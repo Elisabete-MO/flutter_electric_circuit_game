@@ -75,6 +75,39 @@ void main() {
       });
       expect(controller.slotForSymbol(SymbolType.switchSpst), isNull);
     });
+
+    test(
+      'stays synchronized through repeated switch cycles and slot moves',
+      () {
+        final controller = ActivityController();
+
+        for (var cycle = 0; cycle < 4; cycle++) {
+          controller.toggleSwitch();
+          expect(controller.currentAmps, 0.5);
+          controller.toggleSwitch();
+          expect(controller.currentAmps, 0.0);
+        }
+
+        controller.moveSymbol(SymbolType.battery, SlotId.battery);
+        controller.moveSymbol(SymbolType.switchSpst, SlotId.battery);
+        controller.moveSymbol(SymbolType.switchSpst, SlotId.lamp);
+        controller.moveSymbol(SymbolType.lamp, SlotId.lamp);
+        controller.moveSymbol(SymbolType.battery, SlotId.lamp);
+        controller.moveSymbol(SymbolType.switchSpst, SlotId.battery);
+        controller.moveSymbol(SymbolType.switchSpst, SlotId.lamp);
+
+        expect(controller.slotOccupancy, {
+          SlotId.battery: SymbolType.battery,
+          SlotId.switchSpst: null,
+          SlotId.lamp: SymbolType.switchSpst,
+        });
+        final symbolsInSlots = controller.slotOccupancy.values
+            .whereType<SymbolType>()
+            .toList();
+        expect(symbolsInSlots.toSet().length, symbolsInSlots.length);
+        expect(controller.slotForSymbol(SymbolType.lamp), isNull);
+      },
+    );
   });
 
   testWidgets('shows the base MVP activity structure', (
