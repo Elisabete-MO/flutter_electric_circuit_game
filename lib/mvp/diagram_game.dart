@@ -30,6 +30,8 @@ class CircuitDiagramGame extends FlameGame {
 
     _isDiagramLoaded = true;
     _layoutDiagram();
+    controller.addListener(_syncValidationState);
+    _syncValidationState();
   }
 
   @override
@@ -46,6 +48,24 @@ class CircuitDiagramGame extends FlameGame {
     }
     for (final entry in _slots.entries) {
       entry.value.isCandidate = entry.key == candidateSlot;
+    }
+  }
+
+  @override
+  void onRemove() {
+    controller.removeListener(_syncValidationState);
+    super.onRemove();
+  }
+
+  void _syncValidationState() {
+    if (!_isDiagramLoaded) {
+      return;
+    }
+    for (final entry in _slots.entries) {
+      entry.value
+        ..isHighlighted = controller.highlightedSlots.contains(entry.key)
+        ..isSuccessful =
+            controller.validationStatus == ValidationStatus.correct;
     }
   }
 
@@ -101,12 +121,22 @@ class _DiagramSlot extends PositionComponent {
   late Vector2 snapCenter;
   late Vector2 dropSize;
   bool isCandidate = false;
+  bool isHighlighted = false;
+  bool isSuccessful = false;
   final Paint _slotPaint = Paint()
     ..color = const Color(0xFF7B8A97)
     ..strokeWidth = 1.5
     ..style = PaintingStyle.stroke;
   final Paint _candidatePaint = Paint()
     ..color = const Color(0xFF0E9FAD)
+    ..strokeWidth = 2
+    ..style = PaintingStyle.stroke;
+  final Paint _errorPaint = Paint()
+    ..color = const Color(0xFFE07A3F)
+    ..strokeWidth = 2
+    ..style = PaintingStyle.stroke;
+  final Paint _successPaint = Paint()
+    ..color = const Color(0xFF2E8B57)
     ..strokeWidth = 2
     ..style = PaintingStyle.stroke;
 
@@ -128,7 +158,13 @@ class _DiagramSlot extends PositionComponent {
     final rect = Rect.fromLTWH(0, 0, size.x, size.y);
     const dashLength = 6.0;
     const gapLength = 4.0;
-    final paint = isCandidate ? _candidatePaint : _slotPaint;
+    final paint = isSuccessful
+        ? _successPaint
+        : isHighlighted
+        ? _errorPaint
+        : isCandidate
+        ? _candidatePaint
+        : _slotPaint;
 
     for (var x = 0.0; x < rect.width; x += dashLength + gapLength) {
       canvas.drawLine(

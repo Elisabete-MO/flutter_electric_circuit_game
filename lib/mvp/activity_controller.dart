@@ -31,11 +31,16 @@ class ActivityController extends ChangeNotifier {
   void toggleSwitch() => setSwitchClosed(!_isSwitchClosed);
 
   void setSlotSymbol(SlotId slot, SymbolType? symbol) {
-    if (_slotOccupancy[slot] == symbol) {
+    if (symbol != null) {
+      moveSymbol(symbol, slot);
       return;
     }
 
-    _slotOccupancy[slot] = symbol;
+    if (_slotOccupancy[slot] == null) {
+      return;
+    }
+
+    _slotOccupancy[slot] = null;
     _validationStatus = ValidationStatus.idle;
     _highlightedSlots = <SlotId>{};
     notifyListeners();

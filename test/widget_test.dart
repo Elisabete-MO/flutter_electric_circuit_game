@@ -41,6 +41,40 @@ void main() {
       expect(controller.validationStatus, ValidationStatus.correct);
       expect(controller.highlightedSlots, isEmpty);
     });
+
+    test('clears validation feedback after a symbol moves', () {
+      final controller = ActivityController()
+        ..setSlotSymbol(SlotId.battery, SymbolType.battery)
+        ..setSlotSymbol(SlotId.switchSpst, SymbolType.switchSpst)
+        ..setSlotSymbol(SlotId.lamp, SymbolType.lamp)
+        ..verifyDiagram();
+
+      controller.moveSymbol(SymbolType.battery, SlotId.lamp);
+
+      expect(controller.validationStatus, ValidationStatus.idle);
+      expect(controller.highlightedSlots, isEmpty);
+    });
+
+    test('keeps symbols unique when moving and replacing slots', () {
+      final controller = ActivityController()
+        ..setSlotSymbol(SlotId.battery, SymbolType.battery)
+        ..setSlotSymbol(SlotId.switchSpst, SymbolType.switchSpst);
+
+      controller.moveSymbol(SymbolType.battery, SlotId.switchSpst);
+      expect(controller.slotOccupancy, {
+        SlotId.battery: SymbolType.switchSpst,
+        SlotId.switchSpst: SymbolType.battery,
+        SlotId.lamp: null,
+      });
+
+      controller.moveSymbol(SymbolType.lamp, SlotId.battery);
+      expect(controller.slotOccupancy, {
+        SlotId.battery: SymbolType.lamp,
+        SlotId.switchSpst: SymbolType.battery,
+        SlotId.lamp: null,
+      });
+      expect(controller.slotForSymbol(SymbolType.switchSpst), isNull);
+    });
   });
 
   testWidgets('shows the base MVP activity structure', (
