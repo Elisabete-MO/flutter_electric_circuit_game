@@ -95,6 +95,12 @@ class _EletroLabActivityScreenState extends State<EletroLabActivityScreen> {
                     Text(
                       'Corrente: ${_formatCurrent(_controller.currentAmps)}',
                     ),
+                    if (_controller.isSwitchClosed) ...[
+                      const SizedBox(height: 8),
+                      const Text('I = V / R'),
+                      const Text('I = 6 / 12'),
+                      const Text('I = 0,5 A'),
+                    ],
                   ],
                 ),
               ),
