@@ -2,7 +2,6 @@ import 'dart:ui';
 
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
-import 'package:flame_svg/flame_svg.dart';
 
 import 'activity_controller.dart';
 import 'mvp_contract.dart';
@@ -21,7 +20,6 @@ class CircuitDiagramGame extends FlameGame {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    assets.prefix = '';
 
     _wires = _DiagramWires();
     _slots = {
@@ -42,8 +40,17 @@ class CircuitDiagramGame extends FlameGame {
     }
   }
 
+  void setCandidateSlot(SlotId? candidateSlot) {
+    if (!_isDiagramLoaded) {
+      return;
+    }
+    for (final entry in _slots.entries) {
+      entry.value.isCandidate = entry.key == candidateSlot;
+    }
+  }
+
   void _layoutDiagram() {
-    final layout = _DiagramLayout.fromSize(size);
+    final layout = DiagramLayout.fromSize(size);
     for (final entry in layout.slots.entries) {
       _slots[entry.key]!.setLayout(entry.value);
     }
@@ -53,74 +60,23 @@ class CircuitDiagramGame extends FlameGame {
   }
 }
 
-class SymbolLibraryGame extends FlameGame {
-  late final List<_LibrarySymbol> _symbols;
-  bool _isLibraryLoaded = false;
+class DiagramLayout {
+  DiagramLayout({required this.slots});
 
-  @override
-  Color backgroundColor() => const Color(0xFFF3F7FA);
+  final Map<SlotId, DiagramSlotLayout> slots;
 
-  @override
-  Future<void> onLoad() async {
-    await super.onLoad();
-    assets.prefix = '';
-
-    _symbols = [
-      _LibrarySymbol(
-        symbolType: SymbolType.battery,
-        svg: await loadSvg(mvpAssetPaths[MvpAsset.batterySymbol]!),
-      ),
-      _LibrarySymbol(
-        symbolType: SymbolType.switchSpst,
-        svg: await loadSvg(mvpAssetPaths[MvpAsset.switchSymbol]!),
-      ),
-      _LibrarySymbol(
-        symbolType: SymbolType.lamp,
-        svg: await loadSvg(mvpAssetPaths[MvpAsset.lampSymbol]!),
-      ),
-    ];
-    await addAll(_symbols);
-
-    _isLibraryLoaded = true;
-    _layoutLibrary();
-  }
-
-  @override
-  void onGameResize(Vector2 size) {
-    super.onGameResize(size);
-    if (_isLibraryLoaded) {
-      _layoutLibrary();
-    }
-  }
-
-  void _layoutLibrary() {
-    final symbolSize = Vector2((size.x / 4).clamp(72, 108).toDouble(), 48);
-    for (var index = 0; index < _symbols.length; index++) {
-      _symbols[index]
-        ..size = symbolSize
-        ..position = Vector2(size.x * (0.2 + index * 0.3), size.y * 0.5)
-        ..homePosition = _symbols[index].position.clone();
-    }
-  }
-}
-
-class _DiagramLayout {
-  _DiagramLayout({required this.slots});
-
-  final Map<SlotId, _SlotLayout> slots;
-
-  factory _DiagramLayout.fromSize(Vector2 size) {
-    return _DiagramLayout(
+  factory DiagramLayout.fromSize(Vector2 size) {
+    return DiagramLayout(
       slots: {
-        SlotId.battery: _SlotLayout(
+        SlotId.battery: DiagramSlotLayout(
           snapCenter: Vector2(size.x * 0.25, size.y * 0.28),
           visualSize: Vector2(92, 48),
         ),
-        SlotId.switchSpst: _SlotLayout(
+        SlotId.switchSpst: DiagramSlotLayout(
           snapCenter: Vector2(size.x * 0.72, size.y * 0.28),
           visualSize: Vector2(100, 48),
         ),
-        SlotId.lamp: _SlotLayout(
+        SlotId.lamp: DiagramSlotLayout(
           snapCenter: Vector2(size.x * 0.50, size.y * 0.70),
           visualSize: Vector2(92, 48),
         ),
@@ -129,8 +85,8 @@ class _DiagramLayout {
   }
 }
 
-class _SlotLayout {
-  const _SlotLayout({required this.snapCenter, required this.visualSize});
+class DiagramSlotLayout {
+  const DiagramSlotLayout({required this.snapCenter, required this.visualSize});
 
   final Vector2 snapCenter;
   final Vector2 visualSize;
@@ -144,9 +100,14 @@ class _DiagramSlot extends PositionComponent {
   final SlotId slotId;
   late Vector2 snapCenter;
   late Vector2 dropSize;
+  bool isCandidate = false;
   final Paint _slotPaint = Paint()
     ..color = const Color(0xFF7B8A97)
     ..strokeWidth = 1.5
+    ..style = PaintingStyle.stroke;
+  final Paint _candidatePaint = Paint()
+    ..color = const Color(0xFF0E9FAD)
+    ..strokeWidth = 2
     ..style = PaintingStyle.stroke;
 
   Rect get dropHitbox => Rect.fromCenter(
@@ -155,7 +116,7 @@ class _DiagramSlot extends PositionComponent {
     height: dropSize.y,
   );
 
-  void setLayout(_SlotLayout layout) {
+  void setLayout(DiagramSlotLayout layout) {
     snapCenter = layout.snapCenter;
     dropSize = layout.dropSize;
     position = snapCenter;
@@ -167,29 +128,30 @@ class _DiagramSlot extends PositionComponent {
     final rect = Rect.fromLTWH(0, 0, size.x, size.y);
     const dashLength = 6.0;
     const gapLength = 4.0;
+    final paint = isCandidate ? _candidatePaint : _slotPaint;
 
     for (var x = 0.0; x < rect.width; x += dashLength + gapLength) {
       canvas.drawLine(
         Offset(x, 0),
         Offset((x + dashLength).clamp(0, rect.width).toDouble(), 0),
-        _slotPaint,
+        paint,
       );
       canvas.drawLine(
         Offset(x, rect.height),
         Offset((x + dashLength).clamp(0, rect.width).toDouble(), rect.height),
-        _slotPaint,
+        paint,
       );
     }
     for (var y = 0.0; y < rect.height; y += dashLength + gapLength) {
       canvas.drawLine(
         Offset(0, y),
         Offset(0, (y + dashLength).clamp(0, rect.height).toDouble()),
-        _slotPaint,
+        paint,
       );
       canvas.drawLine(
         Offset(rect.width, y),
         Offset(rect.width, (y + dashLength).clamp(0, rect.height).toDouble()),
-        _slotPaint,
+        paint,
       );
     }
   }
@@ -204,7 +166,7 @@ class _DiagramWires extends PositionComponent {
 
   Path _path = Path();
 
-  void setLayout(_DiagramLayout layout) {
+  void setLayout(DiagramLayout layout) {
     final battery = layout.slots[SlotId.battery]!;
     final switchSpst = layout.slots[SlotId.switchSpst]!;
     final lamp = layout.slots[SlotId.lamp]!;
@@ -238,12 +200,4 @@ class _DiagramWires extends PositionComponent {
   void render(Canvas canvas) {
     canvas.drawPath(_path, _wirePaint);
   }
-}
-
-class _LibrarySymbol extends SvgComponent {
-  _LibrarySymbol({required this.symbolType, required super.svg})
-    : super(anchor: Anchor.center);
-
-  final SymbolType symbolType;
-  late Vector2 homePosition;
 }

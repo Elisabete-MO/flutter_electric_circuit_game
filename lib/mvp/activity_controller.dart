@@ -41,6 +41,31 @@ class ActivityController extends ChangeNotifier {
     notifyListeners();
   }
 
+  SlotId? slotForSymbol(SymbolType symbol) {
+    for (final entry in _slotOccupancy.entries) {
+      if (entry.value == symbol) {
+        return entry.key;
+      }
+    }
+    return null;
+  }
+
+  void moveSymbol(SymbolType symbol, SlotId targetSlot) {
+    final sourceSlot = slotForSymbol(symbol);
+    if (sourceSlot == targetSlot) {
+      return;
+    }
+
+    final targetSymbol = _slotOccupancy[targetSlot];
+    if (sourceSlot != null) {
+      _slotOccupancy[sourceSlot] = targetSymbol;
+    }
+    _slotOccupancy[targetSlot] = symbol;
+    _validationStatus = ValidationStatus.idle;
+    _highlightedSlots = <SlotId>{};
+    notifyListeners();
+  }
+
   void verifyDiagram() {
     final emptySlots = _slotOccupancy.entries
         .where((entry) => entry.value == null)

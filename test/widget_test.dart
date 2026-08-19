@@ -17,6 +17,7 @@ void main() {
     await tester.scrollUntilVisible(find.text('Corrente: 0 A'), 300);
     expect(find.text('Corrente: 0 A'), findsOneWidget);
 
+    await tester.scrollUntilVisible(find.text('Verificar diagrama'), 300);
     await tester.tap(find.text('Verificar diagrama'));
     await tester.pump();
 
