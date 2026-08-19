@@ -30,6 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flame: ^1.38.0
+  flutter_svg: ^2.3.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -57,10 +59,16 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
-  # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  assets:
+    - docs/EletroLab_AssetPack_v1/assets/components/battery_dc.webp
+    - docs/EletroLab_AssetPack_v1/assets/components/switch_open.webp
+    - docs/EletroLab_AssetPack_v1/assets/components/switch_closed.webp
+    - docs/EletroLab_AssetPack_v1/assets/components/lamp_off.webp
+    - docs/EletroLab_AssetPack_v1/assets/components/lamp_on.webp
+    - docs/EletroLab_AssetPack_v1/assets/symbols/battery_dc.svg
+    - docs/EletroLab_AssetPack_v1/assets/symbols/switch_open.svg
+    - docs/EletroLab_AssetPack_v1/assets/symbols/lamp.svg
+    - docs/EletroLab_AssetPack_v1/assets/effects/energy_dot.webp
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

@@ -1,30 +1,136 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:flutter_electric_circuit_game/main.dart';
+import 'package:flutter_electric_circuit_game/mvp/activity_controller.dart';
+import 'package:flutter_electric_circuit_game/mvp/mvp_contract.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  group('ActivityController validation', () {
+    test('reports incomplete when a slot is empty', () {
+      final controller = ActivityController();
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+      controller.verifyDiagram();
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+      expect(controller.validationStatus, ValidationStatus.incomplete);
+      expect(controller.highlightedSlots, SlotId.values.toSet());
+    });
+
+    test('reports incorrect when all slots are filled with wrong symbols', () {
+      final controller = ActivityController()
+        ..setSlotSymbol(SlotId.battery, SymbolType.lamp)
+        ..setSlotSymbol(SlotId.switchSpst, SymbolType.switchSpst)
+        ..setSlotSymbol(SlotId.lamp, SymbolType.battery);
+
+      controller.verifyDiagram();
+
+      expect(controller.validationStatus, ValidationStatus.incorrect);
+      expect(controller.highlightedSlots, {SlotId.battery, SlotId.lamp});
+    });
+
+    test('reports correct independently of the physical switch state', () {
+      final controller = ActivityController()
+        ..setSlotSymbol(SlotId.battery, SymbolType.battery)
+        ..setSlotSymbol(SlotId.switchSpst, SymbolType.switchSpst)
+        ..setSlotSymbol(SlotId.lamp, SymbolType.lamp);
+
+      expect(controller.currentAmps, 0.0);
+      controller.setSwitchClosed(true);
+      expect(controller.currentAmps, 0.5);
+      controller.verifyDiagram();
+
+      expect(controller.validationStatus, ValidationStatus.correct);
+      expect(controller.highlightedSlots, isEmpty);
+    });
+
+    test('clears validation feedback after a symbol moves', () {
+      final controller = ActivityController()
+        ..setSlotSymbol(SlotId.battery, SymbolType.battery)
+        ..setSlotSymbol(SlotId.switchSpst, SymbolType.switchSpst)
+        ..setSlotSymbol(SlotId.lamp, SymbolType.lamp)
+        ..verifyDiagram();
+
+      controller.moveSymbol(SymbolType.battery, SlotId.lamp);
+
+      expect(controller.validationStatus, ValidationStatus.idle);
+      expect(controller.highlightedSlots, isEmpty);
+    });
+
+    test('keeps symbols unique when moving and replacing slots', () {
+      final controller = ActivityController()
+        ..setSlotSymbol(SlotId.battery, SymbolType.battery)
+        ..setSlotSymbol(SlotId.switchSpst, SymbolType.switchSpst);
+
+      controller.moveSymbol(SymbolType.battery, SlotId.switchSpst);
+      expect(controller.slotOccupancy, {
+        SlotId.battery: SymbolType.switchSpst,
+        SlotId.switchSpst: SymbolType.battery,
+        SlotId.lamp: null,
+      });
+
+      controller.moveSymbol(SymbolType.lamp, SlotId.battery);
+      expect(controller.slotOccupancy, {
+        SlotId.battery: SymbolType.lamp,
+        SlotId.switchSpst: SymbolType.battery,
+        SlotId.lamp: null,
+      });
+      expect(controller.slotForSymbol(SymbolType.switchSpst), isNull);
+    });
+
+    test(
+      'stays synchronized through repeated switch cycles and slot moves',
+      () {
+        final controller = ActivityController();
+
+        for (var cycle = 0; cycle < 4; cycle++) {
+          controller.toggleSwitch();
+          expect(controller.currentAmps, 0.5);
+          controller.toggleSwitch();
+          expect(controller.currentAmps, 0.0);
+        }
+
+        controller.moveSymbol(SymbolType.battery, SlotId.battery);
+        controller.moveSymbol(SymbolType.switchSpst, SlotId.battery);
+        controller.moveSymbol(SymbolType.switchSpst, SlotId.lamp);
+        controller.moveSymbol(SymbolType.lamp, SlotId.lamp);
+        controller.moveSymbol(SymbolType.battery, SlotId.lamp);
+        controller.moveSymbol(SymbolType.switchSpst, SlotId.battery);
+        controller.moveSymbol(SymbolType.switchSpst, SlotId.lamp);
+
+        expect(controller.slotOccupancy, {
+          SlotId.battery: SymbolType.battery,
+          SlotId.switchSpst: null,
+          SlotId.lamp: SymbolType.switchSpst,
+        });
+        final symbolsInSlots = controller.slotOccupancy.values
+            .whereType<SymbolType>()
+            .toList();
+        expect(symbolsInSlots.toSet().length, symbolsInSlots.length);
+        expect(controller.slotForSymbol(SymbolType.lamp), isNull);
+      },
+    );
+  });
+
+  testWidgets('shows the base MVP activity structure', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const EletroLabApp());
+
+    expect(find.text('Circuito físico'), findsOneWidget);
+    expect(find.text('Monte o diagrama'), findsOneWidget);
+
+    await tester.scrollUntilVisible(find.text('Biblioteca de símbolos'), 300);
+    expect(find.text('Biblioteca de símbolos'), findsOneWidget);
+
+    await tester.scrollUntilVisible(find.text('Corrente: 0 A'), 300);
+    expect(find.text('Corrente: 0 A'), findsOneWidget);
+
+    await tester.scrollUntilVisible(find.text('Verificar diagrama'), 300);
+    await tester.tap(find.text('Verificar diagrama'));
     await tester.pump();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(
+      find.text('Complete todas as posições antes de verificar.'),
+      findsOneWidget,
+    );
   });
 }
