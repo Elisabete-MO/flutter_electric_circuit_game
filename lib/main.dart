@@ -2,6 +2,7 @@ import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
 import 'mvp/activity_controller.dart';
+import 'mvp/diagram_game.dart';
 import 'mvp/eletrolab_game.dart';
 import 'mvp/mvp_contract.dart';
 
@@ -34,12 +35,16 @@ class EletroLabActivityScreen extends StatefulWidget {
 class _EletroLabActivityScreenState extends State<EletroLabActivityScreen> {
   late final ActivityController _controller;
   late final EletroLabGame _game;
+  late final CircuitDiagramGame _diagramGame;
+  late final SymbolLibraryGame _libraryGame;
 
   @override
   void initState() {
     super.initState();
     _controller = ActivityController();
     _game = EletroLabGame(controller: _controller);
+    _diagramGame = CircuitDiagramGame(controller: _controller);
+    _libraryGame = SymbolLibraryGame();
   }
 
   @override
@@ -68,14 +73,20 @@ class _EletroLabActivityScreenState extends State<EletroLabActivityScreen> {
                 child: SizedBox(height: 220, child: GameWidget(game: _game)),
               ),
               const SizedBox(height: 12),
-              const _SectionCard(
+              _SectionCard(
                 title: 'Monte o diagrama',
-                child: Text('Os três slots do diagrama serão exibidos aqui.'),
+                child: SizedBox(
+                  height: 230,
+                  child: GameWidget(game: _diagramGame),
+                ),
               ),
               const SizedBox(height: 12),
-              const _SectionCard(
+              _SectionCard(
                 title: 'Biblioteca de símbolos',
-                child: Text('Bateria, interruptor SPST e lâmpada.'),
+                child: SizedBox(
+                  height: 90,
+                  child: GameWidget(game: _libraryGame),
+                ),
               ),
               const SizedBox(height: 12),
               _SectionCard(

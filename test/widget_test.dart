@@ -10,6 +10,8 @@ void main() {
 
     expect(find.text('Circuito físico'), findsOneWidget);
     expect(find.text('Monte o diagrama'), findsOneWidget);
+
+    await tester.scrollUntilVisible(find.text('Biblioteca de símbolos'), 300);
     expect(find.text('Biblioteca de símbolos'), findsOneWidget);
 
     await tester.scrollUntilVisible(find.text('Corrente: 0 A'), 300);
