@@ -65,10 +65,14 @@ flutter:
     - docs/EletroLab_AssetPack_v1/assets/components/switch_closed.webp
     - docs/EletroLab_AssetPack_v1/assets/components/lamp_off.webp
     - docs/EletroLab_AssetPack_v1/assets/components/lamp_on.webp
+    - docs/EletroLab_AssetPack_v1/assets/components/resistor.webp
     - docs/EletroLab_AssetPack_v1/assets/symbols/battery_dc.svg
     - docs/EletroLab_AssetPack_v1/assets/symbols/switch_open.svg
     - docs/EletroLab_AssetPack_v1/assets/symbols/lamp.svg
+    - docs/EletroLab_AssetPack_v1/assets/symbols/resistor.svg
     - docs/EletroLab_AssetPack_v1/assets/effects/energy_dot.webp
+    - docs/EletroLab_AssetPack_v1/assets/ui/wood_table_texture.png
+    - docs/EletroLab_AssetPack_v1/assets/ui/workshop_background.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

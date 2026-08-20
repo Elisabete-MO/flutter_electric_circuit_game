@@ -21,8 +21,6 @@ void main() {
         ..setSlotSymbol(SlotId.switchSpst, SymbolType.switchSpst)
         ..setSlotSymbol(SlotId.lamp, SymbolType.battery);
 
-      controller.verifyDiagram();
-
       expect(controller.validationStatus, ValidationStatus.incorrect);
       expect(controller.highlightedSlots, {SlotId.battery, SlotId.lamp});
     });
@@ -39,19 +37,6 @@ void main() {
       controller.verifyDiagram();
 
       expect(controller.validationStatus, ValidationStatus.correct);
-      expect(controller.highlightedSlots, isEmpty);
-    });
-
-    test('clears validation feedback after a symbol moves', () {
-      final controller = ActivityController()
-        ..setSlotSymbol(SlotId.battery, SymbolType.battery)
-        ..setSlotSymbol(SlotId.switchSpst, SymbolType.switchSpst)
-        ..setSlotSymbol(SlotId.lamp, SymbolType.lamp)
-        ..verifyDiagram();
-
-      controller.moveSymbol(SymbolType.battery, SlotId.lamp);
-
-      expect(controller.validationStatus, ValidationStatus.idle);
       expect(controller.highlightedSlots, isEmpty);
     });
 
@@ -116,21 +101,12 @@ void main() {
     await tester.pumpWidget(const EletroLabApp());
 
     expect(find.text('Circuito físico'), findsOneWidget);
-    expect(find.text('Monte o diagrama'), findsOneWidget);
+    expect(find.text('Diagrama criado'), findsOneWidget);
+    expect(find.text('Análise do circuito'), findsOneWidget);
 
-    await tester.scrollUntilVisible(find.text('Biblioteca de símbolos'), 300);
-    expect(find.text('Biblioteca de símbolos'), findsOneWidget);
-
-    await tester.scrollUntilVisible(find.text('Corrente: 0 A'), 300);
-    expect(find.text('Corrente: 0 A'), findsOneWidget);
-
-    await tester.scrollUntilVisible(find.text('Verificar diagrama'), 300);
-    await tester.tap(find.text('Verificar diagrama'));
-    await tester.pump();
-
-    expect(
-      find.text('Complete todas as posições antes de verificar.'),
-      findsOneWidget,
-    );
+    expect(find.text('Tensão: 6 V'), findsOneWidget);
+    expect(find.text('Resistência: 12 Ω'), findsOneWidget);
+    expect(find.text('I = V ÷ R'), findsOneWidget);
+    expect(find.text('Concluir atividade'), findsOneWidget);
   });
 }

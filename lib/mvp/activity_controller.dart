@@ -9,6 +9,11 @@ class ActivityController extends ChangeNotifier {
   final Map<SlotId, SymbolType?> _slotOccupancy = {
     for (final slot in SlotId.values) slot: null,
   };
+  final Map<SlotId, int> _slotRotations = {
+    for (final slot in SlotId.values) slot: 0,
+  };
+  final List<Map<SlotId, SymbolType?>> _history = [];
+  SlotId? _selectedSlot;
   ValidationStatus _validationStatus = ValidationStatus.idle;
   Set<SlotId> _highlightedSlots = <SlotId>{};
 
@@ -16,8 +21,21 @@ class ActivityController extends ChangeNotifier {
   double get currentAmps => currentAmpsForSwitch(_isSwitchClosed);
   Map<SlotId, SymbolType?> get slotOccupancy =>
       UnmodifiableMapView(_slotOccupancy);
+  Map<SlotId, int> get slotRotations => UnmodifiableMapView(_slotRotations);
+  SlotId? get selectedSlot => _selectedSlot;
   ValidationStatus get validationStatus => _validationStatus;
   Set<SlotId> get highlightedSlots => UnmodifiableSetView(_highlightedSlots);
+  bool get canUndo => _history.isNotEmpty;
+
+  void selectSlot(SlotId? slot) {
+    if (_selectedSlot == slot) return;
+    _selectedSlot = slot;
+    notifyListeners();
+  }
+
+  void _saveSnapshot() {
+    _history.add(Map<SlotId, SymbolType?>.from(_slotOccupancy));
+  }
 
   void setSwitchClosed(bool isClosed) {
     if (_isSwitchClosed == isClosed) {
@@ -40,10 +58,10 @@ class ActivityController extends ChangeNotifier {
       return;
     }
 
+    _saveSnapshot();
     _slotOccupancy[slot] = null;
-    _validationStatus = ValidationStatus.idle;
     _highlightedSlots = <SlotId>{};
-    notifyListeners();
+    verifyDiagram();
   }
 
   SlotId? slotForSymbol(SymbolType symbol) {
@@ -61,14 +79,51 @@ class ActivityController extends ChangeNotifier {
       return;
     }
 
+    _saveSnapshot();
     final targetSymbol = _slotOccupancy[targetSlot];
     if (sourceSlot != null) {
       _slotOccupancy[sourceSlot] = targetSymbol;
     }
     _slotOccupancy[targetSlot] = symbol;
-    _validationStatus = ValidationStatus.idle;
+    _selectedSlot = targetSlot;
     _highlightedSlots = <SlotId>{};
-    notifyListeners();
+    verifyDiagram();
+  }
+
+  void rotateSelectedSlot() {
+    if (_selectedSlot != null && _slotOccupancy[_selectedSlot] != null) {
+      _slotRotations[_selectedSlot!] =
+          ((_slotRotations[_selectedSlot!] ?? 0) + 90) % 360;
+      verifyDiagram();
+    } else {
+      // Rotate all non-null slots if no slot is selected
+      for (final slot in SlotId.values) {
+        if (_slotOccupancy[slot] != null) {
+          _slotRotations[slot] = ((_slotRotations[slot] ?? 0) + 90) % 360;
+        }
+      }
+      verifyDiagram();
+    }
+  }
+
+  void undo() {
+    if (_history.isEmpty) return;
+    final previousState = _history.removeLast();
+    _slotOccupancy.clear();
+    _slotOccupancy.addAll(previousState);
+    _highlightedSlots = <SlotId>{};
+    verifyDiagram();
+  }
+
+  void clear() {
+    if (_slotOccupancy.values.every((symbol) => symbol == null)) return;
+    _saveSnapshot();
+    for (final slot in SlotId.values) {
+      _slotOccupancy[slot] = null;
+    }
+    _selectedSlot = null;
+    _highlightedSlots = <SlotId>{};
+    verifyDiagram();
   }
 
   void verifyDiagram() {

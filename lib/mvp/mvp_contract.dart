@@ -4,10 +4,14 @@ enum MvpAsset {
   switchClosedPhysical,
   lampOffPhysical,
   lampOnPhysical,
+  resistorPhysical,
   batterySymbol,
   switchSymbol,
   lampSymbol,
+  resistorSymbol,
   energyDot,
+  woodTableBackground,
+  workshopBackground,
 }
 
 const mvpAssetPaths = <MvpAsset, String>{
@@ -21,13 +25,21 @@ const mvpAssetPaths = <MvpAsset, String>{
       'docs/EletroLab_AssetPack_v1/assets/components/lamp_off.webp',
   MvpAsset.lampOnPhysical:
       'docs/EletroLab_AssetPack_v1/assets/components/lamp_on.webp',
+  MvpAsset.resistorPhysical:
+      'docs/EletroLab_AssetPack_v1/assets/components/resistor.webp',
   MvpAsset.batterySymbol:
       'docs/EletroLab_AssetPack_v1/assets/symbols/battery_dc.svg',
   MvpAsset.switchSymbol:
       'docs/EletroLab_AssetPack_v1/assets/symbols/switch_open.svg',
   MvpAsset.lampSymbol: 'docs/EletroLab_AssetPack_v1/assets/symbols/lamp.svg',
+  MvpAsset.resistorSymbol:
+      'docs/EletroLab_AssetPack_v1/assets/symbols/resistor.svg',
   MvpAsset.energyDot:
       'docs/EletroLab_AssetPack_v1/assets/effects/energy_dot.webp',
+  MvpAsset.woodTableBackground:
+      'docs/EletroLab_AssetPack_v1/assets/ui/wood_table_texture.png',
+  MvpAsset.workshopBackground:
+      'docs/EletroLab_AssetPack_v1/assets/ui/workshop_background.png',
 };
 
 enum SymbolType { battery, switchSpst, lamp }

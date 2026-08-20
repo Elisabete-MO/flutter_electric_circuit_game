@@ -1,5 +1,7 @@
+import 'dart:math' as math;
 import 'dart:ui';
 
+import 'package:flame/effects.dart';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
@@ -12,9 +14,11 @@ class EletroLabGame extends FlameGame {
 
   final ActivityController controller;
 
+  late final SpriteComponent _background;
   late final SpriteComponent _battery;
   late final _SwitchComponent _switch;
-  late final SpriteComponent _lamp;
+  late final SpriteComponent _lampBase;
+  late final SpriteComponent _lampGlow;
   late final _CircuitWires _wires;
   late final Sprite _switchOpenSprite;
   late final Sprite _switchClosedSprite;
@@ -23,6 +27,7 @@ class EletroLabGame extends FlameGame {
   late final Sprite _energyDotSprite;
   final List<_EnergyDot> _energyDots = [];
   bool _isCircuitLoaded = false;
+  double _lampOpacityTarget = 0.0;
 
   @override
   Color backgroundColor() => const Color(0xFFF3F7FA);
@@ -37,28 +42,44 @@ class EletroLabGame extends FlameGame {
     _lampOffSprite = await _loadSprite(MvpAsset.lampOffPhysical);
     _lampOnSprite = await _loadSprite(MvpAsset.lampOnPhysical);
     _energyDotSprite = await _loadSprite(MvpAsset.energyDot);
+
+    _background = SpriteComponent(
+      sprite: await _loadSprite(MvpAsset.woodTableBackground),
+      size: size,
+    );
+
     _battery = SpriteComponent(
       sprite: await _loadSprite(MvpAsset.batteryPhysical),
-      size: Vector2(88, 120),
+      size: Vector2(70, 110),
       anchor: Anchor.center,
     );
     _switch = _SwitchComponent(
       controller: controller,
       sprite: _switchOpenSprite,
-      size: Vector2(126, 84),
+      size: Vector2(120, 80),
       anchor: Anchor.center,
     );
-    _lamp = SpriteComponent(
+    _lampBase = SpriteComponent(
       sprite: _lampOffSprite,
-      size: Vector2(116, 98),
+      size: Vector2(100, 100),
       anchor: Anchor.center,
     );
+    _lampGlow = SpriteComponent(
+      sprite: _lampOnSprite,
+      size: Vector2(100, 100),
+      anchor: Anchor.center,
+      priority: 1,
+    );
+    _lampGlow.opacity = 0.0;
+
     _wires = _CircuitWires();
 
+    await add(_background);
     await add(_wires);
     await add(_battery);
     await add(_switch);
-    await add(_lamp);
+    await add(_lampBase);
+    await add(_lampGlow);
 
     _isCircuitLoaded = true;
     _layoutCircuit();
@@ -67,9 +88,23 @@ class EletroLabGame extends FlameGame {
   }
 
   @override
+  void update(double dt) {
+    super.update(dt);
+    if (_isCircuitLoaded) {
+      final currentOpacity = _lampGlow.opacity;
+      if ((currentOpacity - _lampOpacityTarget).abs() > 0.01) {
+        _lampGlow.opacity = lerpDouble(currentOpacity, _lampOpacityTarget, dt * 12.0) ?? _lampOpacityTarget;
+      } else {
+        _lampGlow.opacity = _lampOpacityTarget;
+      }
+    }
+  }
+
+  @override
   void onGameResize(Vector2 size) {
     super.onGameResize(size);
     if (_isCircuitLoaded) {
+      _background.size = size;
       _layoutCircuit();
     }
   }
@@ -88,7 +123,7 @@ class EletroLabGame extends FlameGame {
     _switch.sprite = controller.isSwitchClosed
         ? _switchClosedSprite
         : _switchOpenSprite;
-    _lamp.sprite = controller.isSwitchClosed ? _lampOnSprite : _lampOffSprite;
+    _lampOpacityTarget = controller.isSwitchClosed ? 1.0 : 0.0;
 
     if (controller.isSwitchClosed) {
       _showEnergyDots();
@@ -102,7 +137,7 @@ class EletroLabGame extends FlameGame {
       return;
     }
 
-    const dotCount = 9;
+    const dotCount = 12;
     _energyDots.addAll(
       List.generate(
         dotCount,
@@ -124,16 +159,24 @@ class EletroLabGame extends FlameGame {
   }
 
   void _layoutCircuit() {
-    final layoutScale = (size.x / 360).clamp(0.9, 1.0).toDouble();
+    final layoutScale = (size.x / 360).clamp(0.80, 1.15).toDouble();
     _battery
-      ..size = Vector2(88, 120) * layoutScale
-      ..position = Vector2(size.x * 0.19, size.y * 0.60);
+      ..size = Vector2(65, 110) * layoutScale
+      ..position = Vector2(size.x * 0.18, size.y * 0.50);
+
     _switch
-      ..size = Vector2(126, 84) * layoutScale
-      ..position = Vector2(size.x * 0.50, size.y * 0.32);
-    _lamp
-      ..size = Vector2(116, 98) * layoutScale
-      ..position = Vector2(size.x * 0.81, size.y * 0.60);
+      ..size = Vector2(105, 70) * layoutScale
+      ..position = Vector2(size.x * 0.50, size.y * 0.22);
+
+    _lampBase
+      ..size = Vector2(95, 95) * layoutScale
+      ..position = Vector2(size.x * 0.82, size.y * 0.50)
+      ..angle = math.pi / 2;
+
+    _lampGlow
+      ..size = _lampBase.size
+      ..position = _lampBase.position
+      ..angle = _lampBase.angle;
 
     _wires.size = size;
     _wires.setTerminals(
@@ -141,8 +184,9 @@ class EletroLabGame extends FlameGame {
       batterySize: _battery.size,
       switchPosition: _switch.position,
       switchSize: _switch.size,
-      lamp: _lamp.position,
-      lampSize: _lamp.size,
+      lamp: _lampBase.position,
+      lampSize: _lampBase.size,
+      lampAngle: _lampBase.angle,
     );
   }
 }
@@ -159,7 +203,7 @@ class _SwitchComponent extends SpriteComponent with TapCallbacks {
 
   @override
   bool containsLocalPoint(Vector2 point) {
-    const padding = 10.0;
+    const padding = 12.0;
     return point.x >= -padding &&
         point.x < size.x + padding &&
         point.y >= -padding &&
@@ -168,6 +212,12 @@ class _SwitchComponent extends SpriteComponent with TapCallbacks {
 
   @override
   void onTapUp(TapUpEvent event) {
+    add(
+      ScaleEffect.by(
+        Vector2.all(0.92),
+        EffectController(duration: 0.08, alternate: true),
+      ),
+    );
     controller.toggleSwitch();
     super.onTapUp(event);
   }
@@ -178,7 +228,7 @@ class _EnergyDot extends SpriteComponent {
     required super.sprite,
     required this._wires,
     required this._progress,
-  }) : super(size: Vector2.all(16), anchor: Anchor.center, priority: 1);
+  }) : super(size: Vector2.all(16), anchor: Anchor.center, priority: 2);
 
   final _CircuitWires _wires;
   double _progress;
@@ -188,18 +238,31 @@ class _EnergyDot extends SpriteComponent {
     super.update(dt);
     _progress = (_progress + dt * 0.18) % 1;
     position = _wires.pointAt(_progress);
+
+    final pulse = 1.0 + 0.18 * math.sin(_progress * math.pi * 10);
+    scale = Vector2.all(pulse);
   }
 }
 
 class _CircuitWires extends PositionComponent {
   final Paint _wirePaint = Paint()
-    ..color = const Color(0xFF334155)
-    ..strokeWidth = 4
+    ..color = const Color(0xFFDC2626) // Red wires
+    ..strokeWidth = 4.5
     ..strokeCap = StrokeCap.round
+    ..style = PaintingStyle.stroke;
+
+  final Paint _connectorPaint = Paint()
+    ..color = const Color(0xFFE2E8F0) // Silver metal connectors
+    ..style = PaintingStyle.fill;
+
+  final Paint _connectorBorder = Paint()
+    ..color = const Color(0xFF475569)
+    ..strokeWidth = 1.5
     ..style = PaintingStyle.stroke;
 
   Path _path = Path();
   List<List<Vector2>> _segments = const [];
+  List<Vector2> _terminals = [];
 
   void setTerminals({
     required Vector2 battery,
@@ -208,43 +271,59 @@ class _CircuitWires extends PositionComponent {
     required Vector2 switchSize,
     required Vector2 lamp,
     required Vector2 lampSize,
+    required double lampAngle,
   }) {
-    final batteryRight = Vector2(
-      battery.x + batterySize.x * 0.17,
-      battery.y - batterySize.y * 0.34,
+    final batteryPositive = battery - Vector2(0, batterySize.y * 0.42);
+    final batteryNegative = battery + Vector2(0, batterySize.y * 0.42);
+
+    final switchLeft = switchPosition - Vector2(switchSize.x * 0.38, 0);
+    final switchRight = switchPosition + Vector2(switchSize.x * 0.38, 0);
+
+    final localA = Vector2(-lampSize.x * 0.20, lampSize.y * 0.36);
+    final localB = Vector2(lampSize.x * 0.20, lampSize.y * 0.36);
+
+    final cosA = math.cos(lampAngle);
+    final sinA = math.sin(lampAngle);
+
+    final lampTop = lamp + Vector2(
+      localA.x * cosA - localA.y * sinA,
+      localA.x * sinA + localA.y * cosA,
     );
-    final switchLeft = Vector2(
-      switchPosition.x - switchSize.x * 0.33,
-      switchPosition.y + switchSize.y * 0.12,
+    final lampBottom = lamp + Vector2(
+      localB.x * cosA - localB.y * sinA,
+      localB.x * sinA + localB.y * cosA,
     );
-    final switchRight = Vector2(
-      switchPosition.x + switchSize.x * 0.33,
-      switchPosition.y + switchSize.y * 0.12,
-    );
-    final lampLeft = Vector2(
-      lamp.x - lampSize.x * 0.34,
-      lamp.y + lampSize.y * 0.12,
-    );
-    final lampRight = Vector2(
-      lamp.x + lampSize.x * 0.34,
-      lamp.y + lampSize.y * 0.12,
-    );
-    final batteryLeft = Vector2(
-      battery.x - batterySize.x * 0.17,
-      battery.y - batterySize.y * 0.34,
-    );
-    final bottomY = size.y - 16;
+
+    _terminals = [
+      batteryPositive,
+      switchLeft,
+      switchRight,
+      lampTop,
+      lampBottom,
+      batteryNegative,
+    ];
+
+    final bottomY = size.y * 0.78;
 
     _segments = [
-      [batteryRight, switchLeft],
-      [switchRight, lampLeft],
       [
-        lampRight,
-        Vector2(lampRight.x, bottomY),
-        Vector2(batteryLeft.x, bottomY),
-        batteryLeft,
+        batteryPositive,
+        Vector2(batteryPositive.x, switchLeft.y),
+        switchLeft,
+      ],
+      [
+        switchRight,
+        Vector2(lampTop.x, switchRight.y),
+        lampTop,
+      ],
+      [
+        lampBottom,
+        Vector2(lampBottom.x, bottomY),
+        Vector2(batteryNegative.x, bottomY),
+        batteryNegative,
       ],
     ];
+
     _path = Path();
     for (final segment in _segments) {
       _path.moveTo(segment.first.x, segment.first.y);
@@ -288,5 +367,10 @@ class _CircuitWires extends PositionComponent {
   @override
   void render(Canvas canvas) {
     canvas.drawPath(_path, _wirePaint);
+    for (final terminal in _terminals) {
+      canvas.drawCircle(Offset(terminal.x, terminal.y), 5, _connectorPaint);
+      canvas.drawCircle(Offset(terminal.x, terminal.y), 5, _connectorBorder);
+    }
   }
 }
+

@@ -15,7 +15,7 @@ class CircuitDiagramGame extends FlameGame {
   bool _isDiagramLoaded = false;
 
   @override
-  Color backgroundColor() => const Color(0xFFF3F7FA);
+  Color backgroundColor() => const Color(0x00000000); // Transparent to show dot grid
 
   @override
   Future<void> onLoad() async {
@@ -86,19 +86,23 @@ class DiagramLayout {
   final Map<SlotId, DiagramSlotLayout> slots;
 
   factory DiagramLayout.fromSize(Vector2 size) {
+    final topY = size.y * 0.22;
+    final bottomY = size.y * 0.78;
+    final leftX = size.x * 0.25;
+
     return DiagramLayout(
       slots: {
         SlotId.battery: DiagramSlotLayout(
-          snapCenter: Vector2(size.x * 0.25, size.y * 0.28),
-          visualSize: Vector2(92, 48),
+          snapCenter: Vector2(leftX, size.y * 0.50),
+          visualSize: Vector2(50, 80),
         ),
         SlotId.switchSpst: DiagramSlotLayout(
-          snapCenter: Vector2(size.x * 0.72, size.y * 0.28),
-          visualSize: Vector2(100, 48),
+          snapCenter: Vector2(size.x * 0.50, topY),
+          visualSize: Vector2(80, 50),
         ),
         SlotId.lamp: DiagramSlotLayout(
-          snapCenter: Vector2(size.x * 0.50, size.y * 0.70),
-          visualSize: Vector2(92, 48),
+          snapCenter: Vector2(size.x * 0.50, bottomY),
+          visualSize: Vector2(80, 50),
         ),
       },
     );
@@ -111,7 +115,7 @@ class DiagramSlotLayout {
   final Vector2 snapCenter;
   final Vector2 visualSize;
 
-  Vector2 get dropSize => visualSize + Vector2(36, 28);
+  Vector2 get dropSize => visualSize + Vector2(30, 24);
 }
 
 class _DiagramSlot extends PositionComponent {
@@ -123,21 +127,22 @@ class _DiagramSlot extends PositionComponent {
   bool isCandidate = false;
   bool isHighlighted = false;
   bool isSuccessful = false;
+
   final Paint _slotPaint = Paint()
-    ..color = const Color(0xFF7B8A97)
-    ..strokeWidth = 1.5
+    ..color = const Color(0xFF94A3B8)
+    ..strokeWidth = 1.8
     ..style = PaintingStyle.stroke;
   final Paint _candidatePaint = Paint()
-    ..color = const Color(0xFF0E9FAD)
-    ..strokeWidth = 2
+    ..color = const Color(0xFF0284C7)
+    ..strokeWidth = 2.2
     ..style = PaintingStyle.stroke;
   final Paint _errorPaint = Paint()
-    ..color = const Color(0xFFE07A3F)
-    ..strokeWidth = 2
+    ..color = const Color(0xFFEF4444)
+    ..strokeWidth = 2.2
     ..style = PaintingStyle.stroke;
   final Paint _successPaint = Paint()
-    ..color = const Color(0xFF2E8B57)
-    ..strokeWidth = 2
+    ..color = const Color(0xFF10B981)
+    ..strokeWidth = 2.2
     ..style = PaintingStyle.stroke;
 
   Rect get dropHitbox => Rect.fromCenter(
@@ -166,6 +171,7 @@ class _DiagramSlot extends PositionComponent {
         ? _candidatePaint
         : _slotPaint;
 
+    // Draw dashed rectangle for empty slots
     for (var x = 0.0; x < rect.width; x += dashLength + gapLength) {
       canvas.drawLine(
         Offset(x, 0),
@@ -195,8 +201,8 @@ class _DiagramSlot extends PositionComponent {
 
 class _DiagramWires extends PositionComponent {
   final Paint _wirePaint = Paint()
-    ..color = const Color(0xFF243746)
-    ..strokeWidth = 3
+    ..color = const Color(0xFF1E293B) // Dark slate for schematic wires
+    ..strokeWidth = 2.5
     ..strokeCap = StrokeCap.round
     ..style = PaintingStyle.stroke;
 
@@ -206,30 +212,34 @@ class _DiagramWires extends PositionComponent {
     final battery = layout.slots[SlotId.battery]!;
     final switchSpst = layout.slots[SlotId.switchSpst]!;
     final lamp = layout.slots[SlotId.lamp]!;
-    final batteryRight =
-        battery.snapCenter + Vector2(battery.visualSize.x / 2, 0);
-    final batteryLeft =
-        battery.snapCenter - Vector2(battery.visualSize.x / 2, 0);
-    final switchLeft =
-        switchSpst.snapCenter - Vector2(switchSpst.visualSize.x / 2, 0);
-    final switchRight =
-        switchSpst.snapCenter + Vector2(switchSpst.visualSize.x / 2, 0);
+
+    final leftX = battery.snapCenter.x;
+    final rightX = size.x * 0.75;
+    final topY = switchSpst.snapCenter.y;
+    final bottomY = lamp.snapCenter.y;
+
+    final batteryTop = battery.snapCenter - Vector2(0, battery.visualSize.y / 2);
+    final batteryBottom = battery.snapCenter + Vector2(0, battery.visualSize.y / 2);
+
+    final switchLeft = switchSpst.snapCenter - Vector2(switchSpst.visualSize.x / 2, 0);
+    final switchRight = switchSpst.snapCenter + Vector2(switchSpst.visualSize.x / 2, 0);
+
     final lampLeft = lamp.snapCenter - Vector2(lamp.visualSize.x / 2, 0);
     final lampRight = lamp.snapCenter + Vector2(lamp.visualSize.x / 2, 0);
-    final leftX = 16.0;
-    final rightX = size.x - 16;
 
     _path = Path()
-      ..moveTo(batteryRight.x, batteryRight.y)
+      ..moveTo(batteryTop.x, batteryTop.y)
+      ..lineTo(leftX, topY)
       ..lineTo(switchLeft.x, switchLeft.y)
+      
       ..moveTo(switchRight.x, switchRight.y)
-      ..lineTo(rightX, switchRight.y)
-      ..lineTo(rightX, lampRight.y)
+      ..lineTo(rightX, topY)
+      ..lineTo(rightX, bottomY)
       ..lineTo(lampRight.x, lampRight.y)
+      
       ..moveTo(lampLeft.x, lampLeft.y)
-      ..lineTo(leftX, lampLeft.y)
-      ..lineTo(leftX, batteryLeft.y)
-      ..lineTo(batteryLeft.x, batteryLeft.y);
+      ..lineTo(leftX, bottomY)
+      ..lineTo(batteryBottom.x, batteryBottom.y);
   }
 
   @override
