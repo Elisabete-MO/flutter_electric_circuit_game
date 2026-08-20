@@ -16,6 +16,7 @@ class ActivityController extends ChangeNotifier {
   SlotId? _selectedSlot;
   ValidationStatus _validationStatus = ValidationStatus.idle;
   Set<SlotId> _highlightedSlots = <SlotId>{};
+  String? _selectedAnalysisOption;
 
   bool get isSwitchClosed => _isSwitchClosed;
   double get currentAmps => currentAmpsForSwitch(_isSwitchClosed);
@@ -26,6 +27,15 @@ class ActivityController extends ChangeNotifier {
   ValidationStatus get validationStatus => _validationStatus;
   Set<SlotId> get highlightedSlots => UnmodifiableSetView(_highlightedSlots);
   bool get canUndo => _history.isNotEmpty;
+  String? get selectedAnalysisOption => _selectedAnalysisOption;
+  bool get isAnalysisAnswerCorrect =>
+      _selectedAnalysisOption == correctAnalysisOption;
+
+  void selectAnalysisOption(String option) {
+    if (_selectedAnalysisOption == option) return;
+    _selectedAnalysisOption = option;
+    notifyListeners();
+  }
 
   void selectSlot(SlotId? slot) {
     if (_selectedSlot == slot) return;
@@ -123,6 +133,7 @@ class ActivityController extends ChangeNotifier {
     }
     _selectedSlot = null;
     _highlightedSlots = <SlotId>{};
+    _selectedAnalysisOption = null;
     verifyDiagram();
   }
 

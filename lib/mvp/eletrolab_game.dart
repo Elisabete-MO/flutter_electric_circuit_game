@@ -164,19 +164,22 @@ class EletroLabGame extends FlameGame {
       ..size = Vector2(65, 110) * layoutScale
       ..position = Vector2(size.x * 0.18, size.y * 0.50);
 
-    _switch
-      ..size = Vector2(105, 70) * layoutScale
-      ..position = Vector2(size.x * 0.50, size.y * 0.22);
-
     _lampBase
       ..size = Vector2(95, 95) * layoutScale
-      ..position = Vector2(size.x * 0.82, size.y * 0.50)
+      ..position = Vector2(size.x * 0.72, size.y * 0.50)
       ..angle = math.pi / 2;
 
     _lampGlow
       ..size = _lampBase.size
       ..position = _lampBase.position
       ..angle = _lampBase.angle;
+
+    final lampTerminalX = _lampBase.position.x - (_lampBase.size.y * 0.36);
+    final switchX = (_battery.position.x + lampTerminalX) / 2;
+
+    _switch
+      ..size = Vector2(105, 70) * layoutScale
+      ..position = Vector2(switchX, size.y * 0.15);
 
     _wires.size = size;
     _wires.setTerminals(
@@ -276,11 +279,11 @@ class _CircuitWires extends PositionComponent {
     final batteryPositive = battery - Vector2(0, batterySize.y * 0.42);
     final batteryNegative = battery + Vector2(0, batterySize.y * 0.42);
 
-    final switchLeft = switchPosition - Vector2(switchSize.x * 0.38, 0);
-    final switchRight = switchPosition + Vector2(switchSize.x * 0.38, 0);
+    final switchLeft = switchPosition + Vector2(-switchSize.x * 0.38, switchSize.y * 0.14);
+    final switchRight = switchPosition + Vector2(switchSize.x * 0.38, switchSize.y * 0.14);
 
-    final localA = Vector2(-lampSize.x * 0.20, lampSize.y * 0.36);
-    final localB = Vector2(lampSize.x * 0.20, lampSize.y * 0.36);
+    final localA = Vector2(-lampSize.x * 0.25, lampSize.y * 0.25);
+    final localB = Vector2(lampSize.x * 0.25, lampSize.y * 0.25);
 
     final cosA = math.cos(lampAngle);
     final sinA = math.sin(lampAngle);
@@ -294,16 +297,16 @@ class _CircuitWires extends PositionComponent {
       localB.x * sinA + localB.y * cosA,
     );
 
+    // Connector circles (bolinhas) are drawn only on switch and lamp screw terminals
     _terminals = [
-      batteryPositive,
       switchLeft,
       switchRight,
       lampTop,
       lampBottom,
-      batteryNegative,
     ];
 
     final bottomY = size.y * 0.78;
+    final cornerX = lampTop.x - (25 * (size.x / 360).clamp(0.80, 1.15));
 
     _segments = [
       [
@@ -313,12 +316,14 @@ class _CircuitWires extends PositionComponent {
       ],
       [
         switchRight,
-        Vector2(lampTop.x, switchRight.y),
+        Vector2(cornerX, switchRight.y),
+        Vector2(cornerX, lampTop.y),
         lampTop,
       ],
       [
         lampBottom,
-        Vector2(lampBottom.x, bottomY),
+        Vector2(cornerX, lampBottom.y),
+        Vector2(cornerX, bottomY),
         Vector2(batteryNegative.x, bottomY),
         batteryNegative,
       ],

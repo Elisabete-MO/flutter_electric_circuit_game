@@ -93,9 +93,23 @@ void main() {
         expect(controller.slotForSymbol(SymbolType.lamp), isNull);
       },
     );
+    test('correctly validates circuit analysis options', () {
+      final controller = ActivityController();
+
+      expect(controller.selectedAnalysisOption, isNull);
+      expect(controller.isAnalysisAnswerCorrect, isFalse);
+
+      controller.selectAnalysisOption('2,0 A');
+      expect(controller.selectedAnalysisOption, '2,0 A');
+      expect(controller.isAnalysisAnswerCorrect, isFalse);
+
+      controller.selectAnalysisOption('0,5 A');
+      expect(controller.selectedAnalysisOption, '0,5 A');
+      expect(controller.isAnalysisAnswerCorrect, isTrue);
+    });
   });
 
-  testWidgets('shows the base MVP activity structure', (
+  testWidgets('shows the base MVP activity structure and analysis options', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(const EletroLabApp());
@@ -107,6 +121,13 @@ void main() {
     expect(find.text('Tensão: 6 V'), findsOneWidget);
     expect(find.text('Resistência: 12 Ω'), findsOneWidget);
     expect(find.text('I = V ÷ R'), findsOneWidget);
+
+    // Verify 3 options (1 correct, 2 wrong)
+    expect(find.text('0,5 A'), findsOneWidget);
+    expect(find.text('2,0 A'), findsOneWidget);
+    expect(find.text('1,5 A'), findsOneWidget);
+
     expect(find.text('Concluir atividade'), findsOneWidget);
   });
 }
+

@@ -57,6 +57,10 @@ const expectedSymbolBySlot = <SlotId, SymbolType>{
 const voltageVolts = 6.0;
 const lampResistanceOhms = 12.0;
 
+const analysisOptions = <String>['0,5 A', '2,0 A', '1,5 A'];
+const correctAnalysisOption = '0,5 A';
+
 double currentAmpsForSwitch(bool isSwitchClosed) {
   return isSwitchClosed ? voltageVolts / lampResistanceOhms : 0.0;
 }
+

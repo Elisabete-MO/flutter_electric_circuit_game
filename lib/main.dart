@@ -1,12 +1,12 @@
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
-import 'mvp/activity_controller.dart';
-import 'mvp/circuit_analysis_panel.dart';
-import 'mvp/diagram_game.dart';
-import 'mvp/diagram_workspace.dart';
-import 'mvp/eletrolab_game.dart';
-import 'mvp/mvp_contract.dart';
+import 'package:flutter_electric_circuit_game/mvp/activity_controller.dart';
+import 'package:flutter_electric_circuit_game/mvp/circuit_analysis_panel.dart';
+import 'package:flutter_electric_circuit_game/mvp/diagram_game.dart';
+import 'package:flutter_electric_circuit_game/mvp/diagram_workspace.dart';
+import 'package:flutter_electric_circuit_game/mvp/eletrolab_game.dart';
+import 'package:flutter_electric_circuit_game/mvp/mvp_contract.dart';
 
 void main() => runApp(const EletroLabApp());
 
