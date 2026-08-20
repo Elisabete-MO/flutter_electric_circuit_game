@@ -258,7 +258,8 @@ class SymbolLibrary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final symbols = [
-      SymbolType.battery,
+      SymbolType.batteryPosUp,
+      SymbolType.batteryPosDown,
       SymbolType.switchSpst,
       SymbolType.lamp,
     ];
@@ -289,6 +290,10 @@ class _SymbolCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isVertical =
+        symbol == SymbolType.batteryPosUp || symbol == SymbolType.batteryPosDown;
+    final symbolSize = isVertical ? Vector2(30, 42) : Vector2(50, 32);
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       height: 68,
@@ -315,12 +320,12 @@ class _SymbolCard extends StatelessWidget {
                 opacity: 0.20,
                 child: _TechnicalSymbol(
                   symbolType: symbol,
-                  size: Vector2(50, 32),
+                  size: symbolSize,
                 ),
               )
             : _DraggableSymbol(
                 symbolType: symbol,
-                size: Vector2(50, 32),
+                size: symbolSize,
               ),
       ),
     );
@@ -383,7 +388,11 @@ class _TechnicalSymbol extends StatelessWidget {
 
 String _symbolAssetPath(SymbolType symbolType, bool isSwitchClosed) {
   return switch (symbolType) {
-    SymbolType.battery => mvpAssetPaths[MvpAsset.batterySymbol]!,
+    SymbolType.batteryPosUp =>
+      mvpAssetPaths[MvpAsset.batteryVerticalPosUpSymbol]!,
+    SymbolType.batteryPosDown =>
+      mvpAssetPaths[MvpAsset.batteryVerticalPosDownSymbol]!,
+    SymbolType.batteryHorizontal => mvpAssetPaths[MvpAsset.batterySymbol]!,
     SymbolType.switchSpst => isSwitchClosed
         ? mvpAssetPaths[MvpAsset.switchClosedSymbol]!
         : mvpAssetPaths[MvpAsset.switchOpenSymbol]!,

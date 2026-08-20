@@ -15,11 +15,21 @@ void main() {
       expect(controller.highlightedSlots, SlotId.values.toSet());
     });
 
+    test('reports incorrect when battery polarity is inverted', () {
+      final controller = ActivityController()
+        ..setSlotSymbol(SlotId.battery, SymbolType.batteryPosDown)
+        ..setSlotSymbol(SlotId.switchSpst, SymbolType.switchSpst)
+        ..setSlotSymbol(SlotId.lamp, SymbolType.lamp);
+
+      expect(controller.validationStatus, ValidationStatus.incorrect);
+      expect(controller.highlightedSlots, {SlotId.battery});
+    });
+
     test('reports incorrect when all slots are filled with wrong symbols', () {
       final controller = ActivityController()
         ..setSlotSymbol(SlotId.battery, SymbolType.lamp)
         ..setSlotSymbol(SlotId.switchSpst, SymbolType.switchSpst)
-        ..setSlotSymbol(SlotId.lamp, SymbolType.battery);
+        ..setSlotSymbol(SlotId.lamp, SymbolType.batteryPosUp);
 
       expect(controller.validationStatus, ValidationStatus.incorrect);
       expect(controller.highlightedSlots, {SlotId.battery, SlotId.lamp});
@@ -27,7 +37,7 @@ void main() {
 
     test('reports correct independently of the physical switch state', () {
       final controller = ActivityController()
-        ..setSlotSymbol(SlotId.battery, SymbolType.battery)
+        ..setSlotSymbol(SlotId.battery, SymbolType.batteryPosUp)
         ..setSlotSymbol(SlotId.switchSpst, SymbolType.switchSpst)
         ..setSlotSymbol(SlotId.lamp, SymbolType.lamp);
 
@@ -42,20 +52,20 @@ void main() {
 
     test('keeps symbols unique when moving and replacing slots', () {
       final controller = ActivityController()
-        ..setSlotSymbol(SlotId.battery, SymbolType.battery)
+        ..setSlotSymbol(SlotId.battery, SymbolType.batteryPosUp)
         ..setSlotSymbol(SlotId.switchSpst, SymbolType.switchSpst);
 
-      controller.moveSymbol(SymbolType.battery, SlotId.switchSpst);
+      controller.moveSymbol(SymbolType.batteryPosUp, SlotId.switchSpst);
       expect(controller.slotOccupancy, {
         SlotId.battery: SymbolType.switchSpst,
-        SlotId.switchSpst: SymbolType.battery,
+        SlotId.switchSpst: SymbolType.batteryPosUp,
         SlotId.lamp: null,
       });
 
       controller.moveSymbol(SymbolType.lamp, SlotId.battery);
       expect(controller.slotOccupancy, {
         SlotId.battery: SymbolType.lamp,
-        SlotId.switchSpst: SymbolType.battery,
+        SlotId.switchSpst: SymbolType.batteryPosUp,
         SlotId.lamp: null,
       });
       expect(controller.slotForSymbol(SymbolType.switchSpst), isNull);
@@ -73,16 +83,16 @@ void main() {
           expect(controller.currentAmps, 0.0);
         }
 
-        controller.moveSymbol(SymbolType.battery, SlotId.battery);
+        controller.moveSymbol(SymbolType.batteryPosUp, SlotId.battery);
         controller.moveSymbol(SymbolType.switchSpst, SlotId.battery);
         controller.moveSymbol(SymbolType.switchSpst, SlotId.lamp);
         controller.moveSymbol(SymbolType.lamp, SlotId.lamp);
-        controller.moveSymbol(SymbolType.battery, SlotId.lamp);
+        controller.moveSymbol(SymbolType.batteryPosUp, SlotId.lamp);
         controller.moveSymbol(SymbolType.switchSpst, SlotId.battery);
         controller.moveSymbol(SymbolType.switchSpst, SlotId.lamp);
 
         expect(controller.slotOccupancy, {
-          SlotId.battery: SymbolType.battery,
+          SlotId.battery: SymbolType.batteryPosUp,
           SlotId.switchSpst: null,
           SlotId.lamp: SymbolType.switchSpst,
         });

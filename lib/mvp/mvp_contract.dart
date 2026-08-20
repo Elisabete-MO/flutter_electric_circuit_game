@@ -6,6 +6,8 @@ enum MvpAsset {
   lampOnPhysical,
   resistorPhysical,
   batterySymbol,
+  batteryVerticalPosUpSymbol,
+  batteryVerticalPosDownSymbol,
   switchSymbol,
   switchOpenSymbol,
   switchClosedSymbol,
@@ -31,6 +33,10 @@ const mvpAssetPaths = <MvpAsset, String>{
       'docs/EletroLab_AssetPack_v1/assets/components/resistor.webp',
   MvpAsset.batterySymbol:
       'docs/EletroLab_AssetPack_v1/assets/symbols/battery_dc.svg',
+  MvpAsset.batteryVerticalPosUpSymbol:
+      'docs/EletroLab_AssetPack_v1/assets/symbols/battery_dc_vertical_pos_up.svg',
+  MvpAsset.batteryVerticalPosDownSymbol:
+      'docs/EletroLab_AssetPack_v1/assets/symbols/battery_dc_vertical_pos_down.svg',
   MvpAsset.switchSymbol:
       'docs/EletroLab_AssetPack_v1/assets/symbols/switch_open.svg',
   MvpAsset.switchOpenSymbol:
@@ -48,14 +54,20 @@ const mvpAssetPaths = <MvpAsset, String>{
       'docs/EletroLab_AssetPack_v1/assets/ui/workshop_background.png',
 };
 
-enum SymbolType { battery, switchSpst, lamp }
+enum SymbolType {
+  batteryPosUp,
+  batteryPosDown,
+  batteryHorizontal,
+  switchSpst,
+  lamp,
+}
 
 enum SlotId { battery, switchSpst, lamp }
 
 enum ValidationStatus { idle, incomplete, incorrect, correct }
 
 const expectedSymbolBySlot = <SlotId, SymbolType>{
-  SlotId.battery: SymbolType.battery,
+  SlotId.battery: SymbolType.batteryPosUp,
   SlotId.switchSpst: SymbolType.switchSpst,
   SlotId.lamp: SymbolType.lamp,
 };
