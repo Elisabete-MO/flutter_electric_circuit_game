@@ -249,7 +249,7 @@ class _EnergyDot extends SpriteComponent {
 
 class _CircuitWires extends PositionComponent {
   final Paint _wirePaint = Paint()
-    ..color = const Color(0xFFDC2626) // Red wires
+    ..color = const Color(0xFF18181B) // Black wires
     ..strokeWidth = 4.5
     ..strokeCap = StrokeCap.round
     ..style = PaintingStyle.stroke;

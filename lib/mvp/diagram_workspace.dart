@@ -213,14 +213,21 @@ class _DiagramDropTarget extends StatelessWidget {
           }
           final rotationDeg = controller.slotRotations[slot] ?? 0;
           return GestureDetector(
-            onTap: () => controller.selectSlot(slot),
+            onTap: () {
+              controller.selectSlot(slot);
+              if (symbol == SymbolType.switchSpst) {
+                controller.toggleSwitch();
+              }
+            },
             child: Center(
               child: AnimatedRotation(
                 turns: rotationDeg / 360.0,
                 duration: const Duration(milliseconds: 220),
                 curve: Curves.easeOutBack,
                 child: TweenAnimationBuilder<double>(
-                  key: ValueKey('${slot.name}_${symbol.name}'),
+                  key: ValueKey(
+                    '${slot.name}_${symbol.name}_${symbol == SymbolType.switchSpst ? controller.isSwitchClosed : false}',
+                  ),
                   tween: Tween<double>(begin: 0.75, end: 1.0),
                   duration: const Duration(milliseconds: 200),
                   curve: Curves.easeOutCubic,
@@ -231,6 +238,7 @@ class _DiagramDropTarget extends StatelessWidget {
                   child: _DraggableSymbol(
                     symbolType: symbol,
                     size: layout.visualSize,
+                    isSwitchClosed: controller.isSwitchClosed,
                   ),
                 ),
               ),
@@ -320,14 +328,23 @@ class _SymbolCard extends StatelessWidget {
 }
 
 class _DraggableSymbol extends StatelessWidget {
-  const _DraggableSymbol({required this.symbolType, required this.size});
+  const _DraggableSymbol({
+    required this.symbolType,
+    required this.size,
+    this.isSwitchClosed = false,
+  });
 
   final SymbolType symbolType;
   final Vector2 size;
+  final bool isSwitchClosed;
 
   @override
   Widget build(BuildContext context) {
-    final symbol = _TechnicalSymbol(symbolType: symbolType, size: size);
+    final symbol = _TechnicalSymbol(
+      symbolType: symbolType,
+      size: size,
+      isSwitchClosed: isSwitchClosed,
+    );
     return Draggable<SymbolType>(
       data: symbolType,
       feedback: Material(
@@ -344,25 +361,32 @@ class _DraggableSymbol extends StatelessWidget {
 }
 
 class _TechnicalSymbol extends StatelessWidget {
-  const _TechnicalSymbol({required this.symbolType, required this.size});
+  const _TechnicalSymbol({
+    required this.symbolType,
+    required this.size,
+    this.isSwitchClosed = false,
+  });
 
   final SymbolType symbolType;
   final Vector2 size;
+  final bool isSwitchClosed;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: size.x,
       height: size.y,
-      child: SvgPicture.asset(_symbolAssetPath(symbolType)),
+      child: SvgPicture.asset(_symbolAssetPath(symbolType, isSwitchClosed)),
     );
   }
 }
 
-String _symbolAssetPath(SymbolType symbolType) {
+String _symbolAssetPath(SymbolType symbolType, bool isSwitchClosed) {
   return switch (symbolType) {
     SymbolType.battery => mvpAssetPaths[MvpAsset.batterySymbol]!,
-    SymbolType.switchSpst => mvpAssetPaths[MvpAsset.switchSymbol]!,
+    SymbolType.switchSpst => isSwitchClosed
+        ? mvpAssetPaths[MvpAsset.switchClosedSymbol]!
+        : mvpAssetPaths[MvpAsset.switchOpenSymbol]!,
     SymbolType.lamp => mvpAssetPaths[MvpAsset.lampSymbol]!,
   };
 }

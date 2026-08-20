@@ -7,6 +7,8 @@ enum MvpAsset {
   resistorPhysical,
   batterySymbol,
   switchSymbol,
+  switchOpenSymbol,
+  switchClosedSymbol,
   lampSymbol,
   resistorSymbol,
   energyDot,
@@ -31,6 +33,10 @@ const mvpAssetPaths = <MvpAsset, String>{
       'docs/EletroLab_AssetPack_v1/assets/symbols/battery_dc.svg',
   MvpAsset.switchSymbol:
       'docs/EletroLab_AssetPack_v1/assets/symbols/switch_open.svg',
+  MvpAsset.switchOpenSymbol:
+      'docs/EletroLab_AssetPack_v1/assets/symbols/switch_open.svg',
+  MvpAsset.switchClosedSymbol:
+      'docs/EletroLab_AssetPack_v1/assets/symbols/switch_closed.svg',
   MvpAsset.lampSymbol: 'docs/EletroLab_AssetPack_v1/assets/symbols/lamp.svg',
   MvpAsset.resistorSymbol:
       'docs/EletroLab_AssetPack_v1/assets/symbols/resistor.svg',

@@ -68,6 +68,7 @@ flutter:
     - docs/EletroLab_AssetPack_v1/assets/components/resistor.webp
     - docs/EletroLab_AssetPack_v1/assets/symbols/battery_dc.svg
     - docs/EletroLab_AssetPack_v1/assets/symbols/switch_open.svg
+    - docs/EletroLab_AssetPack_v1/assets/symbols/switch_closed.svg
     - docs/EletroLab_AssetPack_v1/assets/symbols/lamp.svg
     - docs/EletroLab_AssetPack_v1/assets/symbols/resistor.svg
     - docs/EletroLab_AssetPack_v1/assets/effects/energy_dot.webp
