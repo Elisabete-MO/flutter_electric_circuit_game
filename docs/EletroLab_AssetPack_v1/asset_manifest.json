@@ -1,0 +1,22 @@
+{
+  "packVersion": 1,
+  "visualStyle": "light-educational-2.5d",
+  "componentMaxEdgePx": 640,
+  "assets": [
+    {"id": "battery_dc", "kind": "component", "file": "assets/components/battery_dc.webp", "symbol": "assets/symbols/battery_dc.svg", "terminals": 2},
+    {"id": "resistor", "kind": "component", "file": "assets/components/resistor.webp", "symbol": "assets/symbols/resistor.svg", "terminals": 2},
+    {"id": "switch_spst", "kind": "component", "states": {"open": "assets/components/switch_open.webp", "closed": "assets/components/switch_closed.webp"}, "symbols": {"open": "assets/symbols/switch_open.svg", "closed": "assets/symbols/switch_closed.svg"}, "terminals": 2},
+    {"id": "lamp", "kind": "component", "states": {"off": "assets/components/lamp_off.webp", "on": "assets/components/lamp_on.webp"}, "symbol": "assets/symbols/lamp.svg", "terminals": 2},
+    {"id": "led", "kind": "component", "states": {"off": "assets/components/led_off.webp", "on": "assets/components/led_on.webp"}, "symbol": "assets/symbols/led.svg", "terminals": 2, "polarized": true},
+    {"id": "diode", "kind": "component", "file": "assets/components/diode.webp", "symbol": "assets/symbols/diode.svg", "terminals": 2, "polarized": true},
+    {"id": "motor_dc", "kind": "component", "file": "assets/components/motor_dc_off.webp", "symbol": "assets/symbols/motor_dc.svg", "terminals": 2, "polarized": true, "animation": "rotation-controlled-by-solver"},
+    {"id": "voltmeter", "kind": "instrument", "file": "assets/components/voltmeter.webp", "symbol": "assets/symbols/voltmeter.svg", "terminals": 2, "dynamicOverlay": "voltage-text"},
+    {"id": "ammeter", "kind": "instrument", "file": "assets/components/ammeter.webp", "symbol": "assets/symbols/ammeter.svg", "terminals": 2, "dynamicOverlay": "current-text"},
+    {"id": "wire", "kind": "symbol", "file": "assets/symbols/wire.svg"},
+    {"id": "junction", "kind": "symbol", "file": "assets/symbols/junction.svg"},
+    {"id": "energy_dot", "kind": "effect", "file": "assets/effects/energy_dot.webp"},
+    {"id": "grid_tile", "kind": "ui", "file": "assets/ui/grid_tile.webp"},
+    {"id": "terminal_positive", "kind": "ui", "file": "assets/ui/terminal_red.webp"},
+    {"id": "terminal_negative", "kind": "ui", "file": "assets/ui/terminal_black.webp"}
+  ]
+}

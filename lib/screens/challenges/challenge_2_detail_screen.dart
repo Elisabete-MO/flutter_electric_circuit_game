@@ -15,13 +15,13 @@ import '../../widgets/prof_volts_speech.dart';
 import '../../widgets/tech_grid_background.dart';
 import '../../widgets/prof_volts_challenge_dialog.dart';
 
-/// Tela interativa da execução do Desafio 2.
+/// Tela interativa da execuÃ§Ã£o do Desafio 2.
 ///
 /// Apresenta o circuito contendo: Bateria (4.5V), Interruptor e Motor.
 /// Passos:
-/// 1. Observe este circuito (com a opção de testar o interruptor fazendo o motor girar).
-/// 2. Clicar no botão amarelo ("circuit diagram") para montar o diagrama esquemático.
-/// No modo diagrama esquemático: Arrastar/selecionar os símbolos da barra lateral (Bateria, Interruptor e Motor) e posicioná-los nos locais corretos do diagrama elétrico.
+/// 1. Observe este circuito (com a opÃ§Ã£o de testar o interruptor fazendo o motor girar).
+/// 2. Clicar no botÃ£o amarelo ("circuit diagram") para montar o diagrama esquemÃ¡tico.
+/// No modo diagrama esquemÃ¡tico: Arrastar/selecionar os sÃ­mbolos da barra lateral (Bateria, Interruptor e Motor) e posicionÃ¡-los nos locais corretos do diagrama elÃ©trico.
 class Challenge2DetailScreen extends ConsumerStatefulWidget {
   const Challenge2DetailScreen({super.key});
 
@@ -35,7 +35,7 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
   bool _isSwitchClosed = false;
   bool _showDiagramMode = false;
 
-  // Estado do Passo 2: Símbolos posicionados nos 3 slots (Bateria, Interruptor, Motor)
+  // Estado do Passo 2: SÃ­mbolos posicionados nos 3 slots (Bateria, Interruptor, Motor)
   ComponentType? _slotBattery;
   ComponentType? _slotSwitch;
   ComponentType? _slotMotor;
@@ -43,6 +43,8 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
   late final AnimationController _currentAnimationController;
   late final AnimationController _pulseAnimationController;
   late final ConfettiController _confettiController;
+  final ScrollController _paletteVerticalScrollController = ScrollController();
+  final ScrollController _paletteHorizontalScrollController = ScrollController();
 
   int _attempts = 0;
   late final DateTime _startTime;
@@ -82,6 +84,8 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
     _currentAnimationController.dispose();
     _pulseAnimationController.dispose();
     _confettiController.dispose();
+    _paletteVerticalScrollController.dispose();
+    _paletteHorizontalScrollController.dispose();
     super.dispose();
   }
 
@@ -158,7 +162,7 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
             children: [
             Column(
               children: [
-                // Painel Superior de Instruções (Mascote)
+                // Painel Superior de InstruÃ§Ãµes (Mascote)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: ProfVoltsSpeech(
@@ -169,7 +173,7 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
                   ),
                 ),
 
-            // Área Principal do Desafio
+            // Ãrea Principal do Desafio
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) {
@@ -177,27 +181,48 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
 
                   final circuitBoardArea = Stack(
                     children: [
-                      // Fundo da Bancada do Circuito
+                      // Fundo EstÃ¡tico da Bancada do Circuito (Repinta apenas quando o circuito muda de estado)
                       Positioned.fill(
-                        child: AnimatedBuilder(
-                          animation: _currentAnimationController,
-                          builder: (context, _) {
-                            return CustomPaint(
-                              painter: _Challenge2BoardPainter(
-                                isSwitchClosed: _isSwitchClosed,
-                                showDiagramMode: _showDiagramMode,
-                                slotBattery: _slotBattery,
-                                slotSwitch: _slotSwitch,
-                                slotMotor: _slotMotor,
-                                isDark: isDark,
-                                currentProgress: _currentAnimationController.value,
-                              ),
-                            );
-                          },
+                        child: RepaintBoundary(
+                          child: CustomPaint(
+                            painter: _Challenge2BoardPainter(
+                              isSwitchClosed: _isSwitchClosed,
+                              showDiagramMode: _showDiagramMode,
+                              slotBattery: _slotBattery,
+                              slotSwitch: _slotSwitch,
+                              slotMotor: _slotMotor,
+                              isDark: isDark,
+                              drawParticlesOnly: false,
+                            ),
+                          ),
                         ),
                       ),
 
-                      // Interruptor Físico Clicável (Modo Físico)
+                      // Camada de PartÃ­culas ElÃ©tricas DinÃ¢micas (60fps isolados pela GPU via RepaintBoundary)
+                      if (_isSwitchClosed && !_showDiagramMode)
+                        Positioned.fill(
+                          child: RepaintBoundary(
+                            child: AnimatedBuilder(
+                              animation: _currentAnimationController,
+                              builder: (context, _) {
+                                return CustomPaint(
+                                  painter: _Challenge2BoardPainter(
+                                    isSwitchClosed: _isSwitchClosed,
+                                    showDiagramMode: _showDiagramMode,
+                                    slotBattery: _slotBattery,
+                                    slotSwitch: _slotSwitch,
+                                    slotMotor: _slotMotor,
+                                    isDark: isDark,
+                                    currentProgress: _currentAnimationController.value,
+                                    drawParticlesOnly: true,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+
+                      // Interruptor FÃ­sico ClicÃ¡vel (Modo FÃ­sico)
                       if (!_showDiagramMode)
                         Positioned(
                           top: 16,
@@ -249,7 +274,29 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
                           ),
                         ),
 
-                      // Painel de Controle do Diagrama Elétrico ("Fechar Diagrama", "Verificar", "Reiniciar")
+                      // Clique Direto no Asset do Interruptor FÃ­sico na Bancada
+                      if (!_showDiagramMode)
+                        Positioned(
+                          left: constraints.maxWidth * 0.50 - 70,
+                          top: constraints.maxHeight * 0.22 - 45,
+                          width: 140,
+                          height: 90,
+                          child: MouseRegion(
+                            cursor: SystemMouseCursors.click,
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () {
+                                ref.read(audioServiceProvider).playClick();
+                                setState(() {
+                                  _isSwitchClosed = !_isSwitchClosed;
+                                });
+                              },
+                              child: const SizedBox.expand(),
+                            ),
+                          ),
+                        ),
+
+                      // Painel de Controle do Diagrama ElÃ©trico ("Fechar Diagrama", "Verificar", "Reiniciar")
                       Positioned(
                         left: 0,
                         right: 0,
@@ -297,7 +344,7 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
                               final cx = constraints.maxWidth / 2;
                               final cy = constraints.maxHeight / 2;
 
-                              // Adapta dinamicamente o tamanho do diagrama às dimensões da tela
+                              // Adapta dinamicamente o tamanho do diagrama Ã s dimensÃµes da tela
                               final dx = (constraints.maxWidth * 0.26).clamp(80.0, 150.0);
                               final dy = (constraints.maxHeight * 0.22).clamp(55.0, 100.0);
 
@@ -396,13 +443,13 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
     required AppLocalizations l10n,
   }) {
     final symbolList = [
-      _buildDraggableSymbol(ComponentType.resistor, margin: const EdgeInsets.all(6)),
-      _buildDraggableSymbol(ComponentType.battery, margin: const EdgeInsets.all(6)),
-      _buildDraggableSymbol(ComponentType.motor, margin: const EdgeInsets.all(6)),
-      _buildDraggableSymbol(ComponentType.bulb, margin: const EdgeInsets.all(6)),
-      _buildDraggableSymbol(ComponentType.diode, margin: const EdgeInsets.all(6)),
-      _buildDraggableSymbol(ComponentType.switchComponent, margin: const EdgeInsets.all(6)),
-      _buildDraggableSymbol(ComponentType.led, margin: const EdgeInsets.all(6)),
+      _buildDraggableSymbol(ComponentType.resistor, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
+      _buildDraggableSymbol(ComponentType.battery, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
+      _buildDraggableSymbol(ComponentType.motor, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
+      _buildDraggableSymbol(ComponentType.bulb, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
+      _buildDraggableSymbol(ComponentType.diode, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
+      _buildDraggableSymbol(ComponentType.switchComponent, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
+      _buildDraggableSymbol(ComponentType.led, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
     ];
 
     if (isVertical) {
@@ -431,6 +478,7 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
             ),
             Expanded(
               child: ListView(
+                controller: _paletteVerticalScrollController,
                 padding: const EdgeInsets.all(8),
                 children: symbolList,
               ),
@@ -464,6 +512,7 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
             ),
             Expanded(
               child: ListView(
+                controller: _paletteHorizontalScrollController,
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 children: symbolList,
@@ -475,7 +524,7 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
     }
   }
 
-  Widget _buildDraggableSymbol(ComponentType type, {EdgeInsetsGeometry? margin}) {
+  Widget _buildDraggableSymbol(ComponentType type, {EdgeInsetsGeometry? margin, required bool isVerticalList}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final symbolWidget = Container(
@@ -497,6 +546,7 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
     );
 
     return Draggable<ComponentType>(
+      affinity: isVerticalList ? Axis.horizontal : Axis.vertical,
       data: type,
       feedback: Material(
         color: Colors.transparent,
@@ -554,6 +604,14 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
           final isHovered = candidateData.isNotEmpty;
 
           return GestureDetector(
+            onTap: () {
+              if (currentType == ComponentType.switchComponent) {
+                ref.read(audioServiceProvider).playClick();
+                setState(() {
+                  _isSwitchClosed = !_isSwitchClosed;
+                });
+              }
+            },
             onDoubleTap: onClear,
             child: Container(
               width: width,
@@ -604,7 +662,7 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
   }
 }
 
-/// CustomPainter que desenha o circuito físico (bateria, interruptor e motor) e o diagrama elétrico
+/// CustomPainter que desenha o circuito fÃ­sico (bateria, interruptor e motor) e o diagrama elÃ©trico
 class _Challenge2BoardPainter extends CustomPainter {
   _Challenge2BoardPainter({
     required this.isSwitchClosed,
@@ -614,6 +672,7 @@ class _Challenge2BoardPainter extends CustomPainter {
     required this.slotMotor,
     required this.isDark,
     this.currentProgress = 0.0,
+    this.drawParticlesOnly = false,
   });
 
   final bool isSwitchClosed;
@@ -623,11 +682,12 @@ class _Challenge2BoardPainter extends CustomPainter {
   final ComponentType? slotMotor;
   final bool isDark;
   final double currentProgress;
+  final bool drawParticlesOnly;
 
   @override
   void paint(Canvas canvas, Size size) {
     if (showDiagramMode) {
-      _drawDiagramWireOverlay(canvas, size);
+      if (!drawParticlesOnly) _drawDiagramWireOverlay(canvas, size);
     } else {
       _drawPhysicalCircuitOverlay(canvas, size);
     }
@@ -681,7 +741,16 @@ class _Challenge2BoardPainter extends CustomPainter {
       batNegTerm.dx, batNegTerm.dy,
     );
 
-    // --- DESENHO DOS FIOS (Efeito Cilíndrico 3D com Brilho Especular e Sombra Projetada) ---
+    if (drawParticlesOnly) {
+      if (isSwitchClosed) {
+        _drawCurrentParticlesOnPath(canvas, pathRed, const Color(0xFFFFEA00), 5);
+        _drawCurrentParticlesOnPath(canvas, pathWireInter, const Color(0xFFFFEA00), 4);
+        _drawCurrentParticlesOnPath(canvas, pathWireRet, const Color(0xFFFFEA00), 6);
+      }
+      return;
+    }
+
+    // --- DESENHO DOS FIOS (Efeito CilÃ­ndrico 3D com Brilho Especular e Sombra Projetada) ---
     final shadowTransform = Matrix4.translationValues(3, 6, 0);
 
     final wireFloorShadowPaint = Paint()
@@ -788,12 +857,6 @@ class _Challenge2BoardPainter extends CustomPainter {
     canvas.translate(motorX - 70, motorY - 45);
     motorPainter.paint(canvas, const Size(140, 90));
     canvas.restore();
-
-    if (isSwitchClosed) {
-      _drawCurrentParticlesOnPath(canvas, pathRed, const Color(0xFFFFEA00), 5);
-      _drawCurrentParticlesOnPath(canvas, pathWireInter, const Color(0xFFFFEA00), 4);
-      _drawCurrentParticlesOnPath(canvas, pathWireRet, const Color(0xFFFFEA00), 6);
-    }
   }
 
   void _drawCurrentParticlesOnPath(Canvas canvas, Path path, Color color, int count) {
@@ -831,7 +894,7 @@ class _Challenge2BoardPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.square;
 
-    // Adapta dinamicamente a largura e a altura do retângulo do diagrama à tela
+    // Adapta dinamicamente a largura e a altura do retÃ¢ngulo do diagrama Ã  tela
     final dx = (w * 0.26).clamp(80.0, 150.0);
     final dy = (h * 0.22).clamp(55.0, 100.0);
 
@@ -864,6 +927,7 @@ class _Challenge2BoardPainter extends CustomPainter {
         oldDelegate.slotSwitch != slotSwitch ||
         oldDelegate.slotMotor != slotMotor ||
         oldDelegate.isDark != isDark ||
-        oldDelegate.currentProgress != currentProgress;
+        oldDelegate.currentProgress != currentProgress ||
+        oldDelegate.drawParticlesOnly != drawParticlesOnly;
   }
 }

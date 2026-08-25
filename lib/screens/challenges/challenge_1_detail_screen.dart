@@ -15,13 +15,13 @@ import '../../widgets/prof_volts_speech.dart';
 import '../../widgets/tech_grid_background.dart';
 import '../../widgets/prof_volts_challenge_dialog.dart';
 
-/// Tela interativa da execução do Desafio 1.
+/// Tela interativa da execuÃ§Ã£o do Desafio 1.
 ///
-/// Apresenta os dois passos baseados nas imagens de referência:
+/// Apresenta os dois passos baseados nas imagens de referÃªncia:
 /// Passos:
-/// 1. Verificar se há conexões soltas fechando/ligando o interruptor.
-/// 2. Clicar no botão amarelo ("circuit diagram") para montar o diagrama esquemático.
-/// No modo diagrama esquemático: Arrastar/selecionar os símbolos da barra lateral esquerda e posicioná-los no lugar correto do diagrama do circuito.
+/// 1. Verificar se hÃ¡ conexÃµes soltas fechando/ligando o interruptor.
+/// 2. Clicar no botÃ£o amarelo ("circuit diagram") para montar o diagrama esquemÃ¡tico.
+/// No modo diagrama esquemÃ¡tico: Arrastar/selecionar os sÃ­mbolos da barra lateral esquerda e posicionÃ¡-los no lugar correto do diagrama do circuito.
 class Challenge1DetailScreen extends ConsumerStatefulWidget {
   const Challenge1DetailScreen({super.key});
 
@@ -31,11 +31,11 @@ class Challenge1DetailScreen extends ConsumerStatefulWidget {
 
 class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
     with TickerProviderStateMixin {
-  // Estado do Passo 1: Interruptor e lâmpada
+  // Estado do Passo 1: Interruptor e lÃ¢mpada
   bool _isSwitchClosed = false;
   bool _showDiagramMode = false;
 
-  // Estado do Passo 2: Símbolos posicionados nos 3 slots (Bateria, Interruptor, Lâmpada)
+  // Estado do Passo 2: SÃ­mbolos posicionados nos 3 slots (Bateria, Interruptor, LÃ¢mpada)
   ComponentType? _slotBattery;
   ComponentType? _slotSwitch;
   ComponentType? _slotBulb;
@@ -43,6 +43,8 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
   late final AnimationController _currentAnimationController;
   late final AnimationController _pulseAnimationController;
   late final ConfettiController _confettiController;
+  final ScrollController _paletteVerticalScrollController = ScrollController();
+  final ScrollController _paletteHorizontalScrollController = ScrollController();
 
   int _attempts = 0;
   late final DateTime _startTime;
@@ -82,6 +84,8 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
     _currentAnimationController.dispose();
     _pulseAnimationController.dispose();
     _confettiController.dispose();
+    _paletteVerticalScrollController.dispose();
+    _paletteHorizontalScrollController.dispose();
     super.dispose();
   }
 
@@ -158,7 +162,7 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
             children: [
             Column(
               children: [
-                // Painel Superior de Instruções (Mascote)
+                // Painel Superior de InstruÃ§Ãµes (Mascote)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: ProfVoltsSpeech(
@@ -169,7 +173,7 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
                   ),
                 ),
 
-                // Área Principal do Desafio
+                // Ãrea Principal do Desafio
                 Expanded(
                   child: LayoutBuilder(
                     builder: (context, constraints) {
@@ -177,7 +181,7 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
 
                       final circuitBoardArea = Stack(
                         children: [
-                          // Fundo Estático da Bancada do Circuito (Repinta apenas quando o circuito muda de estado)
+                          // Fundo EstÃ¡tico da Bancada do Circuito (Repinta apenas quando o circuito muda de estado)
                           Positioned.fill(
                             child: RepaintBoundary(
                               child: CustomPaint(
@@ -194,7 +198,7 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
                             ),
                           ),
 
-                          // Camada de Partículas Elétricas Dinâmicas (60fps isolados pela GPU via RepaintBoundary)
+                          // Camada de PartÃ­culas ElÃ©tricas DinÃ¢micas (60fps isolados pela GPU via RepaintBoundary)
                           if (_isSwitchClosed && !_showDiagramMode)
                             Positioned.fill(
                               child: RepaintBoundary(
@@ -220,7 +224,7 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
 
                           // Elementos Interativos posicionados na Bancada
 
-                          // Interruptor Físico Clicável (Modo Físico)
+                          // Interruptor FÃ­sico ClicÃ¡vel (Modo FÃ­sico)
                           if (!_showDiagramMode)
                             Positioned(
                               top: 16,
@@ -272,7 +276,29 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
                               ),
                             ),
 
-                          // Painel de Controle do Diagrama Elétrico ("Fechar Diagrama", "Verificar", "Reiniciar")
+                          // Clique Direto no Asset do Interruptor FÃ­sico na Bancada
+                          if (!_showDiagramMode)
+                            Positioned(
+                              left: constraints.maxWidth * 0.72 - 70,
+                              top: constraints.maxHeight * 0.28 - 45,
+                              width: 140,
+                              height: 90,
+                              child: MouseRegion(
+                                cursor: SystemMouseCursors.click,
+                                child: GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: () {
+                                    ref.read(audioServiceProvider).playClick();
+                                    setState(() {
+                                      _isSwitchClosed = !_isSwitchClosed;
+                                    });
+                                  },
+                                  child: const SizedBox.expand(),
+                                ),
+                              ),
+                            ),
+
+                          // Painel de Controle do Diagrama ElÃ©trico ("Fechar Diagrama", "Verificar", "Reiniciar")
                           Positioned(
                             left: 0,
                             right: 0,
@@ -312,7 +338,7 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
                             ),
                           ),
 
-                          // Slots de Drop no Modo Diagrama (Bateria, Interruptor, Lâmpada)
+                          // Slots de Drop no Modo Diagrama (Bateria, Interruptor, LÃ¢mpada)
                           if (_showDiagramMode)
                             Positioned.fill(
                               child: LayoutBuilder(
@@ -320,7 +346,7 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
                                   final cx = constraints.maxWidth / 2;
                                   final cy = constraints.maxHeight / 2;
 
-                                  // Adapta dinamicamente o tamanho do diagrama às dimensões da tela
+                                  // Adapta dinamicamente o tamanho do diagrama Ã s dimensÃµes da tela
                                   final dx = (constraints.maxWidth * 0.26).clamp(80.0, 150.0);
                                   final dy = (constraints.maxHeight * 0.22).clamp(55.0, 100.0);
 
@@ -355,7 +381,7 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
                                         onClear: () => setState(() => _slotSwitch = null),
                                       ),
 
-                                      // Slot 3: Lâmpada (Base do Diagrama)
+                                      // Slot 3: LÃ¢mpada (Base do Diagrama)
                                       _buildDropSlot(
                                         left: cx - 40,
                                         top: bottomY - 30,
@@ -419,13 +445,13 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
     required AppLocalizations l10n,
   }) {
     final symbolList = [
-      _buildDraggableSymbol(ComponentType.resistor, margin: const EdgeInsets.all(6)),
-      _buildDraggableSymbol(ComponentType.battery, margin: const EdgeInsets.all(6)),
-      _buildDraggableSymbol(ComponentType.motor, margin: const EdgeInsets.all(6)),
-      _buildDraggableSymbol(ComponentType.bulb, margin: const EdgeInsets.all(6)),
-      _buildDraggableSymbol(ComponentType.diode, margin: const EdgeInsets.all(6)),
-      _buildDraggableSymbol(ComponentType.switchComponent, margin: const EdgeInsets.all(6)),
-      _buildDraggableSymbol(ComponentType.led, margin: const EdgeInsets.all(6)),
+      _buildDraggableSymbol(ComponentType.resistor, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
+      _buildDraggableSymbol(ComponentType.battery, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
+      _buildDraggableSymbol(ComponentType.motor, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
+      _buildDraggableSymbol(ComponentType.bulb, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
+      _buildDraggableSymbol(ComponentType.diode, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
+      _buildDraggableSymbol(ComponentType.switchComponent, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
+      _buildDraggableSymbol(ComponentType.led, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
     ];
 
     if (isVertical) {
@@ -454,6 +480,7 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
             ),
             Expanded(
               child: ListView(
+                controller: _paletteVerticalScrollController,
                 padding: const EdgeInsets.all(8),
                 children: symbolList,
               ),
@@ -487,6 +514,7 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
             ),
             Expanded(
               child: ListView(
+                controller: _paletteHorizontalScrollController,
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 children: symbolList,
@@ -498,7 +526,7 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
     }
   }
 
-  Widget _buildDraggableSymbol(ComponentType type, {EdgeInsetsGeometry? margin}) {
+  Widget _buildDraggableSymbol(ComponentType type, {EdgeInsetsGeometry? margin, required bool isVerticalList}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final symbolWidget = Container(
@@ -520,6 +548,7 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
     );
 
     return Draggable<ComponentType>(
+      affinity: isVerticalList ? Axis.horizontal : Axis.vertical,
       data: type,
       feedback: Material(
         color: Colors.transparent,
@@ -535,7 +564,7 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
       child: InkWell(
         onTap: () {
           ref.read(audioServiceProvider).playClick();
-          // Permite toque rápido para definir o próximo slot vago
+          // Permite toque rÃ¡pido para definir o prÃ³ximo slot vago
           setState(() {
             _slotBattery ??= type;
             if (_slotBattery != type) {
@@ -578,6 +607,14 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
           final isHovered = candidateData.isNotEmpty;
 
           return GestureDetector(
+            onTap: () {
+              if (currentType == ComponentType.switchComponent) {
+                ref.read(audioServiceProvider).playClick();
+                setState(() {
+                  _isSwitchClosed = !_isSwitchClosed;
+                });
+              }
+            },
             onDoubleTap: onClear,
             child: Container(
               width: width,
@@ -628,7 +665,7 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
   }
 }
 
-/// CustomPainter que desenha o fundo da bancada do circuito e os fios de ligação
+/// CustomPainter que desenha o fundo da bancada do circuito e os fios de ligaÃ§Ã£o
 class _CircuitInteractiveBoardPainter extends CustomPainter {
   _CircuitInteractiveBoardPainter({
     required this.isSwitchClosed,
@@ -665,7 +702,7 @@ class _CircuitInteractiveBoardPainter extends CustomPainter {
     final w = size.width;
     final h = size.height;
 
-    // Coordenadas calculadas dinamicamente com base nas dimensões da bancada
+    // Coordenadas calculadas dinamicamente com base nas dimensÃµes da bancada
     final batX = w * 0.18;
     final batY = h * 0.48;
 
@@ -675,19 +712,19 @@ class _CircuitInteractiveBoardPainter extends CustomPainter {
     final bulbX = w * 0.72;
     final bulbY = h * 0.72;
 
-    // Pontos de conexão exatos nos bornes (Terminais vermelhos/pretos)
+    // Pontos de conexÃ£o exatos nos bornes (Terminais vermelhos/pretos)
     final batPosTerm = Offset(batX + 22, batY - 26);  // Polo (+) Bateria
     final batNegTerm = Offset(batX - 16, batY - 22);  // Polo (-) Bateria
 
     final swRedTerm  = Offset(swX - 25, swY + 6);     // Borne Vermelho Interruptor
     final swBlackTerm = Offset(swX + 25, swY + 6);    // Borne Preto Interruptor
 
-    final bulbRedTerm  = Offset(bulbX - 30, bulbY + 4);  // Borne Vermelho Lâmpada
-    final bulbBlackTerm = Offset(bulbX + 30, bulbY + 4); // Borne Preto Lâmpada
+    final bulbRedTerm  = Offset(bulbX - 30, bulbY + 4);  // Borne Vermelho LÃ¢mpada
+    final bulbBlackTerm = Offset(bulbX + 30, bulbY + 4); // Borne Preto LÃ¢mpada
 
-    // --- DESENHO DOS FIOS (Curvas Bézier suaves de laboratório) ---
+    // --- DESENHO DOS FIOS (Curvas BÃ©zier suaves de laboratÃ³rio) ---
 
-    // 1. Fio Vermelho (Bateria + até Borne Vermelho do Interruptor)
+    // 1. Fio Vermelho (Bateria + atÃ© Borne Vermelho do Interruptor)
     final pathRed = Path();
     pathRed.moveTo(batPosTerm.dx, batPosTerm.dy);
     pathRed.cubicTo(
@@ -696,7 +733,7 @@ class _CircuitInteractiveBoardPainter extends CustomPainter {
       swRedTerm.dx, swRedTerm.dy,
     );
 
-    // 2. Fio de Interconexão (Borne Preto do Interruptor até Borne Vermelho da Lâmpada)
+    // 2. Fio de InterconexÃ£o (Borne Preto do Interruptor atÃ© Borne Vermelho da LÃ¢mpada)
     final pathWireInter = Path();
     pathWireInter.moveTo(swBlackTerm.dx, swBlackTerm.dy);
     pathWireInter.cubicTo(
@@ -705,7 +742,7 @@ class _CircuitInteractiveBoardPainter extends CustomPainter {
       bulbRedTerm.dx, bulbRedTerm.dy,
     );
 
-    // 3. Fio Preto de Retorno (Borne Preto da Lâmpada até Polo (-) da Bateria)
+    // 3. Fio Preto de Retorno (Borne Preto da LÃ¢mpada atÃ© Polo (-) da Bateria)
     final pathWireRet = Path();
     pathWireRet.moveTo(bulbBlackTerm.dx, bulbBlackTerm.dy);
     pathWireRet.cubicTo(
@@ -715,7 +752,7 @@ class _CircuitInteractiveBoardPainter extends CustomPainter {
     );
 
     if (drawParticlesOnly) {
-      // ⚡ DESENHA APENAS AS PARTÍCULAS EM 60FPS
+      // âš¡ DESENHA APENAS AS PARTÃCULAS EM 60FPS
       if (isSwitchClosed) {
         _drawCurrentParticlesOnPath(canvas, pathRed, const Color(0xFFFFEA00), 5);
         _drawCurrentParticlesOnPath(canvas, pathWireInter, const Color(0xFFFFEA00), 4);
@@ -724,7 +761,7 @@ class _CircuitInteractiveBoardPainter extends CustomPainter {
       return;
     }
 
-    // --- DESENHO DOS FIOS (Efeito Cilíndrico 3D com Brilho Especular e Sombra Projetada) ---
+    // --- DESENHO DOS FIOS (Efeito CilÃ­ndrico 3D com Brilho Especular e Sombra Projetada) ---
     final shadowTransform = Matrix4.translationValues(3, 6, 0);
 
     // 1. Sombra suave realista no piso da bancada
@@ -785,7 +822,7 @@ class _CircuitInteractiveBoardPainter extends CustomPainter {
     canvas.drawPath(pathWireInter, wireInterPaint);
     canvas.drawPath(pathWireRet, wireBlackPaint);
 
-    // 4. Linha de Brilho Especular (Highlight 3D cilíndrico superior)
+    // 4. Linha de Brilho Especular (Highlight 3D cilÃ­ndrico superior)
     final wireHighlightPaint = Paint()
       ..color = Colors.white.withValues(alpha: 0.45)
       ..strokeWidth = 1.4
@@ -806,7 +843,7 @@ class _CircuitInteractiveBoardPainter extends CustomPainter {
     canvas.drawCircle(bulbRedTerm, 4, plugPaint);
     canvas.drawCircle(bulbBlackTerm, 4, plugPaint);
 
-    // --- RENDEREZAÇÃO DOS COMPONENTES FÍSICOS ---
+    // --- RENDEREZAÃ‡ÃƒO DOS COMPONENTES FÃSICOS ---
     final batPainter = ComponentPhysicalPainter(
       type: ComponentType.battery,
       isActive: false,
@@ -835,7 +872,7 @@ class _CircuitInteractiveBoardPainter extends CustomPainter {
     swPainter.paint(canvas, const Size(140, 90));
     canvas.restore();
 
-    // Lâmpada (Lado Direito Inferior)
+    // LÃ¢mpada (Lado Direito Inferior)
     canvas.save();
     canvas.translate(bulbX - 70, bulbY - 45);
     bulbPainter.paint(canvas, const Size(140, 90));
@@ -877,7 +914,7 @@ class _CircuitInteractiveBoardPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.square;
 
-    // Adapta dinamicamente a largura e a altura do retângulo do diagrama à tela
+    // Adapta dinamicamente a largura e a altura do retÃ¢ngulo do diagrama Ã  tela
     final dx = (w * 0.26).clamp(80.0, 150.0);
     final dy = (h * 0.22).clamp(55.0, 100.0);
 
@@ -888,7 +925,7 @@ class _CircuitInteractiveBoardPainter extends CustomPainter {
 
     final path = Path();
 
-    // Topo (Interruptor): Vão entre cx - 40 e cx + 40 (80px exatos do slot)
+    // Topo (Interruptor): VÃ£o entre cx - 40 e cx + 40 (80px exatos do slot)
     path.moveTo(leftX, topY);
     path.lineTo(cx - 40, topY);
     path.moveTo(cx + 40, topY);
@@ -897,12 +934,12 @@ class _CircuitInteractiveBoardPainter extends CustomPainter {
     // Lado Direito
     path.lineTo(rightX, bottomY);
 
-    // Base (Lâmpada): Vão entre cx + 40 e cx - 40
+    // Base (LÃ¢mpada): VÃ£o entre cx + 40 e cx - 40
     path.lineTo(cx + 40, bottomY);
     path.moveTo(cx - 40, bottomY);
     path.lineTo(leftX, bottomY);
 
-    // Lado Esquerdo (Bateria): Vão vertical entre cy - 30 e cy + 30 (60px exatos do slot)
+    // Lado Esquerdo (Bateria): VÃ£o vertical entre cy - 30 e cy + 30 (60px exatos do slot)
     path.lineTo(leftX, cy + 30);
     path.moveTo(leftX, cy - 30);
     path.lineTo(leftX, topY);

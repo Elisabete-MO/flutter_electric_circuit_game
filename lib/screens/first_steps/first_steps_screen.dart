@@ -12,8 +12,8 @@ import '../../widgets/glass_container.dart';
 import '../../widgets/tech_grid_background.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Seção "Primeiros passos" — introdução interativa inspirada nas telas de referência.
-/// Combina o grid de 8 quadrantes nítido (Imagem 2) com a faixa de instrução orientativa
+/// SeÃ§Ã£o "Primeiros passos" â€” introduÃ§Ã£o interativa inspirada nas telas de referÃªncia.
+/// Combina o grid de 8 quadrantes nÃ­tido (Imagem 2) com a faixa de instruÃ§Ã£o orientativa
 /// "Observe. You have to know these symbols for this activity." (Imagem 1).
 class FirstStepsScreen extends StatefulWidget {
   const FirstStepsScreen({super.key});
@@ -23,22 +23,25 @@ class FirstStepsScreen extends StatefulWidget {
 }
 
 class _FirstStepsScreenState extends State<FirstStepsScreen> {
-  late List<FirstStepComponent> _components;
+  late List<FirstStepComponent> _gridComponents;
+  late List<FirstStepComponent> _quizQuestions;
   bool _showBannerOverlay = true;
   bool _isQuizMode = false;
   int _quizScore = 0;
   int _quizCurrentIndex = 0;
+  final Set<String> _answeredCorrectlyIds = {};
 
   @override
   void initState() {
     super.initState();
-    _components = List.from(FirstStepComponent.defaultList);
+    _gridComponents = List.from(FirstStepComponent.defaultList);
+    _quizQuestions = List.from(FirstStepComponent.defaultList);
   }
 
   void _toggleComponentState(int index) {
     setState(() {
-      final item = _components[index];
-      _components[index] = item.copyWith(isActive: !item.isActive);
+      final item = _gridComponents[index];
+      _gridComponents[index] = item.copyWith(isActive: !item.isActive);
     });
   }
 
@@ -54,19 +57,22 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
       _isQuizMode = true;
       _quizScore = 0;
       _quizCurrentIndex = 0;
-      _components.shuffle();
+      _answeredCorrectlyIds.clear();
+      _gridComponents = List.from(FirstStepComponent.defaultList)..shuffle();
+      _quizQuestions = List.from(FirstStepComponent.defaultList)..shuffle();
     });
   }
 
   void _resetStudyMode() {
     setState(() {
       _isQuizMode = false;
-      _components = List.from(FirstStepComponent.defaultList);
+      _answeredCorrectlyIds.clear();
+      _gridComponents = List.from(FirstStepComponent.defaultList);
     });
   }
 
   void _answerQuiz(FirstStepComponent selected) {
-    final currentTarget = _components[_quizCurrentIndex];
+    final currentTarget = _quizQuestions[_quizCurrentIndex];
     final isCorrect = selected.id == currentTarget.id;
     final l10n = AppLocalizations.of(context)!;
     final name = l10n.localeName == 'en' ? selected.nameEn : selected.namePt;
@@ -86,7 +92,8 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
           if (isCorrect) {
             setState(() {
               _quizScore++;
-              if (_quizCurrentIndex < _components.length - 1) {
+              _answeredCorrectlyIds.add(selected.id);
+              if (_quizCurrentIndex < _quizQuestions.length - 1) {
                 _quizCurrentIndex++;
               } else {
                 _showQuizResultsDialog();
@@ -102,7 +109,7 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final l10n = AppLocalizations.of(context)!;
-    final isSuccess = _quizScore >= (_components.length / 2);
+    final isSuccess = _quizScore >= (_quizQuestions.length / 2);
     final accentColor = isSuccess
         ? (isDark ? const Color(0xFF00FF9D) : const Color(0xFF00875A))
         : (isDark ? const Color(0xFFFF3B7F) : const Color(0xFFD81B60));
@@ -130,7 +137,7 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
               ),
               const SizedBox(height: 16),
               
-              // 2. Título HUD Cyber
+              // 2. TÃ­tulo HUD Cyber
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
@@ -164,7 +171,7 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
 
               // 3. Mensagem explicativa
               Text(
-                l10n.quizResultMsg(_quizScore, _components.length),
+                l10n.quizResultMsg(_quizScore, _quizQuestions.length),
                 style: theme.textTheme.bodyMedium?.copyWith(
                   height: 1.4,
                   fontSize: 16,
@@ -174,7 +181,7 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
               ),
               const SizedBox(height: 24),
 
-              // 4. Botões de Ação
+              // 4. BotÃµes de AÃ§Ã£o
               Row(
                 children: [
                   Expanded(
@@ -252,7 +259,7 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
                   ? Icons.info_rounded
                   : Icons.info_outline_rounded,
             ),
-            tooltip: 'Alternar instrução',
+            tooltip: 'Alternar instruÃ§Ã£o',
             onPressed: () {
               setState(() {
                 _showBannerOverlay = !_showBannerOverlay;
@@ -279,7 +286,7 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
         child: SafeArea(
           child: Column(
           children: [
-            // Balão de fala do Prof. Volts orientativo
+            // BalÃ£o de fala do Prof. Volts orientativo
             if (_showBannerOverlay && !_isQuizMode)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -324,21 +331,21 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
                           avatar: const Icon(Icons.category_rounded, size: 18),
                           label: Text(
                             l10n.localeName == 'en'
-                                ? _components[_quizCurrentIndex].nameEn
-                                : _components[_quizCurrentIndex].namePt,
+                                ? _quizQuestions[_quizCurrentIndex].nameEn
+                                : _quizQuestions[_quizCurrentIndex].namePt,
                             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          l10n.quizQuestionCount(_quizCurrentIndex + 1, _components.length),
+                          l10n.quizQuestionCount(_quizCurrentIndex + 1, _quizQuestions.length),
                           style: theme.textTheme.labelSmall,
                         ),
                       ],
                     ),
                   ),
 
-                // GRID DE 8 COMPONENTES (Inspirado exatamente nas 8 divisões das referências)
+                // GRID DE 8 COMPONENTES (Inspirado exatamente nas 8 divisÃµes das referÃªncias)
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.all(12),
@@ -348,7 +355,7 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
                         final crossAxisCount = constraints.maxWidth >= 640 ? 4 : 2;
 
                         return GridView.builder(
-                          itemCount: _components.length,
+                          itemCount: _gridComponents.length,
                           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: crossAxisCount,
                             crossAxisSpacing: 12,
@@ -356,11 +363,12 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
                             childAspectRatio: 0.88,
                           ),
                           itemBuilder: (context, index) {
-                            final comp = _components[index];
+                            final comp = _gridComponents[index];
 
                             return SymbolCard(
                               component: comp,
                               showLabels: !_isQuizMode,
+                              isCorrectlyAnswered: _answeredCorrectlyIds.contains(comp.id),
                               onTap: () {
                                 if (_isQuizMode) {
                                   _answerQuiz(comp);

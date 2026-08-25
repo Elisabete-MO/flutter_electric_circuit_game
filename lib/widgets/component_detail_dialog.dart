@@ -213,7 +213,6 @@ class _ComponentDetailDialogState extends State<ComponentDetailDialog> {
                             : l10n.compActivateState,
                       ),
                     ),
-                  const SizedBox(width: 8),
                   FilledButton(
                     onPressed: () => Navigator.of(context).pop(),
                     child: Text(l10n.compUnderstood),
