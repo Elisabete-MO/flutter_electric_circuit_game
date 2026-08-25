@@ -29,12 +29,28 @@ class SandboxScreen extends ConsumerStatefulWidget {
   ConsumerState<SandboxScreen> createState() => _SandboxScreenState();
 }
 
-class _SandboxScreenState extends ConsumerState<SandboxScreen> {
+class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTickerProviderStateMixin {
   static const int gridCols = 6;
   static const int gridRows = 5;
 
   String? _selectedComponentId;
   ConnectionSource? _connectionSource;
+  late final AnimationController _wireAnimationController;
+
+  @override
+  void initState() {
+    super.initState();
+    _wireAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _wireAnimationController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -374,15 +390,21 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> {
 
               // 3. Render das conexões de fios (Phase 3)
               Positioned.fill(
-                child: CustomPaint(
-                  painter: WiresPainter(
-                    wires: state.wires,
-                    components: state.components,
-                    cellSize: cellSize,
-                    isDark: isDark,
-                    isSimulating: state.isSimulating,
-                    simulationValues: state.simulationValues,
-                  ),
+                child: AnimatedBuilder(
+                  animation: _wireAnimationController,
+                  builder: (context, child) {
+                    return CustomPaint(
+                      painter: WiresPainter(
+                        wires: state.wires,
+                        components: state.components,
+                        cellSize: cellSize,
+                        isDark: isDark,
+                        isSimulating: state.isSimulating,
+                        simulationValues: state.simulationValues,
+                        animationValue: _wireAnimationController.value,
+                      ),
+                    );
+                  },
                 ),
               ),
 
@@ -644,6 +666,43 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> {
     final hasValueSlider = component.type == ComponentType.battery || component.type == ComponentType.resistor;
     final isSwitch = component.type == ComponentType.switchComponent;
 
+    final sandboxState = ref.watch(sandboxControllerProvider);
+    final connectedWires = sandboxState.wires.where((w) {
+      return w.fromComponentId == component.id || w.toComponentId == component.id;
+    }).toList();
+
+    String getWireDescription(SandboxWire wire) {
+      final isFrom = wire.fromComponentId == component.id;
+      final otherId = isFrom ? wire.toComponentId : wire.fromComponentId;
+      final otherTerm = isFrom ? wire.toTerminal : wire.fromTerminal;
+      final myTerm = isFrom ? wire.fromTerminal : wire.toTerminal;
+      
+      final otherCompList = sandboxState.components.where((c) => c.id == otherId).toList();
+      if (otherCompList.isEmpty) return 'Terminal $myTerm ↔ Borne órfão';
+      final otherComp = otherCompList.first;
+      
+      String compName = otherComp.type.name;
+      if (isEn) {
+        if (otherComp.type == ComponentType.battery) compName = 'Battery';
+        if (otherComp.type == ComponentType.resistor) compName = 'Resistor';
+        if (otherComp.type == ComponentType.bulb) compName = 'Bulb';
+        if (otherComp.type == ComponentType.switchComponent) compName = 'Switch';
+        if (otherComp.type == ComponentType.motor) compName = 'Motor';
+        if (otherComp.type == ComponentType.led) compName = 'LED';
+        if (otherComp.type == ComponentType.diode) compName = 'Diode';
+      } else {
+        if (otherComp.type == ComponentType.battery) compName = 'Bateria';
+        if (otherComp.type == ComponentType.resistor) compName = 'Resistor';
+        if (otherComp.type == ComponentType.bulb) compName = 'Lâmpada';
+        if (otherComp.type == ComponentType.switchComponent) compName = 'Interruptor';
+        if (otherComp.type == ComponentType.motor) compName = 'Motor';
+        if (otherComp.type == ComponentType.led) compName = 'LED';
+        if (otherComp.type == ComponentType.diode) compName = 'Diodo';
+      }
+      
+      return 'Term. $myTerm ↔ $compName ($otherTerm)';
+    }
+
     String valueLabel = '';
     String unit = '';
     double minVal = 1.0;
@@ -736,6 +795,52 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> {
 
           // Detalhes Elétricos em Tempo Real (Phase 4)
           _buildElectricityDetails(component, isEn, isDark),
+
+          if (connectedWires.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text(
+              isEn ? 'Connected Wires:' : 'Fios Conectados:',
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey),
+            ),
+            const SizedBox(height: 6),
+            Container(
+              constraints: const BoxConstraints(maxHeight: 120),
+              child: SingleChildScrollView(
+                child: Column(
+                  children: connectedWires.map((wire) {
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              getWireDescription(wire),
+                              style: const TextStyle(fontSize: 10),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          IconButton(
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            icon: const Icon(Icons.close_rounded, size: 14, color: Color(0xFFFF3B7F)),
+                            onPressed: () {
+                              ref.read(sandboxControllerProvider.notifier).removeWire(wire.id);
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+          ],
           const Spacer(),
 
           // Botões de Ação
@@ -984,6 +1089,7 @@ class WiresPainter extends CustomPainter {
   final bool isDark;
   final bool isSimulating;
   final Map<String, double> simulationValues;
+  final double animationValue;
 
   WiresPainter({
     required this.wires,
@@ -992,6 +1098,7 @@ class WiresPainter extends CustomPainter {
     required this.isDark,
     required this.isSimulating,
     required this.simulationValues,
+    required this.animationValue,
   });
 
   @override
@@ -1057,6 +1164,37 @@ class WiresPainter extends CustomPainter {
           ..style = PaintingStyle.stroke
           ..strokeCap = StrokeCap.round,
       );
+
+      // 4. Animação de fluxo de corrente (partículas de elétrons pulsantes/correndo)
+      if (isWireActive) {
+        final paintParticle = Paint()
+          ..color = Colors.white
+          ..style = PaintingStyle.fill;
+        
+        for (final metric in path.computeMetrics()) {
+          final length = metric.length;
+          const double spacing = 24.0;
+          final double initialOffset = animationValue * spacing;
+          
+          for (double d = initialOffset; d < length; d += spacing) {
+            final tangent = metric.getTangentForOffset(d);
+            if (tangent != null) {
+              // Desenha o elétron como um círculo branco brilhante
+              canvas.drawCircle(tangent.position, 2.0, paintParticle);
+              
+              // Efeito de brilho ao redor do elétron
+              canvas.drawCircle(
+                tangent.position, 
+                4.5, 
+                Paint()
+                  ..color = const Color(0xFF00FF9D).withValues(alpha: 0.4)
+                  ..style = PaintingStyle.fill
+                  ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1),
+              );
+            }
+          }
+        }
+      }
     }
   }
 
@@ -1067,7 +1205,8 @@ class WiresPainter extends CustomPainter {
         oldDelegate.cellSize != cellSize ||
         oldDelegate.isDark != isDark ||
         oldDelegate.isSimulating != isSimulating ||
-        oldDelegate.simulationValues != simulationValues;
+        oldDelegate.simulationValues != simulationValues ||
+        oldDelegate.animationValue != animationValue;
   }
 }
 

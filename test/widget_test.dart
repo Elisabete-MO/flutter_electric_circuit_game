@@ -193,4 +193,25 @@ void main() {
       },
     );
   });
+
+  group('Sandbox', () {
+    testWidgets(
+      'entra na tela de sandbox e verifica o painel de detalhes inicial',
+      (tester) async {
+        await pumpApp(tester);
+
+        await tapSection(tester, 'Bancada Livre');
+
+        expect(
+          find.text('Bancada Livre'),
+          findsWidgets,
+        );
+
+        expect(
+          find.text('Selecione um componente no grid para editar valores.'),
+          findsOneWidget,
+        );
+      },
+    );
+  });
 }
