@@ -135,9 +135,6 @@ class _ProfVoltsSpeechState extends ConsumerState<ProfVoltsSpeech>
                 child: GlassContainer(
                   padding: const EdgeInsets.all(16),
                   accentColor: const Color(0xFF00F0FF),
-                  opacity: isDark ? 0.7 : 0.85,
-                  borderWidth: 1.5,
-                  borderGlowOnly: true,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -225,7 +222,7 @@ class _ProfVoltsSpeechState extends ConsumerState<ProfVoltsSpeech>
                 child: CustomPaint(
                   size: const Size(10, 10),
                   painter: _TrianglePainter(
-                    color: isDark ? const Color(0xFF1E3A8A) : Colors.white.withValues(alpha: 0.9),
+                    color: (isDark ? const Color(0xFF0D1424) : Colors.white).withValues(alpha: 0.6),
                   ),
                 ),
               ),
