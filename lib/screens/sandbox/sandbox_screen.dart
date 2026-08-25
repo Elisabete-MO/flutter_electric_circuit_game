@@ -411,30 +411,32 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                 ),
               ),
 
-              // 2. DragTargets em cada célula para receber os arrastes
+              // 2. Render das conexões de fios (Phase 3) - IgnorePointer para não bloquear DragTargets
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: AnimatedBuilder(
+                    animation: _wireAnimationController,
+                    builder: (context, child) {
+                      return CustomPaint(
+                        painter: WiresPainter(
+                          wires: state.wires,
+                          components: state.components,
+                          cellSize: cellSize,
+                          isDark: isDark,
+                          isSimulating: state.isSimulating,
+                          simulationValues: state.simulationValues,
+                          animationValue: _wireAnimationController.value,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+
+              // 3. DragTargets em cada célula para receber os arrastes
               for (int x = 0; x < gridCols; x++)
                 for (int y = 0; y < gridRows; y++)
                   _buildGridCellDragTarget(x, y, cellSize, state),
-
-              // 3. Render das conexões de fios (Phase 3)
-              Positioned.fill(
-                child: AnimatedBuilder(
-                  animation: _wireAnimationController,
-                  builder: (context, child) {
-                    return CustomPaint(
-                      painter: WiresPainter(
-                        wires: state.wires,
-                        components: state.components,
-                        cellSize: cellSize,
-                        isDark: isDark,
-                        isSimulating: state.isSimulating,
-                        simulationValues: state.simulationValues,
-                        animationValue: _wireAnimationController.value,
-                      ),
-                    );
-                  },
-                ),
-              ),
 
               // 4. Render dos componentes colocados no grid
               for (final component in state.components)
@@ -443,11 +445,13 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
               // 5. Linha guia de fiação temporária ativa
               if (connSource != null)
                 Positioned.fill(
-                  child: _TemporaryWireLayer(
-                    source: connSource,
-                    components: state.components,
-                    cellSize: cellSize,
-                    isDark: isDark,
+                  child: IgnorePointer(
+                    child: _TemporaryWireLayer(
+                      source: connSource,
+                      components: state.components,
+                      cellSize: cellSize,
+                      isDark: isDark,
+                    ),
                   ),
                 ),
             ],

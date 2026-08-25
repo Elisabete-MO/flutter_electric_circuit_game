@@ -258,5 +258,30 @@ void main() {
         expect(state2.components.first.type, ComponentType.bulb);
       },
     );
+
+    testWidgets(
+      'arrasta componente da paleta para o grid',
+      (tester) async {
+        await pumpApp(tester);
+        await tapSection(tester, 'Bancada Livre');
+
+        final draggableFinder = find.byType(Draggable<ComponentType>).first;
+        final targetFinder = find.byType(DragTarget<Object>).first;
+
+        expect(draggableFinder, findsOneWidget);
+        expect(targetFinder, findsWidgets);
+
+        final draggableCenter = tester.getCenter(draggableFinder);
+        final targetCenter = tester.getCenter(targetFinder);
+
+        await tester.dragFrom(draggableCenter, targetCenter - draggableCenter);
+        await pumpSettle(tester);
+
+        final element = tester.element(find.byType(EletroLabApp));
+        final container = ProviderScope.containerOf(element);
+        final state = container.read(sandboxControllerProvider);
+        expect(state.components, isNotEmpty);
+      },
+    );
   });
 }
