@@ -69,7 +69,7 @@ class ProfVoltsChallengeDialog extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    title.toUpperCase(),
+                    title,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontFamily: GoogleFonts.rajdhani().fontFamily,
                       fontWeight: FontWeight.bold,

@@ -525,7 +525,7 @@ class SymbolsDockPanel extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 10, bottom: 6),
               child: Text(
-                l10n.symbolsPaletteTitle.toUpperCase(),
+                l10n.symbolsPaletteTitle,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: GoogleFonts.rajdhani().fontFamily,
@@ -574,7 +574,7 @@ class SymbolsDockPanel extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 6, bottom: 2),
               child: Text(
-                l10n.symbolsPaletteTitle.toUpperCase(),
+                l10n.symbolsPaletteTitle,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: GoogleFonts.rajdhani().fontFamily,

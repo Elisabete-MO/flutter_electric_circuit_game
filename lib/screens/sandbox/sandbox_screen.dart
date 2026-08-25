@@ -373,7 +373,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            l10n.symbolsPaletteTitle.toUpperCase(),
+            l10n.symbolsPaletteTitle,
             style: GoogleFonts.rajdhani(
               fontWeight: FontWeight.bold,
               fontSize: 15,
@@ -406,7 +406,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            l10n.symbolsPaletteTitle.toUpperCase(),
+            l10n.symbolsPaletteTitle,
             style: GoogleFonts.rajdhani(
               fontWeight: FontWeight.bold,
               fontSize: 14,
@@ -1316,8 +1316,8 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
           ),
           child: Text(
             state.isSimulating
-                ? (isEn ? 'STOP SIMULATION' : 'PARAR SIMULAÇÃO')
-                : (isEn ? 'START SIMULATION' : 'INICIAR SIMULAÇÃO'),
+                ? (isEn ? 'Stop Simulation' : 'Parar Simulação')
+                : (isEn ? 'Start Simulation' : 'Iniciar Simulação'),
           ),
         ),
       ],

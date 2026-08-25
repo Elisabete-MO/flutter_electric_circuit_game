@@ -155,7 +155,7 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      l10n.quizResultTitle.toUpperCase(),
+                      l10n.quizResultTitle,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontFamily: GoogleFonts.rajdhani().fontFamily,
                         fontWeight: FontWeight.bold,
@@ -198,7 +198,7 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                       child: Text(
-                        l10n.quizBackStudy.toUpperCase(),
+                        l10n.quizBackStudy,
                         style: TextStyle(
                           fontFamily: GoogleFonts.rajdhani().fontFamily,
                           fontWeight: FontWeight.bold,
@@ -223,7 +223,7 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                       child: Text(
-                        l10n.buttonRetry.toUpperCase(),
+                        l10n.buttonRetry,
                         style: TextStyle(
                           fontFamily: GoogleFonts.rajdhani().fontFamily,
                           fontWeight: FontWeight.bold,
