@@ -406,7 +406,6 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
                             if (_showDiagramMode)
                               _buildSymbolsPalette(isVertical: true, isDark: isDark, l10n: l10n),
                             Expanded(child: circuitBoardArea),
-                            const CalculatorSidePanel(),
                           ],
                         );
                       } else {

@@ -10,7 +10,6 @@ import '../../state/progress_controller.dart';
 import 'challenge_1_detail_screen.dart';
 import 'challenge_2_detail_screen.dart';
 import 'challenge_3_detail_screen.dart';
-import '../../app/routes.dart';
 
 /// Seção "Começar" — Desafios práticos de circuitos.
 class ChallengesScreen extends ConsumerStatefulWidget {
@@ -103,21 +102,12 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen> {
     ];
 
     return Scaffold(
-appBar: AppBar(
-      title: Text(
-        l10n.challengesTitle,
-        style: const TextStyle(fontWeight: FontWeight.bold),
-      ),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.calculate_rounded),
-          tooltip: 'Calculadora Elétrica',
-          onPressed: () {
-            Navigator.of(context).pushNamed(Routes.electricalDiagram);
-          },
+      appBar: AppBar(
+        title: Text(
+          l10n.challengesTitle,
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-      ],
-    ),
+      ),
       body: TechGridBackground(
         child: SafeArea(
           child: SingleChildScrollView(
