@@ -143,7 +143,7 @@ class _HomeOptionCardState extends State<HomeOptionCard> {
                     Text(
                       option.title,
                       style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w900,
                         letterSpacing: 0.5,
                       ),
                     ),

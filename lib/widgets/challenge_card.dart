@@ -117,7 +117,7 @@ class _ChallengeCardState extends State<ChallengeCard> {
               Text(
                 challenge.title,
                 style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w900,
                   fontSize: 18,
                 ),
               ),

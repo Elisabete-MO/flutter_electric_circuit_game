@@ -82,7 +82,7 @@ class _SymbolCardState extends State<SymbolCard> {
                           Text(
                             widget.component.namePt,
                             style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w900,
                               fontSize: 15,
                             ),
                             textAlign: TextAlign.center,

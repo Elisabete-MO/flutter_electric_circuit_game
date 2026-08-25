@@ -370,7 +370,7 @@ class _CyberMenuCardState extends State<_CyberMenuCard> {
           Text(
             widget.title,
             style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w900,
               fontSize: 20,
               letterSpacing: 0.5,
             ),
