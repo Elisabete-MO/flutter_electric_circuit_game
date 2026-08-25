@@ -103,10 +103,7 @@ class _ChallengesScreenState extends ConsumerState<ChallengesScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          l10n.challengesTitle,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: Text(l10n.challengesTitle),
       ),
       body: TechGridBackground(
         child: SafeArea(

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'package:confetti/confetti.dart';
 
@@ -263,8 +264,10 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
                                   Text(
                                     _isSwitchClosed ? l10n.switchClosed : l10n.switchOpen,
                                     style: TextStyle(
+                                      fontFamily: GoogleFonts.rajdhani().fontFamily,
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 12,
+                                      fontSize: 13,
+                                      letterSpacing: 0.5,
                                       color: _isSwitchClosed ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
                                     ),
                                   ),

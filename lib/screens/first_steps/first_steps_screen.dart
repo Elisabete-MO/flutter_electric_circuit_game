@@ -248,10 +248,7 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          l10n.firstStepsTitle,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: Text(l10n.firstStepsTitle),
         actions: [
           IconButton(
             icon: Icon(
