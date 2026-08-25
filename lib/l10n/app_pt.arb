@@ -3,12 +3,12 @@
   "appTitle": "EletroLab",
   "appSubtitle": "Seu laboratório virtual de circuitos",
 
-  "menuFirstSteps": "Primeiros passos",
-  "menuChallenges": "Começar",
-  "menuSandbox": "Banqueta",
+  "menuFirstSteps": "Primeiros Passos",
+  "menuChallenges": "Desafios",
+  "menuSandbox": "Bancada Livre",
   "menuSettings": "Configurações",
 
-  "firstStepsTitle": "Primeiros passos",
+  "firstStepsTitle": "Primeiros Passos",
   "firstStepsBanner": "Observe. Você precisa conhecer esses símbolos para esta atividade.",
   "challengeMode": "Modo Desafio",
 
@@ -68,7 +68,7 @@
   "challenge2DetailTitle": "Desafio 2: Circuito com Motor e Diagrama",
   "challenge3DetailTitle": "Desafio 3: Circuito com Resistor e Diagrama Completo",
 
-  "sandboxTitle": "Banqueta",
+  "sandboxTitle": "Bancada Livre",
   "sandboxDesc": "A bancada livre do EletroLab. Em breve você poderá montar e experimentar circuitos sem objetivos obrigatórios.",
   "underConstruction": "Em construção",
 
