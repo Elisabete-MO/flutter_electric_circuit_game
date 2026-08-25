@@ -36,6 +36,8 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
   String? _selectedComponentId;
   ConnectionSource? _connectionSource;
   late final AnimationController _wireAnimationController;
+  bool _showMascot = true;
+  ProfVoltsEmotion _lastVoltsEmotion = ProfVoltsEmotion.neutral;
 
   @override
   void initState() {
@@ -90,6 +92,18 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
             ? "Simulation active, but no closed loop found. Connect wires to complete the path."
             : "Simulação ligada, mas sem loop fechado. Conecte fios para fechar o circuito.";
       }
+    }
+
+    // Reabre o painel do mascote quando a emoção mudar de neutro para happy/sad (evento relevante)
+    if (voltsEmotion != _lastVoltsEmotion && voltsEmotion != ProfVoltsEmotion.neutral) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() { _showMascot = true; });
+      });
+    }
+    if (voltsEmotion != _lastVoltsEmotion) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() { _lastVoltsEmotion = voltsEmotion; });
+      });
     }
 
     return Scaffold(
@@ -149,7 +163,8 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              _buildMascotPanel(voltsEmotion, voltsMessage, isDark),
+                              if (_showMascot)
+                                _buildMascotPanel(voltsEmotion, voltsMessage, isDark),
                             ],
                           ),
                         ),
@@ -182,7 +197,8 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                           const SizedBox(height: 16),
 
                           // Mascote
-                          _buildMascotPanel(voltsEmotion, voltsMessage, isDark),
+                          if (_showMascot)
+                            _buildMascotPanel(voltsEmotion, voltsMessage, isDark),
                         ],
                       ),
                     );
@@ -967,28 +983,43 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
   // --- PAINEL DO MASCOTE PROFESSOR VOLTS ---
 
   Widget _buildMascotPanel(ProfVoltsEmotion emotion, String message, bool isDark) {
-    return GlassContainer(
-      borderRadius: 16,
-      opacity: isDark ? 0.35 : 0.6,
-      padding: const EdgeInsets.all(12),
-      child: Row(
-        children: [
-          ProfVoltsFullBody(
-            emotion: emotion,
-            size: 64,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              message,
-              style: TextStyle(
-                fontSize: 12.5,
-                height: 1.4,
-                fontFamily: GoogleFonts.outfit().fontFamily,
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      child: GlassContainer(
+        key: ValueKey(emotion),
+        borderRadius: 16,
+        opacity: isDark ? 0.35 : 0.6,
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            ProfVoltsFullBody(
+              emotion: emotion,
+              size: 64,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  height: 1.4,
+                  fontFamily: GoogleFonts.outfit().fontFamily,
+                ),
               ),
             ),
-          ),
-        ],
+            IconButton(
+              padding: const EdgeInsets.all(4),
+              constraints: const BoxConstraints(),
+              icon: const Icon(Icons.close_rounded, size: 18),
+              tooltip: 'Fechar',
+              onPressed: () {
+                setState(() {
+                  _showMascot = false;
+                });
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
