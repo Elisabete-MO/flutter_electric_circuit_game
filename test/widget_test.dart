@@ -8,21 +8,31 @@ import 'package:eletrolab/models/settings_model.dart';
 import 'package:eletrolab/services/settings_service.dart';
 import 'package:eletrolab/state/settings_controller.dart';
 
+import 'package:eletrolab/state/progress_controller.dart';
+
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
   });
 
+  Future<void> pumpSettle(WidgetTester tester) async {
+    for (int i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+  }
+
   Future<void> pumpApp(
     WidgetTester tester, {
     SettingsModel settings = const SettingsModel(),
   }) async {
+    final prefs = await SharedPreferences.getInstance();
     await tester.binding.setSurfaceSize(const Size(900, 2000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
           settingsRepositoryProvider.overrideWithValue(SettingsService()),
           settingsControllerProvider.overrideWith(
             () => SettingsController(initial: settings),
@@ -31,15 +41,15 @@ void main() {
         child: const EletroLabApp(),
       ),
     );
-    await tester.pumpAndSettle();
+    await pumpSettle(tester);
   }
 
   Future<void> tapSection(WidgetTester tester, String label) async {
     final finder = find.text(label);
     await tester.ensureVisible(finder);
-    await tester.pumpAndSettle();
+    await pumpSettle(tester);
     await tester.tap(finder);
-    await tester.pumpAndSettle();
+    await pumpSettle(tester);
   }
 
   group('Home', () {
@@ -48,10 +58,10 @@ void main() {
 
       expect(find.text('EletroLab'), findsOneWidget);
       expect(
-        find.text('Seu laboratório virtual de circuitos'),
+        find.text('LABORATÓRIO VIRTUAL DE CIRCUITOS'),
         findsOneWidget,
       );
-      expect(find.text('EletroLab v1.0.0'), findsOneWidget);
+      expect(find.text('ELETROLAB CYBER STATION • v1.0.0'), findsOneWidget);
     });
 
     testWidgets('exibe as quatro opções principais', (tester) async {
@@ -72,7 +82,7 @@ void main() {
       final navigator =
           tester.state<NavigatorState>(find.byType(Navigator).first);
       navigator.pop();
-      await tester.pumpAndSettle();
+      await pumpSettle(tester);
       expect(find.text('Banqueta'), findsOneWidget);
     });
   });

@@ -15,13 +15,13 @@ Apresenta identidade com nome e subtítulo:
 
 ```text
 EletroLab
-Seu laboratório virtual de circuitos
+LABORATÓRIO VIRTUAL DE CIRCUITOS
 ```
 
 ### Layout
-- Computador/tablet: grade 2×2.
+- Computador/tablet: Bento Grid responsivo com cartões adaptados via `IntrinsicHeight`.
 - Celular: lista vertical com scroll.
-- Rodapé com versão (`EletroLab v1.0.0`).
+- Rodapé com versão (`ELETROLAB CYBER STATION • v1.0.0`).
 
 ## Primeiros passos (Fase 2 — concluída)
 
@@ -43,9 +43,11 @@ Recursos:
 - **Banner Orientativo**: Mensagem contextual *"Observe. You have to know these symbols for this activity."*.
 - **Modo Desafio / Quiz**: Oculta automaticamente os nomes dos cartões (exibindo apenas `?`) para testar o reconhecimento visual de cada componente pelo estudante.
 
-## Banco de trabalho (Banqueta — Fases 3–7)
+## Banco de trabalho (Banqueta — Fases 3–7, Atualmente em Construção)
 
-Layout conceitual:
+A tela da Banqueta é atualmente apresentada como um painel informativo de "Em construção", pois seu funcionamento completo depende da implementação do motor dinâmico e resolvedor de equações (Solver) planejado para a Fase 5.
+
+### Layout Conceitual Alvo:
 
 ```text
 ┌──────────────────────────────────────────────────────────────┐
@@ -61,7 +63,7 @@ Layout conceitual:
 └──────────────────────────────────────────────────────────────┘
 ```
 
-Permite:
+A Banqueta final permitirá:
 
 - arrastar;
 - mover;

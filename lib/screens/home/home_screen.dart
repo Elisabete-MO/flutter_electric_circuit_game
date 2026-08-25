@@ -252,39 +252,45 @@ class HomeScreen extends ConsumerWidget {
         );
 
         if (wide) {
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: cardTutorial(245)),
-              SizedBox(width: gap),
-              Expanded(child: cardCampaign(245)),
-              SizedBox(width: gap),
-              Expanded(child: cardSandbox(245)),
-              SizedBox(width: gap),
-              Expanded(child: cardSettings(245)),
-            ],
+          return IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(child: cardTutorial(null)),
+                SizedBox(width: gap),
+                Expanded(child: cardCampaign(null)),
+                SizedBox(width: gap),
+                Expanded(child: cardSandbox(null)),
+                SizedBox(width: gap),
+                Expanded(child: cardSettings(null)),
+              ],
+            ),
           );
         }
 
         if (medium) {
           return Column(
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: cardTutorial(225)),
-                  SizedBox(width: gap),
-                  Expanded(child: cardCampaign(225)),
-                ],
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(child: cardTutorial(null)),
+                    SizedBox(width: gap),
+                    Expanded(child: cardCampaign(null)),
+                  ],
+                ),
               ),
               SizedBox(height: gap),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: cardSandbox(225)),
-                  SizedBox(width: gap),
-                  Expanded(child: cardSettings(225)),
-                ],
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(child: cardSandbox(null)),
+                    SizedBox(width: gap),
+                    Expanded(child: cardSettings(null)),
+                  ],
+                ),
               ),
             ],
           );

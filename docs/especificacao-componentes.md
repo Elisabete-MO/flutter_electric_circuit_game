@@ -21,9 +21,8 @@ abstract class CircuitComponent {
 A implementação concreta pode ser adaptada conforme a arquitetura escolhida,
 mas deve manter separados:
 
-- **modelo matemático** (`simulation/`) — terminais, propriedades, participação
-  no solver;
-- **componente visual** (`game/components/`) — desenho, animação, interação.
+- **modelo matemático** (planejado em `simulation/` para a Banqueta) — terminais, propriedades, participação no solver;
+- **componente visual** (`widgets/` e pintores em `lib/widgets/component_physical_painter.dart`, `lib/widgets/circuit_symbol_painter.dart`) — desenho customizado 2D/3D no canvas.
 
 ## Componentes da v1
 
@@ -59,13 +58,10 @@ fontes AC · portas lógicas.
 
 ## Como adicionar um componente
 
-1. Criar o **modelo matemático** em `simulation/` (terminais + propriedades +
-   participação no solver) e o **componente visual** em `game/components/`.
-2. Definir terminais e propriedades editáveis.
-3. Registrar no catálogo/paleta da banqueta (nome, ícone, cor).
-4. Adicionar testes do solver se o componente alterar o comportamento do
-   circuito.
-5. Não colocar lógica matemática nos componentes visuais.
+1. Criar o modelo visual físico em `lib/widgets/component_physical_painter.dart` e o modelo visual esquemático correspondente em `lib/widgets/circuit_symbol_painter.dart`.
+2. Definir as constantes físicas do componente (por exemplo, bornes, tamanho relativo e gradientes de renderização).
+3. Se for um componente dinâmico ou interativo, implementar a lógica reativa em sua tela de controle (por exemplo, rotação do motor baseada em animação contínua, status aceso/apagado da lâmpada, estados aberto/fechado do interruptor).
+4. Para a Banqueta Livre futura, registrar o componente no catálogo matemático em `simulation/`.
 
 ## Grandezas elétricas
 
@@ -88,7 +84,7 @@ P: 1 W
 
 ## Representação da corrente
 
-- Partículas animadas pelos fios (Flame) quando o circuito conduz.
-- Velocidade proporcional à intensidade da corrente.
+- Partículas animadas pelos fios (pintadas via `CustomPainter` com otimização `RepaintBoundary`) quando o circuito conduz.
+- Velocidade proporcional à intensidade da corrente e controlada pelas configurações.
 - Movimento interrompido quando o circuito está aberto.
 - **Representação didática** — não sugere velocidade real de elétrons.

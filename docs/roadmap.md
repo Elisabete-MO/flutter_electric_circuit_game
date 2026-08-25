@@ -7,16 +7,16 @@ sem erros.
 
 | Fase | Descrição | Status |
 |---|---|---|
-| 1 | **Fundação** — projeto, tema, navegação, menu inicial, configurações básicas | ✔ Concluída |
-| 2 | **Primeiros passos** — guia de símbolos esquemáticos e componentes físicos | ✔ Concluída |
-| 3 | **Flame** — canvas, câmera, grid, pan, zoom, interação | ◻ Pendente |
-| 4 | **Componentes** — bateria, resistor, lâmpada, interruptor, fio | ◻ Pendente |
-| 5 | **Circuito** — terminais, nós, conexões, grafo, solver, Lei de Ohm | ◻ Pendente |
-| 6 | **Simulação** — corrente, tensão, potência, animação, lâmpada acendendo | ◻ Pendente |
-| 7 | **Banqueta** — simulador como laboratório livre | ◻ Pendente |
-| 8 | **Começar** — desafios educacionais | ◻ Pendente |
-| 9 | **Configurações** — preferências completas, acessibilidade, persistência | ◻ Pendente |
-| 10 | **Refinamento** — UX, animações, feedback, responsividade, desempenho, testes | ◻ Pendente |
+| 1 | **Fundação** — projeto, tema, navegação, menu inicial Bento Grid, configurações | ✔ Concluída |
+| 2 | **Primeiros passos** — guia de símbolos esquemáticos, interatividade e quiz | ✔ Concluída |
+| 3 | **Renderização Nativa** — migração de Flame para CustomPainter (canto chanfrado, partículas) | ✔ Concluída |
+| 4 | **Componentes** — baterias, lâmpadas, motores, interruptores, resistores e fios 3D | ✔ Concluída |
+| 5 | **Circuito/Solver** — grafo dinâmico, nós, conexões e Leis de Kirchhoff para Banqueta | ◻ Pendente |
+| 6 | **Simulação Visual** — animação reativa da corrente, velocidade e lâmpada/motor ativos | ✔ Concluída |
+| 7 | **Banqueta** — laboratório livre dinâmico (dependente da Fase 5) | ◻ Pendente |
+| 8 | **Desafios (Começar)** — 3 desafios completos, validação de slots, cronômetro e estrelas | ✔ Concluída |
+| 9 | **Configurações Completas** — persistência de progresso, volume de áudio e i18n | ✔ Concluída |
+| 10 | **Refinamento** — UX Cyberpunk, partículas com RepaintBoundary, suíte de testes passando | ✔ Concluída |
 
 ## Detalhamento das fases
 
@@ -33,89 +33,54 @@ sem erros.
 
 ### Dependência entre Fases 2 e 3–6
 
-A fase 2 termina com a "Etapa 7 — Primeiro circuito" (`Bateria → Interruptor →
-Lâmpada → Bateria`, lâmpada acende), o que **exige o núcleo do simulador**
-(Fases 3–6). Sequência recomendada:
-
-**Opção A (recomendada)** — motor primeiro, tutorial depois:
-`3 → 4 → 5 → 6 → 2 → 7 → 8 → 9 → 10`.
-
-**Opção B** — tutorial enxuto com etapa final usando um mock do circuito,
-motor real depois (3–6). Mantém a ordem numérica, com risco de retrabalho.
-
-**Opção C** — fatia vertical mínima do motor suficiente para a etapa 7 do
-tutorial e depois expansão. Entrega o critério de sucesso mais cedo.
-
-> Pendência de decisão: escolher a opção A, B ou C antes de iniciar a Fase 3.
+A aplicação adotou a **Opção C**: uma fatia vertical visualmente rica foi implementada para as etapas interativas do tutorial (Primeiros Passos) e para os Desafios (1, 2 e 3), utilizando a API `CustomPainter` do Flutter e validação por slots. A implementação de um um motor matemático baseado em grafos (nodal) foi postergada e permanece como o principal requisito para a liberação da Bancada Livre (Banqueta).
 
 ## O que precisa ser feito (por fases)
 
-### Fase 2 — Primeiros passos
-- Etapas educacionais:
-  1. O que é um circuito (caminho fechado para a corrente).
-  2. Fonte (bateria) e sua função.
-  3. Condutores (papel dos fios).
-  4. Resistência (resistor).
-  5. Corrente (explicação visual).
-  6. Tensão (diferença entre tensão e corrente).
-  7. Primeiro circuito interativo: `Bateria → Interruptor → Lâmpada → Bateria`.
-- Botões: **Anterior**, **Próximo**, **Pular**, **Começar**.
-- Conclusão: "Parabéns! Você já pode começar a experimentar no EletroLab."
+### Fase 3 — Renderização Nativa (concluída)
+- Canvas de simulação customizado com a API `CustomPainter` (ao invés de Flame).
+- Desenho de malha/grade tecnológica e cantos chanfrados HUD de alta tecnologia.
+- Otimização com `RepaintBoundary` para isolar a repintura das partículas móveis de corrente dos elementos estáticos do circuito.
 
-### Fase 3 — Flame
-- Canvas de simulação, câmera, grade opcional, pan e zoom (mouse/touch/trackpad),
-  centralização, interação básica.
+### Fase 4 — Componentes (concluída para v1)
+- Modelagem visual e animação via CustomPainter de:
+  - **Battery**: fonte de energia com polo positivo/negativo e bornes 3D.
+  - **Resistor**: corpo cilíndrico listrado com código de cores e terminais.
+  - **Lamp**: lâmpada incandescente que acende reativamente.
+  - **Motor**: motor elétrico com hélice rotativa que gira proporcionalmente ao fluxo de corrente.
+  - **Switch**: interruptor tipo alavanca com estados físico aberto e fechado.
+  - **Wire**: cabos flexíveis conectando os terminais com gradientes e sombras 3D tridimensionais.
 
-### Fase 4 — Componentes
-- **Battery**: `voltage`, `internalResistance`.
-- **Resistor**: `resistance`.
-- **Lamp**: `resistance`, `brightness` (intensidade ∝ potência).
-- **Switch**: estados aberto/fechado.
-- **Wire**: conexão entre terminais.
-- **Multimeter**: mede tensão e corrente (resistência depois).
+### Fase 5 — Circuito/Solver (Pendente)
+- Modelo em grafo dinâmico para a Banqueta: `Circuit { Nodes, Terminals, Connections, Components }`.
+- Solver matemático generalizado utilizando as leis de Kirchhoff e análise nodal para suportar qualquer circuito livre criado pelo usuário.
 
-### Fase 5 — Circuito
-- Modelo em grafo: `Circuit { Nodes, Terminals, Connections, Components }`.
-- Solver com Lei de Ohm, Leis de Kirchhoff e análise nodal quando necessário.
-- `SimulationResult { nodeVoltages, componentCurrents, componentVoltages,
-  componentPower, isValid, error }`.
+### Fase 6 — Simulação Visual (concluída para v1)
+- Fluxo de partículas animado nos fios com velocidade controlável e suspensão em circuito aberto.
+- Reatividade visual imediata: fechando a chave, a lâmpada acende, o motor gira e a corrente flui.
 
-### Fase 6 — Simulação
-- Cálculo de `V`, `I`, `P` e visualização.
-- Animação da corrente (partículas, velocidade ∝ corrente, pausa em aberto).
-- Lâmpada acendendo conforme potência.
+### Fase 7 — Banqueta (Pendente)
+- Liberação do laboratório livre, barra de ferramentas de edição, e drag-and-drop de múltiplos componentes na mesa livre. Depende do Solver da Fase 5.
 
-### Fase 7 — Banqueta
-- Bancada livre, paleta de componentes, arrastar/selecionar/excluir/rotacionar,
-  conectar/desconectar, editar valores, multímetro, controles
-  (Simular/Pausar/Reiniciar/Limpar).
+### Fase 8 — Desafios (Começar) (concluída)
+- 3 desafios totalmente desenvolvidos:
+  - **Desafio 1**: Acender lâmpada e arrastar os símbolos corretos (Bateria, Chave, Lâmpada).
+  - **Desafio 2**: Acionar o motor e arrastar os símbolos corretos (Bateria, Chave, Motor).
+  - **Desafio 3**: Proteger circuito em série e arrastar os símbolos corretos (Bateria, Chave, Resistor, Lâmpada).
+- Validação local e pontuação em estrelas baseada em tentativas e tempo decorrido.
 
-### Fase 8 — Começar
-- Sistema modular de desafios: id, título, descrição, dificuldade,
-  componentes, objetivo, condição de vitória, feedback, progresso.
-- Desafios planejados:
-  1. Acenda a lâmpada.
-  2. Controle a luz (interruptor).
-  3. Controle a corrente (resistor de 100 Ω, `V = R × I`).
-  4. Lei de Ohm (`V = 10 V`, `R = 100 Ω` → `I = 0,1 A`).
-  5. Resistores em série (`R1 = 100 Ω`, `R2 = 200 Ω`, `V = 10 V`, `Req = R1 + R2`).
-  6. Circuito paralelo (ramificações e equivalente em paralelo).
+### Fase 9 — Configurações (concluída)
+- Temas: Claro, Escuro e integração dinâmica com o sistema.
+- Idioma (i18n): Tradução completa em tempo real para Português (pt) e Inglês (en).
+- Acessibilidade: Controle de velocidade de animações, tamanho da interface e alto contraste.
+- Dados: Persistência local (tema, preferências e progresso/estrelas de desafios) via `SharedPreferences`.
 
-### Fase 9 — Configurações
-- Aparência: claro/escuro/sistema.
-- Simulação: corrente, valores, grade, terminais, animação.
-- Acessibilidade: tamanho da interface, alto contraste, reduzir animações.
-- Dados: resetar progresso, restaurar padrões.
-- Sobre: nome, descrição, versão.
-- Persistência completa de configurações, progresso e desafios concluídos.
-
-### Fase 10 — Refinamento
-- Melhorar UX, animações, feedback, responsividade, desempenho e testes.
-- Atalhos de teclado: `Delete` excluir, `Ctrl+Z` desfazer, `Ctrl+Y` refazer,
-  `Space` iniciar/pausar, `R` rotacionar.
+### Fase 10 — Refinamento (concluída)
+- Áudio: Efeitos sonoros de clique, drop e sucesso/erro + música de fundo (BGM).
+- Efeitos visuais adicionais (confetes ao vencer).
+- Cobertura de testes unitários e de integração garantindo robustez e sem travamentos.
 
 ## Verificação
 
 - `flutter analyze` e `flutter test` após cada implementação.
 - Build de referência: `flutter build web`.
-- Não ignorar erros de análise ou testes quebrados.

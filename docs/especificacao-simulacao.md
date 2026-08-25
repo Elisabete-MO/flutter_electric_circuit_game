@@ -2,21 +2,19 @@
 
 ## Princípio
 
-O motor elétrico é **completamente separado da camada visual do Flame**:
+O motor de simulação e os widgets de desenho nativo não dependem de frameworks externos:
 
 ```text
 Flutter UI
      ↓
-Flame
+CustomPainter
      ↓
-Circuit Model
+Circuit Model / Slots
      ↓
-Circuit Solver
-     ↓
-Simulation Result
+Circuit Solver (validação visual local)
 ```
 
-A lógica matemática não fica nos componentes visuais.
+A lógica de cálculo matemático e validação fica apartada do fluxo básico de layout e rendering.
 
 ## Modelo do circuito (grafo)
 
@@ -86,9 +84,8 @@ P: 1 W
 
 ## Corrente elétrica visual
 
-- Animar partículas pelos fios quando o circuito está fechado e conduzindo
-  (Flame).
-- Velocidade proporcional à intensidade da corrente.
+- Animar partículas pelos fios quando o circuito está fechado e conduzindo (via CustomPainter).
+- Velocidade proporcional à intensidade da corrente e controlada pelas preferências de simulação.
 - Interromper o movimento quando o circuito estiver aberto.
 - A animação é uma **representação didática** apenas.
 

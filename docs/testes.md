@@ -13,23 +13,22 @@ Build de referência (compilação): `flutter build web`.
 
 Não ignorar erros de análise ou testes quebrados.
 
-## Testes existentes (Fase 1)
+## Testes existentes (Estabilizados)
 
 `test/widget_test.dart`:
 
-- Identidade do EletroLab exibida na home.
-- As quatro opções principais presentes.
-- Navegação até uma seção e retorno à home.
-- Tela de configurações abre com as seções esperadas.
-- Alterar o tema para escuro persiste (`settings` recuperadas de volta).
+- **Identidade do EletroLab**: Verifica a exibição do logo, do subtítulo `LABORATÓRIO VIRTUAL DE CIRCUITOS` e da versão `ELETROLAB CYBER STATION • v1.0.0` na tela inicial.
+- **Opções do Menu**: Confirma que as quatro seções (Primeiros Passos, Começar, Banqueta e Configurações) estão presentes.
+- **Navegação de Retorno**: Garante que o usuário consiga navegar de volta à tela inicial.
+- **Abertura de Configurações**: Valida que a tela de configurações carrega todos os botões de ajuste e switches.
+- **Persistência de Tema**: Testa a alteração dinâmica do tema e a persistência correta após o reinício simulado do app.
 
 ### Notas de infraestrutura de teste
 
-- `SharedPreferences.setMockInitialValues({})` para isolar a persistência.
-- Repositório sobrescrito no `ProviderScope` com `SettingsService()` real
-  sobre o mock — mantém fidelidade com a inicialização de `main()`.
-- `setSurfaceSize` amplia o viewport (conteúdo abaixo da dobra em 800×600).
-- `ensureVisible` para tocar em cartões fora da tela.
+- **Injeção de Dependências**: Utilizamos `SharedPreferences.setMockInitialValues({})` e sobrescrevemos o provider no escopo de testes via `sharedPreferencesProvider.overrideWithValue(prefs)` para fornecer uma instância válida e isolada durante a inicialização dos controladores.
+- **Estabilização de Animações**: Para evitar travamentos por timeout (`pumpAndSettle` que aguarda infinitamente animações recorrentes, como o neon do logo e layouts responsivos), implementamos o helper `pumpSettle(tester, Duration duration)` que roda frames controlados.
+- **Controle de Dimensões**: O viewport de teste é ampliado temporariamente via `tester.binding.setSurfaceSize(const Size(900, 2000))` para renderizar as telas por completo e simular interações realistas.
+- **Layout Responsivo**: Ajustado o Bento Grid da home com `IntrinsicHeight` para evitar erros de `RenderFlex overflow` durante a medição do viewport de testes.
 
 ## Testes planejados para o solver (Fases 5–6)
 
