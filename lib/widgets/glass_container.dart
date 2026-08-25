@@ -17,6 +17,7 @@ class GlassContainer extends StatelessWidget {
     this.width,
     this.height,
     this.borderGlowOnly = false,
+    this.baseColor,
   });
 
   final Widget child;
@@ -31,13 +32,14 @@ class GlassContainer extends StatelessWidget {
   final double? width;
   final double? height;
   final bool borderGlowOnly;
+  final Color? baseColor;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final baseColor = isDark ? const Color(0xFF0D1424) : Colors.white;
+    final resolvedBaseColor = baseColor ?? (isDark ? const Color(0xFF0D1424) : Colors.white);
     final glowColor = accentColor ?? theme.colorScheme.primary;
 
     final effectiveBorderColor = accentColor != null
@@ -49,7 +51,7 @@ class GlassContainer extends StatelessWidget {
     final innerContent = Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: baseColor.withValues(alpha: enableBlur ? opacity : opacity + 0.15),
+        color: resolvedBaseColor.withValues(alpha: enableBlur ? opacity : opacity + 0.15),
         borderRadius: BorderRadius.circular(borderRadius),
         border: Border.all(
           color: effectiveBorderColor,
