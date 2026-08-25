@@ -293,58 +293,101 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
   Widget _buildToolboxItem(ComponentType type, AppLocalizations l10n, bool isDark, {bool compact = false}) {
     final name = _getComponentName(type, l10n);
 
-    final itemWidget = Container(
-      padding: const EdgeInsets.all(6),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.08),
-        ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SizedBox(
-            height: compact ? 40 : 48,
-            width: double.infinity,
-            child: CustomPaint(
-              painter: ComponentPhysicalPainter(
-                type: type,
-                isActive: false,
-                isDarkMode: isDark,
+    // Widget que vive na lista (tamanho controlado pelo ListView)
+    final itemWidget = LayoutBuilder(
+      builder: (context, constraints) {
+        // Calcula altura disponível para o ícone descontando o padding e o texto
+        final iconHeight = (constraints.maxHeight - 6 - 6 - 4 - 16).clamp(24.0, 64.0);
+        return Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.08),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                height: iconHeight,
+                width: double.infinity,
+                child: CustomPaint(
+                  painter: ComponentPhysicalPainter(
+                    type: type,
+                    isActive: false,
+                    isDarkMode: isDark,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                name,
+                style: TextStyle(
+                  fontSize: compact ? 9 : 10,
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    // Widget independente para o feedback de arrastar (tamanho fixo, não depende de constraints externas)
+    final feedbackWidget = Material(
+      color: Colors.transparent,
+      child: Opacity(
+        opacity: 0.75,
+        child: SizedBox(
+          width: 90,
+          height: 90,
+          child: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: isDark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.07),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: isDark ? const Color(0xFF00F5D4).withValues(alpha: 0.5) : const Color(0xFF00F5D4).withValues(alpha: 0.4),
               ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            name,
-            style: TextStyle(
-              fontSize: compact ? 10 : 11,
-              fontWeight: FontWeight.w600,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(
+                  height: 54,
+                  width: double.infinity,
+                  child: CustomPaint(
+                    painter: ComponentPhysicalPainter(
+                      type: type,
+                      isActive: false,
+                      isDarkMode: isDark,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  name,
+                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
-        ],
+        ),
       ),
     );
 
     return Draggable<ComponentType>(
       data: type,
-      feedback: Material(
-        color: Colors.transparent,
-        child: SizedBox(
-          width: compact ? 90 : 110,
-          height: compact ? 80 : 95,
-          child: Opacity(
-            opacity: 0.75,
-            child: itemWidget,
-          ),
-        ),
-      ),
+      feedback: feedbackWidget,
       childWhenDragging: Opacity(
         opacity: 0.4,
         child: itemWidget,
