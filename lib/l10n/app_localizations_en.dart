@@ -18,7 +18,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get menuFirstSteps => 'First Steps';
 
   @override
-  String get menuChallenges => 'Start Challenges';
+  String get menuChallenges => 'Challenges';
 
   @override
   String get menuSandbox => 'Workbench';

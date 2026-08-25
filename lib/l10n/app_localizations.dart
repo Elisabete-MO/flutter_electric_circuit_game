@@ -113,19 +113,19 @@ abstract class AppLocalizations {
   /// No description provided for @menuFirstSteps.
   ///
   /// In pt, this message translates to:
-  /// **'Primeiros passos'**
+  /// **'Primeiros Passos'**
   String get menuFirstSteps;
 
   /// No description provided for @menuChallenges.
   ///
   /// In pt, this message translates to:
-  /// **'Começar'**
+  /// **'Desafios'**
   String get menuChallenges;
 
   /// No description provided for @menuSandbox.
   ///
   /// In pt, this message translates to:
-  /// **'Banqueta'**
+  /// **'Bancada Livre'**
   String get menuSandbox;
 
   /// No description provided for @menuSettings.
@@ -137,7 +137,7 @@ abstract class AppLocalizations {
   /// No description provided for @firstStepsTitle.
   ///
   /// In pt, this message translates to:
-  /// **'Primeiros passos'**
+  /// **'Primeiros Passos'**
   String get firstStepsTitle;
 
   /// No description provided for @firstStepsBanner.
@@ -443,7 +443,7 @@ abstract class AppLocalizations {
   /// No description provided for @sandboxTitle.
   ///
   /// In pt, this message translates to:
-  /// **'Banqueta'**
+  /// **'Bancada Livre'**
   String get sandboxTitle;
 
   /// No description provided for @sandboxDesc.

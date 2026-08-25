@@ -15,19 +15,19 @@ class AppLocalizationsPt extends AppLocalizations {
   String get appSubtitle => 'Seu laboratório virtual de circuitos';
 
   @override
-  String get menuFirstSteps => 'Primeiros passos';
+  String get menuFirstSteps => 'Primeiros Passos';
 
   @override
-  String get menuChallenges => 'Começar';
+  String get menuChallenges => 'Desafios';
 
   @override
-  String get menuSandbox => 'Banqueta';
+  String get menuSandbox => 'Bancada Livre';
 
   @override
   String get menuSettings => 'Configurações';
 
   @override
-  String get firstStepsTitle => 'Primeiros passos';
+  String get firstStepsTitle => 'Primeiros Passos';
 
   @override
   String get firstStepsBanner =>
@@ -201,7 +201,7 @@ class AppLocalizationsPt extends AppLocalizations {
       'Desafio 3: Circuito com Resistor e Diagrama Completo';
 
   @override
-  String get sandboxTitle => 'Banqueta';
+  String get sandboxTitle => 'Bancada Livre';
 
   @override
   String get sandboxDesc =>

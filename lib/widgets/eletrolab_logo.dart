@@ -38,7 +38,7 @@ class _EletroLabLogoState extends State<EletroLabLogo> with SingleTickerProvider
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final iconSize = widget.compact ? 36.0 : 54.0;
+    final iconSize = widget.compact ? 36.0 : 64.0;
     final titleStyle = widget.compact
         ? theme.textTheme.headlineSmall
         : theme.textTheme.displayMedium;
@@ -109,8 +109,8 @@ class _EletroLabLogoState extends State<EletroLabLogo> with SingleTickerProvider
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
               letterSpacing: 2.0,
-              fontWeight: FontWeight.bold,
-              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              fontSize: 13,
             ),
             textAlign: TextAlign.center,
           ),
