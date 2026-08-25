@@ -103,7 +103,10 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final l10n = AppLocalizations.of(context)!;
     final isSuccess = _quizScore >= (_components.length / 2);
-    final accentColor = isSuccess ? const Color(0xFF00FF9D) : const Color(0xFFFF3B7F);
+    final accentColor = isSuccess
+        ? (isDark ? const Color(0xFF00FF9D) : const Color(0xFF00875A))
+        : (isDark ? const Color(0xFFFF3B7F) : const Color(0xFFD81B60));
+    final buttonTextColor = isDark ? Colors.black : Colors.white;
 
     showDialog(
       context: context,
@@ -206,7 +209,7 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
                       },
                       style: FilledButton.styleFrom(
                         backgroundColor: accentColor,
-                        foregroundColor: Colors.black,
+                        foregroundColor: buttonTextColor,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),

@@ -149,12 +149,12 @@ class _ProfVoltsSpeechState extends ConsumerState<ProfVoltsSpeech>
                               Container(
                                 width: 8,
                                 height: 8,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFF00FF9D),
+                                decoration: BoxDecoration(
+                                  color: isDark ? const Color(0xFF00FF9D) : const Color(0xFF00875A),
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Color(0xFF00FF9D),
+                                      color: isDark ? const Color(0xFF00FF9D) : const Color(0xFF00875A),
                                       blurRadius: 6,
                                     ),
                                   ],
@@ -345,9 +345,9 @@ class _RobotAvatarPainter extends CustomPainter {
     final h = size.height;
     final center = Offset(w / 2, h / 2);
 
-    const neonCyan = Color(0xFF00F0FF);
+    final neonCyan = isDark ? const Color(0xFF00F0FF) : const Color(0xFF0097A7);
     const neonBlue = Color(0xFF0066FF);
-    const neonGreen = Color(0xFF00FF9D);
+    final neonGreen = isDark ? const Color(0xFF00FF9D) : const Color(0xFF00875A);
     final shellColor = isDark ? const Color(0xFF1E1E2F) : Colors.grey.shade300;
     final screenColor = isDark ? const Color(0xFF0B0F19) : const Color(0xFFDDEBFF);
     final borderColor = isDark ? neonCyan.withValues(alpha: 0.75) : neonBlue.withValues(alpha: 0.75);
@@ -454,7 +454,7 @@ class _RobotAvatarPainter extends CustomPainter {
 
     // 7. Boca de Osciloscópio (Waveform eletrônica)
     final wavePaint = Paint()
-      ..color = isDark ? neonGreen : const Color(0xFF008F4C)
+      ..color = neonGreen
       ..strokeWidth = 1.6
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;

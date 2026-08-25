@@ -24,7 +24,10 @@ class ProfVoltsChallengeDialog extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final accentColor = isCorrect ? const Color(0xFF00FF9D) : const Color(0xFFFF3B7F);
+    final accentColor = isCorrect
+        ? (isDark ? const Color(0xFF00FF9D) : const Color(0xFF00875A))
+        : (isDark ? const Color(0xFFFF3B7F) : const Color(0xFFD81B60));
+    final buttonTextColor = isDark ? Colors.black : Colors.white;
     final buttonText = isCorrect ? 'CONCLUIR' : 'TENTAR NOVAMENTE';
     final buttonIcon = isCorrect ? Icons.check_circle_rounded : Icons.replay_rounded;
 
@@ -116,7 +119,7 @@ class ProfVoltsChallengeDialog extends StatelessWidget {
                 onPressed: onAction,
                 style: FilledButton.styleFrom(
                   backgroundColor: accentColor,
-                  foregroundColor: Colors.black,
+                  foregroundColor: buttonTextColor,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
@@ -127,7 +130,7 @@ class ProfVoltsChallengeDialog extends StatelessWidget {
                     fontSize: 16,
                   ),
                 ),
-                icon: Icon(buttonIcon, size: 20, color: Colors.black),
+                icon: Icon(buttonIcon, size: 20, color: buttonTextColor),
                 label: Text(buttonText),
               ),
             ),

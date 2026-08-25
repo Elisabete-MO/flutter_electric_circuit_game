@@ -76,12 +76,12 @@ class _FullBodyRobotPainter extends CustomPainter {
     final w = size.width;
     final h = size.height;
 
-    // Cores Cyberpunk do EletroLab
-    const neonCyan = Color(0xFF00F0FF);
+    // Cores Cyberpunk do EletroLab adaptadas para o contraste de cada tema
+    final neonCyan = isDark ? const Color(0xFF00F0FF) : const Color(0xFF0097A7);
     const neonBlue = Color(0xFF0066FF);
-    const neonGreen = Color(0xFF00FF9D);
-    const neonPink = Color(0xFFFF3B7F);
-    const neonAmber = Color(0xFFFF9F1C);
+    final neonGreen = isDark ? const Color(0xFF00FF9D) : const Color(0xFF00875A);
+    final neonPink = isDark ? const Color(0xFFFF3B7F) : const Color(0xFFD81B60);
+    final neonAmber = isDark ? const Color(0xFFFF9F1C) : const Color(0xFFE65100);
 
     final shellColor = isDark ? const Color(0xFF2E2E3E) : Colors.grey.shade300;
     final jointColor = isDark ? const Color(0xFF1F1F2E) : Colors.grey.shade400;
