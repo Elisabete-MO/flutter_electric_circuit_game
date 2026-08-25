@@ -158,19 +158,6 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
           l10n.challenge3DetailTitle,
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: ModeToggleSwitch(
-              isDiagramMode: _showDiagramMode,
-              onChanged: (val) {
-                setState(() {
-                  _showDiagramMode = val;
-                });
-              },
-            ),
-          ),
-        ],
       ),
       body: TechGridBackground(
         child: SafeArea(
@@ -314,15 +301,23 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
                           ),
                         ),
 
-                      // Painel de Controle do Diagrama Elétrico ("Verificar", "Reiniciar")
-                      if (_showDiagramMode)
-                        Positioned(
-                          left: 0,
-                          right: 0,
-                          bottom: 24,
-                          child: Center(
-                            child: FloatingActionDock(
-                              children: [
+                      // Painel de Controle Flutuante Inferior (Alternância de Modo + Ações do Diagrama)
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: 24,
+                        child: Center(
+                          child: FloatingActionDock(
+                            children: [
+                              ModeToggleSwitch(
+                                isDiagramMode: _showDiagramMode,
+                                onChanged: (val) {
+                                  setState(() {
+                                    _showDiagramMode = val;
+                                  });
+                                },
+                              ),
+                              if (_showDiagramMode) ...[
                                 DiagramActionButton(
                                   icon: Icons.verified_rounded,
                                   label: l10n.buttonVerify,
@@ -336,9 +331,10 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
                                   onTap: _resetDiagram,
                                 ),
                               ],
-                            ),
+                            ],
                           ),
                         ),
+                      ),
 
                       // Slots de Drop no Modo Diagrama (Bateria, Interruptor, Resistor, Lâmpada)
                       if (_showDiagramMode)
