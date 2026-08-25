@@ -162,15 +162,15 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
             children: [
             Column(
               children: [
-                // Painel Superior de Instruções (Mascote)
+                // Painel Superior de Instruções (Mascote) / Timer no Modo Diagrama
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: ProfVoltsSpeech(
-                    text: _showDiagramMode
-                        ? l10n.challengeDragSymbolsInstruction
-                        : '${l10n.challengeObserveInstruction}\n${l10n.challengeMakeDiagramInstruction}',
-                    elapsedSeconds: _elapsedSeconds,
-                  ),
+                  child: _showDiagramMode
+                      ? ChallengeTimerBadge(elapsedSeconds: _elapsedSeconds)
+                      : ProfVoltsSpeech(
+                          text: '${l10n.challengeObserveInstruction}\n${l10n.challengeMakeDiagramInstruction}',
+                          elapsedSeconds: _elapsedSeconds,
+                        ),
                 ),
 
             // Área Principal do Desafio

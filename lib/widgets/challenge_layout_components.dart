@@ -161,4 +161,58 @@ class DiagramActionButton extends StatelessWidget {
   }
 }
 
+/// Widget de crachá de cronômetro no canto superior direito para o modo diagrama
+class ChallengeTimerBadge extends StatelessWidget {
+  const ChallengeTimerBadge({super.key, required this.elapsedSeconds});
+
+  final int elapsedSeconds;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final m = (elapsedSeconds ~/ 60).toString().padLeft(2, '0');
+    final s = (elapsedSeconds % 60).toString().padLeft(2, '0');
+
+    return Align(
+      alignment: Alignment.topRight,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: isDark
+              ? const Color(0xFF00F0FF).withValues(alpha: 0.15)
+              : const Color(0xFF0066FF).withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDark
+                ? const Color(0xFF00F0FF).withValues(alpha: 0.4)
+                : const Color(0xFF0066FF).withValues(alpha: 0.3),
+            width: 1.2,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.timer_rounded,
+              size: 16,
+              color: isDark ? const Color(0xFF00F0FF) : const Color(0xFF0066FF),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              '$m:$s',
+              style: TextStyle(
+                fontFamily: GoogleFonts.rajdhani().fontFamily,
+                color: isDark ? const Color(0xFF00F0FF) : const Color(0xFF0066FF),
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                letterSpacing: 1.0,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 
