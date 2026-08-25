@@ -93,50 +93,6 @@ class HomeScreen extends ConsumerWidget {
       alignment: WrapAlignment.spaceBetween,
       runSpacing: 12,
       children: [
-        // Indicador de Status do Sistema
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: isDark
-                ? const Color(0xFF00FF9D).withValues(alpha: 0.12)
-                : const Color(0xFF00E676).withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: isDark
-                  ? const Color(0xFF00FF9D).withValues(alpha: 0.4)
-                  : const Color(0xFF00E676).withValues(alpha: 0.5),
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF00FF9D),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Color(0xFF00FF9D),
-                      blurRadius: 6,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'SISTEMA ONLINE â€¢ 220V',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.2,
-                  color: isDark ? const Color(0xFF00FF9D) : const Color(0xFF007E33),
-                ),
-              ),
-            ],
-          ),
-        ),
-
         // HUD de Estrelas Ganhas
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -376,7 +332,7 @@ class _CyberMenuCardState extends State<_CyberMenuCard> {
                     ),
                   ),
                   child: Text(
-                    '// ${widget.tag}',
+                    widget.tag,
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
                     style: theme.textTheme.labelSmall?.copyWith(

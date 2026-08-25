@@ -96,7 +96,7 @@ class _ChallengeCardState extends State<ChallengeCard> {
                       ),
                     ),
                     child: Text(
-                      '// DESAFIO 0${challenge.number} • ${challenge.difficultyLabel.toUpperCase()}',
+                      'DESAFIO 0${challenge.number} • ${challenge.difficultyLabel.toUpperCase()}',
                       style: theme.textTheme.labelSmall?.copyWith(
                         fontFamily: GoogleFonts.rajdhani().fontFamily,
                         color: isDark ? accentColor : accentColor.withValues(alpha: 0.85),
