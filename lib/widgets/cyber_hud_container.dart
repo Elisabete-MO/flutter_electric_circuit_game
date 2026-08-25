@@ -238,22 +238,22 @@ class CyberHudPainter extends CustomPainter {
     // Brilho neon difuso (espalhado)
     final glowPaintDiffuse = Paint()
       ..color = accentColor.withValues(
-        alpha: 0.4 + (0.4 * hoverValue),
+        alpha: 0.2 + (0.25 * hoverValue),
       )
-      ..strokeWidth = 12.0 + (6.0 * hoverValue)
+      ..strokeWidth = 6.0 + (4.0 * hoverValue)
       ..style = PaintingStyle.stroke
       ..maskFilter = MaskFilter.blur(
         BlurStyle.normal,
-        16.0 + (8.0 * hoverValue),
+        12.0 + (6.0 * hoverValue),
       );
     canvas.drawPath(path, glowPaintDiffuse);
 
     // Brilho neon intenso (próximo à linha)
     final glowPaintIntense = Paint()
       ..color = accentColor.withValues(
-        alpha: 0.7 + (0.3 * hoverValue),
+        alpha: 0.45 + (0.35 * hoverValue),
       )
-      ..strokeWidth = 5.0 + (3.0 * hoverValue)
+      ..strokeWidth = 3.0 + (2.0 * hoverValue)
       ..style = PaintingStyle.stroke
       ..maskFilter = MaskFilter.blur(
         BlurStyle.normal,

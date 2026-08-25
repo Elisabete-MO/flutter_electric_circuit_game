@@ -275,13 +275,19 @@ class _CyberMenuCardState extends State<_CyberMenuCard> {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  shape: BoxShape.circle,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: borderColor.withValues(
+                      alpha: _isHovered ? 0.7 : 0.35,
+                    ),
+                    width: 1.5,
+                  ),
                   boxShadow: [
                     if (_isHovered)
                       BoxShadow(
-                        color: widget.accentColor.withValues(alpha: 0.5),
-                        blurRadius: 16,
-                        spreadRadius: 2,
+                        color: widget.accentColor.withValues(alpha: 0.4),
+                        blurRadius: 12,
+                        spreadRadius: 1,
                       ),
                   ],
                 ),
@@ -322,28 +328,11 @@ class _CyberMenuCardState extends State<_CyberMenuCard> {
                   left: _isHovered ? 8.0 : 0.0,
                   right: _isHovered ? 0.0 : 8.0,
                 ),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: _isHovered
-                      ? widget.accentColor.withValues(alpha: 0.2)
-                      : Colors.transparent,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: _isHovered
-                        ? borderColor.withValues(alpha: 0.6)
-                        : Colors.transparent,
-                  ),
-                ),
                 child: Icon(
                   Icons.arrow_forward_rounded,
-                  color: _isHovered
-                      ? widget.accentColor
-                      : scheme.onSurfaceVariant.withValues(alpha: 0.4),
+                  color: borderColor,
                   size: 18,
                 ),
-              ),
               ),
             ],
           ),
