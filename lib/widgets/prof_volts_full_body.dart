@@ -83,9 +83,9 @@ class _FullBodyRobotPainter extends CustomPainter {
     final neonPink = isDark ? const Color(0xFFFF3B7F) : const Color(0xFFD81B60);
     final neonAmber = isDark ? const Color(0xFFFF9F1C) : const Color(0xFFE65100);
 
-    final shellColor = isDark ? const Color(0xFF2E2E3E) : Colors.grey.shade300;
+    final shellColor = isDark ? const Color(0xFF2E2E3E) : Colors.white;
     final jointColor = isDark ? const Color(0xFF1F1F2E) : Colors.grey.shade400;
-    final screenColor = isDark ? const Color(0xFF0B0F19) : const Color(0xFFDDEBFF);
+    final screenColor = isDark ? const Color(0xFF0B0F19) : const Color(0xFF151E32);
     final primaryGlow = isDark ? neonCyan : neonBlue;
 
     // 1. Glow Geral Traseiro (Aura)

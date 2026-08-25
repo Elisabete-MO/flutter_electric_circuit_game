@@ -344,9 +344,9 @@ class _RobotAvatarPainter extends CustomPainter {
     final neonCyan = isDark ? const Color(0xFF00F0FF) : const Color(0xFF0097A7);
     const neonBlue = Color(0xFF0066FF);
     final neonGreen = isDark ? const Color(0xFF00FF9D) : const Color(0xFF00875A);
-    final shellColor = isDark ? const Color(0xFF1E1E2F) : Colors.grey.shade300;
-    final screenColor = isDark ? const Color(0xFF0B0F19) : const Color(0xFFDDEBFF);
-    final borderColor = isDark ? neonCyan.withValues(alpha: 0.75) : neonBlue.withValues(alpha: 0.75);
+    final shellColor = isDark ? const Color(0xFF1E1E2F) : Colors.white;
+    final screenColor = isDark ? const Color(0xFF0B0F19) : const Color(0xFF151E32);
+    final borderColor = isDark ? neonCyan.withValues(alpha: 0.75) : const Color(0xFF0052CC);
 
     // 1. Glow circular de fundo
     final glowPaint = Paint()
