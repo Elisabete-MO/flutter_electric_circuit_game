@@ -529,7 +529,8 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
         ? component.isActive
         : isActiveElectric;
 
-    final componentWidget = GestureDetector(
+    final bodyWidget = GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: () {
         setState(() {
           _selectedComponentId = component.id;
@@ -539,7 +540,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
         ref.read(sandboxControllerProvider.notifier).rotateComponent(component.id);
       },
       child: Container(
-        padding: const EdgeInsets.all(4),
+        margin: const EdgeInsets.all(4),
         decoration: BoxDecoration(
           border: isSelected
               ? Border.all(color: const Color(0xFF00F5D4), width: 2.0)
@@ -587,13 +588,20 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                   ),
                 ),
               ),
-
-            // Terminais interativos (Bornes vermelho e preto) para puxar fios
-            _buildTerminalPoint(component, 'A', cellSize, isDark),
-            _buildTerminalPoint(component, 'B', cellSize, isDark),
           ],
         ),
       ),
+    );
+
+    final stackChild = Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned.fill(child: bodyWidget),
+
+        // Terminais em camada superior independente (evita conflito com GestureDetector do corpo)
+        _buildTerminalPoint(component, 'A', cellSize, isDark),
+        _buildTerminalPoint(component, 'B', cellSize, isDark),
+      ],
     );
 
     return Positioned(
@@ -610,12 +618,12 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
             height: cellSize,
             child: Opacity(
               opacity: 0.8,
-              child: componentWidget,
+              child: bodyWidget,
             ),
           ),
         ),
-        childWhenDragging: Container(),
-        child: componentWidget,
+        childWhenDragging: const SizedBox.shrink(),
+        child: stackChild,
       ),
     );
   }
@@ -626,14 +634,21 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
     final localX = (relPos.dx - component.gridX) * cellSize;
     final localY = (relPos.dy - component.gridY) * cellSize;
 
+    final isSource = _connectionSource?.componentId == component.id && _connectionSource?.terminal == terminal;
+    final isWiringMode = _connectionSource != null;
+
     final color = terminal == 'A' ? Colors.black87 : Colors.red;
 
+    const touchAreaSize = 32.0; // 32x32px área de toque expandida
+    const dotSize = 14.0; // 14x14px visualização normal do borne
+
     return Positioned(
-      left: localX - 6,
-      top: localY - 6,
-      width: 12,
-      height: 12,
+      left: localX - (touchAreaSize / 2),
+      top: localY - (touchAreaSize / 2),
+      width: touchAreaSize,
+      height: touchAreaSize,
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: () {
           final connSource = _connectionSource;
           if (connSource == null) {
@@ -659,11 +674,39 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
         },
         child: MouseRegion(
           cursor: SystemMouseCursors.click,
-          child: Container(
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 1.5),
+          child: Center(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: isSource ? 18.0 : (isWiringMode ? 16.0 : dotSize),
+              height: isSource ? 18.0 : (isWiringMode ? 16.0 : dotSize),
+              decoration: BoxDecoration(
+                color: isSource ? const Color(0xFF00F5D4) : color,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSource ? Colors.white : (isWiringMode ? const Color(0xFF00F5D4) : Colors.white),
+                  width: isSource ? 2.5 : 1.5,
+                ),
+                boxShadow: [
+                  if (isSource)
+                    BoxShadow(
+                      color: const Color(0xFF00F5D4).withValues(alpha: 0.8),
+                      blurRadius: 10,
+                      spreadRadius: 3,
+                    )
+                  else if (isWiringMode)
+                    BoxShadow(
+                      color: const Color(0xFF00F5D4).withValues(alpha: 0.4),
+                      blurRadius: 6,
+                      spreadRadius: 1,
+                    )
+                  else
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 3,
+                      spreadRadius: 0.5,
+                    ),
+                ],
+              ),
             ),
           ),
         ),
