@@ -225,13 +225,13 @@ class CyberHudPainter extends CustomPainter {
     // Brilho neon sob a borda.
     final glowPaint = Paint()
       ..color = accentColor.withValues(
-        alpha: 0.15 + (0.20 * hoverValue),
+        alpha: 0.08 + (0.12 * hoverValue),
       )
-      ..strokeWidth = 2 + (2 * hoverValue)
+      ..strokeWidth = 3.0 + (2.0 * hoverValue)
       ..style = PaintingStyle.stroke
       ..maskFilter = MaskFilter.blur(
         BlurStyle.normal,
-        5 + (3 * hoverValue),
+        8.0 + (4.0 * hoverValue),
       );
 
     canvas.drawPath(path, glowPaint);
@@ -239,9 +239,9 @@ class CyberHudPainter extends CustomPainter {
     // Borda principal.
     final borderPaint = Paint()
       ..color = accentColor.withValues(
-        alpha: 0.4 + (0.5 * hoverValue),
+        alpha: 0.7 + (0.3 * hoverValue),
       )
-      ..strokeWidth = 1.2 + (0.6 * hoverValue)
+      ..strokeWidth = 1.0 + (0.5 * hoverValue)
       ..style = PaintingStyle.stroke;
 
     canvas.drawPath(path, borderPaint);

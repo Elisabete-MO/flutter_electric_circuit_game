@@ -92,22 +92,22 @@ class GlassContainer extends StatelessWidget {
           if (accentColor != null) ...[
             if (borderGlowOnly) ...[
               BoxShadow(
-                color: glowColor.withValues(alpha: isDark ? 0.35 : 0.2),
-                blurRadius: 4,
-                spreadRadius: 0.5,
+                color: glowColor.withValues(alpha: isDark ? 0.20 : 0.12),
+                blurRadius: 8,
+                spreadRadius: 0.2,
               ),
             ] else ...[
               BoxShadow(
-                color: glowColor.withValues(alpha: isDark ? 0.3 : 0.15),
-                blurRadius: 16,
+                color: glowColor.withValues(alpha: isDark ? 0.15 : 0.08),
+                blurRadius: 20,
                 spreadRadius: 0,
                 offset: const Offset(0, 2),
               ),
               BoxShadow(
-                color: glowColor.withValues(alpha: isDark ? 0.15 : 0.08),
-                blurRadius: 28,
-                spreadRadius: 2,
-                offset: const Offset(0, 6),
+                color: glowColor.withValues(alpha: isDark ? 0.08 : 0.04),
+                blurRadius: 36,
+                spreadRadius: 1,
+                offset: const Offset(0, 4),
               ),
             ],
           ],
