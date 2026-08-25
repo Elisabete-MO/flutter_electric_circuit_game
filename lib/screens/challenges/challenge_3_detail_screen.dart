@@ -43,6 +43,8 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
   late final AnimationController _currentAnimationController;
   late final AnimationController _pulseAnimationController;
   late final ConfettiController _confettiController;
+  final ScrollController _paletteVerticalScrollController = ScrollController();
+  final ScrollController _paletteHorizontalScrollController = ScrollController();
 
   int _attempts = 0;
   late final DateTime _startTime;
@@ -82,6 +84,8 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
     _currentAnimationController.dispose();
     _pulseAnimationController.dispose();
     _confettiController.dispose();
+    _paletteVerticalScrollController.dispose();
+    _paletteHorizontalScrollController.dispose();
     super.dispose();
   }
 
@@ -216,24 +220,46 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
                     children: [
                       // Fundo da Bancada do Circuito
                       Positioned.fill(
-                        child: AnimatedBuilder(
-                          animation: _currentAnimationController,
-                          builder: (context, _) {
-                            return CustomPaint(
-                              painter: _Challenge3BoardPainter(
-                                isSwitchClosed: _isSwitchClosed,
-                                showDiagramMode: _showDiagramMode,
-                                slotBattery: _slotBattery,
-                                slotSwitch: _slotSwitch,
-                                slotResistor: _slotResistor,
-                                slotBulb: _slotBulb,
-                                isDark: isDark,
-                                currentProgress: _currentAnimationController.value,
-                              ),
-                            );
-                          },
+                        child: RepaintBoundary(
+                          child: CustomPaint(
+                            painter: _Challenge3BoardPainter(
+                              isSwitchClosed: _isSwitchClosed,
+                              showDiagramMode: _showDiagramMode,
+                              slotBattery: _slotBattery,
+                              slotSwitch: _slotSwitch,
+                              slotResistor: _slotResistor,
+                              slotBulb: _slotBulb,
+                              isDark: isDark,
+                              drawParticlesOnly: false,
+                            ),
+                          ),
                         ),
                       ),
+
+                      // Camada de Partículas Elétricas Dinâmicas (60fps)
+                      if (_isSwitchClosed && !_showDiagramMode)
+                        Positioned.fill(
+                          child: RepaintBoundary(
+                            child: AnimatedBuilder(
+                              animation: _currentAnimationController,
+                              builder: (context, _) {
+                                return CustomPaint(
+                                  painter: _Challenge3BoardPainter(
+                                    isSwitchClosed: _isSwitchClosed,
+                                    showDiagramMode: _showDiagramMode,
+                                    slotBattery: _slotBattery,
+                                    slotSwitch: _slotSwitch,
+                                    slotResistor: _slotResistor,
+                                    slotBulb: _slotBulb,
+                                    isDark: isDark,
+                                    currentProgress: _currentAnimationController.value,
+                                    drawParticlesOnly: true,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
 
                       // Interruptor Físico Clicável (Modo Físico)
                       if (!_showDiagramMode)
@@ -283,6 +309,28 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
                                   ),
                                 ],
                               ),
+                            ),
+                          ),
+                        ),
+
+                      // Clique Direto no Asset do Interruptor Físico na Bancada
+                      if (!_showDiagramMode)
+                        Positioned(
+                          left: constraints.maxWidth * 0.72 - 65,
+                          top: constraints.maxHeight * 0.74 - 40,
+                          width: 130,
+                          height: 80,
+                          child: MouseRegion(
+                            cursor: SystemMouseCursors.click,
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () {
+                                ref.read(audioServiceProvider).playClick();
+                                setState(() {
+                                  _isSwitchClosed = !_isSwitchClosed;
+                                });
+                              },
+                              child: const SizedBox.expand(),
                             ),
                           ),
                         ),
@@ -448,13 +496,13 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
     required AppLocalizations l10n,
   }) {
     final symbolList = [
-      _buildDraggableSymbol(ComponentType.resistor, margin: const EdgeInsets.all(6)),
-      _buildDraggableSymbol(ComponentType.battery, margin: const EdgeInsets.all(6)),
-      _buildDraggableSymbol(ComponentType.motor, margin: const EdgeInsets.all(6)),
-      _buildDraggableSymbol(ComponentType.bulb, margin: const EdgeInsets.all(6)),
-      _buildDraggableSymbol(ComponentType.diode, margin: const EdgeInsets.all(6)),
-      _buildDraggableSymbol(ComponentType.switchComponent, margin: const EdgeInsets.all(6)),
-      _buildDraggableSymbol(ComponentType.led, margin: const EdgeInsets.all(6)),
+      _buildDraggableSymbol(ComponentType.resistor, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
+      _buildDraggableSymbol(ComponentType.battery, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
+      _buildDraggableSymbol(ComponentType.motor, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
+      _buildDraggableSymbol(ComponentType.bulb, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
+      _buildDraggableSymbol(ComponentType.diode, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
+      _buildDraggableSymbol(ComponentType.switchComponent, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
+      _buildDraggableSymbol(ComponentType.led, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
     ];
 
     if (isVertical) {
@@ -527,7 +575,7 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
     }
   }
 
-  Widget _buildDraggableSymbol(ComponentType type, {EdgeInsetsGeometry? margin}) {
+  Widget _buildDraggableSymbol(ComponentType type, {EdgeInsetsGeometry? margin, required bool isVerticalList}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final symbolWidget = Container(
@@ -549,6 +597,7 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
     );
 
     return Draggable<ComponentType>(
+      affinity: isVerticalList ? Axis.horizontal : Axis.vertical,
       data: type,
       feedback: Material(
         color: Colors.transparent,
@@ -609,6 +658,14 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
           final isHovered = candidateData.isNotEmpty;
 
           return GestureDetector(
+            onTap: () {
+              if (currentType == ComponentType.switchComponent) {
+                ref.read(audioServiceProvider).playClick();
+                setState(() {
+                  _isSwitchClosed = !_isSwitchClosed;
+                });
+              }
+            },
             onDoubleTap: onClear,
             child: Container(
               width: width,
@@ -670,6 +727,7 @@ class _Challenge3BoardPainter extends CustomPainter {
     required this.slotBulb,
     required this.isDark,
     this.currentProgress = 0.0,
+    this.drawParticlesOnly = false,
   });
 
   final bool isSwitchClosed;
@@ -680,11 +738,12 @@ class _Challenge3BoardPainter extends CustomPainter {
   final ComponentType? slotBulb;
   final bool isDark;
   final double currentProgress;
+  final bool drawParticlesOnly;
 
   @override
   void paint(Canvas canvas, Size size) {
     if (showDiagramMode) {
-      _drawDiagramWireOverlay(canvas, size);
+      if (!drawParticlesOnly) _drawDiagramWireOverlay(canvas, size);
     } else {
       _drawPhysicalCircuitOverlay(canvas, size);
     }
@@ -751,6 +810,16 @@ class _Challenge3BoardPainter extends CustomPainter {
       batNegTerm.dx + (w * 0.08), batNegTerm.dy + (h * 0.22),
       batNegTerm.dx, batNegTerm.dy,
     );
+
+    if (drawParticlesOnly) {
+      if (isSwitchClosed) {
+        _drawCurrentParticlesOnPath(canvas, pathRed, const Color(0xFFFFEA00), 4);
+        _drawCurrentParticlesOnPath(canvas, pathBlack1, const Color(0xFFFFEA00), 4);
+        _drawCurrentParticlesOnPath(canvas, pathBlack2, const Color(0xFFFFEA00), 4);
+        _drawCurrentParticlesOnPath(canvas, pathBlack3, const Color(0xFFFFEA00), 5);
+      }
+      return;
+    }
 
     // --- DESENHO DOS FIOS (Efeito Cilíndrico 3D com Brilho Especular e Sombra Projetada) ---
     final shadowTransform = Matrix4.translationValues(3, 6, 0);
@@ -863,13 +932,6 @@ class _Challenge3BoardPainter extends CustomPainter {
     canvas.translate(swX - 65, swY - 40);
     swPainter.paint(canvas, const Size(130, 80));
     canvas.restore();
-
-    if (isSwitchClosed) {
-      _drawCurrentParticlesOnPath(canvas, pathRed, const Color(0xFFFFEA00), 4);
-      _drawCurrentParticlesOnPath(canvas, pathBlack1, const Color(0xFFFFEA00), 4);
-      _drawCurrentParticlesOnPath(canvas, pathBlack2, const Color(0xFFFFEA00), 4);
-      _drawCurrentParticlesOnPath(canvas, pathBlack3, const Color(0xFFFFEA00), 5);
-    }
   }
 
   void _drawCurrentParticlesOnPath(Canvas canvas, Path path, Color color, int count) {

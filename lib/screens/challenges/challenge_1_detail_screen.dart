@@ -42,6 +42,8 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
   late final AnimationController _currentAnimationController;
   late final AnimationController _pulseAnimationController;
   late final ConfettiController _confettiController;
+  final ScrollController _paletteVerticalScrollController = ScrollController();
+  final ScrollController _paletteHorizontalScrollController = ScrollController();
 
   int _attempts = 0;
   late final DateTime _startTime;
@@ -81,6 +83,8 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
     _currentAnimationController.dispose();
     _pulseAnimationController.dispose();
     _confettiController.dispose();
+    _paletteVerticalScrollController.dispose();
+    _paletteHorizontalScrollController.dispose();
     super.dispose();
   }
 
@@ -306,6 +310,28 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
                               ),
                             ),
 
+                          // Clique Direto no Asset do Interruptor Físico na Bancada
+                          if (!_showDiagramMode)
+                            Positioned(
+                              left: constraints.maxWidth * 0.72 - 70,
+                              top: constraints.maxHeight * 0.28 - 45,
+                              width: 140,
+                              height: 90,
+                              child: MouseRegion(
+                                cursor: SystemMouseCursors.click,
+                                child: GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: () {
+                                    ref.read(audioServiceProvider).playClick();
+                                    setState(() {
+                                      _isSwitchClosed = !_isSwitchClosed;
+                                    });
+                                  },
+                                  child: const SizedBox.expand(),
+                                ),
+                              ),
+                            ),
+
                           // Painel de Controle do Diagrama Elétrico ("Fechar Diagrama", "Verificar", "Reiniciar")
                           Positioned(
                             left: 0,
@@ -453,13 +479,13 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
     required AppLocalizations l10n,
   }) {
     final symbolList = [
-      _buildDraggableSymbol(ComponentType.resistor, margin: const EdgeInsets.all(6)),
-      _buildDraggableSymbol(ComponentType.battery, margin: const EdgeInsets.all(6)),
-      _buildDraggableSymbol(ComponentType.motor, margin: const EdgeInsets.all(6)),
-      _buildDraggableSymbol(ComponentType.bulb, margin: const EdgeInsets.all(6)),
-      _buildDraggableSymbol(ComponentType.diode, margin: const EdgeInsets.all(6)),
-      _buildDraggableSymbol(ComponentType.switchComponent, margin: const EdgeInsets.all(6)),
-      _buildDraggableSymbol(ComponentType.led, margin: const EdgeInsets.all(6)),
+      _buildDraggableSymbol(ComponentType.resistor, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
+      _buildDraggableSymbol(ComponentType.battery, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
+      _buildDraggableSymbol(ComponentType.motor, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
+      _buildDraggableSymbol(ComponentType.bulb, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
+      _buildDraggableSymbol(ComponentType.diode, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
+      _buildDraggableSymbol(ComponentType.switchComponent, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
+      _buildDraggableSymbol(ComponentType.led, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
     ];
 
     if (isVertical) {
@@ -532,7 +558,7 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
     }
   }
 
-  Widget _buildDraggableSymbol(ComponentType type, {EdgeInsetsGeometry? margin}) {
+  Widget _buildDraggableSymbol(ComponentType type, {EdgeInsetsGeometry? margin, required bool isVerticalList}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final symbolWidget = Container(
@@ -554,6 +580,7 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
     );
 
     return Draggable<ComponentType>(
+      affinity: isVerticalList ? Axis.horizontal : Axis.vertical,
       data: type,
       feedback: Material(
         color: Colors.transparent,
@@ -612,6 +639,14 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
           final isHovered = candidateData.isNotEmpty;
 
           return GestureDetector(
+            onTap: () {
+              if (currentType == ComponentType.switchComponent) {
+                ref.read(audioServiceProvider).playClick();
+                setState(() {
+                  _isSwitchClosed = !_isSwitchClosed;
+                });
+              }
+            },
             onDoubleTap: onClear,
             child: Container(
               width: width,

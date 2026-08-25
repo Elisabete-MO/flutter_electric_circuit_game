@@ -89,8 +89,9 @@ class HomeScreen extends ConsumerWidget {
   ) {
     final theme = Theme.of(context);
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Wrap(
+      alignment: WrapAlignment.spaceBetween,
+      runSpacing: 12,
       children: [
         // Indicador de Status do Sistema
         Container(

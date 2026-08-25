@@ -20,22 +20,25 @@ class FirstStepsScreen extends StatefulWidget {
 }
 
 class _FirstStepsScreenState extends State<FirstStepsScreen> {
-  late List<FirstStepComponent> _components;
+  late List<FirstStepComponent> _gridComponents;
+  late List<FirstStepComponent> _quizQuestions;
   bool _showBannerOverlay = true;
   bool _isQuizMode = false;
   int _quizScore = 0;
   int _quizCurrentIndex = 0;
+  final Set<String> _answeredCorrectlyIds = {};
 
   @override
   void initState() {
     super.initState();
-    _components = List.from(FirstStepComponent.defaultList);
+    _gridComponents = List.from(FirstStepComponent.defaultList);
+    _quizQuestions = List.from(FirstStepComponent.defaultList);
   }
 
   void _toggleComponentState(int index) {
     setState(() {
-      final item = _components[index];
-      _components[index] = item.copyWith(isActive: !item.isActive);
+      final item = _gridComponents[index];
+      _gridComponents[index] = item.copyWith(isActive: !item.isActive);
     });
   }
 
@@ -51,19 +54,22 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
       _isQuizMode = true;
       _quizScore = 0;
       _quizCurrentIndex = 0;
-      _components.shuffle();
+      _answeredCorrectlyIds.clear();
+      _gridComponents = List.from(FirstStepComponent.defaultList)..shuffle();
+      _quizQuestions = List.from(FirstStepComponent.defaultList)..shuffle();
     });
   }
 
   void _resetStudyMode() {
     setState(() {
       _isQuizMode = false;
-      _components = List.from(FirstStepComponent.defaultList);
+      _answeredCorrectlyIds.clear();
+      _gridComponents = List.from(FirstStepComponent.defaultList);
     });
   }
 
   void _answerQuiz(FirstStepComponent selected) {
-    final currentTarget = _components[_quizCurrentIndex];
+    final currentTarget = _quizQuestions[_quizCurrentIndex];
     final isCorrect = selected.id == currentTarget.id;
     final l10n = AppLocalizations.of(context)!;
     final name = l10n.localeName == 'en' ? selected.nameEn : selected.namePt;
@@ -83,7 +89,8 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
     setState(() {
       if (isCorrect) {
         _quizScore++;
-        if (_quizCurrentIndex < _components.length - 1) {
+        _answeredCorrectlyIds.add(selected.id);
+        if (_quizCurrentIndex < _quizQuestions.length - 1) {
           _quizCurrentIndex++;
         } else {
           _showQuizResultsDialog();
@@ -114,7 +121,7 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
           ],
         ),
         content: Text(
-          l10n.quizResultMsg(_quizScore, _components.length),
+          l10n.quizResultMsg(_quizScore, _quizQuestions.length),
           style: TextStyle(
             fontSize: 16,
             fontFamily: GoogleFonts.outfit().fontFamily,
@@ -230,14 +237,14 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
                           avatar: const Icon(Icons.category_rounded, size: 18),
                           label: Text(
                             l10n.localeName == 'en'
-                                ? _components[_quizCurrentIndex].nameEn
-                                : _components[_quizCurrentIndex].namePt,
+                                ? _quizQuestions[_quizCurrentIndex].nameEn
+                                : _quizQuestions[_quizCurrentIndex].namePt,
                             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          l10n.quizQuestionCount(_quizCurrentIndex + 1, _components.length),
+                          l10n.quizQuestionCount(_quizCurrentIndex + 1, _quizQuestions.length),
                           style: theme.textTheme.labelSmall,
                         ),
                       ],
@@ -254,7 +261,7 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
                         final crossAxisCount = constraints.maxWidth >= 640 ? 4 : 2;
 
                         return GridView.builder(
-                          itemCount: _components.length,
+                          itemCount: _gridComponents.length,
                           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: crossAxisCount,
                             crossAxisSpacing: 12,
@@ -262,11 +269,12 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
                             childAspectRatio: 0.88,
                           ),
                           itemBuilder: (context, index) {
-                            final comp = _components[index];
+                            final comp = _gridComponents[index];
 
                             return SymbolCard(
                               component: comp,
                               showLabels: !_isQuizMode,
+                              isCorrectlyAnswered: _answeredCorrectlyIds.contains(comp.id),
                               onTap: () {
                                 if (_isQuizMode) {
                                   _answerQuiz(comp);

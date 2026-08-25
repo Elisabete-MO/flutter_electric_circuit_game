@@ -196,8 +196,10 @@ class _ComponentDetailDialogState extends State<ComponentDetailDialog> {
               const SizedBox(height: 24),
 
               // Ação de Testar Estado / Fechar
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+              Wrap(
+                alignment: WrapAlignment.end,
+                spacing: 8,
+                runSpacing: 8,
                 children: [
                   if (_component.supportsStateToggle)
                     OutlinedButton.icon(
@@ -213,7 +215,6 @@ class _ComponentDetailDialogState extends State<ComponentDetailDialog> {
                             : l10n.compActivateState,
                       ),
                     ),
-                  const SizedBox(width: 8),
                   FilledButton(
                     onPressed: () => Navigator.of(context).pop(),
                     child: Text(l10n.compUnderstood),

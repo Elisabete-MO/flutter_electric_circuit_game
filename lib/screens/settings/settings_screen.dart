@@ -172,7 +172,7 @@ class _SettingsSection extends StatelessWidget {
                 Text(
                   title,
                   style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w700),
+                      ?.copyWith(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
