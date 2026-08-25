@@ -108,7 +108,7 @@ class HomeScreen extends ConsumerWidget {
           decoration: BoxDecoration(
             color: isDark
                 ? const Color(0xFFFFB300).withValues(alpha: 0.15)
-                : const Color(0xFFFFB300).withValues(alpha: 0.2),
+                : const Color(0xFFFFB300).withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: const Color(0xFFFFB300).withValues(alpha: 0.5),
@@ -131,7 +131,7 @@ class HomeScreen extends ConsumerWidget {
                   letterSpacing: 1.0,
                   color: isDark
                       ? const Color(0xFFFFB300)
-                      : const Color(0xFFB58100),
+                      : const Color(0xFF996B00),
                 ),
               ),
             ],
@@ -381,7 +381,7 @@ class _CyberMenuCardState extends State<_CyberMenuCard> {
           Text(
             widget.description,
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: scheme.onSurfaceVariant,
+              color: isDark ? scheme.onSurfaceVariant : scheme.onSurface.withValues(alpha: 0.75),
               height: 1.4,
             ),
           ),

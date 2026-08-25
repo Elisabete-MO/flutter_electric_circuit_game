@@ -192,6 +192,16 @@ class CyberHudPainter extends CustomPainter {
       ..color = backgroundColor
       ..style = PaintingStyle.fill;
 
+    // Drop shadow
+    final shadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: isDark ? 0.3 : 0.08)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12.0);
+    // Offset the shadow slightly down
+    canvas.save();
+    canvas.translate(0, 4);
+    canvas.drawPath(path, shadowPaint);
+    canvas.restore();
+
     canvas.drawPath(path, backgroundPaint);
 
     // Grade tecnológica de pontos.

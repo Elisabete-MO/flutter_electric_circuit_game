@@ -206,10 +206,10 @@ class _ProfVoltsSpeechState extends ConsumerState<ProfVoltsSpeech>
                             ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
                       Text(
                         _displayedText,
-                        style: theme.textTheme.bodyMedium?.copyWith(
+                        style: theme.textTheme.bodyLarge?.copyWith(
                           color: isDark ? Colors.white : Colors.black87,
                           height: 1.4,
                         ),
