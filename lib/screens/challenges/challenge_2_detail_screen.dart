@@ -13,6 +13,7 @@ import '../../widgets/circuit_symbol_painter.dart';
 import '../../widgets/component_physical_painter.dart';
 import '../../widgets/prof_volts_speech.dart';
 import '../../widgets/tech_grid_background.dart';
+import '../../widgets/prof_volts_challenge_dialog.dart';
 
 /// Tela interativa da execução do Desafio 2.
 ///
@@ -111,56 +112,21 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Icon(
-              isCorrect ? Icons.check_circle_rounded : Icons.error_rounded,
-              color: isCorrect ? const Color(0xFF2E7D32) : const Color(0xFFC62828),
-            ),
-            const SizedBox(width: 10),
-            Text(isCorrect ? l10n.dialogCorrectTitle : l10n.dialogIncorrectTitle),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              isCorrect ? l10n.dialogCorrectMsg : l10n.dialogIncorrectMsg,
-            ),
-            if (isCorrect) ...[
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(3, (index) {
-                  return Icon(
-                    index < stars ? Icons.star_rounded : Icons.star_outline_rounded,
-                    color: index < stars ? Colors.amber : Colors.grey.shade400,
-                    size: 40,
-                  );
-                }),
-              ),
-            ],
-          ],
-        ),
-        actions: [
-          if (!isCorrect)
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(l10n.buttonRetry),
-            )
-          else
-            FilledButton(
-              onPressed: () async {
-                await ref.read(progressControllerProvider.notifier).markAsCompleted('challenge_2', stars: stars);
-                if (!context.mounted) return;
-                Navigator.of(context).pop();
-                Navigator.of(context).pop();
-              },
-              child: Text(l10n.buttonComplete),
-            ),
-        ],
+      builder: (context) => ProfVoltsChallengeDialog(
+        isCorrect: isCorrect,
+        title: isCorrect ? l10n.dialogCorrectTitle : l10n.dialogIncorrectTitle,
+        message: isCorrect ? l10n.dialogCorrectMsg : l10n.dialogIncorrectMsg,
+        stars: stars,
+        onAction: () async {
+          if (isCorrect) {
+            await ref.read(progressControllerProvider.notifier).markAsCompleted('challenge_2', stars: stars);
+            if (!context.mounted) return;
+            Navigator.of(context).pop(); // fecha modal
+            Navigator.of(context).pop(); // volta pra tela de desafios
+          } else {
+            Navigator.of(context).pop(); // apenas fecha modal para tentar de novo
+          }
+        },
       ),
     );
   }
