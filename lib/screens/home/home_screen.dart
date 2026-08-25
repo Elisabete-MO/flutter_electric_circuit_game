@@ -23,10 +23,7 @@ class HomeScreen extends ConsumerWidget {
 
     // Calcular estatísticas
     final completedCount = progress.completedChallenges.length;
-    final totalStars = progress.challengeStars.values.fold<int>(
-      0,
-      (sum, stars) => sum + stars,
-    );
+
 
     return Scaffold(
       body: TechGridBackground(
@@ -39,14 +36,6 @@ class HomeScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // BARRA SUPERIOR HUD DE STATUS & ESTRELAS
-                    _buildHudStatusBar(
-                      context,
-                      totalStars,
-                      completedCount,
-                      isDark,
-                    ),
-                    const SizedBox(height: 24),
 
                     // LOGO ELETROLAB
                     const Center(child: EletroLabLogo()),
@@ -74,56 +63,6 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildHudStatusBar(
-    BuildContext context,
-    int totalStars,
-    int completedCount,
-    bool isDark,
-  ) {
-    final theme = Theme.of(context);
-
-    return Wrap(
-      alignment: WrapAlignment.end,
-      runSpacing: 12,
-      children: [
-        // HUD de Estrelas Ganhas
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: isDark
-                ? const Color(0xFFFFB300).withValues(alpha: 0.15)
-                : const Color(0xFFFFB300).withValues(alpha: 0.3),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: const Color(0xFFFFB300).withValues(alpha: 0.5),
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.star_rounded,
-                color: Color(0xFFFFB300),
-                size: 18,
-                shadows: [BoxShadow(color: Color(0xFFFFB300), blurRadius: 8)],
-              ),
-              const SizedBox(width: 6),
-              Text(
-                '$totalStars / 9 ESTRELAS',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.0,
-                  color: isDark
-                      ? const Color(0xFFFFB300)
-                      : const Color(0xFF996B00),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildBentoGrid(
     BuildContext context,
