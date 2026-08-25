@@ -393,18 +393,16 @@ class FloatingActionDock extends StatelessWidget {
   }
 }
 
-/// Card de Símbolo Arrastável para a Paleta de Símbolos Esquémáticos
+/// Card de Símbolo Arrastável para a Paleta de Símbolos Esquémáticos (sem rótulos de texto)
 class DraggableSymbolCard extends StatelessWidget {
   const DraggableSymbolCard({
     super.key,
     required this.type,
-    required this.label,
     required this.isVerticalList,
     required this.onTap,
   });
 
   final ComponentType type;
-  final String label;
   final bool isVerticalList;
   final VoidCallback onTap;
 
@@ -413,13 +411,13 @@ class DraggableSymbolCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final cardContent = Container(
-      width: isVerticalList ? 112 : 92,
-      height: isVerticalList ? 72 : 72,
+      width: isVerticalList ? 96 : 74,
+      height: 52,
       margin: const EdgeInsets.all(4),
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+      padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEEF2F6),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isDark
               ? Colors.white.withValues(alpha: 0.12)
@@ -434,35 +432,15 @@ class DraggableSymbolCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Center(
-              child: CustomPaint(
-                size: const Size(56, 30),
-                painter: CircuitSymbolPainter(
-                  type: type,
-                  color: isDark ? const Color(0xFF00F5D4) : const Color(0xFF0F172A),
-                  strokeWidth: 2,
-                ),
-              ),
-            ),
+      child: Center(
+        child: CustomPaint(
+          size: const Size(54, 30),
+          painter: CircuitSymbolPainter(
+            type: type,
+            color: isDark ? const Color(0xFF00F5D4) : const Color(0xFF0F172A),
+            strokeWidth: 2,
           ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontFamily: GoogleFonts.rajdhani().fontFamily,
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white70 : const Color(0xFF334155),
-            ),
-          ),
-        ],
+        ),
       ),
     );
 
@@ -512,10 +490,8 @@ class SymbolsDockPanel extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final symbolCards = symbolTypes.map((type) {
-      final label = _getComponentLabel(type, l10n);
       return DraggableSymbolCard(
         type: type,
-        label: label,
         isVerticalList: isVertical,
         onTap: () => onTapSymbol(type),
       );
@@ -523,7 +499,7 @@ class SymbolsDockPanel extends StatelessWidget {
 
     if (isVertical) {
       return Container(
-        width: 136,
+        width: 116,
         margin: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: isDark
@@ -547,7 +523,7 @@ class SymbolsDockPanel extends StatelessWidget {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.only(top: 12, bottom: 8),
+              padding: const EdgeInsets.only(top: 10, bottom: 6),
               child: Text(
                 l10n.symbolsPaletteTitle.toUpperCase(),
                 textAlign: TextAlign.center,
@@ -563,7 +539,7 @@ class SymbolsDockPanel extends StatelessWidget {
             Expanded(
               child: ListView(
                 controller: verticalScrollController,
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 children: symbolCards,
               ),
             ),
@@ -572,7 +548,7 @@ class SymbolsDockPanel extends StatelessWidget {
       );
     } else {
       return Container(
-        height: 115,
+        height: 88,
         margin: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: isDark
@@ -603,7 +579,7 @@ class SymbolsDockPanel extends StatelessWidget {
                 style: TextStyle(
                   fontFamily: GoogleFonts.rajdhani().fontFamily,
                   fontWeight: FontWeight.bold,
-                  fontSize: 12,
+                  fontSize: 11,
                   letterSpacing: 1.5,
                   color: isDark ? const Color(0xFF00F5D4) : const Color(0xFF0F172A),
                 ),
@@ -620,27 +596,6 @@ class SymbolsDockPanel extends StatelessWidget {
           ],
         ),
       );
-    }
-  }
-
-  static String _getComponentLabel(ComponentType type, AppLocalizations l10n) {
-    switch (type) {
-      case ComponentType.battery:
-        return l10n.compBattery;
-      case ComponentType.switchComponent:
-        return l10n.compSwitch;
-      case ComponentType.bulb:
-        return l10n.compBulb;
-      case ComponentType.motor:
-        return l10n.compMotor;
-      case ComponentType.resistor:
-        return l10n.compResistor;
-      case ComponentType.diode:
-        return l10n.compDiode;
-      case ComponentType.led:
-        return l10n.compLED;
-      default:
-        return type.name;
     }
   }
 }
