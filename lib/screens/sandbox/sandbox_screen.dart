@@ -306,93 +306,59 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
   Widget _buildToolboxItem(ComponentType type, AppLocalizations l10n, bool isDark, {bool compact = false}) {
     final name = _getComponentName(type, l10n);
 
-    // Widget que vive na lista (tamanho controlado pelo ListView)
-    final itemWidget = LayoutBuilder(
-      builder: (context, constraints) {
-        // Calcula altura disponível para o ícone descontando o padding e o texto
-        final iconHeight = (constraints.maxHeight - 6 - 6 - 4 - 16).clamp(24.0, 64.0);
-        return Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.08),
+    // Widget do item na lista — usa AspectRatio p/ ícone, sem LayoutBuilder,
+    // sem MainAxisSize.max (que quebra em ListView com altura infinita).
+    Widget buildCard({Color? bgColor, Color? borderColor, double fontSize = 10}) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+        decoration: BoxDecoration(
+          color: bgColor ?? (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03)),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: borderColor ?? (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.08)),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AspectRatio(
+              aspectRatio: compact ? 2.0 : 1.8,
+              child: CustomPaint(
+                painter: ComponentPhysicalPainter(
+                  type: type,
+                  isActive: false,
+                  isDarkMode: isDark,
+                ),
+              ),
             ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SizedBox(
-                height: iconHeight,
-                width: double.infinity,
-                child: CustomPaint(
-                  painter: ComponentPhysicalPainter(
-                    type: type,
-                    isActive: false,
-                    isDarkMode: isDark,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                name,
-                style: TextStyle(
-                  fontSize: compact ? 9 : 10,
-                  fontWeight: FontWeight.w600,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        );
-      },
-    );
+            const SizedBox(height: 3),
+            Text(
+              name,
+              style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w600),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      );
+    }
 
-    // Widget independente para o feedback de arrastar (tamanho fixo, não depende de constraints externas)
+    final itemWidget = buildCard();
+
+    // Feedback independente — tamanho fixo garantido, sem herdar constraints externas
     final feedbackWidget = Material(
       color: Colors.transparent,
-      child: Opacity(
-        opacity: 0.75,
-        child: SizedBox(
-          width: 90,
-          height: 90,
-          child: Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: isDark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.07),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: isDark ? const Color(0xFF00F5D4).withValues(alpha: 0.5) : const Color(0xFF00F5D4).withValues(alpha: 0.4),
-              ),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(
-                  height: 54,
-                  width: double.infinity,
-                  child: CustomPaint(
-                    painter: ComponentPhysicalPainter(
-                      type: type,
-                      isActive: false,
-                      isDarkMode: isDark,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  name,
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
+      child: SizedBox(
+        width: 88,
+        height: 88,
+        child: Opacity(
+          opacity: 0.85,
+          child: buildCard(
+            bgColor: isDark ? Colors.white.withValues(alpha: 0.14) : Colors.white.withValues(alpha: 0.9),
+            borderColor: const Color(0xFF00F5D4),
+            fontSize: 10,
           ),
         ),
       ),
@@ -401,10 +367,8 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
     return Draggable<ComponentType>(
       data: type,
       feedback: feedbackWidget,
-      childWhenDragging: Opacity(
-        opacity: 0.4,
-        child: itemWidget,
-      ),
+      dragAnchorStrategy: pointerDragAnchorStrategy,
+      childWhenDragging: Opacity(opacity: 0.35, child: itemWidget),
       child: itemWidget,
     );
   }
