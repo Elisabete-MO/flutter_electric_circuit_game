@@ -33,7 +33,7 @@ class EletroLabApp extends ConsumerWidget {
       routes: Routes.all,
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(context).copyWith(
-          textScaler: const TextScaler.linear(1.05),
+          textScaler: const TextScaler.linear(1.02),
         ),
         child: child!,
       ),
