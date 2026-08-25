@@ -118,13 +118,13 @@ class _ProfVoltsSpeechState extends ConsumerState<ProfVoltsSpeech>
     final widgetContent = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Mascote Avatar HologrÃ¡fico Cyber HUD Animado
+        // Mascote Avatar Holográfico Cyber HUD Animado
         ProfVoltsAvatar(
           isTalking: isTalking,
           size: 62.0,
         ),
         const SizedBox(width: 16),
-        // Speech Bubble HUD HologrÃ¡fico
+        // Speech Bubble HUD Holográfico
         Expanded(
           child: Stack(
             clipBehavior: Clip.none,
@@ -250,7 +250,7 @@ class _ProfVoltsSpeechState extends ConsumerState<ProfVoltsSpeech>
   }
 }
 
-/// Avatar RobÃ³tico Cyberpunk Animado
+/// Avatar Robótico Cyberpunk Animado
 class ProfVoltsAvatar extends StatefulWidget {
   const ProfVoltsAvatar({
     super.key,
@@ -355,7 +355,7 @@ class _RobotAvatarPainter extends CustomPainter {
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
     canvas.drawCircle(center, w / 2 - 2, glowPaint);
 
-    // 2. PescoÃ§o/Base
+    // 2. Pescoço/Base
     final basePaint = Paint()
       ..color = shellColor
       ..style = PaintingStyle.fill;
@@ -395,7 +395,7 @@ class _RobotAvatarPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
     canvas.drawCircle(Offset(w / 2, h * 0.06), 3, ledPaint);
 
-    // 4. CarcaÃ§a da CabeÃ§a do RobÃ´ (cantos arredondados)
+    // 4. Carcaça da Cabeça do Robô (cantos arredondados)
     final shellPaint = Paint()
       ..color = shellColor
       ..style = PaintingStyle.fill;
@@ -448,7 +448,7 @@ class _RobotAvatarPainter extends CustomPainter {
       eyePaint,
     );
 
-    // 7. Boca de OsciloscÃ³pio (Waveform eletrÃ´nica)
+    // 7. Boca de Osciloscópio (Waveform eletrônica)
     final wavePaint = Paint()
       ..color = neonGreen
       ..strokeWidth = 1.6
@@ -481,7 +481,7 @@ class _RobotAvatarPainter extends CustomPainter {
     }
     canvas.drawPath(wavePath, wavePaint);
     
-    // 8. Linha de varredura (Scanline) hologrÃ¡fica sutil
+    // 8. Linha de varredura (Scanline) holográfica sutil
     if (isDark) {
       final scanPaint = Paint()
         ..color = neonCyan.withValues(alpha: 0.12)

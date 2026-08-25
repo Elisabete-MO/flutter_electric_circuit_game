@@ -15,13 +15,13 @@ import '../../widgets/prof_volts_speech.dart';
 import '../../widgets/tech_grid_background.dart';
 import '../../widgets/prof_volts_challenge_dialog.dart';
 
-/// Tela interativa da execuÃ§Ã£o do Desafio 3.
+/// Tela interativa da execução do Desafio 3.
 ///
-/// Circuito com 4 componentes em sÃ©rie:
+/// Circuito com 4 componentes em série:
 /// 1. Bateria (esquerda, invertida + na base)
 /// 2. Chave alavanca / Interruptor (topo)
 /// 3. Resistor (direita)
-/// 4. LÃ¢mpada (base)
+/// 4. Lâmpada (base)
 class Challenge3DetailScreen extends ConsumerStatefulWidget {
   const Challenge3DetailScreen({super.key});
 
@@ -35,7 +35,7 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
   bool _isSwitchClosed = false;
   bool _showDiagramMode = false;
 
-  // Estado do Passo 2: SÃ­mbolos posicionados nos 4 slots (Bateria, Interruptor, Resistor, LÃ¢mpada)
+  // Estado do Passo 2: Símbolos posicionados nos 4 slots (Bateria, Interruptor, Resistor, Lâmpada)
   ComponentType? _slotBattery;
   ComponentType? _slotSwitch;
   ComponentType? _slotResistor;
@@ -165,7 +165,7 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
             children: [
             Column(
               children: [
-                // Painel Superior de InstruÃ§Ãµes (Mascote)
+                // Painel Superior de Instruções (Mascote)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: ProfVoltsSpeech(
@@ -176,7 +176,7 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
                   ),
                 ),
 
-            // Ãrea Principal do Desafio
+            // Área Principal do Desafio
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) {
@@ -202,7 +202,7 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
                         ),
                       ),
 
-                      // Camada de PartÃ­culas ElÃ©tricas DinÃ¢micas (60fps)
+                      // Camada de Partículas Elétricas Dinâmicas (60fps)
                       if (_isSwitchClosed && !_showDiagramMode)
                         Positioned.fill(
                           child: RepaintBoundary(
@@ -227,7 +227,7 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
                           ),
                         ),
 
-                      // Interruptor FÃ­sico ClicÃ¡vel (Modo FÃ­sico)
+                      // Interruptor Físico Clicável (Modo Físico)
                       if (!_showDiagramMode)
                         Positioned(
                           top: 16,
@@ -279,7 +279,7 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
                           ),
                         ),
 
-                      // Clique Direto no Asset do Interruptor FÃ­sico na Bancada
+                      // Clique Direto no Asset do Interruptor Físico na Bancada
                       if (!_showDiagramMode)
                         Positioned(
                           left: constraints.maxWidth * 0.72 - 65,
@@ -301,7 +301,7 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
                           ),
                         ),
 
-                      // Painel de Controle do Diagrama ElÃ©trico ("Fechar Diagrama", "Verificar", "Reiniciar")
+                      // Painel de Controle do Diagrama Elétrico ("Fechar Diagrama", "Verificar", "Reiniciar")
                       Positioned(
                         left: 0,
                         right: 0,
@@ -341,7 +341,7 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
                         ),
                       ),
 
-                      // Slots de Drop no Modo Diagrama (Bateria, Interruptor, Resistor, LÃ¢mpada)
+                      // Slots de Drop no Modo Diagrama (Bateria, Interruptor, Resistor, Lâmpada)
                       if (_showDiagramMode)
                         Positioned.fill(
                           child: LayoutBuilder(
@@ -349,7 +349,7 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
                               final cx = constraints.maxWidth / 2;
                               final cy = constraints.maxHeight / 2;
 
-                              // Adapta dinamicamente o tamanho do diagrama Ã s dimensÃµes da tela
+                              // Adapta dinamicamente o tamanho do diagrama Ã s dimensões da tela
                               final dx = (constraints.maxWidth * 0.26).clamp(80.0, 150.0);
                               final dy = (constraints.maxHeight * 0.22).clamp(55.0, 100.0);
 
@@ -373,7 +373,7 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
                                     isVertical: true,
                                   ),
 
-                                  // Slot 2: LÃ¢mpada (Topo do Diagrama)
+                                  // Slot 2: Lâmpada (Topo do Diagrama)
                                   _buildDropSlot(
                                     left: cx - 40,
                                     top: topY - 30,
@@ -684,7 +684,7 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
   }
 }
 
-/// CustomPainter que desenha os 4 componentes fÃ­sicos (bateria invertida, chave alavanca, resistor e lÃ¢mpada) e o diagrama retangular completo
+/// CustomPainter que desenha os 4 componentes físicos (bateria invertida, chave alavanca, resistor e lâmpada) e o diagrama retangular completo
 class _Challenge3BoardPainter extends CustomPainter {
   _Challenge3BoardPainter({
     required this.isSwitchClosed,
@@ -789,7 +789,7 @@ class _Challenge3BoardPainter extends CustomPainter {
       return;
     }
 
-    // --- DESENHO DOS FIOS (Efeito CilÃ­ndrico 3D com Brilho Especular e Sombra Projetada) ---
+    // --- DESENHO DOS FIOS (Efeito Cilíndrico 3D com Brilho Especular e Sombra Projetada) ---
     final shadowTransform = Matrix4.translationValues(3, 6, 0);
 
     final wireFloorShadowPaint = Paint()
@@ -937,7 +937,7 @@ class _Challenge3BoardPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.square;
 
-    // Adapta dinamicamente a largura e a altura do retÃ¢ngulo do diagrama Ã  tela
+    // Adapta dinamicamente a largura e a altura do retângulo do diagrama Ã  tela
     final dx = (w * 0.26).clamp(80.0, 150.0);
     final dy = (h * 0.22).clamp(55.0, 100.0);
 

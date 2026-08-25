@@ -12,8 +12,8 @@ import '../../widgets/glass_container.dart';
 import '../../widgets/tech_grid_background.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// SeÃ§Ã£o "Primeiros passos" â€” introduÃ§Ã£o interativa inspirada nas telas de referÃªncia.
-/// Combina o grid de 8 quadrantes nÃ­tido (Imagem 2) com a faixa de instruÃ§Ã£o orientativa
+/// Seção "Primeiros passos" â€” introdução interativa inspirada nas telas de referência.
+/// Combina o grid de 8 quadrantes nítido (Imagem 2) com a faixa de instrução orientativa
 /// "Observe. You have to know these symbols for this activity." (Imagem 1).
 class FirstStepsScreen extends StatefulWidget {
   const FirstStepsScreen({super.key});
@@ -137,7 +137,7 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
               ),
               const SizedBox(height: 16),
               
-              // 2. TÃ­tulo HUD Cyber
+              // 2. Título HUD Cyber
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
@@ -181,7 +181,7 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
               ),
               const SizedBox(height: 24),
 
-              // 4. BotÃµes de AÃ§Ã£o
+              // 4. Botões de Ação
               Row(
                 children: [
                   Expanded(
@@ -259,7 +259,7 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
                   ? Icons.info_rounded
                   : Icons.info_outline_rounded,
             ),
-            tooltip: 'Alternar instruÃ§Ã£o',
+            tooltip: 'Alternar instrução',
             onPressed: () {
               setState(() {
                 _showBannerOverlay = !_showBannerOverlay;
@@ -286,7 +286,7 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
         child: SafeArea(
           child: Column(
           children: [
-            // BalÃ£o de fala do Prof. Volts orientativo
+            // Balão de fala do Prof. Volts orientativo
             if (_showBannerOverlay && !_isQuizMode)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -345,7 +345,7 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
                     ),
                   ),
 
-                // GRID DE 8 COMPONENTES (Inspirado exatamente nas 8 divisÃµes das referÃªncias)
+                // GRID DE 8 COMPONENTES (Inspirado exatamente nas 8 divisões das referências)
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.all(12),

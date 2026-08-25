@@ -5,8 +5,8 @@ import '../models/first_step_component.dart';
 import 'circuit_symbol_painter.dart';
 import 'component_physical_painter.dart';
 
-/// CartÃ£o de componente elÃ©trico inspirado no grid de 8 seÃ§Ãµes das imagens de referÃªncia 1 e 2.
-/// Exibe o objeto fÃ­sico real na metade superior e o sÃ­mbolo esquemÃ¡tico na metade inferior.
+/// Cartão de componente elétrico inspirado no grid de 8 seções das imagens de referência 1 e 2.
+/// Exibe o objeto físico real na metade superior e o símbolo esquemático na metade inferior.
 class SymbolCard extends StatefulWidget {
   const SymbolCard({
     super.key,
@@ -68,7 +68,7 @@ class _SymbolCardState extends State<SymbolCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // PARTE SUPERIOR: Objeto fÃ­sico real + Nome
+                // PARTE SUPERIOR: Objeto físico real + Nome
                 Expanded(
                   flex: 5,
                   child: Container(
@@ -138,7 +138,7 @@ class _SymbolCardState extends State<SymbolCard> {
                   ),
                 ),
 
-                // DIVISOR HORIZONTAL NÃTIDO (Estilo imagem 2 - linha vermelha/azul)
+                // DIVISOR HORIZONTAL NÍTIDO (Estilo imagem 2 - linha vermelha/azul)
                 Container(
                   height: 2,
                   color: widget.isCorrectlyAnswered
@@ -150,7 +150,7 @@ class _SymbolCardState extends State<SymbolCard> {
                               : (isDark ? Colors.grey[700] : const Color(0xFFB0BEC5))),
                 ),
 
-                // PARTE INFERIOR: SÃ­mbolo EsquemÃ¡tico ElÃ©trico
+                // PARTE INFERIOR: Símbolo Esquemático Elétrico
                 Expanded(
                   flex: 4,
                   child: Container(
@@ -172,7 +172,7 @@ class _SymbolCardState extends State<SymbolCard> {
                           child: const SizedBox.expand(),
                         ),
 
-                        // BotÃ£o interativo para alternar estado (ex: abrir/fechar chave, ligar LED)
+                        // Botão interativo para alternar estado (ex: abrir/fechar chave, ligar LED)
                         if (widget.component.supportsStateToggle && widget.onToggleState != null)
                           Positioned(
                             right: 0,
