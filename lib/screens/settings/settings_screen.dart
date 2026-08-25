@@ -96,15 +96,7 @@ class SettingsScreen extends ConsumerWidget {
             title: l10n.settingsAccessibility,
             icon: Icons.accessibility_new_outlined,
             children: [
-              _SectionTitle(l10n.settingsUiSize),
-              Slider(
-                value: settings.interfaceScale.clamp(0.9, 1.3).toDouble(),
-                min: 0.9,
-                max: 1.3,
-                divisions: 8,
-                label: '${(settings.interfaceScale * 100).round()}%',
-                onChanged: controller.setInterfaceScale,
-              ),
+
               _SettingSwitch(
                 title: l10n.settingsHighContrast,
                 value: settings.highContrast,
