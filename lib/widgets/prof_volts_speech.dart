@@ -134,7 +134,7 @@ class _ProfVoltsSpeechState extends ConsumerState<ProfVoltsSpeech>
                 behavior: HitTestBehavior.opaque,
                 child: GlassContainer(
                   padding: const EdgeInsets.all(16),
-                  accentColor: const Color(0xFF00F0FF),
+                  accentColor: isDark ? const Color(0xFF00F0FF) : const Color(0xFF0052CC),
                   baseColor: Colors.white,
                   opacity: 1.0,
                   child: Column(
