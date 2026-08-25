@@ -215,4 +215,139 @@ class ChallengeTimerBadge extends StatelessWidget {
   }
 }
 
+/// Seletor de Modo de Visualização Unificado (Físico vs Diagrama Esquemático)
+class ModeToggleSwitch extends StatelessWidget {
+  const ModeToggleSwitch({
+    super.key,
+    required this.isDiagramMode,
+    required this.onChanged,
+  });
+
+  final bool isDiagramMode;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final locale = Localizations.localeOf(context).languageCode;
+    final isEn = locale == 'en';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? Colors.black45 : Colors.white60,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? const Color(0xFF00F5D4).withValues(alpha: 0.4) : const Color(0xFF00F5D4),
+          width: 1.2,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          GestureDetector(
+            onTap: () => onChanged(false),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: !isDiagramMode ? const Color(0xFF00F5D4) : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.view_in_ar_rounded,
+                    size: 15,
+                    color: !isDiagramMode ? Colors.black : (isDark ? Colors.white70 : Colors.black87),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    isEn ? 'Physical' : 'Físico',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: !isDiagramMode ? Colors.black : (isDark ? Colors.white70 : Colors.black87),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: () => onChanged(true),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: isDiagramMode ? const Color(0xFF00F5D4) : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.schema_outlined,
+                    size: 15,
+                    color: isDiagramMode ? Colors.black : (isDark ? Colors.white70 : Colors.black87),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    isEn ? 'Diagram' : 'Diagrama',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: isDiagramMode ? Colors.black : (isDark ? Colors.white70 : Colors.black87),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Dock Flutuante de Ações Inferior Cyberpunk HUD
+class FloatingActionDock extends StatelessWidget {
+  const FloatingActionDock({
+    super.key,
+    required this.children,
+  });
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF0D1424).withValues(alpha: 0.85) : Colors.white.withValues(alpha: 0.85),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(
+          color: isDark ? const Color(0xFF00F5D4).withValues(alpha: 0.3) : const Color(0xFF00F5D4).withValues(alpha: 0.6),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: (isDark ? const Color(0xFF00F5D4) : Colors.black).withValues(alpha: 0.15),
+            blurRadius: 16,
+            spreadRadius: 1,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Wrap(
+        spacing: 12,
+        runSpacing: 8,
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: children,
+      ),
+    );
+  }
+}
+
 

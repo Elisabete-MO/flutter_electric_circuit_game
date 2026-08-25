@@ -155,6 +155,19 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
           l10n.challenge2DetailTitle,
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: ModeToggleSwitch(
+              isDiagramMode: _showDiagramMode,
+              onChanged: (val) {
+                setState(() {
+                  _showDiagramMode = val;
+                });
+              },
+            ),
+          ),
+        ],
       ),
       body: TechGridBackground(
         child: SafeArea(
@@ -296,28 +309,15 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
                           ),
                         ),
 
-                      // Painel de Controle do Diagrama Elétrico ("Fechar Diagrama", "Verificar", "Reiniciar")
-                      Positioned(
-                        left: 0,
-                        right: 0,
-                        bottom: 24,
-                        child: Center(
-                          child: Wrap(
-                            spacing: 12,
-                            runSpacing: 8,
-                            alignment: WrapAlignment.center,
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            children: [
-                              DiagramToggleButton(
-                                showDiagramMode: _showDiagramMode,
-                                onTap: () {
-                                  setState(() {
-                                    _showDiagramMode = !_showDiagramMode;
-                                  });
-                                },
-                                pulseAnimation: _pulseAnimationController,
-                              ),
-                              if (_showDiagramMode) ...[
+                      // Painel de Controle do Diagrama Elétrico ("Verificar", "Reiniciar")
+                      if (_showDiagramMode)
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: 24,
+                          child: Center(
+                            child: FloatingActionDock(
+                              children: [
                                 DiagramActionButton(
                                   icon: Icons.verified_rounded,
                                   label: l10n.buttonVerify,
@@ -331,10 +331,9 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
                                   onTap: _resetDiagram,
                                 ),
                               ],
-                            ],
+                            ),
                           ),
                         ),
-                      ),
 
                       // Slots de Drop no Modo Diagrama (Bateria, Interruptor, Motor)
                       if (_showDiagramMode)
@@ -686,9 +685,30 @@ class _Challenge2BoardPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     if (showDiagramMode) {
-      if (!drawParticlesOnly) _drawDiagramWireOverlay(canvas, size);
+      if (!drawParticlesOnly) {
+        _drawDiagramBackgroundGrid(canvas, size);
+        _drawDiagramWireOverlay(canvas, size);
+      }
     } else {
       _drawPhysicalCircuitOverlay(canvas, size);
+    }
+  }
+
+  void _drawDiagramBackgroundGrid(Canvas canvas, Size size) {
+    final gridPaint = Paint()
+      ..color = isDark ? Colors.white.withValues(alpha: 0.07) : Colors.black.withValues(alpha: 0.04)
+      ..strokeWidth = 1.0;
+
+    const cols = 8;
+    const rows = 6;
+    final cellW = size.width / cols;
+    final cellH = size.height / rows;
+
+    for (int i = 1; i < cols; i++) {
+      canvas.drawLine(Offset(i * cellW, 0), Offset(i * cellW, size.height), gridPaint);
+    }
+    for (int j = 1; j < rows; j++) {
+      canvas.drawLine(Offset(0, j * cellH), Offset(size.width, j * cellH), gridPaint);
     }
   }
 

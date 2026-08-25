@@ -14,6 +14,7 @@ import '../../widgets/glass_container.dart';
 import '../../widgets/prof_volts_full_body.dart';
 import '../../widgets/component_physical_painter.dart';
 import '../../widgets/circuit_symbol_painter.dart';
+import '../../widgets/challenge_layout_components.dart';
 
 // Estrutura local para rastrear se o usuário está criando uma conexão (borne de origem selecionado)
 class ConnectionSource {
@@ -159,79 +160,12 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
           ),
         ),
         actions: [
-          // Alternador de Modo: Componentes Físicos vs Diagrama Esquemático
-          Container(
-            margin: const EdgeInsets.only(right: 8),
-            decoration: BoxDecoration(
-              color: isDark ? Colors.black45 : Colors.white60,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isDark ? const Color(0xFF00F5D4).withValues(alpha: 0.4) : const Color(0xFF00F5D4),
-                width: 1.2,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                GestureDetector(
-                  onTap: () => setState(() => _isDiagramMode = false),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: !_isDiagramMode ? const Color(0xFF00F5D4) : Colors.transparent,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.view_in_ar_rounded,
-                          size: 15,
-                          color: !_isDiagramMode ? Colors.black : (isDark ? Colors.white70 : Colors.black87),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          isEn ? 'Physical' : 'Físico',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: !_isDiagramMode ? Colors.black : (isDark ? Colors.white70 : Colors.black87),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () => setState(() => _isDiagramMode = true),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: _isDiagramMode ? const Color(0xFF00F5D4) : Colors.transparent,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.schema_outlined,
-                          size: 15,
-                          color: _isDiagramMode ? Colors.black : (isDark ? Colors.white70 : Colors.black87),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          isEn ? 'Diagram' : 'Diagrama',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: _isDiagramMode ? Colors.black : (isDark ? Colors.white70 : Colors.black87),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+          // Alternador de Modo: Componentes Físicos vs Diagrama Esquemático (Padronizado)
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ModeToggleSwitch(
+              isDiagramMode: _isDiagramMode,
+              onChanged: (val) => setState(() => _isDiagramMode = val),
             ),
           ),
           // Seletor de Tamanho da Bancada / Grid (Aumentar/Diminuir)
@@ -1324,67 +1258,61 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
   Widget _buildSimulationControlBar(SandboxState state, bool isEn, bool isDark) {
     final connSource = _connectionSource;
 
-    return GlassContainer(
-      borderRadius: 16,
-      opacity: isDark ? 0.45 : 0.7,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // Botão Cancelar Fiação se estiver criando uma conexão
-          if (connSource != null)
-            TextButton.icon(
-              onPressed: () {
-                setState(() {
-                  _connectionSource = null;
-                });
-              },
-              icon: const Icon(Icons.cancel_outlined, size: 18),
-              label: Text(isEn ? 'Cancel Wiring' : 'Cancelar Conexão'),
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFFFF3B7F),
-              ),
-            )
-          else
-            TextButton.icon(
-              onPressed: () {
-                ref.read(sandboxControllerProvider.notifier).clearCanvas();
-                setState(() {
-                  _selectedComponentId = null;
-                });
-              },
-              icon: const Icon(Icons.delete_sweep_outlined, size: 18),
-              label: Text(isEn ? 'Clear Grid' : 'Limpar Bancada'),
-              style: TextButton.styleFrom(
-                foregroundColor: isDark ? Colors.white70 : Colors.black87,
-              ),
-            ),
-
-          // Botão Simulação (Sem ícone)
-          FilledButton(
+    return FloatingActionDock(
+      children: [
+        // Botão Cancelar Fiação se estiver criando uma conexão
+        if (connSource != null)
+          TextButton.icon(
             onPressed: () {
-              ref.read(sandboxControllerProvider.notifier).toggleSimulation();
+              setState(() {
+                _connectionSource = null;
+              });
             },
-            style: FilledButton.styleFrom(
-              backgroundColor: state.isSimulating
-                  ? const Color(0xFFFF3B7F)
-                  : const Color(0xFF00FF9D),
-              foregroundColor: Colors.black87,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              textStyle: GoogleFonts.rajdhani(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-                letterSpacing: 1.0,
-              ),
+            icon: const Icon(Icons.cancel_outlined, size: 18),
+            label: Text(isEn ? 'Cancel Wiring' : 'Cancelar Conexão'),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFFFF3B7F),
             ),
-            child: Text(
-              state.isSimulating
-                  ? (isEn ? 'STOP SIMULATION' : 'PARAR SIMULAÇÃO')
-                  : (isEn ? 'START SIMULATION' : 'INICIAR SIMULAÇÃO'),
+          )
+        else
+          TextButton.icon(
+            onPressed: () {
+              ref.read(sandboxControllerProvider.notifier).clearCanvas();
+              setState(() {
+                _selectedComponentId = null;
+              });
+            },
+            icon: const Icon(Icons.delete_sweep_outlined, size: 18),
+            label: Text(isEn ? 'Clear Grid' : 'Limpar Bancada'),
+            style: TextButton.styleFrom(
+              foregroundColor: isDark ? Colors.white70 : Colors.black87,
             ),
           ),
-        ],
-      ),
+
+        // Botão Simulação
+        FilledButton(
+          onPressed: () {
+            ref.read(sandboxControllerProvider.notifier).toggleSimulation();
+          },
+          style: FilledButton.styleFrom(
+            backgroundColor: state.isSimulating
+                ? const Color(0xFFFF3B7F)
+                : const Color(0xFF00FF9D),
+            foregroundColor: Colors.black87,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            textStyle: GoogleFonts.rajdhani(
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+              letterSpacing: 1.0,
+            ),
+          ),
+          child: Text(
+            state.isSimulating
+                ? (isEn ? 'STOP SIMULATION' : 'PARAR SIMULAÇÃO')
+                : (isEn ? 'START SIMULATION' : 'INICIAR SIMULAÇÃO'),
+          ),
+        ),
+      ],
     );
   }
 
