@@ -87,15 +87,18 @@ class _CyberHudContainerState extends State<CyberHudContainer>
               ),
               child: ClipPath(
                 clipper: CyberHudClipper(),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: widget.onTap,
-                    splashColor: widget.accentColor.withValues(alpha: 0.15),
-                    highlightColor: widget.accentColor.withValues(alpha: 0.05),
-                    child: Padding(
-                      padding: widget.padding,
-                      child: widget.child,
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: widget.onTap,
+                      splashColor: widget.accentColor.withValues(alpha: 0.15),
+                      highlightColor: widget.accentColor.withValues(alpha: 0.05),
+                      child: Padding(
+                        padding: widget.padding,
+                        child: widget.child,
+                      ),
                     ),
                   ),
                 ),
@@ -165,8 +168,8 @@ class CyberHudPainter extends CustomPainter {
 
     // 1. Pintar Fundo Glassmorphic do Cartão
     final bgColor = isDark 
-        ? const Color(0xFF1B0E3C).withValues(alpha: 0.75 + (0.15 * hoverValue))
-        : Colors.white.withValues(alpha: 0.85 + (0.10 * hoverValue));
+        ? const Color(0xFF1B0E3C).withValues(alpha: 0.55 + (0.10 * hoverValue))
+        : Colors.white.withValues(alpha: 0.50 + (0.10 * hoverValue));
 
     final bgPaint = Paint()
       ..color = bgColor
