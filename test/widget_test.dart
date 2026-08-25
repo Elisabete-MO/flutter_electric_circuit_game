@@ -1,143 +1,105 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:flutter_electric_circuit_game/main.dart';
-import 'package:flutter_electric_circuit_game/mvp/activity_controller.dart';
-import 'package:flutter_electric_circuit_game/mvp/mvp_contract.dart';
+import 'package:eletrolab/app/app.dart';
+import 'package:eletrolab/models/settings_model.dart';
+import 'package:eletrolab/services/settings_service.dart';
+import 'package:eletrolab/state/settings_controller.dart';
 
 void main() {
-  group('ActivityController validation', () {
-    test('reports incomplete when a slot is empty', () {
-      final controller = ActivityController();
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
 
-      controller.verifyDiagram();
+  Future<void> pumpApp(
+    WidgetTester tester, {
+    SettingsModel settings = const SettingsModel(),
+  }) async {
+    await tester.binding.setSurfaceSize(const Size(900, 2000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      expect(controller.validationStatus, ValidationStatus.incomplete);
-      expect(controller.highlightedSlots, SlotId.values.toSet());
-    });
-
-    test('reports incorrect when battery polarity is inverted', () {
-      final controller = ActivityController()
-        ..setSlotSymbol(SlotId.battery, SymbolType.batteryPosDown)
-        ..setSlotSymbol(SlotId.switchSpst, SymbolType.switchSpst)
-        ..setSlotSymbol(SlotId.lamp, SymbolType.lamp);
-
-      expect(controller.validationStatus, ValidationStatus.incorrect);
-      expect(controller.highlightedSlots, {SlotId.battery});
-    });
-
-    test('reports incorrect when all slots are filled with wrong symbols', () {
-      final controller = ActivityController()
-        ..setSlotSymbol(SlotId.battery, SymbolType.lamp)
-        ..setSlotSymbol(SlotId.switchSpst, SymbolType.switchSpst)
-        ..setSlotSymbol(SlotId.lamp, SymbolType.batteryPosUp);
-
-      expect(controller.validationStatus, ValidationStatus.incorrect);
-      expect(controller.highlightedSlots, {SlotId.battery, SlotId.lamp});
-    });
-
-    test('reports correct independently of the physical switch state', () {
-      final controller = ActivityController()
-        ..setSlotSymbol(SlotId.battery, SymbolType.batteryPosUp)
-        ..setSlotSymbol(SlotId.switchSpst, SymbolType.switchSpst)
-        ..setSlotSymbol(SlotId.lamp, SymbolType.lamp);
-
-      expect(controller.currentAmps, 0.0);
-      controller.setSwitchClosed(true);
-      expect(controller.currentAmps, 0.5);
-      controller.verifyDiagram();
-
-      expect(controller.validationStatus, ValidationStatus.correct);
-      expect(controller.highlightedSlots, isEmpty);
-    });
-
-    test('keeps symbols unique when moving and replacing slots', () {
-      final controller = ActivityController()
-        ..setSlotSymbol(SlotId.battery, SymbolType.batteryPosUp)
-        ..setSlotSymbol(SlotId.switchSpst, SymbolType.switchSpst);
-
-      controller.moveSymbol(SymbolType.batteryPosUp, SlotId.switchSpst);
-      expect(controller.slotOccupancy, {
-        SlotId.battery: SymbolType.switchSpst,
-        SlotId.switchSpst: SymbolType.batteryPosUp,
-        SlotId.lamp: null,
-      });
-
-      controller.moveSymbol(SymbolType.lamp, SlotId.battery);
-      expect(controller.slotOccupancy, {
-        SlotId.battery: SymbolType.lamp,
-        SlotId.switchSpst: SymbolType.batteryPosUp,
-        SlotId.lamp: null,
-      });
-      expect(controller.slotForSymbol(SymbolType.switchSpst), isNull);
-    });
-
-    test(
-      'stays synchronized through repeated switch cycles and slot moves',
-      () {
-        final controller = ActivityController();
-
-        for (var cycle = 0; cycle < 4; cycle++) {
-          controller.toggleSwitch();
-          expect(controller.currentAmps, 0.5);
-          controller.toggleSwitch();
-          expect(controller.currentAmps, 0.0);
-        }
-
-        controller.moveSymbol(SymbolType.batteryPosUp, SlotId.battery);
-        controller.moveSymbol(SymbolType.switchSpst, SlotId.battery);
-        controller.moveSymbol(SymbolType.switchSpst, SlotId.lamp);
-        controller.moveSymbol(SymbolType.lamp, SlotId.lamp);
-        controller.moveSymbol(SymbolType.batteryPosUp, SlotId.lamp);
-        controller.moveSymbol(SymbolType.switchSpst, SlotId.battery);
-        controller.moveSymbol(SymbolType.switchSpst, SlotId.lamp);
-
-        expect(controller.slotOccupancy, {
-          SlotId.battery: SymbolType.batteryPosUp,
-          SlotId.switchSpst: null,
-          SlotId.lamp: SymbolType.switchSpst,
-        });
-        final symbolsInSlots = controller.slotOccupancy.values
-            .whereType<SymbolType>()
-            .toList();
-        expect(symbolsInSlots.toSet().length, symbolsInSlots.length);
-        expect(controller.slotForSymbol(SymbolType.lamp), isNull);
-      },
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          settingsRepositoryProvider.overrideWithValue(SettingsService()),
+          settingsControllerProvider.overrideWith(
+            () => SettingsController(initial: settings),
+          ),
+        ],
+        child: const EletroLabApp(),
+      ),
     );
-    test('correctly validates circuit analysis options', () {
-      final controller = ActivityController();
+    await tester.pumpAndSettle();
+  }
 
-      expect(controller.selectedAnalysisOption, isNull);
-      expect(controller.isAnalysisAnswerCorrect, isFalse);
+  Future<void> tapSection(WidgetTester tester, String label) async {
+    final finder = find.text(label);
+    await tester.ensureVisible(finder);
+    await tester.pumpAndSettle();
+    await tester.tap(finder);
+    await tester.pumpAndSettle();
+  }
 
-      controller.selectAnalysisOption('2,0 A');
-      expect(controller.selectedAnalysisOption, '2,0 A');
-      expect(controller.isAnalysisAnswerCorrect, isFalse);
+  group('Home', () {
+    testWidgets('exibe a identidade do EletroLab', (tester) async {
+      await pumpApp(tester);
 
-      controller.selectAnalysisOption('0,5 A');
-      expect(controller.selectedAnalysisOption, '0,5 A');
-      expect(controller.isAnalysisAnswerCorrect, isTrue);
+      expect(find.text('EletroLab'), findsOneWidget);
+      expect(
+        find.text('Seu laboratório virtual de circuitos'),
+        findsOneWidget,
+      );
+      expect(find.text('EletroLab v1.0.0'), findsOneWidget);
+    });
+
+    testWidgets('exibe as quatro opções principais', (tester) async {
+      await pumpApp(tester);
+
+      expect(find.text('Primeiros passos'), findsOneWidget);
+      expect(find.text('Começar'), findsOneWidget);
+      expect(find.text('Banqueta'), findsOneWidget);
+      expect(find.text('Configurações'), findsOneWidget);
+    });
+
+    testWidgets('navega das seções de volta para a home', (tester) async {
+      await pumpApp(tester);
+
+      await tapSection(tester, 'Banqueta');
+      expect(find.text('Em construção'), findsOneWidget);
+
+      final navigator =
+          tester.state<NavigatorState>(find.byType(Navigator).first);
+      navigator.pop();
+      await tester.pumpAndSettle();
+      expect(find.text('Banqueta'), findsOneWidget);
     });
   });
 
-  testWidgets('shows the base MVP activity structure and analysis options', (
-    WidgetTester tester,
-  ) async {
-    await tester.pumpWidget(const EletroLabApp());
+  group('Settings', () {
+    testWidgets('abre a tela de configurações', (tester) async {
+      await pumpApp(tester);
 
-    expect(find.text('Circuito físico'), findsOneWidget);
-    expect(find.text('Diagrama criado'), findsOneWidget);
-    expect(find.text('Análise do circuito'), findsOneWidget);
+      await tapSection(tester, 'Configurações');
 
-    expect(find.text('Tensão: 6 V'), findsOneWidget);
-    expect(find.text('Resistência: 12 Ω'), findsOneWidget);
-    expect(find.text('I = V ÷ R'), findsOneWidget);
+      expect(find.text('Aparência e Idioma'), findsOneWidget);
+      expect(find.text('Simulação'), findsOneWidget);
+      expect(find.text('Acessibilidade'), findsOneWidget);
+      expect(find.text('Dados'), findsOneWidget);
+      expect(find.text('Versão 1.0.0'), findsOneWidget);
+    });
 
-    // Verify 3 options (1 correct, 2 wrong)
-    expect(find.text('0,5 A'), findsOneWidget);
-    expect(find.text('2,0 A'), findsOneWidget);
-    expect(find.text('1,5 A'), findsOneWidget);
+    testWidgets('troca o tema para escuro e persiste', (tester) async {
+      await pumpApp(tester);
 
-    expect(find.text('Concluir atividade'), findsOneWidget);
+      await tapSection(tester, 'Configurações');
+
+      await tapSection(tester, 'Escuro');
+
+      final service = SettingsService();
+      final saved = await service.load();
+      expect(saved.themeMode, AppThemeMode.dark);
+    });
   });
 }
-

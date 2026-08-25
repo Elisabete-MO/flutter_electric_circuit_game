@@ -1,5 +1,5 @@
-name: flutter_electric_circuit_game
-description: "A new Flutter project."
+name: eletrolab
+description: "EletroLab - laboratório virtual de circuitos elétricos"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -30,52 +30,33 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flame: ^1.38.0
-  flutter_svg: ^2.3.0
+  flutter_localizations:
+    sdk: flutter
 
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
+  intl: ^0.20.2
   cupertino_icons: ^1.0.8
+  flame: ^1.38.0
+  flutter_riverpod: ^3.4.2
+  shared_preferences: ^2.5.5
+  google_fonts: ^8.2.1
+  audioplayers: ^6.8.1
+  confetti: ^0.8.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
   flutter_lints: ^6.0.0
 
-# For information on the generic Dart part of this file, see the
-# following page: https://dart.dev/tools/pub/pubspec
-
-# The following section is specific to Flutter packages.
 flutter:
-
-  # The following line ensures that the Material Icons font is
-  # included with your application, so that you can use the icons in
-  # the material Icons class.
+  generate: true
   uses-material-design: true
 
   assets:
-    - docs/EletroLab_AssetPack_v1/assets/components/battery_dc.webp
-    - docs/EletroLab_AssetPack_v1/assets/components/switch_open.webp
-    - docs/EletroLab_AssetPack_v1/assets/components/switch_closed.webp
-    - docs/EletroLab_AssetPack_v1/assets/components/lamp_off.webp
-    - docs/EletroLab_AssetPack_v1/assets/components/lamp_on.webp
-    - docs/EletroLab_AssetPack_v1/assets/components/resistor.webp
-    - docs/EletroLab_AssetPack_v1/assets/symbols/battery_dc.svg
-    - docs/EletroLab_AssetPack_v1/assets/symbols/battery_dc_vertical_pos_up.svg
-    - docs/EletroLab_AssetPack_v1/assets/symbols/battery_dc_vertical_pos_down.svg
-    - docs/EletroLab_AssetPack_v1/assets/symbols/switch_open.svg
-    - docs/EletroLab_AssetPack_v1/assets/symbols/switch_closed.svg
-    - docs/EletroLab_AssetPack_v1/assets/symbols/lamp.svg
-    - docs/EletroLab_AssetPack_v1/assets/symbols/resistor.svg
-    - docs/EletroLab_AssetPack_v1/assets/effects/energy_dot.webp
-    - docs/EletroLab_AssetPack_v1/assets/ui/wood_table_texture.png
-    - docs/EletroLab_AssetPack_v1/assets/ui/workshop_background.png
+    - assets/images/
+    - assets/icons/
+    - assets/sounds/
+    - assets/components/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

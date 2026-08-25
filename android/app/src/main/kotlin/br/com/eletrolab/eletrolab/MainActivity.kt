@@ -1,4 +1,4 @@
-package com.example.flutter_electric_circuit_game
+package br.com.eletrolab.eletrolab
 
 import io.flutter.embedding.android.FlutterActivity
 
