@@ -50,7 +50,7 @@ class HomeScreen extends ConsumerWidget {
 
                     // LOGO ELETROLAB
                     const Center(child: EletroLabLogo()),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 48),
 
                     // SAUDAÃ‡ÃƒO DO PROF. VOLTS
                     ProfVoltsSpeech(
@@ -60,26 +60,10 @@ class HomeScreen extends ConsumerWidget {
                           ? 'Parabéns, Engenheiro! Você completou todos os desafios com sucesso. Continue praticando na Bancada Livre!'
                           : 'Excelente progresso! Você já concluiu $completedCount de 3 desafios. Continue acelerando!',
                     ),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 48),
 
                     // GRID DE OPÃ‡Ã•ES BENTO STYLED
                     _buildBentoGrid(context, l10n, completedCount),
-                    const SizedBox(height: 32),
-
-                    // RODAPÃ‰
-                    Center(
-                      child: Text(
-                        'ELETROLAB CYBER STATION • v1.0.0',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant.withValues(
-                            alpha: 0.7,
-                          ),
-                          letterSpacing: 2.0,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
                   ],
                 ),
               ),
