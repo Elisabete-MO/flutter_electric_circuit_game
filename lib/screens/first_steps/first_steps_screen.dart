@@ -5,6 +5,7 @@ import '../../models/first_step_component.dart';
 import '../../widgets/component_detail_dialog.dart';
 import '../../widgets/prof_volts_speech.dart';
 import '../../widgets/symbol_card.dart';
+import '../../widgets/prof_volts_feedback_dialog.dart';
 
 import '../../widgets/tech_grid_background.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -68,28 +69,31 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
     final l10n = AppLocalizations.of(context)!;
     final name = l10n.localeName == 'en' ? selected.nameEn : selected.namePt;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          isCorrect
-              ? l10n.quizCorrect
-              : l10n.quizIncorrect(name),
-        ),
-        backgroundColor: isCorrect ? Colors.green[700] : Colors.red[700],
-        duration: const Duration(seconds: 2),
+    final feedbackMessage = isCorrect
+        ? l10n.quizCorrect
+        : l10n.quizIncorrect(name);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => ProfVoltsFeedbackDialog(
+        isCorrect: isCorrect,
+        message: feedbackMessage,
+        onAction: () {
+          Navigator.of(context).pop();
+          if (isCorrect) {
+            setState(() {
+              _quizScore++;
+              if (_quizCurrentIndex < _components.length - 1) {
+                _quizCurrentIndex++;
+              } else {
+                _showQuizResultsDialog();
+              }
+            });
+          }
+        },
       ),
     );
-
-    setState(() {
-      if (isCorrect) {
-        _quizScore++;
-        if (_quizCurrentIndex < _components.length - 1) {
-          _quizCurrentIndex++;
-        } else {
-          _showQuizResultsDialog();
-        }
-      }
-    });
   }
 
   void _showQuizResultsDialog() {
