@@ -89,19 +89,7 @@ class _SymbolCardState extends State<SymbolCard> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          if (widget.component.nameEn.isNotEmpty &&
-                              widget.component.nameEn != widget.component.namePt)
-                            Text(
-                              widget.component.nameEn,
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant
-                                    .withValues(alpha: 0.75),
-                                fontSize: 11,
-                              ),
-                              textAlign: TextAlign.center,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+
                           const SizedBox(height: 4),
                         ] else if (widget.isCorrectlyAnswered)
                           const Padding(
