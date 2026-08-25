@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../l10n/app_localizations.dart';
 import '../models/challenge.dart';
 import 'cyber_hud_container.dart';
@@ -29,7 +28,6 @@ class _ChallengeCardState extends State<ChallengeCard> {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
     final challenge = widget.challenge;
-    final isDark = theme.brightness == Brightness.dark;
     final accentColor = challenge.isLocked ? Colors.grey.shade400 : challenge.accentColor;
 
     return CyberHudContainer(

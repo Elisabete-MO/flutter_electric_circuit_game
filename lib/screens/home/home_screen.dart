@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:eletrolab/app/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../app/routes.dart';
 import '../../l10n/app_localizations.dart';
