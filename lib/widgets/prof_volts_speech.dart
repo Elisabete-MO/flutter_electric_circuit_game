@@ -135,7 +135,7 @@ class _ProfVoltsSpeechState extends ConsumerState<ProfVoltsSpeech>
                 child: GlassContainer(
                   padding: const EdgeInsets.all(16),
                   accentColor: isDark ? const Color(0xFF00F0FF) : const Color(0xFF0052CC),
-                  baseColor: Colors.white,
+                  baseColor: isDark ? const Color(0xFF0D1424) : Colors.white,
                   opacity: 1.0,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -165,7 +165,7 @@ class _ProfVoltsSpeechState extends ConsumerState<ProfVoltsSpeech>
                                 style: theme.textTheme.labelMedium?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 1.2,
-                                  color: const Color(0xFF0052CC),
+                                  color: isDark ? const Color(0xFF00F0FF) : const Color(0xFF0052CC),
                                 ),
                               ),
                             ],
@@ -174,10 +174,14 @@ class _ProfVoltsSpeechState extends ConsumerState<ProfVoltsSpeech>
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF0066FF).withValues(alpha: 0.1),
+                                color: isDark
+                                    ? const Color(0xFF00F0FF).withValues(alpha: 0.15)
+                                    : const Color(0xFF0066FF).withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                    color: const Color(0xFF0066FF).withValues(alpha: 0.3),
+                                    color: isDark
+                                        ? const Color(0xFF00F0FF).withValues(alpha: 0.4)
+                                        : const Color(0xFF0066FF).withValues(alpha: 0.3),
                                 ),
                               ),
                               child: Row(
@@ -186,13 +190,13 @@ class _ProfVoltsSpeechState extends ConsumerState<ProfVoltsSpeech>
                                   Icon(
                                     Icons.timer_rounded,
                                     size: 14,
-                                    color: const Color(0xFF0066FF),
+                                    color: isDark ? const Color(0xFF00F0FF) : const Color(0xFF0066FF),
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
                                     _formatTime(widget.elapsedSeconds!),
                                     style: theme.textTheme.labelMedium?.copyWith(
-                                      color: const Color(0xFF0066FF),
+                                      color: isDark ? const Color(0xFF00F0FF) : const Color(0xFF0066FF),
                                       fontWeight: FontWeight.bold,
                                       letterSpacing: 1.0,
                                     ),
@@ -206,7 +210,7 @@ class _ProfVoltsSpeechState extends ConsumerState<ProfVoltsSpeech>
                       Text(
                         _displayedText,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: Colors.black87,
+                          color: isDark ? Colors.white : Colors.black87,
                           height: 1.4,
                         ),
                       ),
@@ -221,7 +225,7 @@ class _ProfVoltsSpeechState extends ConsumerState<ProfVoltsSpeech>
                 child: CustomPaint(
                   size: const Size(10, 10),
                   painter: _TrianglePainter(
-                    color: Colors.white,
+                    color: isDark ? const Color(0xFF0D1424) : Colors.white,
                   ),
                 ),
               ),
