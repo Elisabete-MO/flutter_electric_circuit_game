@@ -337,8 +337,8 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
       feedback: Material(
         color: Colors.transparent,
         child: SizedBox(
-          width: 80,
-          height: 60,
+          width: compact ? 90 : 110,
+          height: compact ? 80 : 95,
           child: Opacity(
             opacity: 0.75,
             child: itemWidget,
