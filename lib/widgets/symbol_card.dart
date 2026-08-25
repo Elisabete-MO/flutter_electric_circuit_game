@@ -67,19 +67,6 @@ class SymbolCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      if (component.nameEn.isNotEmpty &&
-                          component.nameEn != component.namePt)
-                        Text(
-                          component.nameEn,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant
-                                .withValues(alpha: 0.75),
-                            fontSize: 11,
-                          ),
-                          textAlign: TextAlign.center,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
                       const SizedBox(height: 4),
                     ] else
                       Padding(
