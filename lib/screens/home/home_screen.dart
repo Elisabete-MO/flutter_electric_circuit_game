@@ -155,13 +155,13 @@ class HomeScreen extends ConsumerWidget {
           return Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(child: cardTutorial(245)),
+              Expanded(child: cardTutorial(280)),
               SizedBox(width: gap),
-              Expanded(child: cardCampaign(245)),
+              Expanded(child: cardCampaign(280)),
               SizedBox(width: gap),
-              Expanded(child: cardSandbox(245)),
+              Expanded(child: cardSandbox(280)),
               SizedBox(width: gap),
-              Expanded(child: cardSettings(245)),
+              Expanded(child: cardSettings(280)),
             ],
           );
         }
@@ -172,18 +172,18 @@ class HomeScreen extends ConsumerWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(child: cardTutorial(225)),
+                  Expanded(child: cardTutorial(260)),
                   SizedBox(width: gap),
-                  Expanded(child: cardCampaign(225)),
+                  Expanded(child: cardCampaign(260)),
                 ],
               ),
               SizedBox(height: gap),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(child: cardSandbox(225)),
+                  Expanded(child: cardSandbox(260)),
                   SizedBox(width: gap),
-                  Expanded(child: cardSettings(225)),
+                  Expanded(child: cardSettings(260)),
                 ],
               ),
             ],
@@ -311,6 +311,8 @@ class _CyberMenuCardState extends State<_CyberMenuCard> {
           // Descrição
           Text(
             widget.description,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: isDark ? scheme.onSurfaceVariant : scheme.onSurface.withValues(alpha: 0.75),
               height: 1.4,

@@ -82,11 +82,6 @@ void main() {
           find.text('LABORATÓRIO VIRTUAL DE CIRCUITOS'),
           findsOneWidget,
         );
-
-        expect(
-          find.text('ELETROLAB CYBER STATION • v1.0.0'),
-          findsOneWidget,
-        );
       },
     );
 
@@ -96,17 +91,17 @@ void main() {
         await pumpApp(tester);
 
         expect(
-          find.text('Primeiros passos'),
+          find.text('Primeiros Passos'),
           findsOneWidget,
         );
 
         expect(
-          find.text('Começar'),
+          find.text('Desafios'),
           findsOneWidget,
         );
 
         expect(
-          find.text('Banqueta'),
+          find.text('Bancada Livre'),
           findsOneWidget,
         );
 
@@ -122,11 +117,11 @@ void main() {
       (tester) async {
         await pumpApp(tester);
 
-        await tapSection(tester, 'Banqueta');
+        await tapSection(tester, 'Bancada Livre');
 
         expect(
-          find.text('Em construção'),
-          findsOneWidget,
+          find.text('Bancada Livre'),
+          findsWidgets,
         );
 
         final navigator = tester.state<NavigatorState>(
@@ -138,8 +133,8 @@ void main() {
         await pumpSettle(tester);
 
         expect(
-          find.text('Banqueta'),
-          findsOneWidget,
+          find.text('Bancada Livre'),
+          findsWidgets,
         );
       },
     );

@@ -16,6 +16,18 @@ class SandboxController extends Notifier<SandboxState> {
     _recalculateCircuit();
   }
 
+  void moveComponent(String componentId, int newX, int newY) {
+    final updated = state.components.map((c) {
+      if (c.id == componentId) {
+        return c.copyWith(gridX: newX, gridY: newY);
+      }
+      return c;
+    }).toList();
+
+    state = state.copyWith(components: updated);
+    _recalculateCircuit();
+  }
+
   void removeComponent(String componentId) {
     final updatedComponents = state.components.where((c) => c.id != componentId).toList();
     // Remove wires connected to the deleted component
