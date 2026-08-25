@@ -99,7 +99,7 @@ class HomeScreen extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return Wrap(
-      alignment: WrapAlignment.spaceBetween,
+      alignment: WrapAlignment.end,
       runSpacing: 12,
       children: [
         // HUD de Estrelas Ganhas
