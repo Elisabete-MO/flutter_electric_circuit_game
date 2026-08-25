@@ -5,12 +5,15 @@ import '../../models/first_step_component.dart';
 import '../../widgets/component_detail_dialog.dart';
 import '../../widgets/prof_volts_speech.dart';
 import '../../widgets/symbol_card.dart';
+import '../../widgets/prof_volts_feedback_dialog.dart';
+import '../../widgets/prof_volts_full_body.dart';
+import '../../widgets/glass_container.dart';
 
 import '../../widgets/tech_grid_background.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Seção "Primeiros passos" — introdução interativa inspirada nas telas de referência.
-/// Combina o grid de 8 quadrantes nítido (Imagem 2) com a faixa de instrução orientativa
+/// SeÃ§Ã£o "Primeiros passos" â€” introduÃ§Ã£o interativa inspirada nas telas de referÃªncia.
+/// Combina o grid de 8 quadrantes nÃ­tido (Imagem 2) com a faixa de instruÃ§Ã£o orientativa
 /// "Observe. You have to know these symbols for this activity." (Imagem 1).
 class FirstStepsScreen extends StatefulWidget {
   const FirstStepsScreen({super.key});
@@ -74,75 +77,166 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
     final l10n = AppLocalizations.of(context)!;
     final name = l10n.localeName == 'en' ? selected.nameEn : selected.namePt;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          isCorrect
-              ? l10n.quizCorrect
-              : l10n.quizIncorrect(name),
-        ),
-        backgroundColor: isCorrect ? Colors.green[700] : Colors.red[700],
-        duration: const Duration(seconds: 2),
-      ),
-    );
-
-    setState(() {
-      if (isCorrect) {
-        _quizScore++;
-        _answeredCorrectlyIds.add(selected.id);
-        if (_quizCurrentIndex < _quizQuestions.length - 1) {
-          _quizCurrentIndex++;
-        } else {
-          _showQuizResultsDialog();
-        }
-      }
-    });
-  }
-
-  void _showQuizResultsDialog() {
-    final l10n = AppLocalizations.of(context)!;
+    final feedbackMessage = isCorrect
+        ? l10n.quizCorrect
+        : l10n.quizIncorrect(name);
 
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            const Icon(Icons.emoji_events_rounded, color: Color(0xFFFFB300)),
-            const SizedBox(width: 8),
-            Text(
-              l10n.quizResultTitle,
-              style: TextStyle(
-                fontFamily: GoogleFonts.rajdhani().fontFamily,
-                fontWeight: FontWeight.bold,
+      builder: (context) => ProfVoltsFeedbackDialog(
+        isCorrect: isCorrect,
+        message: feedbackMessage,
+        onAction: () {
+          Navigator.of(context).pop();
+          if (isCorrect) {
+            setState(() {
+              _quizScore++;
+              _answeredCorrectlyIds.add(selected.id);
+              if (_quizCurrentIndex < _quizQuestions.length - 1) {
+                _quizCurrentIndex++;
+              } else {
+                _showQuizResultsDialog();
+              }
+            });
+          }
+        },
+      ),
+    );
+  }
+
+  void _showQuizResultsDialog() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
+    final isSuccess = _quizScore >= (_quizQuestions.length / 2);
+    final accentColor = isSuccess
+        ? (isDark ? const Color(0xFF00FF9D) : const Color(0xFF00875A))
+        : (isDark ? const Color(0xFFFF3B7F) : const Color(0xFFD81B60));
+    final buttonTextColor = isDark ? Colors.black : Colors.white;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+        child: GlassContainer(
+          borderRadius: 24,
+          accentColor: accentColor,
+          opacity: isDark ? 0.8 : 0.9,
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 1. Mascote Corpo Inteiro
+              ProfVoltsFullBody(
+                emotion: isSuccess ? ProfVoltsEmotion.happy : ProfVoltsEmotion.sad,
+                size: 150,
               ),
-            ),
-          ],
-        ),
-        content: Text(
-          l10n.quizResultMsg(_quizScore, _quizQuestions.length),
-          style: TextStyle(
-            fontSize: 16,
-            fontFamily: GoogleFonts.outfit().fontFamily,
+              const SizedBox(height: 16),
+              
+              // 2. TÃ­tulo HUD Cyber
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: accentColor.withValues(alpha: 0.5)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isSuccess ? Icons.emoji_events_rounded : Icons.info_outline_rounded,
+                      color: accentColor,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      l10n.quizResultTitle.toUpperCase(),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontFamily: GoogleFonts.rajdhani().fontFamily,
+                        fontWeight: FontWeight.bold,
+                        color: accentColor,
+                        letterSpacing: 1.5,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // 3. Mensagem explicativa
+              Text(
+                l10n.quizResultMsg(_quizScore, _quizQuestions.length),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  height: 1.4,
+                  fontSize: 16,
+                  fontFamily: GoogleFonts.outfit().fontFamily,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+
+              // 4. BotÃµes de AÃ§Ã£o
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        _resetStudyMode();
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: theme.colorScheme.onSurface.withValues(alpha: 0.3)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: Text(
+                        l10n.quizBackStudy.toUpperCase(),
+                        style: TextStyle(
+                          fontFamily: GoogleFonts.rajdhani().fontFamily,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        _startQuizMode();
+                      },
+                      style: FilledButton.styleFrom(
+                        backgroundColor: accentColor,
+                        foregroundColor: buttonTextColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: Text(
+                        l10n.buttonRetry.toUpperCase(),
+                        style: TextStyle(
+                          fontFamily: GoogleFonts.rajdhani().fontFamily,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _resetStudyMode();
-            },
-            child: Text(l10n.quizBackStudy),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _startQuizMode();
-            },
-            child: Text(l10n.buttonRetry),
-          ),
-        ],
       ),
     );
   }
@@ -165,7 +259,7 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
                   ? Icons.info_rounded
                   : Icons.info_outline_rounded,
             ),
-            tooltip: 'Alternar instrução',
+            tooltip: 'Alternar instruÃ§Ã£o',
             onPressed: () {
               setState(() {
                 _showBannerOverlay = !_showBannerOverlay;
@@ -192,7 +286,7 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
         child: SafeArea(
           child: Column(
           children: [
-            // Balão de fala do Prof. Volts orientativo
+            // BalÃ£o de fala do Prof. Volts orientativo
             if (_showBannerOverlay && !_isQuizMode)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -251,7 +345,7 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
                     ),
                   ),
 
-                // GRID DE 8 COMPONENTES (Inspirado exatamente nas 8 divisões das referências)
+                // GRID DE 8 COMPONENTES (Inspirado exatamente nas 8 divisÃµes das referÃªncias)
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.all(12),

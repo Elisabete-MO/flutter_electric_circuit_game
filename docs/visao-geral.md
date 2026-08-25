@@ -3,7 +3,7 @@
 ## O que é
 
 **EletroLab** é um laboratório virtual de circuitos elétricos com fins
-educacionais, desenvolvido com **Flutter + Flame**. Inspira-se no *conceito* de
+educacionais, desenvolvido com a API nativa de desenho **CustomPainter do Flutter**. Inspira-se no *conceito* de
 simuladores educacionais interativos (como o PhET Circuit Construction Kit),
 mas com **implementação, código, textos, assets e identidade visual próprios**.
 
@@ -36,8 +36,8 @@ ferramenta profissional de engenharia.
    - 🧪 **Banqueta** — laboratório livre.
    - ⚙️ **Configurações** — aparência, simulação, acessibilidade e dados.
 
-2. **Motor de simulação** separado da camada visual (Flame):
-   `UI → Flame → Circuit Model → Circuit Solver → SimulationResult`.
+2. **Motor de simulação** separado da camada visual (CustomPainter):
+   `UI → CustomPainter → Circuit Model → Circuit Solver → SimulationResult`.
 
 3. **Componentes** (v1): bateria, resistor, lâmpada, interruptor, fio e
    multímetro.

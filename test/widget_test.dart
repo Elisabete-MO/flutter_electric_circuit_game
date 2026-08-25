@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:eletrolab/app/app.dart';
 import 'package:eletrolab/models/settings_model.dart';
 import 'package:eletrolab/services/settings_service.dart';
+import 'package:eletrolab/state/progress_controller.dart';
 import 'package:eletrolab/state/settings_controller.dart';
 
 void main() {
@@ -13,17 +14,35 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
+  /// Avança o tempo de forma controlada.
+  ///
+  /// Não utiliza pumpAndSettle porque o aplicativo possui animações contínuas,
+  /// que podem impedir o teste de atingir um estado completamente estável.
+  Future<void> pumpSettle(WidgetTester tester) async {
+    for (int i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+  }
+
   Future<void> pumpApp(
     WidgetTester tester, {
     SettingsModel settings = const SettingsModel(),
   }) async {
+    final prefs = await SharedPreferences.getInstance();
+
     await tester.binding.setSurfaceSize(const Size(900, 2000));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    addTearDown(() async {
+      await tester.binding.setSurfaceSize(null);
+    });
 
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          settingsRepositoryProvider.overrideWithValue(SettingsService()),
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          settingsRepositoryProvider.overrideWithValue(
+            SettingsService(),
+          ),
           settingsControllerProvider.overrideWith(
             () => SettingsController(initial: settings),
           ),
@@ -31,75 +50,152 @@ void main() {
         child: const EletroLabApp(),
       ),
     );
-    await tester.pumpAndSettle();
+
+    await pumpSettle(tester);
   }
 
-  Future<void> tapSection(WidgetTester tester, String label) async {
+  Future<void> tapSection(
+    WidgetTester tester,
+    String label,
+  ) async {
     final finder = find.text(label);
+
     await tester.ensureVisible(finder);
-    await tester.pumpAndSettle();
+    await pumpSettle(tester);
+
     await tester.tap(finder);
-    await tester.pumpAndSettle();
+    await pumpSettle(tester);
   }
 
   group('Home', () {
-    testWidgets('exibe a identidade do EletroLab', (tester) async {
-      await pumpApp(tester);
+    testWidgets(
+      'exibe a identidade do EletroLab',
+      (tester) async {
+        await pumpApp(tester);
 
-      expect(find.text('EletroLab'), findsOneWidget);
-      expect(
-        find.text('Seu laboratório virtual de circuitos'),
-        findsOneWidget,
-      );
-      expect(find.text('EletroLab v1.0.0'), findsOneWidget);
-    });
+        expect(
+          find.text('EletroLab'),
+          findsOneWidget,
+        );
 
-    testWidgets('exibe as quatro opções principais', (tester) async {
-      await pumpApp(tester);
+        expect(
+          find.text('LABORATÓRIO VIRTUAL DE CIRCUITOS'),
+          findsOneWidget,
+        );
 
-      expect(find.text('Primeiros passos'), findsOneWidget);
-      expect(find.text('Começar'), findsOneWidget);
-      expect(find.text('Banqueta'), findsOneWidget);
-      expect(find.text('Configurações'), findsOneWidget);
-    });
+        expect(
+          find.text('ELETROLAB CYBER STATION • v1.0.0'),
+          findsOneWidget,
+        );
+      },
+    );
 
-    testWidgets('navega das seções de volta para a home', (tester) async {
-      await pumpApp(tester);
+    testWidgets(
+      'exibe as quatro opções principais',
+      (tester) async {
+        await pumpApp(tester);
 
-      await tapSection(tester, 'Banqueta');
-      expect(find.text('Em construção'), findsOneWidget);
+        expect(
+          find.text('Primeiros passos'),
+          findsOneWidget,
+        );
 
-      final navigator =
-          tester.state<NavigatorState>(find.byType(Navigator).first);
-      navigator.pop();
-      await tester.pumpAndSettle();
-      expect(find.text('Banqueta'), findsOneWidget);
-    });
+        expect(
+          find.text('Começar'),
+          findsOneWidget,
+        );
+
+        expect(
+          find.text('Banqueta'),
+          findsOneWidget,
+        );
+
+        expect(
+          find.text('Configurações'),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'navega das seções de volta para a home',
+      (tester) async {
+        await pumpApp(tester);
+
+        await tapSection(tester, 'Banqueta');
+
+        expect(
+          find.text('Em construção'),
+          findsOneWidget,
+        );
+
+        final navigator = tester.state<NavigatorState>(
+          find.byType(Navigator).first,
+        );
+
+        navigator.pop();
+
+        await pumpSettle(tester);
+
+        expect(
+          find.text('Banqueta'),
+          findsOneWidget,
+        );
+      },
+    );
   });
 
   group('Settings', () {
-    testWidgets('abre a tela de configurações', (tester) async {
-      await pumpApp(tester);
+    testWidgets(
+      'abre a tela de configurações',
+      (tester) async {
+        await pumpApp(tester);
 
-      await tapSection(tester, 'Configurações');
+        await tapSection(tester, 'Configurações');
 
-      expect(find.text('Aparência e Idioma'), findsOneWidget);
-      expect(find.text('Simulação'), findsOneWidget);
-      expect(find.text('Acessibilidade'), findsOneWidget);
-      expect(find.text('Dados'), findsOneWidget);
-      expect(find.text('Versão 1.0.0'), findsOneWidget);
-    });
+        expect(
+          find.text('Aparência e Idioma'),
+          findsOneWidget,
+        );
 
-    testWidgets('troca o tema para escuro e persiste', (tester) async {
-      await pumpApp(tester);
+        expect(
+          find.text('Simulação'),
+          findsOneWidget,
+        );
 
-      await tapSection(tester, 'Configurações');
+        expect(
+          find.text('Acessibilidade'),
+          findsOneWidget,
+        );
 
-      await tapSection(tester, 'Escuro');
+        expect(
+          find.text('Dados'),
+          findsOneWidget,
+        );
 
-      final service = SettingsService();
-      final saved = await service.load();
-      expect(saved.themeMode, AppThemeMode.dark);
-    });
+        expect(
+          find.text('Versão 1.0.0'),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'troca o tema para escuro e persiste',
+      (tester) async {
+        await pumpApp(tester);
+
+        await tapSection(tester, 'Configurações');
+        await tapSection(tester, 'Escuro');
+
+        final service = SettingsService();
+        final savedSettings = await service.load();
+
+        expect(
+          savedSettings.themeMode,
+          AppThemeMode.dark,
+        );
+      },
+    );
   });
 }

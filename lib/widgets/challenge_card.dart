@@ -162,43 +162,10 @@ class _ChallengeCardState extends State<ChallengeCard> {
           ),
           const SizedBox(height: 12),
 
-          // Rodapé do Cartão: Indicador de Conclusão / Botão de Iniciar
+          // Rodapé do Cartão: Botão de Iniciar / Ação
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Row(
-                children: [
-                  Icon(
-                    challenge.isLocked
-                        ? Icons.lock_rounded
-                        : challenge.isCompleted
-                            ? Icons.check_circle_rounded
-                            : Icons.flag_rounded,
-                    size: 16,
-                    color: challenge.isLocked
-                        ? theme.colorScheme.onSurfaceVariant
-                        : challenge.isCompleted
-                            ? const Color(0xFF2E7D32)
-                            : theme.colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    challenge.isLocked
-                        ? 'Bloqueado'
-                        : challenge.isCompleted
-                            ? l10n.challengeStatusCompleted
-                            : l10n.challengeStatusAvailable,
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: challenge.isLocked
-                          ? theme.colorScheme.onSurfaceVariant
-                          : challenge.isCompleted
-                              ? const Color(0xFF2E7D32)
-                              : theme.colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
               Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(14),

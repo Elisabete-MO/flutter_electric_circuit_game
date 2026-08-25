@@ -13,14 +13,15 @@ import '../../widgets/circuit_symbol_painter.dart';
 import '../../widgets/component_physical_painter.dart';
 import '../../widgets/prof_volts_speech.dart';
 import '../../widgets/tech_grid_background.dart';
+import '../../widgets/prof_volts_challenge_dialog.dart';
 
-/// Tela interativa da execução do Desafio 3.
+/// Tela interativa da execuÃ§Ã£o do Desafio 3.
 ///
-/// Circuito com 4 componentes em série:
+/// Circuito com 4 componentes em sÃ©rie:
 /// 1. Bateria (esquerda, invertida + na base)
 /// 2. Chave alavanca / Interruptor (topo)
 /// 3. Resistor (direita)
-/// 4. Lâmpada (base)
+/// 4. LÃ¢mpada (base)
 class Challenge3DetailScreen extends ConsumerStatefulWidget {
   const Challenge3DetailScreen({super.key});
 
@@ -34,7 +35,7 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
   bool _isSwitchClosed = false;
   bool _showDiagramMode = false;
 
-  // Estado do Passo 2: Símbolos posicionados nos 4 slots (Bateria, Interruptor, Resistor, Lâmpada)
+  // Estado do Passo 2: SÃ­mbolos posicionados nos 4 slots (Bateria, Interruptor, Resistor, LÃ¢mpada)
   ComponentType? _slotBattery;
   ComponentType? _slotSwitch;
   ComponentType? _slotResistor;
@@ -117,56 +118,21 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Icon(
-              isCorrect ? Icons.check_circle_rounded : Icons.error_rounded,
-              color: isCorrect ? const Color(0xFF2E7D32) : const Color(0xFFC62828),
-            ),
-            const SizedBox(width: 10),
-            Text(isCorrect ? l10n.dialogCorrectTitle : l10n.dialogIncorrectTitle),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              isCorrect ? l10n.dialogCorrectMsg : l10n.dialogIncorrectMsg,
-            ),
-            if (isCorrect) ...[
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(3, (index) {
-                  return Icon(
-                    index < stars ? Icons.star_rounded : Icons.star_outline_rounded,
-                    color: index < stars ? Colors.amber : Colors.grey.shade400,
-                    size: 40,
-                  );
-                }),
-              ),
-            ],
-          ],
-        ),
-        actions: [
-          if (!isCorrect)
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(l10n.buttonRetry),
-            )
-          else
-            FilledButton(
-              onPressed: () async {
-                await ref.read(progressControllerProvider.notifier).markAsCompleted('challenge_3', stars: stars);
-                if (!context.mounted) return;
-                Navigator.of(context).pop();
-                Navigator.of(context).pop();
-              },
-              child: Text(l10n.buttonComplete),
-            ),
-        ],
+      builder: (context) => ProfVoltsChallengeDialog(
+        isCorrect: isCorrect,
+        title: isCorrect ? l10n.dialogCorrectTitle : l10n.dialogIncorrectTitle,
+        message: isCorrect ? l10n.dialogCorrectMsg : l10n.dialogIncorrectMsg,
+        stars: stars,
+        onAction: () async {
+          if (isCorrect) {
+            await ref.read(progressControllerProvider.notifier).markAsCompleted('challenge_3', stars: stars);
+            if (!context.mounted) return;
+            Navigator.of(context).pop(); // fecha modal
+            Navigator.of(context).pop(); // volta pra tela de desafios
+          } else {
+            Navigator.of(context).pop(); // apenas fecha modal para tentar de novo
+          }
+        },
       ),
     );
   }
@@ -199,7 +165,7 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
             children: [
             Column(
               children: [
-                // Painel Superior de Instruções (Mascote)
+                // Painel Superior de InstruÃ§Ãµes (Mascote)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: ProfVoltsSpeech(
@@ -210,7 +176,7 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
                   ),
                 ),
 
-            // Área Principal do Desafio
+            // Ãrea Principal do Desafio
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) {
@@ -236,7 +202,7 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
                         ),
                       ),
 
-                      // Camada de Partículas Elétricas Dinâmicas (60fps)
+                      // Camada de PartÃ­culas ElÃ©tricas DinÃ¢micas (60fps)
                       if (_isSwitchClosed && !_showDiagramMode)
                         Positioned.fill(
                           child: RepaintBoundary(
@@ -261,7 +227,7 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
                           ),
                         ),
 
-                      // Interruptor Físico Clicável (Modo Físico)
+                      // Interruptor FÃ­sico ClicÃ¡vel (Modo FÃ­sico)
                       if (!_showDiagramMode)
                         Positioned(
                           top: 16,
@@ -313,7 +279,7 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
                           ),
                         ),
 
-                      // Clique Direto no Asset do Interruptor Físico na Bancada
+                      // Clique Direto no Asset do Interruptor FÃ­sico na Bancada
                       if (!_showDiagramMode)
                         Positioned(
                           left: constraints.maxWidth * 0.72 - 65,
@@ -335,7 +301,7 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
                           ),
                         ),
 
-                      // Painel de Controle do Diagrama Elétrico ("Fechar Diagrama", "Verificar", "Reiniciar")
+                      // Painel de Controle do Diagrama ElÃ©trico ("Fechar Diagrama", "Verificar", "Reiniciar")
                       Positioned(
                         left: 0,
                         right: 0,
@@ -375,7 +341,7 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
                         ),
                       ),
 
-                      // Slots de Drop no Modo Diagrama (Bateria, Interruptor, Resistor, Lâmpada)
+                      // Slots de Drop no Modo Diagrama (Bateria, Interruptor, Resistor, LÃ¢mpada)
                       if (_showDiagramMode)
                         Positioned.fill(
                           child: LayoutBuilder(
@@ -383,7 +349,7 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
                               final cx = constraints.maxWidth / 2;
                               final cy = constraints.maxHeight / 2;
 
-                              // Adapta dinamicamente o tamanho do diagrama às dimensões da tela
+                              // Adapta dinamicamente o tamanho do diagrama Ã s dimensÃµes da tela
                               final dx = (constraints.maxWidth * 0.26).clamp(80.0, 150.0);
                               final dy = (constraints.maxHeight * 0.22).clamp(55.0, 100.0);
 
@@ -407,7 +373,7 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
                                     isVertical: true,
                                   ),
 
-                                  // Slot 2: Lâmpada (Topo do Diagrama)
+                                  // Slot 2: LÃ¢mpada (Topo do Diagrama)
                                   _buildDropSlot(
                                     left: cx - 40,
                                     top: topY - 30,
@@ -531,6 +497,7 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
             ),
             Expanded(
               child: ListView(
+                controller: _paletteVerticalScrollController,
                 padding: const EdgeInsets.all(8),
                 children: symbolList,
               ),
@@ -564,6 +531,7 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
             ),
             Expanded(
               child: ListView(
+                controller: _paletteHorizontalScrollController,
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 children: symbolList,
@@ -716,7 +684,7 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
   }
 }
 
-/// CustomPainter que desenha os 4 componentes físicos (bateria invertida, chave alavanca, resistor e lâmpada) e o diagrama retangular completo
+/// CustomPainter que desenha os 4 componentes fÃ­sicos (bateria invertida, chave alavanca, resistor e lÃ¢mpada) e o diagrama retangular completo
 class _Challenge3BoardPainter extends CustomPainter {
   _Challenge3BoardPainter({
     required this.isSwitchClosed,
@@ -821,7 +789,7 @@ class _Challenge3BoardPainter extends CustomPainter {
       return;
     }
 
-    // --- DESENHO DOS FIOS (Efeito Cilíndrico 3D com Brilho Especular e Sombra Projetada) ---
+    // --- DESENHO DOS FIOS (Efeito CilÃ­ndrico 3D com Brilho Especular e Sombra Projetada) ---
     final shadowTransform = Matrix4.translationValues(3, 6, 0);
 
     final wireFloorShadowPaint = Paint()
@@ -969,7 +937,7 @@ class _Challenge3BoardPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.square;
 
-    // Adapta dinamicamente a largura e a altura do retângulo do diagrama à tela
+    // Adapta dinamicamente a largura e a altura do retÃ¢ngulo do diagrama Ã  tela
     final dx = (w * 0.26).clamp(80.0, 150.0);
     final dy = (h * 0.22).clamp(55.0, 100.0);
 
@@ -1005,6 +973,7 @@ class _Challenge3BoardPainter extends CustomPainter {
         oldDelegate.slotResistor != slotResistor ||
         oldDelegate.slotBulb != slotBulb ||
         oldDelegate.isDark != isDark ||
-        oldDelegate.currentProgress != currentProgress;
+        oldDelegate.currentProgress != currentProgress ||
+        oldDelegate.drawParticlesOnly != drawParticlesOnly;
   }
 }

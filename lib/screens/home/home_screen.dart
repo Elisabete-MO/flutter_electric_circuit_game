@@ -11,7 +11,7 @@ import '../../widgets/eletrolab_logo.dart';
 import '../../widgets/prof_volts_speech.dart';
 import '../../widgets/tech_grid_background.dart';
 
-/// Tela inicial do EletroLab: Estação Cyber HUD com Dashboard e estatísticas do jogador.
+/// Tela inicial do EletroLab: EstaÃ§Ã£o Cyber HUD com Dashboard e estatÃ­sticas do jogador.
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
@@ -22,7 +22,7 @@ class HomeScreen extends ConsumerWidget {
     final isDark = theme.brightness == Brightness.dark;
     final progress = ref.watch(progressControllerProvider);
 
-    // Calcular estatísticas
+    // Calcular estatÃ­sticas
     final completedCount = progress.completedChallenges.length;
     final totalStars = progress.challengeStars.values.fold<int>(0, (sum, stars) => sum + stars);
 
@@ -45,24 +45,24 @@ class HomeScreen extends ConsumerWidget {
                     const Center(child: EletroLabLogo()),
                     const SizedBox(height: 24),
 
-                    // SAUDAÇÃO DO PROF. VOLTS
+                    // SAUDAÃ‡ÃƒO DO PROF. VOLTS
                     ProfVoltsSpeech(
                       text: completedCount == 0
                           ? 'Bem-vindo ao EletroLab! Comece pelo tutorial de "Primeiros Passos" ou encare o primeiro desafio.'
                           : completedCount == 3
-                              ? 'Parabéns, Engenheiro! Você completou todos os desafios com sucesso. Continue praticando na Bancada Livre!'
-                              : 'Excelente progresso! Você já concluiu $completedCount de 3 desafios. Continue acelerando!',
+                              ? 'ParabÃ©ns, Engenheiro! VocÃª completou todos os desafios com sucesso. Continue praticando na Bancada Livre!'
+                              : 'Excelente progresso! VocÃª jÃ¡ concluiu $completedCount de 3 desafios. Continue acelerando!',
                     ),
                     const SizedBox(height: 28),
 
-                    // GRID DE OPÇÕES BENTO STYLED
+                    // GRID DE OPÃ‡Ã•ES BENTO STYLED
                     _buildBentoGrid(context, l10n, completedCount),
                     const SizedBox(height: 32),
 
-                    // RODAPÉ
+                    // RODAPÃ‰
                     Center(
                       child: Text(
-                        'ELETROLAB CYBER STATION • v1.0.0',
+                        'ELETROLAB CYBER STATION â€¢ v1.0.0',
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                           letterSpacing: 2.0,
@@ -126,7 +126,7 @@ class HomeScreen extends ConsumerWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'SISTEMA ONLINE • 220V',
+                'SISTEMA ONLINE â€¢ 220V',
                 style: theme.textTheme.labelSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.2,
@@ -233,7 +233,7 @@ class HomeScreen extends ConsumerWidget {
         _CyberMenuCard cardSandbox(double? h) => buildCard(
           title: l10n.menuSandbox,
           description: l10n.menuSandboxDesc,
-          tag: 'LABORATÓRIO LIVRE 3D',
+          tag: 'LABORATÃ“RIO LIVRE 3D',
           icon: Icons.biotech_rounded,
           accentColor: EletroLabColors.neonCyan,
           onTap: () => Navigator.of(context).pushNamed(Routes.sandbox),
@@ -307,7 +307,7 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-/// Cartão Bento Tecnológico Cyber com Tag HUD e Efeitos Neon Interativos.
+/// CartÃ£o Bento TecnolÃ³gico Cyber com Tag HUD e Efeitos Neon Interativos.
 class _CyberMenuCard extends StatefulWidget {
   const _CyberMenuCard({
     required this.title,
@@ -355,11 +355,11 @@ class _CyberMenuCardState extends State<_CyberMenuCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Top Row: Tag HUD + Ícone Neon
+          // Top Row: Tag HUD + Ãcone Neon
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Tag Cyber HUD Tecnológica
+              // Tag Cyber HUD TecnolÃ³gica
               Expanded(
                 child: Container(
                   margin: const EdgeInsets.only(right: 8),
@@ -388,7 +388,7 @@ class _CyberMenuCardState extends State<_CyberMenuCard> {
                   ),
                 ),
               ),
-              // Ícone com brilho Neon
+              // Ãcone com brilho Neon
               AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.all(12),
@@ -425,7 +425,7 @@ class _CyberMenuCardState extends State<_CyberMenuCard> {
           ),
           const SizedBox(height: 12),
 
-          // Título
+          // TÃ­tulo
           Text(
             widget.title,
             style: theme.textTheme.titleLarge?.copyWith(
@@ -436,7 +436,7 @@ class _CyberMenuCardState extends State<_CyberMenuCard> {
           ),
           const SizedBox(height: 6),
 
-          // Descrição
+          // DescriÃ§Ã£o
           Text(
             widget.description,
             style: theme.textTheme.bodyMedium?.copyWith(
@@ -446,7 +446,7 @@ class _CyberMenuCardState extends State<_CyberMenuCard> {
           ),
           const SizedBox(height: 12),
 
-          // Rodapé: Seta Ação
+          // RodapÃ©: Seta AÃ§Ã£o
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [

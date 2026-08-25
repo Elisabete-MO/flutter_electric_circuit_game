@@ -74,15 +74,9 @@ Laboratório virtual de circuitos elétricos.
 Versão X.X.X
 ```
 
-## Planejado (Fase 9)
+## Estado de Implementação (Fase 9 — Concluída)
 
-- Persistência completa: configurações, progresso e desafios concluídos.
-- Resetar progresso habilitado.
-- Refinamento de acessibilidade (alto contraste aplicado ao tema, reduzir
-  animações ligado ao Flame).
-- `ProgressService` e `ProgressData` (primeiros passos, desafios concluídos).
-
-## Referências
-
-- [`estrutura.md`](estrutura.md) — provedores e persistência.
-- [`roadmap.md`](roadmap.md) — Fase 9.
+- **Persistência Completa**: Configurações gerais e progresso do jogador (desafios concluídos e número de estrelas obtidas) são mantidos com persistência reativa local.
+- **Gerenciador de Progresso**: O `ProgressController` salva os desafios resolvidos localmente e atualiza dinamicamente as telas de listagem.
+- **Redução de Animações**: O controle de acessibilidade "reduzir animações" afeta a taxa de atualização do `CustomPainter` e as velocidades de simulação visual (partículas e rotações).
+- **Testabilidade**: Os testes contam com isolamento de `SharedPreferences` injetando instâncias falsas ou mockadas usando `ProviderScope`.
