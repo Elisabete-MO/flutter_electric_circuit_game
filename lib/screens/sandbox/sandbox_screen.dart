@@ -166,6 +166,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
             child: ModeToggleSwitch(
               isDiagramMode: _isDiagramMode,
               onChanged: (val) => setState(() => _isDiagramMode = val),
+              isCompact: true,
             ),
           ),
           // Seletor de Tamanho da Bancada / Grid (Aumentar/Diminuir)

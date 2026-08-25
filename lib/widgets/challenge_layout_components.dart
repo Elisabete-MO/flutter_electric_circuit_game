@@ -223,10 +223,12 @@ class ModeToggleSwitch extends StatelessWidget {
     super.key,
     required this.isDiagramMode,
     required this.onChanged,
+    this.isCompact = false,
   });
 
   final bool isDiagramMode;
   final ValueChanged<bool> onChanged;
+  final bool isCompact;
 
   @override
   Widget build(BuildContext context) {
@@ -234,14 +236,31 @@ class ModeToggleSwitch extends StatelessWidget {
     final locale = Localizations.localeOf(context).languageCode;
     final isEn = locale == 'en';
 
+    final horizontalPadding = isCompact ? 10.0 : 14.0;
+    final verticalPadding = isCompact ? 6.0 : 9.5;
+    final iconSize = isCompact ? 15.0 : 17.0;
+    final fontSize = isCompact ? 11.0 : 13.0;
+
     return Container(
+      padding: isCompact ? EdgeInsets.zero : const EdgeInsets.all(2),
       decoration: BoxDecoration(
-        color: isDark ? Colors.black45 : Colors.white60,
-        borderRadius: BorderRadius.circular(20),
+        color: isDark ? Colors.black54 : const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(isCompact ? 20 : 24),
         border: Border.all(
-          color: isDark ? const Color(0xFF00F5D4).withValues(alpha: 0.4) : const Color(0xFF00F5D4),
-          width: 1.2,
+          color: isDark
+              ? const Color(0xFF00F5D4).withValues(alpha: 0.4)
+              : const Color(0xFF00F5D4),
+          width: isCompact ? 1.2 : 1.5,
         ),
+        boxShadow: isCompact
+            ? null
+            : [
+                BoxShadow(
+                  color: const Color(0xFF00F5D4).withValues(alpha: 0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -250,25 +269,36 @@ class ModeToggleSwitch extends StatelessWidget {
             onTap: () => onChanged(false),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalPadding,
+                vertical: verticalPadding,
+              ),
               decoration: BoxDecoration(
-                color: !isDiagramMode ? const Color(0xFF00F5D4) : Colors.transparent,
-                borderRadius: BorderRadius.circular(16),
+                color: !isDiagramMode
+                    ? const Color(0xFF00F5D4)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(isCompact ? 16 : 20),
               ),
               child: Row(
                 children: [
                   Icon(
                     Icons.view_in_ar_rounded,
-                    size: 15,
-                    color: !isDiagramMode ? Colors.black : (isDark ? Colors.white70 : Colors.black87),
+                    size: iconSize,
+                    color: !isDiagramMode
+                        ? Colors.black
+                        : (isDark ? Colors.white70 : Colors.black87),
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 5),
                   Text(
                     isEn ? 'Physical' : 'Físico',
                     style: TextStyle(
-                      fontSize: 11,
+                      fontFamily: GoogleFonts.rajdhani().fontFamily,
+                      fontSize: fontSize,
                       fontWeight: FontWeight.bold,
-                      color: !isDiagramMode ? Colors.black : (isDark ? Colors.white70 : Colors.black87),
+                      letterSpacing: 0.5,
+                      color: !isDiagramMode
+                          ? Colors.black
+                          : (isDark ? Colors.white70 : Colors.black87),
                     ),
                   ),
                 ],
@@ -279,25 +309,36 @@ class ModeToggleSwitch extends StatelessWidget {
             onTap: () => onChanged(true),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalPadding,
+                vertical: verticalPadding,
+              ),
               decoration: BoxDecoration(
-                color: isDiagramMode ? const Color(0xFF00F5D4) : Colors.transparent,
-                borderRadius: BorderRadius.circular(16),
+                color: isDiagramMode
+                    ? const Color(0xFF00F5D4)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(isCompact ? 16 : 20),
               ),
               child: Row(
                 children: [
                   Icon(
                     Icons.schema_outlined,
-                    size: 15,
-                    color: isDiagramMode ? Colors.black : (isDark ? Colors.white70 : Colors.black87),
+                    size: iconSize,
+                    color: isDiagramMode
+                        ? Colors.black
+                        : (isDark ? Colors.white70 : Colors.black87),
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 5),
                   Text(
                     isEn ? 'Diagram' : 'Diagrama',
                     style: TextStyle(
-                      fontSize: 11,
+                      fontFamily: GoogleFonts.rajdhani().fontFamily,
+                      fontSize: fontSize,
                       fontWeight: FontWeight.bold,
-                      color: isDiagramMode ? Colors.black : (isDark ? Colors.white70 : Colors.black87),
+                      letterSpacing: 0.5,
+                      color: isDiagramMode
+                          ? Colors.black
+                          : (isDark ? Colors.white70 : Colors.black87),
                     ),
                   ),
                 ],
