@@ -35,9 +35,49 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
 
   String? _selectedComponentId;
   ConnectionSource? _connectionSource;
+  ConnectionSource? _snappedTarget;
+  Offset? _currentMousePos;
   late final AnimationController _wireAnimationController;
   bool _showMascot = true;
   ProfVoltsEmotion _lastVoltsEmotion = ProfVoltsEmotion.neutral;
+
+  ConnectionSource? _findNearestTerminal(
+    Offset mousePos,
+    double cellSize,
+    List<SandboxComponent> components,
+    ConnectionSource? currentSource,
+  ) {
+    if (currentSource == null) return null;
+
+    ConnectionSource? nearest;
+    double minDistance = 60.0; // Raio magnético de 60px para atração fluida
+
+    for (final comp in components) {
+      // Terminal A
+      if (currentSource.componentId != comp.id || currentSource.terminal != 'A') {
+        final posA = comp.getTerminalAPosition();
+        final offsetA = Offset(posA.dx * cellSize, posA.dy * cellSize);
+        final distA = (mousePos - offsetA).distance;
+        if (distA < minDistance) {
+          minDistance = distA;
+          nearest = ConnectionSource(comp.id, 'A');
+        }
+      }
+
+      // Terminal B
+      if (currentSource.componentId != comp.id || currentSource.terminal != 'B') {
+        final posB = comp.getTerminalBPosition();
+        final offsetB = Offset(posB.dx * cellSize, posB.dy * cellSize);
+        final distB = (mousePos - offsetB).distance;
+        if (distB < minDistance) {
+          minDistance = distB;
+          nearest = ConnectionSource(comp.id, 'B');
+        }
+      }
+    }
+
+    return nearest;
+  }
 
   @override
   void initState() {
@@ -390,7 +430,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
         final double width = cellSize * gridCols;
         final double height = cellSize * gridRows;
 
-        return Container(
+        final gridContainer = Container(
           width: width,
           height: height,
           decoration: BoxDecoration(
@@ -442,12 +482,14 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
               for (final component in state.components)
                 _buildPlacedComponent(component, cellSize, selectedId, isDark),
 
-              // 5. Linha guia de fiação temporária ativa
+              // 5. Linha guia de fiação temporária ativa com suporte a magnetismo
               if (connSource != null)
                 Positioned.fill(
                   child: IgnorePointer(
                     child: _TemporaryWireLayer(
                       source: connSource,
+                      snappedTarget: _snappedTarget,
+                      mousePosition: _currentMousePos,
                       components: state.components,
                       cellSize: cellSize,
                       isDark: isDark,
@@ -455,6 +497,48 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                   ),
                 ),
             ],
+          ),
+        );
+
+        return MouseRegion(
+          onHover: (event) {
+            if (_connectionSource != null) {
+              final mousePos = event.localPosition;
+              final snapped = _findNearestTerminal(mousePos, cellSize, state.components, _connectionSource);
+              if (_snappedTarget?.componentId != snapped?.componentId || _snappedTarget?.terminal != snapped?.terminal) {
+                setState(() {
+                  _currentMousePos = mousePos;
+                  _snappedTarget = snapped;
+                });
+              } else if (_currentMousePos != mousePos) {
+                setState(() {
+                  _currentMousePos = mousePos;
+                });
+              }
+            }
+          },
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTapDown: (details) {
+              final connSource = _connectionSource;
+              if (connSource != null) {
+                final tapPos = details.localPosition;
+                final target = _findNearestTerminal(tapPos, cellSize, state.components, connSource) ?? _snappedTarget;
+                if (target != null) {
+                  ref.read(sandboxControllerProvider.notifier).addWire(
+                    connSource.componentId,
+                    connSource.terminal,
+                    target.componentId,
+                    target.terminal,
+                  );
+                }
+                setState(() {
+                  _connectionSource = null;
+                  _snappedTarget = null;
+                });
+              }
+            },
+            child: gridContainer,
           ),
         );
       },
@@ -635,12 +719,13 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
     final localY = (relPos.dy - component.gridY) * cellSize;
 
     final isSource = _connectionSource?.componentId == component.id && _connectionSource?.terminal == terminal;
+    final isSnapped = _snappedTarget?.componentId == component.id && _snappedTarget?.terminal == terminal;
     final isWiringMode = _connectionSource != null;
 
     final color = terminal == 'A' ? Colors.black87 : Colors.red;
 
-    const touchAreaSize = 32.0; // 32x32px área de toque expandida
-    const dotSize = 14.0; // 14x14px visualização normal do borne
+    const touchAreaSize = 36.0; // 36x36px área de toque expandida com atração magnética
+    final double currentDotSize = isSource ? 20.0 : (isSnapped ? 22.0 : (isWiringMode ? 16.0 : 14.0));
 
     return Positioned(
       left: localX - (touchAreaSize / 2),
@@ -655,20 +740,24 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
             // Inicia criação do fio
             setState(() {
               _connectionSource = ConnectionSource(component.id, terminal);
+              _snappedTarget = null;
             });
           } else {
             // Finaliza criação do fio se for um borne diferente
             if (connSource.componentId != component.id || connSource.terminal != terminal) {
+              final targetTerm = isSnapped ? _snappedTarget!.terminal : terminal;
+              final targetCompId = isSnapped ? _snappedTarget!.componentId : component.id;
               ref.read(sandboxControllerProvider.notifier).addWire(
                 connSource.componentId,
                 connSource.terminal,
-                component.id,
-                terminal,
+                targetCompId,
+                targetTerm,
               );
             }
             // Limpa o estado temporário
             setState(() {
               _connectionSource = null;
+              _snappedTarget = null;
             });
           }
         },
@@ -676,21 +765,28 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
           cursor: SystemMouseCursors.click,
           child: Center(
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: isSource ? 18.0 : (isWiringMode ? 16.0 : dotSize),
-              height: isSource ? 18.0 : (isWiringMode ? 16.0 : dotSize),
+              duration: const Duration(milliseconds: 150),
+              curve: Curves.easeOutCubic,
+              width: currentDotSize,
+              height: currentDotSize,
               decoration: BoxDecoration(
-                color: isSource ? const Color(0xFF00F5D4) : color,
+                color: (isSource || isSnapped) ? const Color(0xFF00F5D4) : color,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSource ? Colors.white : (isWiringMode ? const Color(0xFF00F5D4) : Colors.white),
-                  width: isSource ? 2.5 : 1.5,
+                  color: (isSource || isSnapped) ? Colors.white : (isWiringMode ? const Color(0xFF00F5D4) : Colors.white),
+                  width: (isSource || isSnapped) ? 2.8 : 1.5,
                 ),
                 boxShadow: [
-                  if (isSource)
+                  if (isSnapped)
+                    BoxShadow(
+                      color: const Color(0xFF00F5D4).withValues(alpha: 0.9),
+                      blurRadius: 16,
+                      spreadRadius: 4,
+                    )
+                  else if (isSource)
                     BoxShadow(
                       color: const Color(0xFF00F5D4).withValues(alpha: 0.8),
-                      blurRadius: 10,
+                      blurRadius: 12,
                       spreadRadius: 3,
                     )
                   else if (isWiringMode)
@@ -1302,46 +1398,48 @@ class WiresPainter extends CustomPainter {
 
 // --- CAMADA VISUAL DE FIO TEMPORÁRIO (ENQUANTO ARRASTA) ---
 
-class _TemporaryWireLayer extends StatefulWidget {
+class _TemporaryWireLayer extends StatelessWidget {
   final ConnectionSource source;
+  final ConnectionSource? snappedTarget;
+  final Offset? mousePosition;
   final List<SandboxComponent> components;
   final double cellSize;
   final bool isDark;
 
   const _TemporaryWireLayer({
     required this.source,
+    this.snappedTarget,
+    this.mousePosition,
     required this.components,
     required this.cellSize,
     required this.isDark,
   });
 
   @override
-  State<_TemporaryWireLayer> createState() => _TemporaryWireLayerState();
-}
-
-class _TemporaryWireLayerState extends State<_TemporaryWireLayer> {
-  Offset? _mousePosition;
-
-  @override
   Widget build(BuildContext context) {
-    final fromComp = widget.components.firstWhere((c) => c.id == widget.source.componentId);
-    final fromRel = widget.source.terminal == 'A' ? fromComp.getTerminalAPosition() : fromComp.getTerminalBPosition();
-    final start = Offset(fromRel.dx * widget.cellSize, fromRel.dy * widget.cellSize);
+    final fromComp = components.firstWhere((c) => c.id == source.componentId);
+    final fromRel = source.terminal == 'A' ? fromComp.getTerminalAPosition() : fromComp.getTerminalBPosition();
+    final start = Offset(fromRel.dx * cellSize, fromRel.dy * cellSize);
 
-    return MouseRegion(
-      onHover: (event) {
-        setState(() {
-          _mousePosition = event.localPosition;
-        });
-      },
-      child: CustomPaint(
-        painter: _TempWirePainter(
-          start: start,
-          currentEnd: _mousePosition,
-          isDark: widget.isDark,
-        ),
-        child: const SizedBox.expand(),
+    Offset? end;
+    if (snappedTarget != null) {
+      final toCompList = components.where((c) => c.id == snappedTarget!.componentId).toList();
+      if (toCompList.isNotEmpty) {
+        final toComp = toCompList.first;
+        final toRel = snappedTarget!.terminal == 'A' ? toComp.getTerminalAPosition() : toComp.getTerminalBPosition();
+        end = Offset(toRel.dx * cellSize, toRel.dy * cellSize);
+      }
+    }
+    end ??= mousePosition;
+
+    return CustomPaint(
+      painter: _TempWirePainter(
+        start: start,
+        currentEnd: end,
+        isSnapped: snappedTarget != null,
+        isDark: isDark,
       ),
+      child: const SizedBox.expand(),
     );
   }
 }
@@ -1349,11 +1447,13 @@ class _TemporaryWireLayerState extends State<_TemporaryWireLayer> {
 class _TempWirePainter extends CustomPainter {
   final Offset start;
   final Offset? currentEnd;
+  final bool isSnapped;
   final bool isDark;
 
   _TempWirePainter({
     required this.start,
     required this.currentEnd,
+    required this.isSnapped,
     required this.isDark,
   });
 
@@ -1370,18 +1470,65 @@ class _TempWirePainter extends CustomPainter {
         end.dx, end.dy,
       );
 
+    // 1. Sombra do Fio Temporário
     canvas.drawPath(
       path,
       Paint()
-        ..color = isDark ? const Color(0xFF00F5D4).withValues(alpha: 0.5) : const Color(0xFF00875A).withValues(alpha: 0.4)
-        ..strokeWidth = 3.0
+        ..color = Colors.black38
+        ..strokeWidth = isSnapped ? 6.0 : 4.0
+        ..style = PaintingStyle.stroke
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
+    );
+
+    // 2. Fio Temporário em tom Neon Cyan com espessura maior se magnetizado
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = isSnapped
+            ? const Color(0xFF00F5D4)
+            : (isDark ? const Color(0xFF00F5D4).withValues(alpha: 0.7) : const Color(0xFF00875A).withValues(alpha: 0.6))
+        ..strokeWidth = isSnapped ? 4.0 : 3.0
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round,
     );
+
+    // 3. Brilho Neon Especular se Magnetizado
+    if (isSnapped) {
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.9)
+          ..strokeWidth = 1.5
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round,
+      );
+
+      // Efeito de pulso e auréola magnética no ponto de conexão alvo
+      canvas.drawCircle(
+        end,
+        18.0,
+        Paint()
+          ..color = const Color(0xFF00F5D4).withValues(alpha: 0.4)
+          ..style = PaintingStyle.fill
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+      );
+
+      canvas.drawCircle(
+        end,
+        13.0,
+        Paint()
+          ..color = const Color(0xFF00F5D4)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.0,
+      );
+    }
   }
 
   @override
   bool shouldRepaint(covariant _TempWirePainter oldDelegate) {
-    return oldDelegate.start != start || oldDelegate.currentEnd != currentEnd || oldDelegate.isDark != isDark;
+    return oldDelegate.start != start ||
+        oldDelegate.currentEnd != currentEnd ||
+        oldDelegate.isSnapped != isSnapped ||
+        oldDelegate.isDark != isDark;
   }
 }
