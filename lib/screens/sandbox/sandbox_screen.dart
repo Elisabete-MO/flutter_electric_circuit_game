@@ -31,8 +31,8 @@ class SandboxScreen extends ConsumerStatefulWidget {
 }
 
 class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTickerProviderStateMixin {
-  static const int gridCols = 6;
-  static const int gridRows = 5;
+  int _gridCols = 6;
+  int _gridRows = 5;
 
   String? _selectedComponentId;
   ConnectionSource? _connectionSource;
@@ -234,19 +234,108 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
               ],
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.help_outline_rounded),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    isEn
-                        ? "Double tap a component to rotate it. Tap terminals to draw wires."
-                        : "Toque duplo em um componente para rotacioná-lo. Toque nos terminais para puxar fios.",
-                  ),
+          // Seletor de Tamanho da Bancada / Grid (Aumentar/Diminuir)
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              color: isDark ? Colors.black45 : Colors.white60,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isDark ? const Color(0xFF00F5D4).withValues(alpha: 0.4) : const Color(0xFF00F5D4),
+                width: 1.2,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                  icon: Icon(Icons.remove, size: 14, color: isDark ? Colors.white70 : Colors.black87),
+                  tooltip: isEn ? "Decrease Grid Size" : "Diminuir Grid",
+                  onPressed: (_gridCols > 4 && _gridRows > 3)
+                      ? () {
+                          setState(() {
+                            _gridCols = math.max(4, _gridCols - 1);
+                            _gridRows = math.max(3, _gridRows - 1);
+                          });
+                        }
+                      : null,
                 ),
-              );
-            },
+                PopupMenuButton<String>(
+                  tooltip: isEn ? "Grid Presets" : "Tamanhos de Grid",
+                  offset: const Offset(0, 36),
+                  color: isDark ? const Color(0xFF141E33) : Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                    child: Row(
+                      children: [
+                        Icon(Icons.grid_4x4_rounded, size: 14, color: isDark ? const Color(0xFF00F5D4) : Colors.black87),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$_gridCols x $_gridRows',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: GoogleFonts.rajdhani().fontFamily,
+                            color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
+                          ),
+                        ),
+                        Icon(Icons.arrow_drop_down, size: 14, color: isDark ? const Color(0xFF00F5D4) : Colors.black87),
+                      ],
+                    ),
+                  ),
+                  onSelected: (preset) {
+                    final parts = preset.split('x');
+                    if (parts.length == 2) {
+                      setState(() {
+                        _gridCols = int.parse(parts[0]);
+                        _gridRows = int.parse(parts[1]);
+                      });
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      value: '6x5',
+                      child: Text('6 × 5 (${isEn ? "Standard" : "Padrão"})', style: const TextStyle(fontSize: 12)),
+                    ),
+                    PopupMenuItem(
+                      value: '8x6',
+                      child: Text('8 × 6 (${isEn ? "Medium" : "Médio"})', style: const TextStyle(fontSize: 12)),
+                    ),
+                    PopupMenuItem(
+                      value: '10x8',
+                      child: Text('10 × 8 (${isEn ? "Large" : "Grande"})', style: const TextStyle(fontSize: 12)),
+                    ),
+                    PopupMenuItem(
+                      value: '12x10',
+                      child: Text('12 × 10 (${isEn ? "Extra Large" : "Extra Grande"})', style: const TextStyle(fontSize: 12)),
+                    ),
+                    PopupMenuItem(
+                      value: '16x12',
+                      child: Text('16 × 12 (${isEn ? "Maximum" : "Máximo"})', style: const TextStyle(fontSize: 12)),
+                    ),
+                  ],
+                ),
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                  icon: Icon(Icons.add, size: 14, color: isDark ? Colors.white70 : Colors.black87),
+                  tooltip: isEn ? "Increase Grid Size" : "Aumentar Grid",
+                  onPressed: (_gridCols < 18 && _gridRows < 15)
+                      ? () {
+                          setState(() {
+                            _gridCols = math.min(18, _gridCols + 1);
+                            _gridRows = math.min(15, _gridRows + 1);
+                          });
+                        }
+                      : null,
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -508,12 +597,12 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
         final double availableWidth = constraints.maxWidth.isInfinite ? 520.0 : constraints.maxWidth;
         final double availableHeight = constraints.maxHeight.isInfinite ? 420.0 : constraints.maxHeight;
 
-        final double cellSizeFromWidth = availableWidth / gridCols;
-        final double cellSizeFromHeight = availableHeight / gridRows;
+        final double cellSizeFromWidth = availableWidth / _gridCols;
+        final double cellSizeFromHeight = availableHeight / _gridRows;
         final double cellSize = cellSizeFromWidth.clamp(0, cellSizeFromHeight);
 
-        final double width = cellSize * gridCols;
-        final double height = cellSize * gridRows;
+        final double width = cellSize * _gridCols;
+        final double height = cellSize * _gridRows;
 
         final gridContainer = Container(
           width: width,
@@ -532,7 +621,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
               // 1. Linhas de Grid
               Positioned.fill(
                 child: CustomPaint(
-                  painter: GridPainter(columns: gridCols, rows: gridRows, isDark: isDark),
+                  painter: GridPainter(columns: _gridCols, rows: _gridRows, isDark: isDark),
                 ),
               ),
 
@@ -560,8 +649,8 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
               ),
 
               // 3. DragTargets em cada célula para receber os arrastes
-              for (int x = 0; x < gridCols; x++)
-                for (int y = 0; y < gridRows; y++)
+              for (int x = 0; x < _gridCols; x++)
+                for (int y = 0; y < _gridRows; y++)
                   _buildGridCellDragTarget(x, y, cellSize, state),
 
               // 4. Render dos componentes colocados no grid
