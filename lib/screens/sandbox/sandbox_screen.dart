@@ -13,6 +13,7 @@ import '../../widgets/tech_grid_background.dart';
 import '../../widgets/glass_container.dart';
 import '../../widgets/prof_volts_full_body.dart';
 import '../../widgets/component_physical_painter.dart';
+import '../../widgets/circuit_symbol_painter.dart';
 
 // Estrutura local para rastrear se o usuário está criando uma conexão (borne de origem selecionado)
 class ConnectionSource {
@@ -39,6 +40,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
   Offset? _currentMousePos;
   late final AnimationController _wireAnimationController;
   bool _showMascot = true;
+  bool _isDiagramMode = false;
   ProfVoltsEmotion _lastVoltsEmotion = ProfVoltsEmotion.neutral;
 
   ConnectionSource? _findNearestTerminal(
@@ -157,6 +159,81 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
           ),
         ),
         actions: [
+          // Alternador de Modo: Componentes Físicos vs Diagrama Esquemático
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              color: isDark ? Colors.black45 : Colors.white60,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isDark ? const Color(0xFF00F5D4).withValues(alpha: 0.4) : const Color(0xFF00F5D4),
+                width: 1.2,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                GestureDetector(
+                  onTap: () => setState(() => _isDiagramMode = false),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: !_isDiagramMode ? const Color(0xFF00F5D4) : Colors.transparent,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.view_in_ar_rounded,
+                          size: 15,
+                          color: !_isDiagramMode ? Colors.black : (isDark ? Colors.white70 : Colors.black87),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          isEn ? 'Physical' : 'Físico',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: !_isDiagramMode ? Colors.black : (isDark ? Colors.white70 : Colors.black87),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => setState(() => _isDiagramMode = true),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: _isDiagramMode ? const Color(0xFF00F5D4) : Colors.transparent,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.schema_outlined,
+                          size: 15,
+                          color: _isDiagramMode ? Colors.black : (isDark ? Colors.white70 : Colors.black87),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          isEn ? 'Diagram' : 'Diagrama',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: _isDiagramMode ? Colors.black : (isDark ? Colors.white70 : Colors.black87),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.help_outline_rounded),
             onPressed: () {
@@ -365,11 +442,19 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
             AspectRatio(
               aspectRatio: compact ? 2.0 : 1.8,
               child: CustomPaint(
-                painter: ComponentPhysicalPainter(
-                  type: type,
-                  isActive: false,
-                  isDarkMode: isDark,
-                ),
+                painter: _isDiagramMode
+                    ? CircuitSymbolPainter(
+                        type: type,
+                        isActive: false,
+                        color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
+                        activeColor: const Color(0xFFFFB300),
+                        strokeWidth: 2.0,
+                      )
+                    : ComponentPhysicalPainter(
+                        type: type,
+                        isActive: false,
+                        isDarkMode: isDark,
+                      ),
               ),
             ),
             const SizedBox(height: 3),
@@ -463,6 +548,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                           components: state.components,
                           cellSize: cellSize,
                           isDark: isDark,
+                          isDiagramMode: _isDiagramMode,
                           isSimulating: state.isSimulating,
                           simulationValues: state.simulationValues,
                           animationValue: _wireAnimationController.value,
@@ -643,16 +729,24 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            // Corpo físico rotacionado
+            // Corpo físico ou esquemático rotacionado
             Positioned.fill(
               child: Transform.rotate(
                 angle: component.rotation * math.pi / 180,
                 child: CustomPaint(
-                  painter: ComponentPhysicalPainter(
-                    type: component.type,
-                    isActive: visualActive,
-                    isDarkMode: isDark,
-                  ),
+                  painter: _isDiagramMode
+                      ? CircuitSymbolPainter(
+                          type: component.type,
+                          isActive: visualActive,
+                          color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
+                          activeColor: const Color(0xFFFFB300),
+                          strokeWidth: 2.5,
+                        )
+                      : ComponentPhysicalPainter(
+                          type: component.type,
+                          isActive: visualActive,
+                          isDarkMode: isDark,
+                        ),
                   child: const SizedBox.expand(),
                 ),
               ),
@@ -1273,6 +1367,7 @@ class WiresPainter extends CustomPainter {
   final List<SandboxComponent> components;
   final double cellSize;
   final bool isDark;
+  final bool isDiagramMode;
   final bool isSimulating;
   final Map<String, double> simulationValues;
   final double animationValue;
@@ -1282,6 +1377,7 @@ class WiresPainter extends CustomPainter {
     required this.components,
     required this.cellSize,
     required this.isDark,
+    this.isDiagramMode = false,
     required this.isSimulating,
     required this.simulationValues,
     required this.animationValue,
@@ -1310,7 +1406,7 @@ class WiresPainter extends CustomPainter {
           simulationValues['active_${fromComp.id}'] == 1.0 && 
           simulationValues['active_${toComp.id}'] == 1.0;
 
-      // Desenha o cabo elétrico (Curva Bézier cúbica para parecer mais físico e natural)
+      // Desenha o cabo elétrico (Curva Bézier ou Linha Esquemática Reta)
       final path = Path()
         ..moveTo(start.dx, start.dy)
         ..cubicTo(
@@ -1319,37 +1415,54 @@ class WiresPainter extends CustomPainter {
           end.dx, end.dy,
         );
 
-      // 1. Sombra do Fio
-      canvas.drawPath(
-        path,
-        Paint()
-          ..color = Colors.black26
-          ..strokeWidth = 5.0
-          ..style = PaintingStyle.stroke
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
-      );
+      if (isDiagramMode) {
+        // Estilo Diagrama Esquemático: Linhas limpas e nítidas
+        final wireColor = isWireActive
+            ? const Color(0xFF00FF9D)
+            : (isDark ? const Color(0xFF00F5D4) : Colors.black87);
 
-      // 2. Fio de base
-      canvas.drawPath(
-        path,
-        Paint()
-          ..color = isWireActive
-              ? const Color(0xFF00FF9D).withValues(alpha: 0.8)
-              : (isDark ? Colors.blueGrey.shade700 : Colors.grey.shade400)
-          ..strokeWidth = 3.5
-          ..style = PaintingStyle.stroke
-          ..strokeCap = StrokeCap.round,
-      );
+        canvas.drawPath(
+          path,
+          Paint()
+            ..color = wireColor
+            ..strokeWidth = isWireActive ? 3.0 : 2.2
+            ..style = PaintingStyle.stroke
+            ..strokeCap = StrokeCap.round,
+        );
+      } else {
+        // Estilo Físico Volumétrico 3D com Sombra e Brilho Especular
+        // 1. Sombra do Fio
+        canvas.drawPath(
+          path,
+          Paint()
+            ..color = Colors.black26
+            ..strokeWidth = 5.0
+            ..style = PaintingStyle.stroke
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
+        );
 
-      // 3. Highlight especular central para efeito 3D metálico
-      canvas.drawPath(
-        path,
-        Paint()
-          ..color = Colors.white.withValues(alpha: 0.4)
-          ..strokeWidth = 1.0
-          ..style = PaintingStyle.stroke
-          ..strokeCap = StrokeCap.round,
-      );
+        // 2. Fio de base
+        canvas.drawPath(
+          path,
+          Paint()
+            ..color = isWireActive
+                ? const Color(0xFF00FF9D).withValues(alpha: 0.8)
+                : (isDark ? Colors.blueGrey.shade700 : Colors.grey.shade400)
+            ..strokeWidth = 3.5
+            ..style = PaintingStyle.stroke
+            ..strokeCap = StrokeCap.round,
+        );
+
+        // 3. Highlight especular central para efeito 3D metálico
+        canvas.drawPath(
+          path,
+          Paint()
+            ..color = Colors.white.withValues(alpha: 0.4)
+            ..strokeWidth = 1.0
+            ..style = PaintingStyle.stroke
+            ..strokeCap = StrokeCap.round,
+        );
+      }
 
       // 4. Animação de fluxo de corrente (partículas de elétrons pulsantes/correndo)
       if (isWireActive) {
@@ -1390,6 +1503,7 @@ class WiresPainter extends CustomPainter {
         oldDelegate.components != components ||
         oldDelegate.cellSize != cellSize ||
         oldDelegate.isDark != isDark ||
+        oldDelegate.isDiagramMode != isDiagramMode ||
         oldDelegate.isSimulating != isSimulating ||
         oldDelegate.simulationValues != simulationValues ||
         oldDelegate.animationValue != animationValue;
