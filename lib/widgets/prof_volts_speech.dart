@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../state/settings_controller.dart';
@@ -112,39 +113,15 @@ class _ProfVoltsSpeechState extends ConsumerState<ProfVoltsSpeech>
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final settings = ref.watch(settingsControllerProvider);
+    final isTalking = _charIndex < widget.text.length;
 
     final widgetContent = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Mascote Avatar Holográfico Cyber HUD
-        Container(
-          width: 62,
-          height: 62,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: const LinearGradient(
-              colors: [Color(0xFF00F0FF), Color(0xFF0066FF)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF00F0FF).withValues(alpha: 0.4),
-                blurRadius: 4,
-                spreadRadius: 0.5,
-              ),
-            ],
-          ),
-          padding: const EdgeInsets.all(2.5),
-          child: Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isDark ? const Color(0xFF0B132B) : const Color(0xFFEFF6FF),
-            ),
-            child: const Center(
-              child: Text('🤖', style: TextStyle(fontSize: 32)),
-            ),
-          ),
+        // Mascote Avatar Holográfico Cyber HUD Animado
+        ProfVoltsAvatar(
+          isTalking: isTalking,
+          size: 62.0,
         ),
         const SizedBox(width: 16),
         // Speech Bubble HUD Holográfico
@@ -274,6 +251,255 @@ class _ProfVoltsSpeechState extends ConsumerState<ProfVoltsSpeech>
         );
       },
     );
+  }
+}
+
+/// Avatar Robótico Cyberpunk Animado
+class ProfVoltsAvatar extends StatefulWidget {
+  const ProfVoltsAvatar({
+    super.key,
+    required this.isTalking,
+    this.size = 62.0,
+  });
+
+  final bool isTalking;
+  final double size;
+
+  @override
+  State<ProfVoltsAvatar> createState() => _ProfVoltsAvatarState();
+}
+
+class _ProfVoltsAvatarState extends State<ProfVoltsAvatar>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  bool _isBlinking = false;
+  double _talkingOffset = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 4),
+    )..repeat();
+
+    _animationController.addListener(() {
+      if (widget.isTalking) {
+        setState(() {
+          _talkingOffset = _animationController.value * 2 * math.pi * 12;
+        });
+      }
+      
+      final val = _animationController.value;
+      final shouldBlink = val > 0.94 && val < 0.97;
+      if (shouldBlink != _isBlinking) {
+        setState(() {
+          _isBlinking = shouldBlink;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return SizedBox(
+      width: widget.size,
+      height: widget.size,
+      child: CustomPaint(
+        painter: _RobotAvatarPainter(
+          isDark: isDark,
+          isTalking: widget.isTalking,
+          isBlinking: _isBlinking,
+          talkingOffset: _talkingOffset,
+        ),
+      ),
+    );
+  }
+}
+
+class _RobotAvatarPainter extends CustomPainter {
+  final bool isDark;
+  final bool isTalking;
+  final bool isBlinking;
+  final double talkingOffset;
+
+  _RobotAvatarPainter({
+    required this.isDark,
+    required this.isTalking,
+    required this.isBlinking,
+    required this.talkingOffset,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final center = Offset(w / 2, h / 2);
+
+    const neonCyan = Color(0xFF00F0FF);
+    const neonBlue = Color(0xFF0066FF);
+    const neonGreen = Color(0xFF00FF9D);
+    final shellColor = isDark ? const Color(0xFF1E1E2F) : Colors.grey.shade300;
+    final screenColor = isDark ? const Color(0xFF0B0F19) : const Color(0xFFDDEBFF);
+    final borderColor = isDark ? neonCyan.withValues(alpha: 0.75) : neonBlue.withValues(alpha: 0.75);
+
+    // 1. Glow circular de fundo
+    final glowPaint = Paint()
+      ..color = (isDark ? neonCyan : neonBlue).withValues(alpha: 0.18)
+      ..style = PaintingStyle.fill
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+    canvas.drawCircle(center, w / 2 - 2, glowPaint);
+
+    // 2. Pescoço/Base
+    final basePaint = Paint()
+      ..color = shellColor
+      ..style = PaintingStyle.fill;
+    final baseRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(w * 0.35, h * 0.76, w * 0.3, h * 0.12),
+      const Radius.circular(3),
+    );
+    canvas.drawRRect(baseRect, basePaint);
+
+    // 3. Antenas laterais (Orelhas)
+    final earPaint = Paint()
+      ..color = isDark ? neonBlue.withValues(alpha: 0.8) : Colors.grey.shade500;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(w * 0.08, h * 0.36, w * 0.08, h * 0.18),
+        const Radius.circular(2),
+      ),
+      earPaint,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(w * 0.84, h * 0.36, w * 0.08, h * 0.18),
+        const Radius.circular(2),
+      ),
+      earPaint,
+    );
+
+    // Piquete de antena no topo
+    final antennaPaint = Paint()
+      ..color = shellColor
+      ..style = PaintingStyle.fill;
+    canvas.drawRect(Rect.fromLTWH(w * 0.47, h * 0.08, w * 0.06, h * 0.10), antennaPaint);
+    
+    // LED piscante da antena
+    final ledPaint = Paint()
+      ..color = isTalking ? neonGreen : neonCyan
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(Offset(w / 2, h * 0.06), 3, ledPaint);
+
+    // 4. Carcaça da Cabeça do Robô (cantos arredondados)
+    final shellPaint = Paint()
+      ..color = shellColor
+      ..style = PaintingStyle.fill;
+    final shellBorderPaint = Paint()
+      ..color = borderColor
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke;
+
+    final headRRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(w * 0.14, h * 0.16, w * 0.72, h * 0.60),
+      const Radius.circular(10),
+    );
+    canvas.drawRRect(headRRect, shellPaint);
+    canvas.drawRRect(headRRect, shellBorderPaint);
+
+    // 5. Visor (Tela interna)
+    final screenPaint = Paint()
+      ..color = screenColor
+      ..style = PaintingStyle.fill;
+    final screenRRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(w * 0.20, h * 0.21, w * 0.60, h * 0.50),
+      const Radius.circular(6),
+    );
+    canvas.drawRRect(screenRRect, screenPaint);
+
+    // 6. Olhos digitais LED (Piscam ciclicamente)
+    final eyePaint = Paint()
+      ..color = isDark ? neonCyan : neonBlue
+      ..style = PaintingStyle.fill;
+
+    final eyeWidth = w * 0.09;
+    final eyeHeight = isBlinking ? h * 0.015 : h * 0.10;
+    final eyeY = h * 0.32 + (isBlinking ? (h * 0.042) : 0);
+
+    // Olho Esquerdo
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(w * 0.32, eyeY, eyeWidth, eyeHeight),
+        const Radius.circular(2),
+      ),
+      eyePaint,
+    );
+
+    // Olho Direito
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(w * 0.58, eyeY, eyeWidth, eyeHeight),
+        const Radius.circular(2),
+      ),
+      eyePaint,
+    );
+
+    // 7. Boca de Osciloscópio (Waveform eletrônica)
+    final wavePaint = Paint()
+      ..color = isDark ? neonGreen : const Color(0xFF008F4C)
+      ..strokeWidth = 1.6
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final wavePath = Path();
+    final waveY = h * 0.56;
+    final startX = w * 0.32;
+    final endX = w * 0.68;
+    final waveWidth = endX - startX;
+
+    wavePath.moveTo(startX, waveY);
+
+    if (isTalking) {
+      for (double x = 0; x <= waveWidth; x += 1) {
+        final currentX = startX + x;
+        final factor = math.sin((x / waveWidth) * math.pi);
+        final amplitude = h * 0.08 * factor;
+        final waveValue = math.sin((x * 0.45) - talkingOffset) * amplitude;
+        wavePath.lineTo(currentX, waveY + waveValue);
+      }
+    } else {
+      for (double x = 0; x <= waveWidth; x += 1) {
+        final currentX = startX + x;
+        final factor = math.sin((x / waveWidth) * math.pi);
+        final waveValue = math.sin(x * 0.15) * 1.5 * factor;
+        wavePath.lineTo(currentX, waveY + waveValue);
+      }
+    }
+    canvas.drawPath(wavePath, wavePaint);
+    
+    // 8. Linha de varredura (Scanline) holográfica sutil
+    if (isDark) {
+      final scanPaint = Paint()
+        ..color = neonCyan.withValues(alpha: 0.12)
+        ..strokeWidth = 1.0;
+      canvas.drawLine(Offset(w * 0.20, h * 0.44), Offset(w * 0.80, h * 0.44), scanPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _RobotAvatarPainter oldDelegate) {
+    return oldDelegate.isDark != isDark ||
+        oldDelegate.isTalking != isTalking ||
+        oldDelegate.isBlinking != isBlinking ||
+        oldDelegate.talkingOffset != talkingOffset;
   }
 }
 
