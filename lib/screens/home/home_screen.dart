@@ -24,7 +24,10 @@ class HomeScreen extends ConsumerWidget {
 
     // Calcular estatÃ­sticas
     final completedCount = progress.completedChallenges.length;
-    final totalStars = progress.challengeStars.values.fold<int>(0, (sum, stars) => sum + stars);
+    final totalStars = progress.challengeStars.values.fold<int>(
+      0,
+      (sum, stars) => sum + stars,
+    );
 
     return Scaffold(
       body: TechGridBackground(
@@ -38,7 +41,12 @@ class HomeScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     // BARRA SUPERIOR HUD DE STATUS & ESTRELAS
-                    _buildHudStatusBar(context, totalStars, completedCount, isDark),
+                    _buildHudStatusBar(
+                      context,
+                      totalStars,
+                      completedCount,
+                      isDark,
+                    ),
                     const SizedBox(height: 24),
 
                     // LOGO ELETROLAB
@@ -50,8 +58,8 @@ class HomeScreen extends ConsumerWidget {
                       text: completedCount == 0
                           ? 'Bem-vindo ao EletroLab! Comece pelo tutorial de "Primeiros Passos" ou encare o primeiro desafio.'
                           : completedCount == 3
-                              ? 'ParabÃ©ns, Engenheiro! VocÃª completou todos os desafios com sucesso. Continue praticando na Bancada Livre!'
-                              : 'Excelente progresso! VocÃª jÃ¡ concluiu $completedCount de 3 desafios. Continue acelerando!',
+                          ? 'ParabÃ©ns, Engenheiro! VocÃª completou todos os desafios com sucesso. Continue praticando na Bancada Livre!'
+                          : 'Excelente progresso! VocÃª jÃ¡ concluiu $completedCount de 3 desafios. Continue acelerando!',
                     ),
                     const SizedBox(height: 28),
 
@@ -62,9 +70,11 @@ class HomeScreen extends ConsumerWidget {
                     // RODAPÃ‰
                     Center(
                       child: Text(
-                        'ELETROLAB CYBER STATION â€¢ v1.0.0',
+                        'ELETROLAB CYBER STATION • v1.0.0',
                         style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                          color: theme.colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.7,
+                          ),
                           letterSpacing: 2.0,
                           fontWeight: FontWeight.bold,
                         ),
@@ -112,12 +122,7 @@ class HomeScreen extends ConsumerWidget {
                 Icons.star_rounded,
                 color: Color(0xFFFFB300),
                 size: 18,
-                shadows: [
-                  BoxShadow(
-                    color: Color(0xFFFFB300),
-                    blurRadius: 8,
-                  ),
-                ],
+                shadows: [BoxShadow(color: Color(0xFFFFB300), blurRadius: 8)],
               ),
               const SizedBox(width: 6),
               Text(
@@ -125,7 +130,9 @@ class HomeScreen extends ConsumerWidget {
                 style: theme.textTheme.labelSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.0,
-                  color: isDark ? const Color(0xFFFFB300) : const Color(0xFFB58100),
+                  color: isDark
+                      ? const Color(0xFFFFB300)
+                      : const Color(0xFFB58100),
                 ),
               ),
             ],
@@ -135,11 +142,16 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildBentoGrid(BuildContext context, AppLocalizations l10n, int completedCount) {
+  Widget _buildBentoGrid(
+    BuildContext context,
+    AppLocalizations l10n,
+    int completedCount,
+  ) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final wide = constraints.maxWidth >= 760;
-        final medium = constraints.maxWidth >= 500 && constraints.maxWidth < 760;
+        final medium =
+            constraints.maxWidth >= 500 && constraints.maxWidth < 760;
         final gap = 16.0;
 
         _CyberMenuCard buildCard({
@@ -298,8 +310,10 @@ class _CyberMenuCardState extends State<_CyberMenuCard> {
     final scheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
     final borderColor = isDark
-        ? EletroLabColors.borderDarkColors[widget.borderIndex % EletroLabColors.borderDarkColors.length]
-        : EletroLabColors.borderLightColors[widget.borderIndex % EletroLabColors.borderLightColors.length];
+        ? EletroLabColors.borderDarkColors[widget.borderIndex %
+              EletroLabColors.borderDarkColors.length]
+        : EletroLabColors.borderLightColors[widget.borderIndex %
+              EletroLabColors.borderLightColors.length];
 
     return CyberHudContainer(
       accentColor: widget.accentColor,
@@ -315,35 +329,7 @@ class _CyberMenuCardState extends State<_CyberMenuCard> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Tag Cyber HUD TecnolÃ³gica
-              Expanded(
-                child: Container(
-                  margin: const EdgeInsets.only(right: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: widget.accentColor.withValues(alpha: isDark ? 0.08 : 0.04),
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(8),
-                      bottomRight: Radius.circular(8),
-                    ),
-                    border: Border.all(
-                      color: borderColor.withValues(alpha: isDark ? 0.65 : 0.45),
-                      width: 1.2,
-                    ),
-                  ),
-                  child: Text(
-                    widget.tag,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      fontFamily: GoogleFonts.rajdhani().fontFamily,
-                      color: isDark ? widget.accentColor : widget.accentColor.withValues(alpha: 0.85),
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                ),
-              ),
+              const Spacer(),
               // Ãcone com brilho Neon
               AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
@@ -351,7 +337,9 @@ class _CyberMenuCardState extends State<_CyberMenuCard> {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      widget.accentColor.withValues(alpha: _isHovered ? 0.35 : 0.2),
+                      widget.accentColor.withValues(
+                        alpha: _isHovered ? 0.35 : 0.2,
+                      ),
                       widget.accentColor.withValues(alpha: 0.08),
                     ],
                     begin: Alignment.topLeft,
@@ -359,9 +347,11 @@ class _CyberMenuCardState extends State<_CyberMenuCard> {
                   ),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                  color: borderColor.withValues(alpha: _isHovered ? 0.7 : 0.35),
-                  width: 1.5,
-                ),
+                    color: borderColor.withValues(
+                      alpha: _isHovered ? 0.7 : 0.35,
+                    ),
+                    width: 1.5,
+                  ),
                   boxShadow: [
                     if (_isHovered)
                       BoxShadow(
@@ -371,11 +361,7 @@ class _CyberMenuCardState extends State<_CyberMenuCard> {
                       ),
                   ],
                 ),
-                child: Icon(
-                  widget.icon,
-                  color: widget.accentColor,
-                  size: 26,
-                ),
+                child: Icon(widget.icon, color: widget.accentColor, size: 26),
               ),
             ],
           ),
@@ -414,11 +400,11 @@ class _CyberMenuCardState extends State<_CyberMenuCard> {
                       ? widget.accentColor.withValues(alpha: 0.2)
                       : Colors.transparent,
                   shape: BoxShape.circle,
-border: Border.all(
-                  color: _isHovered
-                      ? borderColor.withValues(alpha: 0.6)
-                      : Colors.transparent,
-                ),
+                  border: Border.all(
+                    color: _isHovered
+                        ? borderColor.withValues(alpha: 0.6)
+                        : Colors.transparent,
+                  ),
                 ),
                 child: Icon(
                   Icons.arrow_forward_rounded,

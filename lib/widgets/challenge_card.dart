@@ -80,32 +80,7 @@ class _ChallengeCardState extends State<ChallengeCard> {
                       size: 24,
                         ),
                       ),
-                  const SizedBox(width: 10),
-                  // Tag Cyber HUD do Desafio
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: accentColor.withValues(alpha: isDark ? 0.08 : 0.04),
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(6),
-                        bottomRight: Radius.circular(6),
-                      ),
-                      border: Border.all(
-                        color: accentColor.withValues(alpha: isDark ? 0.65 : 0.45),
-                        width: 1.2,
-                      ),
-                    ),
-                    child: Text(
-                      'DESAFIO 0${challenge.number} • ${challenge.difficultyLabel.toUpperCase()}',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        fontFamily: GoogleFonts.rajdhani().fontFamily,
-                        color: isDark ? accentColor : accentColor.withValues(alpha: 0.85),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 10,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                  ),
+
                 ],
               ),
               if (!challenge.isLocked && challenge.isCompleted)
