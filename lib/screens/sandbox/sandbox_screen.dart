@@ -156,15 +156,12 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                           child: Column(
                             children: [
                               Expanded(
-                                child: Center(
-                                  child: SingleChildScrollView(
-                                    child: _buildGridCanvas(sandboxState, selectedId, connSource, isDark),
-                                  ),
-                                ),
+                                child: _buildGridCanvas(sandboxState, selectedId, connSource, isDark),
                               ),
-                              const SizedBox(height: 16),
-                              if (_showMascot)
+                              if (_showMascot) ...[
+                                const SizedBox(height: 16),
                                 _buildMascotPanel(voltsEmotion, voltsMessage, isDark),
+                              ],
                             ],
                           ),
                         ),
@@ -417,8 +414,16 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
   Widget _buildGridCanvas(SandboxState state, String? selectedId, ConnectionSource? connSource, bool isDark) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final double width = constraints.maxWidth.clamp(280.0, 520.0);
-        final double cellSize = width / gridCols;
+        // Calcula o cellSize com base na menor das duas dimensões disponíveis
+        // garantindo que o grid sempre preencha o espaço disponível
+        final double availableWidth = constraints.maxWidth.isInfinite ? 520.0 : constraints.maxWidth;
+        final double availableHeight = constraints.maxHeight.isInfinite ? 420.0 : constraints.maxHeight;
+
+        final double cellSizeFromWidth = availableWidth / gridCols;
+        final double cellSizeFromHeight = availableHeight / gridRows;
+        final double cellSize = cellSizeFromWidth.clamp(0, cellSizeFromHeight);
+
+        final double width = cellSize * gridCols;
         final double height = cellSize * gridRows;
 
         return Container(
