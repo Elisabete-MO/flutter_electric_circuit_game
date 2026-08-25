@@ -1360,20 +1360,11 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
               ),
             ),
 
-          // Botão Simulação
-          FilledButton.icon(
+          // Botão Simulação (Sem ícone)
+          FilledButton(
             onPressed: () {
               ref.read(sandboxControllerProvider.notifier).toggleSimulation();
             },
-            icon: Icon(
-              state.isSimulating ? Icons.stop_circle_outlined : Icons.play_circle_outlined,
-              size: 20,
-            ),
-            label: Text(
-              state.isSimulating
-                  ? (isEn ? 'STOP SIMULATION' : 'PARAR SIMULAÇÃO')
-                  : (isEn ? 'START SIMULATION' : 'INICIAR SIMULAÇÃO'),
-            ),
             style: FilledButton.styleFrom(
               backgroundColor: state.isSimulating
                   ? const Color(0xFFFF3B7F)
@@ -1385,6 +1376,11 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                 fontSize: 14,
                 letterSpacing: 1.0,
               ),
+            ),
+            child: Text(
+              state.isSimulating
+                  ? (isEn ? 'STOP SIMULATION' : 'PARAR SIMULAÇÃO')
+                  : (isEn ? 'START SIMULATION' : 'INICIAR SIMULAÇÃO'),
             ),
           ),
         ],
