@@ -28,4 +28,24 @@ class SandboxWire {
       toTerminal: toTerminal ?? this.toTerminal,
     );
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'fromComponentId': fromComponentId,
+      'fromTerminal': fromTerminal,
+      'toComponentId': toComponentId,
+      'toTerminal': toTerminal,
+    };
+  }
+
+  factory SandboxWire.fromMap(Map<String, dynamic> map) {
+    return SandboxWire(
+      id: map['id'] as String,
+      fromComponentId: map['fromComponentId'] as String,
+      fromTerminal: map['fromTerminal'] as String,
+      toComponentId: map['toComponentId'] as String,
+      toTerminal: map['toTerminal'] as String,
+    );
+  }
 }

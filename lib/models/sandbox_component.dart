@@ -88,4 +88,28 @@ class SandboxComponent {
       return Offset(cx + 0.5, cy); // Direita
     }
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'type': type.name,
+      'gridX': gridX,
+      'gridY': gridY,
+      'rotation': rotation,
+      'isActive': isActive,
+      'value': value,
+    };
+  }
+
+  factory SandboxComponent.fromMap(Map<String, dynamic> map) {
+    return SandboxComponent(
+      id: map['id'] as String,
+      type: ComponentType.values.byName(map['type'] as String),
+      gridX: map['gridX'] as int,
+      gridY: map['gridY'] as int,
+      rotation: (map['rotation'] as num).toDouble(),
+      isActive: map['isActive'] as bool,
+      value: (map['value'] as num).toDouble(),
+    );
+  }
 }

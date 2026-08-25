@@ -5,9 +5,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:eletrolab/app/app.dart';
 import 'package:eletrolab/models/settings_model.dart';
+import 'package:eletrolab/models/first_step_component.dart';
+import 'package:eletrolab/models/sandbox_component.dart';
 import 'package:eletrolab/services/settings_service.dart';
 import 'package:eletrolab/state/progress_controller.dart';
 import 'package:eletrolab/state/settings_controller.dart';
+import 'package:eletrolab/state/sandbox_controller.dart';
 
 void main() {
   setUp(() {
@@ -211,6 +214,48 @@ void main() {
           find.text('Selecione um componente no grid para editar valores.'),
           findsOneWidget,
         );
+      },
+    );
+
+    testWidgets(
+      'persiste e recupera estado do sandbox do SharedPreferences',
+      (tester) async {
+        final prefs = await SharedPreferences.getInstance();
+        final container = ProviderContainer(
+          overrides: [
+            sharedPreferencesProvider.overrideWithValue(prefs),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        // Adiciona um componente via SandboxController
+        final controller = container.read(sandboxControllerProvider.notifier);
+        final component = SandboxComponent(
+          id: 'test_comp',
+          type: ComponentType.bulb,
+          gridX: 2,
+          gridY: 3,
+        );
+        controller.addComponent(component);
+
+        // Verifica que salvou no SharedPreferences
+        final savedComponents = prefs.getString('sandbox_components');
+        expect(savedComponents, isNotNull);
+        expect(savedComponents, contains('test_comp'));
+        expect(savedComponents, contains('bulb'));
+
+        // Cria um novo container simulando restart do app
+        final container2 = ProviderContainer(
+          overrides: [
+            sharedPreferencesProvider.overrideWithValue(prefs),
+          ],
+        );
+        addTearDown(container2.dispose);
+
+        final state2 = container2.read(sandboxControllerProvider);
+        expect(state2.components.length, 1);
+        expect(state2.components.first.id, 'test_comp');
+        expect(state2.components.first.type, ComponentType.bulb);
       },
     );
   });

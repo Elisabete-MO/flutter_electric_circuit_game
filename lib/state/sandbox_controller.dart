@@ -1,13 +1,59 @@
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/first_step_component.dart';
 import '../models/sandbox_component.dart';
 import '../models/sandbox_wire.dart';
 import '../models/sandbox_state.dart';
+import 'progress_controller.dart';
 
 class SandboxController extends Notifier<SandboxState> {
   @override
   SandboxState build() {
-    return const SandboxState();
+    final prefs = ref.watch(sharedPreferencesProvider);
+
+    final compString = prefs.getString('sandbox_components');
+    final wireString = prefs.getString('sandbox_wires');
+    final isSimulating = prefs.getBool('sandbox_is_simulating') ?? false;
+
+    List<SandboxComponent> components = [];
+    List<SandboxWire> wires = [];
+
+    if (compString != null) {
+      try {
+        final List<dynamic> decoded = jsonDecode(compString);
+        components = decoded
+            .map((item) => SandboxComponent.fromMap(item as Map<String, dynamic>))
+            .toList();
+      } catch (_) {}
+    }
+
+    if (wireString != null) {
+      try {
+        final List<dynamic> decoded = jsonDecode(wireString);
+        wires = decoded
+            .map((item) => SandboxWire.fromMap(item as Map<String, dynamic>))
+            .toList();
+      } catch (_) {}
+    }
+
+    final initialState = SandboxState(
+      components: components,
+      wires: wires,
+      isSimulating: isSimulating,
+    );
+
+    return _calculateSimulationForState(initialState);
+  }
+
+  void _persistState() {
+    final prefs = ref.read(sharedPreferencesProvider);
+
+    final compList = state.components.map((c) => c.toMap()).toList();
+    final wireList = state.wires.map((w) => w.toMap()).toList();
+
+    prefs.setString('sandbox_components', jsonEncode(compList));
+    prefs.setString('sandbox_wires', jsonEncode(wireList));
+    prefs.setBool('sandbox_is_simulating', state.isSimulating);
   }
 
   void addComponent(SandboxComponent component) {
@@ -116,6 +162,7 @@ class SandboxController extends Notifier<SandboxState> {
 
   void clearCanvas() {
     state = const SandboxState();
+    _persistState();
   }
 
   void toggleSimulation() {
@@ -124,21 +171,24 @@ class SandboxController extends Notifier<SandboxState> {
   }
 
   void _recalculateCircuit() {
-    if (!state.isSimulating) {
-      state = state.copyWith(
+    state = _calculateSimulationForState(state);
+    _persistState();
+  }
+
+  SandboxState _calculateSimulationForState(SandboxState targetState) {
+    if (!targetState.isSimulating) {
+      return targetState.copyWith(
         simulationValues: {},
         errorMessage: null,
       );
-      return;
     }
 
-    final batteries = state.components.where((c) => c.type == ComponentType.battery).toList();
+    final batteries = targetState.components.where((c) => c.type == ComponentType.battery).toList();
     if (batteries.isEmpty) {
-      state = state.copyWith(
+      return targetState.copyWith(
         simulationValues: {},
         errorMessage: 'Sem fonte de energia no circuito.',
       );
-      return;
     }
 
     final Map<String, double> values = {};
@@ -151,7 +201,8 @@ class SandboxController extends Notifier<SandboxState> {
       double totalResistance = 0.0;
 
       // Start traversal from positive terminal 'B'
-      _traverse(
+      _traverseForState(
+        targetState: targetState,
         currentComponent: battery,
         currentTerminal: 'B',
         targetBattery: battery,
@@ -183,13 +234,14 @@ class SandboxController extends Notifier<SandboxState> {
       }
     }
 
-    state = state.copyWith(
+    return targetState.copyWith(
       simulationValues: values,
       errorMessage: error,
     );
   }
 
-  void _traverse({
+  void _traverseForState({
+    required SandboxState targetState,
     required SandboxComponent currentComponent,
     required String currentTerminal,
     required SandboxComponent targetBattery,
@@ -199,7 +251,7 @@ class SandboxController extends Notifier<SandboxState> {
   }) {
     componentPath.add(currentComponent);
 
-    final wires = state.wires.where((w) {
+    final wires = targetState.wires.where((w) {
       return (w.fromComponentId == currentComponent.id && w.fromTerminal == currentTerminal) ||
              (w.toComponentId == currentComponent.id && w.toTerminal == currentTerminal);
     }).toList();
@@ -208,7 +260,7 @@ class SandboxController extends Notifier<SandboxState> {
       final nextId = wire.fromComponentId == currentComponent.id ? wire.toComponentId : wire.fromComponentId;
       final nextTerm = wire.fromComponentId == currentComponent.id ? wire.toTerminal : wire.fromTerminal;
 
-      final nextComponentList = state.components.where((c) => c.id == nextId).toList();
+      final nextComponentList = targetState.components.where((c) => c.id == nextId).toList();
       if (nextComponentList.isEmpty) continue;
       final nextComponent = nextComponentList.first;
 
@@ -234,7 +286,8 @@ class SandboxController extends Notifier<SandboxState> {
       final nextOutTerm = nextTerm == 'A' ? 'B' : 'A';
 
       visited.add(nextComponent.id);
-      _traverse(
+      _traverseForState(
+        targetState: targetState,
         currentComponent: nextComponent,
         currentTerminal: nextOutTerm,
         targetBattery: targetBattery,
