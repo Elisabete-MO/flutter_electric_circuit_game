@@ -266,7 +266,7 @@ class CyberHudPainter extends CustomPainter {
       ..color = accentColor.withValues(
         alpha: 0.7 + (0.3 * hoverValue),
       )
-      ..strokeWidth = 2.0 + (0.5 * hoverValue)
+      ..strokeWidth = 3.0 + (1.0 * hoverValue)
       ..style = PaintingStyle.stroke;
 
     canvas.drawPath(path, borderPaint);
@@ -276,7 +276,7 @@ class CyberHudPainter extends CustomPainter {
       ..color = accentColor.withValues(
         alpha: 0.6 + (0.4 * hoverValue),
       )
-      ..strokeWidth = 2
+      ..strokeWidth = 3
       ..style = PaintingStyle.stroke;
 
     final topRightDetailPath = Path()

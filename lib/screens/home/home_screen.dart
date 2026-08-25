@@ -280,7 +280,7 @@ class _CyberMenuCardState extends State<_CyberMenuCard> {
                     color: borderColor.withValues(
                       alpha: _isHovered ? 0.7 : 0.35,
                     ),
-                    width: 1.5,
+                    width: 2.0,
                   ),
                   boxShadow: [
                     if (_isHovered)
