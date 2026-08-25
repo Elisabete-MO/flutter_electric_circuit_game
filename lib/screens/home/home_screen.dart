@@ -254,7 +254,6 @@ class _CyberMenuCardState extends State<_CyberMenuCard> {
       height: widget.height,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // Top Row: Tag HUD + Ícone Neon
           Row(
@@ -276,19 +275,13 @@ class _CyberMenuCardState extends State<_CyberMenuCard> {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: borderColor.withValues(
-                      alpha: _isHovered ? 0.7 : 0.35,
-                    ),
-                    width: 1.5,
-                  ),
+                  shape: BoxShape.circle,
                   boxShadow: [
                     if (_isHovered)
                       BoxShadow(
-                        color: widget.accentColor.withValues(alpha: 0.4),
-                        blurRadius: 12,
-                        spreadRadius: 1,
+                        color: widget.accentColor.withValues(alpha: 0.5),
+                        blurRadius: 16,
+                        spreadRadius: 2,
                       ),
                   ],
                 ),
@@ -296,7 +289,7 @@ class _CyberMenuCardState extends State<_CyberMenuCard> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          if (widget.height != null) const Spacer() else const SizedBox(height: 24),
 
           // Título
           Text(
@@ -317,15 +310,21 @@ class _CyberMenuCardState extends State<_CyberMenuCard> {
               height: 1.4,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 24),
 
           // Rodapé: Seta Ação
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              AnimatedContainer(
+              AnimatedPadding(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.all(6),
+                padding: EdgeInsets.only(
+                  left: _isHovered ? 8.0 : 0.0,
+                  right: _isHovered ? 0.0 : 8.0,
+                ),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
                   color: _isHovered
                       ? widget.accentColor.withValues(alpha: 0.2)
@@ -344,6 +343,7 @@ class _CyberMenuCardState extends State<_CyberMenuCard> {
                       : scheme.onSurfaceVariant.withValues(alpha: 0.4),
                   size: 18,
                 ),
+              ),
               ),
             ],
           ),

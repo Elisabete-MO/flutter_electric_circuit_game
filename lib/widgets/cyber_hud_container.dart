@@ -100,7 +100,9 @@ class _CyberHudContainerState extends State<CyberHudContainer>
                 ),
                 child: ClipPath(
                   clipper: CyberHudClipper(),
-                  child: Material(
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                    child: Material(
                     color: Colors.transparent,
                     child: InkWell(
                       onTap: widget.onTap,
@@ -114,6 +116,7 @@ class _CyberHudContainerState extends State<CyberHudContainer>
                       ),
                     ),
                   ),
+                ),
                 ),
               ),
             ),
@@ -182,10 +185,10 @@ class CyberHudPainter extends CustomPainter {
     // oferecendo melhor desempenho no mobile.
     final backgroundColor = isDark
         ? const Color(0xFF1B0E3C).withValues(
-            alpha: 0.75 + (0.15 * hoverValue),
+            alpha: 0.65 + (0.15 * hoverValue),
           )
         : Colors.white.withValues(
-            alpha: 0.85 + (0.10 * hoverValue),
+            alpha: 0.70 + (0.10 * hoverValue),
           );
 
     final backgroundPaint = Paint()
