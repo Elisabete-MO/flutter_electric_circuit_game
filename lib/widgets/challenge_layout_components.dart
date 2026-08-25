@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../l10n/app_localizations.dart';
+import '../models/first_step_component.dart';
+import 'circuit_symbol_painter.dart';
 
 /// Constantes nomeadas de layout para posições, offsets e dimensões de componentes de circuitos
 abstract final class ChallengeLayoutConstants {
@@ -347,6 +349,258 @@ class FloatingActionDock extends StatelessWidget {
         children: children,
       ),
     );
+  }
+}
+
+/// Card de Símbolo Arrastável para a Paleta de Símbolos Esquémáticos
+class DraggableSymbolCard extends StatelessWidget {
+  const DraggableSymbolCard({
+    super.key,
+    required this.type,
+    required this.label,
+    required this.isVerticalList,
+    required this.onTap,
+  });
+
+  final ComponentType type;
+  final String label;
+  final bool isVerticalList;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final cardContent = Container(
+      width: isVerticalList ? 112 : 92,
+      height: isVerticalList ? 72 : 72,
+      margin: const EdgeInsets.all(4),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEEF2F6),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.12)
+              : const Color(0xFFCBD5E1),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Center(
+              child: CustomPaint(
+                size: const Size(56, 30),
+                painter: CircuitSymbolPainter(
+                  type: type,
+                  color: isDark ? const Color(0xFF00F5D4) : const Color(0xFF0F172A),
+                  strokeWidth: 2,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontFamily: GoogleFonts.rajdhani().fontFamily,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white70 : const Color(0xFF334155),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return Draggable<ComponentType>(
+      affinity: isVerticalList ? Axis.horizontal : Axis.vertical,
+      data: type,
+      feedback: Material(
+        color: Colors.transparent,
+        child: Opacity(
+          opacity: 0.85,
+          child: cardContent,
+        ),
+      ),
+      childWhenDragging: Opacity(
+        opacity: 0.3,
+        child: cardContent,
+      ),
+      child: GestureDetector(
+        onTap: onTap,
+        child: cardContent,
+      ),
+    );
+  }
+}
+
+/// Dock Flutuante de Símbolos Esquemáticos ("SÍMBOLOS")
+class SymbolsDockPanel extends StatelessWidget {
+  const SymbolsDockPanel({
+    super.key,
+    required this.isVertical,
+    required this.symbolTypes,
+    required this.onTapSymbol,
+    required this.l10n,
+    this.verticalScrollController,
+    this.horizontalScrollController,
+  });
+
+  final bool isVertical;
+  final List<ComponentType> symbolTypes;
+  final ValueChanged<ComponentType> onTapSymbol;
+  final AppLocalizations l10n;
+  final ScrollController? verticalScrollController;
+  final ScrollController? horizontalScrollController;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final symbolCards = symbolTypes.map((type) {
+      final label = _getComponentLabel(type, l10n);
+      return DraggableSymbolCard(
+        type: type,
+        label: label,
+        isVerticalList: isVertical,
+        onTap: () => onTapSymbol(type),
+      );
+    }).toList();
+
+    if (isVertical) {
+      return Container(
+        width: 136,
+        margin: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: isDark
+              ? const Color(0xFF0F172A).withValues(alpha: 0.92)
+              : Colors.white.withValues(alpha: 0.95),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isDark
+                ? const Color(0xFF00F5D4).withValues(alpha: 0.3)
+                : const Color(0xFF00F5D4).withValues(alpha: 0.5),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 12, bottom: 8),
+              child: Text(
+                l10n.symbolsPaletteTitle.toUpperCase(),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: GoogleFonts.rajdhani().fontFamily,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  letterSpacing: 1.5,
+                  color: isDark ? const Color(0xFF00F5D4) : const Color(0xFF0F172A),
+                ),
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                controller: verticalScrollController,
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                children: symbolCards,
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      return Container(
+        height: 115,
+        margin: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: isDark
+              ? const Color(0xFF0F172A).withValues(alpha: 0.92)
+              : Colors.white.withValues(alpha: 0.95),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isDark
+                ? const Color(0xFF00F5D4).withValues(alpha: 0.3)
+                : const Color(0xFF00F5D4).withValues(alpha: 0.5),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 6, bottom: 2),
+              child: Text(
+                l10n.symbolsPaletteTitle.toUpperCase(),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: GoogleFonts.rajdhani().fontFamily,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  letterSpacing: 1.5,
+                  color: isDark ? const Color(0xFF00F5D4) : const Color(0xFF0F172A),
+                ),
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                controller: horizontalScrollController,
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                children: symbolCards,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  static String _getComponentLabel(ComponentType type, AppLocalizations l10n) {
+    switch (type) {
+      case ComponentType.battery:
+        return l10n.compBattery;
+      case ComponentType.switchComponent:
+        return l10n.compSwitch;
+      case ComponentType.bulb:
+        return l10n.compBulb;
+      case ComponentType.motor:
+        return l10n.compMotor;
+      case ComponentType.resistor:
+        return l10n.compResistor;
+      case ComponentType.diode:
+        return l10n.compDiode;
+      case ComponentType.led:
+        return l10n.compLED;
+      default:
+        return type.name;
+    }
   }
 }
 

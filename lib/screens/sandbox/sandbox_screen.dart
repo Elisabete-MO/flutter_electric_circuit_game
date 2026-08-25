@@ -1289,7 +1289,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
             ),
           ),
 
-        // Botão Simulação
+        // Botão Simulação (Arredondado no padrão cápsula HUD)
         FilledButton(
           onPressed: () {
             ref.read(sandboxControllerProvider.notifier).toggleSimulation();
@@ -1300,6 +1300,13 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                 : const Color(0xFF00FF9D),
             foregroundColor: Colors.black87,
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            elevation: 4,
+            shadowColor: (state.isSimulating
+                ? const Color(0xFFFF3B7F)
+                : const Color(0xFF00FF9D)).withValues(alpha: 0.4),
             textStyle: GoogleFonts.rajdhani(
               fontWeight: FontWeight.bold,
               fontSize: 14,

@@ -440,138 +440,34 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
     required bool isDark,
     required AppLocalizations l10n,
   }) {
-    final symbolList = [
-      _buildDraggableSymbol(ComponentType.resistor, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
-      _buildDraggableSymbol(ComponentType.battery, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
-      _buildDraggableSymbol(ComponentType.motor, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
-      _buildDraggableSymbol(ComponentType.bulb, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
-      _buildDraggableSymbol(ComponentType.diode, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
-      _buildDraggableSymbol(ComponentType.switchComponent, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
-      _buildDraggableSymbol(ComponentType.led, margin: const EdgeInsets.all(6), isVerticalList: isVertical),
+    const symbolTypes = [
+      ComponentType.battery,
+      ComponentType.switchComponent,
+      ComponentType.motor,
+      ComponentType.bulb,
+      ComponentType.resistor,
+      ComponentType.diode,
+      ComponentType.led,
     ];
 
-    if (isVertical) {
-      return Container(
-        width: 140,
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF161C28) : Colors.white,
-          border: Border(
-            right: BorderSide(
-              color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-              width: 2,
-            ),
-          ),
-        ),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              color: isDark ? const Color(0xFF2A3447) : const Color(0xFFE2E8F0),
-              width: double.infinity,
-              child: Text(
-                l10n.symbolsPaletteTitle,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-              ),
-            ),
-            Expanded(
-              child: ListView(
-                controller: _paletteVerticalScrollController,
-                padding: const EdgeInsets.all(8),
-                children: symbolList,
-              ),
-            ),
-          ],
-        ),
-      );
-    } else {
-      return Container(
-        height: 95,
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF161C28) : Colors.white,
-          border: Border(
-            top: BorderSide(
-              color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-              width: 2,
-            ),
-          ),
-        ),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(4),
-              color: isDark ? const Color(0xFF2A3447) : const Color(0xFFE2E8F0),
-              width: double.infinity,
-              child: Text(
-                l10n.symbolsPaletteTitle,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
-              ),
-            ),
-            Expanded(
-              child: ListView(
-                controller: _paletteHorizontalScrollController,
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                children: symbolList,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-  }
-
-  Widget _buildDraggableSymbol(ComponentType type, {EdgeInsetsGeometry? margin, required bool isVerticalList}) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final symbolWidget = Container(
-      width: 70,
-      height: 55,
-      margin: margin ?? const EdgeInsets.symmetric(vertical: 6),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF232D3F) : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: isDark ? Colors.grey[700]! : Colors.grey[300]!),
-      ),
-      child: CustomPaint(
-        painter: CircuitSymbolPainter(
-          type: type,
-          color: isDark ? Colors.white : Colors.black87,
-          strokeWidth: 2,
-        ),
-      ),
-    );
-
-    return Draggable<ComponentType>(
-      affinity: isVerticalList ? Axis.horizontal : Axis.vertical,
-      data: type,
-      feedback: Material(
-        color: Colors.transparent,
-        child: Opacity(
-          opacity: 0.8,
-          child: symbolWidget,
-        ),
-      ),
-      childWhenDragging: Opacity(
-        opacity: 0.3,
-        child: symbolWidget,
-      ),
-      child: InkWell(
-        onTap: () {
-          ref.read(audioServiceProvider).playClick();
-          setState(() {
-            _slotBattery ??= type;
-            if (_slotBattery != type) {
-              _slotSwitch ??= type;
-              if (_slotSwitch != type) {
-                _slotMotor ??= type;
-              }
+    return SymbolsDockPanel(
+      isVertical: isVertical,
+      symbolTypes: symbolTypes,
+      l10n: l10n,
+      verticalScrollController: _paletteVerticalScrollController,
+      horizontalScrollController: _paletteHorizontalScrollController,
+      onTapSymbol: (type) {
+        ref.read(audioServiceProvider).playClick();
+        setState(() {
+          _slotBattery ??= type;
+          if (_slotBattery != type) {
+            _slotSwitch ??= type;
+            if (_slotSwitch != type) {
+              _slotMotor ??= type;
             }
-          });
-        },
-        child: symbolWidget,
-      ),
+          }
+        });
+      },
     );
   }
 
