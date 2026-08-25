@@ -283,7 +283,7 @@ class _CyberMenuCardState extends State<_CyberMenuCard> {
                     width: 2.0,
                   ),
                   boxShadow: [
-                    if (_isHovered)
+                    if (_isHovered && isDark)
                       BoxShadow(
                         color: widget.accentColor.withValues(alpha: 0.4),
                         blurRadius: 12,

@@ -234,32 +234,33 @@ class CyberHudPainter extends CustomPainter {
         }
       }
     }
+    if (isDark) {
+      // Brilho neon difuso (espalhado)
+      final glowPaintDiffuse = Paint()
+        ..color = accentColor.withValues(
+          alpha: 0.2 + (0.25 * hoverValue),
+        )
+        ..strokeWidth = 6.0 + (4.0 * hoverValue)
+        ..style = PaintingStyle.stroke
+        ..maskFilter = MaskFilter.blur(
+          BlurStyle.normal,
+          12.0 + (6.0 * hoverValue),
+        );
+      canvas.drawPath(path, glowPaintDiffuse);
 
-    // Brilho neon difuso (espalhado)
-    final glowPaintDiffuse = Paint()
-      ..color = accentColor.withValues(
-        alpha: 0.2 + (0.25 * hoverValue),
-      )
-      ..strokeWidth = 6.0 + (4.0 * hoverValue)
-      ..style = PaintingStyle.stroke
-      ..maskFilter = MaskFilter.blur(
-        BlurStyle.normal,
-        12.0 + (6.0 * hoverValue),
-      );
-    canvas.drawPath(path, glowPaintDiffuse);
-
-    // Brilho neon intenso (próximo à linha)
-    final glowPaintIntense = Paint()
-      ..color = accentColor.withValues(
-        alpha: 0.45 + (0.35 * hoverValue),
-      )
-      ..strokeWidth = 3.0 + (2.0 * hoverValue)
-      ..style = PaintingStyle.stroke
-      ..maskFilter = MaskFilter.blur(
-        BlurStyle.normal,
-        6.0 + (4.0 * hoverValue),
-      );
-    canvas.drawPath(path, glowPaintIntense);
+      // Brilho neon intenso (próximo à linha)
+      final glowPaintIntense = Paint()
+        ..color = accentColor.withValues(
+          alpha: 0.45 + (0.35 * hoverValue),
+        )
+        ..strokeWidth = 3.0 + (2.0 * hoverValue)
+        ..style = PaintingStyle.stroke
+        ..maskFilter = MaskFilter.blur(
+          BlurStyle.normal,
+          6.0 + (4.0 * hoverValue),
+        );
+      canvas.drawPath(path, glowPaintIntense);
+    }
 
     // Borda principal.
     final borderPaint = Paint()
