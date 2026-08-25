@@ -83,7 +83,7 @@ class _SymbolCardState extends State<SymbolCard> {
                             widget.component.namePt,
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w900,
-                              fontSize: 15,
+                              fontSize: 18,
                             ),
                             textAlign: TextAlign.center,
                             maxLines: 1,
@@ -92,13 +92,29 @@ class _SymbolCardState extends State<SymbolCard> {
 
                           const SizedBox(height: 4),
                         ] else if (widget.isCorrectlyAnswered)
-                          const Padding(
-                            padding: EdgeInsets.only(top: 4, bottom: 4),
-                            child: Icon(
-                              Icons.check_circle_rounded,
-                              color: Color(0xFF00E676),
-                              size: 22,
-                            ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.check_circle_rounded,
+                                color: Color(0xFF00E676),
+                                size: 18,
+                              ),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  widget.component.namePt,
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 18,
+                                    color: const Color(0xFF00E676),
+                                  ),
+                                  textAlign: TextAlign.center,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           )
                         else
                           Padding(
