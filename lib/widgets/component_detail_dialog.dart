@@ -49,12 +49,13 @@ class _ComponentDetailDialogState extends State<ComponentDetailDialog> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
               // Header com título e botão fechar
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -221,6 +222,7 @@ class _ComponentDetailDialogState extends State<ComponentDetailDialog> {
               ),
             ],
           ),
+        ),
         ),
       ),
     );

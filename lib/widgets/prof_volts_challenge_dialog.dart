@@ -40,9 +40,10 @@ class ProfVoltsChallengeDialog extends StatelessWidget {
         accentColor: accentColor,
         opacity: isDark ? 0.8 : 0.9,
         padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
             // 1. Mascote Corpo Inteiro
             ProfVoltsFullBody(
               emotion: isCorrect ? ProfVoltsEmotion.happy : ProfVoltsEmotion.sad,
@@ -136,6 +137,7 @@ class ProfVoltsChallengeDialog extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }
