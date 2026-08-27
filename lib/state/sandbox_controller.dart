@@ -306,12 +306,12 @@ class SandboxController extends Notifier<SandboxState> {
 
     final Map<String, double> values = {};
     String? error;
+    final Set<String> newBurnedSet = Set.from(targetState.burnedComponentIds);
 
     for (final source in powerSources) {
       final visited = <String>{source.id};
       final componentPath = <SandboxComponent>[];
-      bool loopClosed = false;
-      double totalResistance = 0.0;
+      final List<List<SandboxComponent>> closedLoops = [];
 
       // Start traversal from positive terminal 'B'
       _traverseForState(
@@ -322,8 +322,15 @@ class SandboxController extends Notifier<SandboxState> {
         visited: visited,
         componentPath: componentPath,
         onLoopClosed: (pathComponents) {
-          loopClosed = true;
-          totalResistance = pathComponents
+          closedLoops.add(List.from(pathComponents));
+        },
+      );
+
+      if (closedLoops.isNotEmpty) {
+        double totalSourceCurrent = 0.0;
+
+        for (final loopPath in closedLoops) {
+          final totalResistance = loopPath
               .where((c) => c.type != ComponentType.battery && c.type != ComponentType.powerSupply)
               .fold(0.0, (sum, c) {
                 if (c.type == ComponentType.fuse) return sum + 0.1;
@@ -331,47 +338,42 @@ class SandboxController extends Notifier<SandboxState> {
                 if (c.type == ComponentType.buzzer) return sum + 8.0;
                 return sum + c.value;
               });
-        },
-      );
 
-      if (loopClosed) {
-        final Set<String> newBurnedSet = Set.from(targetState.burnedComponentIds);
+          if (totalResistance <= 0.1) {
+            error = 'CURTO-CIRCUITO DETECTADO! Conexão direta entre pólos sem carga!';
+            break;
+          }
 
-        if (totalResistance <= 0.1) {
-          error = 'CURTO-CIRCUITO DETECTADO! Conexão direta entre pólos sem carga!';
-        } else {
-          final current = source.value / totalResistance;
-          values['active_${source.id}'] = 1.0;
-          values['current_${source.id}'] = current;
-          values['node_voltage_${source.id}_B'] = source.value;
-          values['node_voltage_${source.id}_A'] = 0.0;
-          
+          final loopCurrent = source.value / totalResistance;
+          totalSourceCurrent += loopCurrent;
+
           double currentPotential = source.value;
 
-          for (final comp in componentPath) {
+          for (final comp in loopPath) {
             if (comp.type == ComponentType.battery || comp.type == ComponentType.powerSupply) continue;
 
             final compRes = (comp.type == ComponentType.fuse)
                 ? 0.1
                 : (comp.type == ComponentType.capacitor ? 10.0 : (comp.type == ComponentType.buzzer ? 8.0 : comp.value));
-            final vDrop = current * compRes;
-            final power = vDrop * current;
+            final vDrop = loopCurrent * compRes;
+            final power = vDrop * loopCurrent;
 
             values['active_${comp.id}'] = 1.0;
-            values['current_${comp.id}'] = current;
+            values['current_${comp.id}'] = (values['current_${comp.id}'] ?? 0.0) + loopCurrent;
             values['voltage_drop_${comp.id}'] = vDrop;
             values['power_${comp.id}'] = power;
 
             // Define potenciais nos terminais A e B de acordo com o sentido do fluxo
-            values['node_voltage_${comp.id}_A'] = currentPotential;
-            currentPotential -= vDrop;
             values['node_voltage_${comp.id}_B'] = currentPotential;
+            currentPotential -= vDrop;
+            values['node_voltage_${comp.id}_A'] = currentPotential;
 
             // Verificação de Limites Físicos e Sobrecarga Educativa
+            final totalCompCurrent = values['current_${comp.id}'] ?? loopCurrent;
             if (comp.type == ComponentType.led) {
-              if (current > 0.05 || vDrop > 3.3) {
+              if (totalCompCurrent > 0.05 || vDrop > 3.3) {
                 newBurnedSet.add(comp.id);
-                error = 'O LED QUEIMOU! Corrente (${(current * 1000).toStringAsFixed(0)}mA) excedeu o limite seguro (50mA). Conecte um resistor em série!';
+                error = 'O LED QUEIMOU! Corrente (${(totalCompCurrent * 1000).toStringAsFixed(0)}mA) excedeu o limite seguro (50mA). Conecte um resistor em série!';
               }
             } else if (comp.type == ComponentType.bulb) {
               if (power > 15.0) {
@@ -385,25 +387,25 @@ class SandboxController extends Notifier<SandboxState> {
               }
             } else if (comp.type == ComponentType.fuse) {
               final maxCurrent = comp.value; // ex: 2.0A
-              if (current > maxCurrent) {
+              if (totalCompCurrent > maxCurrent) {
                 newBurnedSet.add(comp.id);
-                error = 'FUSÍVEL QUEIMOU! Corrente de ${current.toStringAsFixed(2)}A excedeu o limite do fusível (${maxCurrent.toStringAsFixed(1)}A), desarmando o circuito!';
+                error = 'FUSÍVEL QUEIMOU! Corrente de ${totalCompCurrent.toStringAsFixed(2)}A excedeu o limite do fusível (${maxCurrent.toStringAsFixed(1)}A), desarmando o circuito!';
               }
             }
           }
         }
 
-        return targetState.copyWith(
-          simulationValues: values,
-          errorMessage: error,
-          burnedComponentIds: newBurnedSet,
-        );
+        values['active_${source.id}'] = 1.0;
+        values['current_${source.id}'] = totalSourceCurrent;
+        values['node_voltage_${source.id}_B'] = source.value;
+        values['node_voltage_${source.id}_A'] = 0.0;
       }
     }
 
     return targetState.copyWith(
       simulationValues: values,
       errorMessage: error,
+      burnedComponentIds: newBurnedSet,
     );
   }
 
@@ -462,8 +464,8 @@ class SandboxController extends Notifier<SandboxState> {
       }
 
       if (nextComponent.type == ComponentType.diode || nextComponent.type == ComponentType.led) {
-        if (nextTerm == 'B') {
-          continue;
+        if (nextTerm == 'A') {
+          continue; // Bloqueia a corrente se ela tentar entrar pelo Cathode ('A', -) - Polarização Reversa
         }
       }
 
