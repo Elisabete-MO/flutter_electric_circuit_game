@@ -216,57 +216,25 @@ class ComponentPhysicalPainter extends CustomPainter {
   void _drawPhysicalSwitch(Canvas canvas, Size size, double cx, double cy) {
     _drawBaseBlock(canvas, size, cx, cy);
 
-    final leftTerminal = Offset(cx - 25, cy + 6);
-    final rightTerminal = Offset(cx + 25, cy + 6);
-
-    // Bornes de conexão metálicos com argolas vermelha e preta
-    canvas.drawCircle(leftTerminal, 6.5, Paint()..color = Colors.red);
-    canvas.drawCircle(leftTerminal, 2.5, Paint()..color = const Color(0xFFD4AF37)); // Ilhós de latão
-
-    canvas.drawCircle(rightTerminal, 6.5, Paint()..color = Colors.black87);
-    canvas.drawCircle(rightTerminal, 2.5, Paint()..color = const Color(0xFFD4AF37));
-
-    // Alavanca do interruptor (parte exatamente do centro da bolinha vermelha)
-    final pPivot = leftTerminal;
+    final pPivot = Offset(cx - 25, cy + 6);
     final pLeverEnd = isActive
-        ? rightTerminal // Fechado (encostando perfeitamente no terminal preto)
-        : Offset(cx + 4, cy - 24); // Aberto (alavanca erguida)
+        ? Offset(cx + 25, cy + 6) // Fechado (encostando no terminal preto)
+        : Offset(cx + 5, cy - 26); // Aberto (alavanca erguida)
 
-    // 1. Sombra projetada da alavanca
-    canvas.drawLine(
-      pPivot.translate(2, 3),
-      pLeverEnd.translate(2, 3),
-      Paint()
-        ..color = Colors.black38
-        ..strokeWidth = 4.5
-        ..strokeCap = StrokeCap.round
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
-    );
+    // Bornes de conexão vermelhos e pretos
+    canvas.drawCircle(pPivot, 6, Paint()..color = Colors.red);
+    canvas.drawCircle(Offset(cx + 25, cy + 6), 6, Paint()..color = Colors.black87);
 
-    // 2. Haste metálica principal da alavanca
+    // Alavanca do interruptor (conectada diretamente ao centro da bolinha vermelha)
     final leverPaint = Paint()
-      ..color = isDarkMode ? Colors.grey[300]! : const Color(0xFF333333)
-      ..strokeWidth = 4.5
+      ..color = Colors.grey[800]!
+      ..strokeWidth = 4
       ..strokeCap = StrokeCap.round;
+
+    final handlePaint = Paint()..color = Colors.red;
+
     canvas.drawLine(pPivot, pLeverEnd, leverPaint);
-
-    // 3. Highlight especular central para brilho metálico 3D
-    canvas.drawLine(
-      pPivot.translate(0, -0.8),
-      pLeverEnd.translate(0, -0.8),
-      Paint()
-        ..color = Colors.white.withValues(alpha: 0.6)
-        ..strokeWidth = 1.2
-        ..strokeCap = StrokeCap.round,
-    );
-
-    // 4. Manopla vermelha/néon na extremidade da alavanca
-    final handlePaint = Paint()..color = const Color(0xFFFF3B7F);
-    canvas.drawCircle(pLeverEnd, 5.5, handlePaint);
-    canvas.drawCircle(pLeverEnd, 2.0, Paint()..color = Colors.white.withValues(alpha: 0.8));
-
-    // 5. Pivô de travamento metálico no centro da bolinha vermelha
-    canvas.drawCircle(pPivot, 3.2, Paint()..color = const Color(0xFFD4AF37));
+    canvas.drawCircle(pLeverEnd, 5, handlePaint);
   }
 
   void _drawPhysicalBulb(Canvas canvas, Size size, double cx, double cy) {
