@@ -43,6 +43,8 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
   ConnectionSource? _connectionSource;
   ConnectionSource? _snappedTarget;
   Offset? _currentMousePos;
+  Offset? _dragStartPosition;
+  bool _isDraggingWire = false;
   late final AnimationController _wireAnimationController;
   bool _showMascot = true;
   bool _isDiagramMode = false;
@@ -55,6 +57,38 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
   MultimeterProbeConnection _redProbe = const MultimeterProbeConnection();
   MultimeterProbeConnection _blackProbe = const MultimeterProbeConnection();
   bool _isHoldMultimeter = false;
+
+  ConnectionSource? _findTerminalAtPosition(
+    Offset mousePos,
+    double cellSize,
+    List<SandboxComponent> components, {
+    double touchRadius = 30.0,
+  }) {
+    ConnectionSource? nearest;
+    double minDistance = touchRadius;
+
+    for (final comp in components) {
+      // Terminal A
+      final posA = comp.getTerminalAPosition();
+      final offsetA = Offset(posA.dx * cellSize, posA.dy * cellSize);
+      final distA = (mousePos - offsetA).distance;
+      if (distA < minDistance) {
+        minDistance = distA;
+        nearest = ConnectionSource(comp.id, 'A');
+      }
+
+      // Terminal B
+      final posB = comp.getTerminalBPosition();
+      final offsetB = Offset(posB.dx * cellSize, posB.dy * cellSize);
+      final distB = (mousePos - offsetB).distance;
+      if (distB < minDistance) {
+        minDistance = distB;
+        nearest = ConnectionSource(comp.id, 'B');
+      }
+    }
+
+    return nearest;
+  }
 
   ConnectionSource? _findNearestTerminal(
     Offset mousePos,
@@ -592,28 +626,17 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
         final selectedComponentList = state.components.where((c) => c.id == selectedId).toList();
         final selectedComponent = selectedComponentList.isNotEmpty ? selectedComponentList.first : null;
 
-        final gridContainer = GestureDetector(
-          onTap: () {
-            if (_selectedComponentId != null || _connectionSource != null) {
-              setState(() {
-                _selectedComponentId = null;
-                _connectionSource = null;
-                _snappedTarget = null;
-                _currentMousePos = null;
-              });
-            }
-          },
-          child: Container(
-            width: width,
-            height: height,
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF0D1424).withValues(alpha: 0.4) : Colors.grey.shade100.withValues(alpha: 0.4),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isDark ? Colors.white12 : Colors.black12,
-                width: 1.8,
-              ),
+        final gridContainer = Container(
+          width: width,
+          height: height,
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF0D1424).withValues(alpha: 0.4) : Colors.grey.shade100.withValues(alpha: 0.4),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark ? Colors.white12 : Colors.black12,
+              width: 1.8,
             ),
+          ),
           child: Stack(
             children: [
               // 1. Grid de fundo
@@ -674,7 +697,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                   },
                 ),
 
-              // 5. Linha guia de fiação temporária
+              // 5. Linha guia de fiação temporária (Acompanha o cursor em tempo real)
               if (connSource != null)
                 Positioned.fill(
                   child: IgnorePointer(
@@ -690,33 +713,123 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                 ),
             ],
           ),
-        ),
-      );
+        );
 
-        return MouseRegion(
-          onHover: (event) {
-            if (_connectionSource != null) {
-              final mousePos = event.localPosition;
-              final snapped = _findNearestTerminal(mousePos, cellSize, state.components, _connectionSource);
-              if (_snappedTarget?.componentId != snapped?.componentId || _snappedTarget?.terminal != snapped?.terminal) {
+        final interactiveGridContainer = Listener(
+          onPointerDown: (event) {
+            final mousePos = event.localPosition;
+            final hitTerminal = _findTerminalAtPosition(mousePos, cellSize, state.components);
+
+            if (_showMultimeter && _connectionSource == null && hitTerminal != null) {
+              setState(() {
+                if (_redProbe.componentId == null || (_redProbe.componentId != null && _blackProbe.componentId != null)) {
+                  _redProbe = MultimeterProbeConnection(componentId: hitTerminal.componentId, terminal: hitTerminal.terminal);
+                } else {
+                  _blackProbe = MultimeterProbeConnection(componentId: hitTerminal.componentId, terminal: hitTerminal.terminal);
+                }
+              });
+              return;
+            }
+
+            if (_connectionSource == null) {
+              if (hitTerminal != null) {
+                final snapped = _findNearestTerminal(mousePos, cellSize, state.components, hitTerminal);
                 setState(() {
+                  _connectionSource = hitTerminal;
+                  _dragStartPosition = mousePos;
                   _currentMousePos = mousePos;
                   _snappedTarget = snapped;
+                  _isDraggingWire = true;
                 });
-              } else if (_currentMousePos != mousePos) {
+              } else {
+                if (_selectedComponentId != null) {
+                  setState(() {
+                    _selectedComponentId = null;
+                  });
+                }
+              }
+            } else {
+              if (!_isDraggingWire) {
+                final target = _snappedTarget ?? hitTerminal;
+                if (target != null && (target.componentId != _connectionSource!.componentId || target.terminal != _connectionSource!.terminal)) {
+                  ref.read(sandboxControllerProvider.notifier).addWire(
+                    _connectionSource!.componentId,
+                    _connectionSource!.terminal,
+                    target.componentId,
+                    target.terminal,
+                  );
+                }
                 setState(() {
-                  _currentMousePos = mousePos;
+                  _connectionSource = null;
+                  _snappedTarget = null;
+                  _currentMousePos = null;
+                  _isDraggingWire = false;
+                  _dragStartPosition = null;
                 });
               }
             }
           },
-          child: Center(
+          onPointerMove: (event) {
+            if (_connectionSource != null) {
+              final mousePos = event.localPosition;
+              final snapped = _findNearestTerminal(mousePos, cellSize, state.components, _connectionSource);
+              setState(() {
+                _currentMousePos = mousePos;
+                _snappedTarget = snapped;
+              });
+            }
+          },
+          onPointerHover: (event) {
+            if (_connectionSource != null) {
+              final mousePos = event.localPosition;
+              final snapped = _findNearestTerminal(mousePos, cellSize, state.components, _connectionSource);
+              setState(() {
+                _currentMousePos = mousePos;
+                _snappedTarget = snapped;
+              });
+            }
+          },
+          onPointerUp: (event) {
+            if (_connectionSource != null && _isDraggingWire && _dragStartPosition != null) {
+              final mousePos = event.localPosition;
+              final dragDistance = (mousePos - _dragStartPosition!).distance;
+
+              if (dragDistance < 10.0) {
+                setState(() {
+                  _isDraggingWire = false;
+                });
+              } else {
+                final hitTerminal = _findTerminalAtPosition(mousePos, cellSize, state.components);
+                final target = _snappedTarget ?? hitTerminal;
+
+                if (target != null && (target.componentId != _connectionSource!.componentId || target.terminal != _connectionSource!.terminal)) {
+                  ref.read(sandboxControllerProvider.notifier).addWire(
+                    _connectionSource!.componentId,
+                    _connectionSource!.terminal,
+                    target.componentId,
+                    target.terminal,
+                  );
+                }
+
+                setState(() {
+                  _connectionSource = null;
+                  _snappedTarget = null;
+                  _currentMousePos = null;
+                  _isDraggingWire = false;
+                  _dragStartPosition = null;
+                });
+              }
+            }
+          },
+          child: gridContainer,
+        );
+
+        return Center(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
             child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.vertical,
-                child: gridContainer,
-              ),
+              scrollDirection: Axis.vertical,
+              child: interactiveGridContainer,
             ),
           ),
         );
@@ -970,99 +1083,61 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
       top: localY - (touchAreaSize / 2),
       width: touchAreaSize,
       height: touchAreaSize,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () {
-          final connSource = _connectionSource;
-          if (_showMultimeter && connSource == null) {
-            setState(() {
-              if (_redProbe.componentId == null || (_redProbe.componentId != null && _blackProbe.componentId != null)) {
-                _redProbe = MultimeterProbeConnection(componentId: component.id, terminal: terminal);
-              } else {
-                _blackProbe = MultimeterProbeConnection(componentId: component.id, terminal: terminal);
-              }
-            });
-            return;
-          }
-
-          if (connSource == null) {
-            setState(() {
-              _connectionSource = ConnectionSource(component.id, terminal);
-              _snappedTarget = null;
-            });
-          } else {
-            if (connSource.componentId != component.id || connSource.terminal != terminal) {
-              final targetTerm = isSnapped ? _snappedTarget!.terminal : terminal;
-              final targetCompId = isSnapped ? _snappedTarget!.componentId : component.id;
-              ref.read(sandboxControllerProvider.notifier).addWire(
-                connSource.componentId,
-                connSource.terminal,
-                targetCompId,
-                targetTerm,
-              );
-            }
-            setState(() {
-              _connectionSource = null;
-              _snappedTarget = null;
-            });
-          }
-        },
-        child: MouseRegion(
-          cursor: SystemMouseCursors.click,
-          child: Center(
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              curve: Curves.easeOutCubic,
-              width: currentDotSize,
-              height: currentDotSize,
-              decoration: BoxDecoration(
-                color: (isSource || isSnapped) ? const Color(0xFF00F5D4) : color,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: (isSource || isSnapped) ? Colors.white : (isWiringMode ? const Color(0xFF00F5D4) : Colors.white),
-                  width: (isSource || isSnapped) ? 2.8 : 1.5,
-                ),
-                boxShadow: [
-                  if (isSnapped)
-                    BoxShadow(
-                      color: const Color(0xFF00F5D4).withValues(alpha: 0.9),
-                      blurRadius: 16,
-                      spreadRadius: 4,
-                    )
-                  else if (isSource)
-                    BoxShadow(
-                      color: const Color(0xFF00F5D4).withValues(alpha: 0.8),
-                      blurRadius: 12,
-                      spreadRadius: 3,
-                    )
-                  else if (isWiringMode)
-                    BoxShadow(
-                      color: const Color(0xFF00F5D4).withValues(alpha: 0.4),
-                      blurRadius: 6,
-                      spreadRadius: 1,
-                    )
-                  else
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.3),
-                      blurRadius: 3,
-                      spreadRadius: 0.5,
-                    ),
-                ],
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Center(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeOutCubic,
+            width: currentDotSize,
+            height: currentDotSize,
+            decoration: BoxDecoration(
+              color: (isSource || isSnapped) ? const Color(0xFF00F5D4) : color,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: (isSource || isSnapped) ? Colors.white : (isWiringMode ? const Color(0xFF00F5D4) : Colors.white),
+                width: (isSource || isSnapped) ? 2.8 : 1.5,
               ),
-              child: showPolarity
-                  ? Center(
-                      child: Text(
-                        polaritySign,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: currentDotSize * 0.65,
-                          fontWeight: FontWeight.bold,
-                          height: 1.0,
-                        ),
-                      ),
-                    )
-                  : null,
+              boxShadow: [
+                if (isSnapped)
+                  BoxShadow(
+                    color: const Color(0xFF00F5D4).withValues(alpha: 0.9),
+                    blurRadius: 16,
+                    spreadRadius: 4,
+                  )
+                else if (isSource)
+                  BoxShadow(
+                    color: const Color(0xFF00F5D4).withValues(alpha: 0.8),
+                    blurRadius: 12,
+                    spreadRadius: 3,
+                  )
+                else if (isWiringMode)
+                  BoxShadow(
+                    color: const Color(0xFF00F5D4).withValues(alpha: 0.4),
+                    blurRadius: 6,
+                    spreadRadius: 1,
+                  )
+                else
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    blurRadius: 3,
+                    spreadRadius: 0.5,
+                  ),
+              ],
             ),
+            child: showPolarity
+                ? Center(
+                    child: Text(
+                      polaritySign,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: currentDotSize * 0.65,
+                        fontWeight: FontWeight.bold,
+                        height: 1.0,
+                      ),
+                    ),
+                  )
+                : null,
           ),
         ),
       ),
