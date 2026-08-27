@@ -173,6 +173,46 @@ class WiresPainter extends CustomPainter {
         }
       }
     }
+
+    // 5. Renderiza Nós de Junção Elétrica (T-Junction Dots) em conexões múltiplas
+    final junctionPaint = Paint()
+      ..color = isDark ? const Color(0xFF00FF9D) : const Color(0xFF00875A)
+      ..style = PaintingStyle.fill;
+
+    final terminalWireCounts = <String, Offset>{};
+    for (final wire in wires) {
+      final fromComp = components.where((c) => c.id == wire.fromComponentId).firstOrNull;
+      final toComp = components.where((c) => c.id == wire.toComponentId).firstOrNull;
+      if (fromComp != null && toComp != null) {
+        final fromPos = wire.fromTerminal == 'A' ? fromComp.getTerminalAPosition() : fromComp.getTerminalBPosition();
+        final toPos = wire.toTerminal == 'A' ? toComp.getTerminalAPosition() : toComp.getTerminalBPosition();
+
+        final fromKey = '${wire.fromComponentId}_${wire.fromTerminal}';
+        final toKey = '${wire.toComponentId}_${wire.toTerminal}';
+
+        terminalWireCounts[fromKey] = Offset(fromPos.dx * cellSize, fromPos.dy * cellSize);
+        terminalWireCounts[toKey] = Offset(toPos.dx * cellSize, toPos.dy * cellSize);
+      }
+    }
+
+    for (final entry in terminalWireCounts.entries) {
+      final connectedWireCount = wires.where((w) =>
+          '${w.fromComponentId}_${w.fromTerminal}' == entry.key ||
+          '${w.toComponentId}_${w.toTerminal}' == entry.key).length;
+
+      if (connectedWireCount >= 2) {
+        final pos = entry.value;
+        canvas.drawCircle(pos, 4.5, junctionPaint);
+        canvas.drawCircle(
+          pos,
+          6.5,
+          Paint()
+            ..color = (isDark ? const Color(0xFF00FF9D) : Colors.black87).withValues(alpha: 0.3)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.5,
+        );
+      }
+    }
   }
 
   @override

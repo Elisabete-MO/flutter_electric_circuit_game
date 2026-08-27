@@ -24,6 +24,7 @@ class SandboxControlBarWidget extends StatelessWidget {
   final VoidCallback onToggleOscilloscope;
   final VoidCallback onOpenInspector;
   final VoidCallback onOpenChallenges;
+  final VoidCallback onOpenExportReport;
 
   const SandboxControlBarWidget({
     super.key,
@@ -44,6 +45,7 @@ class SandboxControlBarWidget extends StatelessWidget {
     required this.onToggleOscilloscope,
     required this.onOpenInspector,
     required this.onOpenChallenges,
+    required this.onOpenExportReport,
   });
 
   @override
@@ -118,6 +120,15 @@ class SandboxControlBarWidget extends StatelessWidget {
           ),
           tooltip: isEn ? "Troubleshooting & UGC" : "Desafios & Importar/Exportar",
           onPressed: onOpenChallenges,
+        ),
+        IconButton(
+          icon: const Icon(
+            Icons.assignment_rounded,
+            size: 20,
+            color: Color(0xFF00FF9D),
+          ),
+          tooltip: isEn ? "Circuit Report & BOM" : "Relatório Técnico & BOM",
+          onPressed: onOpenExportReport,
         ),
 
         FilledButton(

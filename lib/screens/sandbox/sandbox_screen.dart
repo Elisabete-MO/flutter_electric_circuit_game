@@ -26,6 +26,7 @@ import 'widgets/sandbox_multimeter.dart';
 import 'widgets/sandbox_oscilloscope.dart';
 import 'widgets/sandbox_inspector_dialog.dart';
 import 'widgets/sandbox_challenges_dialog.dart';
+import 'widgets/sandbox_export_dialog.dart';
 
 class SandboxScreen extends ConsumerStatefulWidget {
   const SandboxScreen({super.key});
@@ -559,6 +560,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                           onToggleOscilloscope: () => setState(() => _showOscilloscope = !_showOscilloscope),
                           onOpenInspector: () => _openInspectorDialog(sandboxState, isEn, isDark),
                           onOpenChallenges: () => _openChallengesDialog(sandboxState, isEn, isDark),
+                          onOpenExportReport: () => _openExportReportDialog(sandboxState, isEn, isDark),
                         ),
                       ],
                     ),
@@ -778,6 +780,17 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
             _selectedComponentId = null;
           });
         },
+      ),
+    );
+  }
+
+  void _openExportReportDialog(SandboxState state, bool isEn, bool isDark) {
+    showDialog(
+      context: context,
+      builder: (context) => SandboxExportDialog(
+        state: state,
+        isEn: isEn,
+        isDark: isDark,
       ),
     );
   }
