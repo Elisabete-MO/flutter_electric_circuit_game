@@ -592,17 +592,28 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
         final selectedComponentList = state.components.where((c) => c.id == selectedId).toList();
         final selectedComponent = selectedComponentList.isNotEmpty ? selectedComponentList.first : null;
 
-        final gridContainer = Container(
-          width: width,
-          height: height,
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF0D1424).withValues(alpha: 0.4) : Colors.grey.shade100.withValues(alpha: 0.4),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isDark ? Colors.white12 : Colors.black12,
-              width: 1.8,
+        final gridContainer = GestureDetector(
+          onTap: () {
+            if (_selectedComponentId != null || _connectionSource != null) {
+              setState(() {
+                _selectedComponentId = null;
+                _connectionSource = null;
+                _snappedTarget = null;
+                _currentMousePos = null;
+              });
+            }
+          },
+          child: Container(
+            width: width,
+            height: height,
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF0D1424).withValues(alpha: 0.4) : Colors.grey.shade100.withValues(alpha: 0.4),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark ? Colors.white12 : Colors.black12,
+                width: 1.8,
+              ),
             ),
-          ),
           child: Stack(
             children: [
               // 1. Grid de fundo
@@ -679,7 +690,8 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                 ),
             ],
           ),
-        );
+        ),
+      );
 
         return MouseRegion(
           onHover: (event) {

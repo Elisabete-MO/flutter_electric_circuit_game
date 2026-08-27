@@ -250,7 +250,10 @@ class TemporaryWireLayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fromComp = components.firstWhere((c) => c.id == source.componentId);
+    final fromCompList = components.where((c) => c.id == source.componentId).toList();
+    if (fromCompList.isEmpty) return const SizedBox.shrink();
+    final fromComp = fromCompList.first;
+
     final fromRel = source.terminal == 'A' ? fromComp.getTerminalAPosition() : fromComp.getTerminalBPosition();
     final start = Offset(fromRel.dx * cellSize, fromRel.dy * cellSize);
 
@@ -264,6 +267,8 @@ class TemporaryWireLayer extends StatelessWidget {
       }
     }
     end ??= mousePosition;
+
+    if (end == null) return const SizedBox.shrink();
 
     return CustomPaint(
       painter: _TempWirePainter(
