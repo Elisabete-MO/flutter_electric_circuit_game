@@ -93,167 +93,169 @@ class SandboxMetricsPanelWidget extends ConsumerWidget {
       borderRadius: 16,
       opacity: isDark ? 0.35 : 0.6,
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Título do Componente
-          Text(
-            getComponentName(component.type, AppLocalizations.of(context)!).toUpperCase(),
-            style: GoogleFonts.rajdhani(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-
-          // Se for interruptor, controle liga/desliga
-          if (isSwitch) ...[
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Título do Componente
             Text(
-              isEn ? 'Switch State:' : 'Estado do interruptor:',
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 6),
-            ElevatedButton.icon(
-              onPressed: () {
-                controller.toggleComponentActive(component.id);
-              },
-              icon: Icon(component.isActive ? Icons.power_rounded : Icons.power_off_rounded, size: 16),
-              label: Text(component.isActive ? (isEn ? 'OPENED' : 'ABERTO') : (isEn ? 'CLOSED' : 'FECHADO')),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: component.isActive
-                    ? const Color(0xFF00FF9D).withValues(alpha: 0.15)
-                    : Colors.grey.withValues(alpha: 0.15),
-                foregroundColor: component.isActive ? const Color(0xFF00FF9D) : Colors.grey,
+              getComponentName(component.type, AppLocalizations.of(context)!).toUpperCase(),
+              style: GoogleFonts.rajdhani(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
               ),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
-          ],
 
-          // Slider de Valor (Battery / Resistor)
-          if (hasValueSlider) ...[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  valueLabel,
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            // Se for interruptor, controle liga/desliga
+            if (isSwitch) ...[
+              Text(
+                isEn ? 'Switch State:' : 'Estado do interruptor:',
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 6),
+              ElevatedButton.icon(
+                onPressed: () {
+                  controller.toggleComponentActive(component.id);
+                },
+                icon: Icon(component.isActive ? Icons.power_rounded : Icons.power_off_rounded, size: 16),
+                label: Text(component.isActive ? (isEn ? 'CLOSED' : 'FECHADO') : (isEn ? 'OPENED' : 'ABERTO')),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: component.isActive
+                      ? const Color(0xFF00FF9D).withValues(alpha: 0.15)
+                      : Colors.grey.withValues(alpha: 0.15),
+                  foregroundColor: component.isActive ? const Color(0xFF00FF9D) : Colors.grey,
                 ),
-                Text(
-                  '${component.value.toStringAsFixed(1)}$unit',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            // Slider de Valor (Battery / Resistor)
+            if (hasValueSlider) ...[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    valueLabel,
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    '${component.value.toStringAsFixed(1)}$unit',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+              Slider(
+                value: component.value.clamp(minVal, maxVal),
+                min: minVal,
+                max: maxVal,
+                divisions: maxVal > 50 ? 50 : 15,
+                activeColor: const Color(0xFF00F5D4),
+                onChanged: (val) {
+                  controller.updateComponentValue(component.id, val);
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            // Detalhes Elétricos em Tempo Real
+            _buildElectricityDetails(context, ref, component, isEn, isDark),
+
+            if (connectedWires.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Text(
+                isEn ? 'Connected Wires:' : 'Fios Conectados:',
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                constraints: const BoxConstraints(maxHeight: 120),
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: connectedWires.map((wire) {
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                getWireDescription(wire),
+                                style: const TextStyle(fontSize: 10),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            IconButton(
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              icon: const Icon(Icons.close_rounded, size: 14, color: Color(0xFFFF3B7F)),
+                              onPressed: () {
+                                controller.removeWire(wire.id);
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
                   ),
                 ),
-              ],
-            ),
-            Slider(
-              value: component.value.clamp(minVal, maxVal),
-              min: minVal,
-              max: maxVal,
-              divisions: maxVal > 50 ? 50 : 15,
-              activeColor: const Color(0xFF00F5D4),
-              onChanged: (val) {
-                controller.updateComponentValue(component.id, val);
-              },
-            ),
+              ),
+            ],
             const SizedBox(height: 16),
-          ],
 
-          // Detalhes Elétricos em Tempo Real
-          _buildElectricityDetails(context, ref, component, isEn, isDark),
-
-          if (connectedWires.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Text(
-              isEn ? 'Connected Wires:' : 'Fios Conectados:',
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey),
-            ),
-            const SizedBox(height: 6),
-            Container(
-              constraints: const BoxConstraints(maxHeight: 120),
-              child: SingleChildScrollView(
-                child: Column(
-                  children: connectedWires.map((wire) {
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 4),
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              getWireDescription(wire),
-                              style: const TextStyle(fontSize: 10),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          IconButton(
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                            icon: const Icon(Icons.close_rounded, size: 14, color: Color(0xFFFF3B7F)),
-                            onPressed: () {
-                              controller.removeWire(wire.id);
-                            },
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
+            // Botões de Ação
+            if (sandboxState.burnedComponentIds.contains(component.id)) ...[
+              FilledButton.icon(
+                onPressed: () {
+                  controller.replaceBurnedComponent(component.id);
+                },
+                icon: const Icon(Icons.build_rounded, size: 16),
+                label: Text(isEn ? 'Replace Component' : 'Substituir Componente'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF00FF9D),
+                  foregroundColor: Colors.black87,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                 ),
               ),
-            ),
-          ],
-          const Spacer(),
-
-          // Botões de Ação
-          if (sandboxState.burnedComponentIds.contains(component.id)) ...[
-            FilledButton.icon(
+              const SizedBox(height: 8),
+            ],
+            OutlinedButton.icon(
               onPressed: () {
-                controller.replaceBurnedComponent(component.id);
+                controller.rotateComponent(component.id);
               },
-              icon: const Icon(Icons.build_rounded, size: 16),
-              label: Text(isEn ? 'Replace Component' : 'Substituir Componente'),
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF00FF9D),
-                foregroundColor: Colors.black87,
+              icon: const Icon(Icons.rotate_right_rounded, size: 16),
+              label: Text(isEn ? 'Rotate 90°' : 'Rotacionar'),
+              style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 8),
               ),
             ),
             const SizedBox(height: 8),
+            FilledButton.icon(
+              onPressed: () {
+                controller.removeComponent(component.id);
+                onDeselect();
+              },
+              icon: const Icon(Icons.delete_forever_rounded, size: 16),
+              label: Text(isEn ? 'Delete' : 'Excluir'),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFFF3B7F),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+              ),
+            ),
           ],
-          OutlinedButton.icon(
-            onPressed: () {
-              controller.rotateComponent(component.id);
-            },
-            icon: const Icon(Icons.rotate_right_rounded, size: 16),
-            label: Text(isEn ? 'Rotate 90°' : 'Rotacionar'),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-            ),
-          ),
-          const SizedBox(height: 8),
-          FilledButton.icon(
-            onPressed: () {
-              controller.removeComponent(component.id);
-              onDeselect();
-            },
-            icon: const Icon(Icons.delete_forever_rounded, size: 16),
-            label: Text(isEn ? 'Delete' : 'Excluir'),
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFFF3B7F),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 8),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

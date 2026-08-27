@@ -162,6 +162,14 @@ class ComponentPhysicalPainter extends CustomPainter {
     canvas.drawRect(termLeft, metalPaint);
     canvas.drawRect(termRight, metalPaint);
 
+    // Condutores de latão estendendo para as extremidades dos terminais da célula A e B
+    final wireLeadPaint = Paint()
+      ..color = const Color(0xFFD4AF37)
+      ..strokeWidth = 2.8
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(Offset(termLeft.center.dx, termLeft.top + 4), Offset(0, cy), wireLeadPaint);
+    canvas.drawLine(Offset(termRight.center.dx, termRight.top + 4), Offset(size.width, cy), wireLeadPaint);
+
     // Símbolos - e + nas lâminas
     final signStyle = const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold);
     TextPainter(text: TextSpan(text: '-', style: signStyle), textDirection: TextDirection.ltr)
@@ -698,6 +706,14 @@ class ComponentPhysicalPainter extends CustomPainter {
       height: blockHeight,
     );
     final rr = RRect.fromRectAndRadius(blockRect, const Radius.circular(5));
+
+    // Hastes metálicas estendendo o circuito até as bordas das células (Terminais A e B)
+    final leadPaint = Paint()
+      ..color = isDarkMode ? const Color(0xFF90A4AE) : const Color(0xFF78909C)
+      ..strokeWidth = 2.8
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(Offset(0, cy + 12), Offset(blockRect.left + 4, cy + 12), leadPaint);
+    canvas.drawLine(Offset(blockRect.right - 4, cy + 12), Offset(size.width, cy + 12), leadPaint);
 
     // Sombra projetada
     canvas.drawRRect(

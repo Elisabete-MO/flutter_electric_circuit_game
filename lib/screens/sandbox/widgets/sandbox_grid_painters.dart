@@ -530,27 +530,20 @@ Path _buildSmartWirePath({
       path.lineTo(end.dx, end.dy);
     }
   } else {
-    // Modo Físico Realista (Cabo curvo por gravidade)
-    if (isReturn) {
-      double maxY = start.dy > end.dy ? start.dy : end.dy;
-      for (final comp in components) {
-        final compY = (comp.gridY + 1) * cellSize;
-        if (compY > maxY) maxY = compY;
-      }
-      final routeY = maxY + (cellSize * 0.6);
+    // Modo Físico Realista (Cabo curvo por gravidade natural)
+    final midX = (start.dx + end.dx) / 2;
+    final dist = (end - start).distance;
+    final sag = (dist * 0.22).clamp(12.0, 50.0);
+    final controlY = math.max(start.dy, end.dy) + sag;
 
-      path.cubicTo(
-        start.dx + 40, routeY,
-        end.dx - 40, routeY,
-        end.dx, end.dy,
-      );
-    } else {
-      path.cubicTo(
-        (start.dx + end.dx) / 2, start.dy,
-        (start.dx + end.dx) / 2, end.dy,
-        end.dx, end.dy,
-      );
-    }
+    path.cubicTo(
+      midX,
+      controlY,
+      midX,
+      controlY,
+      end.dx,
+      end.dy,
+    );
   }
 
   return path;

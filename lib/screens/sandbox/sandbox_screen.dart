@@ -35,7 +35,7 @@ class SandboxScreen extends ConsumerStatefulWidget {
   ConsumerState<SandboxScreen> createState() => _SandboxScreenState();
 }
 
-class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTickerProviderStateMixin {
+class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProviderStateMixin {
   int _gridCols = 6;
   int _gridRows = 5;
 
@@ -138,6 +138,32 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
     return nearest;
   }
 
+  bool _isPositionOverHudOrComponent(
+    Offset mousePos,
+    double cellSize,
+    double gridWidth,
+    List<SandboxComponent> components,
+    String? selectedId,
+  ) {
+    if (selectedId != null) {
+      final selectedCompList = components.where((c) => c.id == selectedId).toList();
+      if (selectedCompList.isNotEmpty) {
+        final comp = selectedCompList.first;
+        final hudLeft = (comp.gridX * cellSize).clamp(0.0, math.max(0.0, gridWidth - 140)).toDouble();
+        final hudTop = math.max(0.0, (comp.gridY * cellSize) - 40).toDouble();
+        final hudRect = Rect.fromLTWH(hudLeft, hudTop, 140, 44);
+        if (hudRect.contains(mousePos)) return true;
+      }
+    }
+
+    for (final comp in components) {
+      final compRect = Rect.fromLTWH(comp.gridX * cellSize, comp.gridY * cellSize, cellSize, cellSize);
+      if (compRect.contains(mousePos)) return true;
+    }
+
+    return false;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -211,6 +237,9 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
       });
     }
 
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobileWidth = screenWidth < 460;
+
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.delete): () {
@@ -255,182 +284,194 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
         autofocus: true,
         child: Scaffold(
           appBar: AppBar(
-            title: Text(
-              isEn ? 'Free Sandbox' : 'Bancada Livre',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontFamily: GoogleFonts.rajdhani().fontFamily,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.0,
-              ),
-            ),
+            title: isMobileWidth
+                ? null
+                : Text(
+                    isEn ? 'Free Sandbox' : 'Bancada Livre',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontFamily: GoogleFonts.rajdhani().fontFamily,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
             actions: [
-              // Menu de Presets / Exemplos de Circuitos
-              PopupMenuButton<String>(
-                tooltip: isEn ? "Circuit Presets" : "Exemplos de Circuitos",
-                icon: const Icon(Icons.auto_awesome_rounded, color: Color(0xFF00F5D4)),
-                color: isDark ? const Color(0xFF141E33) : Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                onSelected: (key) {
-                  controller.loadPreset(key);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(isEn ? 'Loaded circuit preset!' : 'Circuito de exemplo carregado!'),
-                      duration: const Duration(seconds: 2),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                },
-                itemBuilder: (context) => [
-                  PopupMenuItem(
-                    value: 'simple_bulb',
-                    child: Row(
-                      children: [
-                        const Icon(Icons.lightbulb_outline_rounded, size: 18, color: Color(0xFFFFB300)),
-                        const SizedBox(width: 8),
-                        Text(isEn ? 'Simple Circuit (Lamp)' : 'Circuito Simples (Lâmpada)', style: const TextStyle(fontSize: 12)),
-                      ],
-                    ),
-                  ),
-                  PopupMenuItem(
-                    value: 'switch_motor',
-                    child: Row(
-                      children: [
-                        const Icon(Icons.toggle_on_rounded, size: 18, color: Color(0xFF00F5D4)),
-                        const SizedBox(width: 8),
-                        Text(isEn ? 'Switch & Motor' : 'Interruptor & Motor', style: const TextStyle(fontSize: 12)),
-                      ],
-                    ),
-                  ),
-                  PopupMenuItem(
-                    value: 'led_resistor',
-                    child: Row(
-                      children: [
-                        const Icon(Icons.flash_on_rounded, size: 18, color: Color(0xFFFF3B7F)),
-                        const SizedBox(width: 8),
-                        Text(isEn ? 'LED & Resistor' : 'LED com Resistor', style: const TextStyle(fontSize: 12)),
-                      ],
-                    ),
-                  ),
-                  PopupMenuItem(
-                    value: 'parallel_bulbs',
-                    child: Row(
-                      children: [
-                        const Icon(Icons.account_tree_rounded, size: 18, color: Color(0xFF00FF9D)),
-                        const SizedBox(width: 8),
-                        Text(isEn ? 'Parallel Circuit' : 'Circuito em Paralelo', style: const TextStyle(fontSize: 12)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              // Alternador de Modo: Componentes Físicos vs Diagrama Esquemático
-              Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: ModeToggleSwitch(
-                  isDiagramMode: _isDiagramMode,
-                  onChanged: (val) => setState(() => _isDiagramMode = val),
-                  isCompact: true,
-                ),
-              ),
-              // Seletor de Tamanho da Bancada / Grid
-              Container(
-                margin: const EdgeInsets.only(right: 8),
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.black45 : Colors.white60,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isDark ? const Color(0xFF00F5D4).withValues(alpha: 0.4) : const Color(0xFF00F5D4),
-                    width: 1.2,
-                  ),
-                ),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    IconButton(
-                      visualDensity: VisualDensity.compact,
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                      icon: Icon(Icons.remove, size: 14, color: isDark ? Colors.white70 : Colors.black87),
-                      tooltip: isEn ? "Decrease Grid Size" : "Diminuir Grid",
-                      onPressed: (_gridCols > 4 && _gridRows > 3)
-                          ? () {
-                              setState(() {
-                                _gridCols = math.max(4, _gridCols - 1);
-                                _gridRows = math.max(3, _gridRows - 1);
-                              });
-                            }
-                          : null,
-                    ),
+                    // Menu de Presets / Exemplos de Circuitos
                     PopupMenuButton<String>(
-                      tooltip: isEn ? "Grid Presets" : "Tamanhos de Grid",
-                      offset: const Offset(0, 36),
+                      tooltip: isEn ? "Circuit Presets" : "Exemplos de Circuitos",
+                      icon: const Icon(Icons.auto_awesome_rounded, color: Color(0xFF00F5D4)),
                       color: isDark ? const Color(0xFF141E33) : Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                        child: Row(
-                          children: [
-                            Icon(Icons.grid_4x4_rounded, size: 14, color: isDark ? const Color(0xFF00F5D4) : Colors.black87),
-                            const SizedBox(width: 4),
-                            Text(
-                              '$_gridCols x $_gridRows',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: GoogleFonts.rajdhani().fontFamily,
-                                color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
-                              ),
-                            ),
-                            Icon(Icons.arrow_drop_down, size: 14, color: isDark ? const Color(0xFF00F5D4) : Colors.black87),
-                          ],
-                        ),
-                      ),
-                      onSelected: (preset) {
-                        final parts = preset.split('x');
-                        if (parts.length == 2) {
-                          setState(() {
-                            _gridCols = int.parse(parts[0]);
-                            _gridRows = int.parse(parts[1]);
-                          });
-                        }
+                      onSelected: (key) {
+                        controller.loadPreset(key);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(isEn ? 'Loaded circuit preset!' : 'Circuito de exemplo carregado!'),
+                            duration: const Duration(seconds: 2),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
                       },
                       itemBuilder: (context) => [
                         PopupMenuItem(
-                          value: '6x5',
-                          child: Text('6 × 5 (${isEn ? "Standard" : "Padrão"})', style: const TextStyle(fontSize: 12)),
+                          value: 'simple_bulb',
+                          child: Row(
+                            children: [
+                              const Icon(Icons.lightbulb_outline_rounded, size: 18, color: Color(0xFFFFB300)),
+                              const SizedBox(width: 8),
+                              Text(isEn ? 'Simple Circuit (Lamp)' : 'Circuito Simples (Lâmpada)', style: const TextStyle(fontSize: 12)),
+                            ],
+                          ),
                         ),
                         PopupMenuItem(
-                          value: '8x6',
-                          child: Text('8 × 6 (${isEn ? "Medium" : "Médio"})', style: const TextStyle(fontSize: 12)),
+                          value: 'switch_motor',
+                          child: Row(
+                            children: [
+                              const Icon(Icons.toggle_on_rounded, size: 18, color: Color(0xFF00F5D4)),
+                              const SizedBox(width: 8),
+                              Text(isEn ? 'Switch & Motor' : 'Interruptor & Motor', style: const TextStyle(fontSize: 12)),
+                            ],
+                          ),
                         ),
                         PopupMenuItem(
-                          value: '10x8',
-                          child: Text('10 × 8 (${isEn ? "Large" : "Grande"})', style: const TextStyle(fontSize: 12)),
+                          value: 'led_resistor',
+                          child: Row(
+                            children: [
+                              const Icon(Icons.flash_on_rounded, size: 18, color: Color(0xFFFF3B7F)),
+                              const SizedBox(width: 8),
+                              Text(isEn ? 'LED & Resistor' : 'LED com Resistor', style: const TextStyle(fontSize: 12)),
+                            ],
+                          ),
                         ),
                         PopupMenuItem(
-                          value: '12x10',
-                          child: Text('12 × 10 (${isEn ? "Extra Large" : "Extra Grande"})', style: const TextStyle(fontSize: 12)),
-                        ),
-                        PopupMenuItem(
-                          value: '16x12',
-                          child: Text('16 × 12 (${isEn ? "Maximum" : "Máximo"})', style: const TextStyle(fontSize: 12)),
+                          value: 'parallel_bulbs',
+                          child: Row(
+                            children: [
+                              const Icon(Icons.account_tree_rounded, size: 18, color: Color(0xFF00FF9D)),
+                              const SizedBox(width: 8),
+                              Text(isEn ? 'Parallel Circuit' : 'Circuito em Paralelo', style: const TextStyle(fontSize: 12)),
+                            ],
+                          ),
                         ),
                       ],
                     ),
-                    IconButton(
-                      visualDensity: VisualDensity.compact,
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                      icon: Icon(Icons.add, size: 14, color: isDark ? Colors.white70 : Colors.black87),
-                      tooltip: isEn ? "Increase Grid Size" : "Aumentar Grid",
-                      onPressed: (_gridCols < 18 && _gridRows < 15)
-                          ? () {
-                              setState(() {
-                                _gridCols = math.min(18, _gridCols + 1);
-                                _gridRows = math.min(15, _gridRows + 1);
-                              });
-                            }
-                          : null,
+                    // Alternador de Modo: Componentes Físicos vs Diagrama Esquemático
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ModeToggleSwitch(
+                        isDiagramMode: _isDiagramMode,
+                        onChanged: (val) => setState(() => _isDiagramMode = val),
+                        isCompact: true,
+                      ),
+                    ),
+                    // Seletor de Tamanho da Bancada / Grid
+                    Container(
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.black45 : Colors.white60,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF00F5D4).withValues(alpha: 0.4) : const Color(0xFF00F5D4),
+                          width: 1.2,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (!isMobileWidth)
+                            IconButton(
+                              visualDensity: VisualDensity.compact,
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                              icon: Icon(Icons.remove, size: 14, color: isDark ? Colors.white70 : Colors.black87),
+                              tooltip: isEn ? "Decrease Grid Size" : "Diminuir Grid",
+                              onPressed: (_gridCols > 4 && _gridRows > 3)
+                                  ? () {
+                                      setState(() {
+                                        _gridCols = math.max(4, _gridCols - 1);
+                                        _gridRows = math.max(3, _gridRows - 1);
+                                      });
+                                    }
+                                  : null,
+                            ),
+                          PopupMenuButton<String>(
+                            tooltip: isEn ? "Grid Presets" : "Tamanhos de Grid",
+                            offset: const Offset(0, 36),
+                            color: isDark ? const Color(0xFF141E33) : Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.grid_4x4_rounded, size: 14, color: isDark ? const Color(0xFF00F5D4) : Colors.black87),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '$_gridCols x $_gridRows',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: GoogleFonts.rajdhani().fontFamily,
+                                      color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
+                                    ),
+                                  ),
+                                  Icon(Icons.arrow_drop_down, size: 14, color: isDark ? const Color(0xFF00F5D4) : Colors.black87),
+                                ],
+                              ),
+                            ),
+                            onSelected: (preset) {
+                              final parts = preset.split('x');
+                              if (parts.length == 2) {
+                                setState(() {
+                                  _gridCols = int.parse(parts[0]);
+                                  _gridRows = int.parse(parts[1]);
+                                });
+                              }
+                            },
+                            itemBuilder: (context) => [
+                              PopupMenuItem(
+                                value: '6x5',
+                                child: Text('6 × 5 (${isEn ? "Standard" : "Padrão"})', style: const TextStyle(fontSize: 12)),
+                              ),
+                              PopupMenuItem(
+                                value: '8x6',
+                                child: Text('8 × 6 (${isEn ? "Medium" : "Médio"})', style: const TextStyle(fontSize: 12)),
+                              ),
+                              PopupMenuItem(
+                                value: '10x8',
+                                child: Text('10 × 8 (${isEn ? "Large" : "Grande"})', style: const TextStyle(fontSize: 12)),
+                              ),
+                              PopupMenuItem(
+                                value: '12x10',
+                                child: Text('12 × 10 (${isEn ? "Extra Large" : "Extra Grande"})', style: const TextStyle(fontSize: 12)),
+                              ),
+                              PopupMenuItem(
+                                value: '16x12',
+                                child: Text('16 × 12 (${isEn ? "Maximum" : "Máximo"})', style: const TextStyle(fontSize: 12)),
+                              ),
+                            ],
+                          ),
+                          if (!isMobileWidth)
+                            IconButton(
+                              visualDensity: VisualDensity.compact,
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                              icon: Icon(Icons.add, size: 14, color: isDark ? Colors.white70 : Colors.black87),
+                              tooltip: isEn ? "Increase Grid Size" : "Aumentar Grid",
+                              onPressed: (_gridCols < 18 && _gridRows < 15)
+                                  ? () {
+                                      setState(() {
+                                        _gridCols = math.min(18, _gridCols + 1);
+                                        _gridRows = math.min(15, _gridRows + 1);
+                                      });
+                                    }
+                                  : null,
+                            ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -448,7 +489,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                     bodyContent = Column(
                       children: [
                         SizedBox(
-                          height: 90,
+                          height: 115,
                           child: SandboxToolboxWidget(
                             isHorizontal: true,
                             isDark: isDark,
@@ -463,7 +504,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                         if (selectedComponent != null) ...[
                           const SizedBox(height: 12),
                           SizedBox(
-                            height: 220,
+                            height: 260,
                             child: SandboxMetricsPanelWidget(
                               component: selectedComponent,
                               wires: sandboxState.wires,
@@ -775,7 +816,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                   _snappedTarget = snapped;
                   _isDraggingWire = true;
                 });
-              } else {
+              } else if (!_isPositionOverHudOrComponent(mousePos, cellSize, width, state.components, _selectedComponentId)) {
                 if (_selectedComponentId != null) {
                   setState(() {
                     _selectedComponentId = null;
