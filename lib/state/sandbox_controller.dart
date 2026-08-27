@@ -202,6 +202,16 @@ class SandboxController extends Notifier<SandboxState> {
     _persistState();
   }
 
+  void loadCircuit(List<SandboxComponent> components, List<SandboxWire> wires) {
+    _pushSnapshot();
+    state = SandboxState(
+      components: components,
+      wires: wires,
+      isSimulating: state.isSimulating,
+    );
+    _recalculateCircuit();
+  }
+
   void loadPreset(String presetKey) {
     _pushSnapshot();
     final now = DateTime.now().millisecondsSinceEpoch;

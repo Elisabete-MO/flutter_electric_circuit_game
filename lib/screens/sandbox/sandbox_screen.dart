@@ -24,6 +24,8 @@ import 'widgets/sandbox_control_bar.dart';
 import 'widgets/sandbox_metrics_panel.dart';
 import 'widgets/sandbox_multimeter.dart';
 import 'widgets/sandbox_oscilloscope.dart';
+import 'widgets/sandbox_inspector_dialog.dart';
+import 'widgets/sandbox_challenges_dialog.dart';
 
 class SandboxScreen extends ConsumerStatefulWidget {
   const SandboxScreen({super.key});
@@ -555,6 +557,8 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                           showOscilloscope: _showOscilloscope,
                           onToggleMultimeter: () => setState(() => _showMultimeter = !_showMultimeter),
                           onToggleOscilloscope: () => setState(() => _showOscilloscope = !_showOscilloscope),
+                          onOpenInspector: () => _openInspectorDialog(sandboxState, isEn, isDark),
+                          onOpenChallenges: () => _openChallengesDialog(sandboxState, isEn, isDark),
                         ),
                       ],
                     ),
@@ -745,11 +749,46 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
     );
   }
 
+  void _openInspectorDialog(SandboxState state, bool isEn, bool isDark) {
+    showDialog(
+      context: context,
+      builder: (context) => SandboxInspectorDialog(
+        state: state,
+        isEn: isEn,
+        isDark: isDark,
+        onSelectComponent: (compFilterId) {
+          setState(() {
+            _selectedComponentId = compFilterId;
+          });
+        },
+      ),
+    );
+  }
+
+  void _openChallengesDialog(SandboxState state, bool isEn, bool isDark) {
+    showDialog(
+      context: context,
+      builder: (context) => SandboxChallengesDialog(
+        currentState: state,
+        isEn: isEn,
+        isDark: isDark,
+        onLoadCircuit: (components, wires) {
+          ref.read(sandboxControllerProvider.notifier).loadCircuit(components, wires);
+          setState(() {
+            _selectedComponentId = null;
+          });
+        },
+      ),
+    );
+  }
+
   Widget _buildPlacedComponent(SandboxComponent component, double cellSize, String? selectedId, bool isDark) {
     final isSelected = component.id == selectedId;
     final state = ref.watch(sandboxControllerProvider);
     final active = state.simulationValues['active_${component.id}'] == 1.0;
     final isBurned = state.burnedComponentIds.contains(component.id);
+    final power = state.simulationValues['power_${component.id}'] ?? 0.0;
+    final isHighThermal = state.isSimulating && power > 5.0 && !isBurned && component.type != ComponentType.battery && component.type != ComponentType.powerSupply;
 
     final bodyWidget = InkWell(
       onTap: () {
@@ -763,17 +802,21 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
         decoration: BoxDecoration(
           color: isBurned
               ? const Color(0xFFFF3B7F).withValues(alpha: 0.15)
-              : (isSelected
-                  ? const Color(0xFF00F5D4).withValues(alpha: 0.12)
-                  : (isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.02))),
+              : (isHighThermal
+                  ? const Color(0xFFFFB300).withValues(alpha: 0.22)
+                  : (isSelected
+                      ? const Color(0xFF00F5D4).withValues(alpha: 0.12)
+                      : (isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.02)))),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isBurned
                 ? const Color(0xFFFF3B7F)
-                : (isSelected
-                    ? const Color(0xFF00F5D4)
-                    : (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1))),
-            width: isSelected || isBurned ? 2.0 : 1.0,
+                : (isHighThermal
+                    ? const Color(0xFFFFB300)
+                    : (isSelected
+                        ? const Color(0xFF00F5D4)
+                        : (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1)))),
+            width: isSelected || isBurned || isHighThermal ? 2.0 : 1.0,
           ),
           boxShadow: isBurned
               ? [
@@ -783,15 +826,23 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                     spreadRadius: 1,
                   )
                 ]
-              : (isSelected
+              : (isHighThermal
                   ? [
                       BoxShadow(
-                        color: const Color(0xFF00F5D4).withValues(alpha: 0.3),
-                        blurRadius: 10,
-                        spreadRadius: 1,
+                        color: const Color(0xFFFFB300).withValues(alpha: 0.6),
+                        blurRadius: 14,
+                        spreadRadius: 2,
                       )
                     ]
-                  : null),
+                  : (isSelected
+                      ? [
+                          BoxShadow(
+                            color: const Color(0xFF00F5D4).withValues(alpha: 0.3),
+                            blurRadius: 10,
+                            spreadRadius: 1,
+                          )
+                        ]
+                      : null)),
         ),
         child: Stack(
           children: [
@@ -817,6 +868,19 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                 ),
               ),
             ),
+            if (isHighThermal)
+              Positioned(
+                top: 2,
+                right: 2,
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFFB300),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Text('🔥', style: TextStyle(fontSize: 9)),
+                ),
+              ),
           ],
         ),
       ),

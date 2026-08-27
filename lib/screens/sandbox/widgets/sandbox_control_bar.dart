@@ -22,6 +22,8 @@ class SandboxControlBarWidget extends StatelessWidget {
   final bool showOscilloscope;
   final VoidCallback onToggleMultimeter;
   final VoidCallback onToggleOscilloscope;
+  final VoidCallback onOpenInspector;
+  final VoidCallback onOpenChallenges;
 
   const SandboxControlBarWidget({
     super.key,
@@ -40,6 +42,8 @@ class SandboxControlBarWidget extends StatelessWidget {
     required this.showOscilloscope,
     required this.onToggleMultimeter,
     required this.onToggleOscilloscope,
+    required this.onOpenInspector,
+    required this.onOpenChallenges,
   });
 
   @override
@@ -94,6 +98,26 @@ class SandboxControlBarWidget extends StatelessWidget {
           ),
           tooltip: isEn ? "Toggle Oscilloscope" : "Osciloscópio HUD",
           onPressed: onToggleOscilloscope,
+        ),
+
+        // Diagnóstico Inteligente & UGC (Pilar 3)
+        IconButton(
+          icon: const Icon(
+            Icons.saved_search_rounded,
+            size: 20,
+            color: Color(0xFF00F5D4),
+          ),
+          tooltip: isEn ? "Smart Inspector (Prof. Volts)" : "Inspetor Inteligente (Prof. Volts)",
+          onPressed: onOpenInspector,
+        ),
+        IconButton(
+          icon: const Icon(
+            Icons.psychology_rounded,
+            size: 20,
+            color: Color(0xFFFFB300),
+          ),
+          tooltip: isEn ? "Troubleshooting & UGC" : "Desafios & Importar/Exportar",
+          onPressed: onOpenChallenges,
         ),
 
         FilledButton(
