@@ -75,53 +75,54 @@ class _SymbolCardState extends State<SymbolCard> {
                     color: isDark
                         ? const Color(0xFF1E2638)
                         : const Color(0xFFF8FAFC),
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                     child: Column(
                       children: [
                         if (widget.showLabels) ...[
-                          Text(
-                            widget.component.namePt,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w900,
-                              fontSize: 18,
-                            ),
-                            textAlign: TextAlign.center,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-
-                          const SizedBox(height: 4),
-                        ] else if (widget.isCorrectlyAnswered)
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.check_circle_rounded,
-                                color: Color(0xFF00E676),
-                                size: 18,
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              widget.component.namePt,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 16,
                               ),
-                              const SizedBox(width: 4),
-                              Flexible(
-                                child: Text(
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                        ] else if (widget.isCorrectlyAnswered)
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.check_circle_rounded,
+                                  color: Color(0xFF00E676),
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
                                   widget.component.namePt,
                                   style: theme.textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.w900,
-                                    fontSize: 18,
+                                    fontSize: 16,
                                     color: const Color(0xFF00E676),
                                   ),
                                   textAlign: TextAlign.center,
                                   maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           )
                         else
                           Padding(
-                            padding: const EdgeInsets.only(top: 4, bottom: 4),
+                            padding: const EdgeInsets.only(top: 2, bottom: 2),
                             child: Text(
                               '?',
-                              style: theme.textTheme.titleLarge?.copyWith(
+                              style: theme.textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: theme.colorScheme.primary,
                               ),

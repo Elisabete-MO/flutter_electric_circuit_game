@@ -286,7 +286,7 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
             // Balão de fala do Prof. Volts orientativo
             if (_showBannerOverlay && !_isQuizMode)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.fromLTRB(12, 6, 12, 2),
                 child: Stack(
                   children: [
                     ProfVoltsSpeech(
@@ -304,87 +304,101 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
                 ),
               ),
 
-                // Se estiver no Modo Quiz / Desafio
-                if (_isQuizMode)
-                  Container(
-                    width: double.infinity,
-                    margin: const EdgeInsets.all(16),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.4),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: theme.colorScheme.primary),
+            // Se estiver no Modo Quiz / Desafio
+            if (_isQuizMode)
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.fromLTRB(12, 6, 12, 2),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primaryContainer.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: theme.colorScheme.primary),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      l10n.quizWhichSymbol,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    child: Column(
-                      children: [
-                        Text(
-                          l10n.quizWhichSymbol,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Chip(
-                          avatar: const Icon(Icons.category_rounded, size: 18),
-                          label: Text(
-                            l10n.localeName == 'en'
-                                ? _quizQuestions[_quizCurrentIndex].nameEn
-                                : _quizQuestions[_quizCurrentIndex].namePt,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          l10n.quizQuestionCount(_quizCurrentIndex + 1, _quizQuestions.length),
-                          style: theme.textTheme.labelSmall,
-                        ),
-                      ],
+                    const SizedBox(height: 4),
+                    Chip(
+                      visualDensity: VisualDensity.compact,
+                      avatar: const Icon(Icons.category_rounded, size: 16),
+                      label: Text(
+                        l10n.localeName == 'en'
+                            ? _quizQuestions[_quizCurrentIndex].nameEn
+                            : _quizQuestions[_quizCurrentIndex].namePt,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                      ),
                     ),
-                  ),
-
-                // GRID DE 8 COMPONENTES (Inspirado exatamente nas 8 divisões das referências)
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        // Determina colunas responsivas: 4 em telas largas, 2 em telas estreitas
-                        final crossAxisCount = constraints.maxWidth >= 640 ? 4 : 2;
-
-                        return GridView.builder(
-                          itemCount: _gridComponents.length,
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: crossAxisCount,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                            childAspectRatio: 0.88,
-                          ),
-                          itemBuilder: (context, index) {
-                            final comp = _gridComponents[index];
-
-                            return SymbolCard(
-                              component: comp,
-                              showLabels: !_isQuizMode,
-                              isCorrectlyAnswered: _answeredCorrectlyIds.contains(comp.id),
-                              onTap: () {
-                                if (_isQuizMode) {
-                                  _answerQuiz(comp);
-                                } else {
-                                  _openDetailModal(comp);
-                                }
-                              },
-                              onToggleState: () => _toggleComponentState(index),
-                            );
-                          },
-                        );
-                      },
+                    const SizedBox(height: 2),
+                    Text(
+                      l10n.quizQuestionCount(_quizCurrentIndex + 1, _quizQuestions.length),
+                      style: theme.textTheme.labelSmall,
                     ),
+                  ],
                 ),
               ),
+
+            // GRID DE 8 COMPONENTES (Ajustado dinamicamente para caber na tela sem scroll)
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(10, 4, 10, 10),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final crossAxisCount = constraints.maxWidth >= 640 ? 4 : 2;
+                    final rowCount = (_gridComponents.length / crossAxisCount).ceil();
+                    
+                    const spacing = 10.0;
+                    final availableWidth = constraints.maxWidth;
+                    final availableHeight = constraints.maxHeight;
+
+                    final itemWidth = (availableWidth - (crossAxisCount - 1) * spacing) / crossAxisCount;
+                    final itemHeight = (availableHeight - (rowCount - 1) * spacing) / rowCount;
+
+                    final childAspectRatio = (itemWidth > 0 && itemHeight > 0)
+                        ? (itemWidth / itemHeight)
+                        : 0.88;
+
+                    return GridView.builder(
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _gridComponents.length,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        crossAxisSpacing: spacing,
+                        mainAxisSpacing: spacing,
+                        childAspectRatio: childAspectRatio,
+                      ),
+                      itemBuilder: (context, index) {
+                        final comp = _gridComponents[index];
+
+                        return SymbolCard(
+                          component: comp,
+                          showLabels: !_isQuizMode,
+                          isCorrectlyAnswered: _answeredCorrectlyIds.contains(comp.id),
+                          onTap: () {
+                            if (_isQuizMode) {
+                              _answerQuiz(comp);
+                            } else {
+                              _openDetailModal(comp);
+                            }
+                          },
+                          onToggleState: () => _toggleComponentState(index),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ),
           ],
         ),
       ),
     ),
-    );
-  }
+  );
+}
 }
