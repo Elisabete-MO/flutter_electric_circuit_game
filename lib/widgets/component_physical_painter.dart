@@ -420,22 +420,37 @@ class ComponentPhysicalPainter extends CustomPainter {
   void _drawPhysicalMotor(Canvas canvas, Size size, double cx, double cy) {
     _drawBaseBlock(canvas, size, cx, cy);
 
-    // Bornes
-    canvas.drawCircle(Offset(cx - 34, cy + 4), 5, Paint()..color = Colors.red);
-    canvas.drawCircle(Offset(cx + 34, cy + 4), 5, Paint()..color = Colors.black87);
+    final leftTerminal = Offset(cx - 30, cy + 6);
+    final rightTerminal = Offset(cx + 30, cy + 6);
+
+    // Bornes de conexão vermelhos e pretos
+    canvas.drawCircle(leftTerminal, 5.5, Paint()..color = Colors.red);
+    canvas.drawCircle(rightTerminal, 5.5, Paint()..color = Colors.black87);
+
+    // Fios de conexão dos bornes para o motor
+    final leadPaintRed = Paint()
+      ..color = Colors.red
+      ..strokeWidth = 2.0;
+    final leadPaintBlack = Paint()
+      ..color = isDarkMode ? Colors.grey[400]! : Colors.black87
+      ..strokeWidth = 2.0;
+
+    final motorBackX = cx - 16;
+    canvas.drawLine(leftTerminal, Offset(motorBackX, cy - 6), leadPaintRed);
+    canvas.drawLine(rightTerminal, Offset(motorBackX, cy - 2), leadPaintBlack);
 
     // Corpo metálico cilíndrico do motor
-    final motorRect = Rect.fromCenter(center: Offset(cx - 4, cy - 6), width: 34, height: 26);
+    final motorRect = Rect.fromCenter(center: Offset(cx - 2, cy - 6), width: 30, height: 22);
 
     // Sombra projetada do motor
     canvas.drawRRect(
-      RRect.fromRectAndRadius(motorRect.translate(2, 4), const Radius.circular(8)),
+      RRect.fromRectAndRadius(motorRect.translate(2, 3), const Radius.circular(6)),
       Paint()
         ..color = Colors.black.withValues(alpha: 0.3)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
     );
 
-    // Gradiente metálico cilíndrico (luz de cima, sombra embaixo)
+    // Gradiente metálico do corpo do motor
     final motorGradient = Paint()
       ..shader = LinearGradient(
         colors: isActive
@@ -445,60 +460,85 @@ class ComponentPhysicalPainter extends CustomPainter {
         end: Alignment.bottomCenter,
       ).createShader(motorRect);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(motorRect, const Radius.circular(8)),
+      RRect.fromRectAndRadius(motorRect, const Radius.circular(6)),
       motorGradient,
     );
 
-    // Linha de reflexo superior no cilindro
+    // Linha de reflexo superior
     canvas.drawLine(
-      Offset(motorRect.left + 5, motorRect.top + 3),
-      Offset(motorRect.right - 5, motorRect.top + 3),
+      Offset(motorRect.left + 4, motorRect.top + 3),
+      Offset(motorRect.right - 4, motorRect.top + 3),
       Paint()
-        ..color = Colors.white.withValues(alpha: 0.35)
-        ..strokeWidth = 2.5
+        ..color = Colors.white.withValues(alpha: 0.4)
+        ..strokeWidth = 2.0
         ..strokeCap = StrokeCap.round,
     );
 
     // Borda do corpo
     canvas.drawRRect(
-      RRect.fromRectAndRadius(motorRect, const Radius.circular(8)),
+      RRect.fromRectAndRadius(motorRect, const Radius.circular(6)),
       Paint()
         ..color = const Color(0xFF263238)
         ..strokeWidth = 1.0
         ..style = PaintingStyle.stroke,
     );
 
-    // Eixo rotativo
+    // Eixo rotativo metálico
     final shaftPaint = Paint()
-      ..shader = LinearGradient(
-        colors: [Colors.grey[300]!, Colors.grey[600]!],
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-      ).createShader(Rect.fromLTWH(cx + 13, cy - 9, 15, 6))
-      ..strokeWidth = 4
-      ..style = PaintingStyle.stroke;
-    canvas.drawLine(Offset(cx + 13, cy - 6), Offset(cx + 28, cy - 6), shaftPaint);
+      ..color = Colors.grey[400]!
+      ..strokeWidth = 3.5
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(Offset(cx + 13, cy - 6), Offset(cx + 20, cy - 6), shaftPaint);
 
-    // Disco/Hélice montada no eixo
-    final discCenter = Offset(cx + 28, cy - 6);
-    final discRadius = 10.0;
-    final discRect = Rect.fromCircle(center: discCenter, radius: discRadius);
+    // Hélice / Rotor montado no eixo
+    final discCenter = Offset(cx + 20, cy - 6);
+    final fanRadius = 8.5;
+
+    // Disco de fundo da hélice
     canvas.drawCircle(
-      discCenter, discRadius,
-      Paint()
-        ..shader = RadialGradient(
-          center: const Alignment(-0.3, -0.3),
-          colors: [Colors.white, const Color(0xFFE0E0E0), Colors.grey],
-        ).createShader(discRect),
+      discCenter,
+      fanRadius,
+      Paint()..color = isDarkMode ? const Color(0xFF1E293B) : Colors.grey[300]!,
     );
-    canvas.drawCircle(discCenter, discRadius,
-      Paint()..color = Colors.grey[600]!..style = PaintingStyle.stroke..strokeWidth = 1.2);
+    canvas.drawCircle(
+      discCenter,
+      fanRadius,
+      Paint()
+        ..color = isDarkMode ? Colors.white30 : Colors.black26
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0,
+    );
 
-    // Ponto indicador de rotação no disco
-    final angle = isActive ? (DateTime.now().millisecondsSinceEpoch / 100) % (2 * math.pi) : 0.0;
-    final dotX = discCenter.dx + 6 * math.cos(angle);
-    final dotY = discCenter.dy + 6 * math.sin(angle);
-    canvas.drawCircle(Offset(dotX, dotY), 2.5, Paint()..color = Colors.black);
+    // Pás da hélice (3 pás rotativas)
+    final angle = isActive ? (DateTime.now().millisecondsSinceEpoch / 50) % (2 * math.pi) : 0.0;
+    final bladePaint = Paint()
+      ..color = isActive ? const Color(0xFF00F5D4) : (isDarkMode ? Colors.white70 : const Color(0xFF37474F))
+      ..strokeWidth = 2.8
+      ..strokeCap = StrokeCap.round;
+
+    for (int i = 0; i < 3; i++) {
+      final bladeAngle = angle + (i * 2 * math.pi / 3);
+      final pEnd = Offset(
+        discCenter.dx + (fanRadius - 1.5) * math.cos(bladeAngle),
+        discCenter.dy + (fanRadius - 1.5) * math.sin(bladeAngle),
+      );
+      canvas.drawLine(discCenter, pEnd, bladePaint);
+    }
+
+    // Miolo central da hélice
+    canvas.drawCircle(discCenter, 2.5, Paint()..color = Colors.black87);
+
+    // Efeito de vento néon quando o motor está girando
+    if (isActive) {
+      canvas.drawCircle(
+        discCenter,
+        fanRadius + 2,
+        Paint()
+          ..color = const Color(0xFF00F5D4).withValues(alpha: 0.25)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5,
+      );
+    }
   }
 
   /// Desenha a bancada/base retangular cinza dos componentes físicos (como nas fotos)
