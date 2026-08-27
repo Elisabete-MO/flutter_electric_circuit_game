@@ -47,6 +47,21 @@ class ComponentPhysicalPainter extends CustomPainter {
       case ComponentType.motor:
         _drawPhysicalMotor(canvas, size, cx, cy);
         break;
+      case ComponentType.potentiometer:
+        _drawPhysicalPotentiometer(canvas, size, cx, cy);
+        break;
+      case ComponentType.powerSupply:
+        _drawPhysicalPowerSupply(canvas, size, cx, cy);
+        break;
+      case ComponentType.fuse:
+        _drawPhysicalFuse(canvas, size, cx, cy);
+        break;
+      case ComponentType.capacitor:
+        _drawPhysicalCapacitor(canvas, size, cx, cy);
+        break;
+      case ComponentType.buzzer:
+        _drawPhysicalBuzzer(canvas, size, cx, cy);
+        break;
     }
 
     if (isBurned) {
@@ -546,6 +561,198 @@ class ComponentPhysicalPainter extends CustomPainter {
         ..strokeWidth = 1.0
         ..style = PaintingStyle.stroke,
     );
+  }
+
+  void _drawPhysicalPotentiometer(Canvas canvas, Size size, double cx, double cy) {
+    _drawBaseBlock(canvas, size, cx, cy);
+
+    // Bornes
+    canvas.drawCircle(Offset(cx - 32, cy + 4), 5, Paint()..color = Colors.red);
+    canvas.drawCircle(Offset(cx + 32, cy + 4), 5, Paint()..color = Colors.black87);
+
+    // Corpo metálico cilíndrico do potenciômetro
+    final knobCenter = Offset(cx, cy - 8);
+    final knobRadius = 14.0;
+    
+    canvas.drawCircle(
+      knobCenter.translate(2, 3),
+      knobRadius,
+      Paint()
+        ..color = Colors.black.withValues(alpha: 0.3)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+    );
+
+    canvas.drawCircle(
+      knobCenter,
+      knobRadius,
+      Paint()
+        ..shader = RadialGradient(
+          colors: [const Color(0xFFE0E0E0), const Color(0xFF9E9E9E), const Color(0xFF424242)],
+        ).createShader(Rect.fromCircle(center: knobCenter, radius: knobRadius)),
+    );
+
+    // Traço indicador de posição no knob
+    final angle = -math.pi / 4;
+    final indX = knobCenter.dx + (knobRadius - 3) * math.cos(angle);
+    final indY = knobCenter.dy + (knobRadius - 3) * math.sin(angle);
+    canvas.drawLine(
+      knobCenter,
+      Offset(indX, indY),
+      Paint()
+        ..color = const Color(0xFF00F5D4)
+        ..strokeWidth = 2.5
+        ..strokeCap = StrokeCap.round,
+    );
+
+    // Marcação graduada ao redor
+    for (int i = 0; i <= 6; i++) {
+      final a = -3 * math.pi / 4 + (i * math.pi / 4);
+      final p1 = Offset(knobCenter.dx + (knobRadius + 3) * math.cos(a), knobCenter.dy + (knobRadius + 3) * math.sin(a));
+      final p2 = Offset(knobCenter.dx + (knobRadius + 6) * math.cos(a), knobCenter.dy + (knobRadius + 6) * math.sin(a));
+      canvas.drawLine(p1, p2, Paint()..color = const Color(0xFF00F5D4)..strokeWidth = 1.2);
+    }
+  }
+
+  void _drawPhysicalPowerSupply(Canvas canvas, Size size, double cx, double cy) {
+    // Gabinete principal da fonte studio
+    final bodyRect = Rect.fromCenter(center: Offset(cx, cy - 2), width: size.width * 0.76, height: size.height * 0.65);
+    final rr = RRect.fromRectAndRadius(bodyRect, const Radius.circular(8));
+
+    // Sombra
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(bodyRect.translate(2, 4), const Radius.circular(8)),
+      Paint()..color = Colors.black.withValues(alpha: 0.4)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+    );
+
+    // Corpo metálico escuro Cyberpunk
+    canvas.drawRRect(
+      rr,
+      Paint()
+        ..shader = const LinearGradient(
+          colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ).createShader(bodyRect),
+    );
+
+    canvas.drawRRect(rr, Paint()..color = const Color(0xFF00F5D4).withValues(alpha: 0.6)..strokeWidth = 1.5..style = PaintingStyle.stroke);
+
+    // Display LED 7 Segmentos com Tensão
+    final lcdRect = Rect.fromCenter(center: Offset(cx, cy - 12), width: 48, height: 20);
+    canvas.drawRRect(RRect.fromRectAndRadius(lcdRect, const Radius.circular(4)), Paint()..color = const Color(0xFF022C22));
+    
+    final textPainter = TextPainter(
+      text: const TextSpan(
+        text: '12.0V',
+        style: TextStyle(
+          color: Color(0xFF00FF9D),
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.0,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    textPainter.paint(canvas, Offset(cx - textPainter.width / 2, cy - 18));
+
+    // Bornes de Saída DC (+ e -)
+    canvas.drawCircle(Offset(cx - 18, cy + 12), 6, Paint()..color = Colors.red);
+    canvas.drawCircle(Offset(cx + 18, cy + 12), 6, Paint()..color = Colors.black87);
+  }
+
+  void _drawPhysicalFuse(Canvas canvas, Size size, double cx, double cy) {
+    _drawBaseBlock(canvas, size, cx, cy);
+
+    // Bornes
+    canvas.drawCircle(Offset(cx - 32, cy + 4), 5, Paint()..color = Colors.red);
+    canvas.drawCircle(Offset(cx + 32, cy + 4), 5, Paint()..color = Colors.black87);
+
+    // Tubo de Vidro do Fusível
+    final tubeRect = Rect.fromCenter(center: Offset(cx, cy - 4), width: 38, height: 12);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(tubeRect, const Radius.circular(4)),
+      Paint()..color = isDarkMode ? Colors.white24 : const Color(0x66E0F7FA),
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(tubeRect, const Radius.circular(4)),
+      Paint()..color = Colors.cyan.withValues(alpha: 0.5)..strokeWidth = 1.2..style = PaintingStyle.stroke,
+    );
+
+    // Tampas Metálicas Cromadas nas pontas
+    final capLeft = Rect.fromLTWH(tubeRect.left, tubeRect.top, 8, 12);
+    final capRight = Rect.fromLTWH(tubeRect.right - 8, tubeRect.top, 8, 12);
+    final metalPaint = Paint()..color = Colors.grey[400]!;
+    canvas.drawRect(capLeft, metalPaint);
+    canvas.drawRect(capRight, metalPaint);
+
+    // Filamento interno do Fusível
+    if (!isBurned) {
+      canvas.drawLine(
+        Offset(tubeRect.left + 8, cy - 4),
+        Offset(tubeRect.right - 8, cy - 4),
+        Paint()..color = Colors.amber.shade300..strokeWidth = 1.5,
+      );
+    } else {
+      // Filamento rompidos por sobrecorrente
+      canvas.drawLine(Offset(tubeRect.left + 8, cy - 4), Offset(cx - 4, cy - 2), Paint()..color = Colors.black87..strokeWidth = 1.5);
+      canvas.drawLine(Offset(cx + 4, cy - 6), Offset(tubeRect.right - 8, cy - 4), Paint()..color = Colors.black87..strokeWidth = 1.5);
+    }
+  }
+
+  void _drawPhysicalCapacitor(Canvas canvas, Size size, double cx, double cy) {
+    _drawBaseBlock(canvas, size, cx, cy);
+
+    // Bornes
+    canvas.drawCircle(Offset(cx - 30, cy + 4), 5, Paint()..color = Colors.red);
+    canvas.drawCircle(Offset(cx + 30, cy + 4), 5, Paint()..color = Colors.black87);
+
+    // Corpo do Capacitor Eletrolítico (Cilindro Azul)
+    final capRect = Rect.fromCenter(center: Offset(cx, cy - 10), width: 22, height: 26);
+    final rr = RRect.fromRectAndRadius(capRect, const Radius.circular(5));
+
+    canvas.drawRRect(
+      rr,
+      Paint()
+        ..shader = const LinearGradient(
+          colors: [Color(0xFF1E88E5), Color(0xFF1565C0), Color(0xFF0D47A1)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ).createShader(capRect),
+    );
+
+    // Faixa cinza de polaridade negativa (-)
+    canvas.drawRect(
+      Rect.fromLTWH(capRect.left, capRect.top, 6, capRect.height),
+      Paint()..color = Colors.grey[300]!,
+    );
+  }
+
+  void _drawPhysicalBuzzer(Canvas canvas, Size size, double cx, double cy) {
+    _drawBaseBlock(canvas, size, cx, cy);
+
+    // Bornes
+    canvas.drawCircle(Offset(cx - 30, cy + 4), 5, Paint()..color = Colors.red);
+    canvas.drawCircle(Offset(cx + 30, cy + 4), 5, Paint()..color = Colors.black87);
+
+    // Cápsula Piezoelétrica Preta
+    final buzzCenter = Offset(cx, cy - 8);
+    final buzzRadius = 15.0;
+
+    canvas.drawCircle(buzzCenter, buzzRadius, Paint()..color = const Color(0xFF1F2937));
+    canvas.drawCircle(buzzCenter, buzzRadius, Paint()..color = const Color(0xFF00F5D4).withValues(alpha: 0.5)..strokeWidth = 1.2..style = PaintingStyle.stroke);
+    
+    // Furo central de som
+    canvas.drawCircle(buzzCenter, 4, Paint()..color = Colors.black87);
+
+    // Ondas sonoras piscantes quando ativo
+    if (isActive) {
+      final wavePaint = Paint()
+        ..color = const Color(0xFF00F5D4).withValues(alpha: 0.8)
+        ..strokeWidth = 2.0
+        ..style = PaintingStyle.stroke;
+      canvas.drawArc(Rect.fromCircle(center: buzzCenter, radius: 20), -math.pi / 3, 2 * math.pi / 3, false, wavePaint);
+      canvas.drawArc(Rect.fromCircle(center: buzzCenter, radius: 25), -math.pi / 3, 2 * math.pi / 3, false, wavePaint..color = const Color(0xFF00F5D4).withValues(alpha: 0.4));
+    }
   }
 
   @override

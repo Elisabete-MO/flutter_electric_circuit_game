@@ -8,6 +8,11 @@ enum ComponentType {
   diode,
   led,
   motor,
+  potentiometer,
+  powerSupply,
+  fuse,
+  capacitor,
+  buzzer,
 }
 
 /// Modelo que define um componente educativo para a seção de Primeiros Passos.

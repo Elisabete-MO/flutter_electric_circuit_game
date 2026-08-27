@@ -91,6 +91,21 @@ class CircuitSymbolPainter extends CustomPainter {
       case ComponentType.motor:
         _drawMotor(canvas, size, cx, cy, paint, fillPaint);
         break;
+      case ComponentType.potentiometer:
+        _drawPotentiometer(canvas, size, cx, cy, paint, fillPaint);
+        break;
+      case ComponentType.powerSupply:
+        _drawPowerSupply(canvas, size, cx, cy, paint, fillPaint);
+        break;
+      case ComponentType.fuse:
+        _drawFuse(canvas, size, cx, cy, paint, fillPaint);
+        break;
+      case ComponentType.capacitor:
+        _drawCapacitor(canvas, size, cx, cy, paint, fillPaint);
+        break;
+      case ComponentType.buzzer:
+        _drawBuzzer(canvas, size, cx, cy, paint, fillPaint);
+        break;
     }
   }
 
@@ -276,6 +291,97 @@ class CircuitSymbolPainter extends CustomPainter {
       canvas,
       Offset(cx - textPainter.width / 2, cy - textPainter.height / 2),
     );
+  }
+
+  void _drawPotentiometer(Canvas canvas, Size size, double cx, double cy, Paint paint, Paint fillPaint) {
+    _drawResistor(canvas, size, cx, cy, paint, fillPaint);
+    // Seta diagonal do potenciômetro atraves do resistor
+    final arrowPaint = Paint()
+      ..color = paint.color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    _drawArrow(canvas, Offset(cx - 16, cy + 18), Offset(cx + 16, cy - 18), arrowPaint);
+  }
+
+  void _drawPowerSupply(Canvas canvas, Size size, double cx, double cy, Paint paint, Paint fillPaint) {
+    final leftX = 0.0;
+    final rightX = size.width;
+    final radius = 18.0;
+
+    canvas.drawLine(Offset(leftX, cy), Offset(cx - radius, cy), paint);
+    canvas.drawLine(Offset(cx + radius, cy), Offset(rightX, cy), paint);
+
+    canvas.drawCircle(Offset(cx, cy), radius, fillPaint);
+    canvas.drawCircle(Offset(cx, cy), radius, paint);
+
+    // Texto DC ou V
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: 'V~',
+        style: TextStyle(
+          color: paint.color,
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+
+    textPainter.paint(canvas, Offset(cx - textPainter.width / 2, cy - textPainter.height / 2));
+  }
+
+  void _drawFuse(Canvas canvas, Size size, double cx, double cy, Paint paint, Paint fillPaint) {
+    final leftX = 0.0;
+    final rightX = size.width;
+    final width = 36.0;
+    final height = 16.0;
+
+    final rect = Rect.fromCenter(center: Offset(cx, cy), width: width, height: height);
+
+    // Fio passando reto pelo meio do retângulo do fusível
+    canvas.drawLine(Offset(leftX, cy), Offset(rightX, cy), paint);
+    canvas.drawRect(rect, fillPaint);
+    canvas.drawRect(rect, paint);
+  }
+
+  void _drawCapacitor(Canvas canvas, Size size, double cx, double cy, Paint paint, Paint fillPaint) {
+    final leftX = 0.0;
+    final rightX = size.width;
+    final gap = 8.0;
+    final plateHeight = 24.0;
+
+    final pLeft = cx - gap / 2;
+    final pRight = cx + gap / 2;
+
+    canvas.drawLine(Offset(leftX, cy), Offset(pLeft, cy), paint);
+    canvas.drawLine(Offset(pRight, cy), Offset(rightX, cy), paint);
+
+    // Placa Esquerda
+    canvas.drawLine(Offset(pLeft, cy - plateHeight / 2), Offset(pLeft, cy + plateHeight / 2), paint..strokeWidth = strokeWidth * 1.4);
+
+    // Placa Direita
+    canvas.drawLine(Offset(pRight, cy - plateHeight / 2), Offset(pRight, cy + plateHeight / 2), paint..strokeWidth = strokeWidth * 1.4);
+  }
+
+  void _drawBuzzer(Canvas canvas, Size size, double cx, double cy, Paint paint, Paint fillPaint) {
+    final leftX = 0.0;
+    final rightX = size.width;
+    final radius = 14.0;
+
+    final pLeft = cx - radius;
+    final pRight = cx + radius;
+
+    canvas.drawLine(Offset(leftX, cy), Offset(pLeft, cy), paint);
+    canvas.drawLine(Offset(pRight, cy), Offset(rightX, cy), paint);
+
+    // Semicírculo do Buzzer
+    final path = Path()
+      ..addArc(Rect.fromCircle(center: Offset(cx, cy), radius: radius), -math.pi / 2, math.pi);
+
+    canvas.drawPath(path, fillPaint);
+    canvas.drawPath(path, paint);
+    canvas.drawLine(Offset(cx, cy - radius), Offset(cx, cy + radius), paint);
   }
 
   void _drawArrow(Canvas canvas, Offset from, Offset to, Paint paint) {

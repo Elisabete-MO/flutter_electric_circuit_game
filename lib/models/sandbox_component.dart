@@ -24,14 +24,24 @@ class SandboxComponent {
     switch (type) {
       case ComponentType.battery:
         return 9.0; // 9V por padrão
+      case ComponentType.powerSupply:
+        return 12.0; // 12V regulável por padrão
       case ComponentType.resistor:
         return 10.0; // 10 Ohms
+      case ComponentType.potentiometer:
+        return 50.0; // 50 Ohms ajustável por padrão
       case ComponentType.bulb:
         return 5.0; // 5 Ohms
       case ComponentType.motor:
         return 15.0; // 15 Ohms
       case ComponentType.led:
         return 2.0; // Queda de tensão de 2.0V
+      case ComponentType.fuse:
+        return 2.0; // Limite de 2.0A antes de queimar
+      case ComponentType.capacitor:
+        return 100.0; // 100 µF
+      case ComponentType.buzzer:
+        return 8.0; // 8 Ohms de impedância
       default:
         return 1.0;
     }

@@ -23,12 +23,17 @@ class SandboxToolboxWidget extends StatelessWidget {
 
   List<ComponentType> get _availableTypes => const [
         ComponentType.battery,
+        ComponentType.powerSupply,
         ComponentType.switchComponent,
         ComponentType.bulb,
         ComponentType.resistor,
+        ComponentType.potentiometer,
         ComponentType.motor,
         ComponentType.led,
         ComponentType.diode,
+        ComponentType.fuse,
+        ComponentType.capacitor,
+        ComponentType.buzzer,
       ];
 
   @override

@@ -286,8 +286,8 @@ class SandboxController extends Notifier<SandboxState> {
       );
     }
 
-    final batteries = targetState.components.where((c) => c.type == ComponentType.battery).toList();
-    if (batteries.isEmpty) {
+    final powerSources = targetState.components.where((c) => c.type == ComponentType.battery || c.type == ComponentType.powerSupply).toList();
+    if (powerSources.isEmpty) {
       return targetState.copyWith(
         simulationValues: {},
         errorMessage: 'Sem fonte de energia no circuito.',
@@ -297,8 +297,8 @@ class SandboxController extends Notifier<SandboxState> {
     final Map<String, double> values = {};
     String? error;
 
-    for (final battery in batteries) {
-      final visited = <String>{battery.id};
+    for (final source in powerSources) {
+      final visited = <String>{source.id};
       final componentPath = <SandboxComponent>[];
       bool loopClosed = false;
       double totalResistance = 0.0;
@@ -306,16 +306,21 @@ class SandboxController extends Notifier<SandboxState> {
       // Start traversal from positive terminal 'B'
       _traverseForState(
         targetState: targetState,
-        currentComponent: battery,
+        currentComponent: source,
         currentTerminal: 'B',
-        targetBattery: battery,
+        targetBattery: source,
         visited: visited,
         componentPath: componentPath,
         onLoopClosed: (pathComponents) {
           loopClosed = true;
           totalResistance = pathComponents
-              .where((c) => c.type != ComponentType.battery)
-              .fold(0.0, (sum, c) => sum + c.value);
+              .where((c) => c.type != ComponentType.battery && c.type != ComponentType.powerSupply)
+              .fold(0.0, (sum, c) {
+                if (c.type == ComponentType.fuse) return sum + 0.1;
+                if (c.type == ComponentType.capacitor) return sum + 10.0;
+                if (c.type == ComponentType.buzzer) return sum + 8.0;
+                return sum + c.value;
+              });
         },
       );
 
@@ -325,18 +330,32 @@ class SandboxController extends Notifier<SandboxState> {
         if (totalResistance <= 0.1) {
           error = 'CURTO-CIRCUITO DETECTADO! Conexão direta entre pólos sem carga!';
         } else {
-          final current = battery.value / totalResistance;
-          values['active_${battery.id}'] = 1.0;
-          values['current_${battery.id}'] = current;
+          final current = source.value / totalResistance;
+          values['active_${source.id}'] = 1.0;
+          values['current_${source.id}'] = current;
+          values['node_voltage_${source.id}_B'] = source.value;
+          values['node_voltage_${source.id}_A'] = 0.0;
           
+          double currentPotential = source.value;
+
           for (final comp in componentPath) {
-            final vDrop = current * comp.value;
+            if (comp.type == ComponentType.battery || comp.type == ComponentType.powerSupply) continue;
+
+            final compRes = (comp.type == ComponentType.fuse)
+                ? 0.1
+                : (comp.type == ComponentType.capacitor ? 10.0 : (comp.type == ComponentType.buzzer ? 8.0 : comp.value));
+            final vDrop = current * compRes;
             final power = vDrop * current;
 
             values['active_${comp.id}'] = 1.0;
             values['current_${comp.id}'] = current;
             values['voltage_drop_${comp.id}'] = vDrop;
             values['power_${comp.id}'] = power;
+
+            // Define potenciais nos terminais A e B de acordo com o sentido do fluxo
+            values['node_voltage_${comp.id}_A'] = currentPotential;
+            currentPotential -= vDrop;
+            values['node_voltage_${comp.id}_B'] = currentPotential;
 
             // Verificação de Limites Físicos e Sobrecarga Educativa
             if (comp.type == ComponentType.led) {
@@ -353,6 +372,12 @@ class SandboxController extends Notifier<SandboxState> {
               if (vDrop > 18.0) {
                 newBurnedSet.add(comp.id);
                 error = 'BOBINA QUEIMADA! O motor sofreu sobretensão (${vDrop.toStringAsFixed(1)}V > 18V)!';
+              }
+            } else if (comp.type == ComponentType.fuse) {
+              final maxCurrent = comp.value; // ex: 2.0A
+              if (current > maxCurrent) {
+                newBurnedSet.add(comp.id);
+                error = 'FUSÍVEL QUEIMOU! Corrente de ${current.toStringAsFixed(2)}A excedeu o limite do fusível (${maxCurrent.toStringAsFixed(1)}A), desarmando o circuito!';
               }
             }
           }

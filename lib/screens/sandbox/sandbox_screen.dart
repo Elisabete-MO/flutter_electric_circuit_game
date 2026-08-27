@@ -22,6 +22,8 @@ import 'widgets/sandbox_quick_hud.dart';
 import 'widgets/sandbox_mascot_panel.dart';
 import 'widgets/sandbox_control_bar.dart';
 import 'widgets/sandbox_metrics_panel.dart';
+import 'widgets/sandbox_multimeter.dart';
+import 'widgets/sandbox_oscilloscope.dart';
 
 class SandboxScreen extends ConsumerStatefulWidget {
   const SandboxScreen({super.key});
@@ -42,6 +44,14 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
   bool _showMascot = true;
   bool _isDiagramMode = false;
   ProfVoltsEmotion _lastVoltsEmotion = ProfVoltsEmotion.neutral;
+
+  // Pilar 1: Instrumentos Virtuais de Medição (Multímetro & Osciloscópio)
+  bool _showMultimeter = false;
+  bool _showOscilloscope = false;
+  MultimeterMode _multimeterMode = MultimeterMode.voltageDC;
+  MultimeterProbeConnection _redProbe = const MultimeterProbeConnection();
+  MultimeterProbeConnection _blackProbe = const MultimeterProbeConnection();
+  bool _isHoldMultimeter = false;
 
   ConnectionSource? _findNearestTerminal(
     Offset mousePos,
@@ -459,6 +469,44 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                             children: [
                               Positioned.fill(child: bodyContent),
 
+                              // Instrumento Flutuante 1: Multímetro Digital
+                              if (_showMultimeter)
+                                Positioned(
+                                  top: 8,
+                                  left: isNarrow ? 8 : 150,
+                                  child: SandboxMultimeterWidget(
+                                    mode: _multimeterMode,
+                                    sandboxState: sandboxState,
+                                    redProbe: _redProbe,
+                                    blackProbe: _blackProbe,
+                                    isDark: isDark,
+                                    isEn: isEn,
+                                    isHold: _isHoldMultimeter,
+                                    onModeChanged: (newMode) => setState(() => _multimeterMode = newMode),
+                                    onResetProbes: () => setState(() {
+                                      _redProbe = const MultimeterProbeConnection();
+                                      _blackProbe = const MultimeterProbeConnection();
+                                    }),
+                                    onToggleHold: () => setState(() => _isHoldMultimeter = !_isHoldMultimeter),
+                                  ),
+                                ),
+
+                              // Instrumento Flutuante 2: Osciloscópio HUD
+                              if (_showOscilloscope)
+                                Positioned(
+                                  top: 8,
+                                  right: 8,
+                                  child: SandboxOscilloscopeWidget(
+                                    sandboxState: sandboxState,
+                                    isDark: isDark,
+                                    isEn: isEn,
+                                    voltageSignal: sandboxState.simulationValues['voltage_drop_${selectedId ?? ""}'] ??
+                                        (sandboxState.simulationValues.values.isNotEmpty ? sandboxState.simulationValues.values.first : 0.0),
+                                    currentSignal: sandboxState.simulationValues['current_${selectedId ?? ""}'] ?? 0.0,
+                                    onClose: () => setState(() => _showOscilloscope = false),
+                                  ),
+                                ),
+
                               // Painel Flutuante do Prof. Volts no Canto Inferior Direito (Overlay sem achatar o canvas)
                               if (_showMascot)
                                 Positioned(
@@ -503,6 +551,10 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                             setState(() {});
                           },
                           onToggleSimulation: () => controller.toggleSimulation(),
+                          showMultimeter: _showMultimeter,
+                          showOscilloscope: _showOscilloscope,
+                          onToggleMultimeter: () => setState(() => _showMultimeter = !_showMultimeter),
+                          onToggleOscilloscope: () => setState(() => _showOscilloscope = !_showOscilloscope),
                         ),
                       ],
                     ),
@@ -831,6 +883,17 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
         behavior: HitTestBehavior.opaque,
         onTap: () {
           final connSource = _connectionSource;
+          if (_showMultimeter && connSource == null) {
+            setState(() {
+              if (_redProbe.componentId == null || (_redProbe.componentId != null && _blackProbe.componentId != null)) {
+                _redProbe = MultimeterProbeConnection(componentId: component.id, terminal: terminal);
+              } else {
+                _blackProbe = MultimeterProbeConnection(componentId: component.id, terminal: terminal);
+              }
+            });
+            return;
+          }
+
           if (connSource == null) {
             setState(() {
               _connectionSource = ConnectionSource(component.id, terminal);
@@ -933,6 +996,16 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
         return l10n.compLED;
       case ComponentType.motor:
         return l10n.compMotor;
+      case ComponentType.potentiometer:
+        return l10n.localeName == 'en' ? 'Potentiometer' : 'Potenciômetro';
+      case ComponentType.powerSupply:
+        return l10n.localeName == 'en' ? 'Power Supply Studio' : 'Fonte Regulável';
+      case ComponentType.fuse:
+        return l10n.localeName == 'en' ? 'Fuse' : 'Fusível';
+      case ComponentType.capacitor:
+        return l10n.localeName == 'en' ? 'Capacitor' : 'Capacitor';
+      case ComponentType.buzzer:
+        return l10n.localeName == 'en' ? 'Buzzer Alarm' : 'Buzzer / Alarme';
     }
   }
 }

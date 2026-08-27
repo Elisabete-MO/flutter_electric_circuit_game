@@ -34,7 +34,11 @@ class SandboxMetricsPanelWidget extends ConsumerWidget {
     final sandboxState = ref.watch(sandboxControllerProvider);
     final controller = ref.read(sandboxControllerProvider.notifier);
     final isSwitch = component.type == ComponentType.switchComponent;
-    final hasValueSlider = component.type == ComponentType.battery || component.type == ComponentType.resistor;
+    final hasValueSlider = component.type == ComponentType.battery ||
+        component.type == ComponentType.powerSupply ||
+        component.type == ComponentType.resistor ||
+        component.type == ComponentType.potentiometer ||
+        component.type == ComponentType.fuse;
 
     final connectedWires = wires.where((w) {
       return w.fromComponentId == component.id || w.toComponentId == component.id;
@@ -50,25 +54,7 @@ class SandboxMetricsPanelWidget extends ConsumerWidget {
       if (otherCompList.isEmpty) return 'Terminal $myTerm';
       final otherComp = otherCompList.first;
 
-      String compName = '';
-      if (isEn) {
-        if (otherComp.type == ComponentType.battery) compName = 'Battery';
-        if (otherComp.type == ComponentType.resistor) compName = 'Resistor';
-        if (otherComp.type == ComponentType.bulb) compName = 'Bulb';
-        if (otherComp.type == ComponentType.switchComponent) compName = 'Switch';
-        if (otherComp.type == ComponentType.motor) compName = 'Motor';
-        if (otherComp.type == ComponentType.led) compName = 'LED';
-        if (otherComp.type == ComponentType.diode) compName = 'Diode';
-      } else {
-        if (otherComp.type == ComponentType.battery) compName = 'Bateria';
-        if (otherComp.type == ComponentType.resistor) compName = 'Resistor';
-        if (otherComp.type == ComponentType.bulb) compName = 'Lâmpada';
-        if (otherComp.type == ComponentType.switchComponent) compName = 'Interruptor';
-        if (otherComp.type == ComponentType.motor) compName = 'Motor';
-        if (otherComp.type == ComponentType.led) compName = 'LED';
-        if (otherComp.type == ComponentType.diode) compName = 'Diodo';
-      }
-
+      String compName = getComponentName(otherComp.type, AppLocalizations.of(context)!);
       return 'Term. $myTerm ↔ $compName ($otherTerm)';
     }
 
@@ -81,11 +67,26 @@ class SandboxMetricsPanelWidget extends ConsumerWidget {
       unit = 'V';
       minVal = 1.5;
       maxVal = 24.0;
+    } else if (component.type == ComponentType.powerSupply) {
+      valueLabel = isEn ? 'Regulated Voltage' : 'Tensão Regulável';
+      unit = 'V';
+      minVal = 0.0;
+      maxVal = 30.0;
     } else if (component.type == ComponentType.resistor) {
       valueLabel = isEn ? 'Resistance' : 'Resistência';
       unit = 'Ω';
       minVal = 1.0;
       maxVal = 100.0;
+    } else if (component.type == ComponentType.potentiometer) {
+      valueLabel = isEn ? 'Potentiometer Knob' : 'Giro do Potenciômetro';
+      unit = 'Ω';
+      minVal = 1.0;
+      maxVal = 1000.0;
+    } else if (component.type == ComponentType.fuse) {
+      valueLabel = isEn ? 'Fuse Rating' : 'Corrente do Fusível';
+      unit = 'A';
+      minVal = 0.5;
+      maxVal = 5.0;
     }
 
     return GlassContainer(
