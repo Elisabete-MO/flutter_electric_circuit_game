@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -105,6 +106,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
     final isEn = l10n.localeName == 'en';
 
     final sandboxState = ref.watch(sandboxControllerProvider);
+    final controller = ref.read(sandboxControllerProvider.notifier);
     final selectedId = _selectedComponentId;
     final connSource = _connectionSource;
 
@@ -149,26 +151,127 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
       });
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          isEn ? 'Free Sandbox' : 'Bancada Livre',
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontFamily: GoogleFonts.rajdhani().fontFamily,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.0,
-          ),
-        ),
-        actions: [
-          // Alternador de Modo: Componentes Físicos vs Diagrama Esquemático (Padronizado)
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: ModeToggleSwitch(
-              isDiagramMode: _isDiagramMode,
-              onChanged: (val) => setState(() => _isDiagramMode = val),
-              isCompact: true,
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.delete): () {
+          if (_selectedComponentId != null) {
+            controller.removeComponent(_selectedComponentId!);
+            setState(() => _selectedComponentId = null);
+          }
+        },
+        const SingleActivator(LogicalKeyboardKey.backspace): () {
+          if (_selectedComponentId != null) {
+            controller.removeComponent(_selectedComponentId!);
+            setState(() => _selectedComponentId = null);
+          }
+        },
+        const SingleActivator(LogicalKeyboardKey.keyR): () {
+          if (_selectedComponentId != null) {
+            controller.rotateComponent(_selectedComponentId!);
+          }
+        },
+        const SingleActivator(LogicalKeyboardKey.keyZ, control: true): () {
+          controller.undo();
+        },
+        const SingleActivator(LogicalKeyboardKey.keyZ, meta: true): () {
+          controller.undo();
+        },
+        const SingleActivator(LogicalKeyboardKey.keyY, control: true): () {
+          controller.redo();
+        },
+        const SingleActivator(LogicalKeyboardKey.keyY, meta: true): () {
+          controller.redo();
+        },
+        const SingleActivator(LogicalKeyboardKey.space): () {
+          if (_selectedComponentId != null) {
+            final compList = sandboxState.components.where((c) => c.id == _selectedComponentId).toList();
+            if (compList.isNotEmpty && compList.first.type == ComponentType.switchComponent) {
+              controller.toggleComponentActive(_selectedComponentId!);
+            }
+          }
+        },
+      },
+      child: Focus(
+        autofocus: true,
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(
+              isEn ? 'Free Sandbox' : 'Bancada Livre',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontFamily: GoogleFonts.rajdhani().fontFamily,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.0,
+              ),
             ),
-          ),
+            actions: [
+              // Menu de Exemplos de Circuitos (Presets)
+              PopupMenuButton<String>(
+                tooltip: isEn ? "Circuit Presets" : "Exemplos de Circuitos",
+                icon: const Icon(Icons.auto_awesome_rounded, color: Color(0xFF00F5D4)),
+                color: isDark ? const Color(0xFF141E33) : Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                onSelected: (key) {
+                  controller.loadPreset(key);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(isEn ? 'Loaded circuit preset!' : 'Circuito de exemplo carregado!'),
+                      duration: const Duration(seconds: 2),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'simple_bulb',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.lightbulb_outline_rounded, size: 18, color: Color(0xFFFFB300)),
+                        const SizedBox(width: 8),
+                        Text(isEn ? 'Simple Circuit (Lamp)' : 'Circuito Simples (Lâmpada)', style: const TextStyle(fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'switch_motor',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.toggle_on_rounded, size: 18, color: Color(0xFF00F5D4)),
+                        const SizedBox(width: 8),
+                        Text(isEn ? 'Switch & Motor' : 'Interruptor & Motor', style: const TextStyle(fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'led_resistor',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.flash_on_rounded, size: 18, color: Color(0xFFFF3B7F)),
+                        const SizedBox(width: 8),
+                        Text(isEn ? 'LED & Resistor' : 'LED com Resistor', style: const TextStyle(fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'parallel_bulbs',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.account_tree_rounded, size: 18, color: Color(0xFF00FF9D)),
+                        const SizedBox(width: 8),
+                        Text(isEn ? 'Parallel Circuit' : 'Circuito em Paralelo', style: const TextStyle(fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              // Alternador de Modo: Componentes Físicos vs Diagrama Esquemático (Padronizado)
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ModeToggleSwitch(
+                  isDiagramMode: _isDiagramMode,
+                  onChanged: (val) => setState(() => _isDiagramMode = val),
+                  isCompact: true,
+                ),
+              ),
           // Seletor de Tamanho da Bancada / Grid (Aumentar/Diminuir)
           Container(
             margin: const EdgeInsets.only(right: 8),
@@ -358,8 +461,10 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
           ),
         ),
       ),
-    );
-  }
+    ),
+  ),
+);
+}
 
   // --- PALETA DE COMPONENTES (TOOLBOX VERTICAL E HORIZONTAL) ---
 
@@ -539,6 +644,9 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
         final double width = cellSize * _gridCols;
         final double height = cellSize * _gridRows;
 
+        final selectedComponentList = state.components.where((c) => c.id == selectedId).toList();
+        final selectedComponent = selectedComponentList.isNotEmpty ? selectedComponentList.first : null;
+
         final gridContainer = Container(
           width: width,
           height: height,
@@ -591,6 +699,72 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
               // 4. Render dos componentes colocados no grid
               for (final component in state.components)
                 _buildPlacedComponent(component, cellSize, selectedId, isDark),
+
+              // 4.5. Floating Quick HUD Toolbar no componente selecionado
+              if (selectedComponent != null)
+                Positioned(
+                  left: (selectedComponent.gridX * cellSize).clamp(0.0, math.max(0.0, width - 140)),
+                  top: math.max(0.0, (selectedComponent.gridY * cellSize) - 36),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF141E33).withValues(alpha: 0.95) : Colors.white.withValues(alpha: 0.95),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFF00F5D4), width: 1.2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF00F5D4).withValues(alpha: 0.3),
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
+                            icon: const Icon(Icons.rotate_right_rounded, size: 15, color: Color(0xFF00F5D4)),
+                            tooltip: 'Rotacionar (R)',
+                            onPressed: () {
+                              ref.read(sandboxControllerProvider.notifier).rotateComponent(selectedComponent.id);
+                            },
+                          ),
+                          if (selectedComponent.type == ComponentType.switchComponent)
+                            IconButton(
+                              visualDensity: VisualDensity.compact,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
+                              icon: Icon(
+                                selectedComponent.isActive ? Icons.power_rounded : Icons.power_off_rounded,
+                                size: 15,
+                                color: selectedComponent.isActive ? const Color(0xFF00FF9D) : Colors.grey,
+                              ),
+                              tooltip: 'Alternar Interruptor (Espaço)',
+                              onPressed: () {
+                                ref.read(sandboxControllerProvider.notifier).toggleComponentActive(selectedComponent.id);
+                              },
+                            ),
+                          IconButton(
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
+                            icon: const Icon(Icons.delete_outline_rounded, size: 15, color: Color(0xFFFF3B7F)),
+                            tooltip: 'Excluir (Del)',
+                            onPressed: () {
+                              ref.read(sandboxControllerProvider.notifier).removeComponent(selectedComponent.id);
+                              setState(() => _selectedComponentId = null);
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
 
               // 5. Linha guia de fiação temporária ativa com suporte a magnetismo
               if (connSource != null)
@@ -840,6 +1014,11 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
     final isSnapped = _snappedTarget?.componentId == component.id && _snappedTarget?.terminal == terminal;
     final isWiringMode = _connectionSource != null;
 
+    final showPolarity = component.type == ComponentType.battery ||
+        component.type == ComponentType.led ||
+        component.type == ComponentType.diode;
+    final polaritySign = terminal == 'B' ? '+' : '-';
+
     final color = terminal == 'A' ? Colors.black87 : Colors.red;
 
     const touchAreaSize = 36.0; // 36x36px área de toque expandida com atração magnética
@@ -921,6 +1100,19 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                     ),
                 ],
               ),
+              child: showPolarity
+                  ? Center(
+                      child: Text(
+                        polaritySign,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: currentDotSize * 0.65,
+                          fontWeight: FontWeight.bold,
+                          height: 1.0,
+                        ),
+                      ),
+                    )
+                  : null,
             ),
           ),
         ),
@@ -1289,6 +1481,28 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
               foregroundColor: isDark ? Colors.white70 : Colors.black87,
             ),
           ),
+
+        // Botões Undo / Redo
+        IconButton(
+          icon: const Icon(Icons.undo_rounded, size: 20),
+          tooltip: isEn ? "Undo (Ctrl+Z)" : "Desfazer (Ctrl+Z)",
+          onPressed: ref.read(sandboxControllerProvider.notifier).canUndo
+              ? () {
+                  ref.read(sandboxControllerProvider.notifier).undo();
+                  setState(() {});
+                }
+              : null,
+        ),
+        IconButton(
+          icon: const Icon(Icons.redo_rounded, size: 20),
+          tooltip: isEn ? "Redo (Ctrl+Y)" : "Refazer (Ctrl+Y)",
+          onPressed: ref.read(sandboxControllerProvider.notifier).canRedo
+              ? () {
+                  ref.read(sandboxControllerProvider.notifier).redo();
+                  setState(() {});
+                }
+              : null,
+        ),
 
         // Botão Simulação (Arredondado no padrão cápsula HUD)
         FilledButton(
