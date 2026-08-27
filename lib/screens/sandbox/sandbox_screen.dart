@@ -391,6 +391,12 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                             message: voltsMessage,
                             isDark: isDark,
                             onClose: () => setState(() => _showMascot = false),
+                            onQuickAction: sandboxState.burnedComponentIds.isNotEmpty
+                                ? () => controller.replaceAllBurnedComponents()
+                                : null,
+                            quickActionLabel: sandboxState.burnedComponentIds.isNotEmpty
+                                ? (isEn ? 'Replace All Burned' : 'Substituir Todos Queimados')
+                                : null,
                           ),
                           const SizedBox(height: 12),
                         ],
@@ -433,6 +439,12 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                             message: voltsMessage,
                             isDark: isDark,
                             onClose: () => setState(() => _showMascot = false),
+                            onQuickAction: sandboxState.burnedComponentIds.isNotEmpty
+                                ? () => controller.replaceAllBurnedComponents()
+                                : null,
+                            quickActionLabel: sandboxState.burnedComponentIds.isNotEmpty
+                                ? (isEn ? 'Replace All Burned' : 'Substituir Todos Queimados')
+                                : null,
                           ),
                           const SizedBox(height: 12),
                         ],
