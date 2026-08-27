@@ -1,16 +1,23 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../models/sandbox_component.dart';
 import '../../../models/sandbox_wire.dart';
 import '../models/connection_source.dart';
 
-// --- PAINTER DO GRID DE EDIÇÃO ---
+// --- PAINTER DO GRID DE EDIÇÃO COM RETÍCULO HUD ---
 
 class GridPainter extends CustomPainter {
   final int columns;
   final int rows;
   final bool isDark;
+  final Offset? hoverCell;
 
-  GridPainter({required this.columns, required this.rows, required this.isDark});
+  GridPainter({
+    required this.columns,
+    required this.rows,
+    required this.isDark,
+    this.hoverCell,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -32,10 +39,49 @@ class GridPainter extends CustomPainter {
       final y = i * cellHeight;
       canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
     }
+
+    // Destaque de Célula Hover com Cantoneiras HUD (Cyber Reticle)
+    if (hoverCell != null) {
+      final gx = hoverCell!.dx.floor();
+      final gy = hoverCell!.dy.floor();
+
+      if (gx >= 0 && gx < columns && gy >= 0 && gy < rows) {
+        final rect = Rect.fromLTWH(gx * cellWidth, gy * cellHeight, cellWidth, cellHeight);
+        
+        // Fundo sutil
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(rect, const Radius.circular(6)),
+          Paint()..color = (isDark ? const Color(0xFF00F5D4) : const Color(0xFF00875A)).withValues(alpha: 0.06),
+        );
+
+        // Cantoneiras HUD estilo cibernético
+        final bracketPaint = Paint()
+          ..color = isDark ? const Color(0xFF00F5D4) : const Color(0xFF00875A)
+          ..strokeWidth = 1.8
+          ..style = PaintingStyle.stroke;
+
+        const bLen = 8.0;
+        final pad = 3.0;
+
+        // Top-Left
+        canvas.drawPath(Path()..moveTo(rect.left + pad + bLen, rect.top + pad)..lineTo(rect.left + pad, rect.top + pad)..lineTo(rect.left + pad, rect.top + pad + bLen), bracketPaint);
+        // Top-Right
+        canvas.drawPath(Path()..moveTo(rect.right - pad - bLen, rect.top + pad)..lineTo(rect.right - pad, rect.top + pad)..lineTo(rect.right - pad, rect.top + pad + bLen), bracketPaint);
+        // Bottom-Left
+        canvas.drawPath(Path()..moveTo(rect.left + pad + bLen, rect.bottom - pad)..lineTo(rect.left + pad, rect.bottom - pad)..lineTo(rect.left + pad, rect.bottom - pad - bLen), bracketPaint);
+        // Bottom-Right
+        canvas.drawPath(Path()..moveTo(rect.right - pad - bLen, rect.bottom - pad)..lineTo(rect.right - pad, rect.bottom - pad)..lineTo(rect.right - pad, rect.bottom - pad - bLen), bracketPaint);
+      }
+    }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant GridPainter oldDelegate) {
+    return oldDelegate.columns != columns ||
+        oldDelegate.rows != rows ||
+        oldDelegate.isDark != isDark ||
+        oldDelegate.hoverCell != hoverCell;
+  }
 }
 
 // --- PAINTER DOS FIOS CONECTADOS ---
@@ -359,6 +405,17 @@ class _TempWirePainter extends CustomPainter {
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2.0,
       );
+
+      // Retículo de Mira Cibernética no Alvo (Target Lock Reticle)
+      final lockPaint = Paint()
+        ..color = const Color(0xFF00FF9D)
+        ..strokeWidth = 1.5
+        ..style = PaintingStyle.stroke;
+      const arm = 6.0;
+      canvas.drawLine(Offset(end.dx - 18, end.dy), Offset(end.dx - 18 + arm, end.dy), lockPaint);
+      canvas.drawLine(Offset(end.dx + 18, end.dy), Offset(end.dx + 18 - arm, end.dy), lockPaint);
+      canvas.drawLine(Offset(end.dx, end.dy - 18), Offset(end.dx, end.dy - 18 + arm), lockPaint);
+      canvas.drawLine(Offset(end.dx, end.dy + 18), Offset(end.dx, end.dy + 18 - arm), lockPaint);
     }
   }
 
@@ -368,6 +425,57 @@ class _TempWirePainter extends CustomPainter {
         oldDelegate.currentEnd != currentEnd ||
         oldDelegate.isSnapped != isSnapped ||
         oldDelegate.isDark != isDark;
+  }
+}
+
+// --- PAINTER DE FAÍSCA DE CONEXÃO ELÉTRICA (SPARK BURST) ---
+
+class ConnectionSparkPainter extends CustomPainter {
+  final Offset position;
+  final double progress;
+
+  ConnectionSparkPainter({required this.position, required this.progress});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (progress >= 1.0) return;
+
+    final alpha = (1.0 - progress).clamp(0.0, 1.0);
+    final cyanPaint = Paint()
+      ..color = const Color(0xFF00F5D4).withValues(alpha: alpha)
+      ..strokeWidth = 2.2
+      ..strokeCap = StrokeCap.round;
+
+    final goldPaint = Paint()
+      ..color = const Color(0xFFFFD54F).withValues(alpha: alpha)
+      ..strokeWidth = 1.6
+      ..strokeCap = StrokeCap.round;
+
+    const int count = 8;
+    for (int i = 0; i < count; i++) {
+      final angle = (i * math.pi / 4) + (progress * 0.4);
+      final innerDist = progress * 6.0;
+      final outerDist = progress * 22.0 + 5.0;
+
+      final p1 = Offset(position.dx + innerDist * math.cos(angle), position.dy + innerDist * math.sin(angle));
+      final p2 = Offset(position.dx + outerDist * math.cos(angle), position.dy + outerDist * math.sin(angle));
+
+      canvas.drawLine(p1, p2, i % 2 == 0 ? cyanPaint : goldPaint);
+    }
+
+    // Flash central de impacto luminoso
+    canvas.drawCircle(
+      position,
+      (1.0 - progress) * 10.0,
+      Paint()
+        ..color = Colors.white.withValues(alpha: alpha * 0.95)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant ConnectionSparkPainter oldDelegate) {
+    return oldDelegate.position != position || oldDelegate.progress != progress;
   }
 }
 

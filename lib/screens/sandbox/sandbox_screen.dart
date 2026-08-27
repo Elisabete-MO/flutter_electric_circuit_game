@@ -44,8 +44,11 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
   ConnectionSource? _snappedTarget;
   Offset? _currentMousePos;
   Offset? _dragStartPosition;
+  Offset? _hoverGridCell;
   bool _isDraggingWire = false;
   late final AnimationController _wireAnimationController;
+  late final AnimationController _sparkAnimationController;
+  Offset? _sparkPosition;
   bool _showMascot = true;
   bool _isDiagramMode = false;
   ProfVoltsEmotion _lastVoltsEmotion = ProfVoltsEmotion.neutral;
@@ -57,6 +60,13 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
   MultimeterProbeConnection _redProbe = const MultimeterProbeConnection();
   MultimeterProbeConnection _blackProbe = const MultimeterProbeConnection();
   bool _isHoldMultimeter = false;
+
+  void _triggerSpark(Offset position) {
+    setState(() {
+      _sparkPosition = position;
+    });
+    _sparkAnimationController.forward(from: 0.0);
+  }
 
   ConnectionSource? _findTerminalAtPosition(
     Offset mousePos,
@@ -135,11 +145,16 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
       vsync: this,
       duration: const Duration(seconds: 1),
     )..repeat();
+    _sparkAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    );
   }
 
   @override
   void dispose() {
     _wireAnimationController.dispose();
+    _sparkAnimationController.dispose();
     super.dispose();
   }
 
@@ -639,13 +654,14 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
           ),
           child: Stack(
             children: [
-              // 1. Grid de fundo
+              // 1. Grid de fundo com retículo HUD
               Positioned.fill(
                 child: CustomPaint(
                   painter: GridPainter(
                     columns: _gridCols,
                     rows: _gridRows,
                     isDark: isDark,
+                    hoverCell: _hoverGridCell,
                   ),
                 ),
               ),
@@ -711,6 +727,24 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                     ),
                   ),
                 ),
+
+              // 6. Camada de Faísca Elétrica de Conexão (Spark Flash)
+              if (_sparkPosition != null)
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: AnimatedBuilder(
+                      animation: _sparkAnimationController,
+                      builder: (context, child) {
+                        return CustomPaint(
+                          painter: ConnectionSparkPainter(
+                            position: _sparkPosition!,
+                            progress: _sparkAnimationController.value,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
             ],
           ),
         );
@@ -758,6 +792,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                     target.componentId,
                     target.terminal,
                   );
+                  _triggerSpark(mousePos);
                 }
                 setState(() {
                   _connectionSource = null;
@@ -770,22 +805,38 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
             }
           },
           onPointerMove: (event) {
+            final mousePos = event.localPosition;
+            final cellX = (mousePos.dx / cellSize).clamp(0.0, (_gridCols - 1).toDouble());
+            final cellY = (mousePos.dy / cellSize).clamp(0.0, (_gridRows - 1).toDouble());
+
             if (_connectionSource != null) {
-              final mousePos = event.localPosition;
               final snapped = _findNearestTerminal(mousePos, cellSize, state.components, _connectionSource);
               setState(() {
                 _currentMousePos = mousePos;
                 _snappedTarget = snapped;
+                _hoverGridCell = Offset(cellX, cellY);
+              });
+            } else {
+              setState(() {
+                _hoverGridCell = Offset(cellX, cellY);
               });
             }
           },
           onPointerHover: (event) {
+            final mousePos = event.localPosition;
+            final cellX = (mousePos.dx / cellSize).clamp(0.0, (_gridCols - 1).toDouble());
+            final cellY = (mousePos.dy / cellSize).clamp(0.0, (_gridRows - 1).toDouble());
+
             if (_connectionSource != null) {
-              final mousePos = event.localPosition;
               final snapped = _findNearestTerminal(mousePos, cellSize, state.components, _connectionSource);
               setState(() {
                 _currentMousePos = mousePos;
                 _snappedTarget = snapped;
+                _hoverGridCell = Offset(cellX, cellY);
+              });
+            } else {
+              setState(() {
+                _hoverGridCell = Offset(cellX, cellY);
               });
             }
           },
@@ -809,6 +860,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                     target.componentId,
                     target.terminal,
                   );
+                  _triggerSpark(mousePos);
                 }
 
                 setState(() {
@@ -926,7 +978,10 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
     final active = state.simulationValues['active_${component.id}'] == 1.0;
     final isBurned = state.burnedComponentIds.contains(component.id);
     final power = state.simulationValues['power_${component.id}'] ?? 0.0;
+    final voltageDrop = state.simulationValues['voltage_drop_${component.id}'] ?? (component.type == ComponentType.battery ? component.value : 0.0);
+    final current = state.simulationValues['current_${component.id}'] ?? 0.0;
     final isHighThermal = state.isSimulating && power > 5.0 && !isBurned && component.type != ComponentType.battery && component.type != ComponentType.powerSupply;
+    final showTelemetry = state.isSimulating && (current > 0.0001 || active || isSelected || component.type == ComponentType.battery || component.type == ComponentType.powerSupply);
 
     final bodyWidget = InkWell(
       onTap: () {
@@ -1032,6 +1087,57 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
         Positioned.fill(child: bodyWidget),
         _buildTerminalPoint(component, 'A', cellSize, isDark),
         _buildTerminalPoint(component, 'B', cellSize, isDark),
+        if (showTelemetry)
+          Positioned(
+            top: -16,
+            left: -14,
+            right: -14,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0D1424).withValues(alpha: 0.9),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: active ? const Color(0xFF00FF9D) : const Color(0xFF00F5D4).withValues(alpha: 0.6),
+                    width: 0.8,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: (active ? const Color(0xFF00FF9D) : const Color(0xFF00F5D4)).withValues(alpha: 0.25),
+                      blurRadius: 6,
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${voltageDrop.toStringAsFixed(1)}V',
+                      style: TextStyle(
+                        color: active ? const Color(0xFF00FF9D) : const Color(0xFF00F5D4),
+                        fontSize: 8.5,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                    const SizedBox(width: 3),
+                    const Text('•', style: TextStyle(color: Colors.white38, fontSize: 8)),
+                    const SizedBox(width: 3),
+                    Text(
+                      '${(current * 1000).toStringAsFixed(0)}mA',
+                      style: const TextStyle(
+                        color: Color(0xFFFFD54F),
+                        fontSize: 8.5,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
       ],
     );
 

@@ -255,12 +255,20 @@ class ComponentPhysicalPainter extends CustomPainter {
     final bulbRadius = 14.0;
 
     if (isActive) {
-      // Glow externo do bulbo aceso
+      // Glow radiante estendido de luz nos grid cells ao redor
       canvas.drawCircle(
         bulbCenter,
-        bulbRadius + 10,
+        bulbRadius + 28,
         Paint()
-          ..color = const Color(0xFFFFD54F).withValues(alpha: 0.35)
+          ..color = const Color(0xFFFFD54F).withValues(alpha: 0.2)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 16),
+      );
+      // Glow médio brilhante do bulbo aceso
+      canvas.drawCircle(
+        bulbCenter,
+        bulbRadius + 12,
+        Paint()
+          ..color = const Color(0xFFFFB300).withValues(alpha: 0.5)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
       );
     }
@@ -440,11 +448,20 @@ class ComponentPhysicalPainter extends CustomPainter {
     final ledRadius = 11.0;
 
     if (isActive) {
-      // Brilho intenso de LED aceso
+      // Glow verde néon expandido do LED aceso
+      canvas.drawCircle(
+        domeCenter,
+        ledRadius + 22,
+        Paint()
+          ..color = const Color(0xFF00FF9D).withValues(alpha: 0.25)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12),
+      );
       canvas.drawCircle(
         domeCenter,
         ledRadius + 10,
-        Paint()..color = const Color(0xFF4CAF50).withValues(alpha: 0.6),
+        Paint()
+          ..color = const Color(0xFF4CAF50).withValues(alpha: 0.65)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
       );
     }
 
