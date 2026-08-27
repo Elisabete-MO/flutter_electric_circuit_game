@@ -84,14 +84,14 @@ class WiresPainter extends CustomPainter {
           simulationValues['active_${fromComp.id}'] == 1.0 && 
           simulationValues['active_${toComp.id}'] == 1.0;
 
-      // Desenha o cabo elétrico (Curva Bézier ou Linha Esquemática Reta)
-      final path = Path()
-        ..moveTo(start.dx, start.dy)
-        ..cubicTo(
-          (start.dx + end.dx) / 2, start.dy,
-          (start.dx + end.dx) / 2, end.dy,
-          end.dx, end.dy,
-        );
+      // Desenha o cabo elétrico com Roteamento Inteligente (Ortogonal para Diagrama, Curvo para Físico)
+      final path = _buildSmartWirePath(
+        start: start,
+        end: end,
+        cellSize: cellSize,
+        isDiagramMode: isDiagramMode,
+        components: components,
+      );
 
       if (isDiagramMode) {
         // Estilo Diagrama Esquemático: Linhas limpas e nítidas
@@ -324,4 +324,81 @@ class _TempWirePainter extends CustomPainter {
         oldDelegate.isSnapped != isSnapped ||
         oldDelegate.isDark != isDark;
   }
+}
+
+Path _buildSmartWirePath({
+  required Offset start,
+  required Offset end,
+  required double cellSize,
+  required bool isDiagramMode,
+  required List<SandboxComponent> components,
+}) {
+  final path = Path()..moveTo(start.dx, start.dy);
+
+  final dx = end.dx - start.dx;
+  final dy = end.dy - start.dy;
+
+  // Detecta se é um fio de retorno (da direita para a esquerda)
+  final isReturn = dx < -10;
+
+  if (isDiagramMode) {
+    if (isReturn) {
+      // Roteamento ortogonal de retorno por baixo dos componentes
+      double maxY = start.dy > end.dy ? start.dy : end.dy;
+      for (final comp in components) {
+        final compY = (comp.gridY + 1) * cellSize;
+        if (compY > maxY) maxY = compY;
+      }
+      final routeY = maxY + (cellSize * 0.4);
+      const radius = 12.0;
+
+      path.lineTo(start.dx + 20 - radius, start.dy);
+      path.quadraticBezierTo(start.dx + 20, start.dy, start.dx + 20, start.dy + radius);
+      path.lineTo(start.dx + 20, routeY - radius);
+      path.quadraticBezierTo(start.dx + 20, routeY, start.dx + 20 - radius, routeY);
+      path.lineTo(end.dx - 20 + radius, routeY);
+      path.quadraticBezierTo(end.dx - 20, routeY, end.dx - 20, routeY - radius);
+      path.lineTo(end.dx - 20, end.dy + radius);
+      path.quadraticBezierTo(end.dx - 20, end.dy, end.dx - 20 + radius, end.dy);
+      path.lineTo(end.dx, end.dy);
+    } else if (dy.abs() < 5) {
+      // Linha direta reta horizontal
+      path.lineTo(end.dx, end.dy);
+    } else {
+      // Degrau ortogonal Z/L suave
+      final midX = start.dx + dx / 2;
+      const radius = 10.0;
+      final ySign = dy > 0 ? 1 : -1;
+
+      path.lineTo(midX - radius, start.dy);
+      path.quadraticBezierTo(midX, start.dy, midX, start.dy + radius * ySign);
+      path.lineTo(midX, end.dy - radius * ySign);
+      path.quadraticBezierTo(midX, end.dy, midX + radius, end.dy);
+      path.lineTo(end.dx, end.dy);
+    }
+  } else {
+    // Modo Físico Realista (Cabo curvo por gravidade)
+    if (isReturn) {
+      double maxY = start.dy > end.dy ? start.dy : end.dy;
+      for (final comp in components) {
+        final compY = (comp.gridY + 1) * cellSize;
+        if (compY > maxY) maxY = compY;
+      }
+      final routeY = maxY + (cellSize * 0.6);
+
+      path.cubicTo(
+        start.dx + 40, routeY,
+        end.dx - 40, routeY,
+        end.dx, end.dy,
+      );
+    } else {
+      path.cubicTo(
+        (start.dx + end.dx) / 2, start.dy,
+        (start.dx + end.dx) / 2, end.dy,
+        end.dx, end.dy,
+      );
+    }
+  }
+
+  return path;
 }
