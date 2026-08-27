@@ -321,7 +321,7 @@ class SandboxController extends Notifier<SandboxState> {
         final Set<String> newBurnedSet = Set.from(targetState.burnedComponentIds);
 
         if (totalResistance <= 0.1) {
-          error = '🚨 CURTO-CIRCUITO DETECTADO! Conexão direta entre pólos sem carga!';
+          error = 'CURTO-CIRCUITO DETECTADO! Conexão direta entre pólos sem carga!';
         } else {
           final current = battery.value / totalResistance;
           values['active_${battery.id}'] = 1.0;
@@ -340,17 +340,17 @@ class SandboxController extends Notifier<SandboxState> {
             if (comp.type == ComponentType.led) {
               if (current > 0.05 || vDrop > 3.3) {
                 newBurnedSet.add(comp.id);
-                error = '⚡ O LED QUEIMOU! Corrente (${(current * 1000).toStringAsFixed(0)}mA) excedeu o limite seguro (50mA). Conecte um resistor em série!';
+                error = 'O LED QUEIMOU! Corrente (${(current * 1000).toStringAsFixed(0)}mA) excedeu o limite seguro (50mA). Conecte um resistor em série!';
               }
             } else if (comp.type == ComponentType.bulb) {
               if (power > 15.0) {
                 newBurnedSet.add(comp.id);
-                error = '🔥 FILAMENTO ROMPIDO! A lâmpada queimou por excesso de potência (${power.toStringAsFixed(1)}W > 15W)!';
+                error = 'FILAMENTO ROMPIDO! A lâmpada queimou por excesso de potência (${power.toStringAsFixed(1)}W > 15W)!';
               }
             } else if (comp.type == ComponentType.motor) {
               if (vDrop > 18.0) {
                 newBurnedSet.add(comp.id);
-                error = '⚙️ BOBINA QUEIMADA! O motor sofreu sobretensão (${vDrop.toStringAsFixed(1)}V > 18V)!';
+                error = 'BOBINA QUEIMADA! O motor sofreu sobretensão (${vDrop.toStringAsFixed(1)}V > 18V)!';
               }
             }
           }
