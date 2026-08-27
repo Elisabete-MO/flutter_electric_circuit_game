@@ -1,17 +1,17 @@
-# Interface e interação
+# Interface e Interação (EletroLab v1.0.0)
 
-## Menu inicial (Fase 1 — concluída)
+## Menu Inicial (Fase 1 — Concluída)
 
-Quatro opções principais:
+Quatro opções principais com navegação fluida e estética Cyberpunk:
 
-| Opção | Ícone | Rota |
-|---|---|---|
-| Primeiros passos | ⚡ | `/first-steps` |
-| Começar | 🔬 | `/challenges` |
-| Banqueta | 🧪 | `/sandbox` |
-| Configurações | ⚙️ | `/settings` |
+| Opção | Ícone | Rota | Descrição |
+|---|---|---|---|
+| **Primeiros passos** | ⚡ | `/first-steps` | Tutorial interativo de simbologia técnica e quiz de fixação |
+| **Começar** | 🔬 | `/challenges` | Desafios práticos guiados (Lâmpada, Motor, Resistor) |
+| **Bancada Livre** | 🧪 | `/sandbox` | Laboratório livre de simulação e criação de circuitos |
+| **Configurações** | ⚙️ | `/settings` | Preferências de sistema, áudio, acessibilidade e idioma |
 
-Apresenta identidade com nome e subtítulo:
+Apresenta a marca consolidada:
 
 ```text
 EletroLab
@@ -19,13 +19,15 @@ LABORATÓRIO VIRTUAL DE CIRCUITOS
 ```
 
 ### Layout
-- Computador/tablet: Bento Grid responsivo com cartões adaptados via `IntrinsicHeight`.
-- Celular: lista vertical com scroll.
-- Rodapé com versão (`ELETROLAB CYBER STATION • v1.0.0`).
+- Computador/Tablet: Bento Grid responsivo com cartões em relevo CyberHUD.
+- Celular: Lista vertical com rolagem fluida.
+- Rodapé com indicador de versão: `ELETROLAB CYBER STATION • v1.0.0`.
 
-## Primeiros passos (Fase 2 — concluída)
+---
 
-Interface interativa de 8 quadrantes combinando imagens dos componentes físicos e a simbologia esquemática padronizada (IEC/IEEE).
+## Primeiros passos (Fase 2 — Concluída)
+
+Interface interativa de 8 quadrantes combinando representação física 3D e simbologia esquemática padronizada (IEC/IEEE).
 
 Componentes apresentados:
 1. **Bateria** (`battery`) — Fonte de energia elétrica.
@@ -40,88 +42,58 @@ Componentes apresentados:
 Recursos:
 - **Visualização Dupla**: Ilustração física no topo + Símbolo esquemático desenhado via `CustomPainter` na base.
 - **Interatividade de Estados**: Permite ligar/desligar a lâmpada, LED, motor e interruptor diretamente nos cartões.
-- **Banner Orientativo**: Mensagem contextual *"Observe. You have to know these symbols for this activity."*.
-- **Modo Desafio / Quiz**: Oculta automaticamente os nomes dos cartões (exibindo apenas `?`) para testar o reconhecimento visual de cada componente pelo estudante.
+- **Modo Desafio / Quiz**: Oculta os nomes para teste de fixação com diálogo de resultado compactado (máximo `440px`).
 
-## Banco de trabalho (Banqueta — Fases 3–7, Atualmente em Construção)
+---
 
-A tela da Banqueta é atualmente apresentada como um painel informativo de "Em construção", pois seu funcionamento completo depende da implementação do motor dinâmico e resolvedor de equações (Solver) planejado para a Fase 5.
+## Banco de Trabalho (Bancada Livre / Sandbox — Fases 5 & 7 — Concluída)
 
-### Layout Conceitual Alvo:
+A **Bancada Livre** é o laboratório dinâmico onde o estudante pode criar, testar e analisar qualquer circuito elétrico em tempo real.
 
 ```text
 ┌──────────────────────────────────────────────────────────────┐
-│ EletroLab                                                    │
+│ EletroLab — BANCADA LIVRE                                     │
 ├──────────────────────────────────────────────────────────────┤
-│ 🔋  Resistor  💡  Interruptor  ─ Fio ─  📏 Multímetro       │
+│ 🔋 Fonte  ⚡ Resistor  💡 Lâmpada  🔴 LED  🔘 Chave  ⚙️ Motor  │
 ├──────────────────────────────────────────────────────────────┤
 │                                                              │
-│                     BANCADA                                  │
+│                GRADE INTERATIVA (GRID CANVAS)                │
 │                                                              │
 ├──────────────────────────────────────────────────────────────┤
-│ ▶ Simular   ⏸ Pausar   ↻ Reiniciar   🗑 Limpar              │
+│ ▶ Simular  ⏸ Pausar  ↻ Reset  🗑 Limpar | 👁️ Diagrama/Físico │
 └──────────────────────────────────────────────────────────────┘
 ```
 
-A Banqueta final permitirá:
+### Recursos Principais da Bancada Livre:
+1. **Paleta de Componentes**: Drag-and-Drop de Fonte (Bateria), Resistor, Lâmpada, LED, Interruptor SPST e Motor DC.
+2. **Conexões Magnéticas**: Clique ou arraste entre os bornes vermelho (+) e preto (-) para criar fios.
+3. **Modos de Visualização**: Alternância instantânea entre **Visão Física 3D** e **Diagrama Esquemático Técnico**.
+4. **Roteamento Ortogonal Inteligente (Manhattan Routing)**: Fios em modo esquema possuem curvas limpas de $90^\circ$ e desviam automaticamente por baixo dos componentes.
+5. **Edição de Parâmetros**: Modal ao clicar no componente para ajustar Tensão ($V$), Resistência ($R$) ou rotacionar em $90^\circ$.
+6. **Barra de Controle de Simulação**: Play, Pause, Passo a Passo, Desfazer (Undo), Refazer (Redo), Limpar Tudo e Carregador de Circuitos Predefinidos (Presets).
+7. **Assistente Flutuante Prof. Volts**:
+   - Posicionado como HUD flutuante no **canto inferior direito** (não comprime nem obstrui o canvas).
+   - Notificações automáticas em tempo real para curto-circuitos e sobrecargas (queima de LED, lâmpada ou motor).
+   - Ação rápida integrada **"Substituir Todos Queimados"** para reparo instantâneo da bancada.
+   - Desaparece totalmente da tela quando fechado pelo usuário.
 
-- arrastar;
-- mover;
-- selecionar;
-- excluir;
-- rotacionar;
-- conectar;
-- desconectar;
-- editar valores;
-- zoom;
-- pan.
+---
 
-### Interações
+## Modais e Diálogos de Feedback (CyberHUD)
 
-- **Arrastar**: componentes se movem pela bancada.
-- **Selecionar**: destacar, mostrar informações e permitir editar propriedades.
-- **Conectar**: terminais próximos são destacados com indicação de conexão;
-  permite criar o fio.
-- **Fios**: acompanham os terminais dos componentes ao serem movidos.
+- Todos os diálogos popups educacionais (Feedback do Prof. Volts, Resultados de Quiz e Conclusão de Desafios) possuem limite estrito de largura de **`maxWidth: 440px`**, garantindo um visual limpo e centralizado em qualquer resolução (Mobile, Tablet e Desktop).
 
-## Câmera
+---
 
-- zoom in/out;
-- pan;
-- centralização;
-- grade opcional;
-- suporte a mouse, touch e trackpad (quando possível).
+## Responsividade e Atalhos (Desktop)
 
-## Atalhos (desktop)
+- **Celular**: Interação de toque amigável com botões ampliados e painéis colapsáveis.
+- **Tablet & Desktop**: Suporte completo a atalhos de teclado e mouse.
 
 | Atalho | Ação |
 |---|---|
-| `Delete` | excluir selecionado |
-| `Ctrl + Z` | desfazer |
-| `Ctrl + Y` | refazer |
-| `Space` | iniciar/pausar simulação |
-| `R` | rotacionar |
-
-## Responsividade
-
-- **Celular**: controles grandes, interação touch.
-- **Tablet**: layout intermediário.
-- **Desktop**: mouse, teclado e atalhos.
-- **Web**: quando possível.
-
-## Configurações e Internacionalização (i18n — Fase 9/Aparência)
-
-A tela de Configurações permite personalizar:
-
-- **Aparência e Tema**: Alternar entre os modos **Sistema**, **Claro** e **Escuro**.
-- **Idioma / Language (i18n)**: Alternância em tempo real entre **Português (pt)** e **English (en)** usando `flutter_localizations` e arquivos `.arb`. O idioma escolhido altera instantaneamente todos os menus, instruções, rótulos de botões (`VERIFY`, `RESET`, `Iniciar`) e diálogos educativos do EletroLab.
-- **Simulação & Acessibilidade**: Controles de exibição de corrente, grade, valores, animação, escala da interface e contraste.
-- **Persistência**: O idioma e o tema selecionados são salvos via `shared_preferences` e mantidos entre as sessões.
-
-## Identidade visual
-
-- Laboratório virtual, educacional, moderno, amigável e limpo.
-- Componentes facilmente reconhecíveis.
-- Paleta: azul elétrico (primária), ciano (secundária), âmbar (terciária).
-- O nome **EletroLab** aparece na tela inicial e nos principais elementos.
-- Não reproduz a identidade do PhET.
+| `Delete` / `Backspace` | Excluir componente ou fio selecionado |
+| `Ctrl + Z` | Desfazer ação na bancada |
+| `Ctrl + Y` | Refazer ação na bancada |
+| `Espaço` | Alternar entre Iniciar / Pausar simulação |
+| `R` | Rotacionar componente selecionado em $90^\circ$ |

@@ -16,7 +16,7 @@
 
 ## Estado atual do projeto
 
-- **Fases 1, 2, 8, 9, 10: Concluídas** — App navegável com identidade visual Cyberpunk, menu inicial Bento Grid com CyberHUD adaptado, primeiros passos interativo com quiz de reconhecimento, 3 desafios modulares completos (lâmpada, motor, resistor) com placar de estrelas e áudio, persistência local de tema, configurações e progresso via SharedPreferences.
-- **Fase 3: Concluída** — Migração do Flame para renderização customizada altamente otimizada via CustomPainter com isolamento de RepaintBoundary para as partículas móveis de corrente.
-- **Fase 5, 7: Planejadas** — O motor de simulação matemática livre (Solver) está em planejamento e sua conclusão habilitará o laboratório livre (Banqueta).
-- Consulte o [`roadmap.md`](roadmap.md) para o detalhamento das fases de desenvolvimento.
+- **Todas as Fases (1 a 10) 100% Concluídas** — App navegável com identidade visual Cyberpunk, menu inicial Bento Grid com CyberHUD adaptado, primeiros passos interativo com quiz de reconhecimento, 3 desafios modulares completos (lâmpada, motor, resistor) com placar de estrelas e áudio, persistência local de tema, configurações e progresso via SharedPreferences.
+- **Renderização Nativa e Partículas (Fase 3 & 6)** — Canvas de simulação customizado via CustomPainter com partículas de elétrons animadas ao longo dos fios energizados, otimizado com RepaintBoundary.
+- **Motor de Simulação & Bancada Livre (Fases 5 & 7 - Sandbox)** — Laboratório livre totalmente funcional com resolvedor de circuitos em grafo, cálculo de grandezas elétricas em tempo real (Lei de Ohm e Kirchoff), lógica de sobrecarga/queima física (LED, Lâmpada, Motor), roteamento ortogonal inteligente de fios (Manhattan Routing), loader de circuitos predefinidos, atalhos de reparo e assistente HUD flutuante do Professor Volts no canto inferior direito.
+- Consulte o [`roadmap.md`](roadmap.md) para o detalhamento completo de todas as fases.

@@ -11,29 +11,37 @@ sem erros.
 | 2 | **Primeiros passos** — guia de símbolos esquemáticos, interatividade e quiz | ✔ Concluída |
 | 3 | **Renderização Nativa** — migração de Flame para CustomPainter (canto chanfrado, partículas) | ✔ Concluída |
 | 4 | **Componentes** — baterias, lâmpadas, motores, interruptores, resistores e fios 3D | ✔ Concluída |
-| 5 | **Circuito/Solver** — grafo dinâmico, nós, conexões e Leis de Kirchhoff para Banqueta | ◻ Pendente |
+| 5 | **Circuito/Solver** — grafo dinâmico, nós, conexões, detecção de loop e física de sobrecarga | ✔ Concluída |
 | 6 | **Simulação Visual** — animação reativa da corrente, velocidade e lâmpada/motor ativos | ✔ Concluída |
-| 7 | **Banqueta** — laboratório livre dinâmico (dependente da Fase 5) | ◻ Pendente |
+| 7 | **Banqueta (Sandbox)** — laboratório livre dinâmico com drag-and-drop, fiação e presets | ✔ Concluída |
 | 8 | **Desafios (Começar)** — 3 desafios completos, validação de slots, cronômetro e estrelas | ✔ Concluída |
 | 9 | **Configurações Completas** — persistência de progresso, volume de áudio e i18n | ✔ Concluída |
-| 10 | **Refinamento** — UX Cyberpunk, partículas com RepaintBoundary, suíte de testes passando | ✔ Concluída |
+| 10 | **Refinamento** — UX Cyberpunk, HUD Prof. Volts flutuante, roteamento ortogonal de fios | ✔ Concluída |
 
 ## Detalhamento das fases
 
 ### Fase 1 — Fundação (concluída)
 
-- Projeto Flutter (`eletrolab`) com `flame`, `flutter_riverpod`, `shared_preferences`.
+- Projeto Flutter (`eletrolab`) com `flutter_riverpod`, `shared_preferences`.
 - Tema Material 3 claro/escuro com identidade EletroLab.
 - Navegação nomeada: `/`, `/first-steps`, `/challenges`, `/sandbox`, `/settings`.
 - Menu inicial com as 4 opções e identidade visual.
 - `SettingsModel` + `SettingsService` + `SettingsController`, com persistência.
 - Tela de configurações funcional (tema, switches, dados, sobre).
-- Placeholders navegáveis para First steps, Challenges e Sandbox.
 - Estrutura de assets e README.
 
-### Dependência entre Fases 2 e 3–6
+### Fase 5 — Circuito/Solver (concluída)
+- Modelo em grafo dinâmico para a Bancada Livre: `SandboxState { components, wires, simulationValues, burnedComponentIds }`.
+- Traversal de grafo para resolução de circuitos fechados em série e paralelo.
+- Cálculo didático de grandezas elétricas em tempo real: Corrente ($I = V / R_{total}$), Tensão Nodal ($V_{drop}$) e Potência ($P = V \times I$).
+- Lógica de sobrecarga e queima física com thresholds por componente (LED, Lâmpada e Motor).
 
-A aplicação adotou a **Opção C**: uma fatia vertical visualmente rica foi implementada para as etapas interativas do tutorial (Primeiros Passos) e para os Desafios (1, 2 e 3), utilizando a API `CustomPainter` do Flutter e validação por slots. A implementação de um um motor matemático baseado em grafos (nodal) foi postergada e permanece como o principal requisito para a liberação da Bancada Livre (Banqueta).
+### Fase 7 — Banqueta / Sandbox (concluída)
+- Laboratório livre interativo com paleta de componentes, canvas de grid com snap magnético de fiação.
+- Edição de parâmetros (tensão de bateria, resistência), rotação ($90^\circ$) e exclusão.
+- Sistema de Roteamento Ortogonal Inteligente de Fios (Manhattan Routing) para diagramas esquemáticos limpos.
+- Carregamento instantâneo de circuitos de exemplo (presets).
+- Assistente HUD flutuante do Professor Volts no canto inferior direito com ações de reparo rápido.
 
 ## O que precisa ser feito (por fases)
 
