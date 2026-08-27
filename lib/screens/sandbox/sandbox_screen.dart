@@ -750,15 +750,15 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                   painter: _isDiagramMode
                       ? CircuitSymbolPainter(
                           type: component.type,
-                          isActive: component.isActive,
+                          isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
                           isBurned: isBurned,
                           color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
-                          activeColor: active ? const Color(0xFF00FF9D) : const Color(0xFFFFB300),
-                          strokeWidth: active ? 2.8 : 2.0,
+                          activeColor: active || component.isActive ? const Color(0xFF00FF9D) : const Color(0xFFFFB300),
+                          strokeWidth: active || component.isActive ? 2.8 : 2.0,
                         )
                       : ComponentPhysicalPainter(
                           type: component.type,
-                          isActive: component.isActive,
+                          isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
                           isBurned: isBurned,
                           isDarkMode: isDark,
                         ),
