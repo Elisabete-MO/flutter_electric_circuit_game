@@ -10,12 +10,14 @@ class ComponentPhysicalPainter extends CustomPainter {
     this.isActive = false,
     this.isBurned = false,
     required this.isDarkMode,
+    this.value = 10.0,
   });
 
   final ComponentType type;
   final bool isActive;
   final bool isBurned;
   final bool isDarkMode;
+  final double value;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -313,6 +315,36 @@ class ComponentPhysicalPainter extends CustomPainter {
     );
   }
 
+  List<Color> _getResistorColors(double val) {
+    if (val <= 0) val = 10.0;
+    final int valInt = val.round();
+    final String str = valInt.toString();
+    int d1 = int.parse(str[0]);
+    int d2 = str.length > 1 ? int.parse(str[1]) : 0;
+    int zeros = str.length - 2;
+    if (zeros < 0) zeros = 0;
+
+    final colorMap = [
+      const Color(0xFF212121), // 0 Black
+      const Color(0xFF795548), // 1 Brown
+      const Color(0xFFE53935), // 2 Red
+      const Color(0xFFFF9800), // 3 Orange
+      const Color(0xFFFFD54F), // 4 Yellow
+      const Color(0xFF4CAF50), // 5 Green
+      const Color(0xFF1E88E5), // 6 Blue
+      const Color(0xFF7E57C2), // 7 Violet
+      const Color(0xFF9E9E9E), // 8 Grey
+      const Color(0xFFFFFFFF), // 9 White
+    ];
+
+    final c1 = colorMap[d1.clamp(0, 9)];
+    final c2 = colorMap[d2.clamp(0, 9)];
+    final c3 = colorMap[zeros.clamp(0, 9)];
+    final c4 = const Color(0xFFD4AF37); // Gold tolerance 5%
+
+    return [c1, c2, c3, c4];
+  }
+
   void _drawPhysicalResistor(Canvas canvas, Size size, double cx, double cy) {
     _drawBaseBlock(canvas, size, cx, cy);
 
@@ -320,34 +352,52 @@ class ComponentPhysicalPainter extends CustomPainter {
     canvas.drawCircle(Offset(cx - 32, cy + 4), 5, Paint()..color = Colors.red);
     canvas.drawCircle(Offset(cx + 32, cy + 4), 5, Paint()..color = Colors.black87);
 
-    // Corpo cerâmico do resistor (bege/bege-claro)
-    final resRect = RRect.fromRectAndRadius(
-      Rect.fromCenter(center: Offset(cx, cy - 4), width: 36, height: 12),
-      const Radius.circular(4),
-    );
-    canvas.drawRRect(resRect, Paint()..color = const Color(0xFFE8D8B8));
+    // Corpo cerâmico abuloado do resistor (Bege/bege-marfim)
+    final resRect = Rect.fromCenter(center: Offset(cx, cy - 4), width: 36, height: 13);
+    final resRRect = RRect.fromRectAndRadius(resRect, const Radius.circular(5));
 
-    // Fios de chumbo que saem das pontas
+    // Sombra do resistor
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(resRect.translate(1, 2), const Radius.circular(5)),
+      Paint()..color = Colors.black.withValues(alpha: 0.25)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
+    );
+
+    // Gradiente de iluminação do corpo cerâmico
+    final ceramicShader = const LinearGradient(
+      colors: [Color(0xFFFAF3E0), Color(0xFFE8D8B8), Color(0xFFD7C49E)],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+    ).createShader(resRect);
+    canvas.drawRRect(resRRect, Paint()..shader = ceramicShader);
+
+    // Fios de chumbo estanhados
     final leadPaint = Paint()
-      ..color = Colors.grey[600]!
-      ..strokeWidth = 2;
+      ..shader = const LinearGradient(
+        colors: [Colors.white, Color(0xFFB0BEC5), Color(0xFF546E7A)],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ).createShader(Rect.fromLTWH(cx - 32, cy - 4, 64, 8))
+      ..strokeWidth = 2.2
+      ..strokeCap = StrokeCap.round;
     canvas.drawLine(Offset(cx - 32, cy + 4), Offset(cx - 18, cy - 4), leadPaint);
     canvas.drawLine(Offset(cx + 32, cy + 4), Offset(cx + 18, cy - 4), leadPaint);
 
-    // Faixas de cores do código de resistores (ex: Amarelo, Violeta, Vermelho, Dourado)
-    final colors = [
-      const Color(0xFFFFD54F), // Amarelo
-      const Color(0xFF7E57C2), // Violeta
-      const Color(0xFFE53935), // Vermelho
-      const Color(0xFFD4AF37), // Dourado
-    ];
+    // Faixas de cores dinâmicas calculadas a partir do valor em Ohms!
+    final colors = _getResistorColors(value);
     final bandPositions = [-10.0, -4.0, 2.0, 10.0];
     for (var i = 0; i < colors.length; i++) {
       canvas.drawRect(
-        Rect.fromLTWH(cx + bandPositions[i], cy - 10, 3, 12),
+        Rect.fromLTWH(cx + bandPositions[i], cy - 10.5, 3.2, 13),
         Paint()..color = colors[i],
       );
     }
+
+    // Brilho especular longitudinal
+    canvas.drawLine(
+      Offset(resRect.left + 2, resRect.top + 1.5),
+      Offset(resRect.right - 2, resRect.top + 1.5),
+      Paint()..color = Colors.white.withValues(alpha: 0.6)..strokeWidth = 1.2,
+    );
   }
 
   void _drawPhysicalDiode(Canvas canvas, Size size, double cx, double cy) {
@@ -423,120 +473,200 @@ class ComponentPhysicalPainter extends CustomPainter {
     final leftTerminal = Offset(cx - 30, cy + 6);
     final rightTerminal = Offset(cx + 30, cy + 6);
 
-    // Bornes de conexão vermelhos e pretos
+    // Bornes de conexão vermelhos e pretos na base da bancada
     canvas.drawCircle(leftTerminal, 5.5, Paint()..color = Colors.red);
     canvas.drawCircle(rightTerminal, 5.5, Paint()..color = Colors.black87);
 
-    // Fios de conexão dos bornes para o motor
-    final leadPaintRed = Paint()
-      ..color = Colors.red
-      ..strokeWidth = 2.0;
-    final leadPaintBlack = Paint()
-      ..color = isDarkMode ? Colors.grey[400]! : Colors.black87
-      ..strokeWidth = 2.0;
+    // Tampa traseira de plástico (Plastic End-cap) do motor DC (tipo 130)
+    final capBackRect = Rect.fromLTWH(cx - 20, cy - 14, 6, 16);
+    final capBackRRect = RRect.fromRectAndRadius(capBackRect, const Radius.circular(2));
+    canvas.drawRRect(capBackRRect, Paint()..color = const Color(0xFF1E293B));
 
-    final motorBackX = cx - 16;
-    canvas.drawLine(leftTerminal, Offset(motorBackX, cy - 6), leadPaintRed);
-    canvas.drawLine(rightTerminal, Offset(motorBackX, cy - 2), leadPaintBlack);
+    // Abas/Terminais de solda de latão na tampa traseira
+    final solderLug1 = Rect.fromLTWH(cx - 22, cy - 12, 3, 4);
+    final solderLug2 = Rect.fromLTWH(cx - 22, cy - 2, 3, 4);
+    final lugPaint = Paint()..color = const Color(0xFFD4AF37);
+    canvas.drawRect(solderLug1, lugPaint);
+    canvas.drawRect(solderLug2, lugPaint);
 
-    // Corpo metálico cilíndrico do motor
-    final motorRect = Rect.fromCenter(center: Offset(cx - 2, cy - 6), width: 30, height: 22);
+    // Fios de conexão trançados flexíveis dos bornes até os terminais de solda do motor
+    final leadPathRed = Path()
+      ..moveTo(leftTerminal.dx, leftTerminal.dy)
+      ..cubicTo(cx - 28, cy, cx - 24, cy - 10, cx - 22, cy - 10);
+    final leadPathBlack = Path()
+      ..moveTo(rightTerminal.dx, rightTerminal.dy)
+      ..cubicTo(cx - 26, cy + 2, cx - 24, cy, cx - 22, cy);
 
-    // Sombra projetada do motor
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(motorRect.translate(2, 3), const Radius.circular(6)),
+    canvas.drawPath(
+      leadPathRed,
       Paint()
-        ..color = Colors.black.withValues(alpha: 0.3)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
-    );
-
-    // Gradiente metálico do corpo do motor
-    final motorGradient = Paint()
-      ..shader = LinearGradient(
-        colors: isActive
-            ? [const Color(0xFFCFD8DC), const Color(0xFF90A4AE), const Color(0xFF37474F)]
-            : [const Color(0xFFB0BEC5), const Color(0xFF78909C), const Color(0xFF37474F)],
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-      ).createShader(motorRect);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(motorRect, const Radius.circular(6)),
-      motorGradient,
-    );
-
-    // Linha de reflexo superior
-    canvas.drawLine(
-      Offset(motorRect.left + 4, motorRect.top + 3),
-      Offset(motorRect.right - 4, motorRect.top + 3),
-      Paint()
-        ..color = Colors.white.withValues(alpha: 0.4)
+        ..color = const Color(0xFFE53935)
         ..strokeWidth = 2.0
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round,
+    );
+    canvas.drawPath(
+      leadPathBlack,
+      Paint()
+        ..color = isDarkMode ? Colors.grey[400]! : const Color(0xFF1E293B)
+        ..strokeWidth = 2.0
+        ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round,
     );
 
-    // Borda do corpo
+    // Corpo metálico cilíndrico escovado do motor DC (formato clássico Can-shape)
+    final motorRect = Rect.fromCenter(center: Offset(cx - 2, cy - 6), width: 32, height: 20);
+
+    // Sombra projetada sob o corpo metálico
     canvas.drawRRect(
-      RRect.fromRectAndRadius(motorRect, const Radius.circular(6)),
+      RRect.fromRectAndRadius(motorRect.translate(2, 4), const Radius.circular(5)),
       Paint()
-        ..color = const Color(0xFF263238)
-        ..strokeWidth = 1.0
+        ..color = Colors.black.withValues(alpha: 0.35)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+    );
+
+    // Gradiente metálico de aço/alumínio escovado
+    final motorGradient = Paint()
+      ..shader = LinearGradient(
+        colors: isActive
+            ? [const Color(0xFFE2E8F0), const Color(0xFF94A3B8), const Color(0xFF475569), const Color(0xFF334155)]
+            : [const Color(0xFFCBD5E1), const Color(0xFF64748B), const Color(0xFF334155)],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ).createShader(motorRect);
+
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(motorRect, const Radius.circular(5)),
+      motorGradient,
+    );
+
+    // Fresta/Ranhura de ventilação lateral mostrando a bobina de cobre no interior (Vent Slot & Copper Coil)
+    final ventSlot = Rect.fromLTWH(cx - 8, cy - 10, 10, 8);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(ventSlot, const Radius.circular(2)),
+      Paint()..color = const Color(0xFF0F172A),
+    );
+    // Enrolamento de cobre brilhante visível na ranhura
+    canvas.drawRect(
+      Rect.fromLTWH(cx - 6, cy - 8, 6, 4),
+      Paint()..color = const Color(0xFFD97706),
+    );
+
+    // Linha de reflexo especular metálico no topo do cilindro
+    canvas.drawLine(
+      Offset(motorRect.left + 4, motorRect.top + 2),
+      Offset(motorRect.right - 4, motorRect.top + 2),
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.6)
+        ..strokeWidth = 1.8
+        ..strokeCap = StrokeCap.round,
+    );
+
+    // Borda metálica usinada
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(motorRect, const Radius.circular(5)),
+      Paint()
+        ..color = const Color(0xFF334155)
+        ..strokeWidth = 1.2
         ..style = PaintingStyle.stroke,
     );
 
-    // Eixo rotativo metálico
+    // Bucha frontal metálica de bronze (Front Bearing Collar)
+    final bearingRect = Rect.fromLTWH(cx + 14, cy - 9, 4, 6);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(bearingRect, const Radius.circular(1)),
+      Paint()..color = const Color(0xFFB45309), // Bronze
+    );
+
+    // Eixo rotativo cilíndrico de Aço Inox (Steel Shaft)
     final shaftPaint = Paint()
-      ..color = Colors.grey[400]!
+      ..shader = const LinearGradient(
+        colors: [Colors.white, Color(0xFFCBD5E1), Color(0xFF64748B)],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ).createShader(Rect.fromLTWH(cx + 18, cy - 8, 8, 4))
       ..strokeWidth = 3.5
       ..strokeCap = StrokeCap.round;
-    canvas.drawLine(Offset(cx + 13, cy - 6), Offset(cx + 20, cy - 6), shaftPaint);
+    canvas.drawLine(Offset(cx + 18, cy - 6), Offset(cx + 25, cy - 6), shaftPaint);
 
-    // Hélice / Rotor montado no eixo
-    final discCenter = Offset(cx + 20, cy - 6);
-    final fanRadius = 8.5;
+    // Hélice / Rotor de Ventoinha 3D (Fan Blade Propeller)
+    final discCenter = Offset(cx + 25, cy - 6);
+    final fanRadius = 11.0;
 
-    // Disco de fundo da hélice
+    // Sombra do rotor
+    canvas.drawCircle(
+      discCenter.translate(1, 2),
+      fanRadius,
+      Paint()
+        ..color = Colors.black.withValues(alpha: 0.25)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
+    );
+
+    // Disco metálico/plástico central de suporte das pás
     canvas.drawCircle(
       discCenter,
       fanRadius,
-      Paint()..color = isDarkMode ? const Color(0xFF1E293B) : Colors.grey[300]!,
+      Paint()..color = isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
     );
     canvas.drawCircle(
       discCenter,
       fanRadius,
       Paint()
-        ..color = isDarkMode ? Colors.white30 : Colors.black26
+        ..color = isDarkMode ? const Color(0xFF00F5D4).withValues(alpha: 0.4) : const Color(0xFF475569)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0,
+        ..strokeWidth = 1.2,
     );
 
-    // Pás da hélice (3 pás rotativas)
-    final angle = isActive ? (DateTime.now().millisecondsSinceEpoch / 50) % (2 * math.pi) : 0.0;
-    final bladePaint = Paint()
-      ..color = isActive ? const Color(0xFF00F5D4) : (isDarkMode ? Colors.white70 : const Color(0xFF37474F))
-      ..strokeWidth = 2.8
-      ..strokeCap = StrokeCap.round;
+    // 4 Pás da Hélice Rotativa estilo aeronáutico/industrial
+    final angle = isActive ? (DateTime.now().millisecondsSinceEpoch / 30) % (2 * math.pi) : 0.0;
 
-    for (int i = 0; i < 3; i++) {
-      final bladeAngle = angle + (i * 2 * math.pi / 3);
+    for (int i = 0; i < 4; i++) {
+      final bladeAngle = angle + (i * math.pi / 2);
       final pEnd = Offset(
-        discCenter.dx + (fanRadius - 1.5) * math.cos(bladeAngle),
-        discCenter.dy + (fanRadius - 1.5) * math.sin(bladeAngle),
+        discCenter.dx + (fanRadius - 1.0) * math.cos(bladeAngle),
+        discCenter.dy + (fanRadius - 1.0) * math.sin(bladeAngle),
       );
-      canvas.drawLine(discCenter, pEnd, bladePaint);
+
+      final bladePath = Path()
+        ..moveTo(discCenter.dx, discCenter.dy)
+        ..quadraticBezierTo(
+          discCenter.dx + (fanRadius * 0.6) * math.cos(bladeAngle + 0.3),
+          discCenter.dy + (fanRadius * 0.6) * math.sin(bladeAngle + 0.3),
+          pEnd.dx,
+          pEnd.dy,
+        );
+
+      canvas.drawPath(
+        bladePath,
+        Paint()
+          ..color = isActive ? const Color(0xFF00F5D4) : (isDarkMode ? const Color(0xFF94A3B8) : const Color(0xFF334155))
+          ..strokeWidth = 3.2
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round,
+      );
     }
 
-    // Miolo central da hélice
-    canvas.drawCircle(discCenter, 2.5, Paint()..color = Colors.black87);
+    // Miolo central metálico de fixação
+    canvas.drawCircle(discCenter, 3.0, Paint()..color = const Color(0xFFD97706));
+    canvas.drawCircle(discCenter, 1.2, Paint()..color = Colors.black);
 
-    // Efeito de vento néon quando o motor está girando
+    // Efeito de Rotação de Vento Néon (Motion Blur & Airflow Glow)
     if (isActive) {
       canvas.drawCircle(
         discCenter,
-        fanRadius + 2,
+        fanRadius + 3,
         Paint()
-          ..color = const Color(0xFF00F5D4).withValues(alpha: 0.25)
+          ..color = const Color(0xFF00F5D4).withValues(alpha: 0.3)
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.5,
+          ..strokeWidth = 2.0,
+      );
+      canvas.drawCircle(
+        discCenter,
+        fanRadius + 6,
+        Paint()
+          ..color = const Color(0xFF00FF9D).withValues(alpha: 0.15)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.0,
       );
     }
   }

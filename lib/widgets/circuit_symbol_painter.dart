@@ -13,6 +13,7 @@ class CircuitSymbolPainter extends CustomPainter {
     this.activeColor = const Color(0xFFFFB300),
     this.strokeWidth = 2.5,
     this.isVertical = false,
+    this.value = 10.0,
   });
 
   final ComponentType type;
@@ -22,6 +23,7 @@ class CircuitSymbolPainter extends CustomPainter {
   final Color activeColor;
   final double strokeWidth;
   final bool isVertical;
+  final double value;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -263,11 +265,24 @@ class CircuitSymbolPainter extends CustomPainter {
     final rightX = size.width;
     final radius = 18.0;
 
-    // Fios laterais estendidos
-    canvas.drawLine(Offset(leftX, cy), Offset(cx - radius, cy), paint);
-    canvas.drawLine(Offset(cx + radius, cy), Offset(rightX, cy), paint);
+    // Fios estendidos das extremidades até o início das escovas
+    final brushWidth = 5.0;
+    final brushHeight = 8.0;
 
-    // Círculo
+    final leftBrushRect = Rect.fromCenter(center: Offset(cx - radius - brushWidth / 2, cy), width: brushWidth, height: brushHeight);
+    final rightBrushRect = Rect.fromCenter(center: Offset(cx + radius + brushWidth / 2, cy), width: brushWidth, height: brushHeight);
+
+    canvas.drawLine(Offset(leftX, cy), Offset(leftBrushRect.left, cy), paint);
+    canvas.drawLine(Offset(rightBrushRect.right, cy), Offset(rightX, cy), paint);
+
+    // Escovas de carvão laterais (Carbon Brushes do símbolo NBR/IEEE)
+    final brushPaint = Paint()
+      ..color = paint.color
+      ..style = PaintingStyle.fill;
+    canvas.drawRect(leftBrushRect, brushPaint);
+    canvas.drawRect(rightBrushRect, brushPaint);
+
+    // Círculo principal do motor
     if (isActive) {
       canvas.drawCircle(Offset(cx, cy), radius, fillPaint);
     }
@@ -291,6 +306,32 @@ class CircuitSymbolPainter extends CustomPainter {
       canvas,
       Offset(cx - textPainter.width / 2, cy - textPainter.height / 2),
     );
+
+    // Seta curva de rotação animada ao redor do motor quando ativo (Rotation Arc)
+    if (isActive) {
+      final rotArcPaint = Paint()
+        ..color = activeColor
+        ..strokeWidth = strokeWidth * 0.8
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round;
+
+      final arcRadius = radius + 6.0;
+      final angleOffset = (DateTime.now().millisecondsSinceEpoch / 200) % (2 * math.pi);
+      canvas.drawArc(
+        Rect.fromCircle(center: Offset(cx, cy), radius: arcRadius),
+        angleOffset,
+        1.5 * math.pi,
+        false,
+        rotArcPaint,
+      );
+
+      // Ponta da seta
+      final arrowTip = Offset(
+        cx + arcRadius * math.cos(angleOffset + 1.5 * math.pi),
+        cy + arcRadius * math.sin(angleOffset + 1.5 * math.pi),
+      );
+      canvas.drawCircle(arrowTip, strokeWidth, Paint()..color = activeColor);
+    }
   }
 
   void _drawPotentiometer(Canvas canvas, Size size, double cx, double cy, Paint paint, Paint fillPaint) {

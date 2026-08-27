@@ -883,12 +883,14 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                           color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
                           activeColor: active || component.isActive ? const Color(0xFF00FF9D) : const Color(0xFFFFB300),
                           strokeWidth: active || component.isActive ? 2.8 : 2.0,
+                          value: component.value,
                         )
                       : ComponentPhysicalPainter(
                           type: component.type,
                           isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
                           isBurned: isBurned,
                           isDarkMode: isDark,
+                          value: component.value,
                         ),
                 ),
               ),
