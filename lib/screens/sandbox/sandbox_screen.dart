@@ -477,53 +477,6 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                                         ? (isEn ? 'Replace All Burned' : 'Substituir Todos Queimados')
                                         : null,
                                   ),
-                                )
-                              else
-                                Positioned(
-                                  bottom: 8,
-                                  right: 8,
-                                  child: InkWell(
-                                    onTap: () => setState(() => _showMascot = true),
-                                    borderRadius: BorderRadius.circular(20),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                      decoration: BoxDecoration(
-                                        color: isDark ? const Color(0xFF141E33).withValues(alpha: 0.85) : Colors.white.withValues(alpha: 0.9),
-                                        borderRadius: BorderRadius.circular(20),
-                                        border: Border.all(
-                                          color: const Color(0xFF00F5D4),
-                                          width: 1.2,
-                                        ),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: const Color(0xFF00F5D4).withValues(alpha: 0.3),
-                                            blurRadius: 8,
-                                            spreadRadius: 1,
-                                          )
-                                        ],
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          ClipOval(
-                                            child: ProfVoltsFullBody(
-                                              emotion: voltsEmotion,
-                                              size: 24,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            'Prof. Volts',
-                                            style: GoogleFonts.rajdhani(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold,
-                                              color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
                                 ),
                             ],
                           ),
