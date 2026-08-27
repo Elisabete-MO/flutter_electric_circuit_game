@@ -385,21 +385,6 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                   if (isNarrow) {
                     bodyContent = Column(
                       children: [
-                        if (_showMascot) ...[
-                          SandboxMascotPanelWidget(
-                            emotion: voltsEmotion,
-                            message: voltsMessage,
-                            isDark: isDark,
-                            onClose: () => setState(() => _showMascot = false),
-                            onQuickAction: sandboxState.burnedComponentIds.isNotEmpty
-                                ? () => controller.replaceAllBurnedComponents()
-                                : null,
-                            quickActionLabel: sandboxState.burnedComponentIds.isNotEmpty
-                                ? (isEn ? 'Replace All Burned' : 'Substituir Todos Queimados')
-                                : null,
-                          ),
-                          const SizedBox(height: 12),
-                        ],
                         SizedBox(
                           height: 90,
                           child: SandboxToolboxWidget(
@@ -431,57 +416,36 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                       ],
                     );
                   } else {
-                    bodyContent = Column(
+                    bodyContent = Row(
                       children: [
-                        if (_showMascot) ...[
-                          SandboxMascotPanelWidget(
-                            emotion: voltsEmotion,
-                            message: voltsMessage,
+                        SizedBox(
+                          width: 140,
+                          child: SandboxToolboxWidget(
+                            isHorizontal: false,
                             isDark: isDark,
-                            onClose: () => setState(() => _showMascot = false),
-                            onQuickAction: sandboxState.burnedComponentIds.isNotEmpty
-                                ? () => controller.replaceAllBurnedComponents()
-                                : null,
-                            quickActionLabel: sandboxState.burnedComponentIds.isNotEmpty
-                                ? (isEn ? 'Replace All Burned' : 'Substituir Todos Queimados')
-                                : null,
-                          ),
-                          const SizedBox(height: 12),
-                        ],
-                        Expanded(
-                          child: Row(
-                            children: [
-                              SizedBox(
-                                width: 140,
-                                child: SandboxToolboxWidget(
-                                  isHorizontal: false,
-                                  isDark: isDark,
-                                  isDiagramMode: _isDiagramMode,
-                                  getComponentName: _getComponentName,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildGridCanvas(sandboxState, selectedId, connSource, isDark),
-                              ),
-                              if (selectedComponent != null) ...[
-                                const SizedBox(width: 12),
-                                SizedBox(
-                                  width: 200,
-                                  child: SandboxMetricsPanelWidget(
-                                    component: selectedComponent,
-                                    wires: sandboxState.wires,
-                                    allComponents: sandboxState.components,
-                                    isEn: isEn,
-                                    isDark: isDark,
-                                    getComponentName: _getComponentName,
-                                    onDeselect: () => setState(() => _selectedComponentId = null),
-                                  ),
-                                ),
-                              ],
-                            ],
+                            isDiagramMode: _isDiagramMode,
+                            getComponentName: _getComponentName,
                           ),
                         ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildGridCanvas(sandboxState, selectedId, connSource, isDark),
+                        ),
+                        if (selectedComponent != null) ...[
+                          const SizedBox(width: 12),
+                          SizedBox(
+                            width: 200,
+                            child: SandboxMetricsPanelWidget(
+                              component: selectedComponent,
+                              wires: sandboxState.wires,
+                              allComponents: sandboxState.components,
+                              isEn: isEn,
+                              isDark: isDark,
+                              getComponentName: _getComponentName,
+                              onDeselect: () => setState(() => _selectedComponentId = null),
+                            ),
+                          ),
+                        ],
                       ],
                     );
                   }
@@ -490,7 +454,80 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                     padding: const EdgeInsets.all(16),
                     child: Column(
                       children: [
-                        Expanded(child: bodyContent),
+                        Expanded(
+                          child: Stack(
+                            children: [
+                              Positioned.fill(child: bodyContent),
+
+                              // Painel Flutuante do Prof. Volts no Canto Superior Direito (Overlay sem achatar o canvas)
+                              if (_showMascot)
+                                Positioned(
+                                  top: 8,
+                                  right: 8,
+                                  width: isNarrow ? (constraints.maxWidth - 48) : 380,
+                                  child: SandboxMascotPanelWidget(
+                                    emotion: voltsEmotion,
+                                    message: voltsMessage,
+                                    isDark: isDark,
+                                    onClose: () => setState(() => _showMascot = false),
+                                    onQuickAction: sandboxState.burnedComponentIds.isNotEmpty
+                                        ? () => controller.replaceAllBurnedComponents()
+                                        : null,
+                                    quickActionLabel: sandboxState.burnedComponentIds.isNotEmpty
+                                        ? (isEn ? 'Replace All Burned' : 'Substituir Todos Queimados')
+                                        : null,
+                                  ),
+                                )
+                              else
+                                Positioned(
+                                  top: 8,
+                                  right: 8,
+                                  child: InkWell(
+                                    onTap: () => setState(() => _showMascot = true),
+                                    borderRadius: BorderRadius.circular(20),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: isDark ? const Color(0xFF141E33).withValues(alpha: 0.85) : Colors.white.withValues(alpha: 0.9),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: const Color(0xFF00F5D4),
+                                          width: 1.2,
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: const Color(0xFF00F5D4).withValues(alpha: 0.3),
+                                            blurRadius: 8,
+                                            spreadRadius: 1,
+                                          )
+                                        ],
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          ClipOval(
+                                            child: ProfVoltsFullBody(
+                                              emotion: voltsEmotion,
+                                              size: 24,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            'Prof. Volts',
+                                            style: GoogleFonts.rajdhani(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
                         const SizedBox(height: 16),
                         SandboxControlBarWidget(
                           state: sandboxState,
