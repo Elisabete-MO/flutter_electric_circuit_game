@@ -8,6 +8,7 @@ class CircuitSymbolPainter extends CustomPainter {
   CircuitSymbolPainter({
     required this.type,
     this.isActive = false,
+    this.isBurned = false,
     required this.color,
     this.activeColor = const Color(0xFFFFB300),
     this.strokeWidth = 2.5,
@@ -16,6 +17,7 @@ class CircuitSymbolPainter extends CustomPainter {
 
   final ComponentType type;
   final bool isActive;
+  final bool isBurned;
   final Color color;
   final Color activeColor;
   final double strokeWidth;
@@ -24,7 +26,7 @@ class CircuitSymbolPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = isActive ? activeColor : color
+      ..color = isBurned ? const Color(0xFFFF3B7F) : (isActive ? activeColor : color)
       ..strokeWidth = strokeWidth
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
@@ -49,6 +51,17 @@ class CircuitSymbolPainter extends CustomPainter {
       final cy = size.height / 2;
       final cx = size.width / 2;
       _drawComponent(canvas, size, cx, cy, paint, fillPaint);
+    }
+
+    if (isBurned) {
+      final textPainter = TextPainter(
+        text: const TextSpan(
+          text: '💥',
+          style: TextStyle(fontSize: 16),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      textPainter.paint(canvas, Offset(size.width / 2 - 8, size.height / 2 - 10));
     }
   }
 
@@ -289,6 +302,7 @@ class CircuitSymbolPainter extends CustomPainter {
   bool shouldRepaint(covariant CircuitSymbolPainter oldDelegate) {
     return oldDelegate.type != type ||
         oldDelegate.isActive != isActive ||
+        oldDelegate.isBurned != isBurned ||
         oldDelegate.color != color ||
         oldDelegate.activeColor != activeColor ||
         oldDelegate.strokeWidth != strokeWidth;

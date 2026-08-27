@@ -8,11 +8,13 @@ class ComponentPhysicalPainter extends CustomPainter {
   ComponentPhysicalPainter({
     required this.type,
     this.isActive = false,
+    this.isBurned = false,
     required this.isDarkMode,
   });
 
   final ComponentType type;
   final bool isActive;
+  final bool isBurned;
   final bool isDarkMode;
 
   @override
@@ -45,6 +47,25 @@ class ComponentPhysicalPainter extends CustomPainter {
       case ComponentType.motor:
         _drawPhysicalMotor(canvas, size, cx, cy);
         break;
+    }
+
+    if (isBurned) {
+      canvas.drawCircle(
+        Offset(cx, cy),
+        size.width * 0.38,
+        Paint()
+          ..color = Colors.black.withValues(alpha: 0.65)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
+      );
+
+      final textPainter = TextPainter(
+        text: const TextSpan(
+          text: '💥',
+          style: TextStyle(fontSize: 18),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      textPainter.paint(canvas, Offset(cx - 9, cy - 11));
     }
   }
 
@@ -531,6 +552,7 @@ class ComponentPhysicalPainter extends CustomPainter {
   bool shouldRepaint(covariant ComponentPhysicalPainter oldDelegate) {
     return oldDelegate.type != type ||
         oldDelegate.isActive != isActive ||
+        oldDelegate.isBurned != isBurned ||
         oldDelegate.isDarkMode != isDarkMode;
   }
 }

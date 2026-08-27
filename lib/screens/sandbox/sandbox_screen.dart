@@ -695,6 +695,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
     final isSelected = component.id == selectedId;
     final state = ref.watch(sandboxControllerProvider);
     final active = state.simulationValues['active_${component.id}'] == 1.0;
+    final isBurned = state.burnedComponentIds.contains(component.id);
 
     final bodyWidget = InkWell(
       onTap: () {
@@ -706,25 +707,37 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: isSelected
-              ? const Color(0xFF00F5D4).withValues(alpha: 0.12)
-              : (isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.02)),
+          color: isBurned
+              ? const Color(0xFFFF3B7F).withValues(alpha: 0.15)
+              : (isSelected
+                  ? const Color(0xFF00F5D4).withValues(alpha: 0.12)
+                  : (isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.02))),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected
-                ? const Color(0xFF00F5D4)
-                : (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1)),
-            width: isSelected ? 2.0 : 1.0,
+            color: isBurned
+                ? const Color(0xFFFF3B7F)
+                : (isSelected
+                    ? const Color(0xFF00F5D4)
+                    : (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1))),
+            width: isSelected || isBurned ? 2.0 : 1.0,
           ),
-          boxShadow: isSelected
+          boxShadow: isBurned
               ? [
                   BoxShadow(
-                    color: const Color(0xFF00F5D4).withValues(alpha: 0.3),
+                    color: const Color(0xFFFF3B7F).withValues(alpha: 0.4),
                     blurRadius: 10,
                     spreadRadius: 1,
                   )
                 ]
-              : null,
+              : (isSelected
+                  ? [
+                      BoxShadow(
+                        color: const Color(0xFF00F5D4).withValues(alpha: 0.3),
+                        blurRadius: 10,
+                        spreadRadius: 1,
+                      )
+                    ]
+                  : null),
         ),
         child: Stack(
           children: [
@@ -736,6 +749,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                       ? CircuitSymbolPainter(
                           type: component.type,
                           isActive: component.isActive,
+                          isBurned: isBurned,
                           color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
                           activeColor: active ? const Color(0xFF00FF9D) : const Color(0xFFFFB300),
                           strokeWidth: active ? 2.8 : 2.0,
@@ -743,6 +757,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                       : ComponentPhysicalPainter(
                           type: component.type,
                           isActive: component.isActive,
+                          isBurned: isBurned,
                           isDarkMode: isDark,
                         ),
                 ),

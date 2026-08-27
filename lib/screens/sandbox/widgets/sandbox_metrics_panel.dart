@@ -31,6 +31,7 @@ class SandboxMetricsPanelWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final sandboxState = ref.watch(sandboxControllerProvider);
     final controller = ref.read(sandboxControllerProvider.notifier);
     final isSwitch = component.type == ComponentType.switchComponent;
     final hasValueSlider = component.type == ComponentType.battery || component.type == ComponentType.resistor;
@@ -212,6 +213,21 @@ class SandboxMetricsPanelWidget extends ConsumerWidget {
           const Spacer(),
 
           // Botões de Ação
+          if (sandboxState.burnedComponentIds.contains(component.id)) ...[
+            FilledButton.icon(
+              onPressed: () {
+                controller.replaceBurnedComponent(component.id);
+              },
+              icon: const Icon(Icons.build_rounded, size: 16),
+              label: Text(isEn ? 'Replace Component' : 'Substituir Componente'),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF00FF9D),
+                foregroundColor: Colors.black87,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
           OutlinedButton.icon(
             onPressed: () {
               controller.rotateComponent(component.id);

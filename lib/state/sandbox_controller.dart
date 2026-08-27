@@ -318,20 +318,49 @@ class SandboxController extends Notifier<SandboxState> {
       );
 
       if (loopClosed) {
+        final Set<String> newBurnedSet = Set.from(targetState.burnedComponentIds);
+
         if (totalResistance <= 0.1) {
-          error = 'Curto-circuito detectado!';
-          break;
+          error = '🚨 CURTO-CIRCUITO DETECTADO! Conexão direta entre pólos sem carga!';
         } else {
           final current = battery.value / totalResistance;
           values['active_${battery.id}'] = 1.0;
           values['current_${battery.id}'] = current;
           
           for (final comp in componentPath) {
+            final vDrop = current * comp.value;
+            final power = vDrop * current;
+
             values['active_${comp.id}'] = 1.0;
             values['current_${comp.id}'] = current;
-            values['voltage_drop_${comp.id}'] = current * comp.value;
+            values['voltage_drop_${comp.id}'] = vDrop;
+            values['power_${comp.id}'] = power;
+
+            // Verificação de Limites Físicos e Sobrecarga Educativa
+            if (comp.type == ComponentType.led) {
+              if (current > 0.05 || vDrop > 3.3) {
+                newBurnedSet.add(comp.id);
+                error = '⚡ O LED QUEIMOU! Corrente (${(current * 1000).toStringAsFixed(0)}mA) excedeu o limite seguro (50mA). Conecte um resistor em série!';
+              }
+            } else if (comp.type == ComponentType.bulb) {
+              if (power > 15.0) {
+                newBurnedSet.add(comp.id);
+                error = '🔥 FILAMENTO ROMPIDO! A lâmpada queimou por excesso de potência (${power.toStringAsFixed(1)}W > 15W)!';
+              }
+            } else if (comp.type == ComponentType.motor) {
+              if (vDrop > 18.0) {
+                newBurnedSet.add(comp.id);
+                error = '⚙️ BOBINA QUEIMADA! O motor sofreu sobretensão (${vDrop.toStringAsFixed(1)}V > 18V)!';
+              }
+            }
           }
         }
+
+        return targetState.copyWith(
+          simulationValues: values,
+          errorMessage: error,
+          burnedComponentIds: newBurnedSet,
+        );
       }
     }
 
@@ -339,6 +368,19 @@ class SandboxController extends Notifier<SandboxState> {
       simulationValues: values,
       errorMessage: error,
     );
+  }
+
+  void replaceBurnedComponent(String id) {
+    _pushSnapshot();
+    final updatedBurned = Set<String>.from(state.burnedComponentIds)..remove(id);
+    state = state.copyWith(burnedComponentIds: updatedBurned);
+    _recalculateCircuit();
+  }
+
+  void replaceAllBurnedComponents() {
+    _pushSnapshot();
+    state = state.copyWith(burnedComponentIds: {});
+    _recalculateCircuit();
   }
 
   void _traverseForState({
@@ -372,6 +414,10 @@ class SandboxController extends Notifier<SandboxState> {
 
       if (visited.contains(nextComponent.id)) {
         continue;
+      }
+
+      if (targetState.burnedComponentIds.contains(nextComponent.id)) {
+        continue; // Componente queimado interrompe o circuito (circuito aberto)
       }
 
       if (nextComponent.type == ComponentType.switchComponent && !nextComponent.isActive) {
