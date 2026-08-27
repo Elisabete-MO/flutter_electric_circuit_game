@@ -212,11 +212,13 @@ class SandboxController extends Notifier<SandboxState> {
     switch (presetKey) {
       case 'simple_bulb':
         final b = SandboxComponent(id: 'bat_$now', type: ComponentType.battery, gridX: 1, gridY: 2, value: 4.5);
-        final l = SandboxComponent(id: 'bulb_$now', type: ComponentType.bulb, gridX: 4, gridY: 2, value: 10.0);
-        newComponents = [b, l];
+        final s = SandboxComponent(id: 'sw_$now', type: ComponentType.switchComponent, gridX: 3, gridY: 2, isActive: true);
+        final l = SandboxComponent(id: 'bulb_$now', type: ComponentType.bulb, gridX: 5, gridY: 2, value: 10.0);
+        newComponents = [b, s, l];
         newWires = [
-          SandboxWire(id: 'w1_$now', fromComponentId: b.id, fromTerminal: 'B', toComponentId: l.id, toTerminal: 'A'),
-          SandboxWire(id: 'w2_$now', fromComponentId: l.id, fromTerminal: 'B', toComponentId: b.id, toTerminal: 'A'),
+          SandboxWire(id: 'w1_$now', fromComponentId: b.id, fromTerminal: 'B', toComponentId: s.id, toTerminal: 'A'),
+          SandboxWire(id: 'w2_$now', fromComponentId: s.id, fromTerminal: 'B', toComponentId: l.id, toTerminal: 'A'),
+          SandboxWire(id: 'w3_$now', fromComponentId: l.id, fromTerminal: 'B', toComponentId: b.id, toTerminal: 'A'),
         ];
         break;
 
