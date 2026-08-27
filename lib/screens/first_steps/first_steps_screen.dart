@@ -247,6 +247,7 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
@@ -309,41 +310,141 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
 
             // Se estiver no Modo Quiz / Desafio
             if (_isQuizMode)
-              Container(
-                width: double.infinity,
-                margin: const EdgeInsets.fromLTRB(12, 6, 12, 2),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: theme.colorScheme.primary),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      l10n.quizWhichSymbol,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 820),
+                  child: Container(
+                    margin: const EdgeInsets.fromLTRB(12, 6, 12, 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? const Color(0xFF121B2D).withValues(alpha: 0.85)
+                          : Colors.white.withValues(alpha: 0.90),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: theme.colorScheme.primary.withValues(alpha: isDark ? 0.6 : 0.4),
+                        width: 1.5,
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 4),
-                    Chip(
-                      visualDensity: VisualDensity.compact,
-                      avatar: const Icon(Icons.category_rounded, size: 16),
-                      label: Text(
-                        l10n.localeName == 'en'
-                            ? _quizQuestions[_quizCurrentIndex].nameEn
-                            : _quizQuestions[_quizCurrentIndex].namePt,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                      ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          children: [
+                            // 1. Avatar Animado do Prof. Volts
+                            const ProfVoltsAvatar(size: 44, isTalking: false),
+                            const SizedBox(width: 12),
+
+                            // 2. Pergunta + Destaque do Componente Alvo
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    l10n.quizWhichSymbol,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      fontFamily: GoogleFonts.outfit().fontFamily,
+                                      fontWeight: FontWeight.w500,
+                                      color: theme.colorScheme.onSurface.withValues(alpha: 0.85),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  // Badge Embutido do Componente Alvo
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: theme.colorScheme.primary.withValues(alpha: 0.4),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.center_focus_strong_rounded,
+                                          size: 16,
+                                          color: theme.colorScheme.primary,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          (l10n.localeName == 'en'
+                                                  ? _quizQuestions[_quizCurrentIndex].nameEn
+                                                  : _quizQuestions[_quizCurrentIndex].namePt)
+                                              .toUpperCase(),
+                                          style: theme.textTheme.titleSmall?.copyWith(
+                                            fontFamily: GoogleFonts.rajdhani().fontFamily,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 1.2,
+                                            color: theme.colorScheme.primary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(width: 12),
+
+                            // 3. Indicador de Progresso / Placar
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    '${_quizCurrentIndex + 1} / ${_quizQuestions.length}',
+                                    style: theme.textTheme.titleSmall?.copyWith(
+                                      fontFamily: GoogleFonts.rajdhani().fontFamily,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 1.0,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Acertos: $_quizScore',
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: isDark ? const Color(0xFF00FF9D) : const Color(0xFF00875A),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        // Barra de Progresso do Quiz Cyberpunk
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: (_quizCurrentIndex + 1) / _quizQuestions.length,
+                            minHeight: 4,
+                            backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.15),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              isDark ? const Color(0xFF00F0FF) : theme.colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      l10n.quizQuestionCount(_quizCurrentIndex + 1, _quizQuestions.length),
-                      style: theme.textTheme.labelSmall,
-                    ),
-                  ],
+                  ),
                 ),
               ),
 
