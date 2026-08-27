@@ -11,8 +11,10 @@
 | [`especificacao-simulacao.md`](especificacao-simulacao.md) | Motor de simulação: grafo, solver, grandezas e animação de corrente. |
 | [`especificacao-desafios.md`](especificacao-desafios.md) | Sistema de desafios, feedback educacional e os desafios planejados. |
 | [`interface.md`](interface.md) | Telas, interações, atalhos, câmera e responsividade. |
+| [`bancada_livre.md`](bancada_livre.md) | Documentação completa da Bancada Livre / Bancada Online (arquitetura, solver, instrumentos, simulação física e diagnósticos). |
 | [`configuracoes.md`](configuracoes.md) | Preferências, acessibilidade e persistência de configurações. |
 | [`testes.md`](testes.md) | Estratégia de testes, casos do solver e comandos de verificação. |
+
 
 ## Estado atual do projeto
 
