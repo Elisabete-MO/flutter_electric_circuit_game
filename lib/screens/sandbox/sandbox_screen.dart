@@ -459,10 +459,10 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                             children: [
                               Positioned.fill(child: bodyContent),
 
-                              // Painel Flutuante do Prof. Volts no Canto Superior Direito (Overlay sem achatar o canvas)
+                              // Painel Flutuante do Prof. Volts no Canto Inferior Direito (Overlay sem achatar o canvas)
                               if (_showMascot)
                                 Positioned(
-                                  top: 8,
+                                  bottom: 8,
                                   right: 8,
                                   width: isNarrow ? (constraints.maxWidth - 48) : 380,
                                   child: SandboxMascotPanelWidget(
@@ -480,7 +480,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with SingleTicker
                                 )
                               else
                                 Positioned(
-                                  top: 8,
+                                  bottom: 8,
                                   right: 8,
                                   child: InkWell(
                                     onTap: () => setState(() => _showMascot = true),
