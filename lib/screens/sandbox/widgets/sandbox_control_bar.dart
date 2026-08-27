@@ -18,6 +18,11 @@ class SandboxControlBarWidget extends StatelessWidget {
   final VoidCallback onRedo;
   final VoidCallback onToggleSimulation;
 
+  final bool showMultimeter;
+  final bool showOscilloscope;
+  final VoidCallback onToggleMultimeter;
+  final VoidCallback onToggleOscilloscope;
+
   const SandboxControlBarWidget({
     super.key,
     required this.state,
@@ -31,6 +36,10 @@ class SandboxControlBarWidget extends StatelessWidget {
     required this.onUndo,
     required this.onRedo,
     required this.onToggleSimulation,
+    required this.showMultimeter,
+    required this.showOscilloscope,
+    required this.onToggleMultimeter,
+    required this.onToggleOscilloscope,
   });
 
   @override
@@ -65,6 +74,26 @@ class SandboxControlBarWidget extends StatelessWidget {
           icon: const Icon(Icons.redo_rounded, size: 20),
           tooltip: isEn ? "Redo (Ctrl+Y)" : "Refazer (Ctrl+Y)",
           onPressed: canRedo ? onRedo : null,
+        ),
+
+        // Instrumentos Virtuais (Pilar 1)
+        IconButton(
+          icon: Icon(
+            Icons.speed_rounded,
+            size: 20,
+            color: showMultimeter ? const Color(0xFF00F5D4) : (isDark ? Colors.white70 : Colors.black54),
+          ),
+          tooltip: isEn ? "Toggle Multimeter" : "Multímetro Digital",
+          onPressed: onToggleMultimeter,
+        ),
+        IconButton(
+          icon: Icon(
+            Icons.show_chart_rounded,
+            size: 20,
+            color: showOscilloscope ? const Color(0xFF00FF9D) : (isDark ? Colors.white70 : Colors.black54),
+          ),
+          tooltip: isEn ? "Toggle Oscilloscope" : "Osciloscópio HUD",
+          onPressed: onToggleOscilloscope,
         ),
 
         FilledButton(
