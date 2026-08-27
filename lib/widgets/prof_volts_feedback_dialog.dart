@@ -32,12 +32,14 @@ class ProfVoltsFeedbackDialog extends StatelessWidget {
       backgroundColor: Colors.transparent,
       elevation: 0,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-      child: GlassContainer(
-        borderRadius: 24,
-        accentColor: accentColor,
-        opacity: isDark ? 0.8 : 0.9,
-        padding: const EdgeInsets.all(24),
-        child: SingleChildScrollView(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 440),
+        child: GlassContainer(
+          borderRadius: 24,
+          accentColor: accentColor,
+          opacity: isDark ? 0.8 : 0.9,
+          padding: const EdgeInsets.all(24),
+          child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -106,6 +108,7 @@ class ProfVoltsFeedbackDialog extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
       ),
     );
