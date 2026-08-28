@@ -666,11 +666,47 @@ Path buildSmartWirePath({
       path.lineTo(end.dx, end.dy);
     }
   } else {
-    // Modo Físico Realista (Cabo curvo por gravidade natural)
+    // Modo Físico Realista (Cabo curvo com desvio inteligente de componentes intermediários)
+    final minX = math.min(start.dx, end.dx);
+    final maxX = math.max(start.dx, end.dx);
+
+    // Identifica se há componentes intermediários no caminho horizontal entre start e end
+    double maxObstacleBottomY = 0.0;
+    bool hasIntermediateObstacle = false;
+
+    for (final comp in components) {
+      final compLeft = comp.gridX * cellSize;
+      final compRight = (comp.gridX + 1) * cellSize;
+      final compBottom = (comp.gridY + 1) * cellSize;
+
+      // Se o componente estiver entre a origem e o destino na horizontal (sem ser o próprio conector inicial/final)
+      if (compRight > minX + 10 && compLeft < maxX - 10) {
+        final compTop = comp.gridY * cellSize;
+        if (math.min(start.dy, end.dy) <= compBottom && math.max(start.dy, end.dy) >= compTop - 10) {
+          hasIntermediateObstacle = true;
+          if (compBottom > maxObstacleBottomY) {
+            maxObstacleBottomY = compBottom;
+          }
+        }
+      }
+    }
+
     final midX = (start.dx + end.dx) / 2;
     final dist = (end - start).distance;
-    final sag = (dist * 0.22).clamp(12.0, 50.0);
-    final controlY = math.max(start.dy, end.dy) + sag;
+    final baseSag = (dist * 0.22).clamp(14.0, 50.0);
+
+    double controlY = math.max(start.dy, end.dy) + baseSag;
+
+    // Se houver um componente no caminho intermediário, curva o fio com folga segura POR BAIXO da caixa do componente (evitando o aspecto visual de curto-circuito)
+    if (hasIntermediateObstacle) {
+      final clearanceY = maxObstacleBottomY + 18.0;
+      controlY = math.max(controlY, clearanceY);
+    }
+
+    // Se for fio de retorno (direita para a esquerda), adiciona um sag extra para separar visualmente os fios de ida e volta
+    if (isReturn) {
+      controlY += 12.0;
+    }
 
     path.cubicTo(
       midX,
