@@ -226,20 +226,58 @@ class ComponentPhysicalPainter extends CustomPainter {
         ? Offset(cx + 25, cy + 6) // Fechado (encostando no terminal preto)
         : Offset(cx + 5, cy - 26); // Aberto (alavanca erguida)
 
+    // LED de status de estado (Verde quando ligado / Amarelo quando desligado)
+    final statusLedPos = Offset(cx, cy + 12);
+    final statusColor = isActive ? const Color(0xFF00FF9D) : const Color(0xFFFFB300);
+
+    // Glow do LED de status
+    canvas.drawCircle(
+      statusLedPos,
+      5.0,
+      Paint()
+        ..color = statusColor.withValues(alpha: 0.5)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+    );
+    canvas.drawCircle(statusLedPos, 2.5, Paint()..color = statusColor);
+
     // Bornes de conexão vermelhos e pretos
     canvas.drawCircle(pPivot, 6, Paint()..color = Colors.red);
     canvas.drawCircle(Offset(cx + 25, cy + 6), 6, Paint()..color = Colors.black87);
 
-    // Alavanca do interruptor (conectada diretamente ao centro da bolinha vermelha)
+    // Ponto de contato de latão no terminal de chegada (Terminal B)
+    canvas.drawCircle(Offset(cx + 25, cy + 6), 2.5, Paint()..color = const Color(0xFFD4AF37));
+
+    // Sombra projetada sob a alavanca
+    canvas.drawLine(
+      pPivot.translate(1, 3),
+      pLeverEnd.translate(1, 3),
+      Paint()
+        ..color = Colors.black.withValues(alpha: 0.35)
+        ..strokeWidth = 4.5
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2)
+        ..strokeCap = StrokeCap.round,
+    );
+
+    // Alavanca do interruptor (Corpo metálico com revestimento cromado)
     final leverPaint = Paint()
-      ..color = Colors.grey[800]!
-      ..strokeWidth = 4
+      ..shader = const LinearGradient(
+        colors: [Color(0xFFE2E8F0), Color(0xFF64748B), Color(0xFF334155)],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ).createShader(Rect.fromPoints(pPivot, pLeverEnd))
+      ..strokeWidth = 4.0
       ..strokeCap = StrokeCap.round;
 
-    final handlePaint = Paint()..color = Colors.red;
-
     canvas.drawLine(pPivot, pLeverEnd, leverPaint);
-    canvas.drawCircle(pLeverEnd, 5, handlePaint);
+
+    // Manopla isolante vermelha na ponta da alavanca
+    final handleColor = isActive ? const Color(0xFFFF3B7F) : const Color(0xFFE53935);
+    canvas.drawCircle(pLeverEnd, 5.5, Paint()..color = handleColor);
+    canvas.drawCircle(
+      Offset(pLeverEnd.dx - 1.5, pLeverEnd.dy - 1.5),
+      1.8,
+      Paint()..color = Colors.white.withValues(alpha: 0.7),
+    );
   }
 
   void _drawPhysicalBulb(Canvas canvas, Size size, double cx, double cy) {
@@ -446,44 +484,85 @@ class ComponentPhysicalPainter extends CustomPainter {
     canvas.drawCircle(Offset(cx - 30, cy + 4), 5, Paint()..color = Colors.black87);
     canvas.drawCircle(Offset(cx + 30, cy + 4), 5, Paint()..color = Colors.red);
 
-    // Cúpula do LED (Epóxi verde)
     final domeCenter = Offset(cx, cy - 12);
-    final ledRadius = 11.0;
+    final ledRadius = 12.0;
 
+    // Glow néon expandido de alta fidelidade do LED quando energizado
     if (isActive) {
-      // Glow verde néon expandido do LED aceso
       canvas.drawCircle(
         domeCenter,
-        ledRadius + 22,
+        ledRadius + 26,
         Paint()
-          ..color = const Color(0xFF00FF9D).withValues(alpha: 0.25)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12),
+          ..color = const Color(0xFF00FF9D).withValues(alpha: 0.3)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14),
       );
       canvas.drawCircle(
         domeCenter,
-        ledRadius + 10,
+        ledRadius + 14,
         Paint()
-          ..color = const Color(0xFF4CAF50).withValues(alpha: 0.65)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
+          ..color = const Color(0xFF00E676).withValues(alpha: 0.7)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
       );
+
+      // Rayos de fotões pulsantes do LED
+      final rayPaint = Paint()
+        ..color = const Color(0xFF00FF9D).withValues(alpha: 0.8)
+        ..strokeWidth = 1.8
+        ..strokeCap = StrokeCap.round;
+      canvas.drawLine(Offset(cx - 14, cy - 24), Offset(cx - 20, cy - 30), rayPaint);
+      canvas.drawLine(Offset(cx + 14, cy - 24), Offset(cx + 20, cy - 30), rayPaint);
+      canvas.drawLine(Offset(cx, cy - 28), Offset(cx, cy - 36), rayPaint);
     }
 
-    final ledColor = isActive ? const Color(0xFF66BB6A) : const Color(0xFF2E7D32);
-    final domePaint = Paint()..color = ledColor;
+    // Pinos de chumbo metálicos internos (Anvil e Post visíveis no interior da resina)
+    final leadFramePaint = Paint()
+      ..color = Colors.blueGrey.shade300.withValues(alpha: 0.85)
+      ..strokeWidth = 1.8;
+    canvas.drawLine(Offset(cx - 3.5, domeCenter.dy + 4), Offset(cx - 3.5, domeCenter.dy - 2), leadFramePaint);
+    canvas.drawLine(Offset(cx + 3.5, domeCenter.dy + 4), Offset(cx + 3.5, domeCenter.dy - 4), leadFramePaint);
 
-    canvas.drawCircle(domeCenter, ledRadius, domePaint);
+    // Cabeça do ânodo (Anvil em formato de taça)
+    final anvilPath = Path()
+      ..moveTo(cx - 5.5, domeCenter.dy - 2)
+      ..lineTo(cx - 1.5, domeCenter.dy - 2)
+      ..lineTo(cx - 2.5, domeCenter.dy - 6)
+      ..close();
+    canvas.drawPath(anvilPath, Paint()..color = Colors.blueGrey.shade200);
 
-    // Base do LED (borda metálica/plástica)
-    canvas.drawRect(
-      Rect.fromLTWH(cx - ledRadius, domeCenter.dy + 4, ledRadius * 2, 5),
-      Paint()..color = Colors.grey[800]!,
+    // Cúpula esférica de resina epóxi transparente com gradiente de lente 3D
+    final domeShader = RadialGradient(
+      center: const Alignment(-0.35, -0.4),
+      radius: 0.85,
+      colors: isActive
+          ? [const Color(0xFFB9F6CA), const Color(0xFF00E676), const Color(0xFF00C853), const Color(0xFF1B5E20)]
+          : [const Color(0xFF81C784).withValues(alpha: 0.8), const Color(0xFF388E3C), const Color(0xFF1B5E20)],
+    ).createShader(Rect.fromCircle(center: domeCenter, radius: ledRadius));
+
+    canvas.drawCircle(domeCenter, ledRadius, Paint()..shader = domeShader);
+
+    // Colarinho/Anel de resina na base
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(cx - ledRadius - 1, domeCenter.dy + 4, (ledRadius + 1) * 2, 4),
+        const Radius.circular(1.5),
+      ),
+      Paint()..color = isActive ? const Color(0xFF2E7D32) : const Color(0xFF1B5E20),
     );
 
-    // Brilho no topo do domo
-    canvas.drawCircle(
-      Offset(cx - 3, domeCenter.dy - 3),
-      3,
-      Paint()..color = Colors.white.withValues(alpha: 0.6),
+    // Brilho especular curvo de lente de vidro no domo
+    final glassHighlightPath = Path()
+      ..addArc(
+        Rect.fromCircle(center: Offset(cx - 3, domeCenter.dy - 3), radius: ledRadius * 0.6),
+        -math.pi * 0.8,
+        math.pi * 0.5,
+      );
+    canvas.drawPath(
+      glassHighlightPath,
+      Paint()
+        ..color = Colors.white.withValues(alpha: isActive ? 0.9 : 0.65)
+        ..strokeWidth = 2.0
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round,
     );
   }
 
@@ -714,7 +793,7 @@ class ComponentPhysicalPainter extends CustomPainter {
     canvas.drawRRect(
       RRect.fromRectAndRadius(blockRect.translate(2, 4), const Radius.circular(5)),
       Paint()
-        ..color = Colors.black.withValues(alpha: 0.3)
+        ..color = Colors.black.withValues(alpha: 0.35)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
     );
 
@@ -722,8 +801,8 @@ class ComponentPhysicalPainter extends CustomPainter {
     final baseGrad = Paint()
       ..shader = LinearGradient(
         colors: isDarkMode
-            ? [const Color(0xFF4A5568), const Color(0xFF2D3748), const Color(0xFF1A202C)]
-            : [const Color(0xFFF1F5F9), const Color(0xFFE2E8F0), const Color(0xFFCBD5E0)],
+            ? [const Color(0xFF334155), const Color(0xFF1E293B), const Color(0xFF0F172A)]
+            : [const Color(0xFFF8FAFC), const Color(0xFFE2E8F0), const Color(0xFFCBD5E1)],
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
       ).createShader(blockRect);
@@ -731,7 +810,7 @@ class ComponentPhysicalPainter extends CustomPainter {
 
     // Highlight especular superior (borda de luz)
     final topHighlight = Paint()
-      ..color = Colors.white.withValues(alpha: isDarkMode ? 0.12 : 0.7)
+      ..color = Colors.white.withValues(alpha: isDarkMode ? 0.2 : 0.8)
       ..strokeWidth = 1.2
       ..style = PaintingStyle.stroke;
     canvas.drawLine(
@@ -740,9 +819,20 @@ class ComponentPhysicalPainter extends CustomPainter {
       topHighlight,
     );
 
+    // Friso néon sutil de acabamento no modo escuro Cyberpunk
+    if (isDarkMode) {
+      canvas.drawLine(
+        Offset(blockRect.left + 8, blockRect.bottom - 2),
+        Offset(blockRect.right - 8, blockRect.bottom - 2),
+        Paint()
+          ..color = const Color(0xFF00F5D4).withValues(alpha: 0.4)
+          ..strokeWidth = 1.0,
+      );
+    }
+
     // Borda de sombra inferior
     final bottomShadow = Paint()
-      ..color = Colors.black.withValues(alpha: 0.22)
+      ..color = Colors.black.withValues(alpha: 0.3)
       ..strokeWidth = 1.0
       ..style = PaintingStyle.stroke;
     canvas.drawLine(
@@ -755,7 +845,7 @@ class ComponentPhysicalPainter extends CustomPainter {
     canvas.drawRRect(
       rr,
       Paint()
-        ..color = isDarkMode ? const Color(0xFF4A5568) : const Color(0xFFADB5BD)
+        ..color = isDarkMode ? const Color(0xFF475569) : const Color(0xFF94A3B8)
         ..strokeWidth = 1.0
         ..style = PaintingStyle.stroke,
     );
