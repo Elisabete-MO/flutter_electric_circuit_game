@@ -1489,20 +1489,30 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
       top: component.gridY * cellSize,
       width: cellSize,
       height: cellSize,
-      child: LongPressDraggable<SandboxComponent>(
+      child: Draggable<SandboxComponent>(
         data: component,
+        onDragStarted: () {
+          setState(() {
+            if (!_selectedComponentIds.contains(component.id)) {
+              _selectedComponentIds = {component.id};
+            }
+          });
+        },
         feedback: Material(
           color: Colors.transparent,
           child: SizedBox(
             width: cellSize,
             height: cellSize,
             child: Opacity(
-              opacity: 0.8,
+              opacity: 0.85,
               child: bodyWidget,
             ),
           ),
         ),
-        childWhenDragging: const SizedBox.shrink(),
+        childWhenDragging: Opacity(
+          opacity: 0.25,
+          child: stackChild,
+        ),
         child: stackChild,
       ),
     );
