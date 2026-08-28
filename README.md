@@ -1,402 +1,155 @@
-# ⚡ Flutter Electric Circuit Game
+# EletroLab
 
-> 🎮 An educational game built with **Flutter + Flame** to make learning basic electrical circuits more visual, interactive, and fun.
+**EletroLab — seu laboratório virtual de circuitos elétricos.**
 
----
+Aplicação educacional de simulação de circuitos elétricos desenvolvida com
+**Flutter + Flame**. O EletroLab permite montar circuitos, arrastar
+componentes, conectar fios, controlar interruptores, observar a corrente
+elétrica, medir grandezas e resolver desafios — com feedback visual e
+explicações educacionais.
 
-## ✨ About the Project
+> O EletroLab é uma implementação e identidade visual próprias, inspirada
+> apenas no *conceito* de simuladores educacionais interativos de circuitos.
 
-**Flutter Electric Circuit Game** is an educational game focused on introducing electrical circuit concepts through interactive challenges.
+## Objetivo
 
-Instead of only memorizing electrical symbols, players will **use them to solve circuit-based puzzles**, gradually understanding how each component works.
+Oferecer um laboratório virtual acessível e divertido onde estudantes possam
+aprender conceitos de eletricidade (Lei de Ohm, tensão, corrente, potência,
+circuitos em série e paralelo) de forma visual e interativa.
 
-The project is guided by three main ideas:
+## Funcionalidades
 
-```text
-✨ Fascinate
-🎮 Entertain
-🧠 Teach
-```
+- **Primeiros passos** — guia visual e interativo aos 8 símbolos e componentes elétricos essenciais (Bateria, Fio, Interruptor, Lâmpada, Resistor, Diodo, LED e Motor) com renderizadores vetoriais em tempo real, simulação de estados, banner orientativo e modo Desafio/Quiz sem rótulos.
+- **Começar** — 3 cards de desafios práticos e progressivos (Desafio 1: Acenda a Lâmpada, Desafio 2: Controle com Interruptor, Desafio 3: Proteção com Resistor).
+- **Banqueta** — laboratório livre para experimentar circuitos.
+- **Configurações** — aparência, simulação, acessibilidade e dados.
 
-The goal is to combine a strong visual identity, engaging gameplay, and meaningful learning in the same experience.
+## Tecnologias
 
----
+- [Flutter](https://flutter.dev) (Material 3, suporte a mobile, desktop e web)
+- [Flame](https://flame-engine.org) — motor do simulador visual
+- [Riverpod](https://riverpod.dev) — gerenciamento de estado
+- [shared_preferences](https://pub.dev/packages/shared_preferences) —
+  persistência local
 
-## 🎯 Game Concept
+## Requisitos
 
-Players progress through different levels by completing electrical circuits.
+- Flutter SDK 3.44 ou superior (Dart 3.12)
+- Um dispositivo, emulador ou navegador compatível
 
-During a level, the player may need to:
-
-* 🔋 identify batteries and power sources;
-* 💡 make a lamp turn on;
-* 🎚️ use switches to control a circuit;
-* 🧲 work with motors and other electrical components;
-* 🟫 use resistors correctly;
-* ➡️ understand LEDs and polarity;
-* 🔍 find faults in incomplete circuits;
-* 🧩 build increasingly complex circuits.
-
-The difficulty increases gradually as new concepts and components are introduced.
-
----
-
-## 🌌 Visual Concept
-
-The game uses a **futuristic electronics laboratory** inspired by cyberpunk interfaces.
-
-The main gameplay environment is a realistic or semi-realistic electronics workbench.
-
-Electrical symbols can be selected through a large **holographic carousel interface**.
-
-```text
-             ✦ HOLOGRAPHIC SELECTOR ✦
-
-      ┌────────┐ ┌────────┐ ┌────────┐
-      │   M    │ │  /\/\/ │ │  ─| |─ │
-      │ Motor  │ │Resistor│ │Battery │
-      └────────┘ └────────┘ └────────┘
-                         ▲
-                    Selected item
-```
-
-After selecting the correct symbol, the holographic interface closes and the workbench becomes the main focus again.
-
-The player then places the symbol in the circuit.
-
-If the answer is correct:
-
-```text
-Electrical Symbol
-        ↓
-        ✨
-        ↓
-Real Component
-        ↓
-   Circuit works!
-        ↓
-       💡
-```
-
-And yes...
-
-## 💡 The lamp must actually turn on.
-
-That part is non-negotiable. 😄
-
----
-
-## 🕹️ Gameplay Loop
-
-```text
-┌─────────────────────┐
-│       LEVEL         │
-│  Circuit Challenge  │
-└─────────┬───────────┘
-          ↓
-┌─────────────────────┐
-│ Select the Symbol   │
-│ Holographic Menu    │
-└─────────┬───────────┘
-          ↓
-┌─────────────────────┐
-│ Place Component     │
-│ on the Workbench    │
-└─────────┬───────────┘
-          ↓
-      Correct?
-       ↙     ↘
-     No       Yes
-     ↓         ↓
- Try Again   Component
-             appears
-                ↓
-          Circuit reacts
-                ↓
-               ⚡
-```
-
----
-
-## 🗺️ Level Progression
-
-The game is planned around a progressive level system.
-
-Example:
-
-```text
-01 ─── 02 ─── 03 ─── 04 ─── 05
-💡     🔋      🔌      🎚️      LED
-│
-▼
-06 ─── 07 ─── 08 ─── 09 ─── 10
-🟫     ⚙️      🔍      🧩      ⚡
-```
-
-Possible challenges include:
-
-### 🌱 Beginner
-
-* Complete a simple circuit
-* Connect a battery and lamp
-* Use a switch
-* Identify basic symbols
-
-### ⚙️ Intermediate
-
-* Use LEDs
-* Add resistors
-* Control motors
-* Understand polarity
-
-### 🧠 Advanced
-
-* Diagnose broken circuits
-* Compare circuit configurations
-* Build circuits from schematics
-* Solve circuit puzzles with limited components
-
----
-
-## ⭐ Progress and Rewards
-
-Players may receive stars according to their performance.
-
-```text
-⭐⭐⭐  Excellent
-⭐⭐☆  Completed with some mistakes
-⭐☆☆  Completed with hints
-```
-
-Possible progression systems:
-
-* ⭐ stars per level;
-* 🏆 score;
-* ⏱️ optional time challenges;
-* 🔒 unlockable levels;
-* 🎁 special challenges;
-* ⚡ bonus missions.
-
-The focus is not only on getting a high score.
-
-The main reward is seeing the circuit **actually work**.
-
----
-
-## 🧪 Free Laboratory Mode
-
-A future feature may include a sandbox mode where players can freely experiment with components.
-
-```text
-🧪 FREE LAB
-
-🔋 Battery
-💡 Lamp
-🎚️ Switch
-🟫 Resistor
-➡️ LED
-⚙️ Motor
-〰️ Wires
-```
-
-No score.
-
-No timer.
-
-Just experimentation.
-
----
-
-## 🛠️ Technologies
-
-The project is currently planned with:
-
-* 💙 **Flutter**
-* 🔥 **Flame Engine**
-* 🎯 **Dart**
-
-Additional technologies may be introduced as the project evolves.
-
----
-
-## 📁 Initial Project Structure
-
-```text
-flutter_electric_circuit_game/
-│
-├── android/
-├── ios/
-├── web/
-├── linux/
-├── macos/
-├── windows/
-│
-├── assets/
-│   ├── images/
-│   ├── icons/
-│   ├── sounds/
-│   └── animations/
-│
-├── lib/
-│   ├── game/
-│   ├── components/
-│   ├── screens/
-│   ├── models/
-│   └── main.dart
-│
-├── test/
-│
-├── pubspec.yaml
-└── README.md
-```
-
-> The structure may change as the game architecture evolves.
-
----
-
-## 🚀 Getting Started
-
-### 1. Clone the repository
+## Instalação
 
 ```bash
-git clone <repository-url>
-```
-
-### 2. Enter the project
-
-```bash
-cd flutter_electric_circuit_game
-```
-
-### 3. Install dependencies
-
-```bash
+git clone <url-do-repositorio>
+cd eletrolab
 flutter pub get
 ```
 
-### 4. Run the project
+## Execução
 
 ```bash
+# Desenvolvimento
 flutter run
+
+# Plataforma específica
+flutter run -d chrome
+flutter run -d linux
+flutter run -d android
+
+# Build
+flutter build web
 ```
 
----
+## Arquitetura
 
-## 🔥 Adding Flame
+O EletroLab mantém as camadas estritamente separadas:
 
-If Flame is not installed yet:
+```text
+Flutter UI
+     ↓
+Flame (visual)
+     ↓
+Circuit Model (grafo do circuito)
+     ↓
+Circuit Solver (matemática)
+     ↓
+Simulation Result
+```
+
+> Veja também a [documentação detalhada](docs/README.md) do projeto.
+
+Estrutura principal:
+
+```text
+lib/
+├── main.dart
+├── app/            → MaterialApp, rotas e tema (identidade EletroLab)
+├── screens/        → home, first_steps, challenges, sandbox, settings
+├── game/           → câmera, componentes, fios, partículas, interações (Flame)
+├── simulation/     → circuit, nodes, terminais, conexões e solver
+├── models/         → models de componentes, desafios e configurações
+├── state/          → controladores Riverpod
+├── services/       → persistência (configurações, progresso) e repositórios
+└── widgets/        → widgets reutilizáveis
+```
+
+### Estado
+
+O estado da simulação não depende do estado visual do Flame: o motor
+matemático (solver) é independente e testável isoladamente.
+
+### Persistência
+
+Configurações e progresso são persistidos localmente via
+`shared_preferences`, sem backend.
+
+## Como adicionar componentes
+
+1. Crie a classe do componente em `lib/simulation/` (modelo matemático) e o
+   respectivo componente visual em `lib/game/components/`.
+2. Defina seus terminais e propriedades.
+3. Registre o componente no catálogo/banqueta, associando-o a um ícone e nome.
+4. Adicione testes do solver se o componente alterar o comportamento do
+   circuito.
+
+## Como criar desafios
+
+1. Crie uma entrada no sistema de desafios (id, título, descrição,
+   dificuldade, componentes disponíveis, objetivo, condição de vitória,
+   feedback e progresso).
+2. Implemente a condição de vitória com base no `SimulationResult`.
+3. Registre no catálogo de desafios — o sistema é modular para facilitar a
+   adição de novos desafios.
+
+## Como executar testes
 
 ```bash
-flutter pub add flame
+flutter analyze
+flutter test
 ```
 
-Then run:
+Testes existentes:
 
-```bash
-flutter pub get
-```
+- Identidade da tela inicial e as quatro opções principais.
+- Navegação entre seções.
+- Tela de configurações e persistência do tema.
+- Testes do solver de circuitos (adição nas próximas fases).
 
----
+## Roadmap
 
-## 🧭 Current Direction
+O projeto é desenvolvido incrementalmente:
 
-The current concept explores:
+1. **Fundação** — projeto, tema, navegação, menu inicial (*concluído*).
+2. **Primeiros passos** — guia de símbolos esquemáticos e componentes físicos (*concluído*).
+3. **Flame** — canvas, câmera, grade, pan/zoom e interações.
+4. **Componentes** — bateria, resistor, lâmpada, interruptor e fio.
+5. **Circuito** — terminais, nós, conexões, grafo e solver.
+6. **Simulação** — corrente, tensão, potência e animação.
+7. **Banqueta** — laboratório livre.
+8. **Começar** — 3 desafios interativos com bancada e diagramas esquemáticos (*concluído*).
+9. **Configurações** — preferências, acessibilidade e persistência completa.
+10. **Refinamento** — UX, animações, feedback, responsividade e desempenho.
 
-* 🌌 holographic component selection;
-* 🧰 interactive electronics workbench;
-* ⚡ responsive circuits;
-* 💡 animated electrical components;
-* 🎮 progressive gameplay;
-* ⭐ level-based rewards;
-* 🧠 learning through experimentation;
-* 🎨 a more mature visual style aimed at teenage students.
+## Licença
 
----
-
-## 🧩 Development Status
-
-```text
-[████░░░░░░] Concept / Early Development
-```
-
-Current phase:
-
-* [x] Define initial game concept
-* [x] Define visual direction
-* [x] Define level progression idea
-* [x] Define holographic symbol selector
-* [ ] Define final game architecture
-* [ ] Implement first playable level
-* [ ] Implement circuit logic
-* [ ] Implement level system
-* [ ] Add animations and visual feedback
-* [ ] Add sound effects
-* [ ] Build additional levels
-
----
-
-## 🎓 Educational Goal
-
-The project aims to teach basic electrical concepts through interaction rather than memorization alone.
-
-Instead of:
-
-```text
-Read → Memorize → Answer
-```
-
-the game encourages:
-
-```text
-Observe
-   ↓
-Experiment
-   ↓
-Make a decision
-   ↓
-See what happens
-   ↓
-Understand
-```
-
----
-
-## ❤️ Project Philosophy
-
-```text
-        ✨ FASCINATE
-             │
-             ▼
-        🎮 ENTERTAIN
-             │
-             ▼
-          🧠 TEACH
-```
-
-A beautiful visual experience attracts attention.
-
-A good game keeps the player engaged.
-
-Learning happens naturally through both.
-
----
-
-## 📌 Project Name
-
-`flutter_electric_circuit_game` is currently a working repository name.
-
-The final game title is still under discussion.
-
----
-
-## ⚡ Let's build some circuits!
-
-```text
-      + ────────o──o──────── 💡
-      │
-     🔋
-      │
-      └───────────────────────
-```
-
-**Connect. Experiment. Discover.**
+Material educacional próprio do EletroLab. Nenhum asset, texto ou código do PhET foi utilizado.

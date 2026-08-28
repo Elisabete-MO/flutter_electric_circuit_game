@@ -1,11 +1,11 @@
 {
-    "name": "flutter_electric_circuit_game",
-    "short_name": "flutter_electric_circuit_game",
+    "name": "eletrolab",
+    "short_name": "eletrolab",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "EletroLab - laboratório virtual de circuitos elétricos",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
