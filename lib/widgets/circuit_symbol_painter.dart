@@ -230,18 +230,18 @@ class CircuitSymbolPainter extends CustomPainter {
     canvas.drawLine(Offset(leftX, cy), Offset(pLeft, cy), paint);
     canvas.drawLine(Offset(pRight, cy), Offset(rightX, cy), paint);
 
-    // Triângulo do anodo -> catodo
+    // Triângulo do Anodo (+ / Terminal B à direita) -> Cátodo (- / Terminal A à esquerda)
     final path = Path()
-      ..moveTo(pLeft, cy - triHeight / 2)
-      ..lineTo(pRight, cy)
-      ..lineTo(pLeft, cy + triHeight / 2)
+      ..moveTo(pRight, cy - triHeight / 2)
+      ..lineTo(pLeft, cy)
+      ..lineTo(pRight, cy + triHeight / 2)
       ..close();
 
     canvas.drawPath(path, fillPaint);
     canvas.drawPath(path, paint);
 
-    // Barra vertical no catodo
-    canvas.drawLine(Offset(pRight, cy - triHeight / 2), Offset(pRight, cy + triHeight / 2), paint);
+    // Barra vertical no cátodo (Terminal A - à esquerda)
+    canvas.drawLine(Offset(pLeft, cy - triHeight / 2), Offset(pLeft, cy + triHeight / 2), paint);
   }
 
   void _drawLED(Canvas canvas, Size size, double cx, double cy, Paint paint, Paint fillPaint) {
@@ -254,10 +254,10 @@ class CircuitSymbolPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
 
     final arrowStart1 = Offset(cx, cy - 14);
-    final arrowEnd1 = Offset(cx + 10, cy - 24);
+    final arrowEnd1 = Offset(cx - 10, cy - 24);
 
     final arrowStart2 = Offset(cx + 8, cy - 12);
-    final arrowEnd2 = Offset(cx + 18, cy - 22);
+    final arrowEnd2 = Offset(cx - 2, cy - 22);
 
     _drawArrow(canvas, arrowStart1, arrowEnd1, arrowPaint);
     _drawArrow(canvas, arrowStart2, arrowEnd2, arrowPaint);

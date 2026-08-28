@@ -414,9 +414,9 @@ class ComponentPhysicalPainter extends CustomPainter {
   void _drawPhysicalDiode(Canvas canvas, Size size, double cx, double cy) {
     _drawBaseBlock(canvas, size, cx, cy);
 
-    // Bornes
-    canvas.drawCircle(Offset(cx - 32, cy + 4), 5, Paint()..color = Colors.red);
-    canvas.drawCircle(Offset(cx + 32, cy + 4), 5, Paint()..color = Colors.black87);
+    // Bornes (Terminal A à esquerda = Cátodo [-], Terminal B à direita = Ânodo [+])
+    canvas.drawCircle(Offset(cx - 32, cy + 4), 5, Paint()..color = Colors.black87);
+    canvas.drawCircle(Offset(cx + 32, cy + 4), 5, Paint()..color = Colors.red);
 
     // Corpo do Diodo (cilindro preto)
     final diodeRect = RRect.fromRectAndRadius(
@@ -425,9 +425,9 @@ class ComponentPhysicalPainter extends CustomPainter {
     );
     canvas.drawRRect(diodeRect, Paint()..color = const Color(0xFF212121));
 
-    // Anel prateado no catodo (marcação de polaridade)
+    // Anel prateado no cátodo (marcação de polaridade no Terminal A - à esquerda)
     canvas.drawRect(
-      Rect.fromLTWH(cx + 8, cy - 11, 4, 14),
+      Rect.fromLTWH(cx - 12, cy - 11, 4, 14),
       Paint()..color = Colors.grey[300]!,
     );
 
@@ -442,9 +442,9 @@ class ComponentPhysicalPainter extends CustomPainter {
   void _drawPhysicalLED(Canvas canvas, Size size, double cx, double cy) {
     _drawBaseBlock(canvas, size, cx, cy);
 
-    // Bornes
-    canvas.drawCircle(Offset(cx - 30, cy + 4), 5, Paint()..color = Colors.red);
-    canvas.drawCircle(Offset(cx + 30, cy + 4), 5, Paint()..color = Colors.black87);
+    // Bornes (Terminal A à esquerda = Cátodo [-], Terminal B à direita = Ânodo [+])
+    canvas.drawCircle(Offset(cx - 30, cy + 4), 5, Paint()..color = Colors.black87);
+    canvas.drawCircle(Offset(cx + 30, cy + 4), 5, Paint()..color = Colors.red);
 
     // Cúpula do LED (Epóxi verde)
     final domeCenter = Offset(cx, cy - 12);
