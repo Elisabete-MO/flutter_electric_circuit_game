@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../models/first_step_component.dart';
+import 'burned_effects_painter.dart';
 
 /// Renderizador CustomPainter dos componentes em seu aspecto físico/realista
 /// inspirado nos itens da bancada de laboratório das imagens 1 e 2.
@@ -11,6 +12,7 @@ class ComponentPhysicalPainter extends CustomPainter {
     this.isBurned = false,
     required this.isDarkMode,
     this.value = 10.0,
+    this.animationValue = 0.0,
   });
 
   final ComponentType type;
@@ -18,6 +20,7 @@ class ComponentPhysicalPainter extends CustomPainter {
   final bool isBurned;
   final bool isDarkMode;
   final double value;
+  final double animationValue;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -67,22 +70,14 @@ class ComponentPhysicalPainter extends CustomPainter {
     }
 
     if (isBurned) {
-      canvas.drawCircle(
-        Offset(cx, cy),
-        size.width * 0.38,
-        Paint()
-          ..color = Colors.black.withValues(alpha: 0.65)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
+      drawBurnedSmokeAndEmbers(
+        canvas,
+        size,
+        cx,
+        cy,
+        animationValue,
+        isDark: isDarkMode,
       );
-
-      final textPainter = TextPainter(
-        text: const TextSpan(
-          text: '💥',
-          style: TextStyle(fontSize: 18),
-        ),
-        textDirection: TextDirection.ltr,
-      )..layout();
-      textPainter.paint(canvas, Offset(cx - 9, cy - 11));
     }
   }
 
@@ -963,6 +958,8 @@ class ComponentPhysicalPainter extends CustomPainter {
     return oldDelegate.type != type ||
         oldDelegate.isActive != isActive ||
         oldDelegate.isBurned != isBurned ||
-        oldDelegate.isDarkMode != isDarkMode;
+        oldDelegate.isDarkMode != isDarkMode ||
+        oldDelegate.value != value ||
+        oldDelegate.animationValue != animationValue;
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../models/first_step_component.dart';
+import 'burned_effects_painter.dart';
 
 /// Painter que desenha o símbolo esquemático elétrico técnico (IEC / IEEE)
 /// de acordo com o componente e seu estado atual (ex: chave aberta/fechada, LED aceso).
@@ -14,6 +15,7 @@ class CircuitSymbolPainter extends CustomPainter {
     this.strokeWidth = 2.5,
     this.isVertical = false,
     this.value = 10.0,
+    this.animationValue = 0.0,
   });
 
   final ComponentType type;
@@ -24,6 +26,7 @@ class CircuitSymbolPainter extends CustomPainter {
   final double strokeWidth;
   final bool isVertical;
   final double value;
+  final double animationValue;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -56,14 +59,14 @@ class CircuitSymbolPainter extends CustomPainter {
     }
 
     if (isBurned) {
-      final textPainter = TextPainter(
-        text: const TextSpan(
-          text: '💥',
-          style: TextStyle(fontSize: 16),
-        ),
-        textDirection: TextDirection.ltr,
-      )..layout();
-      textPainter.paint(canvas, Offset(size.width / 2 - 8, size.height / 2 - 10));
+      drawBurnedSmokeAndEmbers(
+        canvas,
+        size,
+        size.width / 2,
+        size.height / 2,
+        animationValue,
+        isDark: true,
+      );
     }
   }
 
@@ -452,6 +455,8 @@ class CircuitSymbolPainter extends CustomPainter {
         oldDelegate.isBurned != isBurned ||
         oldDelegate.color != color ||
         oldDelegate.activeColor != activeColor ||
-        oldDelegate.strokeWidth != strokeWidth;
+        oldDelegate.strokeWidth != strokeWidth ||
+        oldDelegate.value != value ||
+        oldDelegate.animationValue != animationValue;
   }
 }
