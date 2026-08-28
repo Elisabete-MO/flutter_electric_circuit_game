@@ -666,7 +666,7 @@ Path buildSmartWirePath({
       path.lineTo(end.dx, end.dy);
     }
   } else {
-    // Modo Físico Realista (Cabo curvo com desvio inteligente de componentes intermediários)
+    // Modo Físico Realista (Cabo curvo com desvio inteligente de componentes e saída externa das bornes)
     final minX = math.min(start.dx, end.dx);
     final maxX = math.max(start.dx, end.dx);
 
@@ -679,8 +679,7 @@ Path buildSmartWirePath({
       final compRight = (comp.gridX + 1) * cellSize;
       final compBottom = (comp.gridY + 1) * cellSize;
 
-      // Se o componente estiver entre a origem e o destino na horizontal (sem ser o próprio conector inicial/final)
-      if (compRight > minX + 10 && compLeft < maxX - 10) {
+      if (compRight > minX + 5 && compLeft < maxX - 5) {
         final compTop = comp.gridY * cellSize;
         if (math.min(start.dy, end.dy) <= compBottom && math.max(start.dy, end.dy) >= compTop - 10) {
           hasIntermediateObstacle = true;
@@ -691,27 +690,38 @@ Path buildSmartWirePath({
       }
     }
 
-    final midX = (start.dx + end.dx) / 2;
+    // Posição da borda inferior da linha de componentes de origem e destino
+    final startRowBottom = ((start.dy / cellSize).floor() + 1.0) * cellSize;
+    final endRowBottom = ((end.dy / cellSize).floor() + 1.0) * cellSize;
+    final cardBottomY = math.max(startRowBottom, endRowBottom);
+
     final dist = (end - start).distance;
-    final baseSag = (dist * 0.22).clamp(14.0, 50.0);
+    final baseSag = (dist * 0.25).clamp(16.0, 55.0);
 
     double controlY = math.max(start.dy, end.dy) + baseSag;
 
-    // Se houver um componente no caminho intermediário, curva o fio com folga segura POR BAIXO da caixa do componente (evitando o aspecto visual de curto-circuito)
-    if (hasIntermediateObstacle) {
-      final clearanceY = maxObstacleBottomY + 18.0;
-      controlY = math.max(controlY, clearanceY);
+    // Se o fio for longo (abrangendo mais de 1 célula) ou houver intermediário, passa 20px limpos abaixo de todas as caixas
+    if (dist > cellSize * 1.1 || hasIntermediateObstacle) {
+      final targetBottom = hasIntermediateObstacle ? math.max(maxObstacleBottomY, cardBottomY) : cardBottomY;
+      controlY = math.max(controlY, targetBottom + 20.0);
     }
 
-    // Se for fio de retorno (direita para a esquerda), adiciona um sag extra para separar visualmente os fios de ida e volta
     if (isReturn) {
-      controlY += 12.0;
+      controlY += 14.0;
     }
+
+    // Projeta os pontos de controle (cp1X e cp2X) para fora das nascentes dos conectores
+    // evitando que a curva atravesse os cantos inferiores das caixas dos componentes
+    final startIsLeft = (start.dx % cellSize) < (cellSize / 2);
+    final endIsLeft = (end.dx % cellSize) < (cellSize / 2);
+
+    final cp1X = startIsLeft ? start.dx - 22.0 : start.dx + 22.0;
+    final cp2X = endIsLeft ? end.dx - 22.0 : end.dx + 22.0;
 
     path.cubicTo(
-      midX,
+      cp1X,
       controlY,
-      midX,
+      cp2X,
       controlY,
       end.dx,
       end.dy,
