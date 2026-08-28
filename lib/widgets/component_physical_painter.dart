@@ -283,9 +283,7 @@ class ComponentPhysicalPainter extends CustomPainter {
   void _drawPhysicalBulb(Canvas canvas, Size size, double cx, double cy) {
     _drawBaseBlock(canvas, size, cx, cy);
 
-    // Bornes nas pontas da base (3D banana jack na altura cy)
-    _drawTerminalJack(canvas, Offset(cx - 30, cy), true);
-    _drawTerminalJack(canvas, Offset(cx + 30, cy), false);
+
 
     // Soquete da lâmpada (metal cilíndrico)
     final socketRect = Rect.fromCenter(center: Offset(cx, cy - 2), width: 18, height: 16);
@@ -397,9 +395,7 @@ class ComponentPhysicalPainter extends CustomPainter {
   void _drawPhysicalResistor(Canvas canvas, Size size, double cx, double cy) {
     _drawBaseBlock(canvas, size, cx, cy);
 
-    // Bornes laterais (3D banana jack na altura cy)
-    _drawTerminalJack(canvas, Offset(cx - 32, cy), true);
-    _drawTerminalJack(canvas, Offset(cx + 32, cy), false);
+
 
     // Corpo cerâmico abuloado do resistor (Bege/bege-marfim)
     final resRect = Rect.fromCenter(center: Offset(cx, cy - 4), width: 36, height: 13);
@@ -452,9 +448,7 @@ class ComponentPhysicalPainter extends CustomPainter {
   void _drawPhysicalDiode(Canvas canvas, Size size, double cx, double cy) {
     _drawBaseBlock(canvas, size, cx, cy);
 
-    // Bornes (Terminal A à esquerda = Cátodo [-], Terminal B à direita = Ânodo [+]) na altura cy
-    _drawTerminalJack(canvas, Offset(cx - 32, cy), false);
-    _drawTerminalJack(canvas, Offset(cx + 32, cy), true);
+
 
     // Corpo do Diodo (cilindro preto)
     final diodeRect = RRect.fromRectAndRadius(
@@ -480,9 +474,7 @@ class ComponentPhysicalPainter extends CustomPainter {
   void _drawPhysicalLED(Canvas canvas, Size size, double cx, double cy) {
     _drawBaseBlock(canvas, size, cx, cy);
 
-    // Bornes (Terminal A à esquerda = Cátodo [-], Terminal B à direita = Ânodo [+]) na altura cy
-    _drawTerminalJack(canvas, Offset(cx - 30, cy), false);
-    _drawTerminalJack(canvas, Offset(cx + 30, cy), true);
+
 
     final domeCenter = Offset(cx, cy - 12);
     final ledRadius = 12.0;
@@ -571,10 +563,6 @@ class ComponentPhysicalPainter extends CustomPainter {
 
     final leftTerminal = Offset(cx - 30, cy);
     final rightTerminal = Offset(cx + 30, cy);
-
-    // Bornes de conexão 3D banana jack na base da bancada na altura cy
-    _drawTerminalJack(canvas, leftTerminal, true);
-    _drawTerminalJack(canvas, rightTerminal, false);
 
     // Tampa traseira de plástico (Plastic End-cap) do motor DC (tipo 130)
     final capBackRect = Rect.fromLTWH(cx - 20, cy - 14, 6, 16);
@@ -928,9 +916,7 @@ class ComponentPhysicalPainter extends CustomPainter {
   void _drawPhysicalPotentiometer(Canvas canvas, Size size, double cx, double cy) {
     _drawBaseBlock(canvas, size, cx, cy);
 
-    // Bornes (3D banana jack na altura cy)
-    _drawTerminalJack(canvas, Offset(cx - 32, cy), true);
-    _drawTerminalJack(canvas, Offset(cx + 32, cy), false);
+
 
     // Corpo metálico cilíndrico do potenciômetro
     final knobCenter = Offset(cx, cy - 8);
@@ -1017,17 +1003,13 @@ class ComponentPhysicalPainter extends CustomPainter {
     )..layout();
     textPainter.paint(canvas, Offset(cx - textPainter.width / 2, cy - 18));
 
-    // Bornes de Saída DC (+ e -) 3D banana jack na altura cy
-    _drawTerminalJack(canvas, Offset(cx - 18, cy), true);
-    _drawTerminalJack(canvas, Offset(cx + 18, cy), false);
+
   }
 
   void _drawPhysicalFuse(Canvas canvas, Size size, double cx, double cy) {
     _drawBaseBlock(canvas, size, cx, cy);
 
-    // Bornes (3D banana jack na altura cy)
-    _drawTerminalJack(canvas, Offset(cx - 32, cy), true);
-    _drawTerminalJack(canvas, Offset(cx + 32, cy), false);
+
 
     // Tubo de Vidro do Fusível
     final tubeRect = Rect.fromCenter(center: Offset(cx, cy - 4), width: 38, height: 12);
@@ -1064,9 +1046,7 @@ class ComponentPhysicalPainter extends CustomPainter {
   void _drawPhysicalCapacitor(Canvas canvas, Size size, double cx, double cy) {
     _drawBaseBlock(canvas, size, cx, cy);
 
-    // Bornes (3D banana jack na altura cy)
-    _drawTerminalJack(canvas, Offset(cx - 30, cy), true);
-    _drawTerminalJack(canvas, Offset(cx + 30, cy), false);
+
 
     // Corpo do Capacitor Eletrolítico (Cilindro Azul)
     final capRect = Rect.fromCenter(center: Offset(cx, cy - 10), width: 22, height: 26);
@@ -1092,9 +1072,7 @@ class ComponentPhysicalPainter extends CustomPainter {
   void _drawPhysicalBuzzer(Canvas canvas, Size size, double cx, double cy) {
     _drawBaseBlock(canvas, size, cx, cy);
 
-    // Bornes (3D banana jack na altura cy)
-    _drawTerminalJack(canvas, Offset(cx - 30, cy), true);
-    _drawTerminalJack(canvas, Offset(cx + 30, cy), false);
+
 
     // Cápsula Piezoelétrica Preta
     final buzzCenter = Offset(cx, cy - 8);
