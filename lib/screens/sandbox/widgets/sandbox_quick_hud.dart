@@ -178,3 +178,67 @@ class SandboxMultiSelectionHudWidget extends StatelessWidget {
     );
   }
 }
+
+class SandboxWireHudWidget extends StatelessWidget {
+  final Offset position;
+  final VoidCallback onDelete;
+  final bool isDark;
+
+  const SandboxWireHudWidget({
+    super.key,
+    required this.position,
+    required this.onDelete,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      left: (position.dx - 45).clamp(0.0, double.infinity),
+      top: (position.dy - 38).clamp(0.0, double.infinity),
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF141E33).withValues(alpha: 0.95) : Colors.white.withValues(alpha: 0.95),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFFF3B7F), width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFFF3B7F).withValues(alpha: 0.3),
+                blurRadius: 8,
+                spreadRadius: 1,
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.cable_rounded, size: 13, color: Color(0xFF00F5D4)),
+              const SizedBox(width: 4),
+              Text(
+                'Fio',
+                style: TextStyle(
+                  color: isDark ? Colors.white : Colors.black87,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(width: 4),
+              IconButton(
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+                icon: const Icon(Icons.delete_forever_rounded, size: 15, color: Color(0xFFFF3B7F)),
+                tooltip: 'Remover Fio (Delete/Backspace)',
+                onPressed: onDelete,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+

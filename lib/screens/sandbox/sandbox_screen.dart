@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/first_step_component.dart';
 import '../../models/sandbox_component.dart';
+import '../../models/sandbox_wire.dart';
 import '../../models/sandbox_state.dart';
 import '../../state/sandbox_controller.dart';
 import '../../widgets/tech_grid_background.dart';
@@ -40,6 +41,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
   int _gridRows = 5;
 
   Set<String> _selectedComponentIds = {};
+  String? _selectedWireId;
   String? get _selectedComponentId => _selectedComponentIds.length == 1 ? _selectedComponentIds.first : null;
   set _selectedComponentId(String? id) {
     _selectedComponentIds = id != null ? {id} : {};
@@ -145,13 +147,103 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
     return nearest;
   }
 
+  SandboxWire? _findWireAtPosition(
+    Offset mousePos,
+    double cellSize,
+    List<SandboxWire> wires,
+    List<SandboxComponent> components,
+  ) {
+    for (final wire in wires) {
+      final fromCompList = components.where((c) => c.id == wire.fromComponentId).toList();
+      final toCompList = components.where((c) => c.id == wire.toComponentId).toList();
+      if (fromCompList.isEmpty || toCompList.isEmpty) continue;
+
+      final fromComp = fromCompList.first;
+      final toComp = toCompList.first;
+
+      final fromRelPos = wire.fromTerminal == 'A' ? fromComp.getTerminalAPosition() : fromComp.getTerminalBPosition();
+      final toRelPos = wire.toTerminal == 'A' ? toComp.getTerminalAPosition() : toComp.getTerminalBPosition();
+
+      final start = Offset(fromRelPos.dx * cellSize, fromRelPos.dy * cellSize);
+      final end = Offset(toRelPos.dx * cellSize, toRelPos.dy * cellSize);
+
+      final path = buildSmartWirePath(
+        start: start,
+        end: end,
+        cellSize: cellSize,
+        isDiagramMode: _isDiagramMode,
+        components: components,
+      );
+
+      for (final metric in path.computeMetrics()) {
+        final length = metric.length;
+        const step = 6.0;
+        for (double d = 0; d <= length; d += step) {
+          final tangent = metric.getTangentForOffset(d);
+          if (tangent != null) {
+            if ((mousePos - tangent.position).distance <= 14.0) {
+              return wire;
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  Offset? _getWireMidpoint(
+    SandboxWire wire,
+    double cellSize,
+    List<SandboxComponent> components,
+  ) {
+    final fromCompList = components.where((c) => c.id == wire.fromComponentId).toList();
+    final toCompList = components.where((c) => c.id == wire.toComponentId).toList();
+    if (fromCompList.isEmpty || toCompList.isEmpty) return null;
+
+    final fromComp = fromCompList.first;
+    final toComp = toCompList.first;
+
+    final fromRelPos = wire.fromTerminal == 'A' ? fromComp.getTerminalAPosition() : fromComp.getTerminalBPosition();
+    final toRelPos = wire.toTerminal == 'A' ? toComp.getTerminalAPosition() : toComp.getTerminalBPosition();
+
+    final start = Offset(fromRelPos.dx * cellSize, fromRelPos.dy * cellSize);
+    final end = Offset(toRelPos.dx * cellSize, toRelPos.dy * cellSize);
+
+    final path = buildSmartWirePath(
+      start: start,
+      end: end,
+      cellSize: cellSize,
+      isDiagramMode: _isDiagramMode,
+      components: components,
+    );
+
+    for (final metric in path.computeMetrics()) {
+      final tangent = metric.getTangentForOffset(metric.length * 0.5);
+      if (tangent != null) return tangent.position;
+    }
+    return Offset((start.dx + end.dx) / 2, (start.dy + end.dy) / 2);
+  }
+
   bool _isPositionOverHudOrComponent(
     Offset mousePos,
     double cellSize,
     double gridWidth,
     List<SandboxComponent> components,
-    Set<String> selectedIds,
-  ) {
+    Set<String> selectedIds, [
+    String? selectedWireId,
+    List<SandboxWire>? wires,
+  ]) {
+    if (selectedWireId != null && wires != null) {
+      final selectedWireList = wires.where((w) => w.id == selectedWireId).toList();
+      if (selectedWireList.isNotEmpty) {
+        final mid = _getWireMidpoint(selectedWireList.first, cellSize, components);
+        if (mid != null) {
+          final wireHudRect = Rect.fromLTWH(mid.dx - 60, mid.dy - 45, 120, 50);
+          if (wireHudRect.contains(mousePos)) return true;
+        }
+      }
+    }
+
     if (selectedIds.length > 1) {
       final multiHudRect = Rect.fromLTWH((gridWidth / 2) - 140, 0, 280, 56);
       if (multiHudRect.contains(mousePos)) return true;
@@ -269,13 +361,19 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.delete): () {
-          if (_selectedComponentIds.isNotEmpty) {
+          if (_selectedWireId != null) {
+            controller.removeWire(_selectedWireId!);
+            setState(() => _selectedWireId = null);
+          } else if (_selectedComponentIds.isNotEmpty) {
             controller.removeComponents(_selectedComponentIds);
             setState(() => _selectedComponentIds.clear());
           }
         },
         const SingleActivator(LogicalKeyboardKey.backspace): () {
-          if (_selectedComponentIds.isNotEmpty) {
+          if (_selectedWireId != null) {
+            controller.removeWire(_selectedWireId!);
+            setState(() => _selectedWireId = null);
+          } else if (_selectedComponentIds.isNotEmpty) {
             controller.removeComponents(_selectedComponentIds);
             setState(() => _selectedComponentIds.clear());
           }
@@ -306,7 +404,10 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
           }
         },
         const SingleActivator(LogicalKeyboardKey.escape): () {
-          setState(() => _selectedComponentIds.clear());
+          setState(() {
+            _selectedComponentIds.clear();
+            _selectedWireId = null;
+          });
         },
         const SingleActivator(LogicalKeyboardKey.keyZ, control: true): () {
           controller.undo();
@@ -773,6 +874,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                         animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
                         isShortCircuit: state.isShortCircuit,
                         shortCircuitWireIds: state.shortCircuitWireIds,
+                        selectedWireId: _selectedWireId,
                       ),
                     );
                   },
@@ -839,6 +941,25 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                   ),
                 ),
 
+              // 4.7. Floating Wire HUD Toolbar quando um fio é selecionado no canvas
+              if (_selectedWireId != null) () {
+                final selectedWireList = state.wires.where((w) => w.id == _selectedWireId).toList();
+                if (selectedWireList.isNotEmpty) {
+                  final wireMidpoint = _getWireMidpoint(selectedWireList.first, cellSize, state.components);
+                  if (wireMidpoint != null) {
+                    return SandboxWireHudWidget(
+                      position: wireMidpoint,
+                      isDark: isDark,
+                      onDelete: () {
+                        ref.read(sandboxControllerProvider.notifier).removeWire(_selectedWireId!);
+                        setState(() => _selectedWireId = null);
+                      },
+                    );
+                  }
+                }
+                return const SizedBox.shrink();
+              }(),
+
               // 5. Linha guia de fiação temporária (Acompanha o cursor em tempo real)
               if (connSource != null)
                 Positioned.fill(
@@ -900,11 +1021,13 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                   _currentMousePos = mousePos;
                   _snappedTarget = snapped;
                   _isDraggingWire = true;
+                  _selectedWireId = null;
                 });
               } else {
                 final hitComp = _findComponentAtPosition(mousePos, cellSize, state.components);
                 if (hitComp != null) {
                   setState(() {
+                    _selectedWireId = null;
                     if (HardwareKeyboard.instance.isShiftPressed || HardwareKeyboard.instance.isControlPressed) {
                       if (_selectedComponentIds.contains(hitComp.id)) {
                         _selectedComponentIds.remove(hitComp.id);
@@ -915,15 +1038,24 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                       _selectedComponentIds = {hitComp.id};
                     }
                   });
-                } else if (!_isPositionOverHudOrComponent(mousePos, cellSize, width, state.components, _selectedComponentIds)) {
-                  setState(() {
-                    if (!HardwareKeyboard.instance.isShiftPressed && !HardwareKeyboard.instance.isControlPressed) {
+                } else {
+                  final hitWire = _findWireAtPosition(mousePos, cellSize, state.wires, state.components);
+                  if (hitWire != null) {
+                    setState(() {
+                      _selectedWireId = hitWire.id;
                       _selectedComponentIds.clear();
-                    }
-                    _boxSelectionStart = mousePos;
-                    _boxSelectionCurrent = mousePos;
-                    _isBoxSelecting = true;
-                  });
+                    });
+                  } else if (!_isPositionOverHudOrComponent(mousePos, cellSize, width, state.components, _selectedComponentIds, _selectedWireId, state.wires)) {
+                    setState(() {
+                      _selectedWireId = null;
+                      if (!HardwareKeyboard.instance.isShiftPressed && !HardwareKeyboard.instance.isControlPressed) {
+                        _selectedComponentIds.clear();
+                      }
+                      _boxSelectionStart = mousePos;
+                      _boxSelectionCurrent = mousePos;
+                      _isBoxSelecting = true;
+                    });
+                  }
                 }
               }
             } else {

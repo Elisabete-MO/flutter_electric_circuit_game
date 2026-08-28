@@ -97,6 +97,7 @@ class WiresPainter extends CustomPainter {
   final double animationValue;
   final bool isShortCircuit;
   final Set<String> shortCircuitWireIds;
+  final String? selectedWireId;
 
   WiresPainter({
     required this.wires,
@@ -109,6 +110,7 @@ class WiresPainter extends CustomPainter {
     required this.animationValue,
     this.isShortCircuit = false,
     this.shortCircuitWireIds = const {},
+    this.selectedWireId,
   });
 
   @override
@@ -130,6 +132,7 @@ class WiresPainter extends CustomPainter {
       final end = Offset(toRelPos.dx * cellSize, toRelPos.dy * cellSize);
 
       final isShortWire = isShortCircuit && (shortCircuitWireIds.isEmpty || shortCircuitWireIds.contains(wire.id));
+      final isSelected = wire.id == selectedWireId;
 
       // Rota eletricamente ativa se a simulação estiver rodando e ambos os componentes conectados tiverem corrente
       final isWireActive = isSimulating && 
@@ -138,13 +141,25 @@ class WiresPainter extends CustomPainter {
           simulationValues['active_${toComp.id}'] == 1.0;
 
       // Desenha o cabo elétrico com Roteamento Inteligente (Ortogonal para Diagrama, Curvo para Físico)
-      final path = _buildSmartWirePath(
+      final path = buildSmartWirePath(
         start: start,
         end: end,
         cellSize: cellSize,
         isDiagramMode: isDiagramMode,
         components: components,
       );
+
+      if (isSelected) {
+        // --- DESTAQUE DE SELEÇÃO DO FIO ---
+        canvas.drawPath(
+          path,
+          Paint()
+            ..color = const Color(0xFF00F5D4).withValues(alpha: 0.85)
+            ..strokeWidth = 9.0
+            ..style = PaintingStyle.stroke
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
+        );
+      }
 
       if (isShortWire) {
         // --- EFEITO DE ANIMAÇÃO DE CURTO-CIRCUITO ---
@@ -369,7 +384,8 @@ class WiresPainter extends CustomPainter {
         oldDelegate.simulationValues != simulationValues ||
         oldDelegate.animationValue != animationValue ||
         oldDelegate.isShortCircuit != isShortCircuit ||
-        oldDelegate.shortCircuitWireIds != shortCircuitWireIds;
+        oldDelegate.shortCircuitWireIds != shortCircuitWireIds ||
+        oldDelegate.selectedWireId != selectedWireId;
   }
 }
 
@@ -578,7 +594,7 @@ class ConnectionSparkPainter extends CustomPainter {
   }
 }
 
-Path _buildSmartWirePath({
+Path buildSmartWirePath({
   required Offset start,
   required Offset end,
   required double cellSize,
