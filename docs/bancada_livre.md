@@ -86,7 +86,7 @@ O cálculo elétrico ocorre em tempo real no método `_calculateSimulationForSta
 | **Motor CC** | $V_{drop} > 18.0\,\text{V}$ | Danificação da bobina | *"BOBINA QUEIMADA! O motor sofreu sobretensão!"* |
 | **Fusível** | $I > I_{máx}$ (ex: $2.0\,\text{A}$) | Fusível abre o circuito | *"FUSÍVEL QUEIMOU! Corrente excedeu o limite, desarmando o circuito!"* |
 
-> **Nota:** Componentes queimados funcionam como circuito aberto, interrompendo o fluxo elétrico até que o usuário utilize a função de substituição/reparo.
+> **Nota:** Componentes queimados funcionam como circuito aberto, interrompendo o fluxo elétrico até que o usuário utilize a função de substituição/reparo. Ao queimar um componente, o simulador dispara uma animação vetorial contínua de **fumaça subindo (Smoke Puffs)**, **incandescência no ponto de ruptura** e **fagulhas/faíscas saltitantes (Embers Sparks)**, oferecendo feedback visual dinâmico em tempo real tanto no modo Físico 3D quanto no modo Esquemático.
 
 ---
 
@@ -191,17 +191,27 @@ Acessíveis no menu da barra superior:
 3. **LED com Resistor:** Bateria 9V + Resistor 50Ω + LED (demonstração de proteção).
 4. **Circuito em Paralelo:** Bateria 9V com duas lâmpadas conectadas em paralelo.
 
-### 10.2. Atalhos de Teclado Suportados
+### 10.2. Seleção Múltipla e Operações em Lote (Marquee Box Selection)
+A bancada suporta seleção de múltiplos componentes de forma ágil e intuitiva:
+* **Seleção por Caixa (*Marquee Drag Selection*):** Clique e arraste o ponteiro do mouse em qualquer área vazia do grid para desenhar um retângulo de seleção estilizado (Cyber HUD). Todos os componentes interceptados pela caixa são selecionados simultaneamente.
+* **Seleção por Clique Combinado (*Shift / Ctrl Click*):** Mantenha pressionada a tecla `Shift` ou `Ctrl` e clique nos componentes desejados para alternar individualmente sua inclusão na seleção.
+* **Barra Flutuante de Ações Múltiplas (*Multi-Selection HUD*):** Ao selecionar mais de um componente, uma barra flutuante exibe o contador total de componentes selecionados e botões para **Rotacionar Todos**, **Excluir Todos** e **Desmarcar**.
+* **Movimentação em Lote:** Arrastar qualquer componente pertencente a um grupo selecionado (ou usar as setas do teclado) move todos os componentes mantendo seus arranjos relativos.
+* **Exclusão / Rotação em Lote:** Operações efetuadas via teclado ou HUD operam sobre todos os componentes selecionados simultaneamente, com suporte a desfazer/refazer (*Undo/Redo*) em um único snapshot de histórico.
+
+### 10.3. Atalhos de Teclado Suportados
 
 | Atalho | Ação Executada |
 |---|---|
-| `Delete` / `Backspace` | Remove o componente selecionado no grid |
-| `R` | Rotaciona o componente selecionado em 90° |
+| `Delete` / `Backspace` | Remove todos os componentes selecionados e seus fios conectados |
+| `R` | Rotaciona todos os componentes selecionados em 90° |
+| `Setas (↑ ↓ ← →)` | Move os componentes selecionados no grid de célula em célula |
+| `Esc` | Desmarca todos os componentes selecionados |
 | `Espaço` | Alterna o estado do interruptor selecionado (Aberto/Fechado) |
 | `Ctrl + Z` / `Cmd + Z` | Desfaz a última ação (Undo) |
 | `Ctrl + Y` / `Cmd + Y` | Refaz a última ação desfeita (Redo) |
 
-### 10.3. Relatório Técnico de Exportação (`SandboxExportDialog`)
+### 10.4. Relatório Técnico de Exportação (`SandboxExportDialog`)
 Permite gerar um resumo dos dados técnicos do circuito (lista de componentes, conexões, medições e diagnósticos) para auditoria e estudos.
 
 ---

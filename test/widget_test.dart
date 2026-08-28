@@ -266,10 +266,10 @@ void main() {
         await tapSection(tester, 'Bancada Livre');
 
         final draggableFinder = find.byType(Draggable<ComponentType>).first;
-        final targetFinder = find.byType(DragTarget<ComponentType>).first;
+        final targetFinder = find.byType(DragTarget<Object>).first;
 
         expect(draggableFinder, findsOneWidget);
-        expect(find.byType(DragTarget<ComponentType>), findsWidgets);
+        expect(find.byType(DragTarget<Object>), findsWidgets);
 
         final draggableCenter = tester.getCenter(draggableFinder);
         final targetCenter = tester.getCenter(targetFinder);

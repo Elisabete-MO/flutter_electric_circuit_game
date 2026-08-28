@@ -39,7 +39,14 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
   int _gridCols = 6;
   int _gridRows = 5;
 
-  String? _selectedComponentId;
+  Set<String> _selectedComponentIds = {};
+  String? get _selectedComponentId => _selectedComponentIds.length == 1 ? _selectedComponentIds.first : null;
+  set _selectedComponentId(String? id) {
+    _selectedComponentIds = id != null ? {id} : {};
+  }
+  Offset? _boxSelectionStart;
+  Offset? _boxSelectionCurrent;
+  bool _isBoxSelecting = false;
   ConnectionSource? _connectionSource;
   ConnectionSource? _snappedTarget;
   Offset? _currentMousePos;
@@ -170,7 +177,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
     _wireAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 1),
-    )..repeat();
+    );
     _sparkAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 350),
@@ -192,6 +199,19 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
     final isEn = l10n.localeName == 'en';
 
     final sandboxState = ref.watch(sandboxControllerProvider);
+
+    // Liga/Desliga o loop de animação conforme a simulação estiver rodando ou pausada
+    if (sandboxState.isSimulating) {
+      if (!_wireAnimationController.isAnimating) {
+        _wireAnimationController.repeat();
+      }
+    } else {
+      if (_wireAnimationController.isAnimating) {
+        _wireAnimationController.stop();
+        _wireAnimationController.reset();
+      }
+    }
+
     final controller = ref.read(sandboxControllerProvider.notifier);
     final selectedId = _selectedComponentId;
     final connSource = _connectionSource;
@@ -243,21 +263,44 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.delete): () {
-          if (_selectedComponentId != null) {
-            controller.removeComponent(_selectedComponentId!);
-            setState(() => _selectedComponentId = null);
+          if (_selectedComponentIds.isNotEmpty) {
+            controller.removeComponents(_selectedComponentIds);
+            setState(() => _selectedComponentIds.clear());
           }
         },
         const SingleActivator(LogicalKeyboardKey.backspace): () {
-          if (_selectedComponentId != null) {
-            controller.removeComponent(_selectedComponentId!);
-            setState(() => _selectedComponentId = null);
+          if (_selectedComponentIds.isNotEmpty) {
+            controller.removeComponents(_selectedComponentIds);
+            setState(() => _selectedComponentIds.clear());
           }
         },
         const SingleActivator(LogicalKeyboardKey.keyR): () {
-          if (_selectedComponentId != null) {
-            controller.rotateComponent(_selectedComponentId!);
+          if (_selectedComponentIds.isNotEmpty) {
+            controller.rotateComponents(_selectedComponentIds);
           }
+        },
+        const SingleActivator(LogicalKeyboardKey.arrowUp): () {
+          if (_selectedComponentIds.isNotEmpty) {
+            controller.moveComponents(_selectedComponentIds, 0, -1);
+          }
+        },
+        const SingleActivator(LogicalKeyboardKey.arrowDown): () {
+          if (_selectedComponentIds.isNotEmpty) {
+            controller.moveComponents(_selectedComponentIds, 0, 1);
+          }
+        },
+        const SingleActivator(LogicalKeyboardKey.arrowLeft): () {
+          if (_selectedComponentIds.isNotEmpty) {
+            controller.moveComponents(_selectedComponentIds, -1, 0);
+          }
+        },
+        const SingleActivator(LogicalKeyboardKey.arrowRight): () {
+          if (_selectedComponentIds.isNotEmpty) {
+            controller.moveComponents(_selectedComponentIds, 1, 0);
+          }
+        },
+        const SingleActivator(LogicalKeyboardKey.escape): () {
+          setState(() => _selectedComponentIds.clear());
         },
         const SingleActivator(LogicalKeyboardKey.keyZ, control: true): () {
           controller.undo();
@@ -721,7 +764,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                         isDiagramMode: _isDiagramMode,
                         isSimulating: state.isSimulating,
                         simulationValues: state.simulationValues,
-                        animationValue: _wireAnimationController.value,
+                        animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
                         isShortCircuit: state.isShortCircuit,
                         shortCircuitWireIds: state.shortCircuitWireIds,
                       ),
@@ -735,12 +778,26 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                 for (int y = 0; y < _gridRows; y++)
                   _buildGridCellDragTarget(x, y, cellSize, state),
 
+              // 3.5. Retângulo de Seleção por Caixa (Marquee Box Selection)
+              if (_isBoxSelecting && _boxSelectionStart != null && _boxSelectionCurrent != null)
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: CustomPaint(
+                      painter: MarqueeSelectionPainter(
+                        start: _boxSelectionStart!,
+                        current: _boxSelectionCurrent!,
+                        isDark: isDark,
+                      ),
+                    ),
+                  ),
+                ),
+
               // 4. Render dos componentes colocados
               for (final component in state.components)
                 _buildPlacedComponent(component, cellSize, selectedId, isDark),
 
-              // 4.5. Floating Quick HUD Toolbar no componente selecionado
-              if (selectedComponent != null)
+              // 4.5. Floating Quick HUD Toolbar no componente selecionado (Seleção Única)
+              if (_selectedComponentIds.length == 1 && selectedComponent != null)
                 SandboxQuickHudWidget(
                   selectedComponent: selectedComponent,
                   cellSize: cellSize,
@@ -752,8 +809,28 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                       : null,
                   onDelete: () {
                     ref.read(sandboxControllerProvider.notifier).removeComponent(selectedComponent.id);
-                    setState(() => _selectedComponentId = null);
+                    setState(() => _selectedComponentIds.clear());
                   },
+                ),
+
+              // 4.6. Floating Multi-Selection HUD Toolbar quando múltiplos componentes estão selecionados
+              if (_selectedComponentIds.length > 1)
+                Positioned(
+                  top: 12,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: SandboxMultiSelectionHudWidget(
+                      selectedCount: _selectedComponentIds.length,
+                      onRotate: () => ref.read(sandboxControllerProvider.notifier).rotateComponents(_selectedComponentIds),
+                      onDelete: () {
+                        ref.read(sandboxControllerProvider.notifier).removeComponents(_selectedComponentIds);
+                        setState(() => _selectedComponentIds.clear());
+                      },
+                      onDeselect: () => setState(() => _selectedComponentIds.clear()),
+                      isDark: isDark,
+                    ),
+                  ),
                 ),
 
               // 5. Linha guia de fiação temporária (Acompanha o cursor em tempo real)
@@ -818,10 +895,28 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                   _snappedTarget = snapped;
                   _isDraggingWire = true;
                 });
-              } else if (!_isPositionOverHudOrComponent(mousePos, cellSize, width, state.components, _selectedComponentId)) {
-                if (_selectedComponentId != null) {
+              } else {
+                final hitComp = _findComponentAtPosition(mousePos, cellSize, state.components);
+                if (hitComp != null) {
                   setState(() {
-                    _selectedComponentId = null;
+                    if (HardwareKeyboard.instance.isShiftPressed || HardwareKeyboard.instance.isControlPressed) {
+                      if (_selectedComponentIds.contains(hitComp.id)) {
+                        _selectedComponentIds.remove(hitComp.id);
+                      } else {
+                        _selectedComponentIds.add(hitComp.id);
+                      }
+                    } else if (!_selectedComponentIds.contains(hitComp.id)) {
+                      _selectedComponentIds = {hitComp.id};
+                    }
+                  });
+                } else if (!_isPositionOverHudOrComponent(mousePos, cellSize, width, state.components, _selectedComponentId)) {
+                  setState(() {
+                    if (!HardwareKeyboard.instance.isShiftPressed && !HardwareKeyboard.instance.isControlPressed) {
+                      _selectedComponentIds.clear();
+                    }
+                    _boxSelectionStart = mousePos;
+                    _boxSelectionCurrent = mousePos;
+                    _isBoxSelecting = true;
                   });
                 }
               }
@@ -852,7 +947,26 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
             final cellX = (mousePos.dx / cellSize).clamp(0.0, (_gridCols - 1).toDouble());
             final cellY = (mousePos.dy / cellSize).clamp(0.0, (_gridRows - 1).toDouble());
 
-            if (_connectionSource != null) {
+            if (_isBoxSelecting && _boxSelectionStart != null) {
+              setState(() {
+                _boxSelectionCurrent = mousePos;
+                final selRect = Rect.fromPoints(_boxSelectionStart!, _boxSelectionCurrent!);
+                final newlySelected = <String>{..._selectedComponentIds};
+                for (final comp in state.components) {
+                  final compRect = Rect.fromLTWH(
+                    comp.gridX * cellSize,
+                    comp.gridY * cellSize,
+                    cellSize,
+                    cellSize,
+                  );
+                  if (selRect.overlaps(compRect)) {
+                    newlySelected.add(comp.id);
+                  }
+                }
+                _selectedComponentIds = newlySelected;
+                _hoverGridCell = Offset(cellX, cellY);
+              });
+            } else if (_connectionSource != null) {
               final snapped = _findNearestTerminal(mousePos, cellSize, state.components, _connectionSource);
               setState(() {
                 _currentMousePos = mousePos;
@@ -884,6 +998,13 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
             }
           },
           onPointerUp: (event) {
+            if (_isBoxSelecting) {
+              setState(() {
+                _isBoxSelecting = false;
+                _boxSelectionStart = null;
+                _boxSelectionCurrent = null;
+              });
+            }
             if (_connectionSource != null && _isDraggingWire && _dragStartPosition != null) {
               final mousePos = event.localPosition;
               final dragDistance = (mousePos - _dragStartPosition!).distance;
@@ -932,30 +1053,56 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
     );
   }
 
+  SandboxComponent? _findComponentAtPosition(Offset pos, double cellSize, List<SandboxComponent> components) {
+    for (final comp in components) {
+      final rect = Rect.fromLTWH(comp.gridX * cellSize, comp.gridY * cellSize, cellSize, cellSize);
+      if (rect.contains(pos)) {
+        return comp;
+      }
+    }
+    return null;
+  }
+
   Widget _buildGridCellDragTarget(int gridX, int gridY, double cellSize, SandboxState state) {
     return Positioned(
       left: gridX * cellSize,
       top: gridY * cellSize,
       width: cellSize,
       height: cellSize,
-      child: DragTarget<ComponentType>(
+      child: DragTarget<Object>(
         onWillAcceptWithDetails: (details) {
-          final isOccupied = state.components.any((c) => c.gridX == gridX && c.gridY == gridY);
-          return !isOccupied;
+          final data = details.data;
+          if (data is ComponentType) {
+            final isOccupied = state.components.any((c) => c.gridX == gridX && c.gridY == gridY);
+            return !isOccupied;
+          } else if (data is SandboxComponent) {
+            return true;
+          }
+          return false;
         },
         onAcceptWithDetails: (details) {
-          final type = details.data;
-          final newComponent = SandboxComponent(
-            id: '${type.name}_${DateTime.now().millisecondsSinceEpoch}',
-            type: type,
-            gridX: gridX,
-            gridY: gridY,
-            value: type == ComponentType.battery ? 9.0 : (type == ComponentType.resistor ? 10.0 : 0.0),
-          );
-          ref.read(sandboxControllerProvider.notifier).addComponent(newComponent);
-          setState(() {
-            _selectedComponentId = newComponent.id;
-          });
+          final data = details.data;
+          if (data is ComponentType) {
+            final newComponent = SandboxComponent(
+              id: '${data.name}_${DateTime.now().millisecondsSinceEpoch}',
+              type: data,
+              gridX: gridX,
+              gridY: gridY,
+              value: data == ComponentType.battery ? 9.0 : (data == ComponentType.resistor ? 10.0 : 0.0),
+            );
+            ref.read(sandboxControllerProvider.notifier).addComponent(newComponent);
+            setState(() {
+              _selectedComponentIds = {newComponent.id};
+            });
+          } else if (data is SandboxComponent) {
+            final deltaX = gridX - data.gridX;
+            final deltaY = gridY - data.gridY;
+            if (_selectedComponentIds.contains(data.id) && _selectedComponentIds.length > 1) {
+              ref.read(sandboxControllerProvider.notifier).moveComponents(_selectedComponentIds, deltaX, deltaY);
+            } else {
+              ref.read(sandboxControllerProvider.notifier).moveComponent(data.id, gridX, gridY);
+            }
+          }
         },
         builder: (context, candidateData, rejectedData) {
           final isHovered = candidateData.isNotEmpty;
@@ -1016,7 +1163,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
   }
 
   Widget _buildPlacedComponent(SandboxComponent component, double cellSize, String? selectedId, bool isDark) {
-    final isSelected = component.id == selectedId;
+    final isSelected = _selectedComponentIds.contains(component.id);
     final state = ref.watch(sandboxControllerProvider);
     final active = state.simulationValues['active_${component.id}'] == 1.0;
     final isBurned = state.burnedComponentIds.contains(component.id);
@@ -1029,7 +1176,15 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
     final bodyWidget = InkWell(
       onTap: () {
         setState(() {
-          _selectedComponentId = component.id;
+          if (HardwareKeyboard.instance.isShiftPressed || HardwareKeyboard.instance.isControlPressed) {
+            if (_selectedComponentIds.contains(component.id)) {
+              _selectedComponentIds.remove(component.id);
+            } else {
+              _selectedComponentIds.add(component.id);
+            }
+          } else {
+            _selectedComponentIds = {component.id};
+          }
         });
       },
       borderRadius: BorderRadius.circular(12),
@@ -1083,27 +1238,34 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
         child: Stack(
           children: [
             Positioned.fill(
-              child: Transform.rotate(
-                angle: component.rotation * (math.pi / 180.0),
-                child: CustomPaint(
-                  painter: _isDiagramMode
-                      ? CircuitSymbolPainter(
-                          type: component.type,
-                          isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
-                          isBurned: isBurned,
-                          color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
-                          activeColor: active || component.isActive ? const Color(0xFF00FF9D) : const Color(0xFFFFB300),
-                          strokeWidth: active || component.isActive ? 2.8 : 2.0,
-                          value: component.value,
-                        )
-                      : ComponentPhysicalPainter(
-                          type: component.type,
-                          isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
-                          isBurned: isBurned,
-                          isDarkMode: isDark,
-                          value: component.value,
-                        ),
-                ),
+              child: AnimatedBuilder(
+                animation: _wireAnimationController,
+                builder: (context, child) {
+                  return Transform.rotate(
+                    angle: component.rotation * (math.pi / 180.0),
+                    child: CustomPaint(
+                      painter: _isDiagramMode
+                          ? CircuitSymbolPainter(
+                              type: component.type,
+                              isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
+                              isBurned: isBurned,
+                              color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
+                              activeColor: active || component.isActive ? const Color(0xFF00FF9D) : const Color(0xFFFFB300),
+                              strokeWidth: active || component.isActive ? 2.8 : 2.0,
+                              value: component.value,
+                              animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
+                            )
+                          : ComponentPhysicalPainter(
+                              type: component.type,
+                              isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
+                              isBurned: isBurned,
+                              isDarkMode: isDark,
+                              value: component.value,
+                              animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
+                            ),
+                    ),
+                  );
+                },
               ),
             ),
             if (isHighThermal)

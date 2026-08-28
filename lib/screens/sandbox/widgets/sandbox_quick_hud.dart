@@ -83,3 +83,98 @@ class SandboxQuickHudWidget extends StatelessWidget {
     );
   }
 }
+
+class SandboxMultiSelectionHudWidget extends StatelessWidget {
+  final int selectedCount;
+  final VoidCallback onRotate;
+  final VoidCallback onDelete;
+  final VoidCallback onDeselect;
+  final bool isDark;
+
+  const SandboxMultiSelectionHudWidget({
+    super.key,
+    required this.selectedCount,
+    required this.onRotate,
+    required this.onDelete,
+    required this.onDeselect,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final borderColor = isDark ? const Color(0xFF00F5D4) : const Color(0xFF00875A);
+    final bgColor = isDark
+        ? const Color(0xFF141E33).withValues(alpha: 0.95)
+        : Colors.white.withValues(alpha: 0.95);
+
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: borderColor, width: 1.4),
+          boxShadow: [
+            BoxShadow(
+              color: borderColor.withValues(alpha: 0.3),
+              blurRadius: 10,
+              spreadRadius: 1,
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: borderColor.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.select_all_rounded, size: 14, color: borderColor),
+                  const SizedBox(width: 4),
+                  Text(
+                    '$selectedCount selecionados',
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.black87,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+              onPressed: onRotate,
+              tooltip: 'Rotacionar Todos (R)',
+              icon: Icon(Icons.rotate_right_rounded, size: 16, color: borderColor),
+            ),
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+              onPressed: onDelete,
+              tooltip: 'Excluir Todos (Delete/Backspace)',
+              icon: const Icon(Icons.delete_forever_rounded, size: 16, color: Color(0xFFFF3B7F)),
+            ),
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+              onPressed: onDeselect,
+              tooltip: 'Desmarcar (Esc)',
+              icon: Icon(Icons.close_rounded, size: 16, color: isDark ? Colors.white54 : Colors.black45),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

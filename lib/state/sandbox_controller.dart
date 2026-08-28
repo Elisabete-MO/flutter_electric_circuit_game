@@ -104,12 +104,48 @@ class SandboxController extends Notifier<SandboxState> {
     _recalculateCircuit();
   }
 
-  void removeComponent(String componentId) {
+  void moveComponents(Set<String> componentIds, int deltaX, int deltaY) {
+    if (componentIds.isEmpty || (deltaX == 0 && deltaY == 0)) return;
+
+    // Verificar se todos os movimentos ficam dentro do grid
+    bool valid = true;
+    for (final c in state.components) {
+      if (componentIds.contains(c.id)) {
+        final targetX = c.gridX + deltaX;
+        final targetY = c.gridY + deltaY;
+        if (targetX < 0 || targetX >= 8 || targetY < 0 || targetY >= 6) {
+          valid = false;
+          break;
+        }
+      }
+    }
+    if (!valid) return;
+
     _pushSnapshot();
-    final updatedComponents = state.components.where((c) => c.id != componentId).toList();
-    // Remove wires connected to the deleted component
+    final updated = state.components.map((c) {
+      if (componentIds.contains(c.id)) {
+        return c.copyWith(
+          gridX: (c.gridX + deltaX).clamp(0, 7),
+          gridY: (c.gridY + deltaY).clamp(0, 5),
+        );
+      }
+      return c;
+    }).toList();
+
+    state = state.copyWith(components: updated);
+    _recalculateCircuit();
+  }
+
+  void removeComponent(String componentId) {
+    removeComponents({componentId});
+  }
+
+  void removeComponents(Set<String> componentIds) {
+    if (componentIds.isEmpty) return;
+    _pushSnapshot();
+    final updatedComponents = state.components.where((c) => !componentIds.contains(c.id)).toList();
     final updatedWires = state.wires.where((w) {
-      return w.fromComponentId != componentId && w.toComponentId != componentId;
+      return !componentIds.contains(w.fromComponentId) && !componentIds.contains(w.toComponentId);
     }).toList();
 
     state = state.copyWith(
@@ -120,9 +156,14 @@ class SandboxController extends Notifier<SandboxState> {
   }
 
   void rotateComponent(String componentId) {
+    rotateComponents({componentId});
+  }
+
+  void rotateComponents(Set<String> componentIds) {
+    if (componentIds.isEmpty) return;
     _pushSnapshot();
     final updated = state.components.map((c) {
-      if (c.id == componentId) {
+      if (componentIds.contains(c.id)) {
         return c.copyWith(rotation: (c.rotation + 90.0) % 360.0);
       }
       return c;

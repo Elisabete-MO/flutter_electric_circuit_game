@@ -647,3 +647,66 @@ Path _buildSmartWirePath({
 
   return path;
 }
+
+// --- PAINTER DE SELEÇÃO POR CAIXA (MARQUEE SELECTION) ---
+
+class MarqueeSelectionPainter extends CustomPainter {
+  final Offset start;
+  final Offset current;
+  final bool isDark;
+
+  MarqueeSelectionPainter({
+    required this.start,
+    required this.current,
+    required this.isDark,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Rect.fromPoints(start, current);
+
+    // 1. Fundo semitransparente estilo HUD néon
+    final fillColor = isDark
+        ? const Color(0xFF00F5D4).withValues(alpha: 0.12)
+        : const Color(0xFF00875A).withValues(alpha: 0.10);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(rect, const Radius.circular(4)),
+      Paint()..color = fillColor,
+    );
+
+    // 2. Borda externa em tom Cyber Neon
+    final borderColor = isDark ? const Color(0xFF00F5D4) : const Color(0xFF00875A);
+    final borderPaint = Paint()
+      ..color = borderColor.withValues(alpha: 0.8)
+      ..strokeWidth = 1.6
+      ..style = PaintingStyle.stroke;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(rect, const Radius.circular(4)),
+      borderPaint,
+    );
+
+    // 3. Cantoneiras de mira ciber (Cyber Corner Reticles)
+    final bracketPaint = Paint()
+      ..color = borderColor
+      ..strokeWidth = 2.4
+      ..style = PaintingStyle.stroke;
+
+    final bLen = math.min(12.0, math.min(rect.width.abs(), rect.height.abs()) / 3);
+
+    // Top-Left
+    canvas.drawPath(Path()..moveTo(rect.left + bLen, rect.top)..lineTo(rect.left, rect.top)..lineTo(rect.left, rect.top + bLen), bracketPaint);
+    // Top-Right
+    canvas.drawPath(Path()..moveTo(rect.right - bLen, rect.top)..lineTo(rect.right, rect.top)..lineTo(rect.right, rect.top + bLen), bracketPaint);
+    // Bottom-Left
+    canvas.drawPath(Path()..moveTo(rect.left + bLen, rect.bottom)..lineTo(rect.left, rect.bottom)..lineTo(rect.left, rect.bottom - bLen), bracketPaint);
+    // Bottom-Right
+    canvas.drawPath(Path()..moveTo(rect.right - bLen, rect.bottom)..lineTo(rect.right, rect.bottom)..lineTo(rect.right, rect.bottom - bLen), bracketPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant MarqueeSelectionPainter oldDelegate) {
+    return oldDelegate.start != start ||
+        oldDelegate.current != current ||
+        oldDelegate.isDark != isDark;
+  }
+}
