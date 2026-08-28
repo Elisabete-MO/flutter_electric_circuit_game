@@ -4,7 +4,7 @@ import '../models/first_step_component.dart';
 import 'burned_effects_painter.dart';
 
 /// Renderizador CustomPainter dos componentes em seu aspecto hiper-realista (3D Vetorial)
-/// com alto nível de fidelidade gráfica a componentes físicos reais de bancada de laboratório.
+/// ajustados proporcionalmente para preencher a célula do grid.
 class ComponentPhysicalPainter extends CustomPainter {
   ComponentPhysicalPainter({
     required this.type,
@@ -85,7 +85,7 @@ class ComponentPhysicalPainter extends CustomPainter {
   void _drawCleanLeads(Canvas canvas, Size size, double cx, double cy, double leftEdgeX, double rightEdgeX) {
     final shadowPaint = Paint()
       ..color = Colors.black.withValues(alpha: 0.35)
-      ..strokeWidth = 3.5
+      ..strokeWidth = 4.2
       ..strokeCap = StrokeCap.round
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
 
@@ -97,27 +97,27 @@ class ComponentPhysicalPainter extends CustomPainter {
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
       ).createShader(Rect.fromLTWH(0, cy - 2, size.width, 4))
-      ..strokeWidth = 3.0
+      ..strokeWidth = 3.6
       ..strokeCap = StrokeCap.round;
 
     final leadHighlightPaint = Paint()
       ..color = Colors.white.withValues(alpha: 0.8)
-      ..strokeWidth = 0.8
+      ..strokeWidth = 1.0
       ..strokeCap = StrokeCap.round;
 
     if (leftEdgeX > 0) {
-      canvas.drawLine(Offset(0, cy + 1.8), Offset(leftEdgeX, cy + 1.8), shadowPaint);
+      canvas.drawLine(Offset(0, cy + 2.0), Offset(leftEdgeX, cy + 2.0), shadowPaint);
       canvas.drawLine(Offset(0, cy), Offset(leftEdgeX, cy), leadBasePaint);
-      canvas.drawLine(Offset(0, cy - 0.8), Offset(leftEdgeX, cy - 0.8), leadHighlightPaint);
+      canvas.drawLine(Offset(0, cy - 1.0), Offset(leftEdgeX, cy - 1.0), leadHighlightPaint);
 
       // Ponto de solda na junção
       _drawSolderBlob(canvas, Offset(leftEdgeX, cy));
     }
 
     if (rightEdgeX < size.width) {
-      canvas.drawLine(Offset(rightEdgeX, cy + 1.8), Offset(size.width, cy + 1.8), shadowPaint);
+      canvas.drawLine(Offset(rightEdgeX, cy + 2.0), Offset(size.width, cy + 2.0), shadowPaint);
       canvas.drawLine(Offset(rightEdgeX, cy), Offset(size.width, cy), leadBasePaint);
-      canvas.drawLine(Offset(rightEdgeX, cy - 0.8), Offset(size.width, cy - 0.8), leadHighlightPaint);
+      canvas.drawLine(Offset(rightEdgeX, cy - 1.0), Offset(size.width, cy - 1.0), leadHighlightPaint);
 
       // Ponto de solda na junção
       _drawSolderBlob(canvas, Offset(rightEdgeX, cy));
@@ -130,25 +130,25 @@ class ComponentPhysicalPainter extends CustomPainter {
       ..shader = RadialGradient(
         center: const Alignment(-0.4, -0.4),
         colors: const [Color(0xFFFFFFFF), Color(0xFFCFD8DC), Color(0xFF546E7A)],
-      ).createShader(Rect.fromCircle(center: pos, radius: 2.8));
-    canvas.drawCircle(pos, 2.5, blobPaint);
+      ).createShader(Rect.fromCircle(center: pos, radius: 3.5));
+    canvas.drawCircle(pos, 3.2, blobPaint);
   }
 
   /// --------------------------------------------------------------------------
-  /// BATERIA ALCALINA INDUSTRIAL 9V (Hiper-realista 3D)
+  /// BATERIA ALCALINA INDUSTRIAL 9V (Hiper-realista 3D - Expandida)
   /// --------------------------------------------------------------------------
   void _drawPhysicalBattery(Canvas canvas, Size size, double cx, double cy) {
-    const batWidth = 38.0;
-    const batHeight = 36.0;
+    const batWidth = 60.0;
+    const batHeight = 52.0;
     final batRect = Rect.fromCenter(center: Offset(cx, cy), width: batWidth, height: batHeight);
-    final batRRect = RRect.fromRectAndRadius(batRect, const Radius.circular(5.5));
+    final batRRect = RRect.fromRectAndRadius(batRect, const Radius.circular(8.0));
 
     _drawCleanLeads(canvas, size, cx, cy, batRect.left - 4, batRect.right + 4);
 
     // Sombra projetada sob o corpo 3D
     canvas.drawRRect(
-      RRect.fromRectAndRadius(batRect.translate(2.5, 4.5), const Radius.circular(5.5)),
-      Paint()..color = Colors.black.withValues(alpha: 0.45)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+      RRect.fromRectAndRadius(batRect.translate(3.0, 5.0), const Radius.circular(8.0)),
+      Paint()..color = Colors.black.withValues(alpha: 0.45)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
     );
 
     // 1. Corpo principal metálico escuro (Navy/Black)
@@ -160,30 +160,29 @@ class ComponentPhysicalPainter extends CustomPainter {
     canvas.drawRRect(batRRect, Paint()..shader = bodyShader);
 
     // 2. Tarja metálica de Cobre/Dourado estilo Duracell/Industrial no topo
-    final copperRect = Rect.fromLTWH(batRect.left, batRect.top, batWidth, 14);
+    final copperRect = Rect.fromLTWH(batRect.left, batRect.top, batWidth, 20);
     final copperShader = const LinearGradient(
       colors: [Color(0xFFFFB74D), Color(0xFFF57C00), Color(0xFFE65100), Color(0xFFBF360C)],
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
     ).createShader(copperRect);
     
-    // Clipper para acompanhar o topo arredondado do RRect
     canvas.save();
     canvas.clipRRect(batRRect);
     canvas.drawRect(copperRect, Paint()..shader = copperShader);
 
     // Destaque especular na tarja de cobre
     canvas.drawLine(
-      Offset(copperRect.left, copperRect.top + 1.2),
-      Offset(copperRect.right, copperRect.top + 1.2),
-      Paint()..color = Colors.white.withValues(alpha: 0.7)..strokeWidth = 1.0,
+      Offset(copperRect.left, copperRect.top + 1.5),
+      Offset(copperRect.right, copperRect.top + 1.5),
+      Paint()..color = Colors.white.withValues(alpha: 0.75)..strokeWidth = 1.4,
     );
 
     // Linha de vinco/rebarba de dobra de alumínio
     canvas.drawLine(
       Offset(copperRect.left, copperRect.bottom),
       Offset(copperRect.right, copperRect.bottom),
-      Paint()..color = const Color(0xFF263238)..strokeWidth = 1.2,
+      Paint()..color = const Color(0xFF263238)..strokeWidth = 1.5,
     );
     canvas.restore();
 
@@ -192,7 +191,7 @@ class ComponentPhysicalPainter extends CustomPainter {
       batRRect,
       Paint()
         ..color = Colors.white.withValues(alpha: 0.15)
-        ..strokeWidth = 1.0
+        ..strokeWidth = 1.2
         ..style = PaintingStyle.stroke,
     );
 
@@ -203,41 +202,41 @@ class ComponentPhysicalPainter extends CustomPainter {
         text: '$voltStr ALKALINE',
         style: const TextStyle(
           color: Colors.white,
-          fontSize: 6.5,
+          fontSize: 9.5,
           fontWeight: FontWeight.w900,
-          letterSpacing: 0.6,
+          letterSpacing: 0.8,
         ),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    textPainter.paint(canvas, Offset(cx - textPainter.width / 2, copperRect.top + 3.8));
+    textPainter.paint(canvas, Offset(cx - textPainter.width / 2, copperRect.top + 4.5));
 
     // 5. Terminais Snap metálicos 3D no topo (+ e -)
-    final snapLeft = Offset(cx - 9.5, batRect.top - 2.5);
-    final snapRight = Offset(cx + 9.5, batRect.top - 3.5);
+    final snapLeft = Offset(cx - 15.0, batRect.top - 4.0);
+    final snapRight = Offset(cx + 15.0, batRect.top - 5.0);
 
     // Polo Negativo (-) - Soquete Sextavado prateado
-    canvas.drawCircle(snapLeft, 3.8, Paint()..color = const Color(0xFF78909C));
-    canvas.drawCircle(snapLeft, 2.2, Paint()..color = const Color(0xFF1E293B));
+    canvas.drawCircle(snapLeft, 5.5, Paint()..color = const Color(0xFF78909C));
+    canvas.drawCircle(snapLeft, 3.2, Paint()..color = const Color(0xFF1E293B));
 
     // Polo Positivo (+) - Conector Coroa de Latão Dourado 3D
-    canvas.drawCircle(snapRight, 4.5, Paint()..color = const Color(0xFFFFD54F));
-    canvas.drawCircle(snapRight, 4.5, Paint()..color = const Color(0xFFFFB300)..style = PaintingStyle.stroke..strokeWidth = 1.0);
-    canvas.drawCircle(snapRight, 2.5, Paint()..color = const Color(0xFFE65100));
+    canvas.drawCircle(snapRight, 6.5, Paint()..color = const Color(0xFFFFD54F));
+    canvas.drawCircle(snapRight, 6.5, Paint()..color = const Color(0xFFFFB300)..style = PaintingStyle.stroke..strokeWidth = 1.2);
+    canvas.drawCircle(snapRight, 3.6, Paint()..color = const Color(0xFFE65100));
 
     // 6. Fios de saída isolados conectando o topo das snap ao circuito
     final wireNegPath = Path()
       ..moveTo(snapLeft.dx, snapLeft.dy)
-      ..cubicTo(snapLeft.dx - 7, snapLeft.dy - 3, batRect.left - 2, cy - 6, batRect.left - 4, cy);
+      ..cubicTo(snapLeft.dx - 10, snapLeft.dy - 4, batRect.left - 2, cy - 8, batRect.left - 4, cy);
     final wirePosPath = Path()
       ..moveTo(snapRight.dx, snapRight.dy)
-      ..cubicTo(snapRight.dx + 7, snapRight.dy - 3, batRect.right + 2, cy - 6, batRect.right + 4, cy);
+      ..cubicTo(snapRight.dx + 10, snapRight.dy - 4, batRect.right + 2, cy - 8, batRect.right + 4, cy);
 
     canvas.drawPath(
       wireNegPath,
       Paint()
         ..color = isDarkMode ? const Color(0xFF64748B) : const Color(0xFF1E293B)
-        ..strokeWidth = 2.4
+        ..strokeWidth = 3.5
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round,
     );
@@ -246,19 +245,19 @@ class ComponentPhysicalPainter extends CustomPainter {
       wirePosPath,
       Paint()
         ..color = const Color(0xFFD32F2F)
-        ..strokeWidth = 2.4
+        ..strokeWidth = 3.5
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round,
     );
 
     // Marcação - e +
-    TextPainter(text: const TextSpan(text: '-', style: TextStyle(color: Color(0xFF90A4AE), fontSize: 8, fontWeight: FontWeight.bold)), textDirection: TextDirection.ltr)
+    TextPainter(text: const TextSpan(text: '-', style: TextStyle(color: Color(0xFF90A4AE), fontSize: 11, fontWeight: FontWeight.bold)), textDirection: TextDirection.ltr)
       ..layout()
-      ..paint(canvas, Offset(batRect.left + 3, batRect.top + 14));
+      ..paint(canvas, Offset(batRect.left + 5, batRect.top + 22));
 
-    TextPainter(text: const TextSpan(text: '+', style: TextStyle(color: Color(0xFFFF7043), fontSize: 8, fontWeight: FontWeight.bold)), textDirection: TextDirection.ltr)
+    TextPainter(text: const TextSpan(text: '+', style: TextStyle(color: Color(0xFFFF7043), fontSize: 11, fontWeight: FontWeight.bold)), textDirection: TextDirection.ltr)
       ..layout()
-      ..paint(canvas, Offset(batRect.right - 8, batRect.top + 14));
+      ..paint(canvas, Offset(batRect.right - 12, batRect.top + 22));
   }
 
   void _drawPhysicalWire(Canvas canvas, Size size, double cx, double cy) {
@@ -266,45 +265,45 @@ class ComponentPhysicalPainter extends CustomPainter {
   }
 
   /// --------------------------------------------------------------------------
-  /// CHAVE FACA DIDÁTICA DE LABORATORIO (Knife Switch 3D)
+  /// CHAVE FACA DIDÁTICA DE LABORATÓRIO (Knife Switch 3D - Expandida)
   /// --------------------------------------------------------------------------
   void _drawPhysicalSwitch(Canvas canvas, Size size, double cx, double cy) {
-    final pPivot = Offset(cx - 22, cy);
-    final pContact = Offset(cx + 22, cy);
+    final pPivot = Offset(cx - 30, cy);
+    final pContact = Offset(cx + 30, cy);
     final pLeverEnd = isActive
         ? pContact
-        : Offset(cx + 2, cy - 26);
+        : Offset(cx + 4, cy - 34);
 
     _drawCleanLeads(canvas, size, cx, cy, pPivot.dx, pContact.dx);
 
     // Placa isolante de baquelite preta com bevel
-    final basePlate = Rect.fromCenter(center: Offset(cx, cy + 2), width: 52, height: 12);
+    final basePlate = Rect.fromCenter(center: Offset(cx, cy + 3), width: 74, height: 16);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(basePlate.translate(1.5, 2.5), const Radius.circular(3)),
-      Paint()..color = Colors.black.withValues(alpha: 0.4)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5),
+      RRect.fromRectAndRadius(basePlate.translate(2, 3), const Radius.circular(4)),
+      Paint()..color = Colors.black.withValues(alpha: 0.4)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
     );
     final baseShader = LinearGradient(
       colors: isDarkMode ? const [Color(0xFF334155), Color(0xFF1E293B)] : const [Color(0xFF475569), Color(0xFF1E293B)],
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
     ).createShader(basePlate);
-    canvas.drawRRect(RRect.fromRectAndRadius(basePlate, const Radius.circular(3)), Paint()..shader = baseShader);
+    canvas.drawRRect(RRect.fromRectAndRadius(basePlate, const Radius.circular(4)), Paint()..shader = baseShader);
 
     // Parafusos e Bornes de latão 3D nos polos
     _drawBrassTerminalPost(canvas, pPivot);
     _drawBrassTerminalPost(canvas, pContact);
 
-    // Garra de encaixe em U no terminal de contato (Contact Jaw Clip)
+    // Garra de encaixe em U no terminal de contato
     final jawPath = Path()
-      ..moveTo(pContact.dx - 3, pContact.dy - 6)
-      ..lineTo(pContact.dx - 3, pContact.dy + 3)
-      ..lineTo(pContact.dx + 3, pContact.dy + 3)
-      ..lineTo(pContact.dx + 3, pContact.dy - 6);
+      ..moveTo(pContact.dx - 4, pContact.dy - 8)
+      ..lineTo(pContact.dx - 4, pContact.dy + 4)
+      ..lineTo(pContact.dx + 4, pContact.dy + 4)
+      ..lineTo(pContact.dx + 4, pContact.dy - 8);
     canvas.drawPath(
       jawPath,
       Paint()
         ..color = const Color(0xFFFFD54F)
-        ..strokeWidth = 1.8
+        ..strokeWidth = 2.4
         ..style = PaintingStyle.stroke,
     );
 
@@ -312,22 +311,22 @@ class ComponentPhysicalPainter extends CustomPainter {
     if (isActive) {
       canvas.drawCircle(
         pContact,
-        7.0,
+        9.0,
         Paint()
           ..color = const Color(0xFF00FF9D).withValues(alpha: 0.6)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
       );
-      canvas.drawCircle(pContact, 2.5, Paint()..color = Colors.white);
+      canvas.drawCircle(pContact, 3.5, Paint()..color = Colors.white);
     }
 
     // Sombra projetada sob a lâmina metálica
     canvas.drawLine(
-      pPivot.translate(2, 3.5),
-      pLeverEnd.translate(2, 3.5),
+      pPivot.translate(2.5, 4.5),
+      pLeverEnd.translate(2.5, 4.5),
       Paint()
         ..color = Colors.black.withValues(alpha: 0.45)
-        ..strokeWidth = 4.8
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5)
+        ..strokeWidth = 6.5
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3)
         ..strokeCap = StrokeCap.round,
     );
 
@@ -338,54 +337,54 @@ class ComponentPhysicalPainter extends CustomPainter {
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
       ).createShader(Rect.fromPoints(pPivot, pLeverEnd))
-      ..strokeWidth = 4.5
+      ..strokeWidth = 6.0
       ..strokeCap = StrokeCap.round;
 
     canvas.drawLine(pPivot, pLeverEnd, leverPaint);
 
     // Brilho especular na lâmina metálica
     canvas.drawLine(
-      pPivot.translate(0, -0.8),
-      pLeverEnd.translate(0, -0.8),
+      pPivot.translate(0, -1.2),
+      pLeverEnd.translate(0, -1.2),
       Paint()
-        ..color = Colors.white.withValues(alpha: 0.75)
-        ..strokeWidth = 1.0
+        ..color = Colors.white.withValues(alpha: 0.8)
+        ..strokeWidth = 1.4
         ..strokeCap = StrokeCap.round,
     );
 
-    // Manopla isolante cilíndrica na ponta (Vermelha / Verde)
+    // Manopla isolante cilíndrica na ponta
     final handleColor = isActive ? const Color(0xFF00E676) : const Color(0xFFD32F2F);
-    canvas.drawCircle(pLeverEnd, 6.0, Paint()..color = handleColor);
+    canvas.drawCircle(pLeverEnd, 8.5, Paint()..color = handleColor);
     canvas.drawCircle(
-      Offset(pLeverEnd.dx - 1.8, pLeverEnd.dy - 1.8),
-      2.0,
+      Offset(pLeverEnd.dx - 2.5, pLeverEnd.dy - 2.5),
+      2.8,
       Paint()..color = Colors.white.withValues(alpha: 0.85),
     );
   }
 
   /// Desenha um borne de parafuso de latão 3D
   void _drawBrassTerminalPost(Canvas canvas, Offset center) {
-    canvas.drawCircle(center, 4.2, Paint()..color = const Color(0xFFFFD54F));
-    canvas.drawCircle(center, 4.2, Paint()..color = const Color(0xFFB45309)..style = PaintingStyle.stroke..strokeWidth = 0.8);
+    canvas.drawCircle(center, 5.8, Paint()..color = const Color(0xFFFFD54F));
+    canvas.drawCircle(center, 5.8, Paint()..color = const Color(0xFFB45309)..style = PaintingStyle.stroke..strokeWidth = 1.0);
     // Ranhura do parafuso de fenda
-    canvas.drawLine(Offset(center.dx - 2.2, center.dy), Offset(center.dx + 2.2, center.dy), Paint()..color = const Color(0xFF78350F)..strokeWidth = 1.0);
+    canvas.drawLine(Offset(center.dx - 3.0, center.dy), Offset(center.dx + 3.0, center.dy), Paint()..color = const Color(0xFF78350F)..strokeWidth = 1.4);
   }
 
   /// --------------------------------------------------------------------------
-  /// LÂMPADA INCANDESCENTE E10 DE LABORATÓRIO (Bulb 3D)
+  /// LÂMPADA INCANDESCENTE E10 DE LABORATÓRIO (Bulb 3D - Expandida)
   /// --------------------------------------------------------------------------
   void _drawPhysicalBulb(Canvas canvas, Size size, double cx, double cy) {
-    final socketCenter = Offset(cx, cy + 4);
-    final socketRect = Rect.fromCenter(center: socketCenter, width: 22, height: 16);
-    final bulbCenter = Offset(cx, cy - 14);
-    const bulbRadius = 15.5;
+    final socketCenter = Offset(cx, cy + 6);
+    final socketRect = Rect.fromCenter(center: socketCenter, width: 32, height: 22);
+    final bulbCenter = Offset(cx, cy - 20);
+    const bulbRadius = 22.0;
 
     _drawCleanLeads(canvas, size, cx, cy, socketRect.left, socketRect.right);
 
     // 1. Soquete roscado de latão/alumínio E10
     canvas.drawRRect(
-      RRect.fromRectAndRadius(socketRect.translate(1.5, 2.5), const Radius.circular(3)),
-      Paint()..color = Colors.black.withValues(alpha: 0.35)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
+      RRect.fromRectAndRadius(socketRect.translate(2, 3), const Radius.circular(4)),
+      Paint()..color = Colors.black.withValues(alpha: 0.35)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5),
     );
 
     final socketShader = const LinearGradient(
@@ -393,41 +392,41 @@ class ComponentPhysicalPainter extends CustomPainter {
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
     ).createShader(socketRect);
-    canvas.drawRRect(RRect.fromRectAndRadius(socketRect, const Radius.circular(3)), Paint()..shader = socketShader);
+    canvas.drawRRect(RRect.fromRectAndRadius(socketRect, const Radius.circular(4)), Paint()..shader = socketShader);
 
     // Roscas espirais de contato metálico
     final threadPaint = Paint()
       ..color = const Color(0xFF78350F)
-      ..strokeWidth = 1.2;
-    canvas.drawLine(Offset(socketRect.left + 2, socketRect.top + 4), Offset(socketRect.right - 2, socketRect.top + 4), threadPaint);
-    canvas.drawLine(Offset(socketRect.left + 2, socketRect.top + 9), Offset(socketRect.right - 2, socketRect.top + 9), threadPaint);
+      ..strokeWidth = 1.6;
+    canvas.drawLine(Offset(socketRect.left + 3, socketRect.top + 6), Offset(socketRect.right - 3, socketRect.top + 6), threadPaint);
+    canvas.drawLine(Offset(socketRect.left + 3, socketRect.top + 13), Offset(socketRect.right - 3, socketRect.top + 13), threadPaint);
 
     // Ponto de solda metálico na base inferior do soquete
-    canvas.drawCircle(Offset(cx, socketRect.bottom + 1), 2.5, Paint()..color = const Color(0xFF90A4AE));
+    canvas.drawCircle(Offset(cx, socketRect.bottom + 1.5), 3.5, Paint()..color = const Color(0xFF90A4AE));
 
     // 2. Glow estendido fotorrealista quando aceso
     if (isActive) {
       canvas.drawCircle(
         bulbCenter,
-        bulbRadius + 32,
+        bulbRadius + 42,
         Paint()
           ..color = const Color(0xFFFFD54F).withValues(alpha: 0.25)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18),
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 22),
       );
       canvas.drawCircle(
         bulbCenter,
-        bulbRadius + 16,
+        bulbRadius + 22,
         Paint()
           ..color = const Color(0xFFFF9100).withValues(alpha: 0.6)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 9),
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12),
       );
     }
 
     // Sombra sob o domo de vidro
     canvas.drawCircle(
-      bulbCenter.translate(2, 3),
+      bulbCenter.translate(3, 4),
       bulbRadius,
-      Paint()..color = Colors.black.withValues(alpha: 0.25)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+      Paint()..color = Colors.black.withValues(alpha: 0.25)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
     );
 
     // 3. Bulbo de vidro soprados com iluminação esférica 3D
@@ -446,49 +445,48 @@ class ComponentPhysicalPainter extends CustomPainter {
     // Borda reflexiva do vidro
     final glassBorder = Paint()
       ..color = isActive ? Colors.amber.withValues(alpha: 0.8) : Colors.blueGrey.shade200
-      ..strokeWidth = 1.2
+      ..strokeWidth = 1.6
       ..style = PaintingStyle.stroke;
     canvas.drawCircle(bulbCenter, bulbRadius, glassBorder);
 
     // Brilhos especulares duplos no vidro
     canvas.drawCircle(
-      Offset(bulbCenter.dx - 5.0, bulbCenter.dy - 5.5),
-      4.0,
+      Offset(bulbCenter.dx - 7.0, bulbCenter.dy - 7.5),
+      5.5,
       Paint()..color = Colors.white.withValues(alpha: isActive ? 0.95 : 0.7),
     );
     canvas.drawCircle(
-      Offset(bulbCenter.dx + 6.0, bulbCenter.dy + 6.0),
-      1.8,
+      Offset(bulbCenter.dx + 8.0, bulbCenter.dy + 8.0),
+      2.5,
       Paint()..color = Colors.white.withValues(alpha: 0.4),
     );
 
     // 4. Hastes internas de suporte de níquel e Filamento de Tungstênio em V
     final supportPaint = Paint()
       ..color = isActive ? const Color(0xFFFF3D00) : const Color(0xFF546E7A)
-      ..strokeWidth = 1.4;
-    canvas.drawLine(Offset(cx - 4, cy - 4), Offset(cx - 3, cy - 14), supportPaint);
-    canvas.drawLine(Offset(cx + 4, cy - 4), Offset(cx + 3, cy - 14), supportPaint);
+      ..strokeWidth = 2.0;
+    canvas.drawLine(Offset(cx - 6, cy - 6), Offset(cx - 4, cy - 20), supportPaint);
+    canvas.drawLine(Offset(cx + 6, cy - 6), Offset(cx + 4, cy - 20), supportPaint);
 
-    // Filamento em mola helicoidal no topo dos suportes
     final filPath = Path()
-      ..moveTo(cx - 3, cy - 14)
-      ..lineTo(cx - 1.5, cy - 18)
-      ..lineTo(cx, cy - 16)
-      ..lineTo(cx + 1.5, cy - 18)
-      ..lineTo(cx + 3, cy - 14);
+      ..moveTo(cx - 4, cy - 20)
+      ..lineTo(cx - 2, cy - 26)
+      ..lineTo(cx, cy - 23)
+      ..lineTo(cx + 2, cy - 26)
+      ..lineTo(cx + 4, cy - 20);
 
     canvas.drawPath(
       filPath,
       Paint()
         ..color = isActive ? Colors.white : const Color(0xFF37474F)
-        ..strokeWidth = 1.8
+        ..strokeWidth = 2.4
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round,
     );
   }
 
   /// --------------------------------------------------------------------------
-  /// RESISTOR DE FILME DE CARBONO 1/4W (Dumbbell Ceramic Shape 3D)
+  /// RESISTOR DE FILME DE CARBONO 1/4W (Dumbbell Ceramic Shape 3D - Expandido)
   /// --------------------------------------------------------------------------
   List<Color> _getResistorColors(double val) {
     if (val <= 0) val = 10.0;
@@ -515,15 +513,15 @@ class ComponentPhysicalPainter extends CustomPainter {
     final c1 = colorMap[d1.clamp(0, 9)];
     final c2 = colorMap[d2.clamp(0, 9)];
     final c3 = colorMap[zeros.clamp(0, 9)];
-    const c4 = Color(0xFFFFD54F); // Ouro (Tolerância 5%)
+    const c4 = Color(0xFFFFD54F);
 
     return [c1, c2, c3, c4];
   }
 
   void _drawPhysicalResistor(Canvas canvas, Size size, double cx, double cy) {
-    const resWidth = 40.0;
-    const centerHeight = 12.0;
-    const bulbHeight = 15.0;
+    const resWidth = 64.0;
+    const centerHeight = 19.0;
+    const bulbHeight = 24.0;
 
     final resRect = Rect.fromCenter(center: Offset(cx, cy), width: resWidth, height: bulbHeight);
 
@@ -531,20 +529,20 @@ class ComponentPhysicalPainter extends CustomPainter {
 
     // Sombra 3D
     canvas.drawRRect(
-      RRect.fromRectAndRadius(resRect.translate(1.5, 3), const Radius.circular(6)),
-      Paint()..color = Colors.black.withValues(alpha: 0.35)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+      RRect.fromRectAndRadius(resRect.translate(2.5, 4.5), const Radius.circular(8)),
+      Paint()..color = Colors.black.withValues(alpha: 0.35)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
     );
 
-    // 1. Corpo Cerâmico abuloado em haltere (Dumbbell Ceramic Shape)
+    // 1. Corpo Cerâmico abuloado em haltere
     final bodyPath = Path()
       ..moveTo(resRect.left, cy - bulbHeight / 2)
-      ..arcToPoint(Offset(resRect.left + 6, cy - centerHeight / 2), radius: const Radius.circular(4))
-      ..lineTo(resRect.right - 6, cy - centerHeight / 2)
-      ..arcToPoint(Offset(resRect.right, cy - bulbHeight / 2), radius: const Radius.circular(4))
+      ..arcToPoint(Offset(resRect.left + 9, cy - centerHeight / 2), radius: const Radius.circular(6))
+      ..lineTo(resRect.right - 9, cy - centerHeight / 2)
+      ..arcToPoint(Offset(resRect.right, cy - bulbHeight / 2), radius: const Radius.circular(6))
       ..lineTo(resRect.right, cy + bulbHeight / 2)
-      ..arcToPoint(Offset(resRect.right - 6, cy + centerHeight / 2), radius: const Radius.circular(4))
-      ..lineTo(resRect.left + 6, cy + centerHeight / 2)
-      ..arcToPoint(Offset(resRect.left, cy + bulbHeight / 2), radius: const Radius.circular(4))
+      ..arcToPoint(Offset(resRect.right - 9, cy + centerHeight / 2), radius: const Radius.circular(6))
+      ..lineTo(resRect.left + 9, cy + centerHeight / 2)
+      ..arcToPoint(Offset(resRect.left, cy + bulbHeight / 2), radius: const Radius.circular(6))
       ..close();
 
     final ceramicShader = const LinearGradient(
@@ -555,44 +553,43 @@ class ComponentPhysicalPainter extends CustomPainter {
 
     canvas.drawPath(bodyPath, Paint()..shader = ceramicShader);
 
-    // 2. Faixas de cores dinâmicas (4 Anéis de precisão)
+    // 2. Faixas de cores dinâmicas
     final colors = _getResistorColors(value);
-    final bandPositions = [-13.0, -5.5, 2.0, 11.5];
+    final bandPositions = [-19.0, -7.5, 4.0, 17.5];
     for (var i = 0; i < colors.length; i++) {
       final h = (i == 0 || i == 3) ? bulbHeight : centerHeight;
       canvas.drawRect(
-        Rect.fromLTWH(cx + bandPositions[i], cy - h / 2, 3.6, h),
+        Rect.fromLTWH(cx + bandPositions[i], cy - h / 2, 5.5, h),
         Paint()..color = colors[i],
       );
-      // Destaque brilhante no anel dourado (Tolerância)
       if (i == 3) {
         canvas.drawRect(
-          Rect.fromLTWH(cx + bandPositions[i] + 1.0, cy - h / 2, 1.0, h),
+          Rect.fromLTWH(cx + bandPositions[i] + 1.5, cy - h / 2, 1.5, h),
           Paint()..color = Colors.white.withValues(alpha: 0.7),
         );
       }
     }
 
-    // 3. Brilho especular longitudinal na cerâmica
+    // 3. Brilho especular longitudinal
     canvas.drawLine(
-      Offset(resRect.left + 2, cy - centerHeight / 2 + 1.2),
-      Offset(resRect.right - 2, cy - centerHeight / 2 + 1.2),
-      Paint()..color = Colors.white.withValues(alpha: 0.7)..strokeWidth = 1.2,
+      Offset(resRect.left + 4, cy - centerHeight / 2 + 1.8),
+      Offset(resRect.right - 4, cy - centerHeight / 2 + 1.8),
+      Paint()..color = Colors.white.withValues(alpha: 0.75)..strokeWidth = 1.8,
     );
   }
 
   /// --------------------------------------------------------------------------
-  /// DIODO RETIFICADOR 1N4007 (Epoxy Package DO-41)
+  /// DIODO RETIFICADOR 1N4007 (Epoxy Package DO-41 - Expandido)
   /// --------------------------------------------------------------------------
   void _drawPhysicalDiode(Canvas canvas, Size size, double cx, double cy) {
-    final diodeRect = Rect.fromCenter(center: Offset(cx, cy), width: 38, height: 14);
-    final diodeRRect = RRect.fromRectAndRadius(diodeRect, const Radius.circular(4.0));
+    final diodeRect = Rect.fromCenter(center: Offset(cx, cy), width: 62, height: 22);
+    final diodeRRect = RRect.fromRectAndRadius(diodeRect, const Radius.circular(6.0));
 
     _drawCleanLeads(canvas, size, cx, cy, diodeRect.left - 2, diodeRect.right + 2);
 
     canvas.drawRRect(
-      RRect.fromRectAndRadius(diodeRect.translate(1.5, 3), const Radius.circular(4.0)),
-      Paint()..color = Colors.black.withValues(alpha: 0.35)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+      RRect.fromRectAndRadius(diodeRect.translate(2.5, 4.0), const Radius.circular(6.0)),
+      Paint()..color = Colors.black.withValues(alpha: 0.35)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
     );
 
     // Corpo de Epóxi Preto fosco usinado
@@ -603,9 +600,9 @@ class ComponentPhysicalPainter extends CustomPainter {
     ).createShader(diodeRect);
     canvas.drawRRect(diodeRRect, Paint()..shader = bodyShader);
 
-    // Anel prateado de Cátodo (Polaridade no lado esquerdo)
+    // Anel prateado de Cátodo
     canvas.drawRect(
-      Rect.fromLTWH(diodeRect.left + 6, diodeRect.top, 5.0, 14),
+      Rect.fromLTWH(diodeRect.left + 9, diodeRect.top, 7.5, 22),
       Paint()..color = const Color(0xFFCFD8DC),
     );
 
@@ -613,27 +610,27 @@ class ComponentPhysicalPainter extends CustomPainter {
     TextPainter(
       text: const TextSpan(
         text: '1N4007',
-        style: TextStyle(color: Color(0xFF90A4AE), fontSize: 6.0, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+        style: TextStyle(color: Color(0xFF90A4AE), fontSize: 8.5, fontWeight: FontWeight.bold, letterSpacing: 0.8),
       ),
       textDirection: TextDirection.ltr,
     )
       ..layout()
-      ..paint(canvas, Offset(cx - 2, cy - 3));
+      ..paint(canvas, Offset(cx - 3, cy - 4.5));
 
     // Highlight especular
     canvas.drawLine(
-      Offset(diodeRect.left + 2, diodeRect.top + 1.2),
-      Offset(diodeRect.right - 2, diodeRect.top + 1.2),
-      Paint()..color = Colors.white.withValues(alpha: 0.4)..strokeWidth = 1.0,
+      Offset(diodeRect.left + 3, diodeRect.top + 1.8),
+      Offset(diodeRect.right - 3, diodeRect.top + 1.8),
+      Paint()..color = Colors.white.withValues(alpha: 0.45)..strokeWidth = 1.4,
     );
   }
 
   /// --------------------------------------------------------------------------
-  /// DIODO EMISSOR DE LUZ - LED 5mm 3D (Com Refração de Resina Epóxi)
+  /// DIODO EMISSOR DE LUZ - LED 5mm 3D (Expandido)
   /// --------------------------------------------------------------------------
   void _drawPhysicalLED(Canvas canvas, Size size, double cx, double cy) {
-    final domeCenter = Offset(cx, cy - 4);
-    const ledRadius = 14.0;
+    final domeCenter = Offset(cx, cy - 6);
+    const ledRadius = 22.0;
 
     _drawCleanLeads(canvas, size, cx, cy, domeCenter.dx - ledRadius - 2, domeCenter.dx + ledRadius + 2);
 
@@ -641,44 +638,44 @@ class ComponentPhysicalPainter extends CustomPainter {
     if (isActive) {
       canvas.drawCircle(
         domeCenter,
-        ledRadius + 28,
+        ledRadius + 36,
         Paint()
           ..color = const Color(0xFF00FF9D).withValues(alpha: 0.35)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 15),
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20),
       );
       canvas.drawCircle(
         domeCenter,
-        ledRadius + 14,
+        ledRadius + 18,
         Paint()
           ..color = const Color(0xFF00E676).withValues(alpha: 0.75)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7),
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
       );
 
       final rayPaint = Paint()
         ..color = const Color(0xFF00FF9D).withValues(alpha: 0.9)
-        ..strokeWidth = 2.0
+        ..strokeWidth = 2.6
         ..strokeCap = StrokeCap.round;
-      canvas.drawLine(Offset(cx - 15, domeCenter.dy - 12), Offset(cx - 22, domeCenter.dy - 19), rayPaint);
-      canvas.drawLine(Offset(cx + 15, domeCenter.dy - 12), Offset(cx + 22, domeCenter.dy - 19), rayPaint);
-      canvas.drawLine(Offset(cx, domeCenter.dy - 17), Offset(cx, domeCenter.dy - 26), rayPaint);
+      canvas.drawLine(Offset(cx - 22, domeCenter.dy - 18), Offset(cx - 32, domeCenter.dy - 28), rayPaint);
+      canvas.drawLine(Offset(cx + 22, domeCenter.dy - 18), Offset(cx + 32, domeCenter.dy - 28), rayPaint);
+      canvas.drawLine(Offset(cx, domeCenter.dy - 26), Offset(cx, domeCenter.dy - 38), rayPaint);
     }
 
-    // Armação metálica interna visível (Cathode Anvil & Anode Post)
+    // Armação metálica interna visível
     final leadFramePaint = Paint()
       ..color = Colors.blueGrey.shade300.withValues(alpha: 0.9)
-      ..strokeWidth = 2.0;
-    canvas.drawLine(Offset(cx - 4.0, domeCenter.dy + 7), Offset(cx - 4.0, domeCenter.dy - 2), leadFramePaint);
-    canvas.drawLine(Offset(cx + 4.0, domeCenter.dy + 7), Offset(cx + 4.0, domeCenter.dy - 4), leadFramePaint);
+      ..strokeWidth = 2.8;
+    canvas.drawLine(Offset(cx - 6.0, domeCenter.dy + 10), Offset(cx - 6.0, domeCenter.dy - 3), leadFramePaint);
+    canvas.drawLine(Offset(cx + 6.0, domeCenter.dy + 10), Offset(cx + 6.0, domeCenter.dy - 6), leadFramePaint);
 
-    // Taça metálica do Cátodo (Anvil)
+    // Taça metálica do Cátodo
     final anvilPath = Path()
-      ..moveTo(cx - 6.5, domeCenter.dy - 2)
-      ..lineTo(cx - 1.5, domeCenter.dy - 2)
-      ..lineTo(cx - 2.5, domeCenter.dy - 6)
+      ..moveTo(cx - 10.0, domeCenter.dy - 3)
+      ..lineTo(cx - 2.0, domeCenter.dy - 3)
+      ..lineTo(cx - 4.0, domeCenter.dy - 9)
       ..close();
     canvas.drawPath(anvilPath, Paint()..color = Colors.blueGrey.shade100);
 
-    // Domo esférico de resina epóxi 5mm com gradiente de lente óptica
+    // Domo esférico de resina epóxi
     final domeShader = RadialGradient(
       center: const Alignment(-0.35, -0.4),
       radius: 0.85,
@@ -692,16 +689,16 @@ class ComponentPhysicalPainter extends CustomPainter {
     // Colarinho/Anel de retenção de resina na base
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromLTWH(cx - ledRadius - 1, domeCenter.dy + 6, (ledRadius + 1) * 2, 4),
-        const Radius.circular(1.5),
+        Rect.fromLTWH(cx - ledRadius - 1.5, domeCenter.dy + 9, (ledRadius + 1.5) * 2, 5),
+        const Radius.circular(2.0),
       ),
       Paint()..color = isActive ? const Color(0xFF2E7D32) : const Color(0xFF1B5E20),
     );
 
-    // Brilho especular curvo de lente de resina epóxi no domo
+    // Brilho especular curvo de lente de resina epóxi
     final glassHighlightPath = Path()
       ..addArc(
-        Rect.fromCircle(center: Offset(cx - 3.5, domeCenter.dy - 3.5), radius: ledRadius * 0.65),
+        Rect.fromCircle(center: Offset(cx - 5.0, domeCenter.dy - 5.0), radius: ledRadius * 0.65),
         -math.pi * 0.8,
         math.pi * 0.5,
       );
@@ -709,36 +706,32 @@ class ComponentPhysicalPainter extends CustomPainter {
       glassHighlightPath,
       Paint()
         ..color = Colors.white.withValues(alpha: isActive ? 0.95 : 0.75)
-        ..strokeWidth = 2.2
+        ..strokeWidth = 3.0
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round,
     );
   }
 
   /// --------------------------------------------------------------------------
-  /// MOTOR CC CILÍNDRICO 130 DE LABORATÓRIO (With Fan Propeller 3D)
+  /// MOTOR CC CILÍNDRICO 130 DE LABORATÓRIO (Expandido)
   /// --------------------------------------------------------------------------
   void _drawPhysicalMotor(Canvas canvas, Size size, double cx, double cy) {
-    final motorCenter = Offset(cx - 5, cy);
-    final motorRect = Rect.fromCenter(center: motorCenter, width: 36, height: 24);
+    final motorCenter = Offset(cx - 8, cy);
+    final motorRect = Rect.fromCenter(center: motorCenter, width: 54, height: 34);
 
-    _drawCleanLeads(canvas, size, cx, cy, motorRect.left - 6, cx + 25);
+    _drawCleanLeads(canvas, size, cx, cy, motorRect.left - 8, cx + 36);
 
     // Sombra do corpo cilíndrico
     canvas.drawRRect(
-      RRect.fromRectAndRadius(motorRect.translate(2, 4), const Radius.circular(5.0)),
-      Paint()..color = Colors.black.withValues(alpha: 0.35)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+      RRect.fromRectAndRadius(motorRect.translate(3, 5), const Radius.circular(7.0)),
+      Paint()..color = Colors.black.withValues(alpha: 0.35)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
     );
 
-    // Tampa traseira de plástico preta (End-Cap)
-    final capBackRect = Rect.fromLTWH(motorRect.left - 5, cy - 9, 6, 18);
-    canvas.drawRRect(RRect.fromRectAndRadius(capBackRect, const Radius.circular(2)), Paint()..color = const Color(0xFF1E293B));
+    // Tampa traseira de plástico preta
+    final capBackRect = Rect.fromLTWH(motorRect.left - 7, cy - 13, 8, 26);
+    canvas.drawRRect(RRect.fromRectAndRadius(capBackRect, const Radius.circular(3)), Paint()..color = const Color(0xFF1E293B));
 
-    // Bornes de solda de latão na tampa traseira
-    canvas.drawRect(Rect.fromLTWH(motorRect.left - 7, cy - 7, 2, 4), Paint()..color = const Color(0xFFFFD54F));
-    canvas.drawRect(Rect.fromLTWH(motorRect.left - 7, cy + 3, 2, 4), Paint()..color = const Color(0xFFFFD54F));
-
-    // Corpo metálico cilíndrico de aço escovado (Can-shape)
+    // Corpo metálico cilíndrico de aço escovado
     final motorGradient = Paint()
       ..shader = LinearGradient(
         colors: isActive
@@ -748,27 +741,27 @@ class ComponentPhysicalPainter extends CustomPainter {
         end: Alignment.bottomCenter,
       ).createShader(motorRect);
 
-    canvas.drawRRect(RRect.fromRectAndRadius(motorRect, const Radius.circular(5.0)), motorGradient);
+    canvas.drawRRect(RRect.fromRectAndRadius(motorRect, const Radius.circular(7.0)), motorGradient);
 
-    // Fresta de ventilação lateral (Vent Slot) exibindo o enrolamento de cobre
-    final ventSlot = Rect.fromLTWH(cx - 9, cy - 6, 10, 8);
-    canvas.drawRRect(RRect.fromRectAndRadius(ventSlot, const Radius.circular(1.5)), Paint()..color = const Color(0xFF0F172A));
-    canvas.drawRect(Rect.fromLTWH(cx - 7, cy - 4, 6, 4), Paint()..color = const Color(0xFFD97706)); // Bobina de Cobre
+    // Fresta de ventilação lateral
+    final ventSlot = Rect.fromLTWH(cx - 12, cy - 8, 14, 11);
+    canvas.drawRRect(RRect.fromRectAndRadius(ventSlot, const Radius.circular(2.0)), Paint()..color = const Color(0xFF0F172A));
+    canvas.drawRect(Rect.fromLTWH(cx - 9, cy - 6, 8, 7), Paint()..color = const Color(0xFFD97706));
 
-    // Eixo rotativo de Aço Inox 2mm
+    // Eixo rotativo de Aço Inox
     final shaftPaint = Paint()
       ..shader = const LinearGradient(
         colors: [Colors.white, Color(0xFFCBD5E1), Color(0xFF64748B)],
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-      ).createShader(Rect.fromLTWH(motorRect.right, cy - 2, 9, 4))
-      ..strokeWidth = 3.8
+      ).createShader(Rect.fromLTWH(motorRect.right, cy - 3, 12, 6))
+      ..strokeWidth = 5.0
       ..strokeCap = StrokeCap.round;
-    canvas.drawLine(Offset(motorRect.right, cy), Offset(motorRect.right + 8, cy), shaftPaint);
+    canvas.drawLine(Offset(motorRect.right, cy), Offset(motorRect.right + 11, cy), shaftPaint);
 
-    // Hélice / Rotor 3D de 4 pás
-    final discCenter = Offset(motorRect.right + 8, cy);
-    const fanRadius = 13.0;
+    // Hélice / Rotor 3D
+    final discCenter = Offset(motorRect.right + 11, cy);
+    const fanRadius = 19.0;
 
     canvas.drawCircle(discCenter, fanRadius, Paint()..color = isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9));
     canvas.drawCircle(
@@ -777,7 +770,7 @@ class ComponentPhysicalPainter extends CustomPainter {
       Paint()
         ..color = const Color(0xFF00F5D4)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.2,
+        ..strokeWidth = 1.6,
     );
 
     final angle = isActive ? (DateTime.now().millisecondsSinceEpoch / 20) % (2 * math.pi) : 0.0;
@@ -785,8 +778,8 @@ class ComponentPhysicalPainter extends CustomPainter {
     for (int i = 0; i < 4; i++) {
       final bladeAngle = angle + (i * math.pi / 2);
       final pEnd = Offset(
-        discCenter.dx + (fanRadius - 1.0) * math.cos(bladeAngle),
-        discCenter.dy + (fanRadius - 1.0) * math.sin(bladeAngle),
+        discCenter.dx + (fanRadius - 1.5) * math.cos(bladeAngle),
+        discCenter.dy + (fanRadius - 1.5) * math.sin(bladeAngle),
       );
 
       final bladePath = Path()
@@ -802,32 +795,31 @@ class ComponentPhysicalPainter extends CustomPainter {
         bladePath,
         Paint()
           ..color = isActive ? const Color(0xFF00F5D4) : (isDarkMode ? const Color(0xFF94A3B8) : const Color(0xFF334155))
-          ..strokeWidth = 3.5
+          ..strokeWidth = 4.8
           ..style = PaintingStyle.stroke
           ..strokeCap = StrokeCap.round,
       );
     }
-    canvas.drawCircle(discCenter, 3.2, Paint()..color = const Color(0xFFD97706));
-    canvas.drawCircle(discCenter, 1.2, Paint()..color = Colors.black);
+    canvas.drawCircle(discCenter, 4.5, Paint()..color = const Color(0xFFD97706));
+    canvas.drawCircle(discCenter, 1.8, Paint()..color = Colors.black);
   }
 
-
   /// --------------------------------------------------------------------------
-  /// POTENCIÔMETRO ROTATIVO 10k 3D
+  /// POTENCIÔMETRO ROTATIVO 10k 3D (Expandido)
   /// --------------------------------------------------------------------------
   void _drawPhysicalPotentiometer(Canvas canvas, Size size, double cx, double cy) {
     final knobCenter = Offset(cx, cy);
-    const knobRadius = 16.0;
+    const knobRadius = 25.0;
 
     _drawCleanLeads(canvas, size, cx, cy, cx - knobRadius - 2, cx + knobRadius + 2);
 
     canvas.drawCircle(
-      knobCenter.translate(2, 3),
+      knobCenter.translate(3, 4),
       knobRadius,
-      Paint()..color = Colors.black.withValues(alpha: 0.35)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+      Paint()..color = Colors.black.withValues(alpha: 0.35)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
     );
 
-    // Corpo metálico de Zinco com textura recartilhada
+    // Corpo metálico de Zinco
     canvas.drawCircle(
       knobCenter,
       knobRadius,
@@ -839,28 +831,28 @@ class ComponentPhysicalPainter extends CustomPainter {
 
     // Eixo rotativo de alumínio com entalhe indicador
     const angle = -math.pi / 4;
-    final indX = knobCenter.dx + (knobRadius - 3.5) * math.cos(angle);
-    final indY = knobCenter.dy + (knobRadius - 3.5) * math.sin(angle);
+    final indX = knobCenter.dx + (knobRadius - 5.0) * math.cos(angle);
+    final indY = knobCenter.dy + (knobRadius - 5.0) * math.sin(angle);
     canvas.drawLine(
       knobCenter,
       Offset(indX, indY),
-      Paint()..color = const Color(0xFF00F5D4)..strokeWidth = 2.8..strokeCap = StrokeCap.round,
+      Paint()..color = const Color(0xFF00F5D4)..strokeWidth = 3.8..strokeCap = StrokeCap.round,
     );
-    canvas.drawCircle(knobCenter, 3.5, Paint()..color = const Color(0xFF212121));
+    canvas.drawCircle(knobCenter, 5.0, Paint()..color = const Color(0xFF212121));
   }
 
   /// --------------------------------------------------------------------------
-  /// FONTE DE ALIMENTAÇÃO DE BANCADA (Power Supply 3D)
+  /// FONTE DE ALIMENTAÇÃO DE BANCADA (Power Supply 3D - Expandida)
   /// --------------------------------------------------------------------------
   void _drawPhysicalPowerSupply(Canvas canvas, Size size, double cx, double cy) {
-    final bodyRect = Rect.fromCenter(center: Offset(cx, cy), width: size.width * 0.82, height: size.height * 0.72);
-    final rr = RRect.fromRectAndRadius(bodyRect, const Radius.circular(8));
+    final bodyRect = Rect.fromCenter(center: Offset(cx, cy), width: size.width * 0.90, height: size.height * 0.82);
+    final rr = RRect.fromRectAndRadius(bodyRect, const Radius.circular(10));
 
     _drawCleanLeads(canvas, size, cx, cy, bodyRect.left, bodyRect.right);
 
     canvas.drawRRect(
-      RRect.fromRectAndRadius(bodyRect.translate(2, 4), const Radius.circular(8)),
-      Paint()..color = Colors.black.withValues(alpha: 0.4)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+      RRect.fromRectAndRadius(bodyRect.translate(3, 5), const Radius.circular(10)),
+      Paint()..color = Colors.black.withValues(alpha: 0.4)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
     );
 
     canvas.drawRRect(
@@ -873,11 +865,11 @@ class ComponentPhysicalPainter extends CustomPainter {
         ).createShader(bodyRect),
     );
 
-    canvas.drawRRect(rr, Paint()..color = const Color(0xFF00F5D4).withValues(alpha: 0.7)..strokeWidth = 1.5..style = PaintingStyle.stroke);
+    canvas.drawRRect(rr, Paint()..color = const Color(0xFF00F5D4).withValues(alpha: 0.7)..strokeWidth = 1.8..style = PaintingStyle.stroke);
 
-    // Display LCD Digital 7 Segmentos
-    final lcdRect = Rect.fromCenter(center: Offset(cx, cy - 6), width: 52, height: 22);
-    canvas.drawRRect(RRect.fromRectAndRadius(lcdRect, const Radius.circular(4)), Paint()..color = const Color(0xFF022C22));
+    // Display LCD Digital
+    final lcdRect = Rect.fromCenter(center: Offset(cx, cy - 8), width: 68, height: 28);
+    canvas.drawRRect(RRect.fromRectAndRadius(lcdRect, const Radius.circular(5)), Paint()..color = const Color(0xFF022C22));
     
     final voltStr = value > 0 ? '${value.toStringAsFixed(1)}V' : '12.0V';
     final textPainter = TextPainter(
@@ -885,37 +877,37 @@ class ComponentPhysicalPainter extends CustomPainter {
         text: voltStr,
         style: const TextStyle(
           color: Color(0xFF00FF9D),
-          fontSize: 12,
+          fontSize: 15,
           fontWeight: FontWeight.bold,
-          letterSpacing: 1.2,
+          letterSpacing: 1.4,
         ),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    textPainter.paint(canvas, Offset(cx - textPainter.width / 2, cy - 13));
+    textPainter.paint(canvas, Offset(cx - textPainter.width / 2, cy - 17));
   }
 
   /// --------------------------------------------------------------------------
-  /// FUSÍVEL DE VIDRO 5x20mm (Cartridge Fuse 3D)
+  /// FUSÍVEL DE VIDRO 5x20mm (Cartridge Fuse 3D - Expandido)
   /// --------------------------------------------------------------------------
   void _drawPhysicalFuse(Canvas canvas, Size size, double cx, double cy) {
-    final tubeRect = Rect.fromCenter(center: Offset(cx, cy), width: 40, height: 13);
+    final tubeRect = Rect.fromCenter(center: Offset(cx, cy), width: 62, height: 20);
 
     _drawCleanLeads(canvas, size, cx, cy, tubeRect.left - 2, tubeRect.right + 2);
 
     // Corpo de Vidro Transparente
     canvas.drawRRect(
-      RRect.fromRectAndRadius(tubeRect, const Radius.circular(4)),
+      RRect.fromRectAndRadius(tubeRect, const Radius.circular(5)),
       Paint()..color = isDarkMode ? Colors.white24 : const Color(0x66E0F7FA),
     );
     canvas.drawRRect(
-      RRect.fromRectAndRadius(tubeRect, const Radius.circular(4)),
-      Paint()..color = Colors.cyan.withValues(alpha: 0.6)..strokeWidth = 1.2..style = PaintingStyle.stroke,
+      RRect.fromRectAndRadius(tubeRect, const Radius.circular(5)),
+      Paint()..color = Colors.cyan.withValues(alpha: 0.6)..strokeWidth = 1.5..style = PaintingStyle.stroke,
     );
 
-    // Terminais metálicos niquelados nas pontas (End Caps)
-    final capLeft = Rect.fromLTWH(tubeRect.left, tubeRect.top, 8.5, 13);
-    final capRight = Rect.fromLTWH(tubeRect.right - 8.5, tubeRect.top, 8.5, 13);
+    // Terminais metálicos niquelados
+    final capLeft = Rect.fromLTWH(tubeRect.left, tubeRect.top, 13, 20);
+    final capRight = Rect.fromLTWH(tubeRect.right - 13, tubeRect.top, 13, 20);
     final metalPaint = Paint()
       ..shader = const LinearGradient(
         colors: [Colors.white, Color(0xFFB0BEC5), Color(0xFF546E7A)],
@@ -926,31 +918,31 @@ class ComponentPhysicalPainter extends CustomPainter {
     canvas.drawRect(capLeft, metalPaint);
     canvas.drawRect(capRight, metalPaint);
 
-    // Elemento fusível interno (Fio)
+    // Elemento fusível interno
     if (!isBurned) {
       canvas.drawLine(
-        Offset(tubeRect.left + 8.5, cy),
-        Offset(tubeRect.right - 8.5, cy),
-        Paint()..color = Colors.amber.shade400..strokeWidth = 1.5,
+        Offset(tubeRect.left + 13, cy),
+        Offset(tubeRect.right - 13, cy),
+        Paint()..color = Colors.amber.shade400..strokeWidth = 2.2,
       );
     } else {
-      canvas.drawLine(Offset(tubeRect.left + 8.5, cy), Offset(cx - 4, cy + 2.5), Paint()..color = Colors.black87..strokeWidth = 1.5);
-      canvas.drawLine(Offset(cx + 4, cy - 2.5), Offset(tubeRect.right - 8.5, cy), Paint()..color = Colors.black87..strokeWidth = 1.5);
+      canvas.drawLine(Offset(tubeRect.left + 13, cy), Offset(cx - 6, cy + 3.5), Paint()..color = Colors.black87..strokeWidth = 2.2);
+      canvas.drawLine(Offset(cx + 6, cy - 3.5), Offset(tubeRect.right - 13, cy), Paint()..color = Colors.black87..strokeWidth = 2.2);
     }
   }
 
   /// --------------------------------------------------------------------------
-  /// CAPACITOR ELETROLÍTICO DE ALUMÍNIO (Capacitor 3D)
+  /// CAPACITOR ELETROLÍTICO DE ALUMÍNIO (Expandido)
   /// --------------------------------------------------------------------------
   void _drawPhysicalCapacitor(Canvas canvas, Size size, double cx, double cy) {
-    final capRect = Rect.fromCenter(center: Offset(cx, cy), width: 24, height: 28);
-    final rr = RRect.fromRectAndRadius(capRect, const Radius.circular(5.5));
+    final capRect = Rect.fromCenter(center: Offset(cx, cy), width: 36, height: 42);
+    final rr = RRect.fromRectAndRadius(capRect, const Radius.circular(7.5));
 
     _drawCleanLeads(canvas, size, cx, cy, capRect.left - 2, capRect.right + 2);
 
     canvas.drawRRect(
-      RRect.fromRectAndRadius(capRect.translate(1.5, 3), const Radius.circular(5.5)),
-      Paint()..color = Colors.black.withValues(alpha: 0.35)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+      RRect.fromRectAndRadius(capRect.translate(2.5, 4.0), const Radius.circular(7.5)),
+      Paint()..color = Colors.black.withValues(alpha: 0.35)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
     );
 
     // Casing cilíndrico com manga de PVC azul
@@ -966,30 +958,30 @@ class ComponentPhysicalPainter extends CustomPainter {
 
     // Faixa branca de polaridade negativa (-)
     canvas.drawRect(
-      Rect.fromLTWH(capRect.left + 2, capRect.top, 5.5, capRect.height),
+      Rect.fromLTWH(capRect.left + 3, capRect.top, 8.0, capRect.height),
       Paint()..color = const Color(0xFFECEFF1),
     );
-    TextPainter(text: const TextSpan(text: '-', style: TextStyle(color: Color(0xFF0D47A1), fontSize: 9, fontWeight: FontWeight.bold)), textDirection: TextDirection.ltr)
+    TextPainter(text: const TextSpan(text: '-', style: TextStyle(color: Color(0xFF0D47A1), fontSize: 13, fontWeight: FontWeight.bold)), textDirection: TextDirection.ltr)
       ..layout()
-      ..paint(canvas, Offset(capRect.left + 3, capRect.top + 8));
+      ..paint(canvas, Offset(capRect.left + 4.5, capRect.top + 12));
 
-    // Topo de alumínio com estamparia de ranhura de segurança (+ relief score)
-    canvas.drawRect(Rect.fromLTWH(capRect.left, capRect.top, capRect.width, 3), Paint()..color = const Color(0xFFCFD8DC));
+    // Topo de alumínio com estamparia de ranhura de segurança
+    canvas.drawRect(Rect.fromLTWH(capRect.left, capRect.top, capRect.width, 4.5), Paint()..color = const Color(0xFFCFD8DC));
   }
 
   /// --------------------------------------------------------------------------
-  /// BUZZER PIEZOELÉTRICO ATIVO (Buzzer 3D)
+  /// BUZZER PIEZOELÉTRICO ATIVO (Expandido)
   /// --------------------------------------------------------------------------
   void _drawPhysicalBuzzer(Canvas canvas, Size size, double cx, double cy) {
     final buzzCenter = Offset(cx, cy);
-    const buzzRadius = 16.0;
+    const buzzRadius = 24.0;
 
     _drawCleanLeads(canvas, size, cx, cy, buzzCenter.dx - buzzRadius - 2, buzzCenter.dx + buzzRadius + 2);
 
     canvas.drawCircle(
-      buzzCenter.translate(2, 3),
+      buzzCenter.translate(3, 4),
       buzzRadius,
-      Paint()..color = Colors.black.withValues(alpha: 0.35)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+      Paint()..color = Colors.black.withValues(alpha: 0.35)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
     );
 
     // Corpo de plástico Noryl preto
@@ -1003,19 +995,19 @@ class ComponentPhysicalPainter extends CustomPainter {
     );
 
     // Anel de borda de vedação
-    canvas.drawCircle(buzzCenter, buzzRadius, Paint()..color = const Color(0xFF00F5D4).withValues(alpha: 0.5)..strokeWidth = 1.2..style = PaintingStyle.stroke);
+    canvas.drawCircle(buzzCenter, buzzRadius, Paint()..color = const Color(0xFF00F5D4).withValues(alpha: 0.5)..strokeWidth = 1.6..style = PaintingStyle.stroke);
     
     // Orifício de ressonância acústica central
-    canvas.drawCircle(buzzCenter, 4.5, Paint()..color = Colors.black);
+    canvas.drawCircle(buzzCenter, 6.5, Paint()..color = Colors.black);
 
     // Ondas sonoras animadas quando ativo
     if (isActive) {
       final wavePaint = Paint()
         ..color = const Color(0xFF00F5D4).withValues(alpha: 0.85)
-        ..strokeWidth = 2.2
+        ..strokeWidth = 3.0
         ..style = PaintingStyle.stroke;
-      canvas.drawArc(Rect.fromCircle(center: buzzCenter, radius: 21), -math.pi / 3, 2 * math.pi / 3, false, wavePaint);
-      canvas.drawArc(Rect.fromCircle(center: buzzCenter, radius: 26), -math.pi / 3, 2 * math.pi / 3, false, wavePaint..color = const Color(0xFF00F5D4).withValues(alpha: 0.4));
+      canvas.drawArc(Rect.fromCircle(center: buzzCenter, radius: 31), -math.pi / 3, 2 * math.pi / 3, false, wavePaint);
+      canvas.drawArc(Rect.fromCircle(center: buzzCenter, radius: 38), -math.pi / 3, 2 * math.pi / 3, false, wavePaint..color = const Color(0xFF00F5D4).withValues(alpha: 0.4));
     }
   }
 

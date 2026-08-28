@@ -37,7 +37,7 @@ class SandboxScreen extends ConsumerStatefulWidget {
 }
 
 class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProviderStateMixin {
-  int _gridCols = 6;
+  int _gridCols = 8;
   int _gridRows = 5;
 
   Set<String> _selectedComponentIds = {};
@@ -583,24 +583,24 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                             },
                             itemBuilder: (context) => [
                               PopupMenuItem(
-                                value: '6x5',
-                                child: Text('6 × 5 (${isEn ? "Standard" : "Padrão"})', style: const TextStyle(fontSize: 12)),
+                                value: '8x5',
+                                child: Text('8 × 5 (${isEn ? "Standard" : "Padrão"})', style: const TextStyle(fontSize: 12)),
                               ),
                               PopupMenuItem(
-                                value: '8x6',
-                                child: Text('8 × 6 (${isEn ? "Medium" : "Médio"})', style: const TextStyle(fontSize: 12)),
+                                value: '10x6',
+                                child: Text('10 × 6 (${isEn ? "Medium" : "Médio"})', style: const TextStyle(fontSize: 12)),
                               ),
                               PopupMenuItem(
-                                value: '10x8',
-                                child: Text('10 × 8 (${isEn ? "Large" : "Grande"})', style: const TextStyle(fontSize: 12)),
+                                value: '12x8',
+                                child: Text('12 × 8 (${isEn ? "Large" : "Grande"})', style: const TextStyle(fontSize: 12)),
                               ),
                               PopupMenuItem(
-                                value: '12x10',
-                                child: Text('12 × 10 (${isEn ? "Extra Large" : "Extra Grande"})', style: const TextStyle(fontSize: 12)),
+                                value: '14x10',
+                                child: Text('14 × 10 (${isEn ? "Extra Large" : "Extra Grande"})', style: const TextStyle(fontSize: 12)),
                               ),
                               PopupMenuItem(
-                                value: '16x12',
-                                child: Text('16 × 12 (${isEn ? "Maximum" : "Máximo"})', style: const TextStyle(fontSize: 12)),
+                                value: '18x12',
+                                child: Text('18 × 12 (${isEn ? "Maximum" : "Máximo"})', style: const TextStyle(fontSize: 12)),
                               ),
                             ],
                           ),
@@ -1381,26 +1381,48 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                 builder: (context, child) {
                   return Transform.rotate(
                     angle: component.rotation * (math.pi / 180.0),
-                    child: CustomPaint(
-                      painter: _isDiagramMode
-                          ? CircuitSymbolPainter(
-                              type: component.type,
-                              isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
-                              isBurned: isBurned,
-                              color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
-                              activeColor: active || component.isActive ? const Color(0xFF00FF9D) : const Color(0xFFFFB300),
-                              strokeWidth: active || component.isActive ? 2.8 : 2.0,
-                              value: component.value,
-                              animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
-                            )
-                          : ComponentPhysicalPainter(
-                              type: component.type,
-                              isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
-                              isBurned: isBurned,
-                              isDarkMode: isDark,
-                              value: component.value,
-                              animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
+                    child: Stack(
+                      children: [
+                        if (_isDiagramMode)
+                          Positioned.fill(
+                            child: Opacity(
+                              opacity: isDark ? 0.25 : 0.30,
+                              child: CustomPaint(
+                                painter: ComponentPhysicalPainter(
+                                  type: component.type,
+                                  isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
+                                  isBurned: isBurned,
+                                  isDarkMode: isDark,
+                                  value: component.value,
+                                  animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
+                                ),
+                              ),
                             ),
+                          ),
+                        Positioned.fill(
+                          child: CustomPaint(
+                            painter: _isDiagramMode
+                                ? CircuitSymbolPainter(
+                                    type: component.type,
+                                    isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
+                                    isBurned: isBurned,
+                                    color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
+                                    activeColor: active || component.isActive ? const Color(0xFF00FF9D) : const Color(0xFFFFB300),
+                                    strokeWidth: active || component.isActive ? 2.8 : 2.0,
+                                    value: component.value,
+                                    animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
+                                  )
+                                : ComponentPhysicalPainter(
+                                    type: component.type,
+                                    isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
+                                    isBurned: isBurned,
+                                    isDarkMode: isDark,
+                                    value: component.value,
+                                    animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
+                                  ),
+                          ),
+                        ),
+                      ],
                     ),
                   );
                 },

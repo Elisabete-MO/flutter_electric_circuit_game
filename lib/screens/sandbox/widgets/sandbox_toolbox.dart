@@ -125,20 +125,39 @@ class SandboxToolboxWidget extends StatelessWidget {
           children: [
             AspectRatio(
               aspectRatio: compact ? 2.0 : 1.8,
-              child: CustomPaint(
-                painter: isDiagramMode
-                    ? CircuitSymbolPainter(
-                        type: type,
-                        isActive: false,
-                        color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
-                        activeColor: const Color(0xFFFFB300),
-                        strokeWidth: 2.0,
-                      )
-                    : ComponentPhysicalPainter(
-                        type: type,
-                        isActive: false,
-                        isDarkMode: isDark,
+              child: Stack(
+                children: [
+                  if (isDiagramMode)
+                    Positioned.fill(
+                      child: Opacity(
+                        opacity: isDark ? 0.25 : 0.30,
+                        child: CustomPaint(
+                          painter: ComponentPhysicalPainter(
+                            type: type,
+                            isActive: false,
+                            isDarkMode: isDark,
+                          ),
+                        ),
                       ),
+                    ),
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: isDiagramMode
+                          ? CircuitSymbolPainter(
+                              type: type,
+                              isActive: false,
+                              color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
+                              activeColor: const Color(0xFFFFB300),
+                              strokeWidth: 2.0,
+                            )
+                          : ComponentPhysicalPainter(
+                              type: type,
+                              isActive: false,
+                              isDarkMode: isDark,
+                            ),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 3),
