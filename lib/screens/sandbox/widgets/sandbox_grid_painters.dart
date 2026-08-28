@@ -666,7 +666,7 @@ Path buildSmartWirePath({
       path.lineTo(end.dx, end.dy);
     }
   } else {
-    // Modo Físico Realista Orgânico (Fios maleáveis com física de catenária fluida)
+    // Modo Físico Realista Orgânico (Catenária fluida de alta fidelidade física)
     final minX = math.min(start.dx, end.dx);
     final maxX = math.max(start.dx, end.dx);
 
@@ -694,10 +694,11 @@ Path buildSmartWirePath({
     final endIsLeft = (end.dx % cellSize) < (cellSize / 2);
 
     final dist = (end - start).distance;
+    final absDx = (end.dx - start.dx).abs();
     final isLongSpan = dist > cellSize * 1.4;
 
     if (hasIntermediateObstacle || (isLongSpan && (start.dy - end.dy).abs() < 10)) {
-      // Conexão longa que sobrevoa/subvoa módulos intermediários: Curva ampla de gravidade limpa
+      // Conexão de longa distância (sobrevoando/subvoando outros cartões)
       final startRowBottom = ((start.dy / cellSize).floor() + 1.0) * cellSize;
       final endRowBottom = ((end.dy / cellSize).floor() + 1.0) * cellSize;
       final cardBottomY = math.max(startRowBottom, endRowBottom);
@@ -722,20 +723,22 @@ Path buildSmartWirePath({
         end.dy,
       );
     } else {
-      // Conexões diretas ou entre alturas diferentes (ex: Bateria no y=1 e Resistor no y=0):
-      // Roteamento de catenária natural fluida e orgânica sem cotovelos duros ou caimentos abruptos em U.
+      // Conexão entre terminais adjacentes ou em diferentes alturas (Catenária física fluida sem rigidez)
       final dxOut1 = startIsLeft ? -1.0 : 1.0;
       final dxOut2 = endIsLeft ? -1.0 : 1.0;
 
-      final armLength = math.min(dist * 0.4, 38.0).clamp(16.0, 38.0);
-      final sagAmount = math.max(12.0, dist * 0.15);
+      // Limita a projeção horizontal dos pontos de controle para evitar cruzamentos rígidos em S
+      final armX = math.min(32.0, math.max(12.0, absDx * 0.45));
 
-      final cp1X = start.dx + dxOut1 * armLength;
-      final cp2X = end.dx + dxOut2 * armLength;
+      final cp1X = start.dx + dxOut1 * armX;
+      final cp2X = end.dx + dxOut2 * armX;
 
-      // Suavização do peso de gravidade dependendo da inclinação do cabo
-      final cp1Y = start.dy + sagAmount + (dy > 0 ? dy * 0.15 : 0);
-      final cp2Y = end.dy + sagAmount + (dy < 0 ? -dy * 0.15 : 0);
+      // Caimento de gravidade natural de alta fluidez
+      final sagBase = math.max(16.0, dist * 0.22);
+      final maxY = math.max(start.dy, end.dy);
+
+      final cp1Y = math.max(start.dy + sagBase * 0.4, maxY + sagBase * 0.25);
+      final cp2Y = math.max(end.dy + sagBase * 0.4, maxY + sagBase * 0.25);
 
       path.cubicTo(
         cp1X,
