@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../../../models/first_step_component.dart';
 import '../../../models/sandbox_component.dart';
 import '../../../models/sandbox_wire.dart';
 import '../models/connection_source.dart';
@@ -161,6 +162,32 @@ class WiresPainter extends CustomPainter {
         );
       }
 
+      // Cor Didática do Fio por Polaridade de Origem (Vermelho +, Azul -, Amarelo Sinal)
+      final isFromPosPower = (fromComp.type == ComponentType.battery || fromComp.type == ComponentType.powerSupply) && wire.fromTerminal == 'B';
+      final isToPosPower = (toComp.type == ComponentType.battery || toComp.type == ComponentType.powerSupply) && wire.toTerminal == 'B';
+
+      final isFromNegPower = (fromComp.type == ComponentType.battery || fromComp.type == ComponentType.powerSupply) && wire.fromTerminal == 'A';
+      final isToNegPower = (toComp.type == ComponentType.battery || toComp.type == ComponentType.powerSupply) && wire.toTerminal == 'A';
+
+      final Color wireBaseColor;
+      final Color wireGlowColor;
+
+      if (isFromPosPower || isToPosPower) {
+        // Fio Vermelho para Pólo Positivo VCC (+)
+        wireBaseColor = const Color(0xFFE53935);
+        wireGlowColor = const Color(0xFFFF3B7F);
+      } else if (isFromNegPower || isToNegPower) {
+        // Fio Azul para Pólo Negativo GND (-)
+        wireBaseColor = isDark ? const Color(0xFF1E88E5) : const Color(0xFF1565C0);
+        wireGlowColor = const Color(0xFF00E5FF);
+      } else {
+        // Fio Amarelo/Laranja para conexões intermediárias de sinal
+        wireBaseColor = isDark ? const Color(0xFFFFB300) : const Color(0xFFFB8C00);
+        wireGlowColor = const Color(0xFF00FF9D);
+      }
+
+      final wireColor = isWireActive ? wireGlowColor : wireBaseColor;
+
       if (isShortWire) {
         // --- EFEITO DE ANIMAÇÃO DE CURTO-CIRCUITO ---
         final pulse = 0.5 + 0.5 * math.sin(animationValue * math.pi * 6);
@@ -253,15 +280,11 @@ class WiresPainter extends CustomPainter {
         }
       } else if (isDiagramMode) {
         // Estilo Diagrama Esquemático: Linhas limpas e nítidas
-        final wireColor = isWireActive
-            ? const Color(0xFF00FF9D)
-            : (isDark ? const Color(0xFF00F5D4) : Colors.black87);
-
         canvas.drawPath(
           path,
           Paint()
             ..color = wireColor
-            ..strokeWidth = isWireActive ? 3.0 : 2.2
+            ..strokeWidth = isWireActive ? 3.2 : 2.4
             ..style = PaintingStyle.stroke
             ..strokeCap = StrokeCap.round,
         );
@@ -272,7 +295,7 @@ class WiresPainter extends CustomPainter {
           path,
           Paint()
             ..color = Colors.black26
-            ..strokeWidth = 5.0
+            ..strokeWidth = 5.5
             ..style = PaintingStyle.stroke
             ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
         );
@@ -281,10 +304,8 @@ class WiresPainter extends CustomPainter {
         canvas.drawPath(
           path,
           Paint()
-            ..color = isWireActive
-                ? const Color(0xFF00FF9D).withValues(alpha: 0.8)
-                : (isDark ? Colors.blueGrey.shade700 : Colors.grey.shade400)
-            ..strokeWidth = 3.5
+            ..color = wireColor
+            ..strokeWidth = isWireActive ? 4.2 : 3.5
             ..style = PaintingStyle.stroke
             ..strokeCap = StrokeCap.round,
         );
@@ -293,7 +314,7 @@ class WiresPainter extends CustomPainter {
         canvas.drawPath(
           path,
           Paint()
-            ..color = Colors.white.withValues(alpha: 0.4)
+            ..color = Colors.white.withValues(alpha: isWireActive ? 0.6 : 0.35)
             ..strokeWidth = 1.0
             ..style = PaintingStyle.stroke
             ..strokeCap = StrokeCap.round,
