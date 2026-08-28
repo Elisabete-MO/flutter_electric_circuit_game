@@ -307,11 +307,14 @@ class SandboxController extends Notifier<SandboxState> {
     final Map<String, double> values = {};
     String? error;
     final Set<String> newBurnedSet = Set.from(targetState.burnedComponentIds);
+    bool isShortCircuit = false;
+    final Set<String> shortCircuitWireIds = {};
 
     for (final source in powerSources) {
       final visited = <String>{source.id};
       final componentPath = <SandboxComponent>[];
-      final List<List<SandboxComponent>> closedLoops = [];
+      final wirePath = <SandboxWire>[];
+      final List<_ClosedLoopData> closedLoops = [];
 
       // Start traversal from positive terminal 'B'
       _traverseForState(
@@ -321,15 +324,17 @@ class SandboxController extends Notifier<SandboxState> {
         targetBattery: source,
         visited: visited,
         componentPath: componentPath,
-        onLoopClosed: (pathComponents) {
-          closedLoops.add(List.from(pathComponents));
+        wirePath: wirePath,
+        onLoopClosed: (pathComponents, pathWires) {
+          closedLoops.add(_ClosedLoopData(List.from(pathComponents), List.from(pathWires)));
         },
       );
 
       if (closedLoops.isNotEmpty) {
         double totalSourceCurrent = 0.0;
 
-        for (final loopPath in closedLoops) {
+        for (final loop in closedLoops) {
+          final loopPath = loop.components;
           final totalResistance = loopPath
               .where((c) => c.type != ComponentType.battery && c.type != ComponentType.powerSupply)
               .fold(0.0, (sum, c) {
@@ -341,6 +346,10 @@ class SandboxController extends Notifier<SandboxState> {
 
           if (totalResistance <= 0.1) {
             error = 'CURTO-CIRCUITO DETECTADO! Conexão direta entre pólos sem carga!';
+            isShortCircuit = true;
+            for (final w in loop.wires) {
+              shortCircuitWireIds.add(w.id);
+            }
             break;
           }
 
@@ -406,6 +415,8 @@ class SandboxController extends Notifier<SandboxState> {
       simulationValues: values,
       errorMessage: error,
       burnedComponentIds: newBurnedSet,
+      isShortCircuit: isShortCircuit,
+      shortCircuitWireIds: shortCircuitWireIds,
     );
   }
 
@@ -429,7 +440,8 @@ class SandboxController extends Notifier<SandboxState> {
     required SandboxComponent targetBattery,
     required Set<String> visited,
     required List<SandboxComponent> componentPath,
-    required void Function(List<SandboxComponent>) onLoopClosed,
+    required List<SandboxWire> wirePath,
+    required void Function(List<SandboxComponent>, List<SandboxWire>) onLoopClosed,
   }) {
     componentPath.add(currentComponent);
 
@@ -446,25 +458,32 @@ class SandboxController extends Notifier<SandboxState> {
       if (nextComponentList.isEmpty) continue;
       final nextComponent = nextComponentList.first;
 
+      wirePath.add(wire);
+
       if (nextComponent.id == targetBattery.id && nextTerm == 'A') {
-        onLoopClosed(List.from(componentPath));
+        onLoopClosed(List.from(componentPath), List.from(wirePath));
+        wirePath.removeLast();
         return;
       }
 
       if (visited.contains(nextComponent.id)) {
+        wirePath.removeLast();
         continue;
       }
 
       if (targetState.burnedComponentIds.contains(nextComponent.id)) {
+        wirePath.removeLast();
         continue; // Componente queimado interrompe o circuito (circuito aberto)
       }
 
       if (nextComponent.type == ComponentType.switchComponent && !nextComponent.isActive) {
+        wirePath.removeLast();
         continue;
       }
 
       if (nextComponent.type == ComponentType.diode || nextComponent.type == ComponentType.led) {
         if (nextTerm == 'A') {
+          wirePath.removeLast();
           continue; // Bloqueia a corrente se ela tentar entrar pelo Cathode ('A', -) - Polarização Reversa
         }
       }
@@ -479,13 +498,21 @@ class SandboxController extends Notifier<SandboxState> {
         targetBattery: targetBattery,
         visited: visited,
         componentPath: componentPath,
+        wirePath: wirePath,
         onLoopClosed: onLoopClosed,
       );
       visited.remove(nextComponent.id);
+      wirePath.removeLast();
     }
 
     componentPath.removeLast();
   }
+}
+
+class _ClosedLoopData {
+  final List<SandboxComponent> components;
+  final List<SandboxWire> wires;
+  _ClosedLoopData(this.components, this.wires);
 }
 
 final sandboxControllerProvider = NotifierProvider<SandboxController, SandboxState>(

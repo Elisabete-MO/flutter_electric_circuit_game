@@ -9,6 +9,8 @@ class SandboxState {
     this.errorMessage,
     this.simulationValues = const {},
     this.burnedComponentIds = const {},
+    this.isShortCircuit = false,
+    this.shortCircuitWireIds = const {},
   });
 
   final List<SandboxComponent> components;
@@ -17,6 +19,8 @@ class SandboxState {
   final String? errorMessage;
   final Map<String, double> simulationValues; // values like current (Amps) or voltage drop (Volts) for components
   final Set<String> burnedComponentIds; // IDs of components overloaded/burned out
+  final bool isShortCircuit;
+  final Set<String> shortCircuitWireIds;
 
   SandboxState copyWith({
     List<SandboxComponent>? components,
@@ -25,6 +29,8 @@ class SandboxState {
     String? errorMessage,
     Map<String, double>? simulationValues,
     Set<String>? burnedComponentIds,
+    bool? isShortCircuit,
+    Set<String>? shortCircuitWireIds,
   }) {
     return SandboxState(
       components: components ?? this.components,
@@ -33,6 +39,8 @@ class SandboxState {
       errorMessage: errorMessage, // can be set to null explicitly by passing null
       simulationValues: simulationValues ?? this.simulationValues,
       burnedComponentIds: burnedComponentIds ?? this.burnedComponentIds,
+      isShortCircuit: isShortCircuit ?? this.isShortCircuit,
+      shortCircuitWireIds: shortCircuitWireIds ?? this.shortCircuitWireIds,
     );
   }
 }

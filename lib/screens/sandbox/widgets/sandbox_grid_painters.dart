@@ -95,6 +95,8 @@ class WiresPainter extends CustomPainter {
   final bool isSimulating;
   final Map<String, double> simulationValues;
   final double animationValue;
+  final bool isShortCircuit;
+  final Set<String> shortCircuitWireIds;
 
   WiresPainter({
     required this.wires,
@@ -105,6 +107,8 @@ class WiresPainter extends CustomPainter {
     required this.isSimulating,
     required this.simulationValues,
     required this.animationValue,
+    this.isShortCircuit = false,
+    this.shortCircuitWireIds = const {},
   });
 
   @override
@@ -125,8 +129,11 @@ class WiresPainter extends CustomPainter {
       final start = Offset(fromRelPos.dx * cellSize, fromRelPos.dy * cellSize);
       final end = Offset(toRelPos.dx * cellSize, toRelPos.dy * cellSize);
 
+      final isShortWire = isShortCircuit && (shortCircuitWireIds.isEmpty || shortCircuitWireIds.contains(wire.id));
+
       // Rota eletricamente ativa se a simulação estiver rodando e ambos os componentes conectados tiverem corrente
       final isWireActive = isSimulating && 
+          !isShortCircuit &&
           simulationValues['active_${fromComp.id}'] == 1.0 && 
           simulationValues['active_${toComp.id}'] == 1.0;
 
@@ -139,7 +146,97 @@ class WiresPainter extends CustomPainter {
         components: components,
       );
 
-      if (isDiagramMode) {
+      if (isShortWire) {
+        // --- EFEITO DE ANIMAÇÃO DE CURTO-CIRCUITO ---
+        final pulse = 0.5 + 0.5 * math.sin(animationValue * math.pi * 6);
+        final glowColor = const Color(0xFFFF3B7F); // Cyber Neon Red/Pink
+
+        // 1. Aura de sobrecarga piscante em volta do fio
+        canvas.drawPath(
+          path,
+          Paint()
+            ..color = glowColor.withValues(alpha: 0.6 + pulse * 0.4)
+            ..strokeWidth = 9.0 + pulse * 5.0
+            ..style = PaintingStyle.stroke
+            ..maskFilter = MaskFilter.blur(BlurStyle.normal, 4.0 + pulse * 6.0),
+        );
+
+        // 2. Núcleo em chamas / Vermelho de Alerta
+        canvas.drawPath(
+          path,
+          Paint()
+            ..color = const Color(0xFFFF1744)
+            ..strokeWidth = 4.0
+            ..style = PaintingStyle.stroke
+            ..strokeCap = StrokeCap.round,
+        );
+
+        // 3. Raios elétricos zangados (Jagged Lightning Bolt Zaps) ao longo do fio
+        final lightningPath = Path();
+        for (final metric in path.computeMetrics()) {
+          final length = metric.length;
+          bool isFirst = true;
+          for (double d = 0; d <= length; d += 8.0) {
+            final tangent = metric.getTangentForOffset(d);
+            if (tangent != null) {
+              final normal = Offset(-tangent.vector.dy, tangent.vector.dx);
+              // Oscilação de alta frequência simulando descarga elétrica
+              final jitter = math.sin((d * 0.5) + (animationValue * math.pi * 12)) * (4.0 + pulse * 3.0);
+              final pt = tangent.position + normal * jitter;
+              if (isFirst) {
+                lightningPath.moveTo(pt.dx, pt.dy);
+                isFirst = false;
+              } else {
+                lightningPath.lineTo(pt.dx, pt.dy);
+              }
+            }
+          }
+        }
+
+        canvas.drawPath(
+          lightningPath,
+          Paint()
+            ..color = const Color(0xFFFFD54F).withValues(alpha: 0.9) // Amarelo Faísca
+            ..strokeWidth = 2.0
+            ..style = PaintingStyle.stroke,
+        );
+
+        canvas.drawPath(
+          lightningPath,
+          Paint()
+            ..color = Colors.white
+            ..strokeWidth = 1.0
+            ..style = PaintingStyle.stroke,
+        );
+
+        // 4. Explosão de faíscas nos terminais de conexão em curto
+        for (final terminalPos in [start, end]) {
+          const sparkCount = 6;
+          for (int i = 0; i < sparkCount; i++) {
+            final angle = (i * math.pi / 3) + (animationValue * math.pi * 4);
+            final len = 6.0 + (pulse * 14.0);
+            final p1 = terminalPos;
+            final p2 = Offset(terminalPos.dx + len * math.cos(angle), terminalPos.dy + len * math.sin(angle));
+
+            canvas.drawLine(
+              p1,
+              p2,
+              Paint()
+                ..color = i % 2 == 0 ? const Color(0xFFFFD54F) : const Color(0xFFFF3B7F)
+                ..strokeWidth = 2.0
+                ..strokeCap = StrokeCap.round,
+            );
+          }
+          // Flash luminoso no nó do terminal
+          canvas.drawCircle(
+            terminalPos,
+            5.0 + pulse * 4.0,
+            Paint()
+              ..color = Colors.white.withValues(alpha: 0.9)
+              ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+          );
+        }
+      } else if (isDiagramMode) {
         // Estilo Diagrama Esquemático: Linhas limpas e nítidas
         final wireColor = isWireActive
             ? const Color(0xFF00FF9D)
@@ -270,7 +367,9 @@ class WiresPainter extends CustomPainter {
         oldDelegate.isDiagramMode != isDiagramMode ||
         oldDelegate.isSimulating != isSimulating ||
         oldDelegate.simulationValues != simulationValues ||
-        oldDelegate.animationValue != animationValue;
+        oldDelegate.animationValue != animationValue ||
+        oldDelegate.isShortCircuit != isShortCircuit ||
+        oldDelegate.shortCircuitWireIds != shortCircuitWireIds;
   }
 }
 

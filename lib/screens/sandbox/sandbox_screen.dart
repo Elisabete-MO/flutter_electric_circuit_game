@@ -722,6 +722,8 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                         isSimulating: state.isSimulating,
                         simulationValues: state.simulationValues,
                         animationValue: _wireAnimationController.value,
+                        isShortCircuit: state.isShortCircuit,
+                        shortCircuitWireIds: state.shortCircuitWireIds,
                       ),
                     );
                   },
