@@ -287,7 +287,7 @@ class SandboxController extends Notifier<SandboxState> {
 
       case 'led_resistor':
         final b = SandboxComponent(id: 'bat_$now', type: ComponentType.battery, gridX: 1, gridY: 2, value: 9.0);
-        final r = SandboxComponent(id: 'res_$now', type: ComponentType.resistor, gridX: 3, gridY: 2, value: 50.0);
+        final r = SandboxComponent(id: 'res_$now', type: ComponentType.resistor, gridX: 3, gridY: 2, value: 220.0);
         final led = SandboxComponent(id: 'led_$now', type: ComponentType.led, gridX: 5, gridY: 2, value: 10.0);
         newComponents = [b, r, led];
         newWires = [

@@ -27,7 +27,7 @@ class SandboxComponent {
       case ComponentType.powerSupply:
         return 12.0; // 12V regulável por padrão
       case ComponentType.resistor:
-        return 10.0; // 10 Ohms
+        return 220.0; // 220 Ohms por padrão (valor seguro para proteção de LEDs)
       case ComponentType.potentiometer:
         return 50.0; // 50 Ohms ajustável por padrão
       case ComponentType.bulb:
