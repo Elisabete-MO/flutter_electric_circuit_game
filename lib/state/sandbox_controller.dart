@@ -529,11 +529,11 @@ class SandboxController extends Notifier<SandboxState> {
 
       if (nextComponent.type == ComponentType.diode || nextComponent.type == ComponentType.led) {
         final isReversed = (nextComponent.rotation == 180.0 || nextComponent.rotation == 270.0)
-            ? (nextTerm == 'B')
-            : (nextTerm == 'A');
+            ? (nextTerm == 'A')
+            : (nextTerm == 'B');
         if (isReversed) {
           wirePath.removeLast();
-          continue; // Bloqueia a corrente se ela tentar entrar pelo Cathode - Polarização Reversa
+          continue; // Bloqueia a corrente se ela tentar entrar pelo Cathode (-) - Polarização Reversa
         }
       }
 
