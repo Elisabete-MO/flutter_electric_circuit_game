@@ -184,12 +184,14 @@ O mascote **Professor Volts** acompanha o usuário no canto inferior direito da 
 
 ## 10. Recursos de Produtividade, Presets e Atalhos
 
-### 10.1. Exemplos Pré-carregados (Presets)
-Acessíveis no menu da barra superior:
-1. **Circuito Simples (Lâmpada):** Bateria 4.5V + Interruptor + Lâmpada 10Ω.
-2. **Interruptor & Motor:** Bateria 9V + Interruptor + Motor 12V.
-3. **LED com Resistor:** Bateria 9V + Resistor 50Ω + LED (demonstração de proteção).
-4. **Circuito em Paralelo:** Bateria 9V com duas lâmpadas conectadas em paralelo.
+### 10.1. Exemplos Pré-carregados (Presets & Desafios Prontos)
+Acessíveis no diálogo de *Desafios de Diagnóstico*:
+1. **Desafio 1: O LED Misterioso:** Bateria 9V + LED + Interruptor (demonstração de proteção com resistor).
+2. **Desafio 2: Proteção de Fusível:** Fonte Regulável 24V + Potenciômetro 1Ω + Fusível 2A + Motor CC.
+3. **Desafio 3: O Curto Misterioso:** Bateria 9V + Lâmpada 5Ω com fio em curto-circuito.
+4. **Desafio 4: Alarme Sonoro & Diodo:** Bateria 9V + Interruptor + Diodo Invertido + Buzzer (aprendizado sobre polaridade do diodo).
+5. **Desafio 5: Estabilizador com Capacitor:** Fonte Regulável 12V + Resistor 100Ω + Capacitor 100µF + Lâmpada 20Ω (análise de filtragem e queda de tensão).
+6. **Desafio 6: Controle de Velocidade do Motor:** Bateria 12V + Potenciômetro 50Ω + Motor CC 12V + Fusível 1.5A (controle reostático sem romper a proteção).
 
 ### 10.2. Seleção Múltipla e Operações em Lote (Marquee Box Selection)
 A bancada suporta seleção de múltiplos componentes de forma ágil e intuitiva:

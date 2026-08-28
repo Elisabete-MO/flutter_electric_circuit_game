@@ -85,6 +85,49 @@ class _SandboxChallengesDialogState extends State<SandboxChallengesDialog> with 
         const SandboxWire(id: 'w2', fromComponentId: 'c_bulb', fromTerminal: 'B', toComponentId: 'c_bat', toTerminal: 'A'),
         const SandboxWire(id: 'w_short', fromComponentId: 'c_bat', fromTerminal: 'B', toComponentId: 'c_bat', toTerminal: 'A'), // Fio em curto
       ];
+    } else if (index == 3) {
+      // Desafio 4: Alarme Sonoro com Diodo Invertido
+      components = [
+        SandboxComponent(id: 'c_bat', type: ComponentType.battery, gridX: 2, gridY: 2, value: 9.0),
+        SandboxComponent(id: 'c_sw', type: ComponentType.switchComponent, gridX: 5, gridY: 2, isActive: true),
+        SandboxComponent(id: 'c_diode', type: ComponentType.diode, gridX: 8, gridY: 2, rotation: 180.0), // Diodo bloqueando
+        SandboxComponent(id: 'c_buzzer', type: ComponentType.buzzer, gridX: 5, gridY: 5, value: 9.0),
+      ];
+      wires = [
+        const SandboxWire(id: 'w1', fromComponentId: 'c_bat', fromTerminal: 'B', toComponentId: 'c_sw', toTerminal: 'A'),
+        const SandboxWire(id: 'w2', fromComponentId: 'c_sw', fromTerminal: 'B', toComponentId: 'c_diode', toTerminal: 'A'),
+        const SandboxWire(id: 'w3', fromComponentId: 'c_diode', fromTerminal: 'B', toComponentId: 'c_buzzer', toTerminal: 'A'),
+        const SandboxWire(id: 'w4', fromComponentId: 'c_buzzer', fromTerminal: 'B', toComponentId: 'c_bat', toTerminal: 'A'),
+      ];
+    } else if (index == 4) {
+      // Desafio 5: Estabilizador com Capacitor & Fonte
+      components = [
+        SandboxComponent(id: 'c_ps', type: ComponentType.powerSupply, gridX: 2, gridY: 3, value: 12.0),
+        SandboxComponent(id: 'c_res', type: ComponentType.resistor, gridX: 5, gridY: 2, value: 100.0),
+        SandboxComponent(id: 'c_cap', type: ComponentType.capacitor, gridX: 8, gridY: 3, value: 100.0),
+        SandboxComponent(id: 'c_bulb', type: ComponentType.bulb, gridX: 5, gridY: 5, value: 20.0),
+      ];
+      wires = [
+        const SandboxWire(id: 'w1', fromComponentId: 'c_ps', fromTerminal: 'B', toComponentId: 'c_res', toTerminal: 'A'),
+        const SandboxWire(id: 'w2', fromComponentId: 'c_res', fromTerminal: 'B', toComponentId: 'c_cap', toTerminal: 'A'),
+        const SandboxWire(id: 'w3', fromComponentId: 'c_cap', fromTerminal: 'A', toComponentId: 'c_bulb', toTerminal: 'A'),
+        const SandboxWire(id: 'w4', fromComponentId: 'c_bulb', fromTerminal: 'B', toComponentId: 'c_ps', toTerminal: 'A'),
+        const SandboxWire(id: 'w5', fromComponentId: 'c_cap', fromTerminal: 'B', toComponentId: 'c_ps', toTerminal: 'A'),
+      ];
+    } else if (index == 5) {
+      // Desafio 6: Reostato de Motor CC
+      components = [
+        SandboxComponent(id: 'c_bat', type: ComponentType.battery, gridX: 2, gridY: 3, value: 12.0),
+        SandboxComponent(id: 'c_pot', type: ComponentType.potentiometer, gridX: 5, gridY: 3, value: 50.0),
+        SandboxComponent(id: 'c_mot', type: ComponentType.motor, gridX: 8, gridY: 3, value: 12.0),
+        SandboxComponent(id: 'c_fuse', type: ComponentType.fuse, gridX: 5, gridY: 5, value: 1.5),
+      ];
+      wires = [
+        const SandboxWire(id: 'w1', fromComponentId: 'c_bat', fromTerminal: 'B', toComponentId: 'c_pot', toTerminal: 'A'),
+        const SandboxWire(id: 'w2', fromComponentId: 'c_pot', fromTerminal: 'B', toComponentId: 'c_mot', toTerminal: 'A'),
+        const SandboxWire(id: 'w3', fromComponentId: 'c_mot', fromTerminal: 'B', toComponentId: 'c_fuse', toTerminal: 'A'),
+        const SandboxWire(id: 'w4', fromComponentId: 'c_fuse', fromTerminal: 'B', toComponentId: 'c_bat', toTerminal: 'A'),
+      ];
     }
 
     widget.onLoadCircuit(components, wires);
@@ -252,6 +295,27 @@ class _SandboxChallengesDialogState extends State<SandboxChallengesDialog> with 
                           widget.isEn ? 'Preset 3: The Short Circuit Bug' : 'Desafio 3: O Curto Misterioso',
                           widget.isEn ? 'The power supply trips due to a hidden short circuit wire. Find and delete it!' : 'A fonte está desarmando por curto-circuito. Use o inspetor e elimine o fio em curto.',
                           Icons.flash_off_rounded,
+                        ),
+                        const SizedBox(height: 10),
+                        _buildPresetCard(
+                          3,
+                          widget.isEn ? 'Preset 4: Polarity Sound Alarm' : 'Desafio 4: Alarme Sonoro & Diodo',
+                          widget.isEn ? 'The diode is blocking current to the buzzer. Rotate it 180° to allow flow and sound the alarm!' : 'O diodo está invertido bloqueando a corrente do buzzer. Gire-o em 180° para ativar o alarme!',
+                          Icons.volume_up_rounded,
+                        ),
+                        const SizedBox(height: 10),
+                        _buildPresetCard(
+                          4,
+                          widget.isEn ? 'Preset 5: Power Supply & Filter' : 'Desafio 5: Estabilizador com Capacitor',
+                          widget.isEn ? 'Analyze voltage drops and power filtering across the resistor and capacitor network.' : 'Análise de queda de tensão e filtragem no circuito alimentado pela fonte regulável de 12V.',
+                          Icons.tune_rounded,
+                        ),
+                        const SizedBox(height: 10),
+                        _buildPresetCard(
+                          5,
+                          widget.isEn ? 'Preset 6: Rheostat & DC Motor Control' : 'Desafio 6: Controle de Velocidade do Motor',
+                          widget.isEn ? 'Vary the potentiometer to control motor RPM without blowing the 1.5A fuse.' : 'Varie a resistência do potenciômetro para acelerar/desacelerar o motor sem romper o fusível de 1.5A.',
+                          Icons.speed_rounded,
                         ),
                       ],
                     ),
