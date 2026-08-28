@@ -131,13 +131,16 @@ class _SandboxMascotPanelWidgetState extends State<SandboxMascotPanelWidget> wit
                           children: [
                             Icon(badgeIcon, size: 14, color: themeColor),
                             const SizedBox(width: 5),
-                            Text(
-                              badgeTitle,
-                              style: GoogleFonts.rajdhani(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.2,
-                                color: themeColor,
+                            Expanded(
+                              child: Text(
+                                badgeTitle,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.rajdhani(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.2,
+                                  color: themeColor,
+                                ),
                               ),
                             ),
                           ],

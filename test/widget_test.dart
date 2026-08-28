@@ -211,7 +211,7 @@ void main() {
         );
 
         expect(
-          find.text('Selecione um componente no grid para editar valores.'),
+          find.textContaining('Arraste componentes da paleta'),
           findsOneWidget,
         );
       },
@@ -266,10 +266,10 @@ void main() {
         await tapSection(tester, 'Bancada Livre');
 
         final draggableFinder = find.byType(Draggable<ComponentType>).first;
-        final targetFinder = find.byType(DragTarget<Object>).first;
+        final targetFinder = find.byType(DragTarget<ComponentType>).first;
 
         expect(draggableFinder, findsOneWidget);
-        expect(targetFinder, findsWidgets);
+        expect(find.byType(DragTarget<ComponentType>), findsWidgets);
 
         final draggableCenter = tester.getCenter(draggableFinder);
         final targetCenter = tester.getCenter(targetFinder);
