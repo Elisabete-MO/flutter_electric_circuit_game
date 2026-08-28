@@ -150,15 +150,21 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
     double cellSize,
     double gridWidth,
     List<SandboxComponent> components,
-    String? selectedId,
+    Set<String> selectedIds,
   ) {
-    if (selectedId != null) {
+    if (selectedIds.length > 1) {
+      final multiHudRect = Rect.fromLTWH((gridWidth / 2) - 140, 0, 280, 56);
+      if (multiHudRect.contains(mousePos)) return true;
+    }
+
+    if (selectedIds.length == 1) {
+      final selectedId = selectedIds.first;
       final selectedCompList = components.where((c) => c.id == selectedId).toList();
       if (selectedCompList.isNotEmpty) {
         final comp = selectedCompList.first;
         final hudLeft = (comp.gridX * cellSize).clamp(0.0, math.max(0.0, gridWidth - 140)).toDouble();
         final hudTop = math.max(0.0, (comp.gridY * cellSize) - 40).toDouble();
-        final hudRect = Rect.fromLTWH(hudLeft, hudTop, 140, 44);
+        final hudRect = Rect.fromLTWH(hudLeft - 10, hudTop - 10, 160, 64);
         if (hudRect.contains(mousePos)) return true;
       }
     }
@@ -909,7 +915,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                       _selectedComponentIds = {hitComp.id};
                     }
                   });
-                } else if (!_isPositionOverHudOrComponent(mousePos, cellSize, width, state.components, _selectedComponentId)) {
+                } else if (!_isPositionOverHudOrComponent(mousePos, cellSize, width, state.components, _selectedComponentIds)) {
                   setState(() {
                     if (!HardwareKeyboard.instance.isShiftPressed && !HardwareKeyboard.instance.isControlPressed) {
                       _selectedComponentIds.clear();
