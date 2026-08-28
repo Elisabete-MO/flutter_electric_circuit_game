@@ -1,98 +1,59 @@
-import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/first_step_component.dart';
 import '../models/sandbox_component.dart';
 import '../models/sandbox_wire.dart';
 import '../models/sandbox_state.dart';
+import '../services/history_manager.dart';
+import '../services/sandbox_persistence_repository.dart';
+import '../services/circuit_solver/circuit_solver_service.dart';
 import 'progress_controller.dart';
 
 class SandboxController extends Notifier<SandboxState> {
+  late final SandboxPersistenceRepository _persistence;
+  final HistoryManager<SandboxState> _history = HistoryManager<SandboxState>(maxDepth: 30);
+  final CircuitSolverService _solverService = CircuitSolverService();
+
   @override
   SandboxState build() {
     final prefs = ref.watch(sharedPreferencesProvider);
+    _persistence = SandboxPersistenceRepository(prefs);
 
-    final compString = prefs.getString('sandbox_components');
-    final wireString = prefs.getString('sandbox_wires');
-    final isSimulating = prefs.getBool('sandbox_is_simulating') ?? false;
+    final initialState = _persistence.load();
 
-    List<SandboxComponent> components = [];
-    List<SandboxWire> wires = [];
+    // Executa a simulação inicial de forma assíncrona para não travar a build
+    Future.microtask(() => _recalculateCircuit());
 
-    if (compString != null) {
-      try {
-        final List<dynamic> decoded = jsonDecode(compString);
-        components = decoded
-            .map((item) => SandboxComponent.fromMap(item as Map<String, dynamic>))
-            .toList();
-      } catch (_) {}
-    }
-
-    if (wireString != null) {
-      try {
-        final List<dynamic> decoded = jsonDecode(wireString);
-        wires = decoded
-            .map((item) => SandboxWire.fromMap(item as Map<String, dynamic>))
-            .toList();
-      } catch (_) {}
-    }
-
-    final initialState = SandboxState(
-      components: components,
-      wires: wires,
-      isSimulating: isSimulating,
-    );
-
-    return _calculateSimulationForState(initialState);
+    return initialState;
   }
 
-  void _persistState() {
-    final prefs = ref.read(sharedPreferencesProvider);
-
-    final compList = state.components.map((c) => c.toMap()).toList();
-    final wireList = state.wires.map((w) => w.toMap()).toList();
-
-    prefs.setString('sandbox_components', jsonEncode(compList));
-    prefs.setString('sandbox_wires', jsonEncode(wireList));
-    prefs.setBool('sandbox_is_simulating', state.isSimulating);
-  }
-
-  final List<SandboxState> _undoStack = [];
-  final List<SandboxState> _redoStack = [];
-
-  bool get canUndo => _undoStack.isNotEmpty;
-  bool get canRedo => _redoStack.isNotEmpty;
-
-  void _pushSnapshot() {
-    _undoStack.add(state);
-    if (_undoStack.length > 30) {
-      _undoStack.removeAt(0);
-    }
-    _redoStack.clear();
-  }
+  bool get canUndo => _history.canUndo;
+  bool get canRedo => _history.canRedo;
 
   void undo() {
-    if (_undoStack.isEmpty) return;
-    _redoStack.add(state);
-    state = _undoStack.removeLast();
-    _recalculateCircuit();
+    final previous = _history.undo(state);
+    if (previous != null) {
+      state = previous;
+      _recalculateCircuit();
+    }
   }
 
   void redo() {
-    if (_redoStack.isEmpty) return;
-    _undoStack.add(state);
-    state = _redoStack.removeLast();
-    _recalculateCircuit();
+    final nextState = _history.redo(state);
+    if (nextState != null) {
+      state = nextState;
+      _recalculateCircuit();
+    }
   }
 
   void addComponent(SandboxComponent component) {
-    _pushSnapshot();
+    _history.pushSnapshot(state);
     final updated = [...state.components, component];
     state = state.copyWith(components: updated);
     _recalculateCircuit();
   }
 
   void moveComponent(String componentId, int newX, int newY) {
-    _pushSnapshot();
+    _history.pushSnapshot(state);
     final updated = state.components.map((c) {
       if (c.id == componentId) {
         return c.copyWith(gridX: newX, gridY: newY);
@@ -121,7 +82,7 @@ class SandboxController extends Notifier<SandboxState> {
     }
     if (!valid) return;
 
-    _pushSnapshot();
+    _history.pushSnapshot(state);
     final updated = state.components.map((c) {
       if (componentIds.contains(c.id)) {
         return c.copyWith(
@@ -142,7 +103,7 @@ class SandboxController extends Notifier<SandboxState> {
 
   void removeComponents(Set<String> componentIds) {
     if (componentIds.isEmpty) return;
-    _pushSnapshot();
+    _history.pushSnapshot(state);
     final updatedComponents = state.components.where((c) => !componentIds.contains(c.id)).toList();
     final updatedWires = state.wires.where((w) {
       return !componentIds.contains(w.fromComponentId) && !componentIds.contains(w.toComponentId);
@@ -161,7 +122,7 @@ class SandboxController extends Notifier<SandboxState> {
 
   void rotateComponents(Set<String> componentIds) {
     if (componentIds.isEmpty) return;
-    _pushSnapshot();
+    _history.pushSnapshot(state);
     final updated = state.components.map((c) {
       if (componentIds.contains(c.id)) {
         return c.copyWith(rotation: (c.rotation + 90.0) % 360.0);
@@ -174,7 +135,7 @@ class SandboxController extends Notifier<SandboxState> {
   }
 
   void toggleComponentActive(String componentId) {
-    _pushSnapshot();
+    _history.pushSnapshot(state);
     final updated = state.components.map((c) {
       if (c.id == componentId) {
         return c.copyWith(isActive: !c.isActive);
@@ -187,7 +148,7 @@ class SandboxController extends Notifier<SandboxState> {
   }
 
   void updateComponentValue(String componentId, double newValue) {
-    _pushSnapshot();
+    _history.pushSnapshot(state);
     final updated = state.components.map((c) {
       if (c.id == componentId) {
         return c.copyWith(value: newValue);
@@ -200,10 +161,10 @@ class SandboxController extends Notifier<SandboxState> {
   }
 
   void addWire(String fromId, String fromTerm, String toId, String toTerm) {
-    // Avoid connecting a terminal to itself
+    // Evitar conexões de um terminal consigo mesmo
     if (fromId == toId && fromTerm == toTerm) return;
 
-    // Avoid duplicate wires
+    // Evitar fios duplicados
     final exists = state.wires.any((w) {
       return (w.fromComponentId == fromId &&
               w.fromTerminal == fromTerm &&
@@ -216,7 +177,7 @@ class SandboxController extends Notifier<SandboxState> {
     });
     if (exists) return;
 
-    _pushSnapshot();
+    _history.pushSnapshot(state);
     final wire = SandboxWire(
       id: 'wire_${DateTime.now().millisecondsSinceEpoch}_${state.wires.length}',
       fromComponentId: fromId,
@@ -231,20 +192,20 @@ class SandboxController extends Notifier<SandboxState> {
   }
 
   void removeWire(String wireId) {
-    _pushSnapshot();
+    _history.pushSnapshot(state);
     final updated = state.wires.where((w) => w.id != wireId).toList();
     state = state.copyWith(wires: updated);
     _recalculateCircuit();
   }
 
   void clearCanvas() {
-    _pushSnapshot();
+    _history.pushSnapshot(state);
     state = const SandboxState();
-    _persistState();
+    _recalculateCircuit();
   }
 
   void loadCircuit(List<SandboxComponent> components, List<SandboxWire> wires) {
-    _pushSnapshot();
+    _history.pushSnapshot(state);
     state = SandboxState(
       components: components,
       wires: wires,
@@ -254,7 +215,7 @@ class SandboxController extends Notifier<SandboxState> {
   }
 
   void loadPreset(String presetKey) {
-    _pushSnapshot();
+    _history.pushSnapshot(state);
     final now = DateTime.now().millisecondsSinceEpoch;
 
     List<SandboxComponent> newComponents = [];
@@ -324,244 +285,24 @@ class SandboxController extends Notifier<SandboxState> {
     _recalculateCircuit();
   }
 
-  void _recalculateCircuit() {
-    state = _calculateSimulationForState(state);
-    _persistState();
-  }
-
-  SandboxState _calculateSimulationForState(SandboxState targetState) {
-    if (!targetState.isSimulating) {
-      return targetState.copyWith(
-        simulationValues: {},
-        errorMessage: null,
-      );
-    }
-
-    final powerSources = targetState.components.where((c) => c.type == ComponentType.battery || c.type == ComponentType.powerSupply).toList();
-    if (powerSources.isEmpty) {
-      return targetState.copyWith(
-        simulationValues: {},
-        errorMessage: 'Sem fonte de energia no circuito.',
-      );
-    }
-
-    final Map<String, double> values = {};
-    String? error;
-    final Set<String> newBurnedSet = Set.from(targetState.burnedComponentIds);
-    bool isShortCircuit = false;
-    final Set<String> shortCircuitWireIds = {};
-
-    for (final source in powerSources) {
-      final visited = <String>{source.id};
-      final componentPath = <SandboxComponent>[];
-      final wirePath = <SandboxWire>[];
-      final List<_ClosedLoopData> closedLoops = [];
-
-      // Start traversal from positive terminal 'B'
-      _traverseForState(
-        targetState: targetState,
-        currentComponent: source,
-        currentTerminal: 'B',
-        targetBattery: source,
-        visited: visited,
-        componentPath: componentPath,
-        wirePath: wirePath,
-        onLoopClosed: (pathComponents, pathWires) {
-          closedLoops.add(_ClosedLoopData(List.from(pathComponents), List.from(pathWires)));
-        },
-      );
-
-      if (closedLoops.isNotEmpty) {
-        double totalSourceCurrent = 0.0;
-
-        for (final loop in closedLoops) {
-          final loopPath = loop.components;
-          final totalResistance = loopPath
-              .where((c) => c.type != ComponentType.battery && c.type != ComponentType.powerSupply)
-              .fold(0.0, (sum, c) {
-                if (c.type == ComponentType.fuse) return sum + 0.1;
-                if (c.type == ComponentType.capacitor) return sum + 10.0;
-                if (c.type == ComponentType.buzzer) return sum + 8.0;
-                if (c.type == ComponentType.motor) return sum + 2.0;
-                return sum + c.value;
-              });
-
-          if (totalResistance <= 0.1) {
-            error = 'CURTO-CIRCUITO DETECTADO! Conexão direta entre pólos sem carga!';
-            isShortCircuit = true;
-            for (final w in loop.wires) {
-              shortCircuitWireIds.add(w.id);
-            }
-            break;
-          }
-
-          final loopCurrent = source.value / totalResistance;
-          totalSourceCurrent += loopCurrent;
-
-          double currentPotential = source.value;
-
-          for (final comp in loopPath) {
-            if (comp.type == ComponentType.battery || comp.type == ComponentType.powerSupply) continue;
-
-            final compRes = (comp.type == ComponentType.fuse)
-                ? 0.1
-                : (comp.type == ComponentType.capacitor
-                    ? 10.0
-                    : (comp.type == ComponentType.buzzer
-                        ? 8.0
-                        : (comp.type == ComponentType.motor ? 2.0 : comp.value)));
-            final vDrop = loopCurrent * compRes;
-            final power = vDrop * loopCurrent;
-
-            values['active_${comp.id}'] = 1.0;
-            values['current_${comp.id}'] = (values['current_${comp.id}'] ?? 0.0) + loopCurrent;
-            values['voltage_drop_${comp.id}'] = vDrop;
-            values['power_${comp.id}'] = power;
-
-            // Define potenciais nos terminais A e B de acordo com o sentido do fluxo
-            values['node_voltage_${comp.id}_B'] = currentPotential;
-            currentPotential -= vDrop;
-            values['node_voltage_${comp.id}_A'] = currentPotential;
-
-            // Verificação de Limites Físicos e Sobrecarga Educativa
-            final totalCompCurrent = values['current_${comp.id}'] ?? loopCurrent;
-            if (comp.type == ComponentType.led) {
-              if (totalCompCurrent > 0.05 || vDrop > 3.3) {
-                newBurnedSet.add(comp.id);
-                error = 'O LED QUEIMOU! Corrente (${(totalCompCurrent * 1000).toStringAsFixed(0)}mA) excedeu o limite seguro (50mA). Conecte um resistor em série!';
-              }
-            } else if (comp.type == ComponentType.bulb) {
-              if (power > 15.0) {
-                newBurnedSet.add(comp.id);
-                error = 'FILAMENTO ROMPIDO! A lâmpada queimou por excesso de potência (${power.toStringAsFixed(1)}W > 15W)!';
-              }
-            } else if (comp.type == ComponentType.motor) {
-              if (vDrop > 18.0) {
-                newBurnedSet.add(comp.id);
-                error = 'BOBINA QUEIMADA! O motor sofreu sobretensão (${vDrop.toStringAsFixed(1)}V > 18V)!';
-              }
-            } else if (comp.type == ComponentType.fuse) {
-              final maxCurrent = comp.value; // ex: 2.0A
-              if (totalCompCurrent > maxCurrent) {
-                newBurnedSet.add(comp.id);
-                error = 'FUSÍVEL QUEIMOU! Corrente de ${totalCompCurrent.toStringAsFixed(2)}A excedeu o limite do fusível (${maxCurrent.toStringAsFixed(1)}A), desarmando o circuito!';
-              }
-            }
-          }
-        }
-
-        values['active_${source.id}'] = 1.0;
-        values['current_${source.id}'] = totalSourceCurrent;
-        values['node_voltage_${source.id}_B'] = source.value;
-        values['node_voltage_${source.id}_A'] = 0.0;
-      }
-    }
-
-    return targetState.copyWith(
-      simulationValues: values,
-      errorMessage: error,
-      burnedComponentIds: newBurnedSet,
-      isShortCircuit: isShortCircuit,
-      shortCircuitWireIds: shortCircuitWireIds,
-    );
+  Future<void> _recalculateCircuit() async {
+    final solved = await _solverService.solve(state);
+    state = solved;
+    await _persistence.save(state);
   }
 
   void replaceBurnedComponent(String id) {
-    _pushSnapshot();
+    _history.pushSnapshot(state);
     final updatedBurned = Set<String>.from(state.burnedComponentIds)..remove(id);
     state = state.copyWith(burnedComponentIds: updatedBurned);
     _recalculateCircuit();
   }
 
   void replaceAllBurnedComponents() {
-    _pushSnapshot();
+    _history.pushSnapshot(state);
     state = state.copyWith(burnedComponentIds: {});
     _recalculateCircuit();
   }
-
-  void _traverseForState({
-    required SandboxState targetState,
-    required SandboxComponent currentComponent,
-    required String currentTerminal,
-    required SandboxComponent targetBattery,
-    required Set<String> visited,
-    required List<SandboxComponent> componentPath,
-    required List<SandboxWire> wirePath,
-    required void Function(List<SandboxComponent>, List<SandboxWire>) onLoopClosed,
-  }) {
-    componentPath.add(currentComponent);
-
-    final wires = targetState.wires.where((w) {
-      return (w.fromComponentId == currentComponent.id && w.fromTerminal == currentTerminal) ||
-             (w.toComponentId == currentComponent.id && w.toTerminal == currentTerminal);
-    }).toList();
-
-    for (final wire in wires) {
-      final nextId = wire.fromComponentId == currentComponent.id ? wire.toComponentId : wire.fromComponentId;
-      final nextTerm = wire.fromComponentId == currentComponent.id ? wire.toTerminal : wire.fromTerminal;
-
-      final nextComponentList = targetState.components.where((c) => c.id == nextId).toList();
-      if (nextComponentList.isEmpty) continue;
-      final nextComponent = nextComponentList.first;
-
-      wirePath.add(wire);
-
-      if (nextComponent.id == targetBattery.id && nextTerm == 'A') {
-        onLoopClosed(List.from(componentPath), List.from(wirePath));
-        wirePath.removeLast();
-        return;
-      }
-
-      if (visited.contains(nextComponent.id)) {
-        wirePath.removeLast();
-        continue;
-      }
-
-      if (targetState.burnedComponentIds.contains(nextComponent.id)) {
-        wirePath.removeLast();
-        continue; // Componente queimado interrompe o circuito (circuito aberto)
-      }
-
-      if (nextComponent.type == ComponentType.switchComponent && !nextComponent.isActive) {
-        wirePath.removeLast();
-        continue;
-      }
-
-      if (nextComponent.type == ComponentType.diode || nextComponent.type == ComponentType.led) {
-        final isReversed = (nextComponent.rotation == 180.0 || nextComponent.rotation == 270.0)
-            ? (nextTerm == 'A')
-            : (nextTerm == 'B');
-        if (isReversed) {
-          wirePath.removeLast();
-          continue; // Bloqueia a corrente se ela tentar entrar pelo Cathode (-) - Polarização Reversa
-        }
-      }
-
-      final nextOutTerm = nextTerm == 'A' ? 'B' : 'A';
-
-      visited.add(nextComponent.id);
-      _traverseForState(
-        targetState: targetState,
-        currentComponent: nextComponent,
-        currentTerminal: nextOutTerm,
-        targetBattery: targetBattery,
-        visited: visited,
-        componentPath: componentPath,
-        wirePath: wirePath,
-        onLoopClosed: onLoopClosed,
-      );
-      visited.remove(nextComponent.id);
-      wirePath.removeLast();
-    }
-
-    componentPath.removeLast();
-  }
-}
-
-class _ClosedLoopData {
-  final List<SandboxComponent> components;
-  final List<SandboxWire> wires;
-  _ClosedLoopData(this.components, this.wires);
 }
 
 final sandboxControllerProvider = NotifierProvider<SandboxController, SandboxState>(

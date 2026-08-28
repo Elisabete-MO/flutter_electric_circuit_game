@@ -847,37 +847,41 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
             children: [
               // 1. Grid de fundo com retículo HUD
               Positioned.fill(
-                child: CustomPaint(
-                  painter: GridPainter(
-                    columns: _gridCols,
-                    rows: _gridRows,
-                    isDark: isDark,
-                    hoverCell: _hoverGridCell,
+                child: RepaintBoundary(
+                  child: CustomPaint(
+                    painter: GridPainter(
+                      columns: _gridCols,
+                      rows: _gridRows,
+                      isDark: isDark,
+                      hoverCell: _hoverGridCell,
+                    ),
                   ),
                 ),
               ),
 
               // 2. Fios conectados
               Positioned.fill(
-                child: AnimatedBuilder(
-                  animation: _wireAnimationController,
-                  builder: (context, child) {
-                    return CustomPaint(
-                      painter: WiresPainter(
-                        wires: state.wires,
-                        components: state.components,
-                        cellSize: cellSize,
-                        isDark: isDark,
-                        isDiagramMode: _isDiagramMode,
-                        isSimulating: state.isSimulating,
-                        simulationValues: state.simulationValues,
-                        animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
-                        isShortCircuit: state.isShortCircuit,
-                        shortCircuitWireIds: state.shortCircuitWireIds,
-                        selectedWireId: _selectedWireId,
-                      ),
-                    );
-                  },
+                child: RepaintBoundary(
+                  child: AnimatedBuilder(
+                    animation: _wireAnimationController,
+                    builder: (context, child) {
+                      return CustomPaint(
+                        painter: WiresPainter(
+                          wires: state.wires,
+                          components: state.components,
+                          cellSize: cellSize,
+                          isDark: isDark,
+                          isDiagramMode: _isDiagramMode,
+                          isSimulating: state.isSimulating,
+                          simulationValues: state.simulationValues,
+                          animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
+                          isShortCircuit: state.isShortCircuit,
+                          shortCircuitWireIds: state.shortCircuitWireIds,
+                          selectedWireId: _selectedWireId,
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
 
@@ -1379,28 +1383,30 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
               child: AnimatedBuilder(
                 animation: _wireAnimationController,
                 builder: (context, child) {
-                  return Transform.rotate(
-                    angle: component.rotation * (math.pi / 180.0),
-                    child: CustomPaint(
-                      painter: _isDiagramMode
-                          ? CircuitSymbolPainter(
-                              type: component.type,
-                              isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
-                              isBurned: isBurned,
-                              color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
-                              activeColor: active || component.isActive ? const Color(0xFF00FF9D) : const Color(0xFFFFB300),
-                              strokeWidth: active || component.isActive ? 2.8 : 2.0,
-                              value: component.value,
-                              animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
-                            )
-                          : ComponentPhysicalPainter(
-                              type: component.type,
-                              isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
-                              isBurned: isBurned,
-                              isDarkMode: isDark,
-                              value: component.value,
-                              animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
-                            ),
+                  return RepaintBoundary(
+                    child: Transform.rotate(
+                      angle: component.rotation * (math.pi / 180.0),
+                      child: CustomPaint(
+                        painter: _isDiagramMode
+                            ? CircuitSymbolPainter(
+                                type: component.type,
+                                isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
+                                isBurned: isBurned,
+                                color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
+                                activeColor: active || component.isActive ? const Color(0xFF00FF9D) : const Color(0xFFFFB300),
+                                strokeWidth: active || component.isActive ? 2.8 : 2.0,
+                                value: component.value,
+                                animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
+                              )
+                            : ComponentPhysicalPainter(
+                                type: component.type,
+                                isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
+                                isBurned: isBurned,
+                                isDarkMode: isDark,
+                                value: component.value,
+                                animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
+                              ),
+                      ),
                     ),
                   );
                 },
