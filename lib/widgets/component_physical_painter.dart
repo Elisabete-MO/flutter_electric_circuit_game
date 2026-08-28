@@ -221,31 +221,31 @@ class ComponentPhysicalPainter extends CustomPainter {
   void _drawPhysicalSwitch(Canvas canvas, Size size, double cx, double cy) {
     _drawBaseBlock(canvas, size, cx, cy);
 
-    final pPivot = Offset(cx - 25, cy + 6);
+    final pPivot = Offset(cx - 25, cy);
     final pLeverEnd = isActive
-        ? Offset(cx + 25, cy + 6) // Fechado (encostando no terminal preto)
+        ? Offset(cx + 25, cy) // Fechado (encostando no terminal preto)
         : Offset(cx + 5, cy - 26); // Aberto (alavanca erguida)
 
     // LED de status de estado (Verde quando ligado / Amarelo quando desligado)
-    final statusLedPos = Offset(cx, cy + 12);
+    final statusLedPos = Offset(cx, cy + 8);
     final statusColor = isActive ? const Color(0xFF00FF9D) : const Color(0xFFFFB300);
 
     // Glow do LED de status
     canvas.drawCircle(
       statusLedPos,
-      5.0,
+      4.0,
       Paint()
         ..color = statusColor.withValues(alpha: 0.5)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
     );
-    canvas.drawCircle(statusLedPos, 2.5, Paint()..color = statusColor);
+    canvas.drawCircle(statusLedPos, 2.0, Paint()..color = statusColor);
 
-    // Bornes de conexão 3D banana jack
+    // Bornes de conexão 3D banana jack na altura exata cy
     _drawTerminalJack(canvas, pPivot, true);
-    _drawTerminalJack(canvas, Offset(cx + 25, cy + 6), false);
+    _drawTerminalJack(canvas, Offset(cx + 25, cy), false);
 
     // Ponto de contato de latão no terminal de chegada (Terminal B)
-    canvas.drawCircle(Offset(cx + 25, cy + 6), 2.5, Paint()..color = const Color(0xFFD4AF37));
+    canvas.drawCircle(Offset(cx + 25, cy), 2.5, Paint()..color = const Color(0xFFD4AF37));
 
     // Sombra projetada sob a alavanca
     canvas.drawLine(
@@ -283,9 +283,9 @@ class ComponentPhysicalPainter extends CustomPainter {
   void _drawPhysicalBulb(Canvas canvas, Size size, double cx, double cy) {
     _drawBaseBlock(canvas, size, cx, cy);
 
-    // Bornes nas pontas da base (3D banana jack)
-    _drawTerminalJack(canvas, Offset(cx - 30, cy + 4), true);
-    _drawTerminalJack(canvas, Offset(cx + 30, cy + 4), false);
+    // Bornes nas pontas da base (3D banana jack na altura cy)
+    _drawTerminalJack(canvas, Offset(cx - 30, cy), true);
+    _drawTerminalJack(canvas, Offset(cx + 30, cy), false);
 
     // Soquete da lâmpada (metal cilíndrico)
     final socketRect = Rect.fromCenter(center: Offset(cx, cy - 2), width: 18, height: 16);
@@ -397,9 +397,9 @@ class ComponentPhysicalPainter extends CustomPainter {
   void _drawPhysicalResistor(Canvas canvas, Size size, double cx, double cy) {
     _drawBaseBlock(canvas, size, cx, cy);
 
-    // Bornes laterais (3D banana jack)
-    _drawTerminalJack(canvas, Offset(cx - 32, cy + 4), true);
-    _drawTerminalJack(canvas, Offset(cx + 32, cy + 4), false);
+    // Bornes laterais (3D banana jack na altura cy)
+    _drawTerminalJack(canvas, Offset(cx - 32, cy), true);
+    _drawTerminalJack(canvas, Offset(cx + 32, cy), false);
 
     // Corpo cerâmico abuloado do resistor (Bege/bege-marfim)
     final resRect = Rect.fromCenter(center: Offset(cx, cy - 4), width: 36, height: 13);
@@ -452,9 +452,9 @@ class ComponentPhysicalPainter extends CustomPainter {
   void _drawPhysicalDiode(Canvas canvas, Size size, double cx, double cy) {
     _drawBaseBlock(canvas, size, cx, cy);
 
-    // Bornes (Terminal A à esquerda = Cátodo [-], Terminal B à direita = Ânodo [+])
-    _drawTerminalJack(canvas, Offset(cx - 32, cy + 4), false);
-    _drawTerminalJack(canvas, Offset(cx + 32, cy + 4), true);
+    // Bornes (Terminal A à esquerda = Cátodo [-], Terminal B à direita = Ânodo [+]) na altura cy
+    _drawTerminalJack(canvas, Offset(cx - 32, cy), false);
+    _drawTerminalJack(canvas, Offset(cx + 32, cy), true);
 
     // Corpo do Diodo (cilindro preto)
     final diodeRect = RRect.fromRectAndRadius(
@@ -480,9 +480,9 @@ class ComponentPhysicalPainter extends CustomPainter {
   void _drawPhysicalLED(Canvas canvas, Size size, double cx, double cy) {
     _drawBaseBlock(canvas, size, cx, cy);
 
-    // Bornes (Terminal A à esquerda = Cátodo [-], Terminal B à direita = Ânodo [+])
-    _drawTerminalJack(canvas, Offset(cx - 30, cy + 4), false);
-    _drawTerminalJack(canvas, Offset(cx + 30, cy + 4), true);
+    // Bornes (Terminal A à esquerda = Cátodo [-], Terminal B à direita = Ânodo [+]) na altura cy
+    _drawTerminalJack(canvas, Offset(cx - 30, cy), false);
+    _drawTerminalJack(canvas, Offset(cx + 30, cy), true);
 
     final domeCenter = Offset(cx, cy - 12);
     final ledRadius = 12.0;
@@ -569,10 +569,10 @@ class ComponentPhysicalPainter extends CustomPainter {
   void _drawPhysicalMotor(Canvas canvas, Size size, double cx, double cy) {
     _drawBaseBlock(canvas, size, cx, cy);
 
-    final leftTerminal = Offset(cx - 30, cy + 6);
-    final rightTerminal = Offset(cx + 30, cy + 6);
+    final leftTerminal = Offset(cx - 30, cy);
+    final rightTerminal = Offset(cx + 30, cy);
 
-    // Bornes de conexão 3D banana jack na base da bancada
+    // Bornes de conexão 3D banana jack na base da bancada na altura cy
     _drawTerminalJack(canvas, leftTerminal, true);
     _drawTerminalJack(canvas, rightTerminal, false);
 
@@ -827,21 +827,21 @@ class ComponentPhysicalPainter extends CustomPainter {
   /// Desenha a bancada/base retangular cinza dos componentes físicos (como nas fotos)
   void _drawBaseBlock(Canvas canvas, Size size, double cx, double cy) {
     final blockWidth = size.width * 0.72;
-    final blockHeight = 22.0;
+    final blockHeight = 20.0;
     final blockRect = Rect.fromCenter(
-      center: Offset(cx, cy + 12),
+      center: Offset(cx, cy + 4),
       width: blockWidth,
       height: blockHeight,
     );
     final rr = RRect.fromRectAndRadius(blockRect, const Radius.circular(5));
 
-    // Hastes metálicas estendendo o circuito até as bordas das células (Terminais A e B)
+    // Hastes metálicas estendendo o circuito em linha reta alinhada aos bornes das células (y = cy)
     final leadPaint = Paint()
       ..color = isDarkMode ? const Color(0xFF90A4AE) : const Color(0xFF78909C)
       ..strokeWidth = 2.8
       ..strokeCap = StrokeCap.round;
-    canvas.drawLine(Offset(0, cy + 12), Offset(blockRect.left + 4, cy + 12), leadPaint);
-    canvas.drawLine(Offset(blockRect.right - 4, cy + 12), Offset(size.width, cy + 12), leadPaint);
+    canvas.drawLine(Offset(0, cy), Offset(blockRect.left + 4, cy), leadPaint);
+    canvas.drawLine(Offset(blockRect.right - 4, cy), Offset(size.width, cy), leadPaint);
 
     // Sombra projetada estendida (Layer 1: Sombra suave de ambiente)
     canvas.drawRRect(
@@ -928,9 +928,9 @@ class ComponentPhysicalPainter extends CustomPainter {
   void _drawPhysicalPotentiometer(Canvas canvas, Size size, double cx, double cy) {
     _drawBaseBlock(canvas, size, cx, cy);
 
-    // Bornes (3D banana jack)
-    _drawTerminalJack(canvas, Offset(cx - 32, cy + 4), true);
-    _drawTerminalJack(canvas, Offset(cx + 32, cy + 4), false);
+    // Bornes (3D banana jack na altura cy)
+    _drawTerminalJack(canvas, Offset(cx - 32, cy), true);
+    _drawTerminalJack(canvas, Offset(cx + 32, cy), false);
 
     // Corpo metálico cilíndrico do potenciômetro
     final knobCenter = Offset(cx, cy - 8);
@@ -1017,17 +1017,17 @@ class ComponentPhysicalPainter extends CustomPainter {
     )..layout();
     textPainter.paint(canvas, Offset(cx - textPainter.width / 2, cy - 18));
 
-    // Bornes de Saída DC (+ e -) 3D banana jack
-    _drawTerminalJack(canvas, Offset(cx - 18, cy + 12), true);
-    _drawTerminalJack(canvas, Offset(cx + 18, cy + 12), false);
+    // Bornes de Saída DC (+ e -) 3D banana jack na altura cy
+    _drawTerminalJack(canvas, Offset(cx - 18, cy), true);
+    _drawTerminalJack(canvas, Offset(cx + 18, cy), false);
   }
 
   void _drawPhysicalFuse(Canvas canvas, Size size, double cx, double cy) {
     _drawBaseBlock(canvas, size, cx, cy);
 
-    // Bornes (3D banana jack)
-    _drawTerminalJack(canvas, Offset(cx - 32, cy + 4), true);
-    _drawTerminalJack(canvas, Offset(cx + 32, cy + 4), false);
+    // Bornes (3D banana jack na altura cy)
+    _drawTerminalJack(canvas, Offset(cx - 32, cy), true);
+    _drawTerminalJack(canvas, Offset(cx + 32, cy), false);
 
     // Tubo de Vidro do Fusível
     final tubeRect = Rect.fromCenter(center: Offset(cx, cy - 4), width: 38, height: 12);
@@ -1064,9 +1064,9 @@ class ComponentPhysicalPainter extends CustomPainter {
   void _drawPhysicalCapacitor(Canvas canvas, Size size, double cx, double cy) {
     _drawBaseBlock(canvas, size, cx, cy);
 
-    // Bornes (3D banana jack)
-    _drawTerminalJack(canvas, Offset(cx - 30, cy + 4), true);
-    _drawTerminalJack(canvas, Offset(cx + 30, cy + 4), false);
+    // Bornes (3D banana jack na altura cy)
+    _drawTerminalJack(canvas, Offset(cx - 30, cy), true);
+    _drawTerminalJack(canvas, Offset(cx + 30, cy), false);
 
     // Corpo do Capacitor Eletrolítico (Cilindro Azul)
     final capRect = Rect.fromCenter(center: Offset(cx, cy - 10), width: 22, height: 26);
@@ -1092,9 +1092,9 @@ class ComponentPhysicalPainter extends CustomPainter {
   void _drawPhysicalBuzzer(Canvas canvas, Size size, double cx, double cy) {
     _drawBaseBlock(canvas, size, cx, cy);
 
-    // Bornes (3D banana jack)
-    _drawTerminalJack(canvas, Offset(cx - 30, cy + 4), true);
-    _drawTerminalJack(canvas, Offset(cx + 30, cy + 4), false);
+    // Bornes (3D banana jack na altura cy)
+    _drawTerminalJack(canvas, Offset(cx - 30, cy), true);
+    _drawTerminalJack(canvas, Offset(cx + 30, cy), false);
 
     // Cápsula Piezoelétrica Preta
     final buzzCenter = Offset(cx, cy - 8);
