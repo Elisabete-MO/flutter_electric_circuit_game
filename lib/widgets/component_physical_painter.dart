@@ -240,9 +240,9 @@ class ComponentPhysicalPainter extends CustomPainter {
     );
     canvas.drawCircle(statusLedPos, 2.5, Paint()..color = statusColor);
 
-    // Bornes de conexão vermelhos e pretos
-    canvas.drawCircle(pPivot, 6, Paint()..color = Colors.red);
-    canvas.drawCircle(Offset(cx + 25, cy + 6), 6, Paint()..color = Colors.black87);
+    // Bornes de conexão 3D banana jack
+    _drawTerminalJack(canvas, pPivot, true);
+    _drawTerminalJack(canvas, Offset(cx + 25, cy + 6), false);
 
     // Ponto de contato de latão no terminal de chegada (Terminal B)
     canvas.drawCircle(Offset(cx + 25, cy + 6), 2.5, Paint()..color = const Color(0xFFD4AF37));
@@ -283,9 +283,9 @@ class ComponentPhysicalPainter extends CustomPainter {
   void _drawPhysicalBulb(Canvas canvas, Size size, double cx, double cy) {
     _drawBaseBlock(canvas, size, cx, cy);
 
-    // Bornes nas pontas da base
-    canvas.drawCircle(Offset(cx - 30, cy + 4), 5, Paint()..color = Colors.red);
-    canvas.drawCircle(Offset(cx + 30, cy + 4), 5, Paint()..color = Colors.black87);
+    // Bornes nas pontas da base (3D banana jack)
+    _drawTerminalJack(canvas, Offset(cx - 30, cy + 4), true);
+    _drawTerminalJack(canvas, Offset(cx + 30, cy + 4), false);
 
     // Soquete da lâmpada (metal cilíndrico)
     final socketRect = Rect.fromCenter(center: Offset(cx, cy - 2), width: 18, height: 16);
@@ -397,9 +397,9 @@ class ComponentPhysicalPainter extends CustomPainter {
   void _drawPhysicalResistor(Canvas canvas, Size size, double cx, double cy) {
     _drawBaseBlock(canvas, size, cx, cy);
 
-    // Bornes laterais
-    canvas.drawCircle(Offset(cx - 32, cy + 4), 5, Paint()..color = Colors.red);
-    canvas.drawCircle(Offset(cx + 32, cy + 4), 5, Paint()..color = Colors.black87);
+    // Bornes laterais (3D banana jack)
+    _drawTerminalJack(canvas, Offset(cx - 32, cy + 4), true);
+    _drawTerminalJack(canvas, Offset(cx + 32, cy + 4), false);
 
     // Corpo cerâmico abuloado do resistor (Bege/bege-marfim)
     final resRect = Rect.fromCenter(center: Offset(cx, cy - 4), width: 36, height: 13);
@@ -453,8 +453,8 @@ class ComponentPhysicalPainter extends CustomPainter {
     _drawBaseBlock(canvas, size, cx, cy);
 
     // Bornes (Terminal A à esquerda = Cátodo [-], Terminal B à direita = Ânodo [+])
-    canvas.drawCircle(Offset(cx - 32, cy + 4), 5, Paint()..color = Colors.black87);
-    canvas.drawCircle(Offset(cx + 32, cy + 4), 5, Paint()..color = Colors.red);
+    _drawTerminalJack(canvas, Offset(cx - 32, cy + 4), false);
+    _drawTerminalJack(canvas, Offset(cx + 32, cy + 4), true);
 
     // Corpo do Diodo (cilindro preto)
     final diodeRect = RRect.fromRectAndRadius(
@@ -481,8 +481,8 @@ class ComponentPhysicalPainter extends CustomPainter {
     _drawBaseBlock(canvas, size, cx, cy);
 
     // Bornes (Terminal A à esquerda = Cátodo [-], Terminal B à direita = Ânodo [+])
-    canvas.drawCircle(Offset(cx - 30, cy + 4), 5, Paint()..color = Colors.black87);
-    canvas.drawCircle(Offset(cx + 30, cy + 4), 5, Paint()..color = Colors.red);
+    _drawTerminalJack(canvas, Offset(cx - 30, cy + 4), false);
+    _drawTerminalJack(canvas, Offset(cx + 30, cy + 4), true);
 
     final domeCenter = Offset(cx, cy - 12);
     final ledRadius = 12.0;
@@ -572,9 +572,9 @@ class ComponentPhysicalPainter extends CustomPainter {
     final leftTerminal = Offset(cx - 30, cy + 6);
     final rightTerminal = Offset(cx + 30, cy + 6);
 
-    // Bornes de conexão vermelhos e pretos na base da bancada
-    canvas.drawCircle(leftTerminal, 5.5, Paint()..color = Colors.red);
-    canvas.drawCircle(rightTerminal, 5.5, Paint()..color = Colors.black87);
+    // Bornes de conexão 3D banana jack na base da bancada
+    _drawTerminalJack(canvas, leftTerminal, true);
+    _drawTerminalJack(canvas, rightTerminal, false);
 
     // Tampa traseira de plástico (Plastic End-cap) do motor DC (tipo 130)
     final capBackRect = Rect.fromLTWH(cx - 20, cy - 14, 6, 16);
@@ -770,6 +770,60 @@ class ComponentPhysicalPainter extends CustomPainter {
     }
   }
 
+  /// Desenha conectores tipo Borne Banana 3D (Vermelho = Positivo/VCC, Preto = Negativo/GND)
+  void _drawTerminalJack(Canvas canvas, Offset center, bool isPositive) {
+    const radius = 5.5;
+
+    // 1. Sombra de profundidade projetada sob o conector
+    canvas.drawCircle(
+      center.translate(1.0, 1.8),
+      radius + 0.8,
+      Paint()
+        ..color = Colors.black.withValues(alpha: 0.45)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5),
+    );
+
+    // 2. Anel metálico cromado de fixação (Bisel de metal do conector banana 3D)
+    final metalBevelPaint = Paint()
+      ..shader = RadialGradient(
+        center: const Alignment(-0.4, -0.4),
+        colors: const [Color(0xFFFFFFFF), Color(0xFF94A3B8), Color(0xFF334155)],
+      ).createShader(Rect.fromCircle(center: center, radius: radius + 1.4));
+    canvas.drawCircle(center, radius + 1.4, metalBevelPaint);
+
+    // 3. Corpo isolante de plástico moldado 3D (Vermelho / Preto)
+    final jackShader = RadialGradient(
+      center: const Alignment(-0.35, -0.4),
+      radius: 0.85,
+      colors: isPositive
+          ? const [Color(0xFFFF5252), Color(0xFFD32F2F), Color(0xFF7F0000)]
+          : const [Color(0xFF475569), Color(0xFF1E293B), Color(0xFF0F172A)],
+    ).createShader(Rect.fromCircle(center: center, radius: radius));
+
+    canvas.drawCircle(center, radius, Paint()..shader = jackShader);
+
+    // 4. Orifício interno recessed (Conector fêmea 3D com profundidade de inserção)
+    canvas.drawCircle(
+      center,
+      2.3,
+      Paint()..color = const Color(0xFF0A0E17),
+    );
+
+    // 5. Pino interno de latão/cobre banhado a ouro
+    canvas.drawCircle(
+      center,
+      1.1,
+      Paint()..color = const Color(0xFFFFD700),
+    );
+
+    // 6. Brilho especular curvado de plástico
+    canvas.drawCircle(
+      Offset(center.dx - 1.5, center.dy - 1.5),
+      1.2,
+      Paint()..color = Colors.white.withValues(alpha: 0.8),
+    );
+  }
+
   /// Desenha a bancada/base retangular cinza dos componentes físicos (como nas fotos)
   void _drawBaseBlock(Canvas canvas, Size size, double cx, double cy) {
     final blockWidth = size.width * 0.72;
@@ -789,28 +843,36 @@ class ComponentPhysicalPainter extends CustomPainter {
     canvas.drawLine(Offset(0, cy + 12), Offset(blockRect.left + 4, cy + 12), leadPaint);
     canvas.drawLine(Offset(blockRect.right - 4, cy + 12), Offset(size.width, cy + 12), leadPaint);
 
-    // Sombra projetada
+    // Sombra projetada estendida (Layer 1: Sombra suave de ambiente)
     canvas.drawRRect(
-      RRect.fromRectAndRadius(blockRect.translate(2, 4), const Radius.circular(5)),
+      RRect.fromRectAndRadius(blockRect.translate(3, 6), const Radius.circular(5)),
       Paint()
-        ..color = Colors.black.withValues(alpha: 0.35)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+        ..color = Colors.black.withValues(alpha: 0.3)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
     );
 
-    // Corpo com gradiente de iluminação (luz de cima)
+    // Sombra projetada de contato (Layer 2: Sombra densa de oclusão)
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(blockRect.translate(1, 2), const Radius.circular(5)),
+      Paint()
+        ..color = Colors.black.withValues(alpha: 0.45)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
+    );
+
+    // Corpo com gradiente de iluminação 3D chamfrado
     final baseGrad = Paint()
       ..shader = LinearGradient(
         colors: isDarkMode
             ? [const Color(0xFF334155), const Color(0xFF1E293B), const Color(0xFF0F172A)]
-            : [const Color(0xFFF8FAFC), const Color(0xFFE2E8F0), const Color(0xFFCBD5E1)],
+            : [const Color(0xFFFFFFFF), const Color(0xFFE2E8F0), const Color(0xFFCBD5E1)],
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
       ).createShader(blockRect);
     canvas.drawRRect(rr, baseGrad);
 
-    // Highlight especular superior (borda de luz)
+    // Highlight especular superior (borda de luz bevel)
     final topHighlight = Paint()
-      ..color = Colors.white.withValues(alpha: isDarkMode ? 0.2 : 0.8)
+      ..color = Colors.white.withValues(alpha: isDarkMode ? 0.35 : 0.9)
       ..strokeWidth = 1.2
       ..style = PaintingStyle.stroke;
     canvas.drawLine(
@@ -825,14 +887,14 @@ class ComponentPhysicalPainter extends CustomPainter {
         Offset(blockRect.left + 8, blockRect.bottom - 2),
         Offset(blockRect.right - 8, blockRect.bottom - 2),
         Paint()
-          ..color = const Color(0xFF00F5D4).withValues(alpha: 0.4)
+          ..color = const Color(0xFF00F5D4).withValues(alpha: 0.45)
           ..strokeWidth = 1.0,
       );
     }
 
     // Borda de sombra inferior
     final bottomShadow = Paint()
-      ..color = Colors.black.withValues(alpha: 0.3)
+      ..color = Colors.black.withValues(alpha: 0.4)
       ..strokeWidth = 1.0
       ..style = PaintingStyle.stroke;
     canvas.drawLine(
@@ -841,7 +903,7 @@ class ComponentPhysicalPainter extends CustomPainter {
       bottomShadow,
     );
 
-    // Borda externa
+    // Borda externa chamfrada
     canvas.drawRRect(
       rr,
       Paint()
@@ -849,14 +911,26 @@ class ComponentPhysicalPainter extends CustomPainter {
         ..strokeWidth = 1.0
         ..style = PaintingStyle.stroke,
     );
+
+    // Rebites/Parafusos metálicos de fixação industrial nos 4 cantos da base 3D
+    final rivetPositions = [
+      Offset(blockRect.left + 5, blockRect.top + 5),
+      Offset(blockRect.right - 5, blockRect.top + 5),
+      Offset(blockRect.left + 5, blockRect.bottom - 5),
+      Offset(blockRect.right - 5, blockRect.bottom - 5),
+    ];
+    for (final pos in rivetPositions) {
+      canvas.drawCircle(pos, 1.4, Paint()..color = isDarkMode ? const Color(0xFF64748B) : const Color(0xFF94A3B8));
+      canvas.drawCircle(pos, 0.7, Paint()..color = isDarkMode ? const Color(0xFF0F172A) : const Color(0xFF334155));
+    }
   }
 
   void _drawPhysicalPotentiometer(Canvas canvas, Size size, double cx, double cy) {
     _drawBaseBlock(canvas, size, cx, cy);
 
-    // Bornes
-    canvas.drawCircle(Offset(cx - 32, cy + 4), 5, Paint()..color = Colors.red);
-    canvas.drawCircle(Offset(cx + 32, cy + 4), 5, Paint()..color = Colors.black87);
+    // Bornes (3D banana jack)
+    _drawTerminalJack(canvas, Offset(cx - 32, cy + 4), true);
+    _drawTerminalJack(canvas, Offset(cx + 32, cy + 4), false);
 
     // Corpo metálico cilíndrico do potenciômetro
     final knobCenter = Offset(cx, cy - 8);
@@ -943,17 +1017,17 @@ class ComponentPhysicalPainter extends CustomPainter {
     )..layout();
     textPainter.paint(canvas, Offset(cx - textPainter.width / 2, cy - 18));
 
-    // Bornes de Saída DC (+ e -)
-    canvas.drawCircle(Offset(cx - 18, cy + 12), 6, Paint()..color = Colors.red);
-    canvas.drawCircle(Offset(cx + 18, cy + 12), 6, Paint()..color = Colors.black87);
+    // Bornes de Saída DC (+ e -) 3D banana jack
+    _drawTerminalJack(canvas, Offset(cx - 18, cy + 12), true);
+    _drawTerminalJack(canvas, Offset(cx + 18, cy + 12), false);
   }
 
   void _drawPhysicalFuse(Canvas canvas, Size size, double cx, double cy) {
     _drawBaseBlock(canvas, size, cx, cy);
 
-    // Bornes
-    canvas.drawCircle(Offset(cx - 32, cy + 4), 5, Paint()..color = Colors.red);
-    canvas.drawCircle(Offset(cx + 32, cy + 4), 5, Paint()..color = Colors.black87);
+    // Bornes (3D banana jack)
+    _drawTerminalJack(canvas, Offset(cx - 32, cy + 4), true);
+    _drawTerminalJack(canvas, Offset(cx + 32, cy + 4), false);
 
     // Tubo de Vidro do Fusível
     final tubeRect = Rect.fromCenter(center: Offset(cx, cy - 4), width: 38, height: 12);
@@ -990,9 +1064,9 @@ class ComponentPhysicalPainter extends CustomPainter {
   void _drawPhysicalCapacitor(Canvas canvas, Size size, double cx, double cy) {
     _drawBaseBlock(canvas, size, cx, cy);
 
-    // Bornes
-    canvas.drawCircle(Offset(cx - 30, cy + 4), 5, Paint()..color = Colors.red);
-    canvas.drawCircle(Offset(cx + 30, cy + 4), 5, Paint()..color = Colors.black87);
+    // Bornes (3D banana jack)
+    _drawTerminalJack(canvas, Offset(cx - 30, cy + 4), true);
+    _drawTerminalJack(canvas, Offset(cx + 30, cy + 4), false);
 
     // Corpo do Capacitor Eletrolítico (Cilindro Azul)
     final capRect = Rect.fromCenter(center: Offset(cx, cy - 10), width: 22, height: 26);
@@ -1018,9 +1092,9 @@ class ComponentPhysicalPainter extends CustomPainter {
   void _drawPhysicalBuzzer(Canvas canvas, Size size, double cx, double cy) {
     _drawBaseBlock(canvas, size, cx, cy);
 
-    // Bornes
-    canvas.drawCircle(Offset(cx - 30, cy + 4), 5, Paint()..color = Colors.red);
-    canvas.drawCircle(Offset(cx + 30, cy + 4), 5, Paint()..color = Colors.black87);
+    // Bornes (3D banana jack)
+    _drawTerminalJack(canvas, Offset(cx - 30, cy + 4), true);
+    _drawTerminalJack(canvas, Offset(cx + 30, cy + 4), false);
 
     // Cápsula Piezoelétrica Preta
     final buzzCenter = Offset(cx, cy - 8);
