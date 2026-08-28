@@ -60,6 +60,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
   Offset? _sparkPosition;
   bool _showMascot = true;
   bool _isDiagramMode = false;
+  bool _useRealisticAssets = true;
   ProfVoltsEmotion _lastVoltsEmotion = ProfVoltsEmotion.neutral;
 
   // Pilar 1: Instrumentos Virtuais de Medição (Multímetro & Osciloscópio)
@@ -518,6 +519,55 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                         isCompact: true,
                       ),
                     ),
+                    // Botão "Modo realista" / "Modo cartoon"
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(20),
+                        onTap: () {
+                          setState(() {
+                            _useRealisticAssets = !_useRealisticAssets;
+                          });
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: _useRealisticAssets
+                                ? theme.colorScheme.primary.withValues(alpha: 0.18)
+                                : (isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: _useRealisticAssets
+                                  ? theme.colorScheme.primary
+                                  : (isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1)),
+                              width: 1.2,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                _useRealisticAssets ? Icons.photo_library_rounded : Icons.brush_rounded,
+                                size: 14,
+                                color: _useRealisticAssets ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                _useRealisticAssets ? 'Modo realista' : 'Modo cartoon',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontFamily: GoogleFonts.rajdhani().fontFamily,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.6,
+                                  color: _useRealisticAssets ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                     // Seletor de Tamanho da Bancada / Grid
                     Container(
                       margin: const EdgeInsets.only(right: 8),
@@ -644,6 +694,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                             isHorizontal: true,
                             isDark: isDark,
                             isDiagramMode: _isDiagramMode,
+                            useRealisticAssets: _useRealisticAssets,
                             getComponentName: _getComponentName,
                           ),
                         ),
@@ -677,6 +728,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                             isHorizontal: false,
                             isDark: isDark,
                             isDiagramMode: _isDiagramMode,
+                            useRealisticAssets: _useRealisticAssets,
                             getComponentName: _getComponentName,
                           ),
                         ),
@@ -1400,9 +1452,9 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                             ),
                           ),
                         Positioned.fill(
-                          child: CustomPaint(
-                            painter: _isDiagramMode
-                                ? CircuitSymbolPainter(
+                          child: _isDiagramMode
+                              ? CustomPaint(
+                                  painter: CircuitSymbolPainter(
                                     type: component.type,
                                     isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
                                     isBurned: isBurned,
@@ -1411,16 +1463,33 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                                     strokeWidth: active || component.isActive ? 2.8 : 2.0,
                                     value: component.value,
                                     animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
-                                  )
-                                : ComponentPhysicalPainter(
-                                    type: component.type,
-                                    isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
-                                    isBurned: isBurned,
-                                    isDarkMode: isDark,
-                                    value: component.value,
-                                    animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
                                   ),
-                          ),
+                                )
+                              : (_useRealisticAssets && component.type.getAssetPath(component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive)) != null
+                                  ? Image.asset(
+                                      component.type.getAssetPath(component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive))!,
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (context, error, stackTrace) => CustomPaint(
+                                        painter: ComponentPhysicalPainter(
+                                          type: component.type,
+                                          isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
+                                          isBurned: isBurned,
+                                          isDarkMode: isDark,
+                                          value: component.value,
+                                          animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
+                                        ),
+                                      ),
+                                    )
+                                  : CustomPaint(
+                                      painter: ComponentPhysicalPainter(
+                                        type: component.type,
+                                        isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
+                                        isBurned: isBurned,
+                                        isDarkMode: isDark,
+                                        value: component.value,
+                                        animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
+                                      ),
+                                    )),
                         ),
                       ],
                     ),

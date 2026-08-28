@@ -261,7 +261,62 @@ class ComponentPhysicalPainter extends CustomPainter {
   }
 
   void _drawPhysicalWire(Canvas canvas, Size size, double cx, double cy) {
-    _drawCleanLeads(canvas, size, cx, cy, 0, size.width);
+    // 1. Linha metálica estanhada de ponta a ponta (mesmo estilo das hastes de todos os componentes)
+    final shadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.35)
+      ..strokeWidth = 4.2
+      ..strokeCap = StrokeCap.round
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
+
+    final leadBasePaint = Paint()
+      ..shader = LinearGradient(
+        colors: isDarkMode
+            ? const [Color(0xFFCBD5E1), Color(0xFF64748B), Color(0xFF1E293B)]
+            : const [Color(0xFFFFFFFF), Color(0xFFB0BEC5), Color(0xFF455A64)],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ).createShader(Rect.fromLTWH(0, cy - 2, size.width, 4))
+      ..strokeWidth = 3.6
+      ..strokeCap = StrokeCap.round;
+
+    final leadHighlightPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.8)
+      ..strokeWidth = 1.0
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawLine(Offset(0, cy + 2.0), Offset(size.width, cy + 2.0), shadowPaint);
+    canvas.drawLine(Offset(0, cy), Offset(size.width, cy), leadBasePaint);
+    canvas.drawLine(Offset(0, cy - 1.0), Offset(size.width, cy - 1.0), leadHighlightPaint);
+
+    // 2. Conector/Terminal central de derivação do fio de laboratório
+    final blockRect = Rect.fromCenter(center: Offset(cx, cy), width: 16.0, height: 10.0);
+    final blockRRect = RRect.fromRectAndRadius(blockRect, const Radius.circular(3.0));
+
+    // Sombra do conector central
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(blockRect.translate(1.5, 2.0), const Radius.circular(3.0)),
+      Paint()
+        ..color = Colors.black.withValues(alpha: 0.4)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.0),
+    );
+
+    // Corpo metálico de latão/liga 3D
+    final blockShader = LinearGradient(
+      colors: isDarkMode
+          ? const [Color(0xFF94A3B8), Color(0xFF475569), Color(0xFF1E293B)]
+          : const [Color(0xFFFFD54F), Color(0xFFFFB300), Color(0xFFE65100)],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+    ).createShader(blockRect);
+    canvas.drawRRect(blockRRect, Paint()..shader = blockShader);
+
+    // Parafuso de fixação no centro
+    canvas.drawCircle(Offset(cx, cy), 3.0, Paint()..color = const Color(0xFF37474F));
+    canvas.drawLine(Offset(cx - 2.0, cy), Offset(cx + 2.0, cy), Paint()..color = Colors.white..strokeWidth = 0.8);
+
+    // Gotas de solda nas junções
+    _drawSolderBlob(canvas, Offset(cx - 8.0, cy));
+    _drawSolderBlob(canvas, Offset(cx + 8.0, cy));
   }
 
   /// --------------------------------------------------------------------------

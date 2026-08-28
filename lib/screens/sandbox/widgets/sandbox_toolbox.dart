@@ -11,6 +11,7 @@ class SandboxToolboxWidget extends StatelessWidget {
   final bool isHorizontal;
   final bool isDark;
   final bool isDiagramMode;
+  final bool useRealisticAssets;
   final String Function(ComponentType, AppLocalizations) getComponentName;
 
   const SandboxToolboxWidget({
@@ -18,6 +19,7 @@ class SandboxToolboxWidget extends StatelessWidget {
     this.isHorizontal = false,
     required this.isDark,
     required this.isDiagramMode,
+    this.useRealisticAssets = true,
     required this.getComponentName,
   });
 
@@ -141,21 +143,35 @@ class SandboxToolboxWidget extends StatelessWidget {
                       ),
                     ),
                   Positioned.fill(
-                    child: CustomPaint(
-                      painter: isDiagramMode
-                          ? CircuitSymbolPainter(
+                    child: isDiagramMode
+                        ? CustomPaint(
+                            painter: CircuitSymbolPainter(
                               type: type,
                               isActive: false,
                               color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
                               activeColor: const Color(0xFFFFB300),
                               strokeWidth: 2.0,
-                            )
-                          : ComponentPhysicalPainter(
-                              type: type,
-                              isActive: false,
-                              isDarkMode: isDark,
                             ),
-                    ),
+                          )
+                        : (useRealisticAssets && type.getAssetPath(false) != null
+                            ? Image.asset(
+                                type.getAssetPath(false)!,
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) => CustomPaint(
+                                  painter: ComponentPhysicalPainter(
+                                    type: type,
+                                    isActive: false,
+                                    isDarkMode: isDark,
+                                  ),
+                                ),
+                              )
+                            : CustomPaint(
+                                painter: ComponentPhysicalPainter(
+                                  type: type,
+                                  isActive: false,
+                                  isDarkMode: isDark,
+                                ),
+                              )),
                   ),
                 ],
               ),
