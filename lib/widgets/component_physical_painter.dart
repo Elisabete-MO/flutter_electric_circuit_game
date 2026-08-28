@@ -82,97 +82,118 @@ class ComponentPhysicalPainter extends CustomPainter {
   }
 
   void _drawPhysicalBattery(Canvas canvas, Size size, double cx, double cy) {
-    // Corpo da bateria de 4.5V (estilo caixa retangular bege/preta clássica)
-    final bodyWidth = size.width * 0.45;
-    final bodyHeight = size.height * 0.55;
-    final bodyRect = Rect.fromCenter(
-      center: Offset(cx, cy + 6),
-      width: bodyWidth,
-      height: bodyHeight,
-    );
+    // 1. Desenha a base padrão da bancada (hastes metálicas retas em y = cy alinhadas às bordas)
+    _drawBaseBlock(canvas, size, cx, cy);
 
-    // Sombra projetada
+    // 2. Dimensões do corpo da bateria industrial 9V / 4.5V
+    final batWidth = 34.0;
+    final batHeight = 32.0;
+    final batRect = Rect.fromCenter(
+      center: Offset(cx, cy - 8),
+      width: batWidth,
+      height: batHeight,
+    );
+    final batRRect = RRect.fromRectAndRadius(batRect, const Radius.circular(4.5));
+
+    // Sombra de volume projetada sob o bloco da bateria
     canvas.drawRRect(
-      RRect.fromRectAndRadius(bodyRect.translate(3, 5), const Radius.circular(6)),
+      RRect.fromRectAndRadius(batRect.translate(2, 3), const Radius.circular(4.5)),
       Paint()
-        ..color = Colors.black.withValues(alpha: 0.35)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+        ..color = Colors.black.withValues(alpha: 0.4)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
     );
 
-    // Bloco principal com gradiente lateral (luz da esquerda)
-    final bodyPaint = Paint()
-      ..shader = const LinearGradient(
-        colors: [Color(0xFF3C3C3C), Color(0xFF222222), Color(0xFF141414)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ).createShader(bodyRect);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(bodyRect, const Radius.circular(6)),
-      bodyPaint,
-    );
+    // Corpo metálico principal com gradiente chamfrado 3D
+    final bodyShader = const LinearGradient(
+      colors: [Color(0xFF334155), Color(0xFF1E293B), Color(0xFF0F172A)],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+    ).createShader(batRect);
+    canvas.drawRRect(batRRect, Paint()..shader = bodyShader);
 
-    // Reflexo especular lateral esquerdo (borda de luz)
+    // Faixa dourada/laranja metálica de alta visibilidade (Marca registrada de bateria industrial)
+    final stripeRect = Rect.fromLTWH(batRect.left, batRect.top + 10, batWidth, 12);
+    final stripeShader = const LinearGradient(
+      colors: [Color(0xFFFF9800), Color(0xFFFF5722), Color(0xFFE65100)],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+    ).createShader(stripeRect);
+    canvas.drawRect(stripeRect, Paint()..shader = stripeShader);
+
+    // Destaque especular na borda superior da tarja
     canvas.drawLine(
-      Offset(bodyRect.left + 1.5, bodyRect.top + 6),
-      Offset(bodyRect.left + 1.5, bodyRect.bottom - 6),
-      Paint()
-        ..color = Colors.white.withValues(alpha: 0.15)
-        ..strokeWidth = 2.5
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round,
+      Offset(stripeRect.left, stripeRect.top + 0.8),
+      Offset(stripeRect.right, stripeRect.top + 0.8),
+      Paint()..color = Colors.white.withValues(alpha: 0.6)..strokeWidth = 1.0,
     );
 
-    // Tarja dourada/laranja (pilha 4.5V plus)
-    final stripeRect = Rect.fromLTWH(
-      bodyRect.left,
-      bodyRect.top + bodyHeight * 0.35,
-      bodyWidth,
-      bodyHeight * 0.3,
-    );
-    final stripePaint = Paint()
-      ..shader = const LinearGradient(
-        colors: [Color(0xFFFF9800), Color(0xFFFF5722)],
-      ).createShader(stripeRect);
-    canvas.drawRect(stripeRect, stripePaint);
-
-    // Texto "4.5 V"
+    // Texto de Tensão em tipografia legível
+    final voltStr = value > 0 ? '${value.toStringAsFixed(value % 1 == 0 ? 0 : 1)}V' : '9V';
     final textPainter = TextPainter(
-      text: const TextSpan(
-        text: '4.5V',
-        style: TextStyle(
+      text: TextSpan(
+        text: voltStr,
+        style: const TextStyle(
           color: Colors.white,
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
+          fontSize: 8.5,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0.5,
         ),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    textPainter.paint(canvas, Offset(cx - textPainter.width / 2, stripeRect.top + 4));
+    textPainter.paint(canvas, Offset(cx - textPainter.width / 2, stripeRect.top + 1.5));
 
-    // Lâminas de terminal metálicas no topo (polos - e +)
-    final termLeft = Rect.fromLTWH(cx - bodyWidth * 0.3, bodyRect.top - 12, 10, 14);
-    final termRight = Rect.fromLTWH(cx + bodyWidth * 0.15, bodyRect.top - 16, 12, 18);
+    // Terminais Snap metálicos no topo (Polos - e + da bateria)
+    final snapLeft = Offset(cx - 9, batRect.top - 3);
+    final snapRight = Offset(cx + 9, batRect.top - 4);
 
-    final metalPaint = Paint()..color = const Color(0xFFD4AF37); // Latão
-    canvas.drawRect(termLeft, metalPaint);
-    canvas.drawRect(termRight, metalPaint);
+    // Polo Negativo (-) - Conector Snap sextavado/cilíndrico metálico
+    canvas.drawCircle(snapLeft, 3.5, Paint()..color = const Color(0xFF94A3B8));
+    canvas.drawCircle(snapLeft, 2.0, Paint()..color = const Color(0xFF1E293B));
 
-    // Condutores de latão estendendo para as extremidades dos terminais da célula A e B
-    final wireLeadPaint = Paint()
-      ..color = const Color(0xFFD4AF37)
-      ..strokeWidth = 2.8
-      ..strokeCap = StrokeCap.round;
-    canvas.drawLine(Offset(termLeft.center.dx, termLeft.top + 4), Offset(0, cy), wireLeadPaint);
-    canvas.drawLine(Offset(termRight.center.dx, termRight.top + 4), Offset(size.width, cy), wireLeadPaint);
+    // Polo Positivo (+) - Conector Snap coroa metálico
+    canvas.drawCircle(snapRight, 4.2, Paint()..color = const Color(0xFFD4AF37));
+    canvas.drawCircle(snapRight, 2.5, Paint()..color = const Color(0xFFB45309));
 
-    // Símbolos - e + nas lâminas
-    final signStyle = const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold);
-    TextPainter(text: TextSpan(text: '-', style: signStyle), textDirection: TextDirection.ltr)
+    // Fios de conexão isolados ligando o topo da bateria diretamente às hastes da base (cy)
+    final wireNegPath = Path()
+      ..moveTo(snapLeft.dx, snapLeft.dy)
+      ..cubicTo(snapLeft.dx - 6, snapLeft.dy - 4, cx - 24, cy - 8, cx - 30, cy);
+    final wirePosPath = Path()
+      ..moveTo(snapRight.dx, snapRight.dy)
+      ..cubicTo(snapRight.dx + 6, snapRight.dy - 4, cx + 24, cy - 8, cx + 30, cy);
+
+    // Fio Negativo (Preto)
+    canvas.drawPath(
+      wireNegPath,
+      Paint()
+        ..color = isDarkMode ? const Color(0xFF475569) : const Color(0xFF1E293B)
+        ..strokeWidth = 2.2
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round,
+    );
+
+    // Fio Positivo (Vermelho)
+    canvas.drawPath(
+      wirePosPath,
+      Paint()
+        ..color = const Color(0xFFE53935)
+        ..strokeWidth = 2.2
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round,
+    );
+
+    // Símbolos - e + impressos nos ombros da bateria
+    final signStyleNeg = const TextStyle(color: Color(0xFF94A3B8), fontSize: 8, fontWeight: FontWeight.bold);
+    final signStylePos = const TextStyle(color: Color(0xFFFF5252), fontSize: 8, fontWeight: FontWeight.bold);
+
+    TextPainter(text: TextSpan(text: '-', style: signStyleNeg), textDirection: TextDirection.ltr)
       ..layout()
-      ..paint(canvas, Offset(termLeft.left + 2, termLeft.top - 10));
-    TextPainter(text: TextSpan(text: '+', style: signStyle), textDirection: TextDirection.ltr)
+      ..paint(canvas, Offset(batRect.left + 3, batRect.top + 1));
+
+    TextPainter(text: TextSpan(text: '+', style: signStylePos), textDirection: TextDirection.ltr)
       ..layout()
-      ..paint(canvas, Offset(termRight.left + 2, termRight.top - 10));
+      ..paint(canvas, Offset(batRect.right - 8, batRect.top + 1));
   }
 
   void _drawPhysicalWire(Canvas canvas, Size size, double cx, double cy) {
