@@ -120,23 +120,23 @@ class CircuitSymbolPainter extends CustomPainter {
     final bLeft = cx - 8;
     final bRight = cx + 8;
 
-    // Linha contínua da extremidade esquerda até a placa positiva e da placa negativa até a extremidade direita
+    // Linha contínua da extremidade esquerda até a placa negativa e da placa positiva até a extremidade direita
     canvas.drawLine(Offset(leftX, cy), Offset(bLeft, cy), paint);
     canvas.drawLine(Offset(bRight, cy), Offset(rightX, cy), paint);
 
-    // Terminal da esquerda (linha longa - polo positivo)
-    final posPaint = Paint()
-      ..color = paint.color
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke;
-    canvas.drawLine(Offset(bLeft, cy - 18), Offset(bLeft, cy + 18), posPaint);
-
-    // Terminal da direita (linha mais curta e mais grossa - polo negativo)
+    // Terminal da esquerda (Terminal A / Polo Negativo - linha mais curta e mais grossa)
     final negPaint = Paint()
       ..color = paint.color
       ..strokeWidth = strokeWidth * 2.2
       ..style = PaintingStyle.stroke;
-    canvas.drawLine(Offset(bRight, cy - 10), Offset(bRight, cy + 10), negPaint);
+    canvas.drawLine(Offset(bLeft, cy - 10), Offset(bLeft, cy + 10), negPaint);
+
+    // Terminal da direita (Terminal B / Polo Positivo - linha mais longa e fina)
+    final posPaint = Paint()
+      ..color = paint.color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+    canvas.drawLine(Offset(bRight, cy - 18), Offset(bRight, cy + 18), posPaint);
   }
 
   void _drawConnectingWire(Canvas canvas, Size size, double cx, double cy, Paint paint) {
