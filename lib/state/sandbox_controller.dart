@@ -248,7 +248,7 @@ class SandboxController extends Notifier<SandboxState> {
     state = SandboxState(
       components: components,
       wires: wires,
-      isSimulating: state.isSimulating,
+      isSimulating: true,
     );
     _recalculateCircuit();
   }
@@ -382,6 +382,7 @@ class SandboxController extends Notifier<SandboxState> {
                 if (c.type == ComponentType.fuse) return sum + 0.1;
                 if (c.type == ComponentType.capacitor) return sum + 10.0;
                 if (c.type == ComponentType.buzzer) return sum + 8.0;
+                if (c.type == ComponentType.motor) return sum + 2.0;
                 return sum + c.value;
               });
 
@@ -404,7 +405,11 @@ class SandboxController extends Notifier<SandboxState> {
 
             final compRes = (comp.type == ComponentType.fuse)
                 ? 0.1
-                : (comp.type == ComponentType.capacitor ? 10.0 : (comp.type == ComponentType.buzzer ? 8.0 : comp.value));
+                : (comp.type == ComponentType.capacitor
+                    ? 10.0
+                    : (comp.type == ComponentType.buzzer
+                        ? 8.0
+                        : (comp.type == ComponentType.motor ? 2.0 : comp.value)));
             final vDrop = loopCurrent * compRes;
             final power = vDrop * loopCurrent;
 
@@ -523,9 +528,12 @@ class SandboxController extends Notifier<SandboxState> {
       }
 
       if (nextComponent.type == ComponentType.diode || nextComponent.type == ComponentType.led) {
-        if (nextTerm == 'A') {
+        final isReversed = (nextComponent.rotation == 180.0 || nextComponent.rotation == 270.0)
+            ? (nextTerm == 'B')
+            : (nextTerm == 'A');
+        if (isReversed) {
           wirePath.removeLast();
-          continue; // Bloqueia a corrente se ela tentar entrar pelo Cathode ('A', -) - Polarização Reversa
+          continue; // Bloqueia a corrente se ela tentar entrar pelo Cathode - Polarização Reversa
         }
       }
 
