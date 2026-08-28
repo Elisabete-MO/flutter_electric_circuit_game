@@ -666,7 +666,7 @@ Path buildSmartWirePath({
       path.lineTo(end.dx, end.dy);
     }
   } else {
-    // Modo Físico Realista (Cabo curvo com desvio inteligente de componentes e saída externa das bornes)
+    // Modo Físico Realista Orgânico (Fios maleáveis com física de catenária fluida)
     final minX = math.min(start.dx, end.dx);
     final maxX = math.max(start.dx, end.dx);
 
@@ -690,42 +690,62 @@ Path buildSmartWirePath({
       }
     }
 
-    // Posição da borda inferior da linha de componentes de origem e destino
-    final startRowBottom = ((start.dy / cellSize).floor() + 1.0) * cellSize;
-    final endRowBottom = ((end.dy / cellSize).floor() + 1.0) * cellSize;
-    final cardBottomY = math.max(startRowBottom, endRowBottom);
-
-    final dist = (end - start).distance;
-    final baseSag = (dist * 0.25).clamp(16.0, 55.0);
-
-    double controlY = math.max(start.dy, end.dy) + baseSag;
-
-    // Se o fio for longo (abrangendo mais de 1 célula) ou houver intermediário, passa 20px limpos abaixo de todas as caixas
-    if (dist > cellSize * 1.1 || hasIntermediateObstacle) {
-      final targetBottom = hasIntermediateObstacle ? math.max(maxObstacleBottomY, cardBottomY) : cardBottomY;
-      controlY = math.max(controlY, targetBottom + 20.0);
-    }
-
-    if (isReturn) {
-      controlY += 14.0;
-    }
-
-    // Projeta os pontos de controle (cp1X e cp2X) para fora das nascentes dos conectores
-    // evitando que a curva atravesse os cantos inferiores das caixas dos componentes
     final startIsLeft = (start.dx % cellSize) < (cellSize / 2);
     final endIsLeft = (end.dx % cellSize) < (cellSize / 2);
 
-    final cp1X = startIsLeft ? start.dx - 22.0 : start.dx + 22.0;
-    final cp2X = endIsLeft ? end.dx - 22.0 : end.dx + 22.0;
+    final dist = (end - start).distance;
+    final isLongSpan = dist > cellSize * 1.4;
 
-    path.cubicTo(
-      cp1X,
-      controlY,
-      cp2X,
-      controlY,
-      end.dx,
-      end.dy,
-    );
+    if (hasIntermediateObstacle || (isLongSpan && (start.dy - end.dy).abs() < 10)) {
+      // Conexão longa que sobrevoa/subvoa módulos intermediários: Curva ampla de gravidade limpa
+      final startRowBottom = ((start.dy / cellSize).floor() + 1.0) * cellSize;
+      final endRowBottom = ((end.dy / cellSize).floor() + 1.0) * cellSize;
+      final cardBottomY = math.max(startRowBottom, endRowBottom);
+      final targetBottom = hasIntermediateObstacle ? math.max(maxObstacleBottomY, cardBottomY) : cardBottomY;
+
+      final baseSag = (dist * 0.22).clamp(18.0, 55.0);
+      double controlY = math.max(targetBottom + 20.0, math.max(start.dy, end.dy) + baseSag);
+
+      if (isReturn) {
+        controlY += 14.0;
+      }
+
+      final cp1X = startIsLeft ? start.dx - 22.0 : start.dx + 22.0;
+      final cp2X = endIsLeft ? end.dx - 22.0 : end.dx + 22.0;
+
+      path.cubicTo(
+        cp1X,
+        controlY,
+        cp2X,
+        controlY,
+        end.dx,
+        end.dy,
+      );
+    } else {
+      // Conexões diretas ou entre alturas diferentes (ex: Bateria no y=1 e Resistor no y=0):
+      // Roteamento de catenária natural fluida e orgânica sem cotovelos duros ou caimentos abruptos em U.
+      final dxOut1 = startIsLeft ? -1.0 : 1.0;
+      final dxOut2 = endIsLeft ? -1.0 : 1.0;
+
+      final armLength = math.min(dist * 0.4, 38.0).clamp(16.0, 38.0);
+      final sagAmount = math.max(12.0, dist * 0.15);
+
+      final cp1X = start.dx + dxOut1 * armLength;
+      final cp2X = end.dx + dxOut2 * armLength;
+
+      // Suavização do peso de gravidade dependendo da inclinação do cabo
+      final cp1Y = start.dy + sagAmount + (dy > 0 ? dy * 0.15 : 0);
+      final cp2Y = end.dy + sagAmount + (dy < 0 ? -dy * 0.15 : 0);
+
+      path.cubicTo(
+        cp1X,
+        cp1Y,
+        cp2X,
+        cp2Y,
+        end.dx,
+        end.dy,
+      );
+    }
   }
 
   return path;
