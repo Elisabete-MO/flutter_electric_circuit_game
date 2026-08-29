@@ -16,6 +16,7 @@ class SymbolCard extends StatefulWidget {
     this.isSelected = false,
     this.showLabels = true,
     this.isCorrectlyAnswered = false,
+    this.useRealisticAssets = false,
   });
 
   final FirstStepComponent component;
@@ -24,6 +25,7 @@ class SymbolCard extends StatefulWidget {
   final bool isSelected;
   final bool showLabels;
   final bool isCorrectlyAnswered;
+  final bool useRealisticAssets;
 
   @override
   State<SymbolCard> createState() => _SymbolCardState();
@@ -129,14 +131,31 @@ class _SymbolCardState extends State<SymbolCard> {
                             ),
                           ),
                         Expanded(
-                          child: CustomPaint(
-                            painter: ComponentPhysicalPainter(
-                              type: widget.component.type,
-                              isActive: widget.component.isActive,
-                              isDarkMode: isDark,
-                            ),
-                            child: const SizedBox.expand(),
-                          ),
+                          child: widget.useRealisticAssets &&
+                                  widget.component.type.getAssetPath(widget.component.isActive) != null
+                              ? Padding(
+                                  padding: const EdgeInsets.all(4.0),
+                                  child: Image.asset(
+                                    widget.component.type.getAssetPath(widget.component.isActive)!,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (context, error, stackTrace) => CustomPaint(
+                                      painter: ComponentPhysicalPainter(
+                                        type: widget.component.type,
+                                        isActive: widget.component.isActive,
+                                        isDarkMode: isDark,
+                                      ),
+                                      child: const SizedBox.expand(),
+                                    ),
+                                  ),
+                                )
+                              : CustomPaint(
+                                  painter: ComponentPhysicalPainter(
+                                    type: widget.component.type,
+                                    isActive: widget.component.isActive,
+                                    isDarkMode: isDark,
+                                  ),
+                                  child: const SizedBox.expand(),
+                                ),
                         ),
                       ],
                     ),

@@ -666,7 +666,7 @@ Path buildSmartWirePath({
       path.lineTo(end.dx, end.dy);
     }
   } else {
-    // Modo Físico Realista (Cabo curvo com desvio inteligente de componentes intermediários)
+    // Modo Físico Realista Orgânico (Catenária fluida de alta fidelidade física)
     final minX = math.min(start.dx, end.dx);
     final maxX = math.max(start.dx, end.dx);
 
@@ -679,8 +679,7 @@ Path buildSmartWirePath({
       final compRight = (comp.gridX + 1) * cellSize;
       final compBottom = (comp.gridY + 1) * cellSize;
 
-      // Se o componente estiver entre a origem e o destino na horizontal (sem ser o próprio conector inicial/final)
-      if (compRight > minX + 10 && compLeft < maxX - 10) {
+      if (compRight > minX + 5 && compLeft < maxX - 5) {
         final compTop = comp.gridY * cellSize;
         if (math.min(start.dy, end.dy) <= compBottom && math.max(start.dy, end.dy) >= compTop - 10) {
           hasIntermediateObstacle = true;
@@ -691,31 +690,65 @@ Path buildSmartWirePath({
       }
     }
 
-    final midX = (start.dx + end.dx) / 2;
+    final startIsLeft = (start.dx % cellSize) < (cellSize / 2);
+    final endIsLeft = (end.dx % cellSize) < (cellSize / 2);
+
     final dist = (end - start).distance;
-    final baseSag = (dist * 0.22).clamp(14.0, 50.0);
+    final absDx = (end.dx - start.dx).abs();
+    final isLongSpan = dist > cellSize * 1.4;
 
-    double controlY = math.max(start.dy, end.dy) + baseSag;
+    if (hasIntermediateObstacle || (isLongSpan && (start.dy - end.dy).abs() < 10)) {
+      // Conexão de longa distância (sobrevoando/subvoando outros cartões)
+      final startRowBottom = ((start.dy / cellSize).floor() + 1.0) * cellSize;
+      final endRowBottom = ((end.dy / cellSize).floor() + 1.0) * cellSize;
+      final cardBottomY = math.max(startRowBottom, endRowBottom);
+      final targetBottom = hasIntermediateObstacle ? math.max(maxObstacleBottomY, cardBottomY) : cardBottomY;
 
-    // Se houver um componente no caminho intermediário, curva o fio com folga segura POR BAIXO da caixa do componente (evitando o aspecto visual de curto-circuito)
-    if (hasIntermediateObstacle) {
-      final clearanceY = maxObstacleBottomY + 18.0;
-      controlY = math.max(controlY, clearanceY);
+      final baseSag = (dist * 0.22).clamp(18.0, 55.0);
+      double controlY = math.max(targetBottom + 20.0, math.max(start.dy, end.dy) + baseSag);
+
+      if (isReturn) {
+        controlY += 14.0;
+      }
+
+      final cp1X = startIsLeft ? start.dx - 22.0 : start.dx + 22.0;
+      final cp2X = endIsLeft ? end.dx - 22.0 : end.dx + 22.0;
+
+      path.cubicTo(
+        cp1X,
+        controlY,
+        cp2X,
+        controlY,
+        end.dx,
+        end.dy,
+      );
+    } else {
+      // Conexão entre terminais adjacentes ou em diferentes alturas (Catenária física fluida sem rigidez)
+      final dxOut1 = startIsLeft ? -1.0 : 1.0;
+      final dxOut2 = endIsLeft ? -1.0 : 1.0;
+
+      // Limita a projeção horizontal dos pontos de controle para evitar cruzamentos rígidos em S
+      final armX = math.min(32.0, math.max(12.0, absDx * 0.45));
+
+      final cp1X = start.dx + dxOut1 * armX;
+      final cp2X = end.dx + dxOut2 * armX;
+
+      // Caimento de gravidade natural de alta fluidez
+      final sagBase = math.max(16.0, dist * 0.22);
+      final maxY = math.max(start.dy, end.dy);
+
+      final cp1Y = math.max(start.dy + sagBase * 0.4, maxY + sagBase * 0.25);
+      final cp2Y = math.max(end.dy + sagBase * 0.4, maxY + sagBase * 0.25);
+
+      path.cubicTo(
+        cp1X,
+        cp1Y,
+        cp2X,
+        cp2Y,
+        end.dx,
+        end.dy,
+      );
     }
-
-    // Se for fio de retorno (direita para a esquerda), adiciona um sag extra para separar visualmente os fios de ida e volta
-    if (isReturn) {
-      controlY += 12.0;
-    }
-
-    path.cubicTo(
-      midX,
-      controlY,
-      midX,
-      controlY,
-      end.dx,
-      end.dy,
-    );
   }
 
   return path;

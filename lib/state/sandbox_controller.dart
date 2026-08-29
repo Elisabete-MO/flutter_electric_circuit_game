@@ -114,7 +114,7 @@ class SandboxController extends Notifier<SandboxState> {
       if (componentIds.contains(c.id)) {
         final targetX = c.gridX + deltaX;
         final targetY = c.gridY + deltaY;
-        if (targetX < 0 || targetX >= 8 || targetY < 0 || targetY >= 6) {
+        if (targetX < 0 || targetX >= 20 || targetY < 0 || targetY >= 16) {
           valid = false;
           break;
         }
@@ -126,8 +126,8 @@ class SandboxController extends Notifier<SandboxState> {
     final updated = state.components.map((c) {
       if (componentIds.contains(c.id)) {
         return c.copyWith(
-          gridX: (c.gridX + deltaX).clamp(0, 7),
-          gridY: (c.gridY + deltaY).clamp(0, 5),
+          gridX: (c.gridX + deltaX).clamp(0, 19),
+          gridY: (c.gridY + deltaY).clamp(0, 15),
         );
       }
       return c;

@@ -35,6 +35,7 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
   // Estado do Passo 1: Interruptor e lâmpada
   bool _isSwitchClosed = false;
   bool _showDiagramMode = false;
+  bool _useRealisticAssets = true;
 
   // Estado do Passo 2: Símbolos posicionados nos 3 slots (Bateria, Interruptor, Lâmpada)
   ComponentType? _slotBattery;
@@ -193,6 +194,7 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
                                   slotSwitch: _slotSwitch,
                                   slotBulb: _slotBulb,
                                   isDark: isDark,
+                                  useRealisticAssets: _useRealisticAssets,
                                   drawParticlesOnly: false,
                                 ),
                               ),
@@ -220,6 +222,49 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
                                     );
                                   },
                                 ),
+                              ),
+                            ),
+
+                          // Componentes Físicos Realistas (PNGs) na Bancada
+                          if (!_showDiagramMode && _useRealisticAssets)
+                            Positioned.fill(
+                              child: LayoutBuilder(
+                                builder: (context, boardConstraints) {
+                                  final w = boardConstraints.maxWidth;
+                                  final h = boardConstraints.maxHeight;
+                                  final batX = w * 0.18;
+                                  final batY = h * 0.48;
+                                  final swX = w * 0.72;
+                                  final swY = h * 0.26;
+                                  final bulbX = w * 0.72;
+                                  final bulbY = h * 0.72;
+
+                                  return Stack(
+                                    children: [
+                                      Positioned(
+                                        left: batX - 60,
+                                        top: batY - 50,
+                                        width: 120,
+                                        height: 100,
+                                        child: Image.asset(ComponentType.battery.getAssetPath(false)!, fit: BoxFit.contain),
+                                      ),
+                                      Positioned(
+                                        left: swX - 60,
+                                        top: swY - 50,
+                                        width: 120,
+                                        height: 100,
+                                        child: Image.asset(ComponentType.switchComponent.getAssetPath(_isSwitchClosed)!, fit: BoxFit.contain),
+                                      ),
+                                      Positioned(
+                                        left: bulbX - 60,
+                                        top: bulbY - 50,
+                                        width: 120,
+                                        height: 100,
+                                        child: Image.asset(ComponentType.bulb.getAssetPath(_isSwitchClosed)!, fit: BoxFit.contain),
+                                      ),
+                                    ],
+                                  );
+                                },
                               ),
                             ),
 
@@ -316,6 +361,51 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
                                         _showDiagramMode = val;
                                       });
                                     },
+                                  ),
+                                  InkWell(
+                                    borderRadius: BorderRadius.circular(20),
+                                    onTap: () {
+                                      setState(() {
+                                        _useRealisticAssets = !_useRealisticAssets;
+                                      });
+                                    },
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 200),
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: _useRealisticAssets
+                                            ? theme.colorScheme.primary.withValues(alpha: 0.18)
+                                            : (isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: _useRealisticAssets
+                                              ? theme.colorScheme.primary
+                                              : (isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1)),
+                                          width: 1.2,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            _useRealisticAssets ? Icons.photo_library_rounded : Icons.brush_rounded,
+                                            size: 14,
+                                            color: _useRealisticAssets ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            _useRealisticAssets ? 'Modo realista' : 'Modo cartoon',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontFamily: GoogleFonts.rajdhani().fontFamily,
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: 0.6,
+                                              color: _useRealisticAssets ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   ),
                                   if (_showDiagramMode) ...[
                                     DiagramActionButton(
@@ -566,6 +656,7 @@ class _CircuitInteractiveBoardPainter extends CustomPainter {
     required this.slotSwitch,
     required this.slotBulb,
     required this.isDark,
+    this.useRealisticAssets = true,
     this.currentProgress = 0.0,
     this.drawParticlesOnly = false,
   });
@@ -576,6 +667,7 @@ class _CircuitInteractiveBoardPainter extends CustomPainter {
   final ComponentType? slotSwitch;
   final ComponentType? slotBulb;
   final bool isDark;
+  final bool useRealisticAssets;
   final double currentProgress;
   final bool drawParticlesOnly;
 
@@ -754,7 +846,9 @@ class _CircuitInteractiveBoardPainter extends CustomPainter {
     canvas.drawCircle(bulbRedTerm, 4, plugPaint);
     canvas.drawCircle(bulbBlackTerm, 4, plugPaint);
 
-    // --- RENDEREZAÃ‡ÃƒO DOS COMPONENTES FÍSICOS ---
+    if (useRealisticAssets) return;
+
+    // --- RENDEREZAÇÃO DOS COMPONENTES FÍSICOS (CARTOON) ---
     final batPainter = ComponentPhysicalPainter(
       type: ComponentType.battery,
       isActive: false,
