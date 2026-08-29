@@ -684,20 +684,89 @@ Path buildSmartWirePath({
       path.lineTo(end.dx, end.dy);
     }
   } else {
-    // Modo Físico Realista (Cabo curvo por gravidade natural)
-    final midX = (start.dx + end.dx) / 2;
-    final dist = (end - start).distance;
-    final sag = (dist * 0.22).clamp(12.0, 50.0);
-    final controlY = math.max(start.dy, end.dy) + sag;
+    // Modo Físico Realista Orgânico (Catenária fluida de alta fidelidade física)
+    final minX = math.min(start.dx, end.dx);
+    final maxX = math.max(start.dx, end.dx);
 
-    path.cubicTo(
-      midX,
-      controlY,
-      midX,
-      controlY,
-      end.dx,
-      end.dy,
-    );
+    // Identifica se há componentes intermediários no caminho horizontal entre start e end
+    double maxObstacleBottomY = 0.0;
+    bool hasIntermediateObstacle = false;
+
+    for (final comp in components) {
+      final compLeft = comp.gridX * cellSize;
+      final compRight = (comp.gridX + 1) * cellSize;
+      final compBottom = (comp.gridY + 1) * cellSize;
+
+      if (compRight > minX + 5 && compLeft < maxX - 5) {
+        final compTop = comp.gridY * cellSize;
+        if (math.min(start.dy, end.dy) <= compBottom && math.max(start.dy, end.dy) >= compTop - 10) {
+          hasIntermediateObstacle = true;
+          if (compBottom > maxObstacleBottomY) {
+            maxObstacleBottomY = compBottom;
+          }
+        }
+      }
+    }
+
+    final startIsLeft = (start.dx % cellSize) < (cellSize / 2);
+    final endIsLeft = (end.dx % cellSize) < (cellSize / 2);
+
+    final dist = (end - start).distance;
+    final absDx = (end.dx - start.dx).abs();
+    final isLongSpan = dist > cellSize * 1.4;
+
+    if (hasIntermediateObstacle || (isLongSpan && (start.dy - end.dy).abs() < 10)) {
+      // Conexão de longa distância (sobrevoando/subvoando outros cartões)
+      final startRowBottom = ((start.dy / cellSize).floor() + 1.0) * cellSize;
+      final endRowBottom = ((end.dy / cellSize).floor() + 1.0) * cellSize;
+      final cardBottomY = math.max(startRowBottom, endRowBottom);
+      final targetBottom = hasIntermediateObstacle ? math.max(maxObstacleBottomY, cardBottomY) : cardBottomY;
+
+      final baseSag = (dist * 0.22).clamp(18.0, 55.0);
+      double controlY = math.max(targetBottom + 20.0, math.max(start.dy, end.dy) + baseSag);
+
+      if (isReturn) {
+        controlY += 14.0;
+      }
+
+      final cp1X = startIsLeft ? start.dx - 22.0 : start.dx + 22.0;
+      final cp2X = endIsLeft ? end.dx - 22.0 : end.dx + 22.0;
+
+      path.cubicTo(
+        cp1X,
+        controlY,
+        cp2X,
+        controlY,
+        end.dx,
+        end.dy,
+      );
+    } else {
+      // Conexão entre terminais adjacentes ou em diferentes alturas (Catenária física fluida sem rigidez)
+      final dxOut1 = startIsLeft ? -1.0 : 1.0;
+      final dxOut2 = endIsLeft ? -1.0 : 1.0;
+
+      // Limita a projeção horizontal dos pontos de controle para evitar cruzamentos rígidos em S
+      final armX = math.min(32.0, math.max(12.0, absDx * 0.45));
+
+      final cp1X = start.dx + dxOut1 * armX;
+      final cp2X = end.dx + dxOut2 * armX;
+
+      // Caimento de gravidade natural de alta fluidez
+      final sagBase = math.max(16.0, dist * 0.22);
+      final maxY = math.max(start.dy, end.dy);
+
+      final cp1Y = math.max(start.dy + sagBase * 0.4, maxY + sagBase * 0.25);
+      final cp2Y = math.max(end.dy + sagBase * 0.4, maxY + sagBase * 0.25);
+
+      path.cubicTo(
+        cp1X,
+        cp1Y,
+        cp2X,
+        cp2Y,
+        end.dx,
+        end.dy,
+      );
+    }
   }
 
   return path;

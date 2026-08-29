@@ -27,6 +27,7 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
   late List<FirstStepComponent> _quizQuestions;
   bool _showBannerOverlay = true;
   bool _isQuizMode = false;
+  bool _useRealisticAssets = true;
   int _quizScore = 0;
   int _quizCurrentIndex = 0;
   final Set<String> _answeredCorrectlyIds = {};
@@ -48,7 +49,10 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
   void _openDetailModal(FirstStepComponent component) {
     showDialog(
       context: context,
-      builder: (context) => ComponentDetailDialog(initialComponent: component),
+      builder: (context) => ComponentDetailDialog(
+        initialComponent: component,
+        useRealisticAssets: _useRealisticAssets,
+      ),
     );
   }
 
@@ -254,30 +258,124 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
       appBar: AppBar(
         title: Text(l10n.firstStepsTitle),
         actions: [
+          // 1. Botão de alternar "Modo realista" / "Modo cartoon" (Padrão: Realista)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(20),
+              onTap: () {
+                setState(() {
+                  _useRealisticAssets = !_useRealisticAssets;
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _useRealisticAssets
+                      ? theme.colorScheme.primary.withValues(alpha: 0.18)
+                      : (isDark
+                          ? const Color(0xFF1E293B)
+                          : const Color(0xFFE2E8F0)),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: _useRealisticAssets
+                        ? theme.colorScheme.primary
+                        : (isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1)),
+                    width: 1.2,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _useRealisticAssets ? Icons.photo_library_rounded : Icons.brush_rounded,
+                      size: 18,
+                      color: _useRealisticAssets ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      _useRealisticAssets ? 'Modo realista' : 'Modo cartoon',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        fontFamily: GoogleFonts.rajdhani().fontFamily,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.8,
+                        color: _useRealisticAssets ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // 2. Botão "Modo desafio" / "Modo estudo"
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(20),
+              onTap: () {
+                if (_isQuizMode) {
+                  _resetStudyMode();
+                } else {
+                  _startQuizMode();
+                }
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _isQuizMode
+                      ? (isDark ? const Color(0xFF00FF9D).withValues(alpha: 0.2) : const Color(0xFF00875A).withValues(alpha: 0.15))
+                      : (isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: _isQuizMode
+                        ? (isDark ? const Color(0xFF00FF9D) : const Color(0xFF00875A))
+                        : (isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1)),
+                    width: 1.2,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _isQuizMode ? Icons.sports_esports_rounded : Icons.school_rounded,
+                      size: 18,
+                      color: _isQuizMode
+                          ? (isDark ? const Color(0xFF00FF9D) : const Color(0xFF00875A))
+                          : theme.colorScheme.onSurface,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      _isQuizMode ? 'Modo desafio' : 'Modo estudo',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        fontFamily: GoogleFonts.rajdhani().fontFamily,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.8,
+                        color: _isQuizMode
+                            ? (isDark ? const Color(0xFF00FF9D) : const Color(0xFF00875A))
+                            : theme.colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // 3. Botão de interrogação por último (Help/Instrução)
           IconButton(
             icon: Icon(
               _showBannerOverlay
-                  ? Icons.info_rounded
-                  : Icons.info_outline_rounded,
+                  ? Icons.help_rounded
+                  : Icons.help_outline_rounded,
             ),
             tooltip: 'Alternar instrução',
             onPressed: () {
               setState(() {
                 _showBannerOverlay = !_showBannerOverlay;
               });
-            },
-          ),
-          IconButton(
-            icon: Icon(
-              _isQuizMode ? Icons.school_rounded : Icons.quiz_rounded,
-            ),
-            tooltip: _isQuizMode ? 'Modo Estudo' : l10n.challengeMode,
-            onPressed: () {
-              if (_isQuizMode) {
-                _resetStudyMode();
-              } else {
-                _startQuizMode();
-              }
             },
           ),
           const SizedBox(width: 8),
@@ -484,6 +582,7 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
                           component: comp,
                           showLabels: !_isQuizMode,
                           isCorrectlyAnswered: _answeredCorrectlyIds.contains(comp.id),
+                          useRealisticAssets: _useRealisticAssets,
                           onTap: () {
                             if (_isQuizMode) {
                               _answerQuiz(comp);

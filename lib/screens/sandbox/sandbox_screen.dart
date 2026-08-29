@@ -37,7 +37,7 @@ class SandboxScreen extends ConsumerStatefulWidget {
 }
 
 class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProviderStateMixin {
-  int _gridCols = 6;
+  int _gridCols = 8;
   int _gridRows = 5;
 
   Set<String> _selectedComponentIds = {};
@@ -60,9 +60,10 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
   Offset? _sparkPosition;
   bool _showMascot = true;
   bool _isDiagramMode = false;
+  bool _useRealisticAssets = true;
   ProfVoltsEmotion _lastVoltsEmotion = ProfVoltsEmotion.neutral;
 
-  // Pilar 1: Instrumentos Virtuais de Medição (Multímetro & Osciloscópio)
+  // Pilar 1: Instrumentos Virtuais de MediÃ§Ã£o (MultÃ­metro & OsciloscÃ³pio)
   bool _showMultimeter = false;
   bool _showOscilloscope = false;
   MultimeterMode _multimeterMode = MultimeterMode.voltageDC;
@@ -118,7 +119,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
     if (currentSource == null) return null;
 
     ConnectionSource? nearest;
-    double minDistance = 60.0; // Raio magnético de 60px para atração fluida
+    double minDistance = 60.0; // Raio magnÃ©tico de 60px para atraÃ§Ã£o fluida
 
     for (final comp in components) {
       // Terminal A
@@ -298,7 +299,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
 
     final sandboxState = ref.watch(sandboxControllerProvider);
 
-    // Liga/Desliga o loop de animação conforme a simulação estiver rodando ou pausada
+    // Liga/Desliga o loop de animaÃ§Ã£o conforme a simulaÃ§Ã£o estiver rodando ou pausada
     if (sandboxState.isSimulating) {
       if (!_wireAnimationController.isAnimating) {
         _wireAnimationController.repeat();
@@ -318,32 +319,32 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
     final selectedComponentList = sandboxState.components.where((c) => c.id == selectedId).toList();
     final selectedComponent = selectedComponentList.isNotEmpty ? selectedComponentList.first : null;
 
-    // Determina a emoção e mensagem do Professor Volts
+    // Determina a emoÃ§Ã£o e mensagem do Professor Volts
     ProfVoltsEmotion voltsEmotion = ProfVoltsEmotion.neutral;
     String voltsMessage = isEn
         ? "Click and drag components from the palette to the grid, then connect their terminals (red/black circles) to build a circuit!"
-        : "Arraste componentes da paleta para o grid, depois ligue seus terminais (círculos vermelho/preto) para montar um circuito!";
+        : "Arraste componentes da paleta para o grid, depois ligue seus terminais (cÃ­rculos vermelho/preto) para montar um circuito!";
 
     if (sandboxState.isSimulating) {
       if (sandboxState.errorMessage != null) {
         voltsEmotion = ProfVoltsEmotion.sad;
         voltsMessage = isEn
             ? "WARNING: ${sandboxState.errorMessage} The circuit was disconnected to prevent overload."
-            : "ALERTA: ${sandboxState.errorMessage} O circuito foi desarmado para proteção.";
+            : "ALERTA: ${sandboxState.errorMessage} O circuito foi desarmado para proteÃ§Ã£o.";
       } else if (sandboxState.simulationValues.isNotEmpty) {
         voltsEmotion = ProfVoltsEmotion.happy;
         voltsMessage = isEn
             ? "SUCCESS: Loop closed! Check the currents and voltage drops on the components."
-            : "SUCESSO: Loop fechado! Veja as correntes e quedas de tensão nos componentes.";
+            : "SUCESSO: Loop fechado! Veja as correntes e quedas de tensÃ£o nos componentes.";
       } else {
         voltsEmotion = ProfVoltsEmotion.neutral;
         voltsMessage = isEn
             ? "Simulation active, but no closed loop found. Connect wires to complete the path."
-            : "Simulação ligada, mas sem loop fechado. Conecte fios para fechar o circuito.";
+            : "SimulaÃ§Ã£o ligada, mas sem loop fechado. Conecte fios para fechar o circuito.";
       }
     }
 
-    // Reabre o painel do mascote quando a emoção mudar de neutro para happy/sad
+    // Reabre o painel do mascote quando a emoÃ§Ã£o mudar de neutro para happy/sad
     if (voltsEmotion != _lastVoltsEmotion && voltsEmotion != ProfVoltsEmotion.neutral) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) setState(() { _showMascot = true; });
@@ -473,7 +474,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                             children: [
                               const Icon(Icons.lightbulb_outline_rounded, size: 18, color: Color(0xFFFFB300)),
                               const SizedBox(width: 8),
-                              Text(isEn ? 'Simple Circuit (Lamp)' : 'Circuito Simples (Lâmpada)', style: const TextStyle(fontSize: 12)),
+                              Text(isEn ? 'Simple Circuit (Lamp)' : 'Circuito Simples (LÃ¢mpada)', style: const TextStyle(fontSize: 12)),
                             ],
                           ),
                         ),
@@ -509,13 +510,62 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                         ),
                       ],
                     ),
-                    // Alternador de Modo: Componentes Físicos vs Diagrama Esquemático
+                    // Alternador de Modo: Componentes FÃ­sicos vs Diagrama EsquemÃ¡tico
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: ModeToggleSwitch(
                         isDiagramMode: _isDiagramMode,
                         onChanged: (val) => setState(() => _isDiagramMode = val),
                         isCompact: true,
+                      ),
+                    ),
+                    // BotÃ£o "Modo realista" / "Modo cartoon"
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(20),
+                        onTap: () {
+                          setState(() {
+                            _useRealisticAssets = !_useRealisticAssets;
+                          });
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: _useRealisticAssets
+                                ? theme.colorScheme.primary.withValues(alpha: 0.18)
+                                : (isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: _useRealisticAssets
+                                  ? theme.colorScheme.primary
+                                  : (isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1)),
+                              width: 1.2,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                _useRealisticAssets ? Icons.photo_library_rounded : Icons.brush_rounded,
+                                size: 14,
+                                color: _useRealisticAssets ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                _useRealisticAssets ? 'Modo realista' : 'Modo cartoon',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontFamily: GoogleFonts.rajdhani().fontFamily,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.6,
+                                  color: _useRealisticAssets ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                     // Seletor de Tamanho da Bancada / Grid
@@ -583,24 +633,24 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                             },
                             itemBuilder: (context) => [
                               PopupMenuItem(
-                                value: '6x5',
-                                child: Text('6 × 5 (${isEn ? "Standard" : "Padrão"})', style: const TextStyle(fontSize: 12)),
+                                value: '8x5',
+                                child: Text('8 Ã— 5 (${isEn ? "Standard" : "PadrÃ£o"})', style: const TextStyle(fontSize: 12)),
                               ),
                               PopupMenuItem(
-                                value: '8x6',
-                                child: Text('8 × 6 (${isEn ? "Medium" : "Médio"})', style: const TextStyle(fontSize: 12)),
+                                value: '10x6',
+                                child: Text('10 Ã— 6 (${isEn ? "Medium" : "MÃ©dio"})', style: const TextStyle(fontSize: 12)),
                               ),
                               PopupMenuItem(
-                                value: '10x8',
-                                child: Text('10 × 8 (${isEn ? "Large" : "Grande"})', style: const TextStyle(fontSize: 12)),
+                                value: '12x8',
+                                child: Text('12 Ã— 8 (${isEn ? "Large" : "Grande"})', style: const TextStyle(fontSize: 12)),
                               ),
                               PopupMenuItem(
-                                value: '12x10',
-                                child: Text('12 × 10 (${isEn ? "Extra Large" : "Extra Grande"})', style: const TextStyle(fontSize: 12)),
+                                value: '14x10',
+                                child: Text('14 Ã— 10 (${isEn ? "Extra Large" : "Extra Grande"})', style: const TextStyle(fontSize: 12)),
                               ),
                               PopupMenuItem(
-                                value: '16x12',
-                                child: Text('16 × 12 (${isEn ? "Maximum" : "Máximo"})', style: const TextStyle(fontSize: 12)),
+                                value: '18x12',
+                                child: Text('18 Ã— 12 (${isEn ? "Maximum" : "MÃ¡ximo"})', style: const TextStyle(fontSize: 12)),
                               ),
                             ],
                           ),
@@ -644,6 +694,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                             isHorizontal: true,
                             isDark: isDark,
                             isDiagramMode: _isDiagramMode,
+                            useRealisticAssets: _useRealisticAssets,
                             getComponentName: _getComponentName,
                           ),
                         ),
@@ -677,6 +728,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                             isHorizontal: false,
                             isDark: isDark,
                             isDiagramMode: _isDiagramMode,
+                            useRealisticAssets: _useRealisticAssets,
                             getComponentName: _getComponentName,
                           ),
                         ),
@@ -712,7 +764,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                             children: [
                               Positioned.fill(child: bodyContent),
 
-                              // Instrumento Flutuante 1: Multímetro Digital
+                              // Instrumento Flutuante 1: MultÃ­metro Digital
                               if (_showMultimeter)
                                 Positioned(
                                   top: 8,
@@ -734,7 +786,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                                   ),
                                 ),
 
-                              // Instrumento Flutuante 2: Osciloscópio HUD
+                              // Instrumento Flutuante 2: OsciloscÃ³pio HUD
                               if (_showOscilloscope)
                                 Positioned(
                                   top: 8,
@@ -845,7 +897,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
           ),
           child: Stack(
             children: [
-              // 1. Grid de fundo com retículo HUD
+              // 1. Grid de fundo com retÃ­culo HUD
               Positioned.fill(
                 child: RepaintBoundary(
                   child: CustomPaint(
@@ -885,12 +937,12 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                 ),
               ),
 
-              // 3. DragTargets em cada célula
+              // 3. DragTargets em cada cÃ©lula
               for (int x = 0; x < _gridCols; x++)
                 for (int y = 0; y < _gridRows; y++)
                   _buildGridCellDragTarget(x, y, cellSize, state),
 
-              // 3.5. Retângulo de Seleção por Caixa (Marquee Box Selection)
+              // 3.5. RetÃ¢ngulo de SeleÃ§Ã£o por Caixa (Marquee Box Selection)
               if (_isBoxSelecting && _boxSelectionStart != null && _boxSelectionCurrent != null)
                 Positioned.fill(
                   child: IgnorePointer(
@@ -908,7 +960,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
               for (final component in state.components)
                 _buildPlacedComponent(component, cellSize, selectedId, isDark),
 
-              // 4.5. Floating Quick HUD Toolbar no componente selecionado (Seleção Única)
+              // 4.5. Floating Quick HUD Toolbar no componente selecionado (SeleÃ§Ã£o Ãšnica)
               if (_selectedComponentIds.length == 1 && selectedComponent != null)
                 SandboxQuickHudWidget(
                   selectedComponent: selectedComponent,
@@ -925,7 +977,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                   },
                 ),
 
-              // 4.6. Floating Multi-Selection HUD Toolbar quando múltiplos componentes estão selecionados
+              // 4.6. Floating Multi-Selection HUD Toolbar quando mÃºltiplos componentes estÃ£o selecionados
               if (_selectedComponentIds.length > 1)
                 Positioned(
                   top: 12,
@@ -945,7 +997,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                   ),
                 ),
 
-              // 4.7. Floating Wire HUD Toolbar quando um fio é selecionado no canvas
+              // 4.7. Floating Wire HUD Toolbar quando um fio Ã© selecionado no canvas
               if (_selectedWireId != null) () {
                 final selectedWireList = state.wires.where((w) => w.id == _selectedWireId).toList();
                 if (selectedWireList.isNotEmpty) {
@@ -964,7 +1016,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                 return const SizedBox.shrink();
               }(),
 
-              // 5. Linha guia de fiação temporária (Acompanha o cursor em tempo real)
+              // 5. Linha guia de fiaÃ§Ã£o temporÃ¡ria (Acompanha o cursor em tempo real)
               if (connSource != null)
                 Positioned.fill(
                   child: IgnorePointer(
@@ -979,7 +1031,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                   ),
                 ),
 
-              // 6. Camada de Faísca Elétrica de Conexão (Spark Flash)
+              // 6. Camada de FaÃ­sca ElÃ©trica de ConexÃ£o (Spark Flash)
               if (_sparkPosition != null)
                 Positioned.fill(
                   child: IgnorePointer(
@@ -1386,28 +1438,67 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                   return RepaintBoundary(
                     child: Transform.rotate(
                       angle: component.rotation * (math.pi / 180.0),
-                      child: CustomPaint(
-                        painter: _isDiagramMode
-                            ? CircuitSymbolPainter(
-                                type: component.type,
-                                isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
-                                isBurned: isBurned,
-                                color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
-                                activeColor: active || component.isActive ? const Color(0xFF00FF9D) : const Color(0xFFFFB300),
-                                strokeWidth: active || component.isActive ? 2.8 : 2.0,
-                                value: component.value,
-                                animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
-                              )
-                            : ComponentPhysicalPainter(
-                                type: component.type,
-                                isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
-                                isBurned: isBurned,
-                                isDarkMode: isDark,
-                                value: component.value,
-                                animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
+                      child: Stack(
+                      children: [
+                        if (_isDiagramMode)
+                          Positioned.fill(
+                            child: Opacity(
+                              opacity: isDark ? 0.25 : 0.30,
+                              child: CustomPaint(
+                                painter: ComponentPhysicalPainter(
+                                  type: component.type,
+                                  isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
+                                  isBurned: isBurned,
+                                  isDarkMode: isDark,
+                                  value: component.value,
+                                  animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
+                                ),
                               ),
-                      ),
+                            ),
+                          ),
+                        Positioned.fill(
+                          child: _isDiagramMode
+                              ? CustomPaint(
+                                  painter: CircuitSymbolPainter(
+                                    type: component.type,
+                                    isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
+                                    isBurned: isBurned,
+                                    color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
+                                    activeColor: active || component.isActive ? const Color(0xFF00FF9D) : const Color(0xFFFFB300),
+                                    strokeWidth: active || component.isActive ? 2.8 : 2.0,
+                                    value: component.value,
+                                    animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
+                                  ),
+                                )
+                              : (_useRealisticAssets && component.type.getAssetPath(component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive)) != null
+                                  ? Image.asset(
+                                      component.type.getAssetPath(component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive))!,
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (context, error, stackTrace) => CustomPaint(
+                                        painter: ComponentPhysicalPainter(
+                                          type: component.type,
+                                          isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
+                                          isBurned: isBurned,
+                                          isDarkMode: isDark,
+                                          value: component.value,
+                                          animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
+                                        ),
+                                      ),
+                                    )
+                                  : CustomPaint(
+                                      painter: ComponentPhysicalPainter(
+                                        type: component.type,
+                                        isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
+                                        isBurned: isBurned,
+                                        isDarkMode: isDark,
+                                        value: component.value,
+                                        animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
+                                      ),
+                                    )),
+                        ),
+                      ],
                     ),
+                  ),
                   );
                 },
               ),
@@ -1422,7 +1513,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                     color: Color(0xFFFFB300),
                     shape: BoxShape.circle,
                   ),
-                  child: const Text('🔥', style: TextStyle(fontSize: 9)),
+                  child: const Text('ðŸ”¥', style: TextStyle(fontSize: 9)),
                 ),
               ),
           ],
@@ -1471,7 +1562,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                       ),
                     ),
                     const SizedBox(width: 3),
-                    const Text('•', style: TextStyle(color: Colors.white38, fontSize: 8)),
+                    const Text('â€¢', style: TextStyle(color: Colors.white38, fontSize: 8)),
                     const SizedBox(width: 3),
                     Text(
                       '${(current * 1000).toStringAsFixed(0)}mA',
@@ -1628,11 +1719,11 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
       case ComponentType.motor:
         return l10n.compMotor;
       case ComponentType.potentiometer:
-        return l10n.localeName == 'en' ? 'Potentiometer' : 'Potenciômetro';
+        return l10n.localeName == 'en' ? 'Potentiometer' : 'PotenciÃ´metro';
       case ComponentType.powerSupply:
-        return l10n.localeName == 'en' ? 'Power Supply Studio' : 'Fonte Regulável';
+        return l10n.localeName == 'en' ? 'Power Supply Studio' : 'Fonte RegulÃ¡vel';
       case ComponentType.fuse:
-        return l10n.localeName == 'en' ? 'Fuse' : 'Fusível';
+        return l10n.localeName == 'en' ? 'Fuse' : 'FusÃ­vel';
       case ComponentType.capacitor:
         return l10n.localeName == 'en' ? 'Capacitor' : 'Capacitor';
       case ComponentType.buzzer:

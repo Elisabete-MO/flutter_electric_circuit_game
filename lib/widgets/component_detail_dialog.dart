@@ -10,9 +10,11 @@ class ComponentDetailDialog extends StatefulWidget {
   const ComponentDetailDialog({
     super.key,
     required this.initialComponent,
+    this.useRealisticAssets = false,
   });
 
   final FirstStepComponent initialComponent;
+  final bool useRealisticAssets;
 
   @override
   State<ComponentDetailDialog> createState() => _ComponentDetailDialogState();
@@ -117,14 +119,28 @@ class _ComponentDetailDialogState extends State<ComponentDetailDialog> {
                           const SizedBox(height: 8),
                           SizedBox(
                             height: 80,
-                            child: CustomPaint(
-                              painter: ComponentPhysicalPainter(
-                                type: _component.type,
-                                isActive: _component.isActive,
-                                isDarkMode: isDark,
-                              ),
-                              child: const SizedBox.expand(),
-                            ),
+                            child: widget.useRealisticAssets &&
+                                    _component.type.getAssetPath(_component.isActive) != null
+                                ? Image.asset(
+                                    _component.type.getAssetPath(_component.isActive)!,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (context, error, stackTrace) => CustomPaint(
+                                      painter: ComponentPhysicalPainter(
+                                        type: _component.type,
+                                        isActive: _component.isActive,
+                                        isDarkMode: isDark,
+                                      ),
+                                      child: const SizedBox.expand(),
+                                    ),
+                                  )
+                                : CustomPaint(
+                                    painter: ComponentPhysicalPainter(
+                                      type: _component.type,
+                                      isActive: _component.isActive,
+                                      isDarkMode: isDark,
+                                    ),
+                                    child: const SizedBox.expand(),
+                                  ),
                           ),
                         ],
                       ),

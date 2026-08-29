@@ -148,3 +148,37 @@ class FirstStepComponent {
         ),
       ];
 }
+
+/// Extensão para resolver os caminhos das imagens PNG realistas dos componentes.
+extension ComponentTypeAssetX on ComponentType {
+  String? getAssetPath(bool isActive) {
+    switch (this) {
+      case ComponentType.battery:
+        return 'assets/components/battery.png';
+      case ComponentType.bulb:
+        return isActive ? 'assets/components/bulb_on.png' : 'assets/components/bulb_off.png';
+      case ComponentType.switchComponent:
+        return isActive ? 'assets/components/switch_closed.png' : 'assets/components/switch_open.png';
+      case ComponentType.resistor:
+        return 'assets/components/resistor.png';
+      case ComponentType.diode:
+        return 'assets/components/diode.png';
+      case ComponentType.led:
+        return isActive ? 'assets/components/led_on.png' : 'assets/components/led_off.png';
+      case ComponentType.motor:
+        return 'assets/components/motor.png';
+      case ComponentType.capacitor:
+        return 'assets/components/capacitor.png';
+      case ComponentType.potentiometer:
+        return 'assets/components/potentiometer.png';
+      case ComponentType.fuse:
+        return 'assets/components/fuse.png';
+      case ComponentType.buzzer:
+        return 'assets/components/buzzer.png';
+      case ComponentType.powerSupply:
+        return 'assets/components/power_supply.png';
+      case ComponentType.connectingWire:
+        return null;
+    }
+  }
+}
