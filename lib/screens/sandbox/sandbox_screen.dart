@@ -1258,6 +1258,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
   }
 
   Widget _buildGridCellDragTarget(int gridX, int gridY, double cellSize, SandboxState state) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Positioned(
       left: gridX * cellSize,
       top: gridY * cellSize,
@@ -1300,12 +1301,55 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
         },
         builder: (context, candidateData, rejectedData) {
           final isHovered = candidateData.isNotEmpty;
+          final draggedItem = candidateData.isNotEmpty ? candidateData.first : null;
+          ComponentType? draggedType;
+          if (draggedItem is ComponentType) {
+            draggedType = draggedItem;
+          } else if (draggedItem is SandboxComponent) {
+            draggedType = draggedItem.type;
+          }
+
           return Container(
             decoration: BoxDecoration(
               color: isHovered ? const Color(0xFF00F5D4).withValues(alpha: 0.15) : Colors.transparent,
               border: isHovered ? Border.all(color: const Color(0xFF00F5D4), width: 1.5) : null,
               borderRadius: BorderRadius.circular(8),
             ),
+            child: isHovered && draggedType != null
+                ? Opacity(
+                    opacity: 0.45,
+                    child: Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: _isDiagramMode
+                          ? CustomPaint(
+                              painter: CircuitSymbolPainter(
+                                type: draggedType,
+                                color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
+                                strokeWidth: 1.8,
+                              ),
+                            )
+                          : (_useRealisticAssets && draggedType.getAssetPath(false) != null
+                              ? Image.asset(
+                                  draggedType.getAssetPath(false)!,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) => CustomPaint(
+                                    painter: ComponentPhysicalPainter(
+                                      type: draggedType!,
+                                      isActive: false,
+                                      isDarkMode: isDark,
+                                    ),
+                                  ),
+                                )
+                              : CustomPaint(
+                                  painter: ComponentPhysicalPainter(
+                                    type: draggedType,
+                                    isActive: false,
+                                    isDarkMode: isDark,
+                                  ),
+                                )),
+                    ),
+                  )
+                : null,
           );
         },
       ),
@@ -1444,16 +1488,31 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                           Positioned.fill(
                             child: Opacity(
                               opacity: isDark ? 0.25 : 0.30,
-                              child: CustomPaint(
-                                painter: ComponentPhysicalPainter(
-                                  type: component.type,
-                                  isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
-                                  isBurned: isBurned,
-                                  isDarkMode: isDark,
-                                  value: component.value,
-                                  animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
-                                ),
-                              ),
+                              child: (_useRealisticAssets && component.type.getAssetPath(component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive)) != null
+                                  ? Image.asset(
+                                      component.type.getAssetPath(component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive))!,
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (context, error, stackTrace) => CustomPaint(
+                                        painter: ComponentPhysicalPainter(
+                                          type: component.type,
+                                          isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
+                                          isBurned: isBurned,
+                                          isDarkMode: isDark,
+                                          value: component.value,
+                                          animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
+                                        ),
+                                      ),
+                                    )
+                                  : CustomPaint(
+                                      painter: ComponentPhysicalPainter(
+                                        type: component.type,
+                                        isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
+                                        isBurned: isBurned,
+                                        isDarkMode: isDark,
+                                        value: component.value,
+                                        animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
+                                      ),
+                                    )),
                             ),
                           ),
                         Positioned.fill(

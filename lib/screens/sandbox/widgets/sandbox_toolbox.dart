@@ -133,13 +133,25 @@ class SandboxToolboxWidget extends StatelessWidget {
                     Positioned.fill(
                       child: Opacity(
                         opacity: isDark ? 0.25 : 0.30,
-                        child: CustomPaint(
-                          painter: ComponentPhysicalPainter(
-                            type: type,
-                            isActive: false,
-                            isDarkMode: isDark,
-                          ),
-                        ),
+                        child: (useRealisticAssets && type.getAssetPath(false) != null
+                            ? Image.asset(
+                                type.getAssetPath(false)!,
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) => CustomPaint(
+                                  painter: ComponentPhysicalPainter(
+                                    type: type,
+                                    isActive: false,
+                                    isDarkMode: isDark,
+                                  ),
+                                ),
+                              )
+                            : CustomPaint(
+                                painter: ComponentPhysicalPainter(
+                                  type: type,
+                                  isActive: false,
+                                  isDarkMode: isDark,
+                                ),
+                              )),
                       ),
                     ),
                   Positioned.fill(
