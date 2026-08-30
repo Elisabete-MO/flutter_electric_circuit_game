@@ -182,8 +182,9 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
 
                       final circuitBoardArea = Stack(
                         children: [
-                          if (!_showDiagramMode)
-                            Positioned.fill(
+                          Positioned.fill(
+                            child: Opacity(
+                              opacity: _showDiagramMode ? 0.35 : 1.0,
                               child: LayoutBuilder(
                                 builder: (context, boardConstraints) {
                                   final w = boardConstraints.maxWidth;
@@ -231,6 +232,7 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
                                 },
                               ),
                             ),
+                          ),
 
                           // Fundo Estático da Bancada & Fios Físicos (desenhados sobre os componentes)
                           Positioned.fill(
@@ -637,6 +639,11 @@ class _CircuitInteractiveBoardPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (showDiagramMode) {
       if (!drawParticlesOnly) {
+        // Desenha o circuito físico como fantasma no fundo (35% opacidade)
+        canvas.saveLayer(Offset.zero & size, Paint()..color = Colors.white.withValues(alpha: 0.35));
+        _drawPhysicalCircuitOverlay(canvas, size);
+        canvas.restore();
+
         _drawDiagramBackgroundGrid(canvas, size);
         _drawDiagramWireOverlay(canvas, size);
       }
