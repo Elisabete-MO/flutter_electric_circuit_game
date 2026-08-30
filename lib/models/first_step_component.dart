@@ -178,7 +178,7 @@ extension ComponentTypeAssetX on ComponentType {
       case ComponentType.powerSupply:
         return 'assets/components/power_supply.png';
       case ComponentType.connectingWire:
-        return null;
+        return 'assets/components/wires.png';
     }
   }
 }
