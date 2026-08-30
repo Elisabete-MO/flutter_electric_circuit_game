@@ -35,7 +35,6 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
   // Estado do Passo 1: Interruptor e lâmpada
   bool _isSwitchClosed = false;
   bool _showDiagramMode = false;
-  bool _useRealisticAssets = true;
 
   // Estado do Passo 2: Símbolos posicionados nos 3 slots (Bateria, Interruptor, Lâmpada)
   ComponentType? _slotBattery;
@@ -183,7 +182,57 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
 
                       final circuitBoardArea = Stack(
                         children: [
-                          // Fundo Estático da Bancada do Circuito (Repinta apenas quando o circuito muda de estado)
+                          if (!_showDiagramMode)
+                            Positioned.fill(
+                              child: LayoutBuilder(
+                                builder: (context, boardConstraints) {
+                                  final w = boardConstraints.maxWidth;
+                                  final h = boardConstraints.maxHeight;
+                                  final batX = w * 0.18;
+                                  final batY = h * 0.50;
+                                  final batW = 180.0;
+                                  final batH = 180.0;
+
+                                  final swX = w * 0.65;
+                                  final swY = h * 0.24;
+                                  final swW = 170.0;
+                                  final swH = 170.0;
+
+                                  final bulbX = w * 0.65;
+                                  final bulbY = h * 0.76;
+                                  final bulbW = 170.0;
+                                  final bulbH = 170.0;
+
+                                  return Stack(
+                                    children: [
+                                      Positioned(
+                                        left: batX - (batW / 2),
+                                        top: batY - (batH / 2),
+                                        width: batW,
+                                        height: batH,
+                                        child: Image.asset(ComponentType.battery.getChallengeAssetPath(false)!, fit: BoxFit.contain),
+                                      ),
+                                      Positioned(
+                                        left: swX - (swW / 2),
+                                        top: swY - (swH / 2),
+                                        width: swW,
+                                        height: swH,
+                                        child: Image.asset(ComponentType.switchComponent.getChallengeAssetPath(_isSwitchClosed)!, fit: BoxFit.contain),
+                                      ),
+                                      Positioned(
+                                        left: bulbX - (bulbW / 2),
+                                        top: bulbY - (bulbH / 2),
+                                        width: bulbW,
+                                        height: bulbH,
+                                        child: Image.asset(ComponentType.bulb.getChallengeAssetPath(_isSwitchClosed)!, fit: BoxFit.contain),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ),
+
+                          // Fundo Estático da Bancada & Fios Físicos (desenhados sobre os componentes)
                           Positioned.fill(
                             child: RepaintBoundary(
                               child: CustomPaint(
@@ -194,7 +243,7 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
                                   slotSwitch: _slotSwitch,
                                   slotBulb: _slotBulb,
                                   isDark: isDark,
-                                  useRealisticAssets: _useRealisticAssets,
+                                  useRealisticAssets: true,
                                   drawParticlesOnly: false,
                                 ),
                               ),
@@ -216,55 +265,13 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
                                         slotSwitch: _slotSwitch,
                                         slotBulb: _slotBulb,
                                         isDark: isDark,
+                                        useRealisticAssets: true,
                                         currentProgress: _currentAnimationController.value,
                                         drawParticlesOnly: true,
                                       ),
                                     );
                                   },
                                 ),
-                              ),
-                            ),
-
-                          // Componentes Físicos Realistas (PNGs) na Bancada
-                          if (!_showDiagramMode && _useRealisticAssets)
-                            Positioned.fill(
-                              child: LayoutBuilder(
-                                builder: (context, boardConstraints) {
-                                  final w = boardConstraints.maxWidth;
-                                  final h = boardConstraints.maxHeight;
-                                  final batX = w * 0.18;
-                                  final batY = h * 0.48;
-                                  final swX = w * 0.72;
-                                  final swY = h * 0.26;
-                                  final bulbX = w * 0.72;
-                                  final bulbY = h * 0.72;
-
-                                  return Stack(
-                                    children: [
-                                      Positioned(
-                                        left: batX - 60,
-                                        top: batY - 50,
-                                        width: 120,
-                                        height: 100,
-                                        child: Image.asset(ComponentType.battery.getAssetPath(false)!, fit: BoxFit.contain),
-                                      ),
-                                      Positioned(
-                                        left: swX - 60,
-                                        top: swY - 50,
-                                        width: 120,
-                                        height: 100,
-                                        child: Image.asset(ComponentType.switchComponent.getAssetPath(_isSwitchClosed)!, fit: BoxFit.contain),
-                                      ),
-                                      Positioned(
-                                        left: bulbX - 60,
-                                        top: bulbY - 50,
-                                        width: 120,
-                                        height: 100,
-                                        child: Image.asset(ComponentType.bulb.getAssetPath(_isSwitchClosed)!, fit: BoxFit.contain),
-                                      ),
-                                    ],
-                                  );
-                                },
                               ),
                             ),
 
@@ -325,12 +332,12 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
                             ),
 
                           // Clique Direto no Asset do Interruptor Físico na Bancada
-                          if (!_showDiagramMode)
+                           if (!_showDiagramMode)
                             Positioned(
-                              left: constraints.maxWidth * 0.72 - 70,
-                              top: constraints.maxHeight * 0.28 - 45,
-                              width: 140,
-                              height: 90,
+                              left: constraints.maxWidth * 0.65 - 85,
+                              top: constraints.maxHeight * 0.24 - 85,
+                              width: 170,
+                              height: 170,
                               child: MouseRegion(
                                 cursor: SystemMouseCursors.click,
                                 child: GestureDetector(
@@ -361,51 +368,6 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
                                         _showDiagramMode = val;
                                       });
                                     },
-                                  ),
-                                  InkWell(
-                                    borderRadius: BorderRadius.circular(20),
-                                    onTap: () {
-                                      setState(() {
-                                        _useRealisticAssets = !_useRealisticAssets;
-                                      });
-                                    },
-                                    child: AnimatedContainer(
-                                      duration: const Duration(milliseconds: 200),
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                      decoration: BoxDecoration(
-                                        color: _useRealisticAssets
-                                            ? theme.colorScheme.primary.withValues(alpha: 0.18)
-                                            : (isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
-                                        borderRadius: BorderRadius.circular(20),
-                                        border: Border.all(
-                                          color: _useRealisticAssets
-                                              ? theme.colorScheme.primary
-                                              : (isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1)),
-                                          width: 1.2,
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            _useRealisticAssets ? Icons.photo_library_rounded : Icons.brush_rounded,
-                                            size: 14,
-                                            color: _useRealisticAssets ? theme.colorScheme.primary : theme.colorScheme.onSurface,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            _useRealisticAssets ? 'Modo realista' : 'Modo cartoon',
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              fontFamily: GoogleFonts.rajdhani().fontFamily,
-                                              fontWeight: FontWeight.bold,
-                                              letterSpacing: 0.6,
-                                              color: _useRealisticAssets ? theme.colorScheme.primary : theme.colorScheme.onSurface,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
                                   ),
                                   if (_showDiagramMode) ...[
                                     DiagramActionButton(
@@ -707,55 +669,70 @@ class _CircuitInteractiveBoardPainter extends CustomPainter {
 
     // Coordenadas calculadas dinamicamente com base nas dimensões da bancada
     final batX = w * 0.18;
-    final batY = h * 0.48;
+    final batY = h * 0.50;
+    final batW = 180.0;
+    final batH = 180.0;
+    final batLeft = batX - (batW / 2);
+    final batTop = batY - (batH / 2);
 
-    final swX = w * 0.72;
-    final swY = h * 0.26;
+    final swX = w * 0.65;
+    final swY = h * 0.24;
+    final swW = 170.0;
+    final swH = 170.0;
+    final swLeft = swX - (swW / 2);
+    final swTop = swY - (swH / 2);
 
-    final bulbX = w * 0.72;
-    final bulbY = h * 0.72;
+    final bulbX = w * 0.65;
+    final bulbY = h * 0.76;
+    final bulbW = 170.0;
+    final bulbH = 170.0;
+    final bulbLeft = bulbX - (bulbW / 2);
+    final bulbTop = bulbY - (bulbH / 2);
 
-    // Pontos de conexão exatos nos bornes (Terminais vermelhos/pretos)
-    final batPosTerm = Offset(batX + 22, batY - 26);  // Polo (+) Bateria
-    final batNegTerm = Offset(batX - 16, batY - 22);  // Polo (-) Bateria
+    // Pontos de conexão exatos nos bornes (Entradas superiores dos bornes)
+    final batPosTerm = Offset(batLeft + batW * 0.855, batTop + batH * 0.383);  // Polo (+) Bateria Horizontal
+    final batNegTerm = Offset(batLeft + batW * 0.849, batTop + batH * 0.609);  // Polo (-) Bateria Horizontal
 
-    final swRedTerm  = Offset(swX - 25, swY + 6);     // Borne Vermelho Interruptor
-    final swBlackTerm = Offset(swX + 25, swY + 6);    // Borne Preto Interruptor
+    final swRedTerm  = Offset(swLeft + swW * 0.138, swTop + swH * 0.310);     // Entrada Borne Vermelho Interruptor (Esquerda)
+    final swBlackTerm = Offset(swLeft + swW * 0.876, swTop + swH * 0.310);    // Entrada Borne Preto Interruptor (Direita)
 
-    final bulbRedTerm  = Offset(bulbX - 30, bulbY + 4);  // Borne Vermelho Lâmpada
-    final bulbBlackTerm = Offset(bulbX + 30, bulbY + 4); // Borne Preto Lâmpada
+    final bulbRedTerm  = Offset(bulbLeft + bulbW * 0.120, bulbTop + bulbH * 0.400);  // Entrada Borne Vermelho Lâmpada (Esquerda)
+    final bulbBlackTerm = Offset(bulbLeft + bulbW * 0.881, bulbTop + bulbH * 0.400); // Entrada Borne Preto Lâmpada (Direita)
 
-    // --- DESENHO DOS FIOS (Curvas Bézier suaves de laboratório) ---
+    // --- DESENHO DOS FIOS (Saída Vertical da Bateria + Trajeto Horizontal Quadrado) ---
 
-    // 1. Fio Vermelho (Bateria + até Borne Vermelho do Interruptor)
+    // 1. Fio Vermelho (Polo (+) da Bateria -> Borne Vermelho do Interruptor)
+    // Sobe na vertical a partir do polo positivo e dobra 90° à direita em direção ao interruptor
     final pathRed = Path();
     pathRed.moveTo(batPosTerm.dx, batPosTerm.dy);
     pathRed.cubicTo(
-      batPosTerm.dx + 40, batPosTerm.dy - (h * 0.28),
-      swRedTerm.dx - (w * 0.12), swRedTerm.dy - 40,
+      batPosTerm.dx, swRedTerm.dy + 35,
+      batPosTerm.dx + (w * 0.08), swRedTerm.dy,
       swRedTerm.dx, swRedTerm.dy,
     );
 
-    // 2. Fio de Interconexão (Borne Preto do Interruptor até Borne Vermelho da Lâmpada)
+    // 2. Fio Preto de Interconexão (Borne Preto Interruptor -> Borne Preto Lâmpada)
+    // Sai do borne do interruptor contornando por fora à direita até a lâmpada
     final pathWireInter = Path();
     pathWireInter.moveTo(swBlackTerm.dx, swBlackTerm.dy);
     pathWireInter.cubicTo(
-      swBlackTerm.dx + (w * 0.10), swBlackTerm.dy + (h * 0.12),
-      bulbRedTerm.dx + (w * 0.08), bulbRedTerm.dy - (h * 0.12),
-      bulbRedTerm.dx, bulbRedTerm.dy,
+      swBlackTerm.dx + (w * 0.16), swBlackTerm.dy - (h * 0.10),
+      bulbBlackTerm.dx + (w * 0.16), bulbBlackTerm.dy + (h * 0.10),
+      bulbBlackTerm.dx, bulbBlackTerm.dy,
     );
 
-    // 3. Fio Preto de Retorno (Borne Preto da Lâmpada até Polo (-) da Bateria)
+    // 3. Fio Preto de Retorno (Borne Vermelho da Lâmpada -> Polo (-) da Bateria)
+    // Corre na horizontal da lâmpada à esquerda e dobra 90° para cima entrando no polo negativo da bateria
     final pathWireRet = Path();
-    pathWireRet.moveTo(bulbBlackTerm.dx, bulbBlackTerm.dy);
+    pathWireRet.moveTo(bulbRedTerm.dx, bulbRedTerm.dy);
     pathWireRet.cubicTo(
-      bulbBlackTerm.dx - (w * 0.10), bulbBlackTerm.dy + (h * 0.18),
-      batNegTerm.dx + (w * 0.05), batNegTerm.dy + (h * 0.32),
+      batNegTerm.dx + (w * 0.08), bulbRedTerm.dy,
+      batNegTerm.dx, bulbRedTerm.dy - 35,
       batNegTerm.dx, batNegTerm.dy,
     );
 
     if (drawParticlesOnly) {
-      // âš¡ DESENHA APENAS AS PARTÍCULAS EM 60FPS
+      // ⚡ DESENHA APENAS AS PARTÍCULAS EM 60FPS
       if (isSwitchClosed) {
         _drawCurrentParticlesOnPath(canvas, pathRed, const Color(0xFFFFEA00), 5);
         _drawCurrentParticlesOnPath(canvas, pathWireInter, const Color(0xFFFFEA00), 4);
@@ -787,7 +764,7 @@ class _CircuitInteractiveBoardPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
 
     final wireBaseInter = Paint()
-      ..color = isDark ? const Color(0xFF1565C0) : const Color(0xFF0D47A1)
+      ..color = isDark ? const Color(0xFF424242) : const Color(0xFF111111)
       ..strokeWidth = 5.5
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
@@ -810,7 +787,7 @@ class _CircuitInteractiveBoardPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
 
     final wireInterPaint = Paint()
-      ..color = isDark ? const Color(0xFF42A5F5) : const Color(0xFF1E88E5)
+      ..color = isDark ? const Color(0xFF9E9E9E) : const Color(0xFF37474F)
       ..strokeWidth = 4.0
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
@@ -837,14 +814,13 @@ class _CircuitInteractiveBoardPainter extends CustomPainter {
     canvas.drawPath(pathWireInter.transform(highlightTransform.storage), wireHighlightPaint);
     canvas.drawPath(pathWireRet.transform(highlightTransform.storage), wireHighlightPaint);
 
-    // Conectores (Plugues de banana / garras de teste) nas extremidades
-    final plugPaint = Paint()..color = const Color(0xFF424242);
-    canvas.drawCircle(batPosTerm, 5, plugPaint);
-    canvas.drawCircle(batNegTerm, 5, plugPaint);
-    canvas.drawCircle(swRedTerm, 4, plugPaint);
-    canvas.drawCircle(swBlackTerm, 4, plugPaint);
-    canvas.drawCircle(bulbRedTerm, 4, plugPaint);
-    canvas.drawCircle(bulbBlackTerm, 4, plugPaint);
+    // Conectores redondos (Plugues 3D) colocados diretamente sobre as entradas dos bornes
+    _drawWireTerminalPlug(canvas, batPosTerm, const Color(0xFFEF5350));
+    _drawWireTerminalPlug(canvas, batNegTerm, isDark ? const Color(0xFF9E9E9E) : const Color(0xFF37474F));
+    _drawWireTerminalPlug(canvas, swRedTerm, const Color(0xFFEF5350));
+    _drawWireTerminalPlug(canvas, swBlackTerm, isDark ? const Color(0xFF9E9E9E) : const Color(0xFF37474F));
+    _drawWireTerminalPlug(canvas, bulbRedTerm, isDark ? const Color(0xFF9E9E9E) : const Color(0xFF37474F));
+    _drawWireTerminalPlug(canvas, bulbBlackTerm, isDark ? const Color(0xFF9E9E9E) : const Color(0xFF37474F));
 
     if (useRealisticAssets) return;
 
@@ -905,6 +881,44 @@ class _CircuitInteractiveBoardPainter extends CustomPainter {
         canvas.drawCircle(tangent.position, 3.0, particlePaint);
       }
     }
+  }
+
+  void _drawWireTerminalPlug(Canvas canvas, Offset pos, Color color) {
+    // Sombra do conector/plugue
+    final shadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.35)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
+    canvas.drawCircle(pos + const Offset(1, 2), 6.5, shadowPaint);
+
+    // Anel metálico (borda prata do borne)
+    final metalPaint = Paint()
+      ..color = const Color(0xFFECEFF1)
+      ..style = PaintingStyle.fill;
+    final metalBorderPaint = Paint()
+      ..color = const Color(0xFF455A64)
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke;
+
+    canvas.drawCircle(pos, 7.0, metalPaint);
+    canvas.drawCircle(pos, 7.0, metalBorderPaint);
+
+    // Plugue redondo colorido (vermelho ou preto)
+    final plugPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+    final plugBorderPaint = Paint()
+      ..color = Colors.black45
+      ..strokeWidth = 0.8
+      ..style = PaintingStyle.stroke;
+
+    canvas.drawCircle(pos, 5.2, plugPaint);
+    canvas.drawCircle(pos, 5.2, plugBorderPaint);
+
+    // Brilho especular (Highlight 3D)
+    final highlightPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.7)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(pos + const Offset(-1.5, -1.5), 1.8, highlightPaint);
   }
 
   void _drawDiagramWireOverlay(Canvas canvas, Size size) {

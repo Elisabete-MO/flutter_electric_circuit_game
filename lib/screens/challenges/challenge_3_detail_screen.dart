@@ -35,7 +35,6 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
   // Estado do Passo 1: Interruptor alavanca
   bool _isSwitchClosed = false;
   bool _showDiagramMode = false;
-  bool _useRealisticAssets = true;
 
   // Estado do Passo 2: Símbolos posicionados nos 4 slots (Bateria, Interruptor, Resistor, Lâmpada)
   ComponentType? _slotBattery;
@@ -186,7 +185,70 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
 
                   final circuitBoardArea = Stack(
                     children: [
-                      // Fundo da Bancada do Circuito
+                      // Componentes Físicos Realistas (PNGs) na Bancada (no fundo)
+                      if (!_showDiagramMode)
+                        Positioned.fill(
+                          child: LayoutBuilder(
+                            builder: (context, boardConstraints) {
+                              final w = boardConstraints.maxWidth;
+                              final h = boardConstraints.maxHeight;
+                              final batX = w * 0.16;
+                              final batY = h * 0.48;
+                              final batW = 180.0;
+                              final batH = 180.0;
+
+                              final bulbX = w * 0.50;
+                              final bulbY = h * 0.24;
+                              final bulbW = 160.0;
+                              final bulbH = 160.0;
+
+                              final resX = w * 0.82;
+                              final resY = h * 0.48;
+                              final resW = 160.0;
+                              final resH = 160.0;
+
+                              final swX = w * 0.50;
+                              final swY = h * 0.74;
+                              final swW = 160.0;
+                              final swH = 160.0;
+
+                              return Stack(
+                                children: [
+                                  Positioned(
+                                    left: batX - (batW / 2),
+                                    top: batY - (batH / 2),
+                                    width: batW,
+                                    height: batH,
+                                    child: Image.asset(ComponentType.battery.getChallengeAssetPath(false)!, fit: BoxFit.contain),
+                                  ),
+                                  Positioned(
+                                    left: bulbX - (bulbW / 2),
+                                    top: bulbY - (bulbH / 2),
+                                    width: bulbW,
+                                    height: bulbH,
+                                    child: Image.asset(ComponentType.bulb.getChallengeAssetPath(_isSwitchClosed)!, fit: BoxFit.contain),
+                                  ),
+                                  Positioned(
+                                    left: resX - (resW / 2),
+                                    top: resY - (resH / 2),
+                                    width: resW,
+                                    height: resH,
+                                    child: Image.asset(ComponentType.resistor.getChallengeAssetPath(false)!, fit: BoxFit.contain),
+                                  ),
+                                  Positioned(
+                                    left: swX - (swW / 2),
+                                    top: swY - (swH / 2),
+                                    width: swW,
+                                    height: swH,
+                                    child: Image.asset(ComponentType.switchComponent.getChallengeAssetPath(_isSwitchClosed)!, fit: BoxFit.contain),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                        ),
+
+                      // Fundo Estático da Bancada & Fios Físicos (desenhados sobre os componentes)
                       Positioned.fill(
                         child: RepaintBoundary(
                           child: CustomPaint(
@@ -198,7 +260,7 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
                               slotResistor: _slotResistor,
                               slotBulb: _slotBulb,
                               isDark: isDark,
-                              useRealisticAssets: _useRealisticAssets,
+                              useRealisticAssets: true,
                               drawParticlesOnly: false,
                             ),
                           ),
@@ -221,64 +283,13 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
                                     slotResistor: _slotResistor,
                                     slotBulb: _slotBulb,
                                     isDark: isDark,
+                                    useRealisticAssets: true,
                                     currentProgress: _currentAnimationController.value,
                                     drawParticlesOnly: true,
                                   ),
                                 );
                               },
                             ),
-                          ),
-                        ),
-
-                      // Componentes Físicos Realistas (PNGs) na Bancada
-                      if (!_showDiagramMode && _useRealisticAssets)
-                        Positioned.fill(
-                          child: LayoutBuilder(
-                            builder: (context, boardConstraints) {
-                              final w = boardConstraints.maxWidth;
-                              final h = boardConstraints.maxHeight;
-                              final batX = w * 0.16;
-                              final batY = h * 0.48;
-                              final bulbX = w * 0.50;
-                              final bulbY = h * 0.24;
-                              final resX = w * 0.82;
-                              final resY = h * 0.48;
-                              final swX = w * 0.50;
-                              final swY = h * 0.74;
-
-                              return Stack(
-                                children: [
-                                  Positioned(
-                                    left: batX - 60,
-                                    top: batY - 50,
-                                    width: 120,
-                                    height: 100,
-                                    child: Image.asset(ComponentType.battery.getAssetPath(false)!, fit: BoxFit.contain),
-                                  ),
-                                  Positioned(
-                                    left: bulbX - 65,
-                                    top: bulbY - 42,
-                                    width: 130,
-                                    height: 85,
-                                    child: Image.asset(ComponentType.bulb.getAssetPath(_isSwitchClosed)!, fit: BoxFit.contain),
-                                  ),
-                                  Positioned(
-                                    left: resX - 50,
-                                    top: resY - 35,
-                                    width: 100,
-                                    height: 70,
-                                    child: Image.asset(ComponentType.resistor.getAssetPath(false)!, fit: BoxFit.contain),
-                                  ),
-                                  Positioned(
-                                    left: swX - 65,
-                                    top: swY - 40,
-                                    width: 130,
-                                    height: 80,
-                                    child: Image.asset(ComponentType.switchComponent.getAssetPath(_isSwitchClosed)!, fit: BoxFit.contain),
-                                  ),
-                                ],
-                              );
-                            },
                           ),
                         ),
 
@@ -373,51 +384,6 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
                                     _showDiagramMode = val;
                                   });
                                 },
-                              ),
-                              InkWell(
-                                borderRadius: BorderRadius.circular(20),
-                                onTap: () {
-                                  setState(() {
-                                    _useRealisticAssets = !_useRealisticAssets;
-                                  });
-                                },
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: _useRealisticAssets
-                                        ? theme.colorScheme.primary.withValues(alpha: 0.18)
-                                        : (isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: _useRealisticAssets
-                                          ? theme.colorScheme.primary
-                                          : (isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1)),
-                                      width: 1.2,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        _useRealisticAssets ? Icons.photo_library_rounded : Icons.brush_rounded,
-                                        size: 14,
-                                        color: _useRealisticAssets ? theme.colorScheme.primary : theme.colorScheme.onSurface,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        _useRealisticAssets ? 'Modo realista' : 'Modo cartoon',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontFamily: GoogleFonts.rajdhani().fontFamily,
-                                          fontWeight: FontWeight.bold,
-                                          letterSpacing: 0.6,
-                                          color: _useRealisticAssets ? theme.colorScheme.primary : theme.colorScheme.onSurface,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
                               ),
                               if (_showDiagramMode) ...[
                                 DiagramActionButton(
@@ -738,59 +704,75 @@ class _Challenge3BoardPainter extends CustomPainter {
 
     final batX = w * 0.16;
     final batY = h * 0.48;
+    final batW = 180.0;
+    final batH = 180.0;
+    final batLeft = batX - (batW / 2);
+    final batTop = batY - (batH / 2);
 
     final bulbX = w * 0.50;
     final bulbY = h * 0.24;
+    final bulbW = 160.0;
+    final bulbH = 160.0;
+    final bulbLeft = bulbX - (bulbW / 2);
+    final bulbTop = bulbY - (bulbH / 2);
 
     final resX = w * 0.82;
     final resY = h * 0.48;
+    final resW = 160.0;
+    final resH = 160.0;
+    final resLeft = resX - (resW / 2);
+    final resTop = resY - (resH / 2);
 
     final swX = w * 0.50;
     final swY = h * 0.74;
+    final swW = 160.0;
+    final swH = 160.0;
+    final swLeft = swX - (swW / 2);
+    final swTop = swY - (swH / 2);
 
     // Bornes
-    final batPosTerm = Offset(batX + 22, batY - 26);
-    final batNegTerm = Offset(batX - 16, batY - 22);
+    final batPosTerm = Offset(batLeft + batW * 0.855, batTop + batH * 0.383);
+    final batNegTerm = Offset(batLeft + batW * 0.849, batTop + batH * 0.609);
 
-    final bulbRedTerm  = Offset(bulbX - 30, bulbY + 4);
-    final bulbBlackTerm = Offset(bulbX + 30, bulbY + 4);
+    final bulbRedTerm  = Offset(bulbLeft + bulbW * 0.120, bulbTop + bulbH * 0.400);
+    final bulbBlackTerm = Offset(bulbLeft + bulbW * 0.881, bulbTop + bulbH * 0.400);
 
-    final resLeftTerm  = Offset(resX - 32, resY + 4);
-    final resRightTerm = Offset(resX + 32, resY + 4);
+    final resLeftTerm  = Offset(resLeft + resW * 0.124, resTop + resH * 0.384);
+    final resRightTerm = Offset(resLeft + resW * 0.880, resTop + resH * 0.383);
 
-    final swRedTerm  = Offset(swX - 25, swY + 6);
-    final swBlackTerm = Offset(swX + 25, swY + 6);
+    final swRedTerm  = Offset(swLeft + swW * 0.138, swTop + swH * 0.310);
+    final swBlackTerm = Offset(swLeft + swW * 0.876, swTop + swH * 0.310);
 
     // Fios
     final pathRed = Path();
     pathRed.moveTo(batPosTerm.dx, batPosTerm.dy);
     pathRed.cubicTo(
-      batPosTerm.dx + 30, batPosTerm.dy - (h * 0.22),
-      bulbRedTerm.dx - (w * 0.08), bulbRedTerm.dy - (h * 0.06),
+      batPosTerm.dx, bulbRedTerm.dy + 35,
+      batPosTerm.dx + (w * 0.08), bulbRedTerm.dy,
       bulbRedTerm.dx, bulbRedTerm.dy,
     );
 
     final pathBlack1 = Path();
     pathBlack1.moveTo(bulbBlackTerm.dx, bulbBlackTerm.dy);
     pathBlack1.cubicTo(
-      bulbBlackTerm.dx + (w * 0.12), bulbBlackTerm.dy - (h * 0.06),
-      resLeftTerm.dx - (w * 0.05), resLeftTerm.dy - (h * 0.18),
+      bulbBlackTerm.dx + (w * 0.12), bulbBlackTerm.dy - (h * 0.12),
+      resLeftTerm.dx - (w * 0.08), resLeftTerm.dy - (h * 0.12),
       resLeftTerm.dx, resLeftTerm.dy,
     );
 
     final pathBlack2 = Path();
     pathBlack2.moveTo(resRightTerm.dx, resRightTerm.dy);
     pathBlack2.cubicTo(
-      resRightTerm.dx + (w * 0.08), resRightTerm.dy + (h * 0.18),
-      swBlackTerm.dx + (w * 0.12), swBlackTerm.dy + (h * 0.06),
+      resRightTerm.dx + (w * 0.14), resRightTerm.dy + (h * 0.10),
+      swBlackTerm.dx + (w * 0.14), swBlackTerm.dy + (h * 0.12),
       swBlackTerm.dx, swBlackTerm.dy,
     );
 
     final pathBlack3 = Path();
     pathBlack3.moveTo(swRedTerm.dx, swRedTerm.dy);
     pathBlack3.cubicTo(
-      swRedTerm.dx - (w * 0.12), swRedTerm.dy + (h * 0.06),
-      batNegTerm.dx + (w * 0.08), batNegTerm.dy + (h * 0.22),
+      batNegTerm.dx + (w * 0.08), swRedTerm.dy,
+      batNegTerm.dx, swRedTerm.dy - 35,
       batNegTerm.dx, batNegTerm.dy,
     );
 
@@ -865,15 +847,15 @@ class _Challenge3BoardPainter extends CustomPainter {
     canvas.drawPath(pathBlack2.transform(highlightTransform.storage), wireHighlightPaint);
     canvas.drawPath(pathBlack3.transform(highlightTransform.storage), wireHighlightPaint);
 
-    final plugPaint = Paint()..color = const Color(0xFF424242);
-    canvas.drawCircle(batPosTerm, 5, plugPaint);
-    canvas.drawCircle(batNegTerm, 5, plugPaint);
-    canvas.drawCircle(bulbRedTerm, 4, plugPaint);
-    canvas.drawCircle(bulbBlackTerm, 4, plugPaint);
-    canvas.drawCircle(resLeftTerm, 4, plugPaint);
-    canvas.drawCircle(resRightTerm, 4, plugPaint);
-    canvas.drawCircle(swRedTerm, 4, plugPaint);
-    canvas.drawCircle(swBlackTerm, 4, plugPaint);
+    // Conectores redondos (Plugues 3D) colocados diretamente sobre as entradas dos bornes
+    _drawWireTerminalPlug(canvas, batPosTerm, const Color(0xFFEF5350));
+    _drawWireTerminalPlug(canvas, batNegTerm, isDark ? const Color(0xFF9E9E9E) : const Color(0xFF37474F));
+    _drawWireTerminalPlug(canvas, bulbRedTerm, const Color(0xFFEF5350));
+    _drawWireTerminalPlug(canvas, bulbBlackTerm, isDark ? const Color(0xFF9E9E9E) : const Color(0xFF37474F));
+    _drawWireTerminalPlug(canvas, resLeftTerm, isDark ? const Color(0xFF9E9E9E) : const Color(0xFF37474F));
+    _drawWireTerminalPlug(canvas, resRightTerm, isDark ? const Color(0xFF9E9E9E) : const Color(0xFF37474F));
+    _drawWireTerminalPlug(canvas, swRedTerm, isDark ? const Color(0xFF9E9E9E) : const Color(0xFF37474F));
+    _drawWireTerminalPlug(canvas, swBlackTerm, isDark ? const Color(0xFF9E9E9E) : const Color(0xFF37474F));
 
     if (useRealisticAssets) return;
 
@@ -940,6 +922,44 @@ class _Challenge3BoardPainter extends CustomPainter {
         canvas.drawCircle(tangent.position, 3.0, particlePaint);
       }
     }
+  }
+
+  void _drawWireTerminalPlug(Canvas canvas, Offset pos, Color color) {
+    // Sombra do conector/plugue
+    final shadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.35)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
+    canvas.drawCircle(pos + const Offset(1, 2), 6.5, shadowPaint);
+
+    // Anel metálico (borda prata do borne)
+    final metalPaint = Paint()
+      ..color = const Color(0xFFECEFF1)
+      ..style = PaintingStyle.fill;
+    final metalBorderPaint = Paint()
+      ..color = const Color(0xFF455A64)
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke;
+
+    canvas.drawCircle(pos, 7.0, metalPaint);
+    canvas.drawCircle(pos, 7.0, metalBorderPaint);
+
+    // Plugue redondo colorido (vermelho ou preto)
+    final plugPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+    final plugBorderPaint = Paint()
+      ..color = Colors.black45
+      ..strokeWidth = 0.8
+      ..style = PaintingStyle.stroke;
+
+    canvas.drawCircle(pos, 5.2, plugPaint);
+    canvas.drawCircle(pos, 5.2, plugBorderPaint);
+
+    // Brilho especular (Highlight 3D)
+    final highlightPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.7)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(pos + const Offset(-1.5, -1.5), 1.8, highlightPaint);
   }
 
   void _drawDiagramWireOverlay(Canvas canvas, Size size) {

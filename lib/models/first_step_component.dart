@@ -151,6 +151,7 @@ class FirstStepComponent {
 
 /// Extensão para resolver os caminhos das imagens PNG realistas dos componentes.
 extension ComponentTypeAssetX on ComponentType {
+  /// Caminhos das imagens da seção "Primeiros Passos" (pasta assets/components/)
   String? getAssetPath(bool isActive) {
     switch (this) {
       case ComponentType.battery:
@@ -179,6 +180,28 @@ extension ComponentTypeAssetX on ComponentType {
         return 'assets/components/power_supply.png';
       case ComponentType.connectingWire:
         return 'assets/components/wires.png';
+    }
+  }
+
+  /// Caminhos das imagens da bancada de desafios (com bornes de laboratório calibrados)
+  String? getChallengeAssetPath(bool isActive) {
+    switch (this) {
+      case ComponentType.battery:
+        return 'assets/images/component_battery_horizontal.png';
+      case ComponentType.bulb:
+        return isActive ? 'assets/images/component_bulb_on.png' : 'assets/images/component_bulb_off.png';
+      case ComponentType.switchComponent:
+        return isActive ? 'assets/images/component_switch_on.png' : 'assets/images/component_switch_off.png';
+      case ComponentType.resistor:
+        return 'assets/images/component_resistor.png';
+      case ComponentType.diode:
+        return 'assets/images/component_diode.png';
+      case ComponentType.led:
+        return isActive ? 'assets/images/component_led_on.png' : 'assets/images/component_led_off.png';
+      case ComponentType.motor:
+        return 'assets/images/component_motor.png';
+      default:
+        return getAssetPath(isActive);
     }
   }
 }

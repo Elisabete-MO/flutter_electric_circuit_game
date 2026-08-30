@@ -35,7 +35,6 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
   // Estado do Passo 1: Interruptor e Motor
   bool _isSwitchClosed = false;
   bool _showDiagramMode = false;
-  bool _useRealisticAssets = true;
 
   // Estado do Passo 2: Símbolos posicionados nos 3 slots (Bateria, Interruptor, Motor)
   ComponentType? _slotBattery;
@@ -183,7 +182,58 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
 
                   final circuitBoardArea = Stack(
                     children: [
-                      // Fundo Estático da Bancada do Circuito (Repinta apenas quando o circuito muda de estado)
+                      // Componentes Físicos Realistas (PNGs) na Bancada (no fundo)
+                      if (!_showDiagramMode)
+                        Positioned.fill(
+                          child: LayoutBuilder(
+                            builder: (context, boardConstraints) {
+                              final w = boardConstraints.maxWidth;
+                              final h = boardConstraints.maxHeight;
+                              final batX = w * 0.18;
+                              final batY = h * 0.50;
+                              final batW = 180.0;
+                              final batH = 180.0;
+
+                              final swX = w * 0.65;
+                              final swY = h * 0.24;
+                              final swW = 170.0;
+                              final swH = 170.0;
+
+                              final motorX = w * 0.65;
+                              final motorY = h * 0.76;
+                              final motorW = 170.0;
+                              final motorH = 170.0;
+
+                              return Stack(
+                                children: [
+                                  Positioned(
+                                    left: batX - (batW / 2),
+                                    top: batY - (batH / 2),
+                                    width: batW,
+                                    height: batH,
+                                    child: Image.asset(ComponentType.battery.getChallengeAssetPath(false)!, fit: BoxFit.contain),
+                                  ),
+                                  Positioned(
+                                    left: swX - (swW / 2),
+                                    top: swY - (swH / 2),
+                                    width: swW,
+                                    height: swH,
+                                    child: Image.asset(ComponentType.switchComponent.getChallengeAssetPath(_isSwitchClosed)!, fit: BoxFit.contain),
+                                  ),
+                                  Positioned(
+                                    left: motorX - (motorW / 2),
+                                    top: motorY - (motorH / 2),
+                                    width: motorW,
+                                    height: motorH,
+                                    child: Image.asset(ComponentType.motor.getChallengeAssetPath(_isSwitchClosed)!, fit: BoxFit.contain),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                        ),
+
+                      // Fundo Estático da Bancada & Fios Físicos (desenhados sobre os componentes)
                       Positioned.fill(
                         child: RepaintBoundary(
                           child: CustomPaint(
@@ -194,7 +244,7 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
                               slotSwitch: _slotSwitch,
                               slotMotor: _slotMotor,
                               isDark: isDark,
-                              useRealisticAssets: _useRealisticAssets,
+                              useRealisticAssets: true,
                               drawParticlesOnly: false,
                             ),
                           ),
@@ -216,55 +266,13 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
                                     slotSwitch: _slotSwitch,
                                     slotMotor: _slotMotor,
                                     isDark: isDark,
+                                    useRealisticAssets: true,
                                     currentProgress: _currentAnimationController.value,
                                     drawParticlesOnly: true,
                                   ),
                                 );
                               },
                             ),
-                          ),
-                        ),
-
-                      // Componentes Físicos Realistas (PNGs) na Bancada
-                      if (!_showDiagramMode && _useRealisticAssets)
-                        Positioned.fill(
-                          child: LayoutBuilder(
-                            builder: (context, boardConstraints) {
-                              final w = boardConstraints.maxWidth;
-                              final h = boardConstraints.maxHeight;
-                              final batX = w * 0.18;
-                              final batY = h * 0.48;
-                              final swX = w * 0.72;
-                              final swY = h * 0.26;
-                              final motorX = w * 0.72;
-                              final motorY = h * 0.72;
-
-                              return Stack(
-                                children: [
-                                  Positioned(
-                                    left: batX - 60,
-                                    top: batY - 50,
-                                    width: 120,
-                                    height: 100,
-                                    child: Image.asset(ComponentType.battery.getAssetPath(false)!, fit: BoxFit.contain),
-                                  ),
-                                  Positioned(
-                                    left: swX - 70,
-                                    top: swY - 45,
-                                    width: 140,
-                                    height: 90,
-                                    child: Image.asset(ComponentType.switchComponent.getAssetPath(_isSwitchClosed)!, fit: BoxFit.contain),
-                                  ),
-                                  Positioned(
-                                    left: motorX - 70,
-                                    top: motorY - 45,
-                                    width: 140,
-                                    height: 90,
-                                    child: Image.asset(ComponentType.motor.getAssetPath(_isSwitchClosed)!, fit: BoxFit.contain),
-                                  ),
-                                ],
-                              );
-                            },
                           ),
                         ),
 
@@ -359,51 +367,6 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
                                     _showDiagramMode = val;
                                   });
                                 },
-                              ),
-                              InkWell(
-                                borderRadius: BorderRadius.circular(20),
-                                onTap: () {
-                                  setState(() {
-                                    _useRealisticAssets = !_useRealisticAssets;
-                                  });
-                                },
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: _useRealisticAssets
-                                        ? theme.colorScheme.primary.withValues(alpha: 0.18)
-                                        : (isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: _useRealisticAssets
-                                          ? theme.colorScheme.primary
-                                          : (isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1)),
-                                      width: 1.2,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        _useRealisticAssets ? Icons.photo_library_rounded : Icons.brush_rounded,
-                                        size: 14,
-                                        color: _useRealisticAssets ? theme.colorScheme.primary : theme.colorScheme.onSurface,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        _useRealisticAssets ? 'Modo realista' : 'Modo cartoon',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontFamily: GoogleFonts.rajdhani().fontFamily,
-                                          fontWeight: FontWeight.bold,
-                                          letterSpacing: 0.6,
-                                          color: _useRealisticAssets ? theme.colorScheme.primary : theme.colorScheme.onSurface,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
                               ),
                               if (_showDiagramMode) ...[
                                 DiagramActionButton(
@@ -704,46 +667,58 @@ class _Challenge2BoardPainter extends CustomPainter {
     final h = size.height;
 
     final batX = w * 0.18;
-    final batY = h * 0.48;
+    final batY = h * 0.50;
+    final batW = 180.0;
+    final batH = 180.0;
+    final batLeft = batX - (batW / 2);
+    final batTop = batY - (batH / 2);
 
-    final swX = w * 0.72;
-    final swY = h * 0.26;
+    final swX = w * 0.65;
+    final swY = h * 0.24;
+    final swW = 170.0;
+    final swH = 170.0;
+    final swLeft = swX - (swW / 2);
+    final swTop = swY - (swH / 2);
 
-    final motorX = w * 0.72;
-    final motorY = h * 0.72;
+    final motorX = w * 0.65;
+    final motorY = h * 0.76;
+    final motorW = 170.0;
+    final motorH = 170.0;
+    final motorLeft = motorX - (motorW / 2);
+    final motorTop = motorY - (motorH / 2);
 
     // Bornes
-    final batPosTerm = Offset(batX + 22, batY - 26);
-    final batNegTerm = Offset(batX - 16, batY - 22);
+    final batPosTerm = Offset(batLeft + batW * 0.855, batTop + batH * 0.383);
+    final batNegTerm = Offset(batLeft + batW * 0.849, batTop + batH * 0.609);
 
-    final swRedTerm  = Offset(swX - 25, swY + 6);
-    final swBlackTerm = Offset(swX + 25, swY + 6);
+    final swRedTerm  = Offset(swLeft + swW * 0.138, swTop + swH * 0.310);
+    final swBlackTerm = Offset(swLeft + swW * 0.876, swTop + swH * 0.310);
 
-    final motorRedTerm  = Offset(motorX - 34, motorY + 4);
-    final motorBlackTerm = Offset(motorX + 34, motorY + 4);
+    final motorRedTerm  = Offset(motorLeft + motorW * 0.124, motorTop + motorH * 0.384);
+    final motorBlackTerm = Offset(motorLeft + motorW * 0.880, motorTop + motorH * 0.383);
 
     // Fios
     final pathRed = Path();
     pathRed.moveTo(batPosTerm.dx, batPosTerm.dy);
     pathRed.cubicTo(
-      batPosTerm.dx + 40, batPosTerm.dy - (h * 0.28),
-      swRedTerm.dx - (w * 0.12), swRedTerm.dy - 40,
+      batPosTerm.dx, swRedTerm.dy + 35,
+      batPosTerm.dx + (w * 0.08), swRedTerm.dy,
       swRedTerm.dx, swRedTerm.dy,
     );
 
     final pathWireInter = Path();
     pathWireInter.moveTo(swBlackTerm.dx, swBlackTerm.dy);
     pathWireInter.cubicTo(
-      swBlackTerm.dx + (w * 0.10), swBlackTerm.dy + (h * 0.12),
-      motorRedTerm.dx + (w * 0.08), motorRedTerm.dy - (h * 0.12),
-      motorRedTerm.dx, motorRedTerm.dy,
+      swBlackTerm.dx + (w * 0.16), swBlackTerm.dy - (h * 0.10),
+      motorBlackTerm.dx + (w * 0.16), motorBlackTerm.dy + (h * 0.10),
+      motorBlackTerm.dx, motorBlackTerm.dy,
     );
 
     final pathWireRet = Path();
-    pathWireRet.moveTo(motorBlackTerm.dx, motorBlackTerm.dy);
+    pathWireRet.moveTo(motorRedTerm.dx, motorRedTerm.dy);
     pathWireRet.cubicTo(
-      motorBlackTerm.dx - (w * 0.10), motorBlackTerm.dy + (h * 0.18),
-      batNegTerm.dx + (w * 0.05), batNegTerm.dy + (h * 0.32),
+      batNegTerm.dx + (w * 0.08), motorRedTerm.dy,
+      batNegTerm.dx, motorRedTerm.dy - 35,
       batNegTerm.dx, batNegTerm.dy,
     );
 
@@ -825,13 +800,13 @@ class _Challenge2BoardPainter extends CustomPainter {
     canvas.drawPath(pathWireInter.transform(highlightTransform.storage), wireHighlightPaint);
     canvas.drawPath(pathWireRet.transform(highlightTransform.storage), wireHighlightPaint);
 
-    final plugPaint = Paint()..color = const Color(0xFF424242);
-    canvas.drawCircle(batPosTerm, 5, plugPaint);
-    canvas.drawCircle(batNegTerm, 5, plugPaint);
-    canvas.drawCircle(swRedTerm, 4, plugPaint);
-    canvas.drawCircle(swBlackTerm, 4, plugPaint);
-    canvas.drawCircle(motorRedTerm, 4, plugPaint);
-    canvas.drawCircle(motorBlackTerm, 4, plugPaint);
+    // Conectores redondos (Plugues 3D) colocados diretamente sobre as entradas dos bornes
+    _drawWireTerminalPlug(canvas, batPosTerm, const Color(0xFFEF5350));
+    _drawWireTerminalPlug(canvas, batNegTerm, isDark ? const Color(0xFF9E9E9E) : const Color(0xFF37474F));
+    _drawWireTerminalPlug(canvas, swRedTerm, const Color(0xFFEF5350));
+    _drawWireTerminalPlug(canvas, swBlackTerm, isDark ? const Color(0xFF42A5F5) : const Color(0xFF1E88E5));
+    _drawWireTerminalPlug(canvas, motorRedTerm, isDark ? const Color(0xFF9E9E9E) : const Color(0xFF37474F));
+    _drawWireTerminalPlug(canvas, motorBlackTerm, isDark ? const Color(0xFF42A5F5) : const Color(0xFF1E88E5));
 
     if (useRealisticAssets) return;
 
@@ -888,6 +863,44 @@ class _Challenge2BoardPainter extends CustomPainter {
         canvas.drawCircle(tangent.position, 3.0, particlePaint);
       }
     }
+  }
+
+  void _drawWireTerminalPlug(Canvas canvas, Offset pos, Color color) {
+    // Sombra do conector/plugue
+    final shadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.35)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
+    canvas.drawCircle(pos + const Offset(1, 2), 6.5, shadowPaint);
+
+    // Anel metálico (borda prata do borne)
+    final metalPaint = Paint()
+      ..color = const Color(0xFFECEFF1)
+      ..style = PaintingStyle.fill;
+    final metalBorderPaint = Paint()
+      ..color = const Color(0xFF455A64)
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke;
+
+    canvas.drawCircle(pos, 7.0, metalPaint);
+    canvas.drawCircle(pos, 7.0, metalBorderPaint);
+
+    // Plugue redondo colorido (vermelho ou preto)
+    final plugPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+    final plugBorderPaint = Paint()
+      ..color = Colors.black45
+      ..strokeWidth = 0.8
+      ..style = PaintingStyle.stroke;
+
+    canvas.drawCircle(pos, 5.2, plugPaint);
+    canvas.drawCircle(pos, 5.2, plugBorderPaint);
+
+    // Brilho especular (Highlight 3D)
+    final highlightPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.7)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(pos + const Offset(-1.5, -1.5), 1.8, highlightPaint);
   }
 
   void _drawDiagramWireOverlay(Canvas canvas, Size size) {
