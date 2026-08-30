@@ -290,10 +290,10 @@ class ComponentPhysicalPainter extends CustomPainter {
       final rightX = cx + w / 2;
 
       final path = Path()
-        ..moveTo(leftX - 4, topY + dropY)
+        ..moveTo(leftX - 6, topY + dropY)
         ..lineTo(leftX + shoulderX, topY)
         ..lineTo(rightX - shoulderX, topY)
-        ..lineTo(rightX + 4, topY + dropY);
+        ..lineTo(rightX + 6, topY + dropY);
 
       canvas.drawPath(path, shadowPaint);
     }
@@ -307,8 +307,8 @@ class ComponentPhysicalPainter extends CustomPainter {
 
       final leftX = cx - w / 2;
       final rightX = cx + w / 2;
-      final leftEnd = Offset(leftX - 4, topY + dropY);
-      final rightEnd = Offset(rightX + 4, topY + dropY);
+      final leftEnd = Offset(leftX - 6, topY + dropY);
+      final rightEnd = Offset(rightX + 6, topY + dropY);
       final leftShoulder = Offset(leftX + shoulderX, topY);
       final rightShoulder = Offset(rightX - shoulderX, topY);
 
@@ -341,39 +341,66 @@ class ComponentPhysicalPainter extends CustomPainter {
         highlightPaint,
       );
 
-      // Conectores / Terminais pretos cilíndricos nas pontas
-      _drawJumperHeaderPin(canvas, leftEnd, isLeft: true);
-      _drawJumperHeaderPin(canvas, rightEnd, isLeft: false);
+      // Ângulos reais dos segmentos das pontas dos fios
+      final leftAngle = math.atan2(leftEnd.dy - leftShoulder.dy, leftEnd.dx - leftShoulder.dx);
+      final rightAngle = math.atan2(rightEnd.dy - rightShoulder.dy, rightEnd.dx - rightShoulder.dx);
+
+      // Conectores / Terminais pretos cilíndricos alinhados perfeitamente com os fios
+      _drawJumperHeaderPin(canvas, leftEnd, leftAngle);
+      _drawJumperHeaderPin(canvas, rightEnd, rightAngle);
     }
   }
 
-  void _drawJumperHeaderPin(Canvas canvas, Offset endPos, {required bool isLeft}) {
-    final angle = isLeft ? -math.pi / 4 : math.pi / 4;
-
+  void _drawJumperHeaderPin(Canvas canvas, Offset pos, double angle) {
     canvas.save();
-    canvas.translate(endPos.dx, endPos.dy);
-    canvas.rotate(angle);
+    canvas.translate(pos.dx, pos.dy);
+    // Rotaciona para alinhar a capa cilíndrica e o pino ao longo da direção exata do fio
+    canvas.rotate(angle - math.pi / 2);
 
-    // Corpo plástico preto do conector (Cilindro)
-    final headerRect = Rect.fromCenter(center: const Offset(0, 0), width: 5.5, height: 11.0);
-    final headerShader = const LinearGradient(
-      colors: [Color(0xFF546E7A), Color(0xFF1C2526), Color(0xFF000000)],
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-    ).createShader(headerRect);
-
+    // 1. Sombra do pino/conector
+    final shadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.3)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.0);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(headerRect, const Radius.circular(2.0)),
-      Paint()..shader = headerShader,
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(center: const Offset(1.5, 4.0), width: 7.0, height: 22.0),
+        const Radius.circular(3.0),
+      ),
+      shadowPaint,
     );
 
-    // Pino metálico de solda/protoboard
+    // 2. Pino metálico prateado (saindo da parte inferior da capa preta)
+    final pinShader = const LinearGradient(
+      colors: [Color(0xFFFFFFFF), Color(0xFFCFD8DC), Color(0xFF607D8B)],
+      begin: Alignment.centerLeft,
+      end: Alignment.centerRight,
+    ).createShader(Rect.fromLTWH(-1.5, 5.0, 3.0, 10.0));
+
     final pinPaint = Paint()
-      ..color = const Color(0xFFECEFF1)
-      ..strokeWidth = 1.8
+      ..shader = pinShader
+      ..strokeWidth = 2.4
       ..strokeCap = StrokeCap.round;
 
-    canvas.drawLine(const Offset(0, 5.5), const Offset(0, 11.5), pinPaint);
+    canvas.drawLine(const Offset(0, 5.0), const Offset(0, 14.0), pinPaint);
+
+    // 3. Capa plástica preta (Cilindro igual à foto de referência)
+    final headerRect = Rect.fromCenter(center: const Offset(0, 0), width: 7.2, height: 13.0);
+    final headerRRect = RRect.fromRectAndRadius(headerRect, const Radius.circular(3.0));
+
+    final headerShader = const LinearGradient(
+      colors: [Color(0xFF607D8B), Color(0xFF263238), Color(0xFF101719), Color(0xFF000000)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    ).createShader(headerRect);
+
+    canvas.drawRRect(headerRRect, Paint()..shader = headerShader);
+
+    // Encaixe superior (borda onde o fio entra na capa preta)
+    canvas.drawCircle(
+      const Offset(0, -6.0),
+      3.2,
+      Paint()..color = const Color(0xFF1C2526),
+    );
 
     canvas.restore();
   }
