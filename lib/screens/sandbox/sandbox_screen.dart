@@ -319,28 +319,28 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
     final selectedComponentList = sandboxState.components.where((c) => c.id == selectedId).toList();
     final selectedComponent = selectedComponentList.isNotEmpty ? selectedComponentList.first : null;
 
-    // Determina a emoÃ§Ã£o e mensagem do Professor Volts
+    // Determina a emoção e mensagem do Professor Volts
     ProfVoltsEmotion voltsEmotion = ProfVoltsEmotion.neutral;
     String voltsMessage = isEn
         ? "Click and drag components from the palette to the grid, then connect their terminals (red/black circles) to build a circuit!"
-        : "Arraste componentes da paleta para o grid, depois ligue seus terminais (cÃ­rculos vermelho/preto) para montar um circuito!";
+        : "Arraste componentes da paleta para o grid, depois ligue seus terminais (círculos vermelho/preto) para montar um circuito!";
 
     if (sandboxState.isSimulating) {
       if (sandboxState.errorMessage != null) {
         voltsEmotion = ProfVoltsEmotion.sad;
         voltsMessage = isEn
             ? "WARNING: ${sandboxState.errorMessage} The circuit was disconnected to prevent overload."
-            : "ALERTA: ${sandboxState.errorMessage} O circuito foi desarmado para proteÃ§Ã£o.";
+            : "ALERTA: ${sandboxState.errorMessage} O circuito foi desarmado para proteção.";
       } else if (sandboxState.simulationValues.isNotEmpty) {
         voltsEmotion = ProfVoltsEmotion.happy;
         voltsMessage = isEn
             ? "SUCCESS: Loop closed! Check the currents and voltage drops on the components."
-            : "SUCESSO: Loop fechado! Veja as correntes e quedas de tensÃ£o nos componentes.";
+            : "SUCESSO: Loop fechado! Veja as correntes e quedas de tensão nos componentes.";
       } else {
         voltsEmotion = ProfVoltsEmotion.neutral;
         voltsMessage = isEn
             ? "Simulation active, but no closed loop found. Connect wires to complete the path."
-            : "SimulaÃ§Ã£o ligada, mas sem loop fechado. Conecte fios para fechar o circuito.";
+            : "Simulação ligada, mas sem loop fechado. Conecte fios para fechar o circuito.";
       }
     }
 
@@ -474,7 +474,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                             children: [
                               const Icon(Icons.lightbulb_outline_rounded, size: 18, color: Color(0xFFFFB300)),
                               const SizedBox(width: 8),
-                              Text(isEn ? 'Simple Circuit (Lamp)' : 'Circuito Simples (LÃ¢mpada)', style: const TextStyle(fontSize: 12)),
+                              Text(isEn ? 'Simple Circuit (Lamp)' : 'Circuito Simples (Lâmpada)', style: const TextStyle(fontSize: 12)),
                             ],
                           ),
                         ),
@@ -634,23 +634,23 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                             itemBuilder: (context) => [
                               PopupMenuItem(
                                 value: '8x5',
-                                child: Text('8 Ã— 5 (${isEn ? "Standard" : "PadrÃ£o"})', style: const TextStyle(fontSize: 12)),
+                                child: Text('8 × 5 (${isEn ? "Standard" : "Padrão"})', style: const TextStyle(fontSize: 12)),
                               ),
                               PopupMenuItem(
                                 value: '10x6',
-                                child: Text('10 Ã— 6 (${isEn ? "Medium" : "MÃ©dio"})', style: const TextStyle(fontSize: 12)),
+                                child: Text('10 × 6 (${isEn ? "Medium" : "Médio"})', style: const TextStyle(fontSize: 12)),
                               ),
                               PopupMenuItem(
                                 value: '12x8',
-                                child: Text('12 Ã— 8 (${isEn ? "Large" : "Grande"})', style: const TextStyle(fontSize: 12)),
+                                child: Text('12 × 8 (${isEn ? "Large" : "Grande"})', style: const TextStyle(fontSize: 12)),
                               ),
                               PopupMenuItem(
                                 value: '14x10',
-                                child: Text('14 Ã— 10 (${isEn ? "Extra Large" : "Extra Grande"})', style: const TextStyle(fontSize: 12)),
+                                child: Text('14 × 10 (${isEn ? "Extra Large" : "Extra Grande"})', style: const TextStyle(fontSize: 12)),
                               ),
                               PopupMenuItem(
                                 value: '18x12',
-                                child: Text('18 Ã— 12 (${isEn ? "Maximum" : "MÃ¡ximo"})', style: const TextStyle(fontSize: 12)),
+                                child: Text('18 × 12 (${isEn ? "Maximum" : "Máximo"})', style: const TextStyle(fontSize: 12)),
                               ),
                             ],
                           ),
@@ -1719,11 +1719,11 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
       case ComponentType.motor:
         return l10n.compMotor;
       case ComponentType.potentiometer:
-        return l10n.localeName == 'en' ? 'Potentiometer' : 'PotenciÃ´metro';
+        return l10n.localeName == 'en' ? 'Potentiometer' : 'Potenciômetro';
       case ComponentType.powerSupply:
-        return l10n.localeName == 'en' ? 'Power Supply Studio' : 'Fonte RegulÃ¡vel';
+        return l10n.localeName == 'en' ? 'Power Supply Studio' : 'Fonte Regulável';
       case ComponentType.fuse:
-        return l10n.localeName == 'en' ? 'Fuse' : 'FusÃ­vel';
+        return l10n.localeName == 'en' ? 'Fuse' : 'Fusível';
       case ComponentType.capacitor:
         return l10n.localeName == 'en' ? 'Capacitor' : 'Capacitor';
       case ComponentType.buzzer:

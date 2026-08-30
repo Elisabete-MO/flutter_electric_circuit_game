@@ -446,7 +446,7 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
                               final cx = constraints.maxWidth / 2;
                               final cy = constraints.maxHeight / 2;
 
-                              // Adapta dinamicamente o tamanho do diagrama Ã s dimensões da tela
+                              // Adapta dinamicamente o tamanho do diagrama às dimensões da tela
                               final dx = (constraints.maxWidth * 0.26).clamp(80.0, 150.0);
                               final dy = (constraints.maxHeight * 0.22).clamp(55.0, 100.0);
 

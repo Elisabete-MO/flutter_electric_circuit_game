@@ -20,7 +20,7 @@ class SandboxController extends Notifier<SandboxState> {
 
     final initialState = _persistence.load();
 
-    // Executa a simulaÃ§Ã£o inicial de forma assÃ­ncrona para nÃ£o travar a build
+    // Executa a simulação inicial de forma assíncrona para não travar a build
     Future.microtask(() => _recalculateCircuit());
 
     return initialState;
@@ -161,7 +161,7 @@ class SandboxController extends Notifier<SandboxState> {
   }
 
   void addWire(String fromId, String fromTerm, String toId, String toTerm) {
-    // Evitar conexÃµes de um terminal consigo mesmo
+    // Evitar conexões de um terminal consigo mesmo
     if (fromId == toId && fromTerm == toTerm) return;
 
     // Evitar fios duplicados
