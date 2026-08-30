@@ -546,55 +546,62 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
                 ),
               ),
 
-            // GRID DE 8 COMPONENTES (Ajustado dinamicamente para caber na tela sem scroll)
+            // GRID DE 8 COMPONENTES (Ajustado dinamicamente para caber na tela com proporção ideal)
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(10, 4, 10, 10),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final crossAxisCount = constraints.maxWidth >= 640 ? 4 : 2;
-                    final rowCount = (_gridComponents.length / crossAxisCount).ceil();
-                    
-                    const spacing = 10.0;
-                    final availableWidth = constraints.maxWidth;
-                    final availableHeight = constraints.maxHeight;
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1400),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final crossAxisCount = constraints.maxWidth >= 640 ? 4 : 2;
+                        final rowCount = (_gridComponents.length / crossAxisCount).ceil();
+                        
+                        const spacing = 12.0;
+                        final availableWidth = constraints.maxWidth;
+                        final availableHeight = constraints.maxHeight;
 
-                    final itemWidth = (availableWidth - (crossAxisCount - 1) * spacing) / crossAxisCount;
-                    final itemHeight = (availableHeight - (rowCount - 1) * spacing) / rowCount;
+                        final itemWidth = (availableWidth - (crossAxisCount - 1) * spacing) / crossAxisCount;
+                        final itemHeight = (availableHeight - (rowCount - 1) * spacing) / rowCount;
 
-                    final childAspectRatio = (itemWidth > 0 && itemHeight > 0)
-                        ? (itemWidth / itemHeight)
-                        : 0.88;
+                        final rawRatio = (itemWidth > 0 && itemHeight > 0)
+                            ? (itemWidth / itemHeight)
+                            : 0.88;
+                        // Limita o ratio máximo para garantir que os cards mantenham altura suficiente em telas widescreen
+                        final childAspectRatio = rawRatio.clamp(0.70, 1.15);
 
-                    return GridView.builder(
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _gridComponents.length,
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: crossAxisCount,
-                        crossAxisSpacing: spacing,
-                        mainAxisSpacing: spacing,
-                        childAspectRatio: childAspectRatio,
-                      ),
-                      itemBuilder: (context, index) {
-                        final comp = _gridComponents[index];
+                        return GridView.builder(
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: _gridComponents.length,
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: crossAxisCount,
+                            crossAxisSpacing: spacing,
+                            mainAxisSpacing: spacing,
+                            childAspectRatio: childAspectRatio,
+                          ),
+                          itemBuilder: (context, index) {
+                            final comp = _gridComponents[index];
 
-                        return SymbolCard(
-                          component: comp,
-                          showLabels: !_isQuizMode,
-                          isCorrectlyAnswered: _answeredCorrectlyIds.contains(comp.id),
-                          useRealisticAssets: _useRealisticAssets,
-                          onTap: () {
-                            if (_isQuizMode) {
-                              _answerQuiz(comp);
-                            } else {
-                              _openDetailModal(comp);
-                            }
+                            return SymbolCard(
+                              component: comp,
+                              showLabels: !_isQuizMode,
+                              isCorrectlyAnswered: _answeredCorrectlyIds.contains(comp.id),
+                              useRealisticAssets: _useRealisticAssets,
+                              onTap: () {
+                                if (_isQuizMode) {
+                                  _answerQuiz(comp);
+                                } else {
+                                  _openDetailModal(comp);
+                                }
+                              },
+                              onToggleState: () => _toggleComponentState(index),
+                            );
                           },
-                          onToggleState: () => _toggleComponentState(index),
                         );
                       },
-                    );
-                  },
+                    ),
+                  ),
                 ),
               ),
             ),
