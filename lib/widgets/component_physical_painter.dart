@@ -261,62 +261,122 @@ class ComponentPhysicalPainter extends CustomPainter {
   }
 
   void _drawPhysicalWire(Canvas canvas, Size size, double cx, double cy) {
-    // 1. Linha metálica estanhada de ponta a ponta (mesmo estilo das hastes de todos os componentes)
+    // 1. Sombra projetada do maço de fios em anel
     final shadowPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.35)
-      ..strokeWidth = 4.2
-      ..strokeCap = StrokeCap.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
+      ..color = Colors.black.withValues(alpha: isDarkMode ? 0.45 : 0.25)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 14.0
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5.0);
 
-    final leadBasePaint = Paint()
-      ..shader = LinearGradient(
-        colors: isDarkMode
-            ? const [Color(0xFFCBD5E1), Color(0xFF64748B), Color(0xFF1E293B)]
-            : const [Color(0xFFFFFFFF), Color(0xFFB0BEC5), Color(0xFF455A64)],
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-      ).createShader(Rect.fromLTWH(0, cy - 2, size.width, 4))
-      ..strokeWidth = 3.6
-      ..strokeCap = StrokeCap.round;
-
-    final leadHighlightPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.8)
-      ..strokeWidth = 1.0
-      ..strokeCap = StrokeCap.round;
-
-    canvas.drawLine(Offset(0, cy + 2.0), Offset(size.width, cy + 2.0), shadowPaint);
-    canvas.drawLine(Offset(0, cy), Offset(size.width, cy), leadBasePaint);
-    canvas.drawLine(Offset(0, cy - 1.0), Offset(size.width, cy - 1.0), leadHighlightPaint);
-
-    // 2. Conector/Terminal central de derivação do fio de laboratório
-    final blockRect = Rect.fromCenter(center: Offset(cx, cy), width: 16.0, height: 10.0);
-    final blockRRect = RRect.fromRectAndRadius(blockRect, const Radius.circular(3.0));
-
-    // Sombra do conector central
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(blockRect.translate(1.5, 2.0), const Radius.circular(3.0)),
-      Paint()
-        ..color = Colors.black.withValues(alpha: 0.4)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.0),
+    canvas.drawOval(
+      Rect.fromCenter(center: Offset(cx + 2, cy + 4), width: size.width * 0.52, height: size.height * 0.48),
+      shadowPaint,
     );
 
-    // Corpo metálico de latão/liga 3D
-    final blockShader = LinearGradient(
-      colors: isDarkMode
-          ? const [Color(0xFF94A3B8), Color(0xFF475569), Color(0xFF1E293B)]
-          : const [Color(0xFFFFD54F), Color(0xFFFFB300), Color(0xFFE65100)],
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-    ).createShader(blockRect);
-    canvas.drawRRect(blockRRect, Paint()..shader = blockShader);
+    // 2. Cores vibrantes dos cabos estilo Jumpers DuPont (Modo Cartoon 3D)
+    final wireColors = [
+      const [Color(0xFFE53935), Color(0xFFB71C1C)], // Vermelho
+      const [Color(0xFFFFB300), Color(0xFFE65100)], // Amarelo/Laranja
+      const [Color(0xFF00E676), Color(0xFF1B5E20)], // Verde
+      const [Color(0xFF0288D1), Color(0xFF01579B)], // Azul
+      const [Color(0xFF8E24AA), Color(0xFF4A148C)], // Roxo
+      const [Color(0xFF37474F), Color(0xFF212121)], // Preto
+    ];
 
-    // Parafuso de fixação no centro
-    canvas.drawCircle(Offset(cx, cy), 3.0, Paint()..color = const Color(0xFF37474F));
-    canvas.drawLine(Offset(cx - 2.0, cy), Offset(cx + 2.0, cy), Paint()..color = Colors.white..strokeWidth = 0.8);
+    final loopRadiusX = size.width * 0.25;
+    final loopRadiusY = size.height * 0.24;
 
-    // Gotas de solda nas junções
-    _drawSolderBlob(canvas, Offset(cx - 8.0, cy));
-    _drawSolderBlob(canvas, Offset(cx + 8.0, cy));
+    // Desenha cada fio curvado no anel trançado
+    for (int i = 0; i < wireColors.length; i++) {
+      final colors = wireColors[i];
+      final angleOffset = (i * math.pi / 3) - 0.2;
+      final offsetX = math.cos(angleOffset) * 3.5;
+      final offsetY = math.sin(angleOffset) * 3.0;
+
+      final path = Path();
+      final center = Offset(cx + offsetX, cy + offsetY);
+      final rect = Rect.fromCenter(
+        center: center,
+        width: (loopRadiusX + (i % 3 - 1) * 3) * 2,
+        height: (loopRadiusY + (i % 2 == 0 ? 2 : -2)) * 2,
+      );
+
+      path.addOval(rect);
+
+      // Tubo de borracha do fio
+      final wirePaint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 4.8
+        ..shader = LinearGradient(
+          colors: colors,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ).createShader(rect);
+
+      canvas.drawPath(path, wirePaint);
+
+      // Brilho especular no cabo
+      final highlightPaint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2
+        ..color = Colors.white.withValues(alpha: 0.45);
+
+      final highlightPath = Path();
+      highlightPath.addArc(
+        Rect.fromCenter(
+          center: center.translate(-0.8, -0.8),
+          width: (loopRadiusX + (i % 3 - 1) * 3) * 2,
+          height: (loopRadiusY + (i % 2 == 0 ? 2 : -2)) * 2,
+        ),
+        math.pi * 0.8,
+        math.pi * 0.6,
+      );
+      canvas.drawPath(highlightPath, highlightPaint);
+    }
+
+    // 3. Fitas de travamento / Abraçadeiras pretas
+    final tiePaint = Paint()..color = const Color(0xFF1E293B);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(center: Offset(cx - loopRadiusX * 0.7, cy - loopRadiusY * 0.4), width: 7.0, height: 16.0),
+        const Radius.circular(2.0),
+      ),
+      tiePaint,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(center: Offset(cx + loopRadiusX * 0.7, cy + loopRadiusY * 0.4), width: 7.0, height: 16.0),
+        const Radius.circular(2.0),
+      ),
+      tiePaint,
+    );
+
+    // 4. Terminais / Pinos Macho DuPont sobressaindo nas pontas
+    final pinOffsets = [
+      Offset(cx + loopRadiusX + 6, cy - 8),
+      Offset(cx + loopRadiusX + 10, cy - 2),
+      Offset(cx + loopRadiusX + 8, cy + 5),
+    ];
+
+    for (final pinPos in pinOffsets) {
+      // Capa plástica preta do conector
+      final headerRect = Rect.fromCenter(center: pinPos, width: 6.0, height: 10.0);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(headerRect, const Radius.circular(1.5)),
+        Paint()..color = const Color(0xFF263238),
+      );
+
+      // Pino metálico prateado
+      final pinTip = Offset(pinPos.dx + 6, pinPos.dy);
+      canvas.drawLine(
+        pinPos,
+        pinTip,
+        Paint()
+          ..color = const Color(0xFFECEFF1)
+          ..strokeWidth = 2.0
+          ..strokeCap = StrokeCap.square,
+      );
+    }
   }
 
   /// --------------------------------------------------------------------------
