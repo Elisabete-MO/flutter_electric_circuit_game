@@ -565,11 +565,9 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
                         final itemWidth = (availableWidth - (crossAxisCount - 1) * spacing) / crossAxisCount;
                         final itemHeight = (availableHeight - (rowCount - 1) * spacing) / rowCount;
 
-                        final rawRatio = (itemWidth > 0 && itemHeight > 0)
+                        final childAspectRatio = (itemWidth > 0 && itemHeight > 0)
                             ? (itemWidth / itemHeight)
                             : 0.88;
-                        // Limita o ratio máximo para garantir que os cards mantenham altura suficiente em telas widescreen
-                        final childAspectRatio = rawRatio.clamp(0.70, 1.15);
 
                         return GridView.builder(
                           physics: const NeverScrollableScrollPhysics(),

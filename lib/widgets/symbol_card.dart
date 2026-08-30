@@ -37,23 +37,23 @@ class _SymbolCardState extends State<SymbolCard> {
   double _getComponentScale(ComponentType type) {
     switch (type) {
       case ComponentType.resistor:
-        return 2.10;
+        return 1.65;
       case ComponentType.diode:
-        return 1.95;
+        return 1.55;
       case ComponentType.motor:
-        return 1.70;
+        return 1.35;
       case ComponentType.connectingWire:
-        return 1.40;
+        return 1.15;
       case ComponentType.led:
-        return 1.40;
+        return 1.05;
       case ComponentType.bulb:
-        return 1.35;
+        return 1.00; // 1.00 para não sobrepor o texto do nome da lâmpada
       case ComponentType.switchComponent:
-        return 1.40;
+        return 1.15;
       case ComponentType.battery:
-        return 1.30;
+        return 1.05;
       default:
-        return 1.35;
+        return 1.10;
     }
   }
 
@@ -101,7 +101,7 @@ class _SymbolCardState extends State<SymbolCard> {
               children: [
                 // PARTE SUPERIOR: Objeto físico real + Nome (Flex maior para dar destaque aos objetos 3D)
                 Expanded(
-                  flex: 65,
+                  flex: 70,
                   child: Container(
                     color: isDark
                         ? const Color(0xFF1E2638)
@@ -233,12 +233,12 @@ class _SymbolCardState extends State<SymbolCard> {
 
                 // PARTE INFERIOR: Símbolo Esquemático Elétrico
                 Expanded(
-                  flex: 35,
+                  flex: 30,
                   child: Container(
                     color: isDark
                         ? const Color(0xFF161C28)
                         : const Color(0xFFFFFFFF),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
