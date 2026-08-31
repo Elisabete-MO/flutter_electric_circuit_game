@@ -42,7 +42,6 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
   ComponentType? _slotBulb;
 
   late final AnimationController _currentAnimationController;
-  late final AnimationController _pulseAnimationController;
   late final ConfettiController _confettiController;
   final ScrollController _paletteVerticalScrollController = ScrollController();
   final ScrollController _paletteHorizontalScrollController = ScrollController();
@@ -71,11 +70,6 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat();
-
-    _pulseAnimationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
   }
 
   @override
@@ -83,7 +77,6 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
     _timer?.cancel();
     _audio.stopBgm();
     _currentAnimationController.dispose();
-    _pulseAnimationController.dispose();
     _confettiController.dispose();
     _paletteVerticalScrollController.dispose();
     _paletteHorizontalScrollController.dispose();
@@ -179,62 +172,97 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       final isWide = constraints.maxWidth >= 600;
+                      final w = constraints.maxWidth;
+                      final h = constraints.maxHeight;
+                      final cx = w / 2;
+                      final cy = h / 2;
+
+                      final double batX, batY, swX, swY, bulbX, bulbY;
+                      final double batW, batH, swW, swH, bulbW, bulbH;
+
+                      if (_showDiagramMode) {
+                        final dx = (w * 0.38).clamp(120.0, 220.0);
+                        final dy = (h * 0.30).clamp(80.0, 140.0);
+                        final sz = (w * 0.14).clamp(70.0, 110.0);
+
+                        batX = cx - dx;
+                        batY = cy;
+                        batW = sz;
+                        batH = sz;
+
+                        swX = cx;
+                        swY = cy - dy;
+                        swW = sz;
+                        swH = sz;
+
+                        bulbX = cx;
+                        bulbY = cy + dy;
+                        bulbW = sz;
+                        bulbH = sz;
+                      } else {
+                        batX = w * 0.18;
+                        batY = h * 0.50;
+                        batW = 180.0;
+                        batH = 180.0;
+
+                        swX = w * 0.65;
+                        swY = h * 0.24;
+                        swW = 170.0;
+                        swH = 170.0;
+
+                        bulbX = w * 0.65;
+                        bulbY = h * 0.76;
+                        bulbW = 170.0;
+                        bulbH = 170.0;
+                      }
 
                       final circuitBoardArea = Stack(
                         children: [
+                          // 1. Componentes Físicos (PNGs) com Transição Suave de Posição
                           Positioned.fill(
-                            child: Opacity(
-                              opacity: _showDiagramMode ? 0.35 : 1.0,
-                              child: LayoutBuilder(
-                                builder: (context, boardConstraints) {
-                                  final w = boardConstraints.maxWidth;
-                                  final h = boardConstraints.maxHeight;
-                                  final batX = w * 0.18;
-                                  final batY = h * 0.50;
-                                  final batW = 180.0;
-                                  final batH = 180.0;
-
-                                  final swX = w * 0.65;
-                                  final swY = h * 0.24;
-                                  final swW = 170.0;
-                                  final swH = 170.0;
-
-                                  final bulbX = w * 0.65;
-                                  final bulbY = h * 0.76;
-                                  final bulbW = 170.0;
-                                  final bulbH = 170.0;
-
-                                  return Stack(
-                                    children: [
-                                      Positioned(
-                                        left: batX - (batW / 2),
-                                        top: batY - (batH / 2),
-                                        width: batW,
-                                        height: batH,
-                                        child: Image.asset(ComponentType.battery.getChallengeAssetPath(false)!, fit: BoxFit.contain),
-                                      ),
-                                      Positioned(
-                                        left: swX - (swW / 2),
-                                        top: swY - (swH / 2),
-                                        width: swW,
-                                        height: swH,
-                                        child: Image.asset(ComponentType.switchComponent.getChallengeAssetPath(_isSwitchClosed)!, fit: BoxFit.contain),
-                                      ),
-                                      Positioned(
-                                        left: bulbX - (bulbW / 2),
-                                        top: bulbY - (bulbH / 2),
-                                        width: bulbW,
-                                        height: bulbH,
-                                        child: Image.asset(ComponentType.bulb.getChallengeAssetPath(_isSwitchClosed)!, fit: BoxFit.contain),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              ),
+                            child: Stack(
+                              children: [
+                                AnimatedPositioned(
+                                  duration: const Duration(milliseconds: 350),
+                                  curve: Curves.easeInOut,
+                                  left: batX - (batW / 2),
+                                  top: batY - (batH / 2),
+                                  width: batW,
+                                  height: batH,
+                                  child: Image.asset(
+                                    ComponentType.battery.getChallengeAssetPath(false)!,
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                                AnimatedPositioned(
+                                  duration: const Duration(milliseconds: 350),
+                                  curve: Curves.easeInOut,
+                                  left: swX - (swW / 2),
+                                  top: swY - (swH / 2),
+                                  width: swW,
+                                  height: swH,
+                                  child: Image.asset(
+                                    ComponentType.switchComponent.getChallengeAssetPath(_isSwitchClosed)!,
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                                AnimatedPositioned(
+                                  duration: const Duration(milliseconds: 350),
+                                  curve: Curves.easeInOut,
+                                  left: bulbX - (bulbW / 2),
+                                  top: bulbY - (bulbH / 2),
+                                  width: bulbW,
+                                  height: bulbH,
+                                  child: Image.asset(
+                                    ComponentType.bulb.getChallengeAssetPath(_isSwitchClosed)!,
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
 
-                          // Fundo Estático da Bancada & Fios Físicos (desenhados sobre os componentes)
+                          // Fundo Estático da Bancada & Fios Físicos / Esquema
                           Positioned.fill(
                             child: RepaintBoundary(
                               child: CustomPaint(
@@ -247,6 +275,15 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
                                   isDark: isDark,
                                   useRealisticAssets: true,
                                   drawParticlesOnly: false,
+                                  batX: batX,
+                                  batY: batY,
+                                  swX: swX,
+                                  swY: swY,
+                                  bulbX: bulbX,
+                                  bulbY: bulbY,
+                                  batSize: batW,
+                                  swSize: swW,
+                                  bulbSize: bulbW,
                                 ),
                               ),
                             ),
@@ -270,6 +307,15 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
                                         useRealisticAssets: true,
                                         currentProgress: _currentAnimationController.value,
                                         drawParticlesOnly: true,
+                                        batX: batX,
+                                        batY: batY,
+                                        swX: swX,
+                                        swY: swY,
+                                        bulbX: bulbX,
+                                        bulbY: bulbY,
+                                        batSize: batW,
+                                        swSize: swW,
+                                        bulbSize: bulbW,
                                       ),
                                     );
                                   },
@@ -277,72 +323,6 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
                               ),
                             ),
 
-<<<<<<< HEAD
-=======
-                          // Componentes Físicos Realistas (PNGs) na Bancada
-                          if (_useRealisticAssets)
-                            Positioned.fill(
-                              child: Opacity(
-                                opacity: _showDiagramMode ? 0.25 : 1.0,
-                                child: LayoutBuilder(
-                                  builder: (context, boardConstraints) {
-                                    final w = boardConstraints.maxWidth;
-                                    final h = boardConstraints.maxHeight;
-
-                                    final cx = w / 2;
-                                    final cy = h / 2;
-                                    final dx = (w * 0.26).clamp(80.0, 150.0);
-                                    final dy = (h * 0.22).clamp(55.0, 100.0);
-                                    final leftX = cx - dx;
-                                    final topY = cy - dy;
-                                    final bottomY = cy + dy;
-
-                                    final batX = _showDiagramMode ? leftX : (w * 0.18);
-                                    final batY = _showDiagramMode ? cy : (h * 0.48);
-                                    final swX = _showDiagramMode ? cx : (w * 0.72);
-                                    final swY = _showDiagramMode ? topY : (h * 0.26);
-                                    final bulbX = _showDiagramMode ? cx : (w * 0.72);
-                                    final bulbY = _showDiagramMode ? bottomY : (h * 0.72);
-
-                                    final scale = _showDiagramMode ? 0.65 : 1.0;
-                                    final batW = 120 * scale;
-                                    final batH = 100 * scale;
-                                    final swW = 120 * scale;
-                                    final swH = 100 * scale;
-                                    final bulbW = 120 * scale;
-                                    final bulbH = 100 * scale;
-
-                                    return Stack(
-                                      children: [
-                                        Positioned(
-                                          left: batX - batW / 2,
-                                          top: batY - batH / 2,
-                                          width: batW,
-                                          height: batH,
-                                          child: Image.asset(ComponentType.battery.getAssetPath(false)!, fit: BoxFit.contain),
-                                        ),
-                                        Positioned(
-                                          left: swX - swW / 2,
-                                          top: swY - swH / 2,
-                                          width: swW,
-                                          height: swH,
-                                          child: Image.asset(ComponentType.switchComponent.getAssetPath(_isSwitchClosed)!, fit: BoxFit.contain),
-                                        ),
-                                        Positioned(
-                                          left: bulbX - bulbW / 2,
-                                          top: bulbY - bulbH / 2,
-                                          width: bulbW,
-                                          height: bulbH,
-                                          child: Image.asset(ComponentType.bulb.getAssetPath(_isSwitchClosed)!, fit: BoxFit.contain),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-
->>>>>>> 5535695 (diagrama)
                           // Elementos Interativos posicionados na Bancada
 
                           // Interruptor Físico Clicável (Modo Físico)
@@ -400,12 +380,12 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
                             ),
 
                           // Clique Direto no Asset do Interruptor Físico na Bancada
-                           if (!_showDiagramMode)
+                          if (!_showDiagramMode)
                             Positioned(
-                              left: constraints.maxWidth * 0.65 - 85,
-                              top: constraints.maxHeight * 0.24 - 85,
-                              width: 170,
-                              height: 170,
+                              left: swX - (swW / 2),
+                              top: swY - (swH / 2),
+                              width: swW,
+                              height: swH,
                               child: MouseRegion(
                                 cursor: SystemMouseCursors.click,
                                 child: GestureDetector(
@@ -456,63 +436,48 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
                             ),
                           ),
 
-                          // Slots de Drop no Modo Diagrama (Bateria, Interruptor, Lâmpada)
+                          // Slots de Drop no Modo Diagrama (Sobrepostos aos Componentes Físicos)
                           if (_showDiagramMode)
                             Positioned.fill(
-                              child: LayoutBuilder(
-                                builder: (context, constraints) {
-                                  final cx = constraints.maxWidth / 2;
-                                  final cy = constraints.maxHeight / 2;
+                              child: Stack(
+                                children: [
+                                  // Slot 1: Bateria (Lado Esquerdo)
+                                  _buildDropSlot(
+                                    left: batX - (batW / 2),
+                                    top: batY - (batH / 2),
+                                    width: batW,
+                                    height: batH,
+                                    currentType: _slotBattery,
+                                    label: l10n.compBattery,
+                                    onAccept: (type) => setState(() => _slotBattery = type),
+                                    onClear: () => setState(() => _slotBattery = null),
+                                    isVertical: true,
+                                  ),
 
-                                  // Adapta dinamicamente o tamanho do diagrama às dimensões da tela
-                                  final dx = (constraints.maxWidth * 0.26).clamp(80.0, 150.0);
-                                  final dy = (constraints.maxHeight * 0.22).clamp(55.0, 100.0);
+                                  // Slot 2: Interruptor (Topo do Diagrama)
+                                  _buildDropSlot(
+                                    left: swX - (swW / 2),
+                                    top: swY - (swH / 2),
+                                    width: swW,
+                                    height: swH,
+                                    currentType: _slotSwitch,
+                                    label: l10n.compSwitch,
+                                    onAccept: (type) => setState(() => _slotSwitch = type),
+                                    onClear: () => setState(() => _slotSwitch = null),
+                                  ),
 
-                                  final leftX = cx - dx;
-                                  final topY = cy - dy;
-                                  final bottomY = cy + dy;
-
-                                  return Stack(
-                                    children: [
-                                      // Slot 1: Bateria (Lado Esquerdo)
-                                      _buildDropSlot(
-                                        left: leftX - 40,
-                                        top: cy - 30,
-                                        width: 80,
-                                        height: 60,
-                                        currentType: _slotBattery,
-                                        label: l10n.compBattery,
-                                        onAccept: (type) => setState(() => _slotBattery = type),
-                                        onClear: () => setState(() => _slotBattery = null),
-                                        isVertical: true,
-                                      ),
-
-                                      // Slot 2: Interruptor (Topo do Diagrama)
-                                      _buildDropSlot(
-                                        left: cx - 40,
-                                        top: topY - 30,
-                                        width: 80,
-                                        height: 60,
-                                        currentType: _slotSwitch,
-                                        label: l10n.compSwitch,
-                                        onAccept: (type) => setState(() => _slotSwitch = type),
-                                        onClear: () => setState(() => _slotSwitch = null),
-                                      ),
-
-                                      // Slot 3: Lâmpada (Base do Diagrama)
-                                      _buildDropSlot(
-                                        left: cx - 40,
-                                        top: bottomY - 30,
-                                        width: 80,
-                                        height: 60,
-                                        currentType: _slotBulb,
-                                        label: l10n.compBulb,
-                                        onAccept: (type) => setState(() => _slotBulb = type),
-                                        onClear: () => setState(() => _slotBulb = null),
-                                      ),
-                                    ],
-                                  );
-                                },
+                                  // Slot 3: Lâmpada (Base do Diagrama)
+                                  _buildDropSlot(
+                                    left: bulbX - (bulbW / 2),
+                                    top: bulbY - (bulbH / 2),
+                                    width: bulbW,
+                                    height: bulbH,
+                                    currentType: _slotBulb,
+                                    label: l10n.compBulb,
+                                    onAccept: (type) => setState(() => _slotBulb = type),
+                                    onClear: () => setState(() => _slotBulb = null),
+                                  ),
+                                ],
                               ),
                             ),
                         ],
@@ -689,6 +654,15 @@ class _CircuitInteractiveBoardPainter extends CustomPainter {
     this.useRealisticAssets = true,
     this.currentProgress = 0.0,
     this.drawParticlesOnly = false,
+    this.batX = 0,
+    this.batY = 0,
+    this.swX = 0,
+    this.swY = 0,
+    this.bulbX = 0,
+    this.bulbY = 0,
+    this.batSize = 180,
+    this.swSize = 170,
+    this.bulbSize = 170,
   });
 
   final bool isSwitchClosed;
@@ -701,23 +675,20 @@ class _CircuitInteractiveBoardPainter extends CustomPainter {
   final double currentProgress;
   final bool drawParticlesOnly;
 
+  final double batX;
+  final double batY;
+  final double swX;
+  final double swY;
+  final double bulbX;
+  final double bulbY;
+  final double batSize;
+  final double swSize;
+  final double bulbSize;
+
   @override
   void paint(Canvas canvas, Size size) {
     if (showDiagramMode) {
       if (!drawParticlesOnly) {
-<<<<<<< HEAD
-        // Desenha o circuito físico como fantasma no fundo (35% opacidade)
-        canvas.saveLayer(Offset.zero & size, Paint()..color = Colors.white.withValues(alpha: 0.35));
-=======
-        // Draw the physical circuit overlay transparently
-        canvas.saveLayer(
-          Rect.fromLTWH(0, 0, size.width, size.height),
-          Paint()..color = Colors.white.withValues(alpha: 0.25),
-        );
->>>>>>> 5535695 (diagrama)
-        _drawPhysicalCircuitOverlay(canvas, size);
-        canvas.restore();
-
         _drawDiagramBackgroundGrid(canvas, size);
         _drawDiagramWireOverlay(canvas, size);
       }
@@ -747,8 +718,8 @@ class _CircuitInteractiveBoardPainter extends CustomPainter {
   void _drawPhysicalCircuitOverlay(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
+    final scale = showDiagramMode ? 0.65 : 1.0;
 
-<<<<<<< HEAD
     // Coordenadas calculadas dinamicamente com base nas dimensões da bancada
     final batX = w * 0.18;
     final batY = h * 0.50;
@@ -780,37 +751,6 @@ class _CircuitInteractiveBoardPainter extends CustomPainter {
 
     final bulbRedTerm  = Offset(bulbLeft + bulbW * 0.120, bulbTop + bulbH * 0.400);  // Entrada Borne Vermelho Lâmpada (Esquerda)
     final bulbBlackTerm = Offset(bulbLeft + bulbW * 0.881, bulbTop + bulbH * 0.400); // Entrada Borne Preto Lâmpada (Direita)
-=======
-    // Coordenadas calculadas dinamicamente com base nas dimensões da bancada e modo
-    final cx = w / 2;
-    final cy = h / 2;
-    final dx = (w * 0.26).clamp(80.0, 150.0);
-    final dy = (h * 0.22).clamp(55.0, 100.0);
-    final leftX = cx - dx;
-    final topY = cy - dy;
-    final bottomY = cy + dy;
-
-    final batX = showDiagramMode ? leftX : (w * 0.18);
-    final batY = showDiagramMode ? cy : (h * 0.48);
-
-    final swX = showDiagramMode ? cx : (w * 0.72);
-    final swY = showDiagramMode ? topY : (h * 0.26);
-
-    final bulbX = showDiagramMode ? cx : (w * 0.72);
-    final bulbY = showDiagramMode ? bottomY : (h * 0.72);
-
-    final scale = showDiagramMode ? 0.65 : 1.0;
-
-    // Pontos de conexão exatos nos bornes (Terminais vermelhos/pretos)
-    final batPosTerm = Offset(batX + 22 * scale, batY - 26 * scale);  // Polo (+) Bateria
-    final batNegTerm = Offset(batX - 16 * scale, batY - 22 * scale);  // Polo (-) Bateria
-
-    final swRedTerm  = Offset(swX - 25 * scale, swY + 6 * scale);     // Borne Vermelho Interruptor
-    final swBlackTerm = Offset(swX + 25 * scale, swY + 6 * scale);    // Borne Preto Interruptor
-
-    final bulbRedTerm  = Offset(bulbX - 30 * scale, bulbY + 4 * scale);  // Borne Vermelho Lâmpada
-    final bulbBlackTerm = Offset(bulbX + 30 * scale, bulbY + 4 * scale); // Borne Preto Lâmpada
->>>>>>> 5535695 (diagrama)
 
     // --- DESENHO DOS FIOS (Saída Vertical da Bateria + Trajeto Horizontal Quadrado) ---
 
@@ -818,80 +758,31 @@ class _CircuitInteractiveBoardPainter extends CustomPainter {
     // Sobe na vertical a partir do polo positivo e dobra 90° à direita em direção ao interruptor
     final pathRed = Path();
     pathRed.moveTo(batPosTerm.dx, batPosTerm.dy);
-<<<<<<< HEAD
     pathRed.cubicTo(
       batPosTerm.dx, swRedTerm.dy + 35,
       batPosTerm.dx + (w * 0.08), swRedTerm.dy,
       swRedTerm.dx, swRedTerm.dy,
     );
-=======
-    if (showDiagramMode) {
-      pathRed.cubicTo(
-        batPosTerm.dx, batPosTerm.dy - (h * 0.15),
-        swRedTerm.dx - (w * 0.05), swRedTerm.dy - 20,
-        swRedTerm.dx, swRedTerm.dy,
-      );
-    } else {
-      pathRed.cubicTo(
-        batPosTerm.dx + 40, batPosTerm.dy - (h * 0.28),
-        swRedTerm.dx - (w * 0.12), swRedTerm.dy - 40,
-        swRedTerm.dx, swRedTerm.dy,
-      );
-    }
->>>>>>> 5535695 (diagrama)
 
     // 2. Fio Preto de Interconexão (Borne Preto Interruptor -> Borne Preto Lâmpada)
     // Sai do borne do interruptor contornando por fora à direita até a lâmpada
     final pathWireInter = Path();
     pathWireInter.moveTo(swBlackTerm.dx, swBlackTerm.dy);
-<<<<<<< HEAD
     pathWireInter.cubicTo(
       swBlackTerm.dx + (w * 0.16), swBlackTerm.dy - (h * 0.10),
       bulbBlackTerm.dx + (w * 0.16), bulbBlackTerm.dy + (h * 0.10),
       bulbBlackTerm.dx, bulbBlackTerm.dy,
     );
-=======
-    if (showDiagramMode) {
-      pathWireInter.cubicTo(
-        swBlackTerm.dx + (w * 0.08), swBlackTerm.dy + 30,
-        bulbRedTerm.dx + (w * 0.08), bulbRedTerm.dy - 30,
-        bulbRedTerm.dx, bulbRedTerm.dy,
-      );
-    } else {
-      pathWireInter.cubicTo(
-        swBlackTerm.dx + (w * 0.10), swBlackTerm.dy + (h * 0.12),
-        bulbRedTerm.dx + (w * 0.08), bulbRedTerm.dy - (h * 0.12),
-        bulbRedTerm.dx, bulbRedTerm.dy,
-      );
-    }
->>>>>>> 5535695 (diagrama)
 
     // 3. Fio Preto de Retorno (Borne Vermelho da Lâmpada -> Polo (-) da Bateria)
     // Corre na horizontal da lâmpada à esquerda e dobra 90° para cima entrando no polo negativo da bateria
     final pathWireRet = Path();
-<<<<<<< HEAD
     pathWireRet.moveTo(bulbRedTerm.dx, bulbRedTerm.dy);
     pathWireRet.cubicTo(
       batNegTerm.dx + (w * 0.08), bulbRedTerm.dy,
       batNegTerm.dx, bulbRedTerm.dy - 35,
       batNegTerm.dx, batNegTerm.dy,
     );
-=======
-    pathWireRet.moveTo(bulbBlackTerm.dx, bulbBlackTerm.dy);
-    if (showDiagramMode) {
-      pathWireRet.cubicTo(
-        bulbBlackTerm.dx, bulbBlackTerm.dy + 30,
-        batNegTerm.dx + 40, batNegTerm.dy + (h * 0.15),
-        batNegTerm.dx, batNegTerm.dy,
-      );
-    } else {
-      pathWireRet.cubicTo(
-        bulbBlackTerm.dx - (w * 0.10), bulbBlackTerm.dy + (h * 0.18),
-        batNegTerm.dx + (w * 0.05), batNegTerm.dy + (h * 0.32),
-        batNegTerm.dx, batNegTerm.dy,
-      );
-    }
->>>>>>> 5535695 (diagrama)
 
     if (drawParticlesOnly) {
       // ⚡ DESENHA APENAS AS PARTÍCULAS EM 60FPS
@@ -1085,45 +976,36 @@ class _CircuitInteractiveBoardPainter extends CustomPainter {
 
   void _drawDiagramWireOverlay(Canvas canvas, Size size) {
     final w = size.width;
-    final h = size.height;
-    final cx = w / 2;
-    final cy = h / 2;
 
     final wirePaint = Paint()
       ..color = isDark ? const Color(0xFF00E5FF) : const Color(0xFF1E293B)
-      ..strokeWidth = 3
+      ..strokeWidth = 3.5
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.square;
 
-    // Adapta dinamicamente a largura e a altura do retângulo do diagrama Ã  tela
-    final dx = (w * 0.26).clamp(80.0, 150.0);
-    final dy = (h * 0.22).clamp(55.0, 100.0);
+    final batHalfH = batSize / 2;
+    final swHalfW = swSize / 2;
+    final bulbHalfW = bulbSize / 2;
 
-    final leftX = cx - dx;
-    final rightX = cx + dx;
-    final topY = cy - dy;
-    final bottomY = cy + dy;
+    final rightX = batX + (w - batX * 2);
 
     final path = Path();
 
-    // Topo (Interruptor): Vão entre cx - 40 e cx + 40 (80px exatos do slot)
-    path.moveTo(leftX, topY);
-    path.lineTo(cx - 40, topY);
-    path.moveTo(cx + 40, topY);
-    path.lineTo(rightX, topY);
+    // 1. Polo (+) Bateria -> Canto superior esquerdo -> Entrada esquerda Interruptor
+    path.moveTo(batX, batY - batHalfH);
+    path.lineTo(batX, swY);
+    path.lineTo(swX - swHalfW, swY);
 
-    // Lado Direito
-    path.lineTo(rightX, bottomY);
+    // 2. Saída direita Interruptor -> Canto superior direito -> Canto inferior direito -> Entrada direita Lâmpada
+    path.moveTo(swX + swHalfW, swY);
+    path.lineTo(rightX, swY);
+    path.lineTo(rightX, bulbY);
+    path.lineTo(bulbX + bulbHalfW, bulbY);
 
-    // Base (Lâmpada): Vão entre cx + 40 e cx - 40
-    path.lineTo(cx + 40, bottomY);
-    path.moveTo(cx - 40, bottomY);
-    path.lineTo(leftX, bottomY);
-
-    // Lado Esquerdo (Bateria): Vão vertical entre cy - 30 e cy + 30 (60px exatos do slot)
-    path.lineTo(leftX, cy + 30);
-    path.moveTo(leftX, cy - 30);
-    path.lineTo(leftX, topY);
+    // 3. Saída esquerda Lâmpada -> Canto inferior esquerdo -> Polo (-) Bateria
+    path.moveTo(bulbX - bulbHalfW, bulbY);
+    path.lineTo(batX, bulbY);
+    path.lineTo(batX, batY + batHalfH);
 
     canvas.drawPath(path, wirePaint);
   }
@@ -1137,6 +1019,12 @@ class _CircuitInteractiveBoardPainter extends CustomPainter {
         oldDelegate.slotBulb != slotBulb ||
         oldDelegate.isDark != isDark ||
         oldDelegate.currentProgress != currentProgress ||
-        oldDelegate.drawParticlesOnly != drawParticlesOnly;
+        oldDelegate.drawParticlesOnly != drawParticlesOnly ||
+        oldDelegate.batX != batX ||
+        oldDelegate.batY != batY ||
+        oldDelegate.swX != swX ||
+        oldDelegate.swY != swY ||
+        oldDelegate.bulbX != bulbX ||
+        oldDelegate.bulbY != bulbY;
   }
 }
