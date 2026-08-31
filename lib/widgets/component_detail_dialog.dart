@@ -213,8 +213,11 @@ class _ComponentDetailDialogState extends State<ComponentDetailDialog> {
               const SizedBox(height: 24),
 
               // Ação de Testar Estado / Fechar
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+              Wrap(
+                alignment: WrapAlignment.end,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 12,
+                runSpacing: 12,
                 children: [
                   if (_component.supportsStateToggle)
                     OutlinedButton.icon(

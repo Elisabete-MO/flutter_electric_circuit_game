@@ -133,114 +133,116 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
             accentColor: accentColor,
             opacity: isDark ? 0.8 : 0.9,
             padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // 1. Mascote Corpo Inteiro
-                ProfVoltsFullBody(
-                  emotion: isSuccess ? ProfVoltsEmotion.happy : ProfVoltsEmotion.sad,
-                  size: 150,
-                ),
-                const SizedBox(height: 16),
-                
-                // 2. Título HUD Cyber
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: accentColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: accentColor.withValues(alpha: 0.5)),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // 1. Mascote Corpo Inteiro
+                  ProfVoltsFullBody(
+                    emotion: isSuccess ? ProfVoltsEmotion.happy : ProfVoltsEmotion.sad,
+                    size: 150,
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        isSuccess ? Icons.emoji_events_rounded : Icons.info_outline_rounded,
-                        color: accentColor,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        l10n.quizResultTitle,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontFamily: GoogleFonts.rajdhani().fontFamily,
-                          fontWeight: FontWeight.bold,
+                  const SizedBox(height: 16),
+                  
+                  // 2. Título HUD Cyber
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: accentColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: accentColor.withValues(alpha: 0.5)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isSuccess ? Icons.emoji_events_rounded : Icons.info_outline_rounded,
                           color: accentColor,
-                          letterSpacing: 1.5,
+                          size: 20,
                         ),
-                        textAlign: TextAlign.center,
+                        const SizedBox(width: 8),
+                        Text(
+                          l10n.quizResultTitle,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontFamily: GoogleFonts.rajdhani().fontFamily,
+                            fontWeight: FontWeight.bold,
+                            color: accentColor,
+                            letterSpacing: 1.5,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // 3. Mensagem explicativa
+                  Text(
+                    l10n.quizResultMsg(_quizScore, _quizQuestions.length),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      height: 1.4,
+                      fontSize: 16,
+                      fontFamily: GoogleFonts.outfit().fontFamily,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+
+                  // 4. Botões de Ação
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            _resetStudyMode();
+                          },
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: theme.colorScheme.onSurface.withValues(alpha: 0.3)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          child: Text(
+                            l10n.quizBackStudy,
+                            style: TextStyle(
+                              fontFamily: GoogleFonts.rajdhani().fontFamily,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            _startQuizMode();
+                          },
+                          style: FilledButton.styleFrom(
+                            backgroundColor: accentColor,
+                            foregroundColor: buttonTextColor,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          child: Text(
+                            l10n.buttonRetry,
+                            style: TextStyle(
+                              fontFamily: GoogleFonts.rajdhani().fontFamily,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 16),
-
-                // 3. Mensagem explicativa
-                Text(
-                  l10n.quizResultMsg(_quizScore, _quizQuestions.length),
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    height: 1.4,
-                    fontSize: 16,
-                    fontFamily: GoogleFonts.outfit().fontFamily,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-
-                // 4. Botões de Ação
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                          _resetStudyMode();
-                        },
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: theme.colorScheme.onSurface.withValues(alpha: 0.3)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: Text(
-                          l10n.quizBackStudy,
-                          style: TextStyle(
-                            fontFamily: GoogleFonts.rajdhani().fontFamily,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.0,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: FilledButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                          _startQuizMode();
-                        },
-                        style: FilledButton.styleFrom(
-                          backgroundColor: accentColor,
-                          foregroundColor: buttonTextColor,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: Text(
-                          l10n.buttonRetry,
-                          style: TextStyle(
-                            fontFamily: GoogleFonts.rajdhani().fontFamily,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.0,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

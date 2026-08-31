@@ -277,6 +277,72 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
                               ),
                             ),
 
+<<<<<<< HEAD
+=======
+                          // Componentes Físicos Realistas (PNGs) na Bancada
+                          if (_useRealisticAssets)
+                            Positioned.fill(
+                              child: Opacity(
+                                opacity: _showDiagramMode ? 0.25 : 1.0,
+                                child: LayoutBuilder(
+                                  builder: (context, boardConstraints) {
+                                    final w = boardConstraints.maxWidth;
+                                    final h = boardConstraints.maxHeight;
+
+                                    final cx = w / 2;
+                                    final cy = h / 2;
+                                    final dx = (w * 0.26).clamp(80.0, 150.0);
+                                    final dy = (h * 0.22).clamp(55.0, 100.0);
+                                    final leftX = cx - dx;
+                                    final topY = cy - dy;
+                                    final bottomY = cy + dy;
+
+                                    final batX = _showDiagramMode ? leftX : (w * 0.18);
+                                    final batY = _showDiagramMode ? cy : (h * 0.48);
+                                    final swX = _showDiagramMode ? cx : (w * 0.72);
+                                    final swY = _showDiagramMode ? topY : (h * 0.26);
+                                    final bulbX = _showDiagramMode ? cx : (w * 0.72);
+                                    final bulbY = _showDiagramMode ? bottomY : (h * 0.72);
+
+                                    final scale = _showDiagramMode ? 0.65 : 1.0;
+                                    final batW = 120 * scale;
+                                    final batH = 100 * scale;
+                                    final swW = 120 * scale;
+                                    final swH = 100 * scale;
+                                    final bulbW = 120 * scale;
+                                    final bulbH = 100 * scale;
+
+                                    return Stack(
+                                      children: [
+                                        Positioned(
+                                          left: batX - batW / 2,
+                                          top: batY - batH / 2,
+                                          width: batW,
+                                          height: batH,
+                                          child: Image.asset(ComponentType.battery.getAssetPath(false)!, fit: BoxFit.contain),
+                                        ),
+                                        Positioned(
+                                          left: swX - swW / 2,
+                                          top: swY - swH / 2,
+                                          width: swW,
+                                          height: swH,
+                                          child: Image.asset(ComponentType.switchComponent.getAssetPath(_isSwitchClosed)!, fit: BoxFit.contain),
+                                        ),
+                                        Positioned(
+                                          left: bulbX - bulbW / 2,
+                                          top: bulbY - bulbH / 2,
+                                          width: bulbW,
+                                          height: bulbH,
+                                          child: Image.asset(ComponentType.bulb.getAssetPath(_isSwitchClosed)!, fit: BoxFit.contain),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+
+>>>>>>> 5535695 (diagrama)
                           // Elementos Interativos posicionados na Bancada
 
                           // Interruptor Físico Clicável (Modo Físico)
@@ -567,10 +633,10 @@ class _Challenge1DetailScreenState extends ConsumerState<Challenge1DetailScreen>
               height: height,
               decoration: BoxDecoration(
                 color: currentType != null
-                    ? (isDark ? const Color(0xFF1E2A3A) : const Color(0xFFE0F7FA))
+                    ? (isDark ? const Color(0xFF1E2A3A).withValues(alpha: 0.15) : const Color(0xFFE0F7FA).withValues(alpha: 0.15))
                     : (isHovered
-                        ? const Color(0xFFFFF9C4)
-                        : (isDark ? const Color(0xFF263238) : Colors.white)),
+                        ? const Color(0xFFFFF9C4).withValues(alpha: 0.4)
+                        : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05))),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: isHovered
@@ -639,8 +705,16 @@ class _CircuitInteractiveBoardPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (showDiagramMode) {
       if (!drawParticlesOnly) {
+<<<<<<< HEAD
         // Desenha o circuito físico como fantasma no fundo (35% opacidade)
         canvas.saveLayer(Offset.zero & size, Paint()..color = Colors.white.withValues(alpha: 0.35));
+=======
+        // Draw the physical circuit overlay transparently
+        canvas.saveLayer(
+          Rect.fromLTWH(0, 0, size.width, size.height),
+          Paint()..color = Colors.white.withValues(alpha: 0.25),
+        );
+>>>>>>> 5535695 (diagrama)
         _drawPhysicalCircuitOverlay(canvas, size);
         canvas.restore();
 
@@ -674,6 +748,7 @@ class _CircuitInteractiveBoardPainter extends CustomPainter {
     final w = size.width;
     final h = size.height;
 
+<<<<<<< HEAD
     // Coordenadas calculadas dinamicamente com base nas dimensões da bancada
     final batX = w * 0.18;
     final batY = h * 0.50;
@@ -705,6 +780,37 @@ class _CircuitInteractiveBoardPainter extends CustomPainter {
 
     final bulbRedTerm  = Offset(bulbLeft + bulbW * 0.120, bulbTop + bulbH * 0.400);  // Entrada Borne Vermelho Lâmpada (Esquerda)
     final bulbBlackTerm = Offset(bulbLeft + bulbW * 0.881, bulbTop + bulbH * 0.400); // Entrada Borne Preto Lâmpada (Direita)
+=======
+    // Coordenadas calculadas dinamicamente com base nas dimensões da bancada e modo
+    final cx = w / 2;
+    final cy = h / 2;
+    final dx = (w * 0.26).clamp(80.0, 150.0);
+    final dy = (h * 0.22).clamp(55.0, 100.0);
+    final leftX = cx - dx;
+    final topY = cy - dy;
+    final bottomY = cy + dy;
+
+    final batX = showDiagramMode ? leftX : (w * 0.18);
+    final batY = showDiagramMode ? cy : (h * 0.48);
+
+    final swX = showDiagramMode ? cx : (w * 0.72);
+    final swY = showDiagramMode ? topY : (h * 0.26);
+
+    final bulbX = showDiagramMode ? cx : (w * 0.72);
+    final bulbY = showDiagramMode ? bottomY : (h * 0.72);
+
+    final scale = showDiagramMode ? 0.65 : 1.0;
+
+    // Pontos de conexão exatos nos bornes (Terminais vermelhos/pretos)
+    final batPosTerm = Offset(batX + 22 * scale, batY - 26 * scale);  // Polo (+) Bateria
+    final batNegTerm = Offset(batX - 16 * scale, batY - 22 * scale);  // Polo (-) Bateria
+
+    final swRedTerm  = Offset(swX - 25 * scale, swY + 6 * scale);     // Borne Vermelho Interruptor
+    final swBlackTerm = Offset(swX + 25 * scale, swY + 6 * scale);    // Borne Preto Interruptor
+
+    final bulbRedTerm  = Offset(bulbX - 30 * scale, bulbY + 4 * scale);  // Borne Vermelho Lâmpada
+    final bulbBlackTerm = Offset(bulbX + 30 * scale, bulbY + 4 * scale); // Borne Preto Lâmpada
+>>>>>>> 5535695 (diagrama)
 
     // --- DESENHO DOS FIOS (Saída Vertical da Bateria + Trajeto Horizontal Quadrado) ---
 
@@ -712,31 +818,80 @@ class _CircuitInteractiveBoardPainter extends CustomPainter {
     // Sobe na vertical a partir do polo positivo e dobra 90° à direita em direção ao interruptor
     final pathRed = Path();
     pathRed.moveTo(batPosTerm.dx, batPosTerm.dy);
+<<<<<<< HEAD
     pathRed.cubicTo(
       batPosTerm.dx, swRedTerm.dy + 35,
       batPosTerm.dx + (w * 0.08), swRedTerm.dy,
       swRedTerm.dx, swRedTerm.dy,
     );
+=======
+    if (showDiagramMode) {
+      pathRed.cubicTo(
+        batPosTerm.dx, batPosTerm.dy - (h * 0.15),
+        swRedTerm.dx - (w * 0.05), swRedTerm.dy - 20,
+        swRedTerm.dx, swRedTerm.dy,
+      );
+    } else {
+      pathRed.cubicTo(
+        batPosTerm.dx + 40, batPosTerm.dy - (h * 0.28),
+        swRedTerm.dx - (w * 0.12), swRedTerm.dy - 40,
+        swRedTerm.dx, swRedTerm.dy,
+      );
+    }
+>>>>>>> 5535695 (diagrama)
 
     // 2. Fio Preto de Interconexão (Borne Preto Interruptor -> Borne Preto Lâmpada)
     // Sai do borne do interruptor contornando por fora à direita até a lâmpada
     final pathWireInter = Path();
     pathWireInter.moveTo(swBlackTerm.dx, swBlackTerm.dy);
+<<<<<<< HEAD
     pathWireInter.cubicTo(
       swBlackTerm.dx + (w * 0.16), swBlackTerm.dy - (h * 0.10),
       bulbBlackTerm.dx + (w * 0.16), bulbBlackTerm.dy + (h * 0.10),
       bulbBlackTerm.dx, bulbBlackTerm.dy,
     );
+=======
+    if (showDiagramMode) {
+      pathWireInter.cubicTo(
+        swBlackTerm.dx + (w * 0.08), swBlackTerm.dy + 30,
+        bulbRedTerm.dx + (w * 0.08), bulbRedTerm.dy - 30,
+        bulbRedTerm.dx, bulbRedTerm.dy,
+      );
+    } else {
+      pathWireInter.cubicTo(
+        swBlackTerm.dx + (w * 0.10), swBlackTerm.dy + (h * 0.12),
+        bulbRedTerm.dx + (w * 0.08), bulbRedTerm.dy - (h * 0.12),
+        bulbRedTerm.dx, bulbRedTerm.dy,
+      );
+    }
+>>>>>>> 5535695 (diagrama)
 
     // 3. Fio Preto de Retorno (Borne Vermelho da Lâmpada -> Polo (-) da Bateria)
     // Corre na horizontal da lâmpada à esquerda e dobra 90° para cima entrando no polo negativo da bateria
     final pathWireRet = Path();
+<<<<<<< HEAD
     pathWireRet.moveTo(bulbRedTerm.dx, bulbRedTerm.dy);
     pathWireRet.cubicTo(
       batNegTerm.dx + (w * 0.08), bulbRedTerm.dy,
       batNegTerm.dx, bulbRedTerm.dy - 35,
       batNegTerm.dx, batNegTerm.dy,
     );
+=======
+    pathWireRet.moveTo(bulbBlackTerm.dx, bulbBlackTerm.dy);
+    if (showDiagramMode) {
+      pathWireRet.cubicTo(
+        bulbBlackTerm.dx, bulbBlackTerm.dy + 30,
+        batNegTerm.dx + 40, batNegTerm.dy + (h * 0.15),
+        batNegTerm.dx, batNegTerm.dy,
+      );
+    } else {
+      pathWireRet.cubicTo(
+        bulbBlackTerm.dx - (w * 0.10), bulbBlackTerm.dy + (h * 0.18),
+        batNegTerm.dx + (w * 0.05), batNegTerm.dy + (h * 0.32),
+        batNegTerm.dx, batNegTerm.dy,
+      );
+    }
+>>>>>>> 5535695 (diagrama)
 
     if (drawParticlesOnly) {
       // ⚡ DESENHA APENAS AS PARTÍCULAS EM 60FPS
@@ -850,20 +1005,20 @@ class _CircuitInteractiveBoardPainter extends CustomPainter {
 
     // Bateria (Lado Esquerdo Central)
     canvas.save();
-    canvas.translate(batX - 60, batY - 50);
-    batPainter.paint(canvas, const Size(120, 100));
+    canvas.translate(batX - 60 * scale, batY - 50 * scale);
+    batPainter.paint(canvas, Size(120 * scale, 100 * scale));
     canvas.restore();
 
     // Interruptor (Lado Direito Superior)
     canvas.save();
-    canvas.translate(swX - 70, swY - 45);
-    swPainter.paint(canvas, const Size(140, 90));
+    canvas.translate(swX - 70 * scale, swY - 45 * scale);
+    swPainter.paint(canvas, Size(140 * scale, 90 * scale));
     canvas.restore();
 
     // Lâmpada (Lado Direito Inferior)
     canvas.save();
-    canvas.translate(bulbX - 70, bulbY - 45);
-    bulbPainter.paint(canvas, const Size(140, 90));
+    canvas.translate(bulbX - 70 * scale, bulbY - 45 * scale);
+    bulbPainter.paint(canvas, Size(140 * scale, 90 * scale));
     canvas.restore();
   }
 

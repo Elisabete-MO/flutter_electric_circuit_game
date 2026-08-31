@@ -278,6 +278,72 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
                           ),
                         ),
 
+<<<<<<< HEAD
+=======
+                      // Componentes Físicos Realistas (PNGs) na Bancada
+                      if (_useRealisticAssets)
+                        Positioned.fill(
+                          child: Opacity(
+                            opacity: _showDiagramMode ? 0.25 : 1.0,
+                            child: LayoutBuilder(
+                              builder: (context, boardConstraints) {
+                                final w = boardConstraints.maxWidth;
+                                final h = boardConstraints.maxHeight;
+
+                                final cx = w / 2;
+                                final cy = h / 2;
+                                final dx = (w * 0.26).clamp(80.0, 150.0);
+                                final dy = (h * 0.22).clamp(55.0, 100.0);
+                                final leftX = cx - dx;
+                                final topY = cy - dy;
+                                final bottomY = cy + dy;
+
+                                final batX = _showDiagramMode ? leftX : (w * 0.18);
+                                final batY = _showDiagramMode ? cy : (h * 0.48);
+                                final swX = _showDiagramMode ? cx : (w * 0.72);
+                                final swY = _showDiagramMode ? topY : (h * 0.26);
+                                final motorX = _showDiagramMode ? cx : (w * 0.72);
+                                final motorY = _showDiagramMode ? bottomY : (h * 0.72);
+
+                                final scale = _showDiagramMode ? 0.65 : 1.0;
+                                final batW = 120 * scale;
+                                final batH = 100 * scale;
+                                final swW = 140 * scale;
+                                final swH = 90 * scale;
+                                final motorW = 140 * scale;
+                                final motorH = 90 * scale;
+
+                                return Stack(
+                                  children: [
+                                    Positioned(
+                                      left: batX - batW / 2,
+                                      top: batY - batH / 2,
+                                      width: batW,
+                                      height: batH,
+                                      child: Image.asset(ComponentType.battery.getAssetPath(false)!, fit: BoxFit.contain),
+                                    ),
+                                    Positioned(
+                                      left: swX - swW / 2,
+                                      top: swY - swH / 2,
+                                      width: swW,
+                                      height: swH,
+                                      child: Image.asset(ComponentType.switchComponent.getAssetPath(_isSwitchClosed)!, fit: BoxFit.contain),
+                                    ),
+                                    Positioned(
+                                      left: motorX - motorW / 2,
+                                      top: motorY - motorH / 2,
+                                      width: motorW,
+                                      height: motorH,
+                                      child: Image.asset(ComponentType.motor.getAssetPath(_isSwitchClosed)!, fit: BoxFit.contain),
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+
+>>>>>>> 5535695 (diagrama)
                       // Interruptor Físico Clicável (Modo Físico)
                       if (!_showDiagramMode)
                         Positioned(
@@ -566,10 +632,10 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
               height: height,
               decoration: BoxDecoration(
                 color: currentType != null
-                    ? (isDark ? const Color(0xFF1E2A3A) : const Color(0xFFE0F7FA))
+                    ? (isDark ? const Color(0xFF1E2A3A).withValues(alpha: 0.15) : const Color(0xFFE0F7FA).withValues(alpha: 0.15))
                     : (isHovered
-                        ? const Color(0xFFFFF9C4)
-                        : (isDark ? const Color(0xFF263238) : Colors.white)),
+                        ? const Color(0xFFFFF9C4).withValues(alpha: 0.4)
+                        : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05))),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: isHovered
@@ -638,8 +704,16 @@ class _Challenge2BoardPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (showDiagramMode) {
       if (!drawParticlesOnly) {
+<<<<<<< HEAD
         // Desenha o circuito físico como fantasma no fundo (35% opacidade)
         canvas.saveLayer(Offset.zero & size, Paint()..color = Colors.white.withValues(alpha: 0.35));
+=======
+        // Draw the physical circuit overlay transparently
+        canvas.saveLayer(
+          Rect.fromLTWH(0, 0, size.width, size.height),
+          Paint()..color = Colors.white.withValues(alpha: 0.25),
+        );
+>>>>>>> 5535695 (diagrama)
         _drawPhysicalCircuitOverlay(canvas, size);
         canvas.restore();
 
@@ -673,6 +747,7 @@ class _Challenge2BoardPainter extends CustomPainter {
     final w = size.width;
     final h = size.height;
 
+<<<<<<< HEAD
     final batX = w * 0.18;
     final batY = h * 0.50;
     final batW = 180.0;
@@ -703,31 +778,113 @@ class _Challenge2BoardPainter extends CustomPainter {
 
     final motorRedTerm  = Offset(motorLeft + motorW * 0.124, motorTop + motorH * 0.384);
     final motorBlackTerm = Offset(motorLeft + motorW * 0.880, motorTop + motorH * 0.383);
+=======
+    // Coordenadas calculadas dinamicamente com base nas dimensões da bancada e modo
+    final cx = w / 2;
+    final cy = h / 2;
+    final dx = (w * 0.26).clamp(80.0, 150.0);
+    final dy = (h * 0.22).clamp(55.0, 100.0);
+    final leftX = cx - dx;
+    final topY = cy - dy;
+    final bottomY = cy + dy;
 
-    // Fios
+    final batX = showDiagramMode ? leftX : (w * 0.18);
+    final batY = showDiagramMode ? cy : (h * 0.48);
+
+    final swX = showDiagramMode ? cx : (w * 0.72);
+    final swY = showDiagramMode ? topY : (h * 0.26);
+
+    final motorX = showDiagramMode ? cx : (w * 0.72);
+    final motorY = showDiagramMode ? bottomY : (h * 0.72);
+
+    final scale = showDiagramMode ? 0.65 : 1.0;
+
+    // Bornes
+    final batPosTerm = Offset(batX + 22 * scale, batY - 26 * scale);
+    final batNegTerm = Offset(batX - 16 * scale, batY - 22 * scale);
+
+    final swRedTerm  = Offset(swX - 25 * scale, swY + 6 * scale);
+    final swBlackTerm = Offset(swX + 25 * scale, swY + 6 * scale);
+
+    final motorRedTerm  = Offset(motorX - 34 * scale, motorY + 4 * scale);
+    final motorBlackTerm = Offset(motorX + 34 * scale, motorY + 4 * scale);
+>>>>>>> 5535695 (diagrama)
+
+    // 1. Fio Vermelho (Bateria + até Borne Vermelho do Interruptor)
     final pathRed = Path();
     pathRed.moveTo(batPosTerm.dx, batPosTerm.dy);
+<<<<<<< HEAD
     pathRed.cubicTo(
       batPosTerm.dx, swRedTerm.dy + 35,
       batPosTerm.dx + (w * 0.08), swRedTerm.dy,
       swRedTerm.dx, swRedTerm.dy,
     );
+=======
+    if (showDiagramMode) {
+      pathRed.cubicTo(
+        batPosTerm.dx, batPosTerm.dy - (h * 0.15),
+        swRedTerm.dx - (w * 0.05), swRedTerm.dy - 20,
+        swRedTerm.dx, swRedTerm.dy,
+      );
+    } else {
+      pathRed.cubicTo(
+        batPosTerm.dx + 40, batPosTerm.dy - (h * 0.28),
+        swRedTerm.dx - (w * 0.12), swRedTerm.dy - 40,
+        swRedTerm.dx, swRedTerm.dy,
+      );
+    }
+>>>>>>> 5535695 (diagrama)
 
+    // 2. Fio de Interconexão (Borne Preto do Interruptor até Borne Vermelho do Motor)
     final pathWireInter = Path();
     pathWireInter.moveTo(swBlackTerm.dx, swBlackTerm.dy);
+<<<<<<< HEAD
     pathWireInter.cubicTo(
       swBlackTerm.dx + (w * 0.16), swBlackTerm.dy - (h * 0.10),
       motorBlackTerm.dx + (w * 0.16), motorBlackTerm.dy + (h * 0.10),
       motorBlackTerm.dx, motorBlackTerm.dy,
     );
+=======
+    if (showDiagramMode) {
+      pathWireInter.cubicTo(
+        swBlackTerm.dx + (w * 0.08), swBlackTerm.dy + 30,
+        motorRedTerm.dx + (w * 0.08), motorRedTerm.dy - 30,
+        motorRedTerm.dx, motorRedTerm.dy,
+      );
+    } else {
+      pathWireInter.cubicTo(
+        swBlackTerm.dx + (w * 0.10), swBlackTerm.dy + (h * 0.12),
+        motorRedTerm.dx + (w * 0.08), motorRedTerm.dy - (h * 0.12),
+        motorRedTerm.dx, motorRedTerm.dy,
+      );
+    }
+>>>>>>> 5535695 (diagrama)
 
+    // 3. Fio Preto de Retorno (Borne Preto do Motor até Polo (-) da Bateria)
     final pathWireRet = Path();
+<<<<<<< HEAD
     pathWireRet.moveTo(motorRedTerm.dx, motorRedTerm.dy);
     pathWireRet.cubicTo(
       batNegTerm.dx + (w * 0.08), motorRedTerm.dy,
       batNegTerm.dx, motorRedTerm.dy - 35,
       batNegTerm.dx, batNegTerm.dy,
     );
+=======
+    pathWireRet.moveTo(motorBlackTerm.dx, motorBlackTerm.dy);
+    if (showDiagramMode) {
+      pathWireRet.cubicTo(
+        motorBlackTerm.dx, motorBlackTerm.dy + 30,
+        batNegTerm.dx + 40, batNegTerm.dy + (h * 0.15),
+        batNegTerm.dx, batNegTerm.dy,
+      );
+    } else {
+      pathWireRet.cubicTo(
+        motorBlackTerm.dx - (w * 0.10), motorBlackTerm.dy + (h * 0.18),
+        batNegTerm.dx + (w * 0.05), batNegTerm.dy + (h * 0.32),
+        batNegTerm.dx, batNegTerm.dy,
+      );
+    }
+>>>>>>> 5535695 (diagrama)
 
     if (drawParticlesOnly) {
       if (isSwitchClosed) {
@@ -834,18 +991,18 @@ class _Challenge2BoardPainter extends CustomPainter {
     );
 
     canvas.save();
-    canvas.translate(batX - 60, batY - 50);
-    batPainter.paint(canvas, const Size(120, 100));
+    canvas.translate(batX - 60 * scale, batY - 50 * scale);
+    batPainter.paint(canvas, Size(120 * scale, 100 * scale));
     canvas.restore();
 
     canvas.save();
-    canvas.translate(swX - 70, swY - 45);
-    swPainter.paint(canvas, const Size(140, 90));
+    canvas.translate(swX - 70 * scale, swY - 45 * scale);
+    swPainter.paint(canvas, Size(140 * scale, 90 * scale));
     canvas.restore();
 
     canvas.save();
-    canvas.translate(motorX - 70, motorY - 45);
-    motorPainter.paint(canvas, const Size(140, 90));
+    canvas.translate(motorX - 70 * scale, motorY - 45 * scale);
+    motorPainter.paint(canvas, Size(140 * scale, 90 * scale));
     canvas.restore();
   }
 
