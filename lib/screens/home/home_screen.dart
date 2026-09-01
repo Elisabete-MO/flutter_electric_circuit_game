@@ -121,7 +121,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF071828),
+      backgroundColor: const Color(0xFF021712), // Fundo escuro esmeralda
       body: SafeArea(
         child: Column(
           children: [
@@ -149,10 +149,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: const BoxDecoration(
-        color: Color(0xFF0B2A4A),
+        color: Color(0xFF04382B), // Verde esmeralda escuro elegante
         border: Border(
           bottom: BorderSide(
-            color: Color(0xFF1E3A5F),
+            color: Color(0xFF059669),
             width: 1.5,
           ),
         ),
