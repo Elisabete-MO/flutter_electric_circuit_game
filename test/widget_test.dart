@@ -11,6 +11,7 @@ import 'package:eletrolab/services/settings_service.dart';
 import 'package:eletrolab/state/progress_controller.dart';
 import 'package:eletrolab/state/settings_controller.dart';
 import 'package:eletrolab/state/sandbox_controller.dart';
+import 'package:eletrolab/services/sandbox_persistence_repository.dart';
 
 void main() {
   setUp(() {
@@ -61,10 +62,12 @@ void main() {
     WidgetTester tester,
     String label,
   ) async {
-    final finder = find.text(label);
-
-    await tester.ensureVisible(finder);
-    await pumpSettle(tester);
+    final Finder finder;
+    if (label == 'Configurações') {
+      finder = find.byIcon(Icons.settings_rounded);
+    } else {
+      finder = find.text(label).first;
+    }
 
     await tester.tap(finder);
     await pumpSettle(tester);
@@ -82,34 +85,29 @@ void main() {
         );
 
         expect(
-          find.text('LABORATÓRIO VIRTUAL DE CIRCUITOS'),
+          find.text('Feira de Ciências da Comunidade · 1ª fase'),
           findsOneWidget,
         );
       },
     );
 
     testWidgets(
-      'exibe as quatro opções principais',
+      'exibe o mapa da feira de ciências e o estande selecionado',
       (tester) async {
         await pumpApp(tester);
 
         expect(
+          find.text('Feira de Ciências da Comunidade · 1ª fase'),
+          findsOneWidget,
+        );
+
+        expect(
           find.text('Primeiros Passos'),
-          findsOneWidget,
+          findsWidgets,
         );
 
         expect(
-          find.text('Desafios'),
-          findsOneWidget,
-        );
-
-        expect(
-          find.text('Bancada Livre'),
-          findsOneWidget,
-        );
-
-        expect(
-          find.text('Configurações'),
+          find.text('Iniciar Tutorial'),
           findsOneWidget,
         );
       },
@@ -121,6 +119,7 @@ void main() {
         await pumpApp(tester);
 
         await tapSection(tester, 'Bancada Livre');
+        await tapSection(tester, 'Abrir Simulador');
 
         expect(
           find.text('Bancada Livre'),
@@ -204,6 +203,7 @@ void main() {
         await pumpApp(tester);
 
         await tapSection(tester, 'Bancada Livre');
+        await tapSection(tester, 'Abrir Simulador');
 
         expect(
           find.text('Bancada Livre'),
@@ -237,6 +237,7 @@ void main() {
           gridY: 3,
         );
         controller.addComponent(component);
+        await SandboxPersistenceRepository(prefs).save(container.read(sandboxControllerProvider));
 
         // Verifica que salvou no SharedPreferences
         final savedComponents = prefs.getString('sandbox_components');
@@ -264,6 +265,7 @@ void main() {
       (tester) async {
         await pumpApp(tester);
         await tapSection(tester, 'Bancada Livre');
+        await tapSection(tester, 'Abrir Simulador');
 
         final draggableFinder = find.byType(Draggable<ComponentType>).first;
         final targetFinder = find.byType(DragTarget<Object>).first;

@@ -1,342 +1,221 @@
 import 'package:flutter/material.dart';
-import 'package:eletrolab/app/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/routes.dart';
-import '../../l10n/app_localizations.dart';
-import '../../state/progress_controller.dart';
-import '../../widgets/cyber_hud_container.dart';
-import '../../widgets/eletrolab_logo.dart';
-import '../../widgets/prof_volts_speech.dart';
-import '../../widgets/tech_grid_background.dart';
+import '../../app/theme.dart';
+import '../../models/stand_data.dart';
+import 'widgets/science_fair_map.dart';
 
-/// Tela inicial do EletroLab: Estação Cyber HUD com Dashboard e estatísticas do jogador.
-class HomeScreen extends ConsumerWidget {
+/// Tela inicial gamificada do EletroLab: Mapa da Feira de Ciências da Comunidade no Ginásio.
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
 
-    final l10n = AppLocalizations.of(context)!;
-    final progress = ref.watch(progressControllerProvider);
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  late List<StandData> _stands;
+  StandData? _selectedStand;
 
-    // Calcular estatísticas
-    final completedCount = progress.completedChallenges.length;
-
-
-    return Scaffold(
-      body: TechGridBackground(
-        child: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: constraints.maxHeight - 40,
-                  ),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1100),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-
-                    // LOGO ELETROLAB
-                    const Center(child: EletroLabLogo()),
-                    const SizedBox(height: 48),
-
-                    // SAUDAÇÃO DO PROF. VOLTS
-                    ProfVoltsSpeech(
-                      text: completedCount == 0
-                          ? 'Bem-vindo ao EletroLab! Comece pelo tutorial de "Primeiros Passos" ou encare o primeiro desafio.'
-                          : completedCount == 3
-                          ? 'Parabéns, Engenheiro! Você completou todos os desafios com sucesso. Continue praticando na Bancada Livre!'
-                          : 'Excelente progresso! Você já concluiu $completedCount de 3 desafios. Continue acelerando!',
-                    ),
-                    const SizedBox(height: 48),
-
-                    // GRID DE OPÇÕES BENTO STYLED
-                    _buildBentoGrid(context, l10n, completedCount),
-                  ],
-                ),
-              ),
-            ),
-                ),
-              );
-            },
-          ),
-        ),
-      ),
+  @override
+  void initState() {
+    super.initState();
+    _stands = StandData.defaultStands;
+    // Estande 01 ("Primeiros Passos") vem selecionado por padrão
+    _selectedStand = _stands.firstWhere(
+      (s) => s.number == 1,
+      orElse: () => _stands.first,
     );
   }
 
+  void _onSelectStand(StandData stand) {
+    setState(() {
+      _selectedStand = stand;
+    });
+  }
 
-  Widget _buildBentoGrid(
-    BuildContext context,
-    AppLocalizations l10n,
-    int completedCount,
-  ) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final wide = constraints.maxWidth >= 760;
-        final medium =
-            constraints.maxWidth >= 500 && constraints.maxWidth < 760;
-        final gap = 16.0;
+  void _onCloseCard() {
+    setState(() {
+      _selectedStand = null;
+    });
+  }
 
-        _CyberMenuCard buildCard({
-          required String title,
-          required String description,
-          required String tag,
-          required IconData icon,
-          required Color accentColor,
-          required VoidCallback onTap,
-          double? height,
-          borderIndex = 0,
-        }) {
-          return _CyberMenuCard(
-            title: title,
-            description: description,
-            tag: tag,
-            icon: icon,
-            accentColor: accentColor,
-            onTap: onTap,
-            borderIndex: borderIndex,
-            height: height,
-          );
-        }
+  void _onStartMission(StandData stand) {
+    if (stand.isBancadaLivre) {
+      Navigator.of(context).pushNamed(Routes.sandbox);
+    } else if (stand.number == 1) {
+      Navigator.of(context).pushNamed(Routes.firstSteps);
+    } else {
+      Navigator.of(context).pushNamed(Routes.firstSteps);
+    }
+  }
 
-        _CyberMenuCard cardTutorial(double? h) => buildCard(
-          title: l10n.menuFirstSteps,
-          description: l10n.menuFirstStepsDesc,
-          tag: 'PASSO A PASSO',
-          icon: Icons.flash_on_rounded,
-          accentColor: EletroLabColors.amber,
-          onTap: () => Navigator.of(context).pushNamed(Routes.firstSteps),
-          height: h,
-          borderIndex: 0,
-        );
-
-        _CyberMenuCard cardCampaign(double? h) => buildCard(
-          title: l10n.menuChallenges,
-          description: l10n.menuChallengesDesc,
-          tag: 'DESAFIOS ($completedCount/3)',
-          icon: Icons.science_rounded,
-          accentColor: EletroLabColors.electricBlue,
-          onTap: () => Navigator.of(context).pushNamed(Routes.challenges),
-          height: h,
-          borderIndex: 1,
-        );
-
-        _CyberMenuCard cardSandbox(double? h) => buildCard(
-          title: l10n.menuSandbox,
-          description: l10n.menuSandboxDesc,
-          tag: 'LABORATÓRIO LIVRE 3D',
-          icon: Icons.biotech_rounded,
-          accentColor: EletroLabColors.neonCyan,
-          onTap: () => Navigator.of(context).pushNamed(Routes.sandbox),
-          height: h,
-          borderIndex: 2,
-        );
-
-        _CyberMenuCard cardSettings(double? h) => buildCard(
-          title: l10n.menuSettings,
-          description: l10n.menuSettingsDesc,
-          tag: 'SISTEMA',
-          icon: Icons.settings_rounded,
-          accentColor: EletroLabColors.success,
-          onTap: () => Navigator.of(context).pushNamed(Routes.settings),
-          height: h,
-          borderIndex: 3,
-        );
-
-        if (wide) {
-          return Row(
+  void _onTapMaqueteColetiva() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF0F172A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: const BorderSide(color: Color(0xFF10B981), width: 2),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.location_city_rounded, color: Color(0xFF10B981), size: 28),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Maquete Coletiva',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(child: cardTutorial(280)),
-              SizedBox(width: gap),
-              Expanded(child: cardCampaign(280)),
-              SizedBox(width: gap),
-              Expanded(child: cardSandbox(280)),
-              SizedBox(width: gap),
-              Expanded(child: cardSettings(280)),
-            ],
-          );
-        }
-
-        if (medium) {
-          return Column(
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: cardTutorial(260)),
-                  SizedBox(width: gap),
-                  Expanded(child: cardCampaign(260)),
-                ],
+              Text(
+                'Integração Final da Comunidade',
+                style: TextStyle(
+                  color: Color(0xFF10B981),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
               ),
-              SizedBox(height: gap),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: cardSandbox(260)),
-                  SizedBox(width: gap),
-                  Expanded(child: cardSettings(260)),
-                ],
+              SizedBox(height: 10),
+              Text(
+                'Conclua as missões dos estandes da Feira de Ciências para energizar a maquete coletiva completa do bairro com todas as equipes!',
+                style: TextStyle(
+                  color: Color(0xFFCBD5E1),
+                  fontSize: 14,
+                  height: 1.4,
+                ),
               ),
             ],
-          );
-        }
-
-        return Column(
-          children: [
-            cardTutorial(null),
-            SizedBox(height: gap),
-            cardCampaign(null),
-            SizedBox(height: gap),
-            cardSandbox(null),
-            SizedBox(height: gap),
-            cardSettings(null),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text(
+                'Entendido',
+                style: TextStyle(
+                  color: Color(0xFF10B981),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+              ),
+            ),
           ],
         );
       },
     );
   }
-}
-
-/// Cartão Bento Tecnológico Cyber com Tag HUD e Efeitos Neon Interativos.
-class _CyberMenuCard extends StatefulWidget {
-  const _CyberMenuCard({
-    required this.title,
-    required this.description,
-    required this.tag,
-    required this.icon,
-    required this.accentColor,
-    required this.onTap,
-    this.borderIndex = 0,
-    this.height,
-  });
-
-  final String title;
-  final String description;
-  final String tag;
-  final IconData icon;
-  final Color accentColor;
-  final VoidCallback onTap;
-  final int borderIndex;
-  final double? height;
-
-  @override
-  State<_CyberMenuCard> createState() => _CyberMenuCardState();
-}
-
-class _CyberMenuCardState extends State<_CyberMenuCard> {
-  bool _isHovered = false;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    final borderColor = isDark
-        ? EletroLabColors.borderDarkColors[widget.borderIndex %
-              EletroLabColors.borderDarkColors.length]
-        : EletroLabColors.borderLightColors[widget.borderIndex %
-              EletroLabColors.borderLightColors.length];
+    return Scaffold(
+      backgroundColor: const Color(0xFF071828),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // 1. Barra Superior (Header Bar)
+            _buildHeader(context),
 
-    return CyberHudContainer(
-      accentColor: widget.accentColor,
-      onTap: widget.onTap,
-      onHoverChanged: (hovered) => setState(() => _isHovered = hovered),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      height: widget.height,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+            // 2. Área Principal: Mapa da Feira preenchendo todo o espaço com o fundo
+            Expanded(
+              child: ScienceFairMap(
+                stands: _stands,
+                selectedStand: _selectedStand,
+                onSelectStand: _onSelectStand,
+                onStartMission: _onStartMission,
+                onCloseCard: _onCloseCard,
+                onTapMaqueteColetiva: _onTapMaqueteColetiva,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      decoration: const BoxDecoration(
+        color: Color(0xFF0B2A4A),
+        border: Border(
+          bottom: BorderSide(
+            color: Color(0xFF1E3A5F),
+            width: 1.5,
+          ),
+        ),
+      ),
+      child: Row(
         children: [
-          // Top Row: Tag HUD + Ícone Neon
+          // High-Contrast Header Logo
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              const Spacer(),
-              // Ícone com brilho Neon
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      widget.accentColor.withValues(
-                        alpha: _isHovered ? 0.35 : 0.2,
-                      ),
-                      widget.accentColor.withValues(alpha: 0.08),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+              Icon(
+                Icons.bolt_rounded,
+                color: EletroLabColors.neonCyan,
+                size: 30,
+                shadows: [
+                  Shadow(
+                    color: EletroLabColors.neonCyan.withValues(alpha: 0.6),
+                    blurRadius: 10,
                   ),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: borderColor.withValues(
-                      alpha: _isHovered ? 0.7 : 0.35,
-                    ),
-                    width: 2.0,
-                  ),
-                  boxShadow: [
-                    if (_isHovered && isDark)
-                      BoxShadow(
-                        color: widget.accentColor.withValues(alpha: 0.4),
-                        blurRadius: 12,
-                        spreadRadius: 1,
-                      ),
-                  ],
+                ],
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'EletroLab',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 22,
+                  letterSpacing: 1.0,
                 ),
-                child: Icon(widget.icon, color: widget.accentColor, size: 26),
               ),
             ],
           ),
-          if (widget.height != null) const Spacer() else const SizedBox(height: 24),
 
-          // Título
-          Text(
-            widget.title,
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w900,
-              fontSize: 20,
-              letterSpacing: 0.5,
-            ),
-          ),
-          const SizedBox(height: 6),
+          const SizedBox(width: 16),
 
-          // Descrição
-          Text(
-            widget.description,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: isDark ? scheme.onSurfaceVariant : scheme.onSurface.withValues(alpha: 0.75),
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Rodapé: Seta Ação
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              AnimatedPadding(
-                duration: const Duration(milliseconds: 200),
-                padding: EdgeInsets.only(
-                  left: _isHovered ? 8.0 : 0.0,
-                  right: _isHovered ? 0.0 : 8.0,
-                ),
-                child: Icon(
-                  Icons.arrow_forward_rounded,
-                  color: borderColor,
-                  size: 18,
-                ),
+          // Título central
+          const Expanded(
+            child: Text(
+              'Feira de Ciências da Comunidade · 1ª fase',
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: Color(0xFFE2E8F0),
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.2,
               ),
-            ],
+            ),
+          ),
+
+          const SizedBox(width: 16),
+
+          // Ícone de Configurações
+          IconButton(
+            onPressed: () => Navigator.of(context).pushNamed(Routes.settings),
+            tooltip: 'Configurações',
+            icon: const Icon(
+              Icons.settings_rounded,
+              color: Colors.white,
+              size: 24,
+            ),
           ),
         ],
       ),

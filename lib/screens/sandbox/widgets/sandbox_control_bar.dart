@@ -23,7 +23,6 @@ class SandboxControlBarWidget extends StatelessWidget {
   final VoidCallback onToggleMultimeter;
   final VoidCallback onToggleOscilloscope;
   final VoidCallback onOpenInspector;
-  final VoidCallback onOpenChallenges;
   final VoidCallback onOpenExportReport;
 
   const SandboxControlBarWidget({
@@ -44,7 +43,6 @@ class SandboxControlBarWidget extends StatelessWidget {
     required this.onToggleMultimeter,
     required this.onToggleOscilloscope,
     required this.onOpenInspector,
-    required this.onOpenChallenges,
     required this.onOpenExportReport,
   });
 
@@ -111,15 +109,6 @@ class SandboxControlBarWidget extends StatelessWidget {
           ),
           tooltip: isEn ? "Smart Inspector (Prof. Volts)" : "Inspetor Inteligente (Prof. Volts)",
           onPressed: onOpenInspector,
-        ),
-        IconButton(
-          icon: const Icon(
-            Icons.psychology_rounded,
-            size: 20,
-            color: Color(0xFFFFB300),
-          ),
-          tooltip: isEn ? "Troubleshooting & UGC" : "Desafios & Importar/Exportar",
-          onPressed: onOpenChallenges,
         ),
         IconButton(
           icon: const Icon(

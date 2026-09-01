@@ -26,7 +26,6 @@ import 'widgets/sandbox_metrics_panel.dart';
 import 'widgets/sandbox_multimeter.dart';
 import 'widgets/sandbox_oscilloscope.dart';
 import 'widgets/sandbox_inspector_dialog.dart';
-import 'widgets/sandbox_challenges_dialog.dart';
 import 'widgets/sandbox_export_dialog.dart';
 
 class SandboxScreen extends ConsumerStatefulWidget {
@@ -851,7 +850,6 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                           onToggleMultimeter: () => setState(() => _showMultimeter = !_showMultimeter),
                           onToggleOscilloscope: () => setState(() => _showOscilloscope = !_showOscilloscope),
                           onOpenInspector: () => _openInspectorDialog(sandboxState, isEn, isDark),
-                          onOpenChallenges: () => _openChallengesDialog(sandboxState, isEn, isDark),
                           onOpenExportReport: () => _openExportReportDialog(sandboxState, isEn, isDark),
                         ),
                       ],
@@ -1366,23 +1364,6 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
         onSelectComponent: (compFilterId) {
           setState(() {
             _selectedComponentId = compFilterId;
-          });
-        },
-      ),
-    );
-  }
-
-  void _openChallengesDialog(SandboxState state, bool isEn, bool isDark) {
-    showDialog(
-      context: context,
-      builder: (context) => SandboxChallengesDialog(
-        currentState: state,
-        isEn: isEn,
-        isDark: isDark,
-        onLoadCircuit: (components, wires) {
-          ref.read(sandboxControllerProvider.notifier).loadCircuit(components, wires);
-          setState(() {
-            _selectedComponentId = null;
           });
         },
       ),
