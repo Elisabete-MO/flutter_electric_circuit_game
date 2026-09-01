@@ -140,6 +140,17 @@ class HomeScreen extends ConsumerWidget {
           borderIndex: 2,
         );
 
+        _CyberMenuCard cardSchematicSandbox(double? h) => buildCard(
+          title: 'Bancada Esquemática',
+          description: 'Ligue os pontos e projete circuitos no papel.',
+          tag: 'PROJETO E ESQUEMA',
+          icon: Icons.draw_rounded,
+          accentColor: EletroLabColors.electricBlue,
+          onTap: () => Navigator.of(context).pushNamed(Routes.schematicSandbox),
+          height: h,
+          borderIndex: 4,
+        );
+
         _CyberMenuCard cardSettings(double? h) => buildCard(
           title: l10n.menuSettings,
           description: l10n.menuSettingsDesc,
@@ -152,16 +163,29 @@ class HomeScreen extends ConsumerWidget {
         );
 
         if (wide) {
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          return Column(
             children: [
-              Expanded(child: cardTutorial(280)),
-              SizedBox(width: gap),
-              Expanded(child: cardCampaign(280)),
-              SizedBox(width: gap),
-              Expanded(child: cardSandbox(280)),
-              SizedBox(width: gap),
-              Expanded(child: cardSettings(280)),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: cardTutorial(280)),
+                  SizedBox(width: gap),
+                  Expanded(child: cardCampaign(280)),
+                  SizedBox(width: gap),
+                  Expanded(child: cardSandbox(280)),
+                ],
+              ),
+              SizedBox(height: gap),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: cardSchematicSandbox(280)),
+                  SizedBox(width: gap),
+                  Expanded(child: cardSettings(280)),
+                  SizedBox(width: gap),
+                  Expanded(child: const SizedBox.shrink()),
+                ],
+              ),
             ],
           );
         }
@@ -183,7 +207,16 @@ class HomeScreen extends ConsumerWidget {
                 children: [
                   Expanded(child: cardSandbox(260)),
                   SizedBox(width: gap),
+                  Expanded(child: cardSchematicSandbox(260)),
+                ],
+              ),
+              SizedBox(height: gap),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Expanded(child: cardSettings(260)),
+                  SizedBox(width: gap),
+                  Expanded(child: const SizedBox.shrink()),
                 ],
               ),
             ],
@@ -197,6 +230,8 @@ class HomeScreen extends ConsumerWidget {
             cardCampaign(null),
             SizedBox(height: gap),
             cardSandbox(null),
+            SizedBox(height: gap),
+            cardSchematicSandbox(null),
             SizedBox(height: gap),
             cardSettings(null),
           ],
