@@ -53,7 +53,7 @@ class StandData {
     );
   }
 
-  /// Lista oficial de estandes da Feira de Ciências.
+  /// Lista oficial de estandes da Feira de Ciências com posições perfeitamente distribuídas na quadra.
   static List<StandData> get defaultStands => const [
         // 1. Primeiros Passos (Tutorial) - Sem missões 0/5
         StandData(
@@ -64,7 +64,7 @@ class StandData {
           concept: 'Aprenda a conectar fonte, fios e lâmpada em um circuito fechado',
           asset: 'assets/stands/estande_01.png',
           relX: 0.16,
-          relY: 0.30,
+          relY: 0.22,
           hasMissions: false,
           totalMissions: 0,
         ),
@@ -91,7 +91,7 @@ class StandData {
           concept: 'Série, paralelo e ramificações',
           asset: 'assets/stands/estande_03.png',
           relX: 0.16,
-          relY: 0.70,
+          relY: 0.78,
           totalMissions: 5,
         ),
 
@@ -104,7 +104,7 @@ class StandData {
           concept: 'Polaridade, LED, diodo e resistor',
           asset: 'assets/stands/estande_04.png',
           relX: 0.33,
-          relY: 0.35,
+          relY: 0.30,
           totalMissions: 5,
         ),
 
@@ -130,7 +130,7 @@ class StandData {
           concept: 'Tensão, corrente e resistência',
           asset: 'assets/stands/estande_06.png',
           relX: 0.67,
-          relY: 0.35,
+          relY: 0.30,
           totalMissions: 5,
         ),
 
@@ -156,7 +156,7 @@ class StandData {
           concept: 'Potenciômetro, sensor e capacitor',
           asset: 'assets/stands/estande_08.png',
           relX: 0.84,
-          relY: 0.30,
+          relY: 0.22,
           totalMissions: 5,
         ),
 
@@ -182,11 +182,11 @@ class StandData {
           concept: 'Integração, diagnóstico e apresentação',
           asset: 'assets/stands/estande_10.png',
           relX: 0.84,
-          relY: 0.70,
+          relY: 0.78,
           totalMissions: 5,
         ),
 
-        // 11. Maquete Coletiva
+        // 11. Maquete Coletiva - Posição superior sem sobrepor círculo central
         StandData(
           id: 'maquete_coletiva',
           number: 11,
@@ -195,12 +195,12 @@ class StandData {
           concept: 'Integração final dos subsistemas',
           asset: 'assets/stands/estande_11.png',
           relX: 0.50,
-          relY: 0.28,
+          relY: 0.18,
           isMaqueteColetiva: true,
           totalMissions: 5,
         ),
 
-        // 12. Bancada Livre - Sem missões 0/5
+        // 12. Bancada Livre - Posição inferior sem sobrepor círculo central
         StandData(
           id: 'bancada_livre',
           number: 12,
@@ -209,7 +209,7 @@ class StandData {
           concept: 'Simulação livre de circuitos elétricos',
           asset: 'assets/stands/estande_12.png',
           relX: 0.50,
-          relY: 0.76,
+          relY: 0.82,
           hasMissions: false,
           totalMissions: 0,
           isBancadaLivre: true,

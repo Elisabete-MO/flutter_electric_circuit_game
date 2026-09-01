@@ -64,12 +64,12 @@ class _StandMarkerState extends State<StandMarker> {
                   color: widget.isSelected
                       ? EletroLabColors.amber
                       : (isTutorial
-                          ? const Color(0xFF047857) // Verde esmeralda para Tutorial
+                          ? const Color(0xFFD97706) // Amarelo/âmbar para Tutorial
                           : (isBancadaLivre
-                              ? const Color(0xFF0F52BA) // Azul para Bancada Livre
+                              ? const Color(0xFF0284C7) // Azul ciano para Bancada Livre
                               : (isCompleted
-                                  ? const Color(0xFF065F46) // Verde escuro se concluído
-                                  : const Color(0xFF0B2A4A).withValues(alpha: 0.95)))),
+                                  ? const Color(0xFF10B981) // Verde esmeralda se concluído
+                                  : const Color(0xFF064E3B).withValues(alpha: 0.95)))), // Verde escuro combinando com as mesas verdes
                   borderRadius: BorderRadius.circular(7),
                   border: Border.all(
                     color: widget.isSelected

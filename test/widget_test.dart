@@ -83,11 +83,6 @@ void main() {
           find.text('EletroLab'),
           findsOneWidget,
         );
-
-        expect(
-          find.text('Feira de Ciências da Comunidade · 1ª fase'),
-          findsOneWidget,
-        );
       },
     );
 
@@ -95,11 +90,6 @@ void main() {
       'exibe o mapa da feira de ciências e o estande selecionado',
       (tester) async {
         await pumpApp(tester);
-
-        expect(
-          find.text('Feira de Ciências da Comunidade · 1ª fase'),
-          findsOneWidget,
-        );
 
         expect(
           find.text('Primeiros Passos'),

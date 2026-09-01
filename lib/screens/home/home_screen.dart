@@ -158,6 +158,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // High-Contrast Header Logo
           Row(
@@ -186,26 +187,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ],
           ),
-
-          const SizedBox(width: 16),
-
-          // Título central
-          const Expanded(
-            child: Text(
-              'Feira de Ciências da Comunidade · 1ª fase',
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: Color(0xFFE2E8F0),
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.2,
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 16),
 
           // Ícone de Configurações
           IconButton(
