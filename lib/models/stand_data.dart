@@ -53,9 +53,9 @@ class StandData {
     );
   }
 
-  /// Lista oficial de estandes da Feira de Ciências com posições perfeitamente distribuídas na quadra.
+  /// Lista oficial de estandes da Feira de Ciências com o mapeamento correto dos assets visuais.
   static List<StandData> get defaultStands => const [
-        // 1. Primeiros Passos (Tutorial) - Sem missões 0/5
+        // 1. Primeiros Passos (Tutorial) - Manual, bateria didática e lâmpadas
         StandData(
           id: 'primeiros_passos',
           number: 1,
@@ -69,59 +69,59 @@ class StandData {
           totalMissions: 0,
         ),
 
-        // 2. Liga e Desliga
+        // 2. Liga e Desliga - Diagrama de chaves/interruptores e protoboard
         StandData(
           id: 'liga_desliga',
           number: 2,
           name: 'Liga e Desliga',
           team: 'Equipe Controle',
           concept: 'Interruptor e estados do circuito',
-          asset: 'assets/stands/estande_02.png',
+          asset: 'assets/stands/estande_03.png',
           relX: 0.16,
           relY: 0.50,
           totalMissions: 5,
         ),
 
-        // 3. Ruas da Maquete
+        // 3. Ruas da Maquete - Maquete 3D do bairro com ruas e casas
         StandData(
           id: 'ruas_maquete',
           number: 3,
           name: 'Ruas da Maquete',
           team: 'Equipe Bairro',
           concept: 'Série, paralelo e ramificações',
-          asset: 'assets/stands/estande_03.png',
+          asset: 'assets/stands/estande_02.png',
           relX: 0.16,
           relY: 0.78,
           totalMissions: 5,
         ),
 
-        // 4. Letreiros de LED
+        // 4. Letreiros de LED - Painel com leds em seta (>>>), resistores e LEDs coloridos
         StandData(
           id: 'letreiros_led',
           number: 4,
           name: 'Letreiros de LED',
           team: 'Equipe Sinalização',
           concept: 'Polaridade, LED, diodo e resistor',
-          asset: 'assets/stands/estande_04.png',
+          asset: 'assets/stands/estande_05.png',
           relX: 0.33,
           relY: 0.30,
           totalMissions: 5,
         ),
 
-        // 5. Movimento em Miniatura
+        // 5. Movimento em Miniatura - Motores CC com hélices e engrenagens
         StandData(
           id: 'movimento',
           number: 5,
           name: 'Movimento em Miniatura',
           team: 'Equipe Mecânica',
           concept: 'Motor CC e inversão de polaridade',
-          asset: 'assets/stands/estande_05.png',
+          asset: 'assets/stands/estande_04.png',
           relX: 0.33,
           relY: 0.70,
           totalMissions: 5,
         ),
 
-        // 6. Mede, Testa e Explica
+        // 6. Mede, Testa e Explica - Multímetro digital, lápis e prancha de testes
         StandData(
           id: 'mede_testa',
           number: 6,
@@ -134,7 +134,7 @@ class StandData {
           totalMissions: 5,
         ),
 
-        // 7. Circuito Seguro
+        // 7. Circuito Seguro - Quadro de proteção com disjuntores, capacete e luvas
         StandData(
           id: 'circuito_seguro',
           number: 7,
@@ -147,7 +147,7 @@ class StandData {
           totalMissions: 5,
         ),
 
-        // 8. Horta Monitorada
+        // 8. Horta Monitorada - Painel solar, maquete de estufa/horta com ventilador
         StandData(
           id: 'horta_monitorada',
           number: 8,
@@ -160,7 +160,7 @@ class StandData {
           totalMissions: 5,
         ),
 
-        // 9. Portão da Escola
+        // 9. Portão da Escola - Módulo relé, botões de comando do portão
         StandData(
           id: 'portao_escola',
           number: 9,
@@ -173,7 +173,7 @@ class StandData {
           totalMissions: 5,
         ),
 
-        // 10. Praça da Maquete Coletiva
+        // 10. Praça da Maquete Coletiva - Solenóide com bobina de cobre e clipes
         StandData(
           id: 'praca_maquete',
           number: 10,
@@ -186,28 +186,28 @@ class StandData {
           totalMissions: 5,
         ),
 
-        // 11. Maquete Coletiva - Posição superior sem sobrepor círculo central
+        // 11. Maquete Coletiva - Maquete 3D completa e integrada do bairro comunitário
         StandData(
           id: 'maquete_coletiva',
           number: 11,
           name: 'Maquete Coletiva',
           team: 'Integração Comunitária',
           concept: 'Integração final dos subsistemas',
-          asset: 'assets/stands/estande_11.png',
+          asset: 'assets/stands/estande_12.png',
           relX: 0.50,
           relY: 0.18,
           isMaqueteColetiva: true,
           totalMissions: 5,
         ),
 
-        // 12. Bancada Livre - Posição inferior sem sobrepor círculo central
+        // 12. Bancada Livre - Laboratório completo de ferramentas, ferro de solda e multímetro
         StandData(
           id: 'bancada_livre',
           number: 12,
           name: 'Bancada Livre',
           team: 'Laboratório 3D',
           concept: 'Simulação livre de circuitos elétricos',
-          asset: 'assets/stands/estande_12.png',
+          asset: 'assets/stands/estande_11.png',
           relX: 0.50,
           relY: 0.82,
           hasMissions: false,
