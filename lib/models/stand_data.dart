@@ -53,15 +53,15 @@ class StandData {
     );
   }
 
-  /// Lista oficial de estandes da Feira de Ciências com o mapeamento correto dos assets visuais.
+  /// Lista oficial dos 12 estandes da Feira de Ciências.
   static List<StandData> get defaultStands => const [
-        // 1. Primeiros Passos (Tutorial) - Manual, bateria didática e lâmpadas
+        // 01. Primeiros Passos (Tutorial) - Sem missões 0/5
         StandData(
           id: 'primeiros_passos',
           number: 1,
           name: 'Primeiros Passos',
-          team: 'Equipe Luz',
-          concept: 'Aprenda a conectar fonte, fios e lâmpada em um circuito fechado',
+          team: 'Equipe Tutorial',
+          concept: 'Aprenda os conceitos fundamentais de circuitos e navegação',
           asset: 'assets/stands/estande_01.png',
           relX: 0.16,
           relY: 0.22,
@@ -69,130 +69,130 @@ class StandData {
           totalMissions: 0,
         ),
 
-        // 2. Liga e Desliga - Diagrama de chaves/interruptores e protoboard
+        // 02. Acende Aí (Missão 1)
+        StandData(
+          id: 'acende_ai',
+          number: 2,
+          name: 'Acende Aí',
+          team: 'Equipe Luz',
+          concept: 'Aprenda a conectar fonte, fios e lâmpada em um circuito fechado',
+          asset: 'assets/stands/estande_01.png',
+          relX: 0.16,
+          relY: 0.50,
+          totalMissions: 5,
+        ),
+
+        // 03. Liga e Desliga (Missão 2)
         StandData(
           id: 'liga_desliga',
-          number: 2,
+          number: 3,
           name: 'Liga e Desliga',
           team: 'Equipe Controle',
           concept: 'Interruptor e estados do circuito',
           asset: 'assets/stands/estande_03.png',
           relX: 0.16,
-          relY: 0.50,
-          totalMissions: 5,
-        ),
-
-        // 3. Ruas da Maquete - Maquete 3D do bairro com ruas e casas
-        StandData(
-          id: 'ruas_maquete',
-          number: 3,
-          name: 'Ruas da Maquete',
-          team: 'Equipe Bairro',
-          concept: 'Série, paralelo e ramificações',
-          asset: 'assets/stands/estande_02.png',
-          relX: 0.16,
           relY: 0.78,
           totalMissions: 5,
         ),
 
-        // 4. Letreiros de LED - Painel com leds em seta (>>>), resistores e LEDs coloridos
+        // 04. Ruas da Maquete (Missão 3)
         StandData(
-          id: 'letreiros_led',
+          id: 'ruas_maquete',
           number: 4,
-          name: 'Letreiros de LED',
-          team: 'Equipe Sinalização',
-          concept: 'Polaridade, LED, diodo e resistor',
-          asset: 'assets/stands/estande_05.png',
+          name: 'Ruas da Maquete',
+          team: 'Equipe Bairro',
+          concept: 'Série, paralelo e ramificações',
+          asset: 'assets/stands/estande_02.png',
           relX: 0.33,
           relY: 0.30,
           totalMissions: 5,
         ),
 
-        // 5. Movimento em Miniatura - Motores CC com hélices e engrenagens
+        // 05. Letreros de LED (Missão 4)
         StandData(
-          id: 'movimento',
+          id: 'letreros_led',
           number: 5,
-          name: 'Movimento em Miniatura',
-          team: 'Equipe Mecânica',
-          concept: 'Motor CC e inversão de polaridade',
-          asset: 'assets/stands/estande_04.png',
+          name: 'Letreros de LED',
+          team: 'Equipe Sinalização',
+          concept: 'Polaridade, LED, diodo e resistor',
+          asset: 'assets/stands/estande_05.png',
           relX: 0.33,
           relY: 0.70,
           totalMissions: 5,
         ),
 
-        // 6. Mede, Testa e Explica - Multímetro digital, lápis e prancha de testes
+        // 06. Movimento em Miniatura (Missão 5)
+        StandData(
+          id: 'movimento',
+          number: 6,
+          name: 'Movimento em Miniatura',
+          team: 'Equipe Mecânica',
+          concept: 'Motor CC e inversão de polaridade',
+          asset: 'assets/stands/estande_04.png',
+          relX: 0.67,
+          relY: 0.30,
+          totalMissions: 5,
+        ),
+
+        // 07. Mede, Testa e Explica (Missão 6)
         StandData(
           id: 'mede_testa',
-          number: 6,
+          number: 7,
           name: 'Mede, Testa e Explica',
           team: 'Equipe Investigação',
           concept: 'Tensão, corrente e resistência',
           asset: 'assets/stands/estande_06.png',
           relX: 0.67,
-          relY: 0.30,
-          totalMissions: 5,
-        ),
-
-        // 7. Circuito Seguro - Quadro de proteção com disjuntores, capacete e luvas
-        StandData(
-          id: 'circuito_seguro',
-          number: 7,
-          name: 'Circuito Seguro',
-          team: 'Equipe Segurança',
-          concept: 'Curto, circuito aberto e fusível didático',
-          asset: 'assets/stands/estande_07.png',
-          relX: 0.67,
           relY: 0.70,
           totalMissions: 5,
         ),
 
-        // 8. Horta Monitorada - Painel solar, maquete de estufa/horta com ventilador
+        // 08. Circuito Seguro (Missão 7)
         StandData(
-          id: 'horta_monitorada',
+          id: 'circuito_seguro',
           number: 8,
-          name: 'Horta Monitorada',
-          team: 'Equipe Ambiente',
-          concept: 'Potenciômetro, sensor e capacitor',
-          asset: 'assets/stands/estande_08.png',
+          name: 'Circuito Seguro',
+          team: 'Equipe Segurança',
+          concept: 'Curto, circuito aberto e fusível didático',
+          asset: 'assets/stands/estande_07.png',
           relX: 0.84,
           relY: 0.22,
           totalMissions: 5,
         ),
 
-        // 9. Portão da Escola - Módulo relé, botões de comando do portão
+        // 09. Horta Monitorada (Missão 8)
         StandData(
-          id: 'portao_escola',
+          id: 'horta_monitorada',
           number: 9,
-          name: 'Portão da Escola',
-          team: 'Equipe Automação',
-          concept: 'Relé, comando e carga',
-          asset: 'assets/stands/estande_09.png',
+          name: 'Horta Monitorada',
+          team: 'Equipe Ambiente',
+          concept: 'Potenciômetro, sensor e capacitor',
+          asset: 'assets/stands/estande_08.png',
           relX: 0.84,
           relY: 0.50,
           totalMissions: 5,
         ),
 
-        // 10. Praça da Maquete Coletiva - Solenóide com bobina de cobre e clipes
+        // 10. Portão da Escola (Missão 9)
         StandData(
-          id: 'praca_maquete',
+          id: 'portao_escola',
           number: 10,
-          name: 'Praça da Maquete Coletiva',
-          team: 'Todas as equipes',
-          concept: 'Integração, diagnóstico e apresentação',
-          asset: 'assets/stands/estande_10.png',
+          name: 'Portão da Escola',
+          team: 'Equipe Automação',
+          concept: 'Relé, comando e carga',
+          asset: 'assets/stands/estande_09.png',
           relX: 0.84,
           relY: 0.78,
           totalMissions: 5,
         ),
 
-        // 11. Maquete Coletiva - Maquete 3D completa e integrada do bairro comunitário
+        // 11. Praça da Maquete Coletiva (Missão 10 - Integração Final)
         StandData(
-          id: 'maquete_coletiva',
+          id: 'praca_maquete',
           number: 11,
-          name: 'Maquete Coletiva',
-          team: 'Integração Comunitária',
-          concept: 'Integração final dos subsistemas',
+          name: 'Praça da Maquete Coletiva',
+          team: 'Todas as equipes',
+          concept: 'Integração, diagnóstico e apresentação',
           asset: 'assets/stands/estande_12.png',
           relX: 0.50,
           relY: 0.18,
@@ -200,7 +200,7 @@ class StandData {
           totalMissions: 5,
         ),
 
-        // 12. Bancada Livre - Laboratório completo de ferramentas, ferro de solda e multímetro
+        // 12. Bancada Livre - Modo Livre 3D (Sem missões 0/5)
         StandData(
           id: 'bancada_livre',
           number: 12,
