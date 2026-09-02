@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/routes.dart';
 import '../../app/theme.dart';
 import '../../models/stand_data.dart';
+import 'widgets/experimental_horizontal_map.dart';
 import 'widgets/science_fair_map.dart';
 
 /// Tela inicial gamificada do EletroLab: Mapa da Feira de Ciências da Comunidade no Ginásio.
@@ -15,6 +16,10 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  /// Flag de controle do Teste de Navegação Horizontal.
+  /// Mude para `false` para retornar imediatamente à tela padrão aprovada.
+  static const bool useExperimentalHorizontalMap = true;
+
   late List<StandData> _stands;
   StandData? _selectedStand;
 
@@ -130,14 +135,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
             // 2. Área Principal: Mapa da Feira preenchendo todo o espaço com o fundo
             Expanded(
-              child: ScienceFairMap(
-                stands: _stands,
-                selectedStand: _selectedStand,
-                onSelectStand: _onSelectStand,
-                onStartMission: _onStartMission,
-                onCloseCard: _onCloseCard,
-                onTapMaqueteColetiva: _onTapMaqueteColetiva,
-              ),
+              child: useExperimentalHorizontalMap
+                  ? ExperimentalHorizontalMap(
+                      stands: _stands,
+                      selectedStand: _selectedStand,
+                      onSelectStand: _onSelectStand,
+                      onStartMission: _onStartMission,
+                      onCloseCard: _onCloseCard,
+                      onTapMaqueteColetiva: _onTapMaqueteColetiva,
+                    )
+                  : ScienceFairMap(
+                      stands: _stands,
+                      selectedStand: _selectedStand,
+                      onSelectStand: _onSelectStand,
+                      onStartMission: _onStartMission,
+                      onCloseCard: _onCloseCard,
+                      onTapMaqueteColetiva: _onTapMaqueteColetiva,
+                    ),
             ),
           ],
         ),
