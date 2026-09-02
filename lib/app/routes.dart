@@ -4,6 +4,7 @@ import '../screens/first_bench/first_bench_flow_screen.dart';
 import '../screens/first_steps/first_steps_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/intro_screen.dart';
+import '../screens/letreros_led/letreros_led_screen.dart';
 import '../screens/liga_desliga/liga_desliga_screen.dart';
 import '../screens/main_menu/main_menu_screen.dart';
 import '../screens/ruas_maquete/ruas_maquete_screen.dart';
@@ -19,6 +20,7 @@ abstract final class Routes {
   static const String firstBench = '/first-bench';
   static const String ligaDesliga = '/liga-desliga';
   static const String ruasMaquete = '/ruas-maquete';
+  static const String letrerosLed = '/letreros-led';
   static const String sandbox = '/sandbox';
   static const String settings = '/settings';
 
@@ -30,6 +32,7 @@ abstract final class Routes {
     firstBench: (_) => const FirstBenchFlowScreen(),
     ligaDesliga: (_) => const LigaDesligaScreen(),
     ruasMaquete: (_) => const RuasMaqueteScreen(),
+    letrerosLed: (_) => const LetrerosLedScreen(),
     sandbox: (_) => const SandboxScreen(),
     settings: (_) => const SettingsScreen(),
   };

@@ -33,6 +33,10 @@ class StandMission {
   static const String voltsMediationEstandeRuasMaquete =
       'Quando há mais de um destino, a organização dos caminhos altera o comportamento de todo o circuito.';
 
+  /// Fala oficial de mediação do Professor Volts para o Estande "Letreiros de LED"
+  static const String voltsMediationEstandeLetrerosLed =
+      'Componentes semicondutores como LEDs possuem sentido certo para conduzir. E limitar a corrente é fundamental para sua durabilidade.';
+
   static List<StandMission> get estande3Missions => const [
         StandMission(
           id: 'liga_desliga_m1',
@@ -146,6 +150,64 @@ class StandMission {
           victoryCriteria: 'Desconectar uma lâmpada e comprovar que a outra permanece acesa',
           failureFeedback: 'Em paralelo, os ramos funcionam de forma independente.',
           voltsMediation: voltsMediationEstandeRuasMaquete,
+        ),
+      ];
+
+  static List<StandMission> get letrerosLedMissions => const [
+        StandMission(
+          id: 'letreros_led_m1',
+          standId: 'letreros_led',
+          number: 1,
+          title: 'Polaridade do LED',
+          objective: 'Conectar o LED vermelho na orientação correta de ânodo (+) e cátodo (-).',
+          componentsInfo: 'Bateria 9V, LED vermelho, Resistor 680Ω',
+          victoryCriteria: 'Conectar o LED respeitando a orientação ânodo (+) e cátodo (-)',
+          failureFeedback: 'Verifique a polaridade do LED: a corrente só passa em um sentido.',
+          voltsMediation: voltsMediationEstandeLetrerosLed,
+        ),
+        StandMission(
+          id: 'letreros_led_m2',
+          standId: 'letreros_led',
+          number: 2,
+          title: 'Diagnóstico de LED Invertido',
+          objective: 'Identificar por que o LED não acende e inverter os seus terminais.',
+          componentsInfo: 'Circuito montado sem brilho (LED invertido)',
+          victoryCriteria: 'Identificar a inversão de polaridade do LED e inverter seus terminais',
+          failureFeedback: 'O LED no sentido inverso bloqueia a corrente.',
+          voltsMediation: voltsMediationEstandeLetrerosLed,
+        ),
+        StandMission(
+          id: 'letreros_led_m3',
+          standId: 'letreros_led',
+          number: 3,
+          title: 'Resistor Limitador de Corrente',
+          objective: 'Escolher e posicionar o resistor em série adequado para evitar sobrecorrente.',
+          componentsInfo: 'Bateria 9V, LED, resistores variados (0Ω, 220Ω, 680Ω, 10kΩ)',
+          victoryCriteria: 'Escolher e posicionar o resistor em série adequado (680Ω) para proteção de corrente',
+          failureFeedback: 'Sem resistor de limitação, o LED receberá corrente excessiva!',
+          voltsMediation: voltsMediationEstandeLetrerosLed,
+        ),
+        StandMission(
+          id: 'letreros_led_m4',
+          standId: 'letreros_led',
+          number: 4,
+          title: 'Painel de Sinalização Dupla',
+          objective: 'Montar dois ramos em paralelo, cada um com seu LED e resistor protetor dedicado.',
+          componentsInfo: '2 LEDs (Verde e Vermelho), 2 resistores (680Ω), Bateria',
+          victoryCriteria: 'Montar dois ramos em paralelo, cada um com seu LED e resistor protetor',
+          failureFeedback: 'Cada LED precisa de proteção adequada em seu ramo.',
+          voltsMediation: voltsMediationEstandeLetrerosLed,
+        ),
+        StandMission(
+          id: 'letreros_led_m5',
+          standId: 'letreros_led',
+          number: 5,
+          title: 'Revisão do Letreiro Defeituoso',
+          objective: 'Inspecionar a placa com 2 erros de montagem e corrigir a polaridade e a resistência.',
+          componentsInfo: 'Placa de sinalização com 2 erros de montagem',
+          victoryCriteria: 'Corrigir a polaridade de um LED e o resistor subdimensionado',
+          failureFeedback: 'Inspecione a polaridade e os valores de resistência antes de energizar.',
+          voltsMediation: voltsMediationEstandeLetrerosLed,
         ),
       ];
 }
