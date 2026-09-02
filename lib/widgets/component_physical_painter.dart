@@ -67,6 +67,9 @@ class ComponentPhysicalPainter extends CustomPainter {
       case ComponentType.buzzer:
         _drawPhysicalBuzzer(canvas, size, cx, cy);
         break;
+      case ComponentType.relay:
+        _drawPhysicalRelay(canvas, size, cx, cy);
+        break;
     }
 
     if (isBurned) {
@@ -403,6 +406,26 @@ class ComponentPhysicalPainter extends CustomPainter {
     );
 
     canvas.restore();
+  }
+
+  void _drawPhysicalRelay(Canvas canvas, Size size, double cx, double cy) {
+    // Basic block for relay in physical mode since it uses an asset image typically
+    final Rect box = Rect.fromCenter(center: Offset(cx, cy), width: 60, height: 40);
+    final paint = Paint()..color = const Color(0xFF1E88E5)..style = PaintingStyle.fill;
+    canvas.drawRect(box, paint);
+    
+    final borderPaint = Paint()..color = Colors.black87..style = PaintingStyle.stroke..strokeWidth = 2;
+    canvas.drawRect(box, borderPaint);
+
+    // Pins on the left (C1, C2)
+    final pinPaint = Paint()..color = Colors.grey.shade400..style = PaintingStyle.fill;
+    canvas.drawRect(Rect.fromCenter(center: Offset(cx - 32, cy - 10), width: 6, height: 4), pinPaint);
+    canvas.drawRect(Rect.fromCenter(center: Offset(cx - 32, cy + 10), width: 6, height: 4), pinPaint);
+    
+    // Pins on the right (NO, COM, NC)
+    canvas.drawRect(Rect.fromCenter(center: Offset(cx + 32, cy - 14), width: 6, height: 4), pinPaint);
+    canvas.drawRect(Rect.fromCenter(center: Offset(cx + 32, cy), width: 6, height: 4), pinPaint);
+    canvas.drawRect(Rect.fromCenter(center: Offset(cx + 32, cy + 14), width: 6, height: 4), pinPaint);
   }
 
   /// --------------------------------------------------------------------------

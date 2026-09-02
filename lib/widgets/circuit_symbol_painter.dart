@@ -111,6 +111,9 @@ class CircuitSymbolPainter extends CustomPainter {
       case ComponentType.buzzer:
         _drawBuzzer(canvas, size, cx, cy, paint, fillPaint);
         break;
+      case ComponentType.relay:
+        _drawRelay(canvas, size, cx, cy, paint, fillPaint);
+        break;
     }
   }
 
@@ -419,6 +422,51 @@ class CircuitSymbolPainter extends CustomPainter {
       );
 
     canvas.drawPath(path, paint);
+  }
+
+  void _drawRelay(Canvas canvas, Size size, double cx, double cy, Paint paint, Paint fillPaint) {
+    // Left side: Coil
+    final coilRect = Rect.fromCenter(center: Offset(cx - 20, cy), width: 16, height: 32);
+    canvas.drawRect(coilRect, fillPaint);
+    canvas.drawRect(coilRect, paint);
+    
+    // Terminals C1 and C2 lines
+    canvas.drawLine(Offset(cx - 20, cy - 16), Offset(cx - 20, cy - 26), paint);
+    canvas.drawLine(Offset(cx - 20, cy + 16), Offset(cx - 20, cy + 26), paint);
+
+    // Right side: Switch
+    final comPos = Offset(cx + 20, cy + 16);
+    final ncPos = Offset(cx + 8, cy - 16);
+    final noPos = Offset(cx + 32, cy - 16);
+
+    // Switch terminals
+    final dotPaint = Paint()
+      ..color = paint.color
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(comPos, strokeWidth * 1.5, dotPaint);
+    canvas.drawCircle(ncPos, strokeWidth * 1.5, dotPaint);
+    canvas.drawCircle(noPos, strokeWidth * 1.5, dotPaint);
+
+    // Switch Arm
+    final originalStroke = paint.strokeWidth;
+    if (isActive) {
+      canvas.drawLine(comPos, noPos, paint..strokeWidth = originalStroke * 1.2);
+    } else {
+      canvas.drawLine(comPos, ncPos, paint..strokeWidth = originalStroke * 1.2);
+    }
+    paint.strokeWidth = originalStroke;
+
+    // Dashed line representing magnetic coupling
+    final dashedPaint = Paint()
+      ..color = paint.color.withValues(alpha: 0.5)
+      ..strokeWidth = 1.2
+      ..style = PaintingStyle.stroke;
+    
+    double startX = cx - 12;
+    double endX = cx + 18;
+    for (double i = startX; i < endX; i += 5) {
+      canvas.drawLine(Offset(i, cy), Offset(i + 2.5, cy), dashedPaint);
+    }
   }
 
   @override

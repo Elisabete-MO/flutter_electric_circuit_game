@@ -88,22 +88,14 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
     double minDistance = touchRadius;
 
     for (final comp in components) {
-      // Terminal A
-      final posA = comp.getTerminalAPosition();
-      final offsetA = Offset(posA.dx * cellSize, posA.dy * cellSize);
-      final distA = (mousePos - offsetA).distance;
-      if (distA < minDistance) {
-        minDistance = distA;
-        nearest = ConnectionSource(comp.id, 'A');
-      }
-
-      // Terminal B
-      final posB = comp.getTerminalBPosition();
-      final offsetB = Offset(posB.dx * cellSize, posB.dy * cellSize);
-      final distB = (mousePos - offsetB).distance;
-      if (distB < minDistance) {
-        minDistance = distB;
-        nearest = ConnectionSource(comp.id, 'B');
+      for (final term in comp.availableTerminals) {
+        final pos = comp.getTerminalPosition(term);
+        final offset = Offset(pos.dx * cellSize, pos.dy * cellSize);
+        final dist = (mousePos - offset).distance;
+        if (dist < minDistance) {
+          minDistance = dist;
+          nearest = ConnectionSource(comp.id, term);
+        }
       }
     }
 
@@ -122,25 +114,15 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
     double minDistance = 60.0; // Raio magnÃ©tico de 60px para atraÃ§Ã£o fluida
 
     for (final comp in components) {
-      // Terminal A
-      if (currentSource.componentId != comp.id || currentSource.terminal != 'A') {
-        final posA = comp.getTerminalAPosition();
-        final offsetA = Offset(posA.dx * cellSize, posA.dy * cellSize);
-        final distA = (mousePos - offsetA).distance;
-        if (distA < minDistance) {
-          minDistance = distA;
-          nearest = ConnectionSource(comp.id, 'A');
-        }
-      }
-
-      // Terminal B
-      if (currentSource.componentId != comp.id || currentSource.terminal != 'B') {
-        final posB = comp.getTerminalBPosition();
-        final offsetB = Offset(posB.dx * cellSize, posB.dy * cellSize);
-        final distB = (mousePos - offsetB).distance;
-        if (distB < minDistance) {
-          minDistance = distB;
-          nearest = ConnectionSource(comp.id, 'B');
+      for (final term in comp.availableTerminals) {
+        if (currentSource.componentId != comp.id || currentSource.terminal != term) {
+          final pos = comp.getTerminalPosition(term);
+          final offset = Offset(pos.dx * cellSize, pos.dy * cellSize);
+          final dist = (mousePos - offset).distance;
+          if (dist < minDistance) {
+            minDistance = dist;
+            nearest = ConnectionSource(comp.id, term);
+          }
         }
       }
     }
@@ -162,8 +144,8 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
       final fromComp = fromCompList.first;
       final toComp = toCompList.first;
 
-      final fromRelPos = wire.fromTerminal == 'A' ? fromComp.getTerminalAPosition() : fromComp.getTerminalBPosition();
-      final toRelPos = wire.toTerminal == 'A' ? toComp.getTerminalAPosition() : toComp.getTerminalBPosition();
+      final fromRelPos = fromComp.getTerminalPosition(wire.fromTerminal);
+      final toRelPos = toComp.getTerminalPosition(wire.toTerminal);
 
       final start = Offset(fromRelPos.dx * cellSize, fromRelPos.dy * cellSize);
       final end = Offset(toRelPos.dx * cellSize, toRelPos.dy * cellSize);
@@ -204,8 +186,8 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
     final fromComp = fromCompList.first;
     final toComp = toCompList.first;
 
-    final fromRelPos = wire.fromTerminal == 'A' ? fromComp.getTerminalAPosition() : fromComp.getTerminalBPosition();
-    final toRelPos = wire.toTerminal == 'A' ? toComp.getTerminalAPosition() : toComp.getTerminalBPosition();
+    final fromRelPos = fromComp.getTerminalPosition(wire.fromTerminal);
+    final toRelPos = toComp.getTerminalPosition(wire.toTerminal);
 
     final start = Offset(fromRelPos.dx * cellSize, fromRelPos.dy * cellSize);
     final end = Offset(toRelPos.dx * cellSize, toRelPos.dy * cellSize);
@@ -1584,8 +1566,8 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
       clipBehavior: Clip.none,
       children: [
         Positioned.fill(child: bodyWidget),
-        _buildTerminalPoint(component, 'A', cellSize, isDark),
-        _buildTerminalPoint(component, 'B', cellSize, isDark),
+        for (final terminalId in component.availableTerminals)
+          _buildTerminalPoint(component, terminalId, cellSize, isDark),
         if (showTelemetry)
           Positioned(
             top: -16,
@@ -1646,6 +1628,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
       width: cellSize,
       height: cellSize,
       child: Draggable<SandboxComponent>(
+        maxSimultaneousDrags: _isDraggingWire ? 0 : 1,
         data: component,
         onDragStarted: () {
           setState(() {
@@ -1675,7 +1658,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
   }
 
   Widget _buildTerminalPoint(SandboxComponent component, String terminal, double cellSize, bool isDark) {
-    final relPos = terminal == 'A' ? component.getTerminalAPosition() : component.getTerminalBPosition();
+    final relPos = component.getTerminalPosition(terminal);
     final localX = (relPos.dx - component.gridX) * cellSize;
     final localY = (relPos.dy - component.gridY) * cellSize;
 
@@ -1688,71 +1671,86 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
         component.type == ComponentType.diode;
     final polaritySign = terminal == 'B' ? '+' : '-';
 
+    final isRelay = component.type == ComponentType.relay;
     final color = terminal == 'A' ? Colors.black87 : Colors.red;
 
     const touchAreaSize = 36.0;
-    final double currentDotSize = isSource ? 20.0 : (isSnapped ? 22.0 : (isWiringMode ? 16.0 : 14.0));
+    final double currentDotSize = isSource
+        ? (isRelay ? 24.0 : 20.0)
+        : (isSnapped
+            ? (isRelay ? 26.0 : 22.0)
+            : (isWiringMode ? (isRelay ? 22.0 : 16.0) : (isRelay ? 20.0 : 14.0)));
 
     return Positioned(
       left: localX - (touchAreaSize / 2),
       top: localY - (touchAreaSize / 2),
       width: touchAreaSize,
       height: touchAreaSize,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: Center(
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            curve: Curves.easeOutCubic,
-            width: currentDotSize,
-            height: currentDotSize,
-            decoration: BoxDecoration(
-              color: (isSource || isSnapped) ? const Color(0xFF00F5D4) : color,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: (isSource || isSnapped) ? Colors.white : (isWiringMode ? const Color(0xFF00F5D4) : Colors.white),
-                width: (isSource || isSnapped) ? 2.8 : 1.5,
-              ),
-              boxShadow: [
-                if (isSnapped)
-                  BoxShadow(
-                    color: const Color(0xFF00F5D4).withValues(alpha: 0.9),
-                    blurRadius: 16,
-                    spreadRadius: 4,
-                  )
-                else if (isSource)
-                  BoxShadow(
-                    color: const Color(0xFF00F5D4).withValues(alpha: 0.8),
-                    blurRadius: 12,
-                    spreadRadius: 3,
-                  )
-                else if (isWiringMode)
-                  BoxShadow(
-                    color: const Color(0xFF00F5D4).withValues(alpha: 0.4),
-                    blurRadius: 6,
-                    spreadRadius: 1,
-                  )
-                else
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.3),
-                    blurRadius: 3,
-                    spreadRadius: 0.5,
-                  ),
-              ],
-            ),
-            child: showPolarity
-                ? Center(
-                    child: Text(
-                      polaritySign,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: currentDotSize * 0.65,
-                        fontWeight: FontWeight.bold,
-                        height: 1.0,
-                      ),
+      child: Tooltip(
+        message: terminal,
+        waitDuration: const Duration(milliseconds: 300),
+        preferBelow: false,
+        decoration: BoxDecoration(
+          color: Colors.black87,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        textStyle: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: Center(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              curve: Curves.easeOutCubic,
+              width: currentDotSize,
+              height: currentDotSize,
+              decoration: BoxDecoration(
+                color: (isSource || isSnapped) ? const Color(0xFF00F5D4) : color,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: (isSource || isSnapped) ? Colors.white : (isWiringMode ? const Color(0xFF00F5D4) : Colors.white),
+                  width: (isSource || isSnapped) ? 2.8 : 1.5,
+                ),
+                boxShadow: [
+                  if (isSnapped)
+                    BoxShadow(
+                      color: const Color(0xFF00F5D4).withValues(alpha: 0.6),
+                      blurRadius: 8,
+                      spreadRadius: 1,
+                    )
+                  else
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 3,
+                      spreadRadius: 0.5,
                     ),
-                  )
-                : null,
+                ],
+              ),
+              child: (showPolarity || isRelay)
+                  ? Center(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 1.5),
+                          child: Text(
+                            showPolarity ? polaritySign : terminal,
+                            softWrap: false,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: currentDotSize * (isRelay ? 0.5 : 0.65),
+                              fontWeight: FontWeight.bold,
+                              height: 1.0,
+                              letterSpacing: isRelay ? -0.3 : 0.0,
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                  : null,
+            ),
           ),
         ),
       ),
@@ -1787,6 +1785,8 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
         return l10n.localeName == 'en' ? 'Capacitor' : 'Capacitor';
       case ComponentType.buzzer:
         return l10n.localeName == 'en' ? 'Buzzer Alarm' : 'Buzzer / Alarme';
+      case ComponentType.relay:
+        return l10n.localeName == 'en' ? 'Relay' : 'Relê';
     }
   }
 }

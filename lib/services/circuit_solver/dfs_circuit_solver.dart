@@ -4,9 +4,55 @@ import '../../models/sandbox_wire.dart';
 import '../../models/sandbox_state.dart';
 import 'circuit_solver_strategy.dart';
 
+class _ComponentTraversal {
+  final SandboxComponent component;
+  final String inTerminal;
+  final String outTerminal;
+  _ComponentTraversal(this.component, this.inTerminal, this.outTerminal);
+}
+
+class _ClosedLoopData {
+  final List<_ComponentTraversal> path;
+  final List<SandboxWire> wires;
+  _ClosedLoopData(this.path, this.wires);
+}
+
 class DfsCircuitSolver implements CircuitSolverStrategy {
   @override
   SandboxState solve(SandboxState targetState) {
+    SandboxState currentState = targetState;
+    bool changed = true;
+    int iterations = 0;
+
+    while (changed && iterations < 3) {
+      changed = false;
+      iterations++;
+
+      final result = _solveIteration(currentState);
+      
+      // Update states of relays based on coil current
+      final newComponents = <SandboxComponent>[];
+      for (final comp in currentState.components) {
+        if (comp.type == ComponentType.relay) {
+          final hasCoilCurrent = (result.simulationValues['coil_current_${comp.id}'] ?? 0.0) >= 0.01;
+          if (comp.isActive != hasCoilCurrent) {
+            newComponents.add(comp.copyWith(isActive: hasCoilCurrent));
+            changed = true; // State changed, need another pass
+          } else {
+            newComponents.add(comp);
+          }
+        } else {
+          newComponents.add(comp);
+        }
+      }
+      
+      currentState = result.copyWith(components: newComponents);
+    }
+    
+    return currentState;
+  }
+
+  SandboxState _solveIteration(SandboxState targetState) {
     if (!targetState.isSimulating) {
       return targetState.copyWith(
         simulationValues: {},
@@ -34,15 +80,16 @@ class DfsCircuitSolver implements CircuitSolverStrategy {
 
     for (final source in powerSources) {
       final visited = <String>{source.id};
-      final componentPath = <SandboxComponent>[];
+      final componentPath = <_ComponentTraversal>[
+        _ComponentTraversal(source, 'A', 'B')
+      ];
       final wirePath = <SandboxWire>[];
       final List<_ClosedLoopData> closedLoops = [];
 
-      // Start traversal from positive terminal 'B'
       _traverseForState(
         targetState: targetState,
         currentComponent: source,
-        currentTerminal: 'B',
+        currentTerminal: 'B', // start going OUT of B
         targetBattery: source,
         visited: visited,
         componentPath: componentPath,
@@ -57,12 +104,21 @@ class DfsCircuitSolver implements CircuitSolverStrategy {
         double totalSourceCurrent = 0.0;
 
         for (final loop in closedLoops) {
-          final loopPath = loop.components;
+          final loopPath = loop.path;
+          
           final totalResistance = loopPath
-              .where((c) =>
-                  c.type != ComponentType.battery &&
-                  c.type != ComponentType.powerSupply)
-              .fold(0.0, (sum, c) {
+              .where((t) =>
+                  t.component.type != ComponentType.battery &&
+                  t.component.type != ComponentType.powerSupply)
+              .fold(0.0, (sum, t) {
+            final c = t.component;
+            if (c.type == ComponentType.relay) {
+              if (t.inTerminal == 'C1' || t.inTerminal == 'C2') {
+                return sum + 100.0; // Resistência da bobina
+              } else {
+                return sum + 0.1; // Resistência do contato (chave)
+              }
+            }
             if (c.type == ComponentType.fuse) return sum + 0.1;
             if (c.type == ComponentType.capacitor) return sum + 10.0;
             if (c.type == ComponentType.buzzer) return sum + 8.0;
@@ -84,21 +140,33 @@ class DfsCircuitSolver implements CircuitSolverStrategy {
 
           double currentPotential = source.value;
 
-          for (final comp in loopPath) {
+          for (final traversal in loopPath) {
+            final comp = traversal.component;
             if (comp.type == ComponentType.battery ||
                 comp.type == ComponentType.powerSupply) {
               continue;
             }
 
-            final compRes = (comp.type == ComponentType.fuse)
-                ? 0.1
-                : (comp.type == ComponentType.capacitor
-                    ? 10.0
-                    : (comp.type == ComponentType.buzzer
-                        ? 8.0
-                        : (comp.type == ComponentType.motor
-                            ? 2.0
-                            : comp.value)));
+            double compRes;
+            if (comp.type == ComponentType.relay) {
+              if (traversal.inTerminal == 'C1' || traversal.inTerminal == 'C2') {
+                compRes = 100.0;
+                values['coil_current_${comp.id}'] = (values['coil_current_${comp.id}'] ?? 0.0) + loopCurrent;
+              } else {
+                compRes = 0.1;
+              }
+            } else {
+              compRes = (comp.type == ComponentType.fuse)
+                  ? 0.1
+                  : (comp.type == ComponentType.capacitor
+                      ? 10.0
+                      : (comp.type == ComponentType.buzzer
+                          ? 8.0
+                          : (comp.type == ComponentType.motor
+                              ? 2.0
+                              : comp.value)));
+            }
+
             final vDrop = loopCurrent * compRes;
             final power = vDrop * loopCurrent;
 
@@ -108,12 +176,10 @@ class DfsCircuitSolver implements CircuitSolverStrategy {
             values['voltage_drop_${comp.id}'] = vDrop;
             values['power_${comp.id}'] = power;
 
-            // Define potenciais nos terminais A e B de acordo com o sentido do fluxo
-            values['node_voltage_${comp.id}_B'] = currentPotential;
+            values['node_voltage_${comp.id}_${traversal.inTerminal}'] = currentPotential;
             currentPotential -= vDrop;
-            values['node_voltage_${comp.id}_A'] = currentPotential;
+            values['node_voltage_${comp.id}_${traversal.outTerminal}'] = currentPotential;
 
-            // Verificação de Limites Físicos e Sobrecarga Educativa
             final totalCompCurrent = values['current_${comp.id}'] ?? loopCurrent;
             if (comp.type == ComponentType.led) {
               if (totalCompCurrent > 0.05 || vDrop > 3.3) {
@@ -134,7 +200,7 @@ class DfsCircuitSolver implements CircuitSolverStrategy {
                     'BOBINA QUEIMADA! O motor sofreu sobretensão (${vDrop.toStringAsFixed(1)}V > 18V)!';
               }
             } else if (comp.type == ComponentType.fuse) {
-              final maxCurrent = comp.value; // ex: 2.0A
+              final maxCurrent = comp.value;
               if (totalCompCurrent > maxCurrent) {
                 newBurnedSet.add(comp.id);
                 error =
@@ -163,16 +229,14 @@ class DfsCircuitSolver implements CircuitSolverStrategy {
   void _traverseForState({
     required SandboxState targetState,
     required SandboxComponent currentComponent,
-    required String currentTerminal,
+    required String currentTerminal, // Current output terminal from currentComponent
     required SandboxComponent targetBattery,
     required Set<String> visited,
-    required List<SandboxComponent> componentPath,
+    required List<_ComponentTraversal> componentPath,
     required List<SandboxWire> wirePath,
-    required void Function(List<SandboxComponent>, List<SandboxWire>)
+    required void Function(List<_ComponentTraversal>, List<SandboxWire>)
         onLoopClosed,
   }) {
-    componentPath.add(currentComponent);
-
     final wires = targetState.wires.where((w) {
       return (w.fromComponentId == currentComponent.id &&
               w.fromTerminal == currentTerminal) ||
@@ -198,7 +262,7 @@ class DfsCircuitSolver implements CircuitSolverStrategy {
       if (nextComponent.id == targetBattery.id && nextTerm == 'A') {
         onLoopClosed(List.from(componentPath), List.from(wirePath));
         wirePath.removeLast();
-        return;
+        return; // Retorna para continuar procurando outros caminhos
       }
 
       if (visited.contains(nextComponent.id)) {
@@ -208,7 +272,7 @@ class DfsCircuitSolver implements CircuitSolverStrategy {
 
       if (targetState.burnedComponentIds.contains(nextComponent.id)) {
         wirePath.removeLast();
-        continue; // Componente queimado interrompe o circuito (circuito aberto)
+        continue;
       }
 
       if (nextComponent.type == ComponentType.switchComponent &&
@@ -219,39 +283,40 @@ class DfsCircuitSolver implements CircuitSolverStrategy {
 
       if (nextComponent.type == ComponentType.diode ||
           nextComponent.type == ComponentType.led) {
+        // Polarização de Diodo
         final isReversed =
             (nextComponent.rotation == 180.0 || nextComponent.rotation == 270.0)
                 ? (nextTerm == 'A')
                 : (nextTerm == 'B');
         if (isReversed) {
           wirePath.removeLast();
-          continue; // Bloqueia a corrente se ela tentar entrar pelo Cathode (-) - Polarização Reversa
+          continue;
         }
       }
 
-      final nextOutTerm = nextTerm == 'A' ? 'B' : 'A';
+      final nextOutTerms = nextComponent.getInternalConnections(nextTerm);
 
       visited.add(nextComponent.id);
-      _traverseForState(
-        targetState: targetState,
-        currentComponent: nextComponent,
-        currentTerminal: nextOutTerm,
-        targetBattery: targetBattery,
-        visited: visited,
-        componentPath: componentPath,
-        wirePath: wirePath,
-        onLoopClosed: onLoopClosed,
-      );
+      
+      for (final outTerm in nextOutTerms) {
+        componentPath.add(_ComponentTraversal(nextComponent, nextTerm, outTerm));
+        
+        _traverseForState(
+          targetState: targetState,
+          currentComponent: nextComponent,
+          currentTerminal: outTerm,
+          targetBattery: targetBattery,
+          visited: visited,
+          componentPath: componentPath,
+          wirePath: wirePath,
+          onLoopClosed: onLoopClosed,
+        );
+        
+        componentPath.removeLast();
+      }
+      
       visited.remove(nextComponent.id);
       wirePath.removeLast();
     }
-
-    componentPath.removeLast();
   }
-}
-
-class _ClosedLoopData {
-  final List<SandboxComponent> components;
-  final List<SandboxWire> wires;
-  _ClosedLoopData(this.components, this.wires);
 }

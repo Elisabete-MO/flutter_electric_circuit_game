@@ -220,9 +220,9 @@ class WiresPainter extends CustomPainter {
       final fromComp = fromCompList.first;
       final toComp = toCompList.first;
 
-      // Obtém as coordenadas relativas dos terminais A ou B
-      final fromRelPos = wire.fromTerminal == 'A' ? fromComp.getTerminalAPosition() : fromComp.getTerminalBPosition();
-      final toRelPos = wire.toTerminal == 'A' ? toComp.getTerminalAPosition() : toComp.getTerminalBPosition();
+      // Obtém as coordenadas relativas dos terminais
+      final fromRelPos = fromComp.getTerminalPosition(wire.fromTerminal);
+      final toRelPos = toComp.getTerminalPosition(wire.toTerminal);
 
       // Transforma para coordenadas absolutas em pixels
       final start = Offset(fromRelPos.dx * cellSize, fromRelPos.dy * cellSize);
@@ -245,6 +245,8 @@ class WiresPainter extends CustomPainter {
         cellSize: cellSize,
         isDiagramMode: isDiagramMode,
         components: components,
+        fromComponentId: fromComp.id,
+        toComponentId: toComp.id,
       );
 
       if (isSelected) {
@@ -389,8 +391,8 @@ class WiresPainter extends CustomPainter {
       final fromComp = components.where((c) => c.id == wire.fromComponentId).firstOrNull;
       final toComp = components.where((c) => c.id == wire.toComponentId).firstOrNull;
       if (fromComp != null && toComp != null) {
-        final fromPos = wire.fromTerminal == 'A' ? fromComp.getTerminalAPosition() : fromComp.getTerminalBPosition();
-        final toPos = wire.toTerminal == 'A' ? toComp.getTerminalAPosition() : toComp.getTerminalBPosition();
+        final fromPos = fromComp.getTerminalPosition(wire.fromTerminal);
+        final toPos = toComp.getTerminalPosition(wire.toTerminal);
 
         final fromKey = '${wire.fromComponentId}_${wire.fromTerminal}';
         final toKey = '${wire.toComponentId}_${wire.toTerminal}';
@@ -455,7 +457,7 @@ class TemporaryWireLayer extends StatelessWidget {
     if (fromCompList.isEmpty) return const SizedBox.shrink();
     final fromComp = fromCompList.first;
 
-    final fromRel = source.terminal == 'A' ? fromComp.getTerminalAPosition() : fromComp.getTerminalBPosition();
+    final fromRel = fromComp.getTerminalPosition(source.terminal);
     final start = Offset(fromRel.dx * cellSize, fromRel.dy * cellSize);
 
     Offset? end;
@@ -463,7 +465,7 @@ class TemporaryWireLayer extends StatelessWidget {
       final toCompList = components.where((c) => c.id == snappedTarget!.componentId).toList();
       if (toCompList.isNotEmpty) {
         final toComp = toCompList.first;
-        final toRel = snappedTarget!.terminal == 'A' ? toComp.getTerminalAPosition() : toComp.getTerminalBPosition();
+        final toRel = toComp.getTerminalPosition(snappedTarget!.terminal);
         end = Offset(toRel.dx * cellSize, toRel.dy * cellSize);
       }
     }
@@ -639,6 +641,8 @@ Path buildSmartWirePath({
   required double cellSize,
   required bool isDiagramMode,
   required List<SandboxComponent> components,
+  String? fromComponentId,
+  String? toComponentId,
 }) {
   final path = Path()..moveTo(start.dx, start.dy);
 
@@ -693,6 +697,10 @@ Path buildSmartWirePath({
     bool hasIntermediateObstacle = false;
 
     for (final comp in components) {
+      if (comp.id == fromComponentId || comp.id == toComponentId) {
+        continue; // Não considera o próprio componente de origem ou destino como obstáculo
+      }
+
       final compLeft = comp.gridX * cellSize;
       final compRight = (comp.gridX + 1) * cellSize;
       final compBottom = (comp.gridY + 1) * cellSize;
@@ -741,22 +749,26 @@ Path buildSmartWirePath({
         end.dy,
       );
     } else {
-      // Conexão entre terminais adjacentes ou em diferentes alturas (Catenária física fluida sem rigidez)
-      final dxOut1 = startIsLeft ? -1.0 : 1.0;
-      final dxOut2 = endIsLeft ? -1.0 : 1.0;
+      // Determina a direção de saída do pino (normal) baseado na posição dele na célula
+      Offset getExitVector(Offset pt) {
+        final relX = (pt.dx % cellSize) / cellSize;
+        final relY = (pt.dy % cellSize) / cellSize;
+        if (relY < 0.2) return const Offset(0, -1); // Sai para cima
+        if (relY > 0.8) return const Offset(0, 1);  // Sai para baixo
+        if (relX < 0.5) return const Offset(-1, 0); // Sai para esquerda
+        return const Offset(1, 0);                  // Sai para direita
+      }
 
-      // Limita a projeção horizontal dos pontos de controle para evitar cruzamentos rígidos em S
-      final armX = math.min(32.0, math.max(12.0, absDx * 0.45));
+      final outStart = getExitVector(start);
+      final outEnd = getExitVector(end);
 
-      final cp1X = start.dx + dxOut1 * armX;
-      final cp2X = end.dx + dxOut2 * armX;
+      final armLen = math.min(32.0, math.max(12.0, dist * 0.3));
 
-      // Caimento de gravidade natural de alta fluidez
-      final sagBase = math.max(16.0, dist * 0.22);
-      final maxY = math.max(start.dy, end.dy);
-
-      final cp1Y = math.max(start.dy + sagBase * 0.4, maxY + sagBase * 0.25);
-      final cp2Y = math.max(end.dy + sagBase * 0.4, maxY + sagBase * 0.25);
+      final cp1X = start.dx + outStart.dx * armLen;
+      final cp1Y = start.dy + outStart.dy * armLen + (outStart.dy == 0 ? armLen * 0.5 : 0); // Leve gravidade
+      
+      final cp2X = end.dx + outEnd.dx * armLen;
+      final cp2Y = end.dy + outEnd.dy * armLen + (outEnd.dy == 0 ? armLen * 0.5 : 0);
 
       path.cubicTo(
         cp1X,

@@ -36,6 +36,7 @@ class SandboxToolboxWidget extends StatelessWidget {
         ComponentType.fuse,
         ComponentType.capacitor,
         ComponentType.buzzer,
+        ComponentType.relay,
       ];
 
   @override

@@ -13,6 +13,7 @@ enum ComponentType {
   fuse,
   capacitor,
   buzzer,
+  relay,
 }
 
 /// Modelo que define um componente educativo para a seção de Primeiros Passos.
@@ -146,6 +147,18 @@ class FirstStepComponent {
           isActive: false,
           supportsStateToggle: true,
         ),
+        FirstStepComponent(
+          id: 'relay',
+          type: ComponentType.relay,
+          namePt: 'Relê',
+          nameEn: 'Relay',
+          description:
+              'Chave eletromecânica operada por uma bobina. A corrente em um circuito controla a passagem de corrente em outro circuito.',
+          symbolDescription:
+              'Um símbolo de bobina acoplado por uma linha tracejada a uma chave seletora com terminais normalmente aberto (NO) e normalmente fechado (NC).',
+          isActive: false,
+          supportsStateToggle: false,
+        ),
       ];
 }
 
@@ -176,6 +189,8 @@ extension ComponentTypeAssetX on ComponentType {
         return 'assets/components/fuse.png';
       case ComponentType.buzzer:
         return 'assets/components/buzzer.png';
+      case ComponentType.relay:
+        return 'assets/components/relay.png';
       case ComponentType.powerSupply:
         return 'assets/components/power_supply.png';
       case ComponentType.connectingWire:
