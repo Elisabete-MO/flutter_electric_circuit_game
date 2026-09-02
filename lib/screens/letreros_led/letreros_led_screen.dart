@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../models/stand_mission.dart';
+import '../../widgets/component_vector_painters.dart';
 import '../../widgets/glass_container.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
+import '../../widgets/tech_grid_background.dart';
+import '../../widgets/workbench_components.dart';
 
 /// Tela Interativa do Estande 05 / Estande "Letreiros de LED" (Equipe Sinalização).
 class LetrerosLedScreen extends StatefulWidget {
@@ -258,136 +261,84 @@ class _LetrerosLedScreenState extends State<LetrerosLedScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF031614),
-      body: SafeArea(
-        child: Column(
+      backgroundColor: const Color(0xFF021712),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF041C16),
+        elevation: 0,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. Cabeçalho Imersivo
-            _buildHeader(),
-
-            // 2. Área Central da Bancada e Painel de Controle
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Coluna Esquerda: Placa / Letreiro Interativo
-                    Expanded(
-                      flex: 6,
-                      child: _buildLedWorkbench(),
-                    ),
-
-                    const SizedBox(width: 16),
-
-                    // Coluna Direita: Controles e Gaveta de Peças
-                    Expanded(
-                      flex: 4,
-                      child: _buildMissionControlPanel(),
-                    ),
-                  ],
-                ),
+            Text(
+              'ESTANDE 05 — LETREIROS DE LED',
+              style: GoogleFonts.orbitron(
+                color: const Color(0xFF10B981),
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
               ),
             ),
-
-            // 3. Rodapé com Fala do Volts
-            _buildFooter(),
+            Text(
+              'Equipe Sinalização — Semicondutores e Proteção',
+              style: GoogleFonts.outfit(color: Colors.white60, fontSize: 12),
+            ),
           ],
         ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF10B981)),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF06231E),
-        border: Border(
-          bottom: BorderSide(
-            color: const Color(0xFF10B981).withValues(alpha: 0.3),
-            width: 1,
+      body: TechGridBackground(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                // Coluna Principal da Bancada (60%)
+                Expanded(
+                  flex: 3,
+                  child: Column(
+                    children: [
+                      WorkbenchHeaderStepper(
+                        totalMissions: _missions.length,
+                        currentMissionIndex: _currentMissionIndex,
+                        missionTitle: _missions[_currentMissionIndex].title,
+                        missionObjective: _missions[_currentMissionIndex].objective,
+                        onPrevious: _currentMissionIndex > 0
+                            ? () => setState(() => _currentMissionIndex--)
+                            : null,
+                        onNext: _currentMissionIndex < _missions.length - 1
+                            ? () => setState(() => _currentMissionIndex++)
+                            : null,
+                      ),
+                      const SizedBox(height: 12),
+                      Expanded(
+                        child: _buildLedWorkbench(),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                // Painel Lateral (40%)
+                Expanded(
+                  flex: 2,
+                  child: WorkbenchSidePanel(
+                    teamTitle: 'Painel da Equipe Sinalização',
+                    toolboxItems: [
+                      _buildSidePanelContent(),
+                    ],
+                    onEnergizePressed: _validateCurrentMission,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white70),
-            onPressed: () => Navigator.of(context).pop(),
-            tooltip: 'Voltar ao Mapa',
-          ),
-          const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    'Estande 05 — Letreiros de LED',
-                    style: GoogleFonts.orbitron(
-                      color: const Color(0xFF10B981),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF10B981).withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFF10B981)),
-                    ),
-                    child: Text(
-                      'Equipe Sinalização',
-                      style: GoogleFonts.rajdhani(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              Text(
-                'Missão ${_currentMission.number} de 5: ${_currentMission.title}',
-                style: GoogleFonts.rajdhani(
-                  color: Colors.white70,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-          const Spacer(),
-
-          // Indicador Visual de Estágio (1 a 5)
-          Row(
-            children: List.generate(_missions.length, (index) {
-              final isCompleted = index < _currentMissionIndex;
-              final isCurrent = index == _currentMissionIndex;
-              return Container(
-                margin: const EdgeInsets.symmetric(horizontal: 3),
-                width: isCurrent ? 24 : 10,
-                height: 10,
-                decoration: BoxDecoration(
-                  color: isCompleted
-                      ? const Color(0xFF10B981)
-                      : isCurrent
-                          ? Colors.amberAccent
-                          : Colors.white24,
-                  borderRadius: BorderRadius.circular(5),
-                  border: isCurrent
-                      ? Border.all(color: Colors.white, width: 1.5)
-                      : null,
-                ),
-              );
-            }),
-          ),
-        ],
-      ),
     );
   }
+
+
 
   Widget _buildLedWorkbench() {
     return GlassContainer(
@@ -831,76 +782,7 @@ class _LetrerosLedScreenState extends State<LetrerosLedScreen>
     );
   }
 
-  Widget _buildMissionControlPanel() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF082B24),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.build_circle_rounded, color: Color(0xFF10B981)),
-              const SizedBox(width: 8),
-              Text(
-                'Painel de Controle',
-                style: GoogleFonts.orbitron(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-            ],
-          ),
-          const Divider(color: Colors.white24, height: 20),
 
-          Text(
-            _currentMission.objective,
-            style: GoogleFonts.rajdhani(
-              color: Colors.white70,
-              fontSize: 15,
-              height: 1.3,
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          Expanded(
-            child: SingleChildScrollView(
-              child: _buildSidePanelContent(),
-            ),
-          ),
-
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF10B981),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              icon: const Icon(Icons.play_arrow_rounded, color: Colors.white),
-              label: Text(
-                'ENERGIZAR E VALIDAR LETREIRO',
-                style: GoogleFonts.orbitron(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                ),
-              ),
-              onPressed: _validateCurrentMission,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildSidePanelContent() {
     return Column(
@@ -912,106 +794,21 @@ class _LetrerosLedScreenState extends State<LetrerosLedScreen>
         ),
         const SizedBox(height: 8),
 
-        // Componente 1: LED Vermelho
-        Draggable<String>(
+        const WorkbenchToolboxItem<String>(
           data: 'led_red',
-          feedback: Material(
-            color: Colors.transparent,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: const Color(0xFF059669),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: const [BoxShadow(color: Colors.redAccent, blurRadius: 12)],
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.emoji_objects_rounded, color: Colors.redAccent),
-                  SizedBox(width: 8),
-                  Text('LED Vermelho', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                ],
-              ),
-            ),
-          ),
-          childWhenDragging: Opacity(
-            opacity: 0.3,
-            child: _buildDraggableToolboxCard(
-              title: 'LED Vermelho (Semicondutor)',
-              subtitle: 'Arraste para o soquete do circuito',
-              icon: Icons.emoji_objects_rounded,
-              color: Colors.redAccent,
-            ),
-          ),
-          child: _buildDraggableToolboxCard(
-            title: 'LED Vermelho (Semicondutor)',
-            subtitle: 'Arraste ou clique para Encaixar',
-            icon: Icons.emoji_objects_rounded,
-            color: Colors.redAccent,
-            onTap: () {
-              setState(() {
-                _m1LedInserted = true;
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('⚡ LED Vermelho encaixado no soquete!'),
-                  duration: Duration(seconds: 1),
-                ),
-              );
-            },
-          ),
+          title: 'LED Vermelho (Semicondutor)',
+          subtitle: 'Encaixe no soquete do circuito',
+          icon: Icons.emoji_objects_rounded,
+          customVectorWidget: LedVectorWidget(size: 24, isOn: true, ledColor: Colors.redAccent),
+          color: Colors.redAccent,
         ),
-
-        const SizedBox(height: 8),
-
-        // Componente 2: Resistor 680Ω
-        Draggable<String>(
+        const WorkbenchToolboxItem<String>(
           data: 'resistor_680',
-          feedback: Material(
-            color: Colors.transparent,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: const Color(0xFF059669),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: const [BoxShadow(color: Colors.amber, blurRadius: 12)],
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.shield_rounded, color: Colors.amber),
-                  SizedBox(width: 8),
-                  Text('Resistor 680Ω', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                ],
-              ),
-            ),
-          ),
-          childWhenDragging: Opacity(
-            opacity: 0.3,
-            child: _buildDraggableToolboxCard(
-              title: 'Resistor Prot. 680Ω',
-              subtitle: 'Proteção de sobrecorrente',
-              icon: Icons.shield_rounded,
-              color: Colors.amber,
-            ),
-          ),
-          child: _buildDraggableToolboxCard(
-            title: 'Resistor Prot. 680Ω',
-            subtitle: 'Arraste para selecionar resistor',
-            icon: Icons.shield_rounded,
-            color: Colors.amber,
-            onTap: () {
-              setState(() {
-                _m3SelectedResistor = '680';
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('🛡️ Resistor ideal de 680Ω selecionado!'),
-                  duration: Duration(seconds: 1),
-                ),
-              );
-            },
-          ),
+          title: 'Resistor Prot. 680Ω',
+          subtitle: 'Proteção de sobrecorrente',
+          icon: Icons.shield_rounded,
+          customVectorWidget: ResistorVectorWidget(size: 24, resistanceValue: '680'),
+          color: Colors.amber,
         ),
 
         const SizedBox(height: 16),
@@ -1048,105 +845,29 @@ class _LetrerosLedScreenState extends State<LetrerosLedScreen>
             ],
           ),
         ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: Colors.white24),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            icon: const Icon(Icons.refresh_rounded, size: 16, color: Colors.white70),
+            onPressed: _resetCurrentMission,
+            label: Text(
+              'Reiniciar Montagem',
+              style: GoogleFonts.rajdhani(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 13),
+            ),
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildDraggableToolboxCard({
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required Color color,
-    VoidCallback? onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1E293B),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withValues(alpha: 0.5)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: color.withValues(alpha: 0.2),
-              ),
-              child: Icon(icon, color: color, size: 20),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                  ),
-                  Text(
-                    subtitle,
-                    style: GoogleFonts.outfit(color: Colors.white60, fontSize: 11),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  Widget _buildFooter() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFF06231E),
-        border: Border(
-          top: BorderSide(
-            color: const Color(0xFF10B981).withValues(alpha: 0.3),
-            width: 1,
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          const CircleAvatar(
-            backgroundColor: Color(0xFF10B981),
-            radius: 18,
-            child: Icon(Icons.face_rounded, color: Colors.white, size: 22),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              'Prof. Volts: "${_currentMission.voltsMediation}"',
-              style: GoogleFonts.rajdhani(
-                color: Colors.amberAccent,
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          OutlinedButton(
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: Colors.white30),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            onPressed: _resetCurrentMission,
-            child: Text(
-              'Reiniciar Missão',
-              style: GoogleFonts.rajdhani(color: Colors.white70, fontSize: 13),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+
+
 
   /// Componente gráfico de placa de letreiro luminoso de LED estilo Neon/Glassmorphism
   Widget _buildLedSignBoard({

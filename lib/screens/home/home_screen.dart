@@ -56,6 +56,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       Navigator.of(context).pushNamed(Routes.ruasMaquete);
     } else if (stand.number == 5 || stand.id == 'letreros_led') {
       Navigator.of(context).pushNamed(Routes.letrerosLed);
+    } else if (stand.number == 6 || stand.id == 'movimento_miniatura') {
+      Navigator.of(context).pushNamed(Routes.movimentoMiniatura);
     } else {
       Navigator.of(context).pushNamed(Routes.firstBench);
     }

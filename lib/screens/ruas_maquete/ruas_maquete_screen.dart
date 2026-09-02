@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../models/stand_mission.dart';
 import '../../widgets/glass_container.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
+import '../../widgets/tech_grid_background.dart';
+import '../../widgets/workbench_components.dart';
 
 /// Tela Interativa do Estande 04 / Estande "Ruas da Maquete" (Equipe Bairro).
 class RuasMaqueteScreen extends StatefulWidget {
@@ -254,137 +256,84 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF031614),
-      body: SafeArea(
-        child: Column(
+      backgroundColor: const Color(0xFF021712),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF041C16),
+        elevation: 0,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. Cabeçalho Imersivo do Estande
-            _buildHeader(),
-
-            // 2. Área Central da Bancada e Controles Interativos
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Coluna da Esquerda: Bancada Interativa da Maquete
-                    Expanded(
-                      flex: 6,
-                      child: _buildMaqueteWorkbench(),
-                    ),
-
-                    const SizedBox(width: 16),
-
-                    // Coluna da Direita: Painel de Controle e Ferramentas da Missão
-                    Expanded(
-                      flex: 4,
-                      child: _buildMissionControlPanel(),
-                    ),
-                  ],
-                ),
+            Text(
+              'ESTANDE 04 — RUAS DA MAQUETE',
+              style: GoogleFonts.orbitron(
+                color: const Color(0xFF10B981),
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
               ),
             ),
-
-            // 3. Rodapé com Mediação do Professor Volts e Ações
-            _buildFooter(),
+            Text(
+              'Equipe Bairro — Circuito em Série e Paralelo',
+              style: GoogleFonts.outfit(color: Colors.white60, fontSize: 12),
+            ),
           ],
         ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF10B981)),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ),
-    );
-  }
-
-  /// Cabeçalho superior com título, indicador de progresso e botão de retorno.
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF06231E),
-        border: Border(
-          bottom: BorderSide(
-            color: const Color(0xFF10B981).withValues(alpha: 0.3),
-            width: 1,
+      body: TechGridBackground(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                // Coluna Principal da Bancada (60%)
+                Expanded(
+                  flex: 3,
+                  child: Column(
+                    children: [
+                      WorkbenchHeaderStepper(
+                        totalMissions: _missions.length,
+                        currentMissionIndex: _currentMissionIndex,
+                        missionTitle: _missions[_currentMissionIndex].title,
+                        missionObjective: _missions[_currentMissionIndex].objective,
+                        onPrevious: _currentMissionIndex > 0
+                            ? () => setState(() => _currentMissionIndex--)
+                            : null,
+                        onNext: _currentMissionIndex < _missions.length - 1
+                            ? () => setState(() => _currentMissionIndex++)
+                            : null,
+                      ),
+                      const SizedBox(height: 12),
+                      Expanded(
+                        child: _buildMaqueteWorkbench(),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                // Painel Lateral (40%)
+                Expanded(
+                  flex: 2,
+                  child: WorkbenchSidePanel(
+                    teamTitle: 'Painel da Equipe Bairro',
+                    toolboxItems: [
+                      _buildMissionControlPanel(),
+                    ],
+                    onEnergizePressed: _validateCurrentMission,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white70),
-            onPressed: () => Navigator.of(context).pop(),
-            tooltip: 'Voltar ao Mapa',
-          ),
-          const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    'Estande 04 — Ruas da Maquete',
-                    style: GoogleFonts.orbitron(
-                      color: const Color(0xFF10B981),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF10B981).withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFF10B981)),
-                    ),
-                    child: Text(
-                      'Equipe Bairro',
-                      style: GoogleFonts.rajdhani(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              Text(
-                'Missão ${_currentMission.number} de 5: ${_currentMission.title}',
-                style: GoogleFonts.rajdhani(
-                  color: Colors.white70,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-          const Spacer(),
-
-          // Indicador Visual de Estágio (1 a 5)
-          Row(
-            children: List.generate(_missions.length, (index) {
-              final isCompleted = index < _currentMissionIndex;
-              final isCurrent = index == _currentMissionIndex;
-              return Container(
-                margin: const EdgeInsets.symmetric(horizontal: 3),
-                width: isCurrent ? 24 : 10,
-                height: 10,
-                decoration: BoxDecoration(
-                  color: isCompleted
-                      ? const Color(0xFF10B981)
-                      : isCurrent
-                          ? Colors.amberAccent
-                          : Colors.white24,
-                  borderRadius: BorderRadius.circular(5),
-                  border: isCurrent
-                      ? Border.all(color: Colors.white, width: 1.5)
-                      : null,
-                ),
-              );
-            }),
-          ),
-        ],
-      ),
     );
   }
+
+
 
   /// Desenho interativo da bancada simulando as Ruas da Maquete
   Widget _buildMaqueteWorkbench() {
@@ -950,20 +899,47 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
 
   /// Conteúdo dinâmico do painel lateral para perguntas/ferramentas
   Widget _buildSidePanelMissionContent() {
+    Widget content;
     switch (_currentMissionIndex) {
       case 0:
-        return _buildM1SideTools();
+        content = _buildM1SideTools();
+        break;
       case 1:
-        return _buildM2SideTools();
+        content = _buildM2SideTools();
+        break;
       case 2:
-        return _buildM3SideTools();
+        content = _buildM3SideTools();
+        break;
       case 3:
-        return _buildM4SideTools();
+        content = _buildM4SideTools();
+        break;
       case 4:
-        return _buildM5SideTools();
+        content = _buildM5SideTools();
+        break;
       default:
-        return const SizedBox.shrink();
+        content = const SizedBox.shrink();
     }
+    return Column(
+      children: [
+        content,
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: Colors.white24),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            icon: const Icon(Icons.refresh_rounded, size: 16, color: Colors.white70),
+            onPressed: _resetCurrentMission,
+            label: Text(
+              'Reiniciar Montagem',
+              style: GoogleFonts.rajdhani(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 13),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildM1SideTools() {
@@ -975,54 +951,12 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
           style: GoogleFonts.rajdhani(color: Colors.amberAccent, fontWeight: FontWeight.bold, fontSize: 14),
         ),
         const SizedBox(height: 10),
-        Draggable<String>(
+        const WorkbenchToolboxItem<String>(
           data: 'fio_serie',
-          feedback: Material(
-            color: Colors.transparent,
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFF10B981),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.alt_route_rounded, color: Colors.white),
-                  SizedBox(width: 8),
-                  Text('Fio Condutor em Série', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                ],
-              ),
-            ),
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E293B),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.5)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.alt_route_rounded, color: Color(0xFF10B981)),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Fio Condutor em Série',
-                        style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
-                      ),
-                      Text(
-                        'Arraste para a bancada para interligar os postes numa rota única.',
-                        style: GoogleFonts.rajdhani(color: Colors.white60, fontSize: 13),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+          title: 'Fio Condutor em Série',
+          subtitle: 'Interliga postes em rota única',
+          icon: Icons.alt_route_rounded,
+          color: Color(0xFF10B981),
         ),
       ],
     );
@@ -1152,53 +1086,7 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
     );
   }
 
-  /// Rodapé com mediação do Professor Volts e navegação
-  Widget _buildFooter() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFF06231E),
-        border: Border(
-          top: BorderSide(
-            color: const Color(0xFF10B981).withValues(alpha: 0.3),
-            width: 1,
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          const CircleAvatar(
-            backgroundColor: Color(0xFF10B981),
-            radius: 18,
-            child: Icon(Icons.face_rounded, color: Colors.white, size: 22),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              'Prof. Volts: "${_currentMission.voltsMediation}"',
-              style: GoogleFonts.rajdhani(
-                color: Colors.amberAccent,
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          OutlinedButton(
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: Colors.white30),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            onPressed: _resetCurrentMission,
-            child: Text(
-              'Reiniciar Missão',
-              style: GoogleFonts.rajdhani(color: Colors.white70, fontSize: 13),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+
 
   /// Componente didático visual de poste de iluminação pública
   Widget _buildStreetLamp({

@@ -5,12 +5,12 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../app/routes.dart';
 import '../../models/stand_mission.dart';
 import '../../state/progress_controller.dart';
-import '../../widgets/eletrolab_header_brand.dart';
+import '../../widgets/component_vector_painters.dart';
 import '../../widgets/glass_container.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
 import '../../widgets/prof_volts_full_body.dart';
-import '../../widgets/prof_volts_speech.dart';
 import '../../widgets/tech_grid_background.dart';
+import '../../widgets/workbench_components.dart';
 
 /// Tela Interativa e Estilizada das 5 Missões do Estande 03 — "Liga e Desliga" (Equipe Controle)
 class LigaDesligaScreen extends ConsumerStatefulWidget {
@@ -288,139 +288,158 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
 
   @override
   Widget build(BuildContext context) {
-    final mission = _missions[_currentMissionIndex];
-
     return Scaffold(
+      backgroundColor: const Color(0xFF021712),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF041C16),
+        elevation: 0,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'ESTANDE 03 — LIGA E DESLIGA',
+              style: GoogleFonts.orbitron(
+                color: const Color(0xFF10B981),
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+              ),
+            ),
+            Text(
+              'Equipe Controle — Mini Painel de Iluminação',
+              style: GoogleFonts.outfit(color: Colors.white60, fontSize: 12),
+            ),
+          ],
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF10B981)),
+          onPressed: () => Navigator.of(context).pushReplacementNamed(Routes.home),
+        ),
+      ),
       body: TechGridBackground(
         child: SafeArea(
-          child: Column(
-            children: [
-              // 1. Cabeçalho EletroLab + Indicador de Progresso (M1 a M5)
-              _buildTopBar(),
-
-              // 2. Balão de Fala Animado do Professor Volts com Mascot Avatar
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-                child: ProfVoltsSpeech(
-                  text: '“${mission.voltsMediation}”',
-                ),
-              ),
-
-              // 3. Conteúdo da Missão Atual
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 960),
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 350),
-                        child: _buildMissionContent(mission),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                // Área Principal da Bancada
+                Expanded(
+                  flex: 3,
+                  child: Column(
+                    children: [
+                      WorkbenchHeaderStepper(
+                        totalMissions: _missions.length,
+                        currentMissionIndex: _currentMissionIndex,
+                        missionTitle: _missions[_currentMissionIndex].title,
+                        missionObjective: _missions[_currentMissionIndex].objective,
+                        onPrevious: _currentMissionIndex > 0
+                            ? () => setState(() => _currentMissionIndex--)
+                            : null,
+                        onNext: _currentMissionIndex < _missions.length - 1
+                            ? () => setState(() => _currentMissionIndex++)
+                            : null,
                       ),
-                    ),
+                      const SizedBox(height: 12),
+                      Expanded(
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 300),
+                          child: _buildCurrentMissionUI(),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 16),
+                // Painel Lateral (Gaveta de Componentes & Validação)
+                Expanded(
+                  flex: 2,
+                  child: WorkbenchSidePanel(
+                    teamTitle: 'Painel da Equipe Controle',
+                    toolboxItems: [
+                      _buildSideToolboxDrawer(),
+                    ],
+                    onEnergizePressed: _validateCurrentMission,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildTopBar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFF021E18).withValues(alpha: 0.85),
-        border: const Border(bottom: BorderSide(color: Color(0xFF10B981), width: 1.2)),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF10B981).withValues(alpha: 0.15),
-            blurRadius: 10,
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-                onPressed: () => Navigator.of(context).pushReplacementNamed(Routes.home),
-                tooltip: 'Voltar ao Mapa da Feira',
-              ),
-              const SizedBox(width: 8),
-              const EletroLabHeaderBrand(compact: true),
-            ],
-          ),
-
-          // Badges das Missões 1 a 5
-          Row(
-            children: List.generate(_missions.length, (idx) {
-              final active = idx == _currentMissionIndex;
-              final done = idx < _currentMissionIndex;
-              return Container(
-                margin: const EdgeInsets.only(left: 6),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                decoration: BoxDecoration(
-                  color: done
-                      ? const Color(0xFF10B981)
-                      : (active ? const Color(0xFF059669) : const Color(0xFF042D23)),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: active ? Colors.white : (done ? const Color(0xFF34D399) : Colors.white24),
-                    width: active ? 1.5 : 1.0,
-                  ),
-                  boxShadow: active
-                      ? [
-                          const BoxShadow(
-                            color: Color(0xFF10B981),
-                            blurRadius: 8,
-                          )
-                        ]
-                      : null,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (done) const Icon(Icons.check_rounded, color: Colors.white, size: 13),
-                    if (done) const SizedBox(width: 3),
-                    Text(
-                      'M${idx + 1}',
-                      style: GoogleFonts.rajdhani(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMissionContent(StandMission mission) {
+  void _validateCurrentMission() {
     switch (_currentMissionIndex) {
       case 0:
-        return _buildMission1UI(mission);
+        _validateMission1();
+        break;
       case 1:
-        return _buildMission2UI(mission);
+        _validateMission2();
+        break;
       case 2:
-        return _buildMission3UI(mission);
+        _validateMission3();
+        break;
       case 3:
-        return _buildMission4UI(mission);
+        _validateMission4();
+        break;
       case 4:
-        return _buildMission5UI(mission);
+        _validateMission5();
+        break;
+    }
+  }
+
+
+
+  Widget _buildCurrentMissionUI() {
+    switch (_currentMissionIndex) {
+      case 0:
+        return _buildMission1UI(_missions[0]);
+      case 1:
+        return _buildMission2UI(_missions[1]);
+      case 2:
+        return _buildMission3UI(_missions[2]);
+      case 3:
+        return _buildMission4UI(_missions[3]);
+      case 4:
+        return _buildMission5UI(_missions[4]);
       default:
         return Container();
     }
+  }
+
+  Widget _buildSideToolboxDrawer() {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        WorkbenchToolboxItem<String>(
+          data: 'switch',
+          title: 'Interruptor (SPST)',
+          subtitle: 'Chave de controle de fluxo',
+          icon: Icons.toggle_off_rounded,
+          customVectorWidget: PushButtonVectorWidget(size: 24),
+          color: Colors.amber,
+        ),
+        SizedBox(height: 8),
+        WorkbenchToolboxItem<String>(
+          data: 'battery',
+          title: 'Bateria 4.5V',
+          subtitle: 'Fonte de alimentação didática',
+          icon: Icons.battery_charging_full_rounded,
+          customVectorWidget: BatteryVectorWidget(size: 24),
+          color: Color(0xFF10B981),
+        ),
+        SizedBox(height: 8),
+        WorkbenchToolboxItem<String>(
+          data: 'lamp',
+          title: 'Lâmpada Incandescente',
+          subtitle: 'Carga de iluminação',
+          icon: Icons.lightbulb_rounded,
+          customVectorWidget: BulbVectorWidget(size: 24, isOn: true),
+          color: Colors.amberAccent,
+        ),
+      ],
+    );
   }
 
   // ==========================================
@@ -439,34 +458,25 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
           _buildMissionHeader(mission),
           const SizedBox(height: 16),
 
-          // Layout com Gaveta Lateral de Componentes + Bancada de Montagem
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. Painel Lateral de Componentes para Arrastar (Toolbox)
-              _buildSideComponentToolbox(),
-
-              const SizedBox(width: 16),
-
-              // 2. Bancada de Montagem com DragTarget
-              Expanded(
-                child: Container(
-                  height: 270,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF031D17), Color(0xFF021410)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4), width: 1.2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.5),
-                        blurRadius: 16,
-                      ),
-                    ],
+          // Bancada de Montagem com DragTarget
+          Expanded(
+            child: Container(
+              height: 270,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF031D17), Color(0xFF021410)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4), width: 1.2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.5),
+                    blurRadius: 16,
                   ),
+                ],
+              ),
                   child: Stack(
                     children: [
                       // 1. Fios Neons com Animação de Elétrons
@@ -588,8 +598,6 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   ),
                 ),
               ),
-            ],
-          ),
 
           const SizedBox(height: 20),
 
@@ -623,215 +631,9 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
     );
   }
 
-  /// Painel Lateral de Componentes (Toolbox Arrastável)
-  Widget _buildSideComponentToolbox() {
-    return Container(
-      width: 175,
-      height: 270,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF03261D),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4), width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 10,
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.inventory_2_rounded, color: Color(0xFF10B981), size: 18),
-              const SizedBox(width: 6),
-              Text(
-                'COMPONENTES',
-                style: GoogleFonts.rajdhani(
-                  color: const Color(0xFF10B981),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                  letterSpacing: 1.0,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Arraste ou clique:',
-            style: GoogleFonts.outfit(color: Colors.white60, fontSize: 11),
-          ),
-          const Divider(color: Colors.white12, height: 16),
 
-          // Item Arrastável: Interruptor
-          Draggable<String>(
-            data: 'switch',
-            feedback: Material(
-              color: Colors.transparent,
-              child: _buildToolboxItemCard(
-                label: 'Interruptor',
-                icon: Icons.toggle_off_rounded,
-                color: Colors.amber,
-                isDraggingFeedback: true,
-              ),
-            ),
-            childWhenDragging: Opacity(
-              opacity: 0.3,
-              child: _buildToolboxItemCard(
-                label: 'Interruptor',
-                icon: Icons.toggle_off_rounded,
-                color: Colors.amber,
-              ),
-            ),
-            child: _buildToolboxItemCard(
-              label: 'Interruptor (SPST)',
-              icon: Icons.toggle_off_rounded,
-              color: _m1SwitchInserted ? Colors.grey : Colors.amber,
-              isInstalled: _m1SwitchInserted,
-              onTap: () {
-                if (!_m1SwitchInserted) {
-                  setState(() {
-                    _m1SwitchInserted = true;
-                  });
-                }
-              },
-            ),
-          ),
 
-          const SizedBox(height: 10),
 
-          // Item Arrastável: Bateria 4.5V
-          Draggable<String>(
-            data: 'battery',
-            feedback: Material(
-              color: Colors.transparent,
-              child: _buildToolboxItemCard(
-                label: 'Bateria 4.5V',
-                icon: Icons.battery_charging_full_rounded,
-                color: const Color(0xFF10B981),
-                isDraggingFeedback: true,
-              ),
-            ),
-            childWhenDragging: Opacity(
-              opacity: 0.3,
-              child: _buildToolboxItemCard(
-                label: 'Bateria 4.5V',
-                icon: Icons.battery_charging_full_rounded,
-                color: const Color(0xFF10B981),
-              ),
-            ),
-            child: _buildToolboxItemCard(
-              label: 'Bateria 4.5V',
-              icon: Icons.battery_charging_full_rounded,
-              color: const Color(0xFF10B981),
-              isInstalled: true,
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('⚡ Bateria 4.5V conectada como fonte de energia do circuito.'),
-                    duration: Duration(seconds: 1),
-                  ),
-                );
-              },
-            ),
-          ),
-
-          const SizedBox(height: 10),
-
-          // Item Arrastável: Lâmpada
-          Draggable<String>(
-            data: 'lamp',
-            feedback: Material(
-              color: Colors.transparent,
-              child: _buildToolboxItemCard(
-                label: 'Lâmpada',
-                icon: Icons.lightbulb_rounded,
-                color: Colors.amberAccent,
-                isDraggingFeedback: true,
-              ),
-            ),
-            childWhenDragging: Opacity(
-              opacity: 0.3,
-              child: _buildToolboxItemCard(
-                label: 'Lâmpada',
-                icon: Icons.lightbulb_rounded,
-                color: Colors.amberAccent,
-              ),
-            ),
-            child: _buildToolboxItemCard(
-              label: 'Lâmpada',
-              icon: Icons.lightbulb_rounded,
-              color: Colors.amberAccent,
-              isInstalled: true,
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('💡 Lâmpada instalada no soquete de carga do circuito.'),
-                    duration: Duration(seconds: 1),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildToolboxItemCard({
-    required String label,
-    required IconData icon,
-    required Color color,
-    bool isInstalled = false,
-    bool isDraggingFeedback = false,
-    VoidCallback? onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(
-          color: isDraggingFeedback ? const Color(0xFF059669) : const Color(0xFF021E18),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isDraggingFeedback ? Colors.white : color.withValues(alpha: 0.5),
-            width: isDraggingFeedback ? 2 : 1,
-          ),
-          boxShadow: isDraggingFeedback
-              ? [
-                  BoxShadow(
-                    color: color.withValues(alpha: 0.5),
-                    blurRadius: 12,
-                  ),
-                ]
-              : null,
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: color, size: 20),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                label,
-                style: GoogleFonts.outfit(
-                  color: isInstalled ? Colors.white54 : Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            if (isInstalled)
-              const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 14),
-          ],
-        ),
-      ),
-    );
-  }
 
   // ==========================================
   // MISSÃO 2: Aberto ou Fechado?

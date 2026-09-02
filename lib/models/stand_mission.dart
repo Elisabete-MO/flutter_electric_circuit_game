@@ -210,5 +210,67 @@ class StandMission {
           voltsMediation: voltsMediationEstandeLetrerosLed,
         ),
       ];
+
+  /// Fala oficial de mediação do Professor Volts para o Estande "Movimento em Miniatura"
+  static const String voltsMediationEstandeMovimentoMiniatura =
+      'Luz e movimento são formas diferentes de energia geradas pela corrente elétrica. Vamos explorar o motor CC.';
+
+  static List<StandMission> get movimentoMiniaturaMissions => const [
+        StandMission(
+          id: 'movimento_miniatura_m1',
+          standId: 'movimento_miniatura',
+          number: 1,
+          title: 'Primeiro Giro do Motor',
+          objective: 'Conectar o motor CC à fonte de alimentação didática.',
+          componentsInfo: 'Bateria, motor CC didático',
+          victoryCriteria: 'Fechar o circuito e fazer o eixo do motor girar',
+          failureFeedback: 'Confira se ambos os terminais do motor estão conectados.',
+          voltsMediation: voltsMediationEstandeMovimentoMiniatura,
+        ),
+        StandMission(
+          id: 'movimento_miniatura_m2',
+          standId: 'movimento_miniatura',
+          number: 2,
+          title: 'Inversão de Sentido de Rotação',
+          objective: 'Inverter a polaridade da fonte para alterar o sentido de giro do motor (horário/anti-horário).',
+          componentsInfo: 'Bateria, motor CC',
+          victoryCriteria: 'Inverter os polos da fonte para mudar o sentido de giro (horário/anti-horário)',
+          failureFeedback: 'Inverta a polaridade para alterar o sentido do campo magnético.',
+          voltsMediation: voltsMediationEstandeMovimentoMiniatura,
+        ),
+        StandMission(
+          id: 'movimento_miniatura_m3',
+          standId: 'movimento_miniatura',
+          number: 3,
+          title: 'Botão de Partida do Motor',
+          objective: 'Controlar o acionamento do motor utilizando um interruptor de pressão (push-button).',
+          componentsInfo: 'Bateria, motor CC, interruptor tipo push-button',
+          victoryCriteria: 'Controlar o acionamento do motor via botão de pressão',
+          failureFeedback: 'O interruptor deve interromper a rota da corrente quando solto.',
+          voltsMediation: voltsMediationEstandeMovimentoMiniatura,
+        ),
+        StandMission(
+          id: 'movimento_miniatura_m4',
+          standId: 'movimento_miniatura',
+          number: 4,
+          title: 'Painel com LED Indicador',
+          objective: 'Conectar um LED com resistor em paralelo ao motor para sinalizar visualmente a operação.',
+          componentsInfo: 'Bateria, motor CC, LED, resistor',
+          victoryCriteria: 'Montar LED indicador em paralelo ao motor para sinalizar funcionamento',
+          failureFeedback: 'O LED indicador também necessita de resistor de proteção.',
+          voltsMediation: voltsMediationEstandeMovimentoMiniatura,
+        ),
+        StandMission(
+          id: 'movimento_miniatura_m5',
+          standId: 'movimento_miniatura',
+          number: 5,
+          title: 'Diagnóstico do Mini Carrinho',
+          objective: 'Inspecionar um carrinho com motor travado e reparar o ponto de mau contato elétrico.',
+          componentsInfo: 'Protótipo com motor travado',
+          victoryCriteria: 'Descobrir mau contato nos terminais do motor e reparar a fiação',
+          failureFeedback: 'Teste a fonte, a fiação e o interruptor para achar a interrupção.',
+          voltsMediation: voltsMediationEstandeMovimentoMiniatura,
+        ),
+      ];
 }
 
