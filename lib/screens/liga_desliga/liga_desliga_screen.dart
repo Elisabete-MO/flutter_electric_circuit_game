@@ -602,7 +602,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
           ),
           const SizedBox(height: 4),
           Text(
-            'Arraste para o circuito:',
+            'Arraste ou clique:',
             style: GoogleFonts.outfit(color: Colors.white60, fontSize: 11),
           ),
           const Divider(color: Colors.white12, height: 16),
@@ -760,9 +760,9 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
             alignment: Alignment.centerRight,
             child: ElevatedButton.icon(
               onPressed: _validateMission2,
-              icon: const Icon(Icons.psychology_rounded),
+              icon: const Icon(Icons.verified_rounded),
               label: Text(
-                'VERIFICAR PREVISÃO',
+                'CONFIRMAR PREVISÕES',
                 style: GoogleFonts.rajdhani(
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.2,
@@ -795,50 +795,70 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
       decoration: BoxDecoration(
         color: const Color(0xFF03261D),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.35)),
+        border: Border.all(
+          color: currentValue != null ? const Color(0xFF10B981) : Colors.white24,
+          width: currentValue != null ? 1.5 : 1.0,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: GoogleFonts.rajdhani(color: const Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 16.5)),
-          const SizedBox(height: 2),
-          Text(subtitle, style: GoogleFonts.outfit(color: Colors.white70, fontSize: 13)),
+          Text(
+            title,
+            style: GoogleFonts.rajdhani(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: GoogleFonts.outfit(color: Colors.white70, fontSize: 13),
+          ),
           const SizedBox(height: 12),
+
           Row(
             children: [
               Expanded(
                 child: ChoiceChip(
                   label: Center(
                     child: Text(
-                      'Circuito Aberto (Apagada)',
-                      style: GoogleFonts.outfit(
-                        fontWeight: FontWeight.w600,
-                        color: currentValue == 'aberto' ? Colors.black : Colors.white,
-                      ),
-                    ),
-                  ),
-                  selected: currentValue == 'aberto',
-                  selectedColor: const Color(0xFF10B981),
-                  backgroundColor: const Color(0xFF021A14),
-                  onSelected: (_) => onSelect('aberto'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ChoiceChip(
-                  label: Center(
-                    child: Text(
-                      'Circuito Fechado (Acesa)',
-                      style: GoogleFonts.outfit(
-                        fontWeight: FontWeight.w600,
+                      'LÂMPADA ACESA (Circuito Fechado)',
+                      style: GoogleFonts.rajdhani(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
                         color: currentValue == 'fechado' ? Colors.black : Colors.white,
                       ),
                     ),
                   ),
                   selected: currentValue == 'fechado',
                   selectedColor: const Color(0xFF10B981),
-                  backgroundColor: const Color(0xFF021A14),
-                  onSelected: (_) => onSelect('fechado'),
+                  backgroundColor: const Color(0xFF021E18),
+                  onSelected: (selected) {
+                    if (selected) onSelect('fechado');
+                  },
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ChoiceChip(
+                  label: Center(
+                    child: Text(
+                      'LÂMPADA APAGADA (Circuito Aberto)',
+                      style: GoogleFonts.rajdhani(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: currentValue == 'aberto' ? Colors.black : Colors.white,
+                      ),
+                    ),
+                  ),
+                  selected: currentValue == 'aberto',
+                  selectedColor: Colors.amber,
+                  backgroundColor: const Color(0xFF021E18),
+                  onSelected: (selected) {
+                    if (selected) onSelect('aberto');
+                  },
                 ),
               ),
             ],
@@ -868,112 +888,93 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
           ),
           const SizedBox(height: 16),
 
-          Row(
-            children: [
-              // Painel de Chaves
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF03261D),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.35)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Interruptores', style: GoogleFonts.rajdhani(color: const Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 16.5)),
-                      const SizedBox(height: 12),
-                      SwitchListTile(
-                        title: Text('Chave 1', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.w600)),
-                        value: _m3Switch1Closed,
-                        activeThumbColor: const Color(0xFF10B981),
-                        onChanged: (val) {
-                          setState(() {
-                            _m3Switch1Closed = val;
-                            _m3TestedSwitch1 = true;
-                          });
-                        },
-                      ),
-                      SwitchListTile(
-                        title: Text('Chave 2', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.w600)),
-                        value: _m3Switch2Closed,
-                        activeThumbColor: const Color(0xFF10B981),
-                        onChanged: (val) {
-                          setState(() {
-                            _m3Switch2Closed = val;
-                            _m3TestedSwitch2 = true;
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-
-              // Resposta das Luminárias
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF03261D),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.35)),
-                  ),
-                  child: Column(
-                    children: [
-                      Text('Luminárias Independentes', style: GoogleFonts.rajdhani(color: const Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 16.5)),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          _buildMiniBulbDisplay('Luminária A', _m3Switch1Closed),
-                          _buildMiniBulbDisplay('Luminária B', _m3Switch2Closed),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          // Mapeamento Selecionável
+          // Bancada com 2 Interruptores e 2 Lâmpadas
           Container(
-            padding: const EdgeInsets.all(14),
+            height: 230,
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF021D17),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.white12),
+              gradient: const LinearGradient(
+                colors: [Color(0xFF031D17), Color(0xFF021410)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                DropdownButton<String>(
-                  value: _m3MapSwitch1,
-                  hint: Text('Mapear Chave 1...', style: GoogleFonts.outfit(color: Colors.white60)),
-                  dropdownColor: const Color(0xFF03261D),
-                  items: const [
-                    DropdownMenuItem(value: 'lampA', child: Text('Chave 1 ➔ Luminária A', style: TextStyle(color: Colors.white))),
-                    DropdownMenuItem(value: 'lampB', child: Text('Chave 1 ➔ Luminária B', style: TextStyle(color: Colors.white))),
+                // Bateria Comum
+                _buildRealisticBattery(),
+
+                // Painel de 2 Chaves
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildSwitchControlCard(
+                      label: 'CHAVE 1',
+                      isClosed: _m3Switch1Closed,
+                      onToggle: () {
+                        setState(() {
+                          _m3Switch1Closed = !_m3Switch1Closed;
+                          _m3TestedSwitch1 = true;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    _buildSwitchControlCard(
+                      label: 'CHAVE 2',
+                      isClosed: _m3Switch2Closed,
+                      onToggle: () {
+                        setState(() {
+                          _m3Switch2Closed = !_m3Switch2Closed;
+                          _m3TestedSwitch2 = true;
+                        });
+                      },
+                    ),
                   ],
-                  onChanged: (val) => setState(() => _m3MapSwitch1 = val),
                 ),
-                DropdownButton<String>(
-                  value: _m3MapSwitch2,
-                  hint: Text('Mapear Chave 2...', style: GoogleFonts.outfit(color: Colors.white60)),
-                  dropdownColor: const Color(0xFF03261D),
-                  items: const [
-                    DropdownMenuItem(value: 'lampA', child: Text('Chave 2 ➔ Luminária A', style: TextStyle(color: Colors.white))),
-                    DropdownMenuItem(value: 'lampB', child: Text('Chave 2 ➔ Luminária B', style: TextStyle(color: Colors.white))),
+
+                // Painel de 2 Lâmpadas (A e B)
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildRealisticBulb(
+                      isLit: _m3Switch1Closed,
+                      label: 'Luminária A',
+                    ),
+                    const SizedBox(height: 16),
+                    _buildRealisticBulb(
+                      isLit: _m3Switch2Closed,
+                      label: 'Luminária B',
+                    ),
                   ],
-                  onChanged: (val) => setState(() => _m3MapSwitch2 = val),
                 ),
               ],
             ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Mapeamento de Resposta do Aluno
+          Row(
+            children: [
+              Expanded(
+                child: _buildMappingSelector(
+                  title: 'Chave 1 controla:',
+                  currentSelection: _m3MapSwitch1,
+                  onSelect: (val) => setState(() => _m3MapSwitch1 = val),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildMappingSelector(
+                  title: 'Chave 2 controla:',
+                  currentSelection: _m3MapSwitch2,
+                  onSelect: (val) => setState(() => _m3MapSwitch2 = val),
+                ),
+              ),
+            ],
           ),
 
           const SizedBox(height: 20),
@@ -982,9 +983,9 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
             alignment: Alignment.centerRight,
             child: ElevatedButton.icon(
               onPressed: _validateMission3,
-              icon: const Icon(Icons.check_circle_rounded),
+              icon: const Icon(Icons.settings_input_component_rounded),
               label: Text(
-                'CONFIRMAR MAPEAMENTO',
+                'VALIDAR MAPEAMENTO',
                 style: GoogleFonts.rajdhani(
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.2,
@@ -1006,11 +1007,52 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
     );
   }
 
+  Widget _buildMappingSelector({
+    required String title,
+    required String? currentSelection,
+    required ValueChanged<String> onSelect,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF03261D),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: currentSelection != null ? const Color(0xFF10B981) : Colors.white24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            initialValue: currentSelection,
+            dropdownColor: const Color(0xFF021E18),
+            style: GoogleFonts.outfit(color: Colors.white, fontSize: 13),
+            decoration: const InputDecoration(
+              isDense: true,
+              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              border: OutlineInputBorder(),
+            ),
+            items: const [
+              DropdownMenuItem(value: 'lampA', child: Text('Luminária A')),
+              DropdownMenuItem(value: 'lampB', child: Text('Luminária B')),
+            ],
+            onChanged: (val) {
+              if (val != null) onSelect(val);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   // ==========================================
-  // MISSÃO 4: Conferência
+  // MISSÃO 4: Conferência (Correção de Ramo Inútil)
   // ==========================================
   Widget _buildMission4UI(StandMission mission) {
-    final bool lampIsLit = _m4SwitchInMainBranch ? _m4SwitchClosed : true;
+    // Se o interruptor está no ramo inútil (paralelo), a lâmpada fica acesa SEMPRE.
+    // Se o interruptor está no ramo principal (série), a lâmpada obedece ao estado da chave (_m4SwitchClosed).
+    final bool isLampLit = _m4SwitchInMainBranch ? _m4SwitchClosed : true;
 
     return GlassContainer(
       borderRadius: 24,
@@ -1031,11 +1073,11 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
             ),
             child: Row(
               children: [
-                const Icon(Icons.warning_amber_rounded, color: Colors.amber),
+                const Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 22),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Problema: A chave está num desvio (ramo inútil) e a corrente continua passando para a lâmpada mesmo ao abrir o interruptor!',
+                    'Problema Detectado: O interruptor foi montado em um ramo paralelo (ramo inútil). A lâmpada permanece acesa mesmo quando tentamos desligar!',
                     style: GoogleFonts.outfit(color: Colors.amberAccent, fontSize: 13.5),
                   ),
                 ),
@@ -1044,9 +1086,11 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
           ),
           const SizedBox(height: 16),
 
+          // Bancada Didática Interativa de Correção do Ramo
           Container(
-            height: 220,
+            height: 250,
             width: double.infinity,
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 colors: [Color(0xFF031D17), Color(0xFF021410)],
@@ -1054,60 +1098,157 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4)),
+              border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4), width: 1.2),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  blurRadius: 16,
+                ),
+              ],
             ),
             child: Stack(
               children: [
+                // 1. Fonte (Bateria 4.5V na Esquerda)
                 Positioned(
-                  left: 30,
-                  top: 70,
+                  left: 20,
+                  top: 75,
                   child: _buildRealisticBattery(),
                 ),
+
+                // 2. Opção A: Ramo Inútil (Paralelo - Topo)
                 Positioned(
-                  right: 40,
-                  top: 65,
-                  child: _buildRealisticBulb(isLit: lampIsLit),
-                ),
-                Positioned(
-                  left: 230,
-                  top: 25,
-                  child: OutlinedButton.icon(
-                    onPressed: () {
+                  left: 210,
+                  top: 15,
+                  child: InkWell(
+                    onTap: () {
                       setState(() {
-                        _m4SwitchInMainBranch = !_m4SwitchInMainBranch;
+                        _m4SwitchInMainBranch = false;
                       });
                     },
-                    icon: Icon(
-                      _m4SwitchInMainBranch ? Icons.check_circle_rounded : Icons.swap_horiz_rounded,
-                      color: _m4SwitchInMainBranch ? const Color(0xFF10B981) : Colors.amber,
-                    ),
-                    label: Text(
-                      _m4SwitchInMainBranch
-                          ? 'Ramo Principal (Correto)'
-                          : 'Ramo Inútil (Clique para Mover)',
-                      style: GoogleFonts.rajdhani(
-                        color: _m4SwitchInMainBranch ? const Color(0xFF10B981) : Colors.amber,
-                        fontWeight: FontWeight.bold,
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: !_m4SwitchInMainBranch
+                            ? Colors.amber.withValues(alpha: 0.2)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: !_m4SwitchInMainBranch ? Colors.amber : Colors.white24,
+                          width: !_m4SwitchInMainBranch ? 2 : 1,
+                        ),
                       ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(
-                        color: _m4SwitchInMainBranch ? const Color(0xFF10B981) : Colors.amber,
-                        width: 1.5,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            !_m4SwitchInMainBranch
+                                ? Icons.warning_amber_rounded
+                                : Icons.radio_button_unchecked_rounded,
+                            color: !_m4SwitchInMainBranch ? Colors.amber : Colors.white54,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            !_m4SwitchInMainBranch
+                                ? 'Ramo Inútil (Chave Ineficaz)'
+                                : 'Mover Chave para Ramo Inútil',
+                            style: GoogleFonts.rajdhani(
+                              color: !_m4SwitchInMainBranch ? Colors.amber : Colors.white70,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 ),
-                if (_m4SwitchInMainBranch)
-                  Positioned(
-                    left: 240,
-                    top: 85,
-                    child: SwitchListTile(
-                      title: Text('Testar Chave', style: GoogleFonts.outfit(color: Colors.white, fontSize: 13)),
-                      value: _m4SwitchClosed,
-                      onChanged: (val) => setState(() => _m4SwitchClosed = val),
+
+                // 3. Opção B: Ramo Principal (Em Série com a Lâmpada - Centro)
+                Positioned(
+                  left: 210,
+                  top: 80,
+                  child: InkWell(
+                    onTap: () {
+                      setState(() {
+                        _m4SwitchInMainBranch = true;
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: _m4SwitchInMainBranch
+                            ? const Color(0xFF10B981).withValues(alpha: 0.2)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _m4SwitchInMainBranch ? const Color(0xFF10B981) : Colors.white24,
+                          width: _m4SwitchInMainBranch ? 2 : 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _m4SwitchInMainBranch
+                                ? Icons.check_circle_rounded
+                                : Icons.radio_button_unchecked_rounded,
+                            color: _m4SwitchInMainBranch ? const Color(0xFF10B981) : Colors.white54,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            _m4SwitchInMainBranch
+                                ? 'Ramo Principal em Série (Correto!)'
+                                : 'Mover Chave para Ramo Principal (Série)',
+                            style: GoogleFonts.rajdhani(
+                              color: _m4SwitchInMainBranch ? const Color(0xFF10B981) : Colors.white70,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
+                ),
+
+                // 4. Teste de Acionamento da Chave quando posicionada
+                Positioned(
+                  left: 210,
+                  top: 145,
+                  child: Row(
+                    children: [
+                      Text(
+                        'Estado da Chave:',
+                        style: GoogleFonts.outfit(color: Colors.white70, fontSize: 12),
+                      ),
+                      const SizedBox(width: 8),
+                      ChoiceChip(
+                        label: Text('OFF (Aberta)', style: GoogleFonts.rajdhani(fontSize: 12, fontWeight: FontWeight.bold)),
+                        selected: !_m4SwitchClosed,
+                        selectedColor: Colors.amber,
+                        onSelected: (_) => setState(() => _m4SwitchClosed = false),
+                      ),
+                      const SizedBox(width: 6),
+                      ChoiceChip(
+                        label: Text('ON (Fechada)', style: GoogleFonts.rajdhani(fontSize: 12, fontWeight: FontWeight.bold)),
+                        selected: _m4SwitchClosed,
+                        selectedColor: const Color(0xFF10B981),
+                        onSelected: (_) => setState(() => _m4SwitchClosed = true),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // 5. Luminária na Direita
+                Positioned(
+                  right: 25,
+                  top: 65,
+                  child: _buildRealisticBulb(isLit: isLampLit),
+                ),
               ],
             ),
           ),
@@ -1331,7 +1472,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
     );
   }
 
-  Widget _buildRealisticBulb({required bool isLit}) {
+  Widget _buildRealisticBulb({required bool isLit, String? label}) {
     return Stack(
       alignment: Alignment.center,
       children: [
@@ -1360,7 +1501,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
             ),
             const SizedBox(height: 4),
             Text(
-              isLit ? 'LUMINÁRIA ACESA' : 'DESLIGADA',
+              label ?? (isLit ? 'LUMINÁRIA ACESA' : 'DESLIGADA'),
               style: GoogleFonts.rajdhani(
                 color: isLit ? Colors.amberAccent : Colors.white38,
                 fontWeight: FontWeight.bold,
@@ -1374,7 +1515,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
     );
   }
 
-  Widget _buildSwitchControlCard({required bool isClosed, required VoidCallback onToggle}) {
+  Widget _buildSwitchControlCard({required bool isClosed, required VoidCallback onToggle, String? label}) {
     return InkWell(
       onTap: onToggle,
       borderRadius: BorderRadius.circular(16),
@@ -1404,7 +1545,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
             ),
             const SizedBox(width: 8),
             Text(
-              isClosed ? 'CHAVE FECHADA (ON)' : 'CHAVE ABERTA (OFF)',
+              label ?? (isClosed ? 'CHAVE FECHADA (ON)' : 'CHAVE ABERTA (OFF)'),
               style: GoogleFonts.rajdhani(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -1467,26 +1608,6 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
     );
   }
 
-  Widget _buildMiniBulbDisplay(String label, bool isLit) {
-    return Column(
-      children: [
-        Icon(
-          Icons.lightbulb_rounded,
-          size: 46,
-          color: isLit ? Colors.amberAccent : Colors.white24,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: GoogleFonts.rajdhani(
-            color: isLit ? Colors.amberAccent : Colors.white60,
-            fontWeight: FontWeight.bold,
-            fontSize: 13,
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 /// Custom Painter com Tracados Neon e Fluxo de Elétrons Animados
