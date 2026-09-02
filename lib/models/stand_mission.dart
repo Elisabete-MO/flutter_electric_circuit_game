@@ -29,6 +29,10 @@ class StandMission {
   static const String voltsMediationEstande3 =
       'Um interruptor não cria energia. Ele decide se o caminho está completo ou interrompido.';
 
+  /// Fala oficial de mediação do Professor Volts para o Estande "Ruas da Maquete"
+  static const String voltsMediationEstandeRuasMaquete =
+      'Quando há mais de um destino, a organização dos caminhos altera o comportamento de todo o circuito.';
+
   static List<StandMission> get estande3Missions => const [
         StandMission(
           id: 'liga_desliga_m1',
@@ -86,4 +90,63 @@ class StandMission {
           voltsMediation: voltsMediationEstande3,
         ),
       ];
+
+  static List<StandMission> get ruasMaqueteMissions => const [
+        StandMission(
+          id: 'ruas_maquete_m1',
+          standId: 'ruas_maquete',
+          number: 1,
+          title: 'Postes em Série',
+          objective: 'Conectar 2 lâmpadas na mesma rota em série.',
+          componentsInfo: 'Bateria, 2 lâmpadas, fios',
+          victoryCriteria: 'Conectar 2 lâmpadas na mesma rota contínua em série',
+          failureFeedback: 'Há apenas uma rota contínua para as duas lâmpadas.',
+          voltsMediation: voltsMediationEstandeRuasMaquete,
+        ),
+        StandMission(
+          id: 'ruas_maquete_m2',
+          standId: 'ruas_maquete',
+          number: 2,
+          title: 'Comparação de Brilho',
+          objective: 'Analisar o circuito em série com 1 vs 2 lâmpadas e identificar o motivo da redução de brilho.',
+          componentsInfo: 'Circuito em série comutável (1 ou 2 lâmpadas)',
+          victoryCriteria: 'Medir/observar a queda de brilho e selecionar a razão física correta',
+          failureFeedback: 'Adicionar cargas em série reduz a corrente disponível para cada uma.',
+          voltsMediation: voltsMediationEstandeRuasMaquete,
+        ),
+        StandMission(
+          id: 'ruas_maquete_m3',
+          standId: 'ruas_maquete',
+          number: 3,
+          title: 'Bifurcação de Fios',
+          objective: 'Criar um ponto de junção (nó) para dividir o percurso da corrente.',
+          componentsInfo: 'Junção de fiação, 2 lâmpadas, bateria',
+          victoryCriteria: 'Criar um ponto de junção (nó) para dividir e reconectar o percurso ao polo negativo',
+          failureFeedback: 'A bifurcação precisa se reconectar ao polo negativo da fonte.',
+          voltsMediation: voltsMediationEstandeRuasMaquete,
+        ),
+        StandMission(
+          id: 'ruas_maquete_m4',
+          standId: 'ruas_maquete',
+          number: 4,
+          title: 'Casas Independentes (Paralelo)',
+          objective: 'Conectar 2 lâmpadas em paralelo para que cada uma tenha seu ramo próprio.',
+          componentsInfo: '2 lâmpadas em paralelo, bateria, fios',
+          victoryCriteria: 'Ambas as lâmpadas acesas com brilho total em ramos próprios',
+          failureFeedback: 'Cada ramo deve ter seu caminho individual até a bateria.',
+          voltsMediation: voltsMediationEstandeRuasMaquete,
+        ),
+        StandMission(
+          id: 'ruas_maquete_m5',
+          standId: 'ruas_maquete',
+          number: 5,
+          title: 'Teste de Manutenção do Bairro',
+          objective: 'Simular defeito em um dos ramos e verificar a independência do circuito em paralelo.',
+          componentsInfo: 'Circuito em paralelo com simulação de defeito',
+          victoryCriteria: 'Desconectar uma lâmpada e comprovar que a outra permanece acesa',
+          failureFeedback: 'Em paralelo, os ramos funcionam de forma independente.',
+          voltsMediation: voltsMediationEstandeRuasMaquete,
+        ),
+      ];
 }
+
