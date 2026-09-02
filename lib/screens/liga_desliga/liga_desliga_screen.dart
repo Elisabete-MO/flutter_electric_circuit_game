@@ -479,11 +479,40 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                         ),
                       ),
 
-                      // 2. Fonte (Bateria 4.5V)
+                      // 2. Fonte (Bateria 4.5V DragTarget)
                       Positioned(
                         left: 30,
                         top: 80,
-                        child: _buildRealisticBattery(),
+                        child: DragTarget<String>(
+                          onWillAcceptWithDetails: (details) => details.data == 'battery',
+                          onAcceptWithDetails: (_) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('⚡ Bateria 4.5V fixada na fonte de energia!'),
+                                duration: Duration(seconds: 1),
+                              ),
+                            );
+                          },
+                          builder: (context, candidateData, rejectedData) {
+                            final isHovering = candidateData.isNotEmpty;
+                            return AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              decoration: isHovering
+                                  ? BoxDecoration(
+                                      borderRadius: BorderRadius.circular(16),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0xFF10B981).withValues(alpha: 0.8),
+                                          blurRadius: 16,
+                                          spreadRadius: 3,
+                                        ),
+                                      ],
+                                    )
+                                  : null,
+                              child: _buildRealisticBattery(),
+                            );
+                          },
+                        ),
                       ),
 
                       // 3. Slot DragTarget do Interruptor (Topo Centro)
@@ -520,11 +549,40 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                               ),
                       ),
 
-                      // 4. Luminária (Direita com Glow Halo)
+                      // 4. Luminária (Direita com DragTarget)
                       Positioned(
                         right: 30,
                         top: 70,
-                        child: _buildRealisticBulb(isLit: isBulbLit),
+                        child: DragTarget<String>(
+                          onWillAcceptWithDetails: (details) => details.data == 'lamp',
+                          onAcceptWithDetails: (_) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('💡 Lâmpada conectada ao soquete com sucesso!'),
+                                duration: Duration(seconds: 1),
+                              ),
+                            );
+                          },
+                          builder: (context, candidateData, rejectedData) {
+                            final isHovering = candidateData.isNotEmpty;
+                            return AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              decoration: isHovering
+                                  ? BoxDecoration(
+                                      borderRadius: BorderRadius.circular(16),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.amberAccent.withValues(alpha: 0.8),
+                                          blurRadius: 16,
+                                          spreadRadius: 3,
+                                        ),
+                                      ],
+                                    )
+                                  : null,
+                              child: _buildRealisticBulb(isLit: isBulbLit),
+                            );
+                          },
+                        ),
                       ),
                     ],
                   ),
@@ -644,19 +702,78 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
 
           const SizedBox(height: 10),
 
-          // Outros Componentes Informativos
-          _buildToolboxItemCard(
-            label: 'Bateria 4.5V',
-            icon: Icons.battery_charging_full_rounded,
-            color: const Color(0xFF10B981),
-            isInstalled: true,
+          // Item Arrastável: Bateria 4.5V
+          Draggable<String>(
+            data: 'battery',
+            feedback: Material(
+              color: Colors.transparent,
+              child: _buildToolboxItemCard(
+                label: 'Bateria 4.5V',
+                icon: Icons.battery_charging_full_rounded,
+                color: const Color(0xFF10B981),
+                isDraggingFeedback: true,
+              ),
+            ),
+            childWhenDragging: Opacity(
+              opacity: 0.3,
+              child: _buildToolboxItemCard(
+                label: 'Bateria 4.5V',
+                icon: Icons.battery_charging_full_rounded,
+                color: const Color(0xFF10B981),
+              ),
+            ),
+            child: _buildToolboxItemCard(
+              label: 'Bateria 4.5V',
+              icon: Icons.battery_charging_full_rounded,
+              color: const Color(0xFF10B981),
+              isInstalled: true,
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('⚡ Bateria 4.5V conectada como fonte de energia do circuito.'),
+                    duration: Duration(seconds: 1),
+                  ),
+                );
+              },
+            ),
           ),
+
           const SizedBox(height: 10),
-          _buildToolboxItemCard(
-            label: 'Lâmpada',
-            icon: Icons.lightbulb_rounded,
-            color: Colors.amberAccent,
-            isInstalled: true,
+
+          // Item Arrastável: Lâmpada
+          Draggable<String>(
+            data: 'lamp',
+            feedback: Material(
+              color: Colors.transparent,
+              child: _buildToolboxItemCard(
+                label: 'Lâmpada',
+                icon: Icons.lightbulb_rounded,
+                color: Colors.amberAccent,
+                isDraggingFeedback: true,
+              ),
+            ),
+            childWhenDragging: Opacity(
+              opacity: 0.3,
+              child: _buildToolboxItemCard(
+                label: 'Lâmpada',
+                icon: Icons.lightbulb_rounded,
+                color: Colors.amberAccent,
+              ),
+            ),
+            child: _buildToolboxItemCard(
+              label: 'Lâmpada',
+              icon: Icons.lightbulb_rounded,
+              color: Colors.amberAccent,
+              isInstalled: true,
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('💡 Lâmpada instalada no soquete de carga do circuito.'),
+                    duration: Duration(seconds: 1),
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),

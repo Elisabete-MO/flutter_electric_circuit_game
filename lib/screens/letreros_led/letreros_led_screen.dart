@@ -907,6 +907,116 @@ class _LetrerosLedScreenState extends State<LetrerosLedScreen>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
+          'Gaveta de Componentes Arrastáveis:',
+          style: GoogleFonts.rajdhani(color: const Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+        const SizedBox(height: 8),
+
+        // Componente 1: LED Vermelho
+        Draggable<String>(
+          data: 'led_red',
+          feedback: Material(
+            color: Colors.transparent,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF059669),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: const [BoxShadow(color: Colors.redAccent, blurRadius: 12)],
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.emoji_objects_rounded, color: Colors.redAccent),
+                  SizedBox(width: 8),
+                  Text('LED Vermelho', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ),
+          ),
+          childWhenDragging: Opacity(
+            opacity: 0.3,
+            child: _buildDraggableToolboxCard(
+              title: 'LED Vermelho (Semicondutor)',
+              subtitle: 'Arraste para o soquete do circuito',
+              icon: Icons.emoji_objects_rounded,
+              color: Colors.redAccent,
+            ),
+          ),
+          child: _buildDraggableToolboxCard(
+            title: 'LED Vermelho (Semicondutor)',
+            subtitle: 'Arraste ou clique para Encaixar',
+            icon: Icons.emoji_objects_rounded,
+            color: Colors.redAccent,
+            onTap: () {
+              setState(() {
+                _m1LedInserted = true;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('⚡ LED Vermelho encaixado no soquete!'),
+                  duration: Duration(seconds: 1),
+                ),
+              );
+            },
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        // Componente 2: Resistor 680Ω
+        Draggable<String>(
+          data: 'resistor_680',
+          feedback: Material(
+            color: Colors.transparent,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF059669),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: const [BoxShadow(color: Colors.amber, blurRadius: 12)],
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.shield_rounded, color: Colors.amber),
+                  SizedBox(width: 8),
+                  Text('Resistor 680Ω', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ),
+          ),
+          childWhenDragging: Opacity(
+            opacity: 0.3,
+            child: _buildDraggableToolboxCard(
+              title: 'Resistor Prot. 680Ω',
+              subtitle: 'Proteção de sobrecorrente',
+              icon: Icons.shield_rounded,
+              color: Colors.amber,
+            ),
+          ),
+          child: _buildDraggableToolboxCard(
+            title: 'Resistor Prot. 680Ω',
+            subtitle: 'Arraste para selecionar resistor',
+            icon: Icons.shield_rounded,
+            color: Colors.amber,
+            onTap: () {
+              setState(() {
+                _m3SelectedResistor = '680';
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('🛡️ Resistor ideal de 680Ω selecionado!'),
+                  duration: Duration(seconds: 1),
+                ),
+              );
+            },
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        Text(
           'Simbologia e Regras do LED:',
           style: GoogleFonts.rajdhani(color: Colors.amberAccent, fontWeight: FontWeight.bold, fontSize: 14),
         ),
@@ -939,6 +1049,55 @@ class _LetrerosLedScreenState extends State<LetrerosLedScreen>
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildDraggableToolboxCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    VoidCallback? onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E293B),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.5)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: color.withValues(alpha: 0.2),
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.outfit(color: Colors.white60, fontSize: 11),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
