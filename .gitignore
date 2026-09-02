@@ -46,5 +46,4 @@ app.*.map.json
 
 # Python scripts and docs asset pack
 *.py
-docs/
 
