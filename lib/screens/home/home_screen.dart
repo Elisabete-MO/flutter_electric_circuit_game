@@ -50,6 +50,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       Navigator.of(context).pushNamed(Routes.sandbox);
     } else if (stand.number == 1) {
       Navigator.of(context).pushNamed(Routes.firstBench);
+    } else if (stand.number == 3 || stand.id == 'liga_desliga') {
+      Navigator.of(context).pushNamed(Routes.ligaDesliga);
     } else {
       Navigator.of(context).pushNamed(Routes.firstBench);
     }
