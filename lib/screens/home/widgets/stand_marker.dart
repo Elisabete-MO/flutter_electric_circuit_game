@@ -25,38 +25,6 @@ class StandMarker extends StatefulWidget {
 class _StandMarkerState extends State<StandMarker> {
   bool _isHovered = false;
 
-  IconData _getStandIcon(int number, bool isBancadaLivre) {
-    if (isBancadaLivre) return Icons.science_rounded;
-    switch (number) {
-      case 1:
-        return Icons.school_rounded;
-      case 2:
-        return Icons.tungsten_rounded;
-      case 3:
-        return Icons.toggle_on_rounded;
-      case 4:
-        return Icons.alt_route_rounded;
-      case 5:
-        return Icons.lightbulb_rounded;
-      case 6:
-        return Icons.autorenew_rounded;
-      case 7:
-        return Icons.speed_rounded;
-      case 8:
-        return Icons.shield_rounded;
-      case 9:
-        return Icons.eco_rounded;
-      case 10:
-        return Icons.sensor_door_rounded;
-      case 11:
-        return Icons.location_city_rounded;
-      case 12:
-        return Icons.handyman_rounded;
-      default:
-        return Icons.star_rounded;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final disableAnimations = MediaQuery.disableAnimationsOf(context);
@@ -75,8 +43,6 @@ class _StandMarkerState extends State<StandMarker> {
     final bool isCompleted = widget.stand.hasMissions &&
         widget.stand.completedMissions >= widget.stand.totalMissions &&
         widget.stand.totalMissions > 0;
-
-    final IconData standIcon = _getStandIcon(widget.stand.number, isBancadaLivre);
 
     // Border color logic (thinner green border by default, cyan/amber when active)
     final Color borderColor = widget.isSelected
@@ -227,27 +193,14 @@ class _StandMarkerState extends State<StandMarker> {
                       ),
                     ],
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        standIcon,
-                        size: (widget.width * 0.11).clamp(11.0, 14.0),
-                        color: widget.isSelected || isBancadaLivre || isTutorial
-                            ? Colors.white
-                            : const Color(0xFF34D399),
-                      ),
-                      const SizedBox(width: 3),
-                      Text(
-                        numberFormatted,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          fontSize: (widget.width * 0.11).clamp(11.0, 14.0),
-                          letterSpacing: 0.2,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    numberFormatted,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: (widget.width * 0.11).clamp(11.0, 14.0),
+                      letterSpacing: 0.2,
+                    ),
                   ),
                 ),
               ),

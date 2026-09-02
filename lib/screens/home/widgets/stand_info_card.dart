@@ -14,41 +14,8 @@ class StandInfoCard extends StatelessWidget {
     required this.onClose,
   });
 
-  IconData _getStandIcon(int number, bool isBancadaLivre) {
-    if (isBancadaLivre) return Icons.science_rounded;
-    switch (number) {
-      case 1:
-        return Icons.school_rounded;
-      case 2:
-        return Icons.tungsten_rounded;
-      case 3:
-        return Icons.toggle_on_rounded;
-      case 4:
-        return Icons.alt_route_rounded;
-      case 5:
-        return Icons.lightbulb_rounded;
-      case 6:
-        return Icons.autorenew_rounded;
-      case 7:
-        return Icons.speed_rounded;
-      case 8:
-        return Icons.shield_rounded;
-      case 9:
-        return Icons.eco_rounded;
-      case 10:
-        return Icons.sensor_door_rounded;
-      case 11:
-        return Icons.location_city_rounded;
-      case 12:
-        return Icons.handyman_rounded;
-      default:
-        return Icons.star_rounded;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final IconData standIcon = _getStandIcon(stand.number, stand.isBancadaLivre);
     final numberFormatted = stand.number < 10 ? '0${stand.number}' : '${stand.number}';
 
     return Container(
@@ -132,21 +99,14 @@ class StandInfoCard extends StatelessWidget {
                       BoxShadow(color: Colors.black45, blurRadius: 4),
                     ],
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(standIcon, size: 14, color: const Color(0xFF34D399)),
-                      const SizedBox(width: 4),
-                      Text(
-                        'ESTANDE $numberFormatted',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 11,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    'ESTANDE $numberFormatted',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 11,
+                      letterSpacing: 0.5,
+                    ),
                   ),
                 ),
               ),
