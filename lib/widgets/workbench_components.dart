@@ -323,10 +323,10 @@ class WorkbenchSidePanel extends StatelessWidget {
               Expanded(
                 child: Text(
                   teamTitle,
-                  style: GoogleFonts.orbitron(
+                  style: GoogleFonts.rajdhani(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
-                    fontSize: 14,
+                    fontSize: 16,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -365,10 +365,10 @@ class WorkbenchSidePanel extends StatelessWidget {
               icon: const Icon(Icons.play_arrow_rounded, color: Colors.white),
               label: Text(
                 'ENERGIZAR E VALIDAR BANCADA',
-                style: GoogleFonts.orbitron(
+                style: GoogleFonts.rajdhani(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
-                  fontSize: 11,
+                  fontSize: 14,
                 ),
               ),
               onPressed: onEnergizePressed,

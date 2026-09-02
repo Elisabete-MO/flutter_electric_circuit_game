@@ -298,9 +298,9 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
           children: [
             Text(
               'ESTANDE 03 — LIGA E DESLIGA',
-              style: GoogleFonts.orbitron(
+              style: GoogleFonts.rajdhani(
                 color: const Color(0xFF10B981),
-                fontSize: 13,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1.2,
               ),
@@ -1478,10 +1478,10 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
               children: [
                 Text(
                   label ?? 'INTERRUPTOR (SPST)',
-                  style: GoogleFonts.orbitron(
+                  style: GoogleFonts.rajdhani(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
-                    fontSize: 11,
+                    fontSize: 12,
                   ),
                 ),
                 Text(
@@ -1550,10 +1550,10 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
               children: [
                 Text(
                   isHovering ? '🎯 Solte para Encaixar!' : '➕ Encaixar Interruptor',
-                  style: GoogleFonts.orbitron(
+                  style: GoogleFonts.rajdhani(
                     color: isHovering ? const Color(0xFF10B981) : Colors.amber,
                     fontWeight: FontWeight.bold,
-                    fontSize: 12,
+                    fontSize: 14,
                   ),
                 ),
                 Text(

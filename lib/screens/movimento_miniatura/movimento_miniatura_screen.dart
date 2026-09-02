@@ -168,7 +168,7 @@ class _MovimentoMiniaturaScreenState extends State<MovimentoMiniaturaScreen>
             Expanded(
               child: Text(
                 'Estande Concluído!',
-                style: GoogleFonts.orbitron(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 22),
               ),
             ),
           ],
@@ -203,9 +203,9 @@ class _MovimentoMiniaturaScreenState extends State<MovimentoMiniaturaScreen>
           children: [
             Text(
               'ESTANDE 06 — MOVIMENTO EM MINIATURA',
-              style: GoogleFonts.orbitron(
+              style: GoogleFonts.rajdhani(
                 color: const Color(0xFF10B981),
-                fontSize: 13,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1.2,
               ),
@@ -578,7 +578,7 @@ class _MovimentoMiniaturaScreenState extends State<MovimentoMiniaturaScreen>
                               const SizedBox(width: 10),
                               Text(
                                 _m3PushButtonPressed ? 'MOTOR EM PARTIDA! (PRESSIONADO)' : 'SEGURE PARA ACIONAR O MOTOR',
-                                style: GoogleFonts.orbitron(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
                               ),
                             ],
                           ),
@@ -639,10 +639,10 @@ class _MovimentoMiniaturaScreenState extends State<MovimentoMiniaturaScreen>
                             const SizedBox(height: 6),
                             Text(
                               isSystemReady ? 'LED STATUS: ON 🟢' : 'LED STATUS: OFF 🔴',
-                              style: GoogleFonts.orbitron(
+                              style: GoogleFonts.rajdhani(
                                 color: isSystemReady ? const Color(0xFF10B981) : Colors.white54,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 12,
+                                fontSize: 13,
                               ),
                             ),
                           ],
@@ -877,10 +877,10 @@ class _MovimentoMiniaturaScreenState extends State<MovimentoMiniaturaScreen>
         const SizedBox(height: 8),
         Text(
           isRunning ? 'MOTOR CC EM OPERAÇÃO ⚡' : 'MOTOR CC DESLIGADO ⚪',
-          style: GoogleFonts.orbitron(
+          style: GoogleFonts.rajdhani(
             color: isRunning ? const Color(0xFF10B981) : Colors.white54,
             fontWeight: FontWeight.bold,
-            fontSize: 12,
+            fontSize: 13,
           ),
         ),
       ],

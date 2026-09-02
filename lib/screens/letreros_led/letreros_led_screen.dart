@@ -185,10 +185,10 @@ class _LetrerosLedScreenState extends State<LetrerosLedScreen>
             Expanded(
               child: Text(
                 'Estande Concluído!',
-                style: GoogleFonts.orbitron(
+                style: GoogleFonts.rajdhani(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
-                  fontSize: 20,
+                  fontSize: 22,
                 ),
               ),
             ),
@@ -270,9 +270,9 @@ class _LetrerosLedScreenState extends State<LetrerosLedScreen>
           children: [
             Text(
               'ESTANDE 05 — LETREIROS DE LED',
-              style: GoogleFonts.orbitron(
+              style: GoogleFonts.rajdhani(
                 color: const Color(0xFF10B981),
-                fontSize: 13,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1.2,
               ),
@@ -917,7 +917,7 @@ class _LetrerosLedScreenState extends State<LetrerosLedScreen>
           const SizedBox(width: 12),
           Text(
             title,
-            style: GoogleFonts.orbitron(
+            style: GoogleFonts.rajdhani(
               color: activeColor,
               fontWeight: FontWeight.bold,
               fontSize: 24,

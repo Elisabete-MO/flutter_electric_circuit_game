@@ -180,10 +180,10 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
             Expanded(
               child: Text(
                 'Estande Concluído!',
-                style: GoogleFonts.orbitron(
+                style: GoogleFonts.rajdhani(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
-                  fontSize: 20,
+                  fontSize: 22,
                 ),
               ),
             ),
@@ -265,9 +265,9 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
           children: [
             Text(
               'ESTANDE 04 — RUAS DA MAQUETE',
-              style: GoogleFonts.orbitron(
+              style: GoogleFonts.rajdhani(
                 color: const Color(0xFF10B981),
-                fontSize: 13,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1.2,
               ),
@@ -504,10 +504,10 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
                                   : isHovered
                                       ? '🎯 Solte para Encaixar Fio!'
                                       : '➕ Encaixar Fio em Série',
-                              style: GoogleFonts.orbitron(
+                              style: GoogleFonts.rajdhani(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 12,
+                                fontSize: 14,
                               ),
                             ),
                             Text(
@@ -840,10 +840,10 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
               const SizedBox(width: 8),
               Text(
                 'Painel de Controle',
-                style: GoogleFonts.orbitron(
+                style: GoogleFonts.rajdhani(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                  fontSize: 18,
                 ),
               ),
             ],
@@ -883,10 +883,10 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
               icon: const Icon(Icons.play_arrow_rounded, color: Colors.white),
               label: Text(
                 'TESTAR E VALIDAR CIRCUITO',
-                style: GoogleFonts.orbitron(
+                style: GoogleFonts.rajdhani(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
-                  fontSize: 14,
+                  fontSize: 15,
                 ),
               ),
               onPressed: _validateCurrentMission,
