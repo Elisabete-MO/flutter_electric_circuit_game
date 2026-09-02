@@ -439,74 +439,98 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
           _buildMissionHeader(mission),
           const SizedBox(height: 16),
 
-          // Bancada de Montagem
-          Container(
-            height: 260,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF031D17), Color(0xFF021410)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4), width: 1.2),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.5),
-                  blurRadius: 16,
-                ),
-              ],
-            ),
-            child: Stack(
-              children: [
-                // 1. Fios Neons com Animação de Elétrons
-                CustomPaint(
-                  size: Size.infinite,
-                  painter: CircuitWirePainter(
-                    isClosed: isBulbLit,
-                    animationValue: _currentFlowController.value,
-                    switchInserted: _m1SwitchInserted,
+          // Layout com Gaveta Lateral de Componentes + Bancada de Montagem
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 1. Painel Lateral de Componentes para Arrastar (Toolbox)
+              _buildSideComponentToolbox(),
+
+              const SizedBox(width: 16),
+
+              // 2. Bancada de Montagem com DragTarget
+              Expanded(
+                child: Container(
+                  height: 270,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF031D17), Color(0xFF021410)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4), width: 1.2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.5),
+                        blurRadius: 16,
+                      ),
+                    ],
+                  ),
+                  child: Stack(
+                    children: [
+                      // 1. Fios Neons com Animação de Elétrons
+                      CustomPaint(
+                        size: Size.infinite,
+                        painter: CircuitWirePainter(
+                          isClosed: isBulbLit,
+                          animationValue: _currentFlowController.value,
+                          switchInserted: _m1SwitchInserted,
+                        ),
+                      ),
+
+                      // 2. Fonte (Bateria 4.5V)
+                      Positioned(
+                        left: 30,
+                        top: 80,
+                        child: _buildRealisticBattery(),
+                      ),
+
+                      // 3. Slot DragTarget do Interruptor (Topo Centro)
+                      Positioned(
+                        left: 230,
+                        top: 15,
+                        child: _m1SwitchInserted
+                            ? _buildSwitchControlCard(
+                                isClosed: _m1SwitchClosed,
+                                onToggle: () {
+                                  setState(() {
+                                    _m1SwitchClosed = !_m1SwitchClosed;
+                                  });
+                                },
+                              )
+                            : DragTarget<String>(
+                                onWillAcceptWithDetails: (details) => details.data == 'switch',
+                                onAcceptWithDetails: (details) {
+                                  setState(() {
+                                    _m1SwitchInserted = true;
+                                  });
+                                },
+                                builder: (context, candidateData, rejectedData) {
+                                  final isHovering = candidateData.isNotEmpty;
+                                  return _buildInsertSwitchSlot(
+                                    isHovering: isHovering,
+                                    onTap: () {
+                                      setState(() {
+                                        _m1SwitchInserted = true;
+                                      });
+                                    },
+                                  );
+                                },
+                              ),
+                      ),
+
+                      // 4. Luminária (Direita com Glow Halo)
+                      Positioned(
+                        right: 30,
+                        top: 70,
+                        child: _buildRealisticBulb(isLit: isBulbLit),
+                      ),
+                    ],
                   ),
                 ),
-
-                // 2. Fonte (Bateria 4.5V)
-                Positioned(
-                  left: 40,
-                  top: 75,
-                  child: _buildRealisticBattery(),
-                ),
-
-                // 3. Slot do Interruptor (Topo Centro)
-                Positioned(
-                  left: 280,
-                  top: 15,
-                  child: _m1SwitchInserted
-                      ? _buildSwitchControlCard(
-                          isClosed: _m1SwitchClosed,
-                          onToggle: () {
-                            setState(() {
-                              _m1SwitchClosed = !_m1SwitchClosed;
-                            });
-                          },
-                        )
-                      : _buildInsertSwitchSlot(
-                          onTap: () {
-                            setState(() {
-                              _m1SwitchInserted = true;
-                            });
-                          },
-                        ),
-                ),
-
-                // 4. Luminária (Direita com Glow Halo)
-                Positioned(
-                  right: 45,
-                  top: 65,
-                  child: _buildRealisticBulb(isLit: isBulbLit),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
 
           const SizedBox(height: 20),
@@ -537,6 +561,157 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Painel Lateral de Componentes (Toolbox Arrastável)
+  Widget _buildSideComponentToolbox() {
+    return Container(
+      width: 175,
+      height: 270,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF03261D),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 10,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.inventory_2_rounded, color: Color(0xFF10B981), size: 18),
+              const SizedBox(width: 6),
+              Text(
+                'COMPONENTES',
+                style: GoogleFonts.rajdhani(
+                  color: const Color(0xFF10B981),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  letterSpacing: 1.0,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Arraste para o circuito:',
+            style: GoogleFonts.outfit(color: Colors.white60, fontSize: 11),
+          ),
+          const Divider(color: Colors.white12, height: 16),
+
+          // Item Arrastável: Interruptor
+          Draggable<String>(
+            data: 'switch',
+            feedback: Material(
+              color: Colors.transparent,
+              child: _buildToolboxItemCard(
+                label: 'Interruptor',
+                icon: Icons.toggle_off_rounded,
+                color: Colors.amber,
+                isDraggingFeedback: true,
+              ),
+            ),
+            childWhenDragging: Opacity(
+              opacity: 0.3,
+              child: _buildToolboxItemCard(
+                label: 'Interruptor',
+                icon: Icons.toggle_off_rounded,
+                color: Colors.amber,
+              ),
+            ),
+            child: _buildToolboxItemCard(
+              label: 'Interruptor (SPST)',
+              icon: Icons.toggle_off_rounded,
+              color: _m1SwitchInserted ? Colors.grey : Colors.amber,
+              isInstalled: _m1SwitchInserted,
+              onTap: () {
+                if (!_m1SwitchInserted) {
+                  setState(() {
+                    _m1SwitchInserted = true;
+                  });
+                }
+              },
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          // Outros Componentes Informativos
+          _buildToolboxItemCard(
+            label: 'Bateria 4.5V',
+            icon: Icons.battery_charging_full_rounded,
+            color: const Color(0xFF10B981),
+            isInstalled: true,
+          ),
+          const SizedBox(height: 10),
+          _buildToolboxItemCard(
+            label: 'Lâmpada',
+            icon: Icons.lightbulb_rounded,
+            color: Colors.amberAccent,
+            isInstalled: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToolboxItemCard({
+    required String label,
+    required IconData icon,
+    required Color color,
+    bool isInstalled = false,
+    bool isDraggingFeedback = false,
+    VoidCallback? onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: isDraggingFeedback ? const Color(0xFF059669) : const Color(0xFF021E18),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isDraggingFeedback ? Colors.white : color.withValues(alpha: 0.5),
+            width: isDraggingFeedback ? 2 : 1,
+          ),
+          boxShadow: isDraggingFeedback
+              ? [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.5),
+                    blurRadius: 12,
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                style: GoogleFonts.outfit(
+                  color: isInstalled ? Colors.white54 : Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (isInstalled)
+              const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 14),
+          ],
+        ),
       ),
     );
   }
@@ -1243,26 +1418,44 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
     );
   }
 
-  Widget _buildInsertSwitchSlot({required VoidCallback onTap}) {
+  Widget _buildInsertSwitchSlot({bool isHovering = false, required VoidCallback onTap}) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.amber.withValues(alpha: 0.1),
+          color: isHovering
+              ? const Color(0xFF10B981).withValues(alpha: 0.3)
+              : Colors.amber.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.amber, width: 2),
+          border: Border.all(
+            color: isHovering ? const Color(0xFF10B981) : Colors.amber,
+            width: isHovering ? 2.5 : 2.0,
+          ),
+          boxShadow: isHovering
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.5),
+                    blurRadius: 14,
+                  ),
+                ]
+              : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.add_circle_outline_rounded, color: Colors.amber, size: 22),
+            Icon(
+              isHovering ? Icons.move_to_inbox_rounded : Icons.add_circle_outline_rounded,
+              color: isHovering ? const Color(0xFF10B981) : Colors.amber,
+              size: 22,
+            ),
             const SizedBox(width: 8),
             Text(
-              'Inserir Interruptor Aqui',
+              isHovering ? 'Solte para Encaixar o Interruptor!' : 'Solte ou Clique para Inserir Interruptor',
               style: GoogleFonts.rajdhani(
-                color: Colors.amber,
+                color: isHovering ? const Color(0xFF10B981) : Colors.amber,
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
                 letterSpacing: 0.8,
