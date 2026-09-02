@@ -18,16 +18,18 @@ Conhecer
 Ordem de evolucao:
 
 1. Confirmar regras pedagogicas e eletricas do circuito 9 V, SPST, 680 ohms e LED.
-2. Validar representacao com circuito fisico faded sob simbolos/esquema.
-3. Restringir conceitualmente a Bancada aos componentes, valores e regras da missao.
+2. Validar um slice de representacao: circuito ghost, alvos semanticos de simbolo e botao Testar.
+3. Evoluir para Conhecer, Inspecionar e Construir em Bancada restrita.
 4. Validar montagem por topologia, teste, correcao e feedback causal.
-5. Cobrir o comportamento eletrico e as interacoes relevantes com testes antes de escalar conteudo.
+5. Reparar a suite bloqueada por testes vazios e cobrir polaridade, protecao do LED, aberto/curto, snap, undo/redo e regras da missao antes de escalar conteudo.
+
+> A ordem de evolução é técnica e não representa a ordem pedagógica apresentada ao aluno.
 
 `FIRST_STAND.md` define o produto desta frente. Avaliacao e estrelas nao bloqueiam este roadmap: permanecem em validacao.
 
 ## Frente B - Proof of Architecture do Rele
 
-Esta frente ocorre relativamente cedo e pode ser conduzida em paralelo por outro integrante. Ela nao depende de implementar os estandes 2-8.
+Esta frente ocorre relativamente cedo e pode ser conduzida em paralelo por outro integrante. Ela nao depende de implementar os estandes 2-8. `PORTAO_DA_ESCOLA.md` e a especificacao em validacao desta frente.
 
 Objetivo: uma unica missao avancada do Portao da Escola que prove evolucao para componente multipinos, bobina, contatos, circuitos de comando/carga relacionados e controle indireto de uma carga simulada.
 

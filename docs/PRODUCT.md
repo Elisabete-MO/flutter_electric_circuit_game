@@ -10,6 +10,8 @@ O produto aproxima objeto fisico, linguagem esquematica e comportamento eletrico
 
 O estudante reconhece componentes, observa circuitos, relaciona objetos a simbolos tecnicos, testa hipoteses, diagnostica falhas e construi solucoes progressivamente. A Bancada Livre e um ativo reutilizavel para experimentacao e para missoes com liberdade controlada.
 
+O produto combina jogo guiado e experimentacao livre: a campanha oferece contexto e mediacao, enquanto a Bancada permite testar ideias quando a missao liberar essa liberdade. EletroLab usa codigo, textos, assets e identidade visual proprios; referencias externas inspiram comparacoes, nao sao conteudo a copiar.
+
 ## Contexto e vocabulario
 
 O vocabulario ativo e Feira de Ciencias, estande, missao/fase, demonstracao, bancada, experimento, maquete, visitantes e equipe.
@@ -33,6 +35,8 @@ EletroLab representa circuitos virtuais e kits didaticos de baixa tensao. Nunca 
 Precisao eletrica tem prioridade sobre conveniencia visual. Antes de aprovar um componente fisico ou asset, registrar nome tecnico, tipo/subtipo, terminais, funcao dos terminais, faixa eletrica relevante, polaridade, simbolo tecnico, referencia real confiavel e papel pedagogico. A aparencia nao basta para identificar um componente.
 
 LED exige polaridade e limitacao de corrente; tipos de interruptor nao sao intercambiaveis; rele precisa ser definido por seus terminais e comportamento; topologia determina serie/paralelo; `+` e `-` indicam polaridade/potencial, nao sentido da corrente.
+
+O produto e local-first no estado atual: preferencias e progresso sao locais, sem backend ou sincronizacao em nuvem. Isso descreve o escopo atual, nao impede decisao futura explicitamente aprovada.
 
 ## Decisoes aprovadas
 
