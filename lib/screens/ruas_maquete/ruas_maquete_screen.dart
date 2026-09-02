@@ -495,41 +495,83 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
                       _m1WireConnected = !_m1WireConnected;
                     });
                   },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  borderRadius: BorderRadius.circular(16),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                     decoration: BoxDecoration(
                       color: _m1WireConnected
-                          ? const Color(0xFF10B981).withValues(alpha: 0.2)
+                          ? const Color(0xFF064E3B)
                           : isHovered
-                              ? Colors.amber.withValues(alpha: 0.3)
-                              : const Color(0xFF1E293B),
+                              ? const Color(0xFF10B981).withValues(alpha: 0.3)
+                              : const Color(0xFF0F172A).withValues(alpha: 0.85),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: _m1WireConnected
                             ? const Color(0xFF10B981)
                             : isHovered
-                                ? Colors.amber
-                                : Colors.white30,
-                        width: 2,
+                                ? const Color(0xFF10B981)
+                                : Colors.amber,
+                        width: isHovered ? 2.5 : 2.0,
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: (_m1WireConnected || isHovered ? const Color(0xFF10B981) : Colors.amber).withValues(alpha: 0.3),
+                          blurRadius: 10,
+                        ),
+                      ],
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          _m1WireConnected ? Icons.check_circle_rounded : Icons.alt_route_rounded,
-                          color: _m1WireConnected ? const Color(0xFF10B981) : Colors.amberAccent,
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          _m1WireConnected
-                              ? 'Fio em Série Conectado (Rota Única)'
-                              : 'Arraste ou clique para Conectar Fio em Série',
-                          style: GoogleFonts.rajdhani(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            color: (_m1WireConnected || isHovered ? const Color(0xFF10B981) : Colors.amber).withValues(alpha: 0.2),
+                            border: Border.all(
+                              color: _m1WireConnected || isHovered ? const Color(0xFF10B981) : Colors.amber,
+                              width: 1.5,
+                            ),
                           ),
+                          child: Icon(
+                            _m1WireConnected
+                                ? Icons.check_circle_rounded
+                                : isHovered
+                                    ? Icons.move_to_inbox_rounded
+                                    : Icons.add_box_rounded,
+                            color: _m1WireConnected || isHovered ? const Color(0xFF10B981) : Colors.amber,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _m1WireConnected
+                                  ? '⚡ Fio em Série Conectado (Rota Única)'
+                                  : isHovered
+                                      ? '🎯 Solte para Encaixar Fio!'
+                                      : '➕ Encaixar Fio em Série',
+                              style: GoogleFonts.orbitron(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                            Text(
+                              _m1WireConnected
+                                  ? 'Clique para alternar conexão'
+                                  : 'Arraste o componente da gaveta ou clique aqui',
+                              style: GoogleFonts.rajdhani(
+                                color: Colors.white70,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),

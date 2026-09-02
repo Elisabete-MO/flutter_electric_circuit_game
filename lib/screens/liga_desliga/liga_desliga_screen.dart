@@ -1473,45 +1473,44 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
   }
 
   Widget _buildRealisticBulb({required bool isLit, String? label}) {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        if (isLit)
-          Container(
-            width: 90,
-            height: 90,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(
-                colors: [
-                  Colors.amberAccent.withValues(alpha: 0.6),
-                  Colors.amber.withValues(alpha: 0.15),
-                  Colors.transparent,
-                ],
-              ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: isLit ? const Color(0xFF451A03) : const Color(0xFF0F172A),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isLit ? Colors.amberAccent : Colors.white24,
+          width: 1.5,
+        ),
+        boxShadow: [
+          if (isLit)
+            BoxShadow(
+              color: Colors.amberAccent.withValues(alpha: 0.4),
+              blurRadius: 16,
+              spreadRadius: 2,
+            ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.lightbulb_rounded,
+            size: 42,
+            color: isLit ? Colors.amberAccent : Colors.white30,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label ?? (isLit ? 'LUMINÁRIA ACESA' : 'LUMINÁRIA DESLIGADA'),
+            style: GoogleFonts.rajdhani(
+              color: isLit ? Colors.amberAccent : Colors.white54,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+              letterSpacing: 0.8,
             ),
           ),
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.lightbulb_rounded,
-              size: 58,
-              color: isLit ? Colors.amberAccent : Colors.white30,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label ?? (isLit ? 'LUMINÁRIA ACESA' : 'DESLIGADA'),
-              style: GoogleFonts.rajdhani(
-                color: isLit ? Colors.amberAccent : Colors.white38,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-                letterSpacing: 0.8,
-              ),
-            ),
-          ],
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -1519,39 +1518,62 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
     return InkWell(
       onTap: onToggle,
       borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: isClosed ? const Color(0xFF10B981) : const Color(0xFF1E293B),
+          color: isClosed ? const Color(0xFF064E3B) : const Color(0xFF1E293B),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isClosed ? const Color(0xFF34D399) : Colors.white24,
-            width: 1.5,
+            color: isClosed ? const Color(0xFF10B981) : Colors.amber.withValues(alpha: 0.6),
+            width: 2.0,
           ),
           boxShadow: [
             BoxShadow(
               color: isClosed ? const Color(0xFF10B981).withValues(alpha: 0.4) : Colors.black45,
-              blurRadius: 10,
+              blurRadius: 12,
             ),
           ],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              isClosed ? Icons.toggle_on_rounded : Icons.toggle_off_rounded,
-              color: Colors.white,
-              size: 28,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label ?? (isClosed ? 'CHAVE FECHADA (ON)' : 'CHAVE ABERTA (OFF)'),
-              style: GoogleFonts.rajdhani(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-                letterSpacing: 0.8,
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: isClosed
+                    ? const Color(0xFF10B981).withValues(alpha: 0.3)
+                    : Colors.white10,
               ),
+              child: Icon(
+                isClosed ? Icons.toggle_on_rounded : Icons.toggle_off_rounded,
+                color: isClosed ? const Color(0xFF34D399) : Colors.amber,
+                size: 26,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label ?? 'INTERRUPTOR (SPST)',
+                  style: GoogleFonts.orbitron(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                  ),
+                ),
+                Text(
+                  isClosed ? 'FECHADO (ON)' : 'ABERTO (OFF)',
+                  style: GoogleFonts.rajdhani(
+                    color: isClosed ? const Color(0xFF34D399) : Colors.amber,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -1562,45 +1584,68 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
   Widget _buildInsertSwitchSlot({bool isHovering = false, required VoidCallback onTap}) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(16),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: isHovering
               ? const Color(0xFF10B981).withValues(alpha: 0.3)
-              : Colors.amber.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(14),
+              : const Color(0xFF0F172A).withValues(alpha: 0.85),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isHovering ? const Color(0xFF10B981) : Colors.amber,
             width: isHovering ? 2.5 : 2.0,
           ),
-          boxShadow: isHovering
-              ? [
-                  BoxShadow(
-                    color: const Color(0xFF10B981).withValues(alpha: 0.5),
-                    blurRadius: 14,
-                  ),
-                ]
-              : null,
+          boxShadow: [
+            BoxShadow(
+              color: (isHovering ? const Color(0xFF10B981) : Colors.amber).withValues(alpha: isHovering ? 0.5 : 0.2),
+              blurRadius: isHovering ? 14 : 8,
+              spreadRadius: isHovering ? 2 : 0,
+            ),
+          ],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              isHovering ? Icons.move_to_inbox_rounded : Icons.add_circle_outline_rounded,
-              color: isHovering ? const Color(0xFF10B981) : Colors.amber,
-              size: 22,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              isHovering ? 'Solte para Encaixar o Interruptor!' : 'Solte ou Clique para Inserir Interruptor',
-              style: GoogleFonts.rajdhani(
-                color: isHovering ? const Color(0xFF10B981) : Colors.amber,
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-                letterSpacing: 0.8,
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: (isHovering ? const Color(0xFF10B981) : Colors.amber).withValues(alpha: 0.2),
+                border: Border.all(
+                  color: isHovering ? const Color(0xFF10B981) : Colors.amber,
+                  width: 1.5,
+                ),
               ),
+              child: Icon(
+                isHovering ? Icons.move_to_inbox_rounded : Icons.add_box_rounded,
+                color: isHovering ? const Color(0xFF10B981) : Colors.amber,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isHovering ? '🎯 Solte para Encaixar!' : '➕ Encaixar Interruptor',
+                  style: GoogleFonts.orbitron(
+                    color: isHovering ? const Color(0xFF10B981) : Colors.amber,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+                Text(
+                  'Arraste o objeto ou clique aqui',
+                  style: GoogleFonts.rajdhani(
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
             ),
           ],
         ),

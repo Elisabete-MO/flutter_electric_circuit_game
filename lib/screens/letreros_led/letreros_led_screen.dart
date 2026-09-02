@@ -452,73 +452,122 @@ class _LetrerosLedScreenState extends State<LetrerosLedScreen>
           isLit: isLit,
         ),
 
-        // Soquete do LED na Bancada
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: const Color(0xFF0F172A),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isLit ? Colors.redAccent : Colors.white24,
-              width: 2,
-            ),
-          ),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('Polo (+) Ânodo', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
-                  const SizedBox(width: 20),
-                  Icon(
-                    _m1LedDirectPolarity ? Icons.arrow_forward_rounded : Icons.arrow_back_rounded,
-                    color: isLit ? Colors.amberAccent : Colors.white60,
-                  ),
-                  const SizedBox(width: 20),
-                  const Text('Polo (-) Cátodo', style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _m1LedInserted ? const Color(0xFF10B981) : const Color(0xFF1E293B),
-                      side: const BorderSide(color: Color(0xFF10B981)),
-                    ),
-                    icon: Icon(_m1LedInserted ? Icons.check : Icons.add_circle_outline),
-                    label: Text(
-                      _m1LedInserted ? 'LED No Soquete' : 'Inserir LED no Soquete',
-                      style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _m1LedInserted = !_m1LedInserted;
-                      });
-                    },
-                  ),
-                  const SizedBox(width: 12),
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1E293B),
-                      side: const BorderSide(color: Colors.amberAccent),
-                    ),
-                    icon: const Icon(Icons.flip_camera_android_rounded, color: Colors.amberAccent),
-                    label: Text(
-                      _m1LedDirectPolarity ? 'Polaridade: Ânodo (+) → Cátodo (-)' : 'Polaridade: Cátodo (-) → Ânodo (+)',
-                      style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _m1LedDirectPolarity = !_m1LedDirectPolarity;
-                      });
-                    },
+        // Soquete do LED na Bancada com DragTarget
+        DragTarget<String>(
+          onWillAcceptWithDetails: (details) => details.data == 'led_red',
+          onAcceptWithDetails: (details) {
+            setState(() {
+              _m1LedInserted = true;
+            });
+          },
+          builder: (context, candidateData, rejectedData) {
+            final isHovered = candidateData.isNotEmpty;
+            return Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: isHovered
+                    ? const Color(0xFF10B981).withValues(alpha: 0.25)
+                    : const Color(0xFF0F172A),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isHovered
+                      ? const Color(0xFF10B981)
+                      : isLit
+                          ? Colors.redAccent
+                          : Colors.amber,
+                  width: isHovered ? 2.5 : 2.0,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: (isHovered || isLit ? Colors.redAccent : Colors.amber).withValues(alpha: 0.3),
+                    blurRadius: 10,
                   ),
                 ],
               ),
-            ],
-          ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text('Polo (+) Ânodo', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                      const SizedBox(width: 20),
+                      Icon(
+                        _m1LedDirectPolarity ? Icons.arrow_forward_rounded : Icons.arrow_back_rounded,
+                        color: isLit ? Colors.amberAccent : Colors.white60,
+                      ),
+                      const SizedBox(width: 20),
+                      const Text('Polo (-) Cátodo', style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      InkWell(
+                        onTap: () {
+                          setState(() {
+                            _m1LedInserted = !_m1LedInserted;
+                          });
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: _m1LedInserted ? const Color(0xFF064E3B) : const Color(0xFF1E293B),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: _m1LedInserted ? const Color(0xFF10B981) : Colors.amber,
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                _m1LedInserted
+                                    ? Icons.check_circle_rounded
+                                    : isHovered
+                                        ? Icons.move_to_inbox_rounded
+                                        : Icons.add_box_rounded,
+                                color: _m1LedInserted ? const Color(0xFF10B981) : Colors.amber,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                _m1LedInserted
+                                    ? 'LED No Soquete'
+                                    : isHovered
+                                        ? '🎯 Solte Aqui!'
+                                        : '➕ Encaixar LED Vermelho',
+                                style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1E293B),
+                          side: const BorderSide(color: Colors.amberAccent),
+                        ),
+                        icon: const Icon(Icons.flip_camera_android_rounded, color: Colors.amberAccent),
+                        label: Text(
+                          _m1LedDirectPolarity ? 'Polaridade: Ânodo (+) → Cátodo (-)' : 'Polaridade: Cátodo (-) → Ânodo (+)',
+                          style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _m1LedDirectPolarity = !_m1LedDirectPolarity;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
         ),
       ],
     );
