@@ -332,9 +332,11 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
 
               const SizedBox(width: 24),
 
-              // 2. BALÃO DE FALA (Ao lado da Nuri, suspenso na altura ideal)
+              // 2. BALÃO DE FALA (Ao lado da Nuri, suspenso na altura do rosto/boca)
               Padding(
-                padding: const EdgeInsets.only(bottom: 28),
+                padding: EdgeInsets.only(
+                  bottom: (spriteHeight * 0.48).clamp(180.0, 260.0),
+                ),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 480),
                   child: SpeechBubbleWidget(
