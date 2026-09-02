@@ -16,29 +16,29 @@ class _HorizontalScrollBehavior extends ScrollBehavior {
 }
 
 /// Mapeamento de coordenadas (X, Y) fixas no canvas original de 4096 × 1152 px.
-class _StandPosition {
+class StandPosition {
   final double x;
   final double y;
-  const _StandPosition(this.x, this.y);
+  const StandPosition(this.x, this.y);
 }
 
 /// Mapeamento preciso das posições dos 12 estandes no cenário expandido de 4096 × 1152 px.
-const Map<int, _StandPosition> _standCanvasPositions = {
+const Map<int, StandPosition> _standCanvasPositions = {
   // Lado Esquerdo (0 a 2048 px)
-  1: _StandPosition(380, 270),   // Primeiros Passos (Tutorial) - Topo esquerdo
-  2: _StandPosition(380, 576),   // Acende Aí - Meio esquerdo
-  3: _StandPosition(380, 880),   // Liga e Desliga - Base esquerda
-  4: _StandPosition(1060, 360),  // Ruas da Maquete - Topo meio-esquerdo
-  5: _StandPosition(1060, 792),  // Letreros de LED - Base meio-esquerdo
-  6: _StandPosition(1620, 360),  // Movimento em Miniatura - Topo próximo à junção
+  1: StandPosition(380, 270),   // Primeiros Passos (Tutorial) - Topo esquerdo
+  2: StandPosition(380, 576),   // Acende Aí - Meio esquerdo
+  3: StandPosition(380, 880),   // Liga e Desliga - Base esquerda
+  4: StandPosition(1060, 360),  // Ruas da Maquete - Topo meio-esquerdo
+  5: StandPosition(1060, 792),  // Letreros de LED - Base meio-esquerdo
+  6: StandPosition(1620, 360),  // Movimento em Miniatura - Topo próximo à junção
 
   // Lado Direito (2048 a 4096 px)
-  7: _StandPosition(2476, 792),  // Mede, Testa e Explica - Base próximo à junção
-  8: _StandPosition(3040, 270),  // Circuito Seguro - Topo meio-direito
-  9: _StandPosition(3040, 576),  // Horta Monitorada - Meio meio-direito
-  10: _StandPosition(3040, 880), // Portão da Escola - Base meio-direito
-  11: _StandPosition(3580, 360), // Praça da Maquete Coletiva - Topo direito
-  12: _StandPosition(3780, 780), // Bancada Livre (3D Lab) - Final lado direito
+  7: StandPosition(2476, 792),  // Mede, Testa e Explica - Base próximo à junção
+  8: StandPosition(3040, 270),  // Circuito Seguro - Topo meio-direito
+  9: StandPosition(3040, 576),  // Horta Monitorada - Meio meio-direito
+  10: StandPosition(3040, 880), // Portão da Escola - Base meio-direito
+  11: StandPosition(3580, 360), // Praça da Maquete Coletiva - Topo direito
+  12: StandPosition(3780, 780), // Bancada Livre (3D Lab) - Final lado direito
 };
 
 /// Versão Experimental do Mapa da Feira de Ciências com Navegação Horizontal Contínua.
@@ -207,7 +207,7 @@ class _ExperimentalHorizontalMapState
                       // E. Marcadores dos Estandes (01 a 12)
                       ...widget.stands.map((stand) {
                         final pos = _standCanvasPositions[stand.number] ??
-                            const _StandPosition(2048, 576);
+                            const StandPosition(2048, 576);
 
                         final double standW = stand.isBancadaLivre
                             ? bancadaLivreW
@@ -326,18 +326,10 @@ class _AlphaLumenCentralLogo extends StatelessWidget {
                   SizedBox(
                     width: size * 0.34,
                     height: size * 0.34,
-                    child: Image.asset(
-                      'assets/stands/simbolo_instituto_alpha_lumen_oficial_transparente.png',
+                    child: const Icon(
+                      Icons.stars_rounded,
                       color: Colors.white,
-                      colorBlendMode: BlendMode.srcIn,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Icon(
-                          Icons.stars_rounded,
-                          color: Colors.white,
-                          size: 36,
-                        );
-                      },
+                      size: 36,
                     ),
                   ),
                   SizedBox(height: size * 0.04),
@@ -392,7 +384,7 @@ class _AlphaLumenCentralLogo extends StatelessWidget {
 class HorizontalProgressionPathPainter extends CustomPainter {
   final List<StandData> stands;
   final double scale;
-  final Map<int, _StandPosition> positions;
+  final Map<int, StandPosition> positions;
   final double centerLogoX;
   final double centerLogoY;
   final double centerLogoRadius;
@@ -436,12 +428,12 @@ class HorizontalProgressionPathPainter extends CustomPainter {
 
     final path = Path();
 
-    final firstPos = positions[stands.first.number] ?? const _StandPosition(0, 0);
+    final firstPos = positions[stands.first.number] ?? const StandPosition(0, 0);
     path.moveTo(firstPos.x * scale, firstPos.y * scale);
 
     for (int i = 0; i < stands.length - 1; i++) {
-      final pos1 = positions[stands[i].number] ?? const _StandPosition(0, 0);
-      final pos2 = positions[stands[i + 1].number] ?? const _StandPosition(0, 0);
+      final pos1 = positions[stands[i].number] ?? const StandPosition(0, 0);
+      final pos2 = positions[stands[i + 1].number] ?? const StandPosition(0, 0);
 
       final p1 = Offset(pos1.x * scale, pos1.y * scale);
       final p2 = Offset(pos2.x * scale, pos2.y * scale);

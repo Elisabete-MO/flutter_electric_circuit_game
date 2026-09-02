@@ -243,18 +243,10 @@ class _AlphaLumenCentralLogo extends StatelessWidget {
                   SizedBox(
                     width: size * 0.34,
                     height: size * 0.34,
-                    child: Image.asset(
-                      'assets/stands/simbolo_instituto_alpha_lumen_oficial_transparente.png',
+                    child: const Icon(
+                      Icons.stars_rounded,
                       color: Colors.white,
-                      colorBlendMode: BlendMode.srcIn,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Icon(
-                          Icons.stars_rounded,
-                          color: Colors.white,
-                          size: 32,
-                        );
-                      },
+                      size: 32,
                     ),
                   ),
 

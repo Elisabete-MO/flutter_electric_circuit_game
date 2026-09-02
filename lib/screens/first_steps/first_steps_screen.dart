@@ -17,7 +17,9 @@ import 'package:google_fonts/google_fonts.dart';
 /// Combina o grid de 8 quadrantes nítido (Imagem 2) com a faixa de instrução orientativa
 /// "Observe. You have to know these symbols for this activity." (Imagem 1).
 class FirstStepsScreen extends StatefulWidget {
-  const FirstStepsScreen({super.key});
+  final VoidCallback? onPhaseComplete;
+
+  const FirstStepsScreen({super.key, this.onPhaseComplete});
 
   @override
   State<FirstStepsScreen> createState() => _FirstStepsScreenState();
@@ -190,55 +192,89 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
                   const SizedBox(height: 24),
 
                   // 4. Botões de Ação
-                  Row(
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                            _resetStudyMode();
-                          },
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: theme.colorScheme.onSurface.withValues(alpha: 0.3)),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
+                      if (isSuccess && widget.onPhaseComplete != null) ...[
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton.icon(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                              widget.onPhaseComplete?.call();
+                            },
+                            icon: const Icon(Icons.arrow_forward_rounded),
+                            label: Text(
+                              'AVANÇAR PARA A FASE 2',
+                              style: TextStyle(
+                                fontFamily: GoogleFonts.rajdhani().fontFamily,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.2,
+                              ),
                             ),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                          child: Text(
-                            l10n.quizBackStudy,
-                            style: TextStyle(
-                              fontFamily: GoogleFonts.rajdhani().fontFamily,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.0,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: FilledButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                            _startQuizMode();
-                          },
-                          style: FilledButton.styleFrom(
-                            backgroundColor: accentColor,
-                            foregroundColor: buttonTextColor,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                          child: Text(
-                            l10n.buttonRetry,
-                            style: TextStyle(
-                              fontFamily: GoogleFonts.rajdhani().fontFamily,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.0,
+                            style: FilledButton.styleFrom(
+                              backgroundColor: const Color(0xFF00FF9D),
+                              foregroundColor: Colors.black,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
                             ),
                           ),
                         ),
+                        const SizedBox(height: 12),
+                      ],
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                                _resetStudyMode();
+                              },
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(color: theme.colorScheme.onSurface.withValues(alpha: 0.3)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                              ),
+                              child: Text(
+                                l10n.quizBackStudy,
+                                style: TextStyle(
+                                  fontFamily: GoogleFonts.rajdhani().fontFamily,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.0,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: FilledButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                                _startQuizMode();
+                              },
+                              style: FilledButton.styleFrom(
+                                backgroundColor: accentColor,
+                                foregroundColor: buttonTextColor,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                              ),
+                              child: Text(
+                                l10n.buttonRetry,
+                                style: TextStyle(
+                                  fontFamily: GoogleFonts.rajdhani().fontFamily,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.0,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../screens/first_bench/first_bench_flow_screen.dart';
 import '../screens/first_steps/first_steps_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/intro_screen.dart';
@@ -13,6 +14,7 @@ abstract final class Routes {
   static const String intro = '/intro';
   static const String home = '/home';
   static const String firstSteps = '/first-steps';
+  static const String firstBench = '/first-bench';
   static const String sandbox = '/sandbox';
   static const String settings = '/settings';
 
@@ -21,6 +23,7 @@ abstract final class Routes {
     intro: (_) => const IntroScreen(),
     home: (_) => const HomeScreen(),
     firstSteps: (_) => const FirstStepsScreen(),
+    firstBench: (_) => const FirstBenchFlowScreen(),
     sandbox: (_) => const SandboxScreen(),
     settings: (_) => const SettingsScreen(),
   };

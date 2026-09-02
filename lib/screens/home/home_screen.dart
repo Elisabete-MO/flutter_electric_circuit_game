@@ -49,9 +49,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (stand.isBancadaLivre) {
       Navigator.of(context).pushNamed(Routes.sandbox);
     } else if (stand.number == 1) {
-      Navigator.of(context).pushNamed(Routes.firstSteps);
+      Navigator.of(context).pushNamed(Routes.firstBench);
     } else {
-      Navigator.of(context).pushNamed(Routes.firstSteps);
+      Navigator.of(context).pushNamed(Routes.firstBench);
     }
   }
 

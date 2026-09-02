@@ -11,7 +11,7 @@ class SymbolCard extends StatefulWidget {
   const SymbolCard({
     super.key,
     required this.component,
-    required this.onTap,
+    this.onTap,
     this.onToggleState,
     this.isSelected = false,
     this.showLabels = true,
@@ -20,7 +20,7 @@ class SymbolCard extends StatefulWidget {
   });
 
   final FirstStepComponent component;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final VoidCallback? onToggleState;
   final bool isSelected;
   final bool showLabels;
