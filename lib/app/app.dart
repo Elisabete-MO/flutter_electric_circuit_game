@@ -29,7 +29,7 @@ class EletroLabApp extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: AppLocalizations.supportedLocales,
-      initialRoute: Routes.home,
+      initialRoute: Routes.menu,
       routes: Routes.all,
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(context).copyWith(

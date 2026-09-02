@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/routes.dart';
-import '../../app/theme.dart';
 import '../../models/stand_data.dart';
 import 'widgets/experimental_horizontal_map.dart';
 import 'widgets/science_fair_map.dart';
@@ -127,92 +126,112 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF021712), // Fundo escuro esmeralda
-      body: SafeArea(
-        child: Column(
-          children: [
-            // 1. Barra Superior (Header Bar)
-            _buildHeader(context),
+      body: Stack(
+        children: [
+          // 1. Área Principal: Mapa Imersivo da Feira preenchendo toda a tela
+          Positioned.fill(
+            child: useExperimentalHorizontalMap
+                ? ExperimentalHorizontalMap(
+                    stands: _stands,
+                    selectedStand: _selectedStand,
+                    onSelectStand: _onSelectStand,
+                    onStartMission: _onStartMission,
+                    onCloseCard: _onCloseCard,
+                    onTapMaqueteColetiva: _onTapMaqueteColetiva,
+                  )
+                : ScienceFairMap(
+                    stands: _stands,
+                    selectedStand: _selectedStand,
+                    onSelectStand: _onSelectStand,
+                    onStartMission: _onStartMission,
+                    onCloseCard: _onCloseCard,
+                    onTapMaqueteColetiva: _onTapMaqueteColetiva,
+                  ),
+          ),
 
-            // 2. Área Principal: Mapa da Feira preenchendo todo o espaço com o fundo
-            Expanded(
-              child: useExperimentalHorizontalMap
-                  ? ExperimentalHorizontalMap(
-                      stands: _stands,
-                      selectedStand: _selectedStand,
-                      onSelectStand: _onSelectStand,
-                      onStartMission: _onStartMission,
-                      onCloseCard: _onCloseCard,
-                      onTapMaqueteColetiva: _onTapMaqueteColetiva,
-                    )
-                  : ScienceFairMap(
-                      stands: _stands,
-                      selectedStand: _selectedStand,
-                      onSelectStand: _onSelectStand,
-                      onStartMission: _onStartMission,
-                      onCloseCard: _onCloseCard,
-                      onTapMaqueteColetiva: _onTapMaqueteColetiva,
-                    ),
+          // 2. Ícones Flutuantes no Canto Inferior Direito (Voltar ao Menu Principal & Configurações)
+          Positioned(
+            bottom: 24,
+            right: 24,
+            child: SafeArea(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Ícone de Voltar ao Menu Principal
+                  _buildFloatingIconButton(
+                    context,
+                    icon: Icons.home_rounded,
+                    tooltip: 'Menu Principal',
+                    accentColor: const Color(0xFF10B981),
+                    onTap: () {
+                      if (Navigator.of(context).canPop()) {
+                        Navigator.of(context).pop();
+                      } else {
+                        Navigator.of(context).pushReplacementNamed(Routes.menu);
+                      }
+                    },
+                  ),
+                  const SizedBox(width: 12),
+                  // Ícone de Configurações
+                  _buildFloatingIconButton(
+                    context,
+                    icon: Icons.settings_rounded,
+                    tooltip: 'Configurações',
+                    accentColor: Colors.white,
+                    onTap: () => Navigator.of(context).pushNamed(Routes.settings),
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: const BoxDecoration(
-        color: Color(0xFF04382B), // Verde esmeralda escuro elegante
-        border: Border(
-          bottom: BorderSide(
-            color: Color(0xFF059669),
-            width: 1.5,
-          ),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // High-Contrast Header Logo
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.bolt_rounded,
-                color: EletroLabColors.neonCyan,
-                size: 30,
-                shadows: [
-                  Shadow(
-                    color: EletroLabColors.neonCyan.withValues(alpha: 0.6),
-                    blurRadius: 10,
-                  ),
-                ],
+  /// Botão Flutuante Circular com estilo Glassmorphic
+  Widget _buildFloatingIconButton(
+    BuildContext context, {
+    required IconData icon,
+    required String tooltip,
+    required Color accentColor,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: Tooltip(
+        message: tooltip,
+        child: InkWell(
+          onTap: onTap,
+          customBorder: const CircleBorder(),
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xEE03281E),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: const Color(0xFF10B981).withValues(alpha: 0.5),
+                width: 1.5,
               ),
-              const SizedBox(width: 8),
-              const Text(
-                'EletroLab',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 22,
-                  letterSpacing: 1.0,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  blurRadius: 14,
+                  offset: const Offset(0, 4),
                 ),
-              ),
-            ],
-          ),
-
-          // Ícone de Configurações
-          IconButton(
-            onPressed: () => Navigator.of(context).pushNamed(Routes.settings),
-            tooltip: 'Configurações',
-            icon: const Icon(
-              Icons.settings_rounded,
-              color: Colors.white,
+                BoxShadow(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                  blurRadius: 10,
+                ),
+              ],
+            ),
+            child: Icon(
+              icon,
+              color: accentColor,
               size: 24,
             ),
           ),
-        ],
+        ),
       ),
     );
   }

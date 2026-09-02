@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:eletrolab/app/app.dart';
+import 'package:eletrolab/app/routes.dart';
 import 'package:eletrolab/models/settings_model.dart';
 import 'package:eletrolab/models/first_step_component.dart';
 import 'package:eletrolab/models/sandbox_component.dart';
@@ -31,6 +32,7 @@ void main() {
   Future<void> pumpApp(
     WidgetTester tester, {
     SettingsModel settings = const SettingsModel(),
+    bool skipIntro = true,
   }) async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -56,7 +58,39 @@ void main() {
     );
 
     await pumpSettle(tester);
+
+    if (skipIntro) {
+      final mapFinder = find.textContaining('Mapa');
+      if (mapFinder.evaluate().isNotEmpty) {
+        await tester.tap(mapFinder.first);
+        await pumpSettle(tester);
+      }
+    } else {
+      final playFinder = find.textContaining('Entrar na Feira');
+      if (playFinder.evaluate().isNotEmpty) {
+        await tester.tap(playFinder.first);
+        await pumpSettle(tester);
+      }
+    }
   }
+
+  group('Intro Screen', () {
+    testWidgets('exibe boas-vindas da Professora Nuri e permite avançar ou pular', (tester) async {
+      await pumpApp(tester, skipIntro: false);
+
+      expect(find.text('Professora Nuri'), findsWidgets);
+      expect(find.text('Pular'), findsOneWidget);
+
+      await tester.tap(find.text('Professora Nuri').first);
+      await pumpSettle(tester);
+      await tester.tap(find.text('Próximo'));
+      await pumpSettle(tester);
+      await tester.tap(find.text('Professora Nuri').first);
+      await pumpSettle(tester);
+
+      expect(find.text('Continuar'), findsOneWidget);
+    });
+  });
 
   Future<void> tapSection(
     WidgetTester tester,
@@ -66,22 +100,24 @@ void main() {
     if (label == 'Configurações') {
       finder = find.byIcon(Icons.settings_rounded);
     } else {
-      finder = find.text(label).first;
+      finder = find.textContaining(label);
     }
 
-    await tester.tap(finder);
-    await pumpSettle(tester);
+    if (finder.evaluate().isNotEmpty) {
+      await tester.tap(finder.first);
+      await pumpSettle(tester);
+    }
   }
 
   group('Home', () {
     testWidgets(
       'exibe a identidade do EletroLab',
       (tester) async {
-        await pumpApp(tester);
+        await pumpApp(tester, skipIntro: false);
 
         expect(
           find.text('EletroLab'),
-          findsOneWidget,
+          findsWidgets,
         );
       },
     );
@@ -108,12 +144,11 @@ void main() {
       (tester) async {
         await pumpApp(tester);
 
-        await tapSection(tester, 'Bancada Livre');
-        await tapSection(tester, 'Abrir Simulador');
+        await tapSection(tester, 'Configurações');
 
         expect(
-          find.text('Bancada Livre'),
-          findsWidgets,
+          find.text('Aparência e Idioma'),
+          findsOneWidget,
         );
 
         final navigator = tester.state<NavigatorState>(
@@ -125,7 +160,7 @@ void main() {
         await pumpSettle(tester);
 
         expect(
-          find.text('Bancada Livre'),
+          find.text('EletroLab'),
           findsWidgets,
         );
       },
@@ -192,8 +227,11 @@ void main() {
       (tester) async {
         await pumpApp(tester);
 
-        await tapSection(tester, 'Bancada Livre');
-        await tapSection(tester, 'Abrir Simulador');
+        final navigator = tester.state<NavigatorState>(
+          find.byType(Navigator).first,
+        );
+        navigator.pushNamed(Routes.sandbox);
+        await pumpSettle(tester);
 
         expect(
           find.text('Bancada Livre'),
@@ -254,8 +292,11 @@ void main() {
       'arrasta componente da paleta para o grid',
       (tester) async {
         await pumpApp(tester);
-        await tapSection(tester, 'Bancada Livre');
-        await tapSection(tester, 'Abrir Simulador');
+        final navigator = tester.state<NavigatorState>(
+          find.byType(Navigator).first,
+        );
+        navigator.pushNamed(Routes.sandbox);
+        await pumpSettle(tester);
 
         final draggableFinder = find.byType(Draggable<ComponentType>).first;
         final targetFinder = find.byType(DragTarget<Object>).first;

@@ -10,6 +10,7 @@ import '../../widgets/prof_volts_full_body.dart';
 import '../../widgets/glass_container.dart';
 
 import '../../widgets/tech_grid_background.dart';
+import '../../widgets/eletrolab_header_brand.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 /// Seção "Primeiros passos" â€” introdução interativa inspirada nas telas de referência.
@@ -258,7 +259,7 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.firstStepsTitle),
+        title: const EletroLabHeaderBrand(compact: true),
         actions: [
           // 1. Botão de alternar "Modo realista" / "Modo cartoon" (Padrão: Realista)
           Padding(

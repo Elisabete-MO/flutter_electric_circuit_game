@@ -55,18 +55,18 @@ class _EletroLabLogoState extends State<EletroLabLogo> with SingleTickerProvider
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Raio Azul com Brilho Neon Pulsante
+                // Raio Verde Esmeralda com Brilho Neon Pulsante
                 Icon(
                   Icons.bolt_rounded,
-                  color: EletroLabColors.neonCyan, // Azul Neon / Cyan
+                  color: const Color(0xFF10B981), // Verde Esmeralda
                   size: iconSize,
                   shadows: [
                     Shadow(
-                      color: EletroLabColors.electricBlue.withValues(alpha: glowValue * 0.8),
+                      color: const Color(0xFF10B981).withValues(alpha: glowValue * 0.8),
                       blurRadius: 10 + glowValue * 15,
                     ),
                     Shadow(
-                      color: EletroLabColors.neonCyan.withValues(alpha: glowValue * 0.6),
+                      color: const Color(0xFF34D399).withValues(alpha: glowValue * 0.6),
                       blurRadius: 20 + glowValue * 25,
                     ),
                   ],
@@ -105,11 +105,11 @@ class _EletroLabLogoState extends State<EletroLabLogo> with SingleTickerProvider
         if (!widget.compact) ...[
           const SizedBox(height: 8),
           Text(
-            'LABORATÓRIO VIRTUAL DE CIRCUITOS',
+            'Laboratório Virtual de Circuitos',
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-              letterSpacing: 2.0,
-              fontWeight: FontWeight.w900,
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+              letterSpacing: 1.2,
+              fontWeight: FontWeight.w700,
               fontSize: 13,
             ),
             textAlign: TextAlign.center,
