@@ -49,112 +49,166 @@ class StandInfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final IconData standIcon = _getStandIcon(stand.number, stand.isBancadaLivre);
+    final numberFormatted = stand.number < 10 ? '0${stand.number}' : '${stand.number}';
 
-    return Transform(
-      alignment: Alignment.bottomCenter,
-      transform: Matrix4.identity()
-        ..setEntry(3, 2, 0.001) // Projeção de perspectiva 3D top-down
-        ..rotateX(-0.06), // Inclinação suave alinhada ao mapa da quadra
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 300),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF042920), Color(0xFF021612)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.65),
+            blurRadius: 24,
+            spreadRadius: 3,
+            offset: const Offset(0, 10),
+          ),
+          BoxShadow(
+            color: const Color(0xFF10B981).withValues(alpha: 0.25),
+            blurRadius: 16,
+            spreadRadius: 0,
+          ),
+        ],
+        border: Border.all(
+          color: const Color(0xFF10B981),
+          width: 1.2,
+        ),
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            constraints: const BoxConstraints(maxWidth: 270),
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF063328), Color(0xFF021B15)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.55),
-                  blurRadius: 22,
-                  spreadRadius: 2,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-              border: Border.all(
-                color: const Color(0xFF059669),
-                width: 1.5,
-              ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header Row: Icon + Title & Close Button
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF10B981).withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: const Color(0xFF10B981).withValues(alpha: 0.4),
+          // 1. Top Image Preview with Close Button & Number Tag
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+                child: SizedBox(
+                  height: 120,
+                  width: double.infinity,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.asset(
+                        stand.asset,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: const Color(0xFF0F172A),
+                          child: const Icon(Icons.science_rounded, color: Colors.white38, size: 40),
                         ),
                       ),
-                      child: Icon(
-                        standIcon,
-                        size: 20,
-                        color: const Color(0xFF34D399),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            stand.name,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w900,
-                              fontSize: 16.0,
-                              letterSpacing: -0.2,
-                            ),
-                          ),
-                          Text(
-                            stand.team,
-                            style: const TextStyle(
-                              color: Color(0xFF34D399),
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12.0,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    InkWell(
-                      onTap: onClose,
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
+                      Container(
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.close_rounded,
-                          size: 16,
-                          color: Colors.white70,
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.black.withValues(alpha: 0.2),
+                              const Color(0xFF042920),
+                            ],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
                         ),
                       ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Stand Number Badge on Preview Image
+              Positioned(
+                top: 10,
+                left: 10,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF021612).withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: const Color(0xFF10B981), width: 1.0),
+                    boxShadow: const [
+                      BoxShadow(color: Colors.black45, blurRadius: 4),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(standIcon, size: 14, color: const Color(0xFF34D399)),
+                      const SizedBox(width: 4),
+                      Text(
+                        'ESTANDE $numberFormatted',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 11,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Close Button
+              Positioned(
+                top: 10,
+                right: 10,
+                child: InkWell(
+                  onTap: onClose,
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    padding: const EdgeInsets.all(5),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.6),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white30, width: 0.8),
                     ),
-                  ],
+                    child: const Icon(
+                      Icons.close_rounded,
+                      size: 16,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          // 2. Body Details
+          Padding(
+            padding: const EdgeInsets.all(14.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  stand.name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 17.0,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  stand.team,
+                  style: const TextStyle(
+                    color: Color(0xFF34D399),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12.0,
+                  ),
                 ),
                 const SizedBox(height: 10),
 
-                // Concept Description
+                // Concept Description Box
                 Container(
-                  padding: const EdgeInsets.all(9),
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.25),
+                    color: Colors.black.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                       color: Colors.white.withValues(alpha: 0.08),
@@ -165,29 +219,26 @@ class StandInfoCard extends StatelessWidget {
                     style: const TextStyle(
                       color: Color(0xFFE2E8F0),
                       fontSize: 12.0,
-                      height: 1.3,
+                      height: 1.35,
                     ),
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
 
-                // Progress Header
+                // Mission Progress Header
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Flexible(
-                      child: Text(
-                        !stand.hasMissions
-                            ? (stand.isBancadaLivre
-                                ? 'Simulador 3D Livre'
-                                : 'Tutorial Introdutório')
-                            : 'Progresso da Equipe',
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Color(0xFF94A3B8),
-                          fontWeight: FontWeight.w700,
-                          fontSize: 11.5,
-                        ),
+                    Text(
+                      !stand.hasMissions
+                          ? (stand.isBancadaLivre
+                              ? 'Simulador 3D Livre'
+                              : 'Tutorial Introdutório')
+                          : 'Progresso da Equipe',
+                      style: const TextStyle(
+                        color: Color(0xFF94A3B8),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11.5,
                       ),
                     ),
                     if (stand.hasMissions)
@@ -203,7 +254,7 @@ class StandInfoCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
 
-                // 5 Circles Progress Indicator Bar (only shown for stands with missions)
+                // 5 Circles Progress Indicator Bar
                 if (stand.hasMissions) ...[
                   Row(
                     children: List.generate(stand.totalMissions, (index) {
@@ -211,8 +262,8 @@ class StandInfoCard extends StatelessWidget {
                       return Padding(
                         padding: const EdgeInsets.only(right: 6.0),
                         child: Container(
-                          width: 15,
-                          height: 15,
+                          width: 14,
+                          height: 14,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: isFilled
@@ -222,13 +273,13 @@ class StandInfoCard extends StatelessWidget {
                               color: isFilled
                                   ? const Color(0xFF10B981)
                                   : const Color(0xFF64748B),
-                              width: 2.0,
+                              width: 1.8,
                             ),
                           ),
                           child: isFilled
                               ? const Icon(
                                   Icons.check_rounded,
-                                  size: 10,
+                                  size: 9,
                                   color: Colors.white,
                                 )
                               : null,
@@ -238,10 +289,10 @@ class StandInfoCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 14),
                 ] else ...[
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 10),
                 ],
 
-                // Action Button ("Começar missão" / "Iniciar Tutorial" / "Abrir Simulador")
+                // Action Button
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
@@ -249,8 +300,8 @@ class StandInfoCard extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF10B981),
                       foregroundColor: const Color(0xFF022C22),
-                      elevation: 3,
-                      padding: const EdgeInsets.symmetric(vertical: 11.5),
+                      elevation: 4,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -270,7 +321,7 @@ class StandInfoCard extends StatelessWidget {
                     ),
                     label: Text(
                       stand.isBancadaLivre
-                          ? 'Abrir Simulador'
+                          ? 'Abrir Simulador 3D'
                           : (stand.number == 1
                               ? 'Iniciar Tutorial'
                               : 'Começar missão'),
@@ -280,49 +331,8 @@ class StandInfoCard extends StatelessWidget {
               ],
             ),
           ),
-
-          // Arrow Pointer at Bottom
-          Padding(
-            padding: const EdgeInsets.only(left: 32.0),
-            child: CustomPaint(
-              size: const Size(18, 10),
-              painter: _CardArrowPainter(),
-            ),
-          ),
         ],
       ),
     );
   }
-}
-
-class _CardArrowPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFF021B15)
-      ..style = PaintingStyle.fill;
-
-    final path = Path()
-      ..moveTo(0, 0)
-      ..lineTo(size.width / 2, size.height)
-      ..lineTo(size.width, 0)
-      ..close();
-
-    canvas.drawPath(path, paint);
-
-    final borderPaint = Paint()
-      ..color = const Color(0xFF059669)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-
-    final borderPath = Path()
-      ..moveTo(0, 0)
-      ..lineTo(size.width / 2, size.height)
-      ..lineTo(size.width, 0);
-
-    canvas.drawPath(borderPath, borderPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
