@@ -4,10 +4,12 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../models/stand_mission.dart';
 import '../../models/first_step_component.dart';
+import '../../models/circuit_action.dart';
 import '../../state/circuit_undo_redo_controller.dart';
 import '../../state/progress_controller.dart';
 import '../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../widgets/physical_blueprint_socket.dart';
+import '../../widgets/schematic_blueprint_socket.dart';
 import '../../widgets/realistic_wire_painter.dart';
 import '../../widgets/component_vector_painters.dart';
 import '../../widgets/component_physical_painter.dart';
@@ -126,6 +128,36 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
           break;
       }
     });
+  }
+
+  void _insertComponent({
+    required String name,
+    required bool Function() getInserted,
+    required void Function(bool) setInserted,
+    required double Function() getRotation,
+    required void Function(double) setRotation,
+  }) {
+    final prevInserted = getInserted();
+    final prevRotation = getRotation();
+    _undoRedoController.execute(InsertComponentAction(
+      description: 'Inserir $name',
+      onApply: () => setState(() { setInserted(true); setRotation(0); }),
+      onUndo: () => setState(() { setInserted(prevInserted); setRotation(prevRotation); }),
+    ));
+  }
+
+  void _rotateComponent({
+    required String name,
+    required double Function() getRotation,
+    required void Function(double) setRotation,
+  }) {
+    final prevRotation = getRotation();
+    final newRotation = (prevRotation + 90) % 360;
+    _undoRedoController.execute(RotateComponentAction(
+      description: 'Girar $name',
+      onApply: () => setState(() => setRotation(newRotation)),
+      onUndo: () => setState(() => setRotation(prevRotation)),
+    ));
   }
 
   Future<void> _validateCurrentMission() async {
@@ -766,19 +798,36 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
 
   /// Circuito Específico de acordo com a missão atual
   Widget _buildCircuitBenchForCurrentMission() {
-    switch (_currentMissionIndex) {
-      case 0:
-        return _buildM1Circuit();
-      case 1:
-        return _buildM2Circuit();
-      case 2:
-        return _buildM3Circuit();
-      case 3:
-        return _buildM4Circuit();
-      case 4:
-        return _buildM5Circuit();
-      default:
-        return const SizedBox.shrink();
+    if (_usePhysicalStyle) {
+      switch (_currentMissionIndex) {
+        case 0:
+          return _buildM1Physical();
+        case 1:
+          return _buildM2Physical();
+        case 2:
+          return _buildM3Physical();
+        case 3:
+          return _buildM4Physical();
+        case 4:
+          return _buildM5Physical();
+        default:
+          return const SizedBox.shrink();
+      }
+    } else {
+      switch (_currentMissionIndex) {
+        case 0:
+          return _buildM1Schematic();
+        case 1:
+          return _buildM2Schematic();
+        case 2:
+          return _buildM3Schematic();
+        case 3:
+          return _buildM4Schematic();
+        case 4:
+          return _buildM5Schematic();
+        default:
+          return const SizedBox.shrink();
+      }
     }
   }
 
@@ -857,7 +906,7 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
     );
   }
 
-  Widget _buildM1Circuit() {
+  Widget _buildM1Physical() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -889,8 +938,18 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                         width: 95,
                         height: 95,
                         showLabel: false,
-                        onAccept: (_) => setState(() => _m1BatteryInserted = true),
-                        onRotate: () => setState(() => _m1BatteryRotation = (_m1BatteryRotation + 90) % 360),
+                        onAccept: (_) => _insertComponent(
+                          name: 'Bateria',
+                          getInserted: () => _m1BatteryInserted,
+                          setInserted: (v) => _m1BatteryInserted = v,
+                          getRotation: () => _m1BatteryRotation,
+                          setRotation: (v) => _m1BatteryRotation = v,
+                        ),
+                        onRotate: () => _rotateComponent(
+                          name: 'Bateria',
+                          getRotation: () => _m1BatteryRotation,
+                          setRotation: (v) => _m1BatteryRotation = v,
+                        ),
                         onTap: () {},
                         symbolWidget: _usePhysicalStyle
                             ? CustomPaint(
@@ -944,7 +1003,7 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
   }
 
   /// M2: Queda de Tensão na Lâmpada
-  Widget _buildM2Circuit() {
+  Widget _buildM2Physical() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -1016,8 +1075,18 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                         width: 95,
                         height: 95,
                         showLabel: false,
-                        onAccept: (_) => setState(() => _m2BatteryInserted = true),
-                        onRotate: () => setState(() => _m2BatteryRotation = (_m2BatteryRotation + 90) % 360),
+                        onAccept: (_) => _insertComponent(
+                          name: 'Bateria',
+                          getInserted: () => _m2BatteryInserted,
+                          setInserted: (v) => _m2BatteryInserted = v,
+                          getRotation: () => _m2BatteryRotation,
+                          setRotation: (v) => _m2BatteryRotation = v,
+                        ),
+                        onRotate: () => _rotateComponent(
+                          name: 'Bateria',
+                          getRotation: () => _m2BatteryRotation,
+                          setRotation: (v) => _m2BatteryRotation = v,
+                        ),
                         onTap: () {},
                         symbolWidget: _usePhysicalStyle
                             ? CustomPaint(
@@ -1048,8 +1117,18 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                         width: 95,
                         height: 95,
                         showLabel: false,
-                        onAccept: (_) => setState(() => _m2BulbInserted = true),
-                        onRotate: () => setState(() => _m2BulbRotation = (_m2BulbRotation + 90) % 360),
+                        onAccept: (_) => _insertComponent(
+                          name: 'Lâmpada',
+                          getInserted: () => _m2BulbInserted,
+                          setInserted: (v) => _m2BulbInserted = v,
+                          getRotation: () => _m2BulbRotation,
+                          setRotation: (v) => _m2BulbRotation = v,
+                        ),
+                        onRotate: () => _rotateComponent(
+                          name: 'Lâmpada',
+                          getRotation: () => _m2BulbRotation,
+                          setRotation: (v) => _m2BulbRotation = v,
+                        ),
                         onTap: () {},
                         symbolWidget: _usePhysicalStyle
                             ? CustomPaint(
@@ -1105,7 +1184,7 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
   }
 
   /// M3: Resistência e Corrente (Reostato Didático)
-  Widget _buildM3Circuit() {
+  Widget _buildM3Physical() {
     final currentMa = (9.0 / _m3ResistanceValue) * 1000.0;
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -1196,8 +1275,18 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                         width: 95,
                         height: 95,
                         showLabel: false,
-                        onAccept: (_) => setState(() => _m3BatteryInserted = true),
-                        onRotate: () => setState(() => _m3BatteryRotation = (_m3BatteryRotation + 90) % 360),
+                        onAccept: (_) => _insertComponent(
+                          name: 'Bateria',
+                          getInserted: () => _m3BatteryInserted,
+                          setInserted: (v) => _m3BatteryInserted = v,
+                          getRotation: () => _m3BatteryRotation,
+                          setRotation: (v) => _m3BatteryRotation = v,
+                        ),
+                        onRotate: () => _rotateComponent(
+                          name: 'Bateria',
+                          getRotation: () => _m3BatteryRotation,
+                          setRotation: (v) => _m3BatteryRotation = v,
+                        ),
                         onTap: () {},
                         symbolWidget: _usePhysicalStyle
                             ? CustomPaint(size: const Size(55, 55), painter: ComponentPhysicalPainter(type: ComponentType.battery, isDarkMode: false))
@@ -1215,8 +1304,18 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                         width: 95,
                         height: 95,
                         showLabel: false,
-                        onAccept: (_) => setState(() => _m3ResistorInserted = true),
-                        onRotate: () => setState(() => _m3ResistorRotation = (_m3ResistorRotation + 90) % 360),
+                        onAccept: (_) => _insertComponent(
+                          name: 'Resistor',
+                          getInserted: () => _m3ResistorInserted,
+                          setInserted: (v) => _m3ResistorInserted = v,
+                          getRotation: () => _m3ResistorRotation,
+                          setRotation: (v) => _m3ResistorRotation = v,
+                        ),
+                        onRotate: () => _rotateComponent(
+                          name: 'Resistor',
+                          getRotation: () => _m3ResistorRotation,
+                          setRotation: (v) => _m3ResistorRotation = v,
+                        ),
                         onTap: () {},
                         symbolWidget: _usePhysicalStyle
                             ? CustomPaint(size: const Size(55, 55), painter: ComponentPhysicalPainter(type: ComponentType.resistor, isDarkMode: false))
@@ -1234,8 +1333,18 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                         width: 95,
                         height: 95,
                         showLabel: false,
-                        onAccept: (_) => setState(() => _m3LedInserted = true),
-                        onRotate: () => setState(() => _m3LedRotation = (_m3LedRotation + 90) % 360),
+                        onAccept: (_) => _insertComponent(
+                          name: 'LED',
+                          getInserted: () => _m3LedInserted,
+                          setInserted: (v) => _m3LedInserted = v,
+                          getRotation: () => _m3LedRotation,
+                          setRotation: (v) => _m3LedRotation = v,
+                        ),
+                        onRotate: () => _rotateComponent(
+                          name: 'LED',
+                          getRotation: () => _m3LedRotation,
+                          setRotation: (v) => _m3LedRotation = v,
+                        ),
                         onTap: () {},
                         symbolWidget: _usePhysicalStyle
                             ? CustomPaint(size: const Size(55, 55), painter: ComponentPhysicalPainter(type: ComponentType.led, isActive: true, isDarkMode: false))
@@ -1271,7 +1380,7 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
   }
 
   /// M4: Dimensionamento Seguro de Resistor
-  Widget _buildM4Circuit() {
+  Widget _buildM4Physical() {
     final hasResistor = _m4SelectedResistor != null;
     final isSafe = _m4SelectedResistor == 680;
     final isBurned = _m4SelectedResistor == 68;
@@ -1371,8 +1480,18 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                         width: 95,
                         height: 95,
                         showLabel: false,
-                        onAccept: (_) => setState(() => _m4BatteryInserted = true),
-                        onRotate: () => setState(() => _m4BatteryRotation = (_m4BatteryRotation + 90) % 360),
+                        onAccept: (_) => _insertComponent(
+                          name: 'Bateria',
+                          getInserted: () => _m4BatteryInserted,
+                          setInserted: (v) => _m4BatteryInserted = v,
+                          getRotation: () => _m4BatteryRotation,
+                          setRotation: (v) => _m4BatteryRotation = v,
+                        ),
+                        onRotate: () => _rotateComponent(
+                          name: 'Bateria',
+                          getRotation: () => _m4BatteryRotation,
+                          setRotation: (v) => _m4BatteryRotation = v,
+                        ),
                         onTap: () {},
                         symbolWidget: _usePhysicalStyle
                             ? CustomPaint(size: const Size(55, 55), painter: ComponentPhysicalPainter(type: ComponentType.battery, isDarkMode: false))
@@ -1390,8 +1509,18 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                         width: 95,
                         height: 95,
                         showLabel: false,
-                        onAccept: (_) => setState(() => _m4ResistorInserted = true),
-                        onRotate: () => setState(() => _m4ResistorRotation = (_m4ResistorRotation + 90) % 360),
+                        onAccept: (_) => _insertComponent(
+                          name: 'Resistor',
+                          getInserted: () => _m4ResistorInserted,
+                          setInserted: (v) => _m4ResistorInserted = v,
+                          getRotation: () => _m4ResistorRotation,
+                          setRotation: (v) => _m4ResistorRotation = v,
+                        ),
+                        onRotate: () => _rotateComponent(
+                          name: 'Resistor',
+                          getRotation: () => _m4ResistorRotation,
+                          setRotation: (v) => _m4ResistorRotation = v,
+                        ),
                         onTap: () {},
                         symbolWidget: _usePhysicalStyle
                             ? CustomPaint(size: const Size(55, 55), painter: ComponentPhysicalPainter(type: ComponentType.resistor, isDarkMode: false))
@@ -1409,8 +1538,18 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                         width: 95,
                         height: 95,
                         showLabel: false,
-                        onAccept: (_) => setState(() => _m4LedInserted = true),
-                        onRotate: () => setState(() => _m4LedRotation = (_m4LedRotation + 90) % 360),
+                        onAccept: (_) => _insertComponent(
+                          name: 'LED',
+                          getInserted: () => _m4LedInserted,
+                          setInserted: (v) => _m4LedInserted = v,
+                          getRotation: () => _m4LedRotation,
+                          setRotation: (v) => _m4LedRotation = v,
+                        ),
+                        onRotate: () => _rotateComponent(
+                          name: 'LED',
+                          getRotation: () => _m4LedRotation,
+                          setRotation: (v) => _m4LedRotation = v,
+                        ),
                         onTap: () {},
                         symbolWidget: _usePhysicalStyle
                             ? CustomPaint(size: const Size(55, 55), painter: ComponentPhysicalPainter(type: ComponentType.led, isActive: hasResistor && !isBurned, isBurned: isBurned, isDarkMode: false))
@@ -1428,7 +1567,7 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
   }
 
   /// M5: Diário de Investigação (Diagnóstico de Falha)
-  Widget _buildM5Circuit() {
+  Widget _buildM5Physical() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -1518,8 +1657,18 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                         width: 95,
                         height: 95,
                         showLabel: false,
-                        onAccept: (_) => setState(() => _m5BatteryInserted = true),
-                        onRotate: () => setState(() => _m5BatteryRotation = (_m5BatteryRotation + 90) % 360),
+                        onAccept: (_) => _insertComponent(
+                          name: 'Bateria',
+                          getInserted: () => _m5BatteryInserted,
+                          setInserted: (v) => _m5BatteryInserted = v,
+                          getRotation: () => _m5BatteryRotation,
+                          setRotation: (v) => _m5BatteryRotation = v,
+                        ),
+                        onRotate: () => _rotateComponent(
+                          name: 'Bateria',
+                          getRotation: () => _m5BatteryRotation,
+                          setRotation: (v) => _m5BatteryRotation = v,
+                        ),
                         onTap: () {},
                         symbolWidget: _usePhysicalStyle
                             ? CustomPaint(size: const Size(55, 55), painter: ComponentPhysicalPainter(type: ComponentType.battery, isDarkMode: false))
@@ -1537,8 +1686,18 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                         width: 95,
                         height: 95,
                         showLabel: false,
-                        onAccept: (_) => setState(() => _m5ResistorInserted = true),
-                        onRotate: () => setState(() => _m5ResistorRotation = (_m5ResistorRotation + 90) % 360),
+                        onAccept: (_) => _insertComponent(
+                          name: 'Resistor',
+                          getInserted: () => _m5ResistorInserted,
+                          setInserted: (v) => _m5ResistorInserted = v,
+                          getRotation: () => _m5ResistorRotation,
+                          setRotation: (v) => _m5ResistorRotation = v,
+                        ),
+                        onRotate: () => _rotateComponent(
+                          name: 'Resistor',
+                          getRotation: () => _m5ResistorRotation,
+                          setRotation: (v) => _m5ResistorRotation = v,
+                        ),
                         onTap: () {},
                         symbolWidget: _usePhysicalStyle
                             ? CustomPaint(size: const Size(55, 55), painter: ComponentPhysicalPainter(type: ComponentType.resistor, isDarkMode: false))
@@ -1556,12 +1715,831 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                         width: 95,
                         height: 95,
                         showLabel: false,
-                        onAccept: (_) => setState(() => _m5LedInserted = true),
-                        onRotate: () => setState(() => _m5LedRotation = (_m5LedRotation + 90) % 360),
+                        onAccept: (_) => _insertComponent(
+                          name: 'LED',
+                          getInserted: () => _m5LedInserted,
+                          setInserted: (v) => _m5LedInserted = v,
+                          getRotation: () => _m5LedRotation,
+                          setRotation: (v) => _m5LedRotation = v,
+                        ),
+                        onRotate: () => _rotateComponent(
+                          name: 'LED',
+                          getRotation: () => _m5LedRotation,
+                          setRotation: (v) => _m5LedRotation = v,
+                        ),
                         onTap: () {},
                         symbolWidget: _usePhysicalStyle
                             ? CustomPaint(size: const Size(55, 55), painter: ComponentPhysicalPainter(type: ComponentType.led, isActive: true, isDarkMode: false))
                             : CustomPaint(size: const Size(55, 55), painter: CircuitSymbolPainter(type: ComponentType.led, isActive: true, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ==========================================
+  // SCHEMATIC CANVASES
+  // ==========================================
+
+  /// M1 Schematic: Battery socket for voltage measurement
+  Widget _buildM1Schematic() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          'Medição Direta da Bateria 9V',
+          style: GoogleFonts.rajdhani(color: const Color(0xFF0F172A), fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        const SizedBox(height: 12),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final w = constraints.maxWidth;
+                final h = constraints.maxHeight;
+                final batteryX = w * 0.5;
+                final centerY = h * 0.5;
+
+                return Stack(
+                  children: [
+                    Positioned(
+                      left: batteryX - 47.5,
+                      top: centerY - 37.5,
+                      child: SchematicBlueprintSocket<String>(
+                        expectedData: 'battery',
+                        isFilled: _m1BatteryInserted,
+                        showLabel: false,
+                        rotation: _m1BatteryRotation,
+                        onAccept: (_) => _insertComponent(
+                          name: 'Bateria',
+                          getInserted: () => _m1BatteryInserted,
+                          setInserted: (v) => _m1BatteryInserted = v,
+                          getRotation: () => _m1BatteryRotation,
+                          setRotation: (v) => _m1BatteryRotation = v,
+                        ),
+                        onRotate: () => _rotateComponent(
+                          name: 'Bateria',
+                          getRotation: () => _m1BatteryRotation,
+                          setRotation: (v) => _m1BatteryRotation = v,
+                        ),
+                        onTap: () {},
+                        symbolWidget: CustomPaint(
+                          size: const Size(55, 55),
+                          painter: CircuitSymbolPainter(
+                            type: ComponentType.battery,
+                            color: const Color(0xFF0F172A),
+                            strokeWidth: 2.5,
+                          ),
+                        ),
+                        placeholderWidget: CustomPaint(
+                          size: const Size(48, 38),
+                          painter: CircuitSymbolPainter(
+                            type: ComponentType.battery,
+                            isActive: false,
+                            color: const Color(0xFF94A3B8),
+                            strokeWidth: 2.0,
+                          ),
+                        ),
+                        label: '',
+                      ),
+                    ),
+                    if (_m1BatteryInserted)
+                      Positioned(
+                        left: batteryX + 60,
+                        top: centerY - 30,
+                        child: _buildProbeSlot(
+                          isRed: true,
+                          isConnected: _redProbeConnected,
+                          onTap: () => setState(() => _redProbeConnected = !_redProbeConnected),
+                          label: 'Polo (+)',
+                        ),
+                      ),
+                    if (_m1BatteryInserted)
+                      Positioned(
+                        left: batteryX + 60,
+                        top: centerY + 10,
+                        child: _buildProbeSlot(
+                          isRed: false,
+                          isConnected: _blackProbeConnected,
+                          onTap: () => setState(() => _blackProbeConnected = !_blackProbeConnected),
+                          label: 'Polo (-)',
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// M2 Schematic: Battery + Bulb with probes
+  Widget _buildM2Schematic() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          'Circuito Energizado com Lâmpada em Carga',
+          style: GoogleFonts.rajdhani(color: const Color(0xFF0F172A), fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        const SizedBox(height: 12),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final w = constraints.maxWidth;
+                final h = constraints.maxHeight;
+                final batteryX = w * 0.2;
+                final bulbX = w * 0.75;
+                final centerY = h * 0.5;
+
+                final batteryPlacement = ComponentPlacement(
+                  position: Offset(batteryX, centerY),
+                  rotation: _m2BatteryRotation,
+                  type: ComponentType.battery,
+                );
+                final bulbPlacement = ComponentPlacement(
+                  position: Offset(bulbX, centerY),
+                  rotation: _m2BulbRotation,
+                  type: ComponentType.bulb,
+                );
+
+                final wires = <WirePath>[];
+                if (_m2BatteryInserted && _m2BulbInserted) {
+                  wires.add(DynamicWirePath.fromComponents(
+                    compA: batteryPlacement,
+                    terminalIndexA: 1,
+                    compB: bulbPlacement,
+                    terminalIndexB: 0,
+                    color: const Color(0xFFEF4444),
+                    isActive: true,
+                  ).toWirePath());
+                  wires.add(DynamicWirePath.fromComponents(
+                    compA: bulbPlacement,
+                    terminalIndexA: 1,
+                    compB: batteryPlacement,
+                    terminalIndexB: 0,
+                    color: const Color(0xFF1E293B),
+                    isActive: true,
+                  ).toWirePath());
+                }
+
+                return Stack(
+                  children: [
+                    if (wires.isNotEmpty)
+                      Positioned.fill(
+                        child: RealisticWireWidget(
+                          wires: wires,
+                          animationValue: 0,
+                          showElectrons: false,
+                        ),
+                      ),
+                    Positioned(
+                      left: batteryX - 47.5,
+                      top: centerY - 37.5,
+                      child: SchematicBlueprintSocket<String>(
+                        expectedData: 'battery',
+                        isFilled: _m2BatteryInserted,
+                        showLabel: false,
+                        rotation: _m2BatteryRotation,
+                        onAccept: (_) => _insertComponent(
+                          name: 'Bateria',
+                          getInserted: () => _m2BatteryInserted,
+                          setInserted: (v) => _m2BatteryInserted = v,
+                          getRotation: () => _m2BatteryRotation,
+                          setRotation: (v) => _m2BatteryRotation = v,
+                        ),
+                        onRotate: () => _rotateComponent(
+                          name: 'Bateria',
+                          getRotation: () => _m2BatteryRotation,
+                          setRotation: (v) => _m2BatteryRotation = v,
+                        ),
+                        onTap: () {},
+                        symbolWidget: CustomPaint(
+                          size: const Size(55, 55),
+                          painter: CircuitSymbolPainter(
+                            type: ComponentType.battery,
+                            color: const Color(0xFF0F172A),
+                            strokeWidth: 2.5,
+                          ),
+                        ),
+                        placeholderWidget: CustomPaint(
+                          size: const Size(48, 38),
+                          painter: CircuitSymbolPainter(
+                            type: ComponentType.battery,
+                            isActive: false,
+                            color: const Color(0xFF94A3B8),
+                            strokeWidth: 2.0,
+                          ),
+                        ),
+                        label: '',
+                      ),
+                    ),
+                    Positioned(
+                      left: bulbX - 47.5,
+                      top: centerY - 37.5,
+                      child: SchematicBlueprintSocket<String>(
+                        expectedData: 'bulb',
+                        isFilled: _m2BulbInserted,
+                        showLabel: false,
+                        rotation: _m2BulbRotation,
+                        onAccept: (_) => _insertComponent(
+                          name: 'Lâmpada',
+                          getInserted: () => _m2BulbInserted,
+                          setInserted: (v) => _m2BulbInserted = v,
+                          getRotation: () => _m2BulbRotation,
+                          setRotation: (v) => _m2BulbRotation = v,
+                        ),
+                        onRotate: () => _rotateComponent(
+                          name: 'Lâmpada',
+                          getRotation: () => _m2BulbRotation,
+                          setRotation: (v) => _m2BulbRotation = v,
+                        ),
+                        onTap: () {},
+                        symbolWidget: CustomPaint(
+                          size: const Size(55, 55),
+                          painter: CircuitSymbolPainter(
+                            type: ComponentType.bulb,
+                            isActive: _m2BatteryInserted && _m2BulbInserted,
+                            color: const Color(0xFF0F172A),
+                            strokeWidth: 2.5,
+                          ),
+                        ),
+                        placeholderWidget: CustomPaint(
+                          size: const Size(48, 38),
+                          painter: CircuitSymbolPainter(
+                            type: ComponentType.bulb,
+                            isActive: false,
+                            color: const Color(0xFF94A3B8),
+                            strokeWidth: 2.0,
+                          ),
+                        ),
+                        label: '',
+                      ),
+                    ),
+                    if (_m2BatteryInserted && _m2BulbInserted)
+                      Positioned(
+                        left: (batteryX + bulbX) / 2 - 10,
+                        top: centerY - 50,
+                        child: _buildProbeSlot(
+                          isRed: true,
+                          isConnected: _redProbeConnected,
+                          onTap: () => setState(() => _redProbeConnected = !_redProbeConnected),
+                          label: 'A',
+                        ),
+                      ),
+                    if (_m2BatteryInserted && _m2BulbInserted)
+                      Positioned(
+                        left: (batteryX + bulbX) / 2 - 10,
+                        top: centerY + 30,
+                        child: _buildProbeSlot(
+                          isRed: false,
+                          isConnected: _blackProbeConnected,
+                          onTap: () => setState(() => _blackProbeConnected = !_blackProbeConnected),
+                          label: 'B',
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// M3 Schematic: Battery + Resistor + LED with slider
+  Widget _buildM3Schematic() {
+    final currentMa = (9.0 / _m3ResistanceValue) * 1000.0;
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          'Lei de Ohm: I = V / R (${currentMa.toStringAsFixed(1)} mA)',
+          style: GoogleFonts.rajdhani(color: const Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 18),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final w = constraints.maxWidth;
+                final h = constraints.maxHeight;
+                final batteryX = w * 0.12;
+                final resistorX = w * 0.45;
+                final ledX = w * 0.82;
+                final centerY = h * 0.45;
+
+                final batteryPlacement = ComponentPlacement(
+                  position: Offset(batteryX, centerY),
+                  rotation: _m3BatteryRotation,
+                  type: ComponentType.battery,
+                );
+                final resistorPlacement = ComponentPlacement(
+                  position: Offset(resistorX, centerY),
+                  rotation: _m3ResistorRotation,
+                  type: ComponentType.resistor,
+                );
+                final ledPlacement = ComponentPlacement(
+                  position: Offset(ledX, centerY),
+                  rotation: _m3LedRotation,
+                  type: ComponentType.led,
+                );
+
+                final wires = <WirePath>[];
+                if (_m3BatteryInserted && _m3ResistorInserted) {
+                  wires.add(DynamicWirePath.fromComponents(
+                    compA: batteryPlacement,
+                    terminalIndexA: 1,
+                    compB: resistorPlacement,
+                    terminalIndexB: 0,
+                    color: const Color(0xFFEF4444),
+                    isActive: true,
+                  ).toWirePath());
+                }
+                if (_m3ResistorInserted && _m3LedInserted) {
+                  wires.add(DynamicWirePath.fromComponents(
+                    compA: resistorPlacement,
+                    terminalIndexA: 1,
+                    compB: ledPlacement,
+                    terminalIndexB: 0,
+                    color: const Color(0xFFF97316),
+                    isActive: true,
+                  ).toWirePath());
+                }
+                if (_m3LedInserted && _m3BatteryInserted) {
+                  wires.add(DynamicWirePath.fromComponents(
+                    compA: ledPlacement,
+                    terminalIndexA: 1,
+                    compB: batteryPlacement,
+                    terminalIndexB: 0,
+                    color: const Color(0xFF1E293B),
+                    isActive: true,
+                  ).toWirePath());
+                }
+
+                return Stack(
+                  children: [
+                    if (wires.isNotEmpty)
+                      Positioned.fill(
+                        child: RealisticWireWidget(
+                          wires: wires,
+                          animationValue: 0,
+                          showElectrons: false,
+                        ),
+                      ),
+                    Positioned(
+                      left: batteryX - 47.5,
+                      top: centerY - 37.5,
+                      child: SchematicBlueprintSocket<String>(
+                        expectedData: 'battery',
+                        isFilled: _m3BatteryInserted,
+                        showLabel: false,
+                        rotation: _m3BatteryRotation,
+                        onAccept: (_) => _insertComponent(
+                          name: 'Bateria',
+                          getInserted: () => _m3BatteryInserted,
+                          setInserted: (v) => _m3BatteryInserted = v,
+                          getRotation: () => _m3BatteryRotation,
+                          setRotation: (v) => _m3BatteryRotation = v,
+                        ),
+                        onRotate: () => _rotateComponent(
+                          name: 'Bateria',
+                          getRotation: () => _m3BatteryRotation,
+                          setRotation: (v) => _m3BatteryRotation = v,
+                        ),
+                        onTap: () {},
+                        symbolWidget: CustomPaint(size: const Size(55, 55), painter: CircuitSymbolPainter(type: ComponentType.battery, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
+                        placeholderWidget: CustomPaint(size: const Size(48, 38), painter: CircuitSymbolPainter(type: ComponentType.battery, isActive: false, color: const Color(0xFF94A3B8), strokeWidth: 2.0)),
+                        label: '',
+                      ),
+                    ),
+                    Positioned(
+                      left: resistorX - 47.5,
+                      top: centerY - 37.5,
+                      child: SchematicBlueprintSocket<String>(
+                        expectedData: 'resistor',
+                        isFilled: _m3ResistorInserted,
+                        showLabel: false,
+                        rotation: _m3ResistorRotation,
+                        onAccept: (_) => _insertComponent(
+                          name: 'Resistor',
+                          getInserted: () => _m3ResistorInserted,
+                          setInserted: (v) => _m3ResistorInserted = v,
+                          getRotation: () => _m3ResistorRotation,
+                          setRotation: (v) => _m3ResistorRotation = v,
+                        ),
+                        onRotate: () => _rotateComponent(
+                          name: 'Resistor',
+                          getRotation: () => _m3ResistorRotation,
+                          setRotation: (v) => _m3ResistorRotation = v,
+                        ),
+                        onTap: () {},
+                        symbolWidget: CustomPaint(size: const Size(55, 55), painter: CircuitSymbolPainter(type: ComponentType.resistor, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
+                        placeholderWidget: CustomPaint(size: const Size(48, 38), painter: CircuitSymbolPainter(type: ComponentType.resistor, isActive: false, color: const Color(0xFF94A3B8), strokeWidth: 2.0)),
+                        label: '',
+                      ),
+                    ),
+                    Positioned(
+                      left: ledX - 47.5,
+                      top: centerY - 37.5,
+                      child: SchematicBlueprintSocket<String>(
+                        expectedData: 'led',
+                        isFilled: _m3LedInserted,
+                        showLabel: false,
+                        rotation: _m3LedRotation,
+                        onAccept: (_) => _insertComponent(
+                          name: 'LED',
+                          getInserted: () => _m3LedInserted,
+                          setInserted: (v) => _m3LedInserted = v,
+                          getRotation: () => _m3LedRotation,
+                          setRotation: (v) => _m3LedRotation = v,
+                        ),
+                        onRotate: () => _rotateComponent(
+                          name: 'LED',
+                          getRotation: () => _m3LedRotation,
+                          setRotation: (v) => _m3LedRotation = v,
+                        ),
+                        onTap: () {},
+                        symbolWidget: CustomPaint(size: const Size(55, 55), painter: CircuitSymbolPainter(type: ComponentType.led, isActive: true, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
+                        placeholderWidget: CustomPaint(size: const Size(48, 38), painter: CircuitSymbolPainter(type: ComponentType.led, isActive: false, color: const Color(0xFF94A3B8), strokeWidth: 2.0)),
+                        label: '',
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Ajuste o Reostato:',
+          style: GoogleFonts.rajdhani(color: const Color(0xFF0F172A), fontSize: 14, fontWeight: FontWeight.bold),
+        ),
+        Slider(
+          value: _m3ResistanceValue,
+          min: 100.0,
+          max: 1000.0,
+          divisions: 18,
+          activeColor: const Color(0xFF10B981),
+          label: '${_m3ResistanceValue.round()} Ω',
+          onChanged: (val) => setState(() {
+            _m3ResistanceValue = val;
+            _redProbeConnected = true;
+            _blackProbeConnected = true;
+          }),
+        ),
+      ],
+    );
+  }
+
+  /// M4 Schematic: Battery + Resistor + LED with resistor selection
+  Widget _buildM4Schematic() {
+    final hasResistor = _m4SelectedResistor != null;
+    final isSafe = _m4SelectedResistor == 680;
+    final isBurned = _m4SelectedResistor == 68;
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          hasResistor
+              ? 'Resistor Selecionado: $_m4SelectedResistor Ω'
+              : 'Selecione um resistor na gaveta lateral',
+          style: GoogleFonts.rajdhani(
+            color: isSafe ? const Color(0xFF10B981) : (isBurned ? Colors.redAccent : Colors.amberAccent),
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final w = constraints.maxWidth;
+                final h = constraints.maxHeight;
+                final batteryX = w * 0.12;
+                final resistorX = w * 0.45;
+                final ledX = w * 0.82;
+                final centerY = h * 0.45;
+
+                final batteryPlacement = ComponentPlacement(
+                  position: Offset(batteryX, centerY),
+                  rotation: _m4BatteryRotation,
+                  type: ComponentType.battery,
+                );
+                final resistorPlacement = ComponentPlacement(
+                  position: Offset(resistorX, centerY),
+                  rotation: _m4ResistorRotation,
+                  type: ComponentType.resistor,
+                );
+                final ledPlacement = ComponentPlacement(
+                  position: Offset(ledX, centerY),
+                  rotation: _m4LedRotation,
+                  type: ComponentType.led,
+                );
+
+                final wires = <WirePath>[];
+                if (_m4BatteryInserted && _m4ResistorInserted) {
+                  wires.add(DynamicWirePath.fromComponents(
+                    compA: batteryPlacement,
+                    terminalIndexA: 1,
+                    compB: resistorPlacement,
+                    terminalIndexB: 0,
+                    color: const Color(0xFFEF4444),
+                    isActive: hasResistor,
+                  ).toWirePath());
+                }
+                if (_m4ResistorInserted && _m4LedInserted) {
+                  wires.add(DynamicWirePath.fromComponents(
+                    compA: resistorPlacement,
+                    terminalIndexA: 1,
+                    compB: ledPlacement,
+                    terminalIndexB: 0,
+                    color: const Color(0xFFF97316),
+                    isActive: hasResistor,
+                  ).toWirePath());
+                }
+                if (_m4LedInserted && _m4BatteryInserted) {
+                  wires.add(DynamicWirePath.fromComponents(
+                    compA: ledPlacement,
+                    terminalIndexA: 1,
+                    compB: batteryPlacement,
+                    terminalIndexB: 0,
+                    color: const Color(0xFF1E293B),
+                    isActive: hasResistor,
+                  ).toWirePath());
+                }
+
+                return Stack(
+                  children: [
+                    if (wires.isNotEmpty)
+                      Positioned.fill(
+                        child: RealisticWireWidget(
+                          wires: wires,
+                          animationValue: 0,
+                          showElectrons: false,
+                        ),
+                      ),
+                    Positioned(
+                      left: batteryX - 47.5,
+                      top: centerY - 37.5,
+                      child: SchematicBlueprintSocket<String>(
+                        expectedData: 'battery',
+                        isFilled: _m4BatteryInserted,
+                        showLabel: false,
+                        rotation: _m4BatteryRotation,
+                        onAccept: (_) => _insertComponent(
+                          name: 'Bateria',
+                          getInserted: () => _m4BatteryInserted,
+                          setInserted: (v) => _m4BatteryInserted = v,
+                          getRotation: () => _m4BatteryRotation,
+                          setRotation: (v) => _m4BatteryRotation = v,
+                        ),
+                        onRotate: () => _rotateComponent(
+                          name: 'Bateria',
+                          getRotation: () => _m4BatteryRotation,
+                          setRotation: (v) => _m4BatteryRotation = v,
+                        ),
+                        onTap: () {},
+                        symbolWidget: CustomPaint(size: const Size(55, 55), painter: CircuitSymbolPainter(type: ComponentType.battery, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
+                        placeholderWidget: CustomPaint(size: const Size(48, 38), painter: CircuitSymbolPainter(type: ComponentType.battery, isActive: false, color: const Color(0xFF94A3B8), strokeWidth: 2.0)),
+                        label: '',
+                      ),
+                    ),
+                    Positioned(
+                      left: resistorX - 47.5,
+                      top: centerY - 37.5,
+                      child: SchematicBlueprintSocket<String>(
+                        expectedData: 'resistor',
+                        isFilled: _m4ResistorInserted,
+                        showLabel: false,
+                        rotation: _m4ResistorRotation,
+                        onAccept: (_) => _insertComponent(
+                          name: 'Resistor',
+                          getInserted: () => _m4ResistorInserted,
+                          setInserted: (v) => _m4ResistorInserted = v,
+                          getRotation: () => _m4ResistorRotation,
+                          setRotation: (v) => _m4ResistorRotation = v,
+                        ),
+                        onRotate: () => _rotateComponent(
+                          name: 'Resistor',
+                          getRotation: () => _m4ResistorRotation,
+                          setRotation: (v) => _m4ResistorRotation = v,
+                        ),
+                        onTap: () {},
+                        symbolWidget: CustomPaint(size: const Size(55, 55), painter: CircuitSymbolPainter(type: ComponentType.resistor, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
+                        placeholderWidget: CustomPaint(size: const Size(48, 38), painter: CircuitSymbolPainter(type: ComponentType.resistor, isActive: false, color: const Color(0xFF94A3B8), strokeWidth: 2.0)),
+                        label: '',
+                      ),
+                    ),
+                    Positioned(
+                      left: ledX - 47.5,
+                      top: centerY - 37.5,
+                      child: SchematicBlueprintSocket<String>(
+                        expectedData: 'led',
+                        isFilled: _m4LedInserted,
+                        showLabel: false,
+                        rotation: _m4LedRotation,
+                        onAccept: (_) => _insertComponent(
+                          name: 'LED',
+                          getInserted: () => _m4LedInserted,
+                          setInserted: (v) => _m4LedInserted = v,
+                          getRotation: () => _m4LedRotation,
+                          setRotation: (v) => _m4LedRotation = v,
+                        ),
+                        onRotate: () => _rotateComponent(
+                          name: 'LED',
+                          getRotation: () => _m4LedRotation,
+                          setRotation: (v) => _m4LedRotation = v,
+                        ),
+                        onTap: () {},
+                        symbolWidget: CustomPaint(size: const Size(55, 55), painter: CircuitSymbolPainter(type: ComponentType.led, isActive: hasResistor && !isBurned, isBurned: isBurned, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
+                        placeholderWidget: CustomPaint(size: const Size(48, 38), painter: CircuitSymbolPainter(type: ComponentType.led, isActive: false, color: const Color(0xFF94A3B8), strokeWidth: 2.0)),
+                        label: '',
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// M5 Schematic: Battery + Resistor + LED for diagnostic
+  Widget _buildM5Schematic() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          'Diagnóstico: Por que o LED está fraco?',
+          style: GoogleFonts.rajdhani(color: const Color(0xFFD97706), fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final w = constraints.maxWidth;
+                final h = constraints.maxHeight;
+                final batteryX = w * 0.12;
+                final resistorX = w * 0.45;
+                final ledX = w * 0.82;
+                final centerY = h * 0.45;
+
+                final batteryPlacement = ComponentPlacement(
+                  position: Offset(batteryX, centerY),
+                  rotation: _m5BatteryRotation,
+                  type: ComponentType.battery,
+                );
+                final resistorPlacement = ComponentPlacement(
+                  position: Offset(resistorX, centerY),
+                  rotation: _m5ResistorRotation,
+                  type: ComponentType.resistor,
+                );
+                final ledPlacement = ComponentPlacement(
+                  position: Offset(ledX, centerY),
+                  rotation: _m5LedRotation,
+                  type: ComponentType.led,
+                );
+
+                final wires = <WirePath>[];
+                if (_m5BatteryInserted && _m5ResistorInserted) {
+                  wires.add(DynamicWirePath.fromComponents(
+                    compA: batteryPlacement,
+                    terminalIndexA: 1,
+                    compB: resistorPlacement,
+                    terminalIndexB: 0,
+                    color: const Color(0xFFEF4444),
+                    isActive: true,
+                  ).toWirePath());
+                }
+                if (_m5ResistorInserted && _m5LedInserted) {
+                  wires.add(DynamicWirePath.fromComponents(
+                    compA: resistorPlacement,
+                    terminalIndexA: 1,
+                    compB: ledPlacement,
+                    terminalIndexB: 0,
+                    color: const Color(0xFFF97316),
+                    isActive: true,
+                  ).toWirePath());
+                }
+                if (_m5LedInserted && _m5BatteryInserted) {
+                  wires.add(DynamicWirePath.fromComponents(
+                    compA: ledPlacement,
+                    terminalIndexA: 1,
+                    compB: batteryPlacement,
+                    terminalIndexB: 0,
+                    color: const Color(0xFF1E293B),
+                    isActive: true,
+                  ).toWirePath());
+                }
+
+                return Stack(
+                  children: [
+                    if (wires.isNotEmpty)
+                      Positioned.fill(
+                        child: RealisticWireWidget(
+                          wires: wires,
+                          animationValue: 0,
+                          showElectrons: false,
+                        ),
+                      ),
+                    Positioned(
+                      left: batteryX - 47.5,
+                      top: centerY - 37.5,
+                      child: SchematicBlueprintSocket<String>(
+                        expectedData: 'battery',
+                        isFilled: _m5BatteryInserted,
+                        showLabel: false,
+                        rotation: _m5BatteryRotation,
+                        onAccept: (_) => _insertComponent(
+                          name: 'Bateria',
+                          getInserted: () => _m5BatteryInserted,
+                          setInserted: (v) => _m5BatteryInserted = v,
+                          getRotation: () => _m5BatteryRotation,
+                          setRotation: (v) => _m5BatteryRotation = v,
+                        ),
+                        onRotate: () => _rotateComponent(
+                          name: 'Bateria',
+                          getRotation: () => _m5BatteryRotation,
+                          setRotation: (v) => _m5BatteryRotation = v,
+                        ),
+                        onTap: () {},
+                        symbolWidget: CustomPaint(size: const Size(55, 55), painter: CircuitSymbolPainter(type: ComponentType.battery, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
+                        placeholderWidget: CustomPaint(size: const Size(48, 38), painter: CircuitSymbolPainter(type: ComponentType.battery, isActive: false, color: const Color(0xFF94A3B8), strokeWidth: 2.0)),
+                        label: '',
+                      ),
+                    ),
+                    Positioned(
+                      left: resistorX - 47.5,
+                      top: centerY - 37.5,
+                      child: SchematicBlueprintSocket<String>(
+                        expectedData: 'resistor',
+                        isFilled: _m5ResistorInserted,
+                        showLabel: false,
+                        rotation: _m5ResistorRotation,
+                        onAccept: (_) => _insertComponent(
+                          name: 'Resistor',
+                          getInserted: () => _m5ResistorInserted,
+                          setInserted: (v) => _m5ResistorInserted = v,
+                          getRotation: () => _m5ResistorRotation,
+                          setRotation: (v) => _m5ResistorRotation = v,
+                        ),
+                        onRotate: () => _rotateComponent(
+                          name: 'Resistor',
+                          getRotation: () => _m5ResistorRotation,
+                          setRotation: (v) => _m5ResistorRotation = v,
+                        ),
+                        onTap: () {},
+                        symbolWidget: CustomPaint(size: const Size(55, 55), painter: CircuitSymbolPainter(type: ComponentType.resistor, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
+                        placeholderWidget: CustomPaint(size: const Size(48, 38), painter: CircuitSymbolPainter(type: ComponentType.resistor, isActive: false, color: const Color(0xFF94A3B8), strokeWidth: 2.0)),
+                        label: '',
+                      ),
+                    ),
+                    Positioned(
+                      left: ledX - 47.5,
+                      top: centerY - 37.5,
+                      child: SchematicBlueprintSocket<String>(
+                        expectedData: 'led',
+                        isFilled: _m5LedInserted,
+                        showLabel: false,
+                        rotation: _m5LedRotation,
+                        onAccept: (_) => _insertComponent(
+                          name: 'LED',
+                          getInserted: () => _m5LedInserted,
+                          setInserted: (v) => _m5LedInserted = v,
+                          getRotation: () => _m5LedRotation,
+                          setRotation: (v) => _m5LedRotation = v,
+                        ),
+                        onRotate: () => _rotateComponent(
+                          name: 'LED',
+                          getRotation: () => _m5LedRotation,
+                          setRotation: (v) => _m5LedRotation = v,
+                        ),
+                        onTap: () {},
+                        symbolWidget: CustomPaint(size: const Size(55, 55), painter: CircuitSymbolPainter(type: ComponentType.led, isActive: true, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
+                        placeholderWidget: CustomPaint(size: const Size(48, 38), painter: CircuitSymbolPainter(type: ComponentType.led, isActive: false, color: const Color(0xFF94A3B8), strokeWidth: 2.0)),
+                        label: '',
                       ),
                     ),
                   ],

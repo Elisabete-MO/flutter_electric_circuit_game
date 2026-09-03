@@ -1003,7 +1003,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         // Push-Button: Botão de pressão
         WorkbenchSymbolToolboxTile<String>(
           data: 'push_button',
-          label: 'Push-Button',
+          label: 'Botão',
           tooltip: 'Botão de Pressão (Momentâneo)',
           symbolWidget: _usePhysicalStyle
               ? const PushButtonVectorWidget(size: 34)
@@ -1406,7 +1406,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                     Text(
                       _m5PushButtonPressed
                           ? 'LUMINÁRIA ACESA! (PRESSIONADO)'
-                          : 'SEGURE O PUSH-BUTTON PARA ACENDER',
+                          : 'SEGURE O BOTÃO PARA ACENDER',
                       style: GoogleFonts.rajdhani(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -2263,18 +2263,27 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   showLabel: false,
                   rotation: _m5PushButtonRotation,
                   onAccept: (_) => _insertComponent(
-                    name: 'Push-Button M5',
+                    name: 'Botão M5',
                     getInserted: () => _m5PushButtonInserted,
                     setInserted: (v) => _m5PushButtonInserted = v,
                     getRotation: () => _m5PushButtonRotation,
                     setRotation: (v) => _m5PushButtonRotation = v,
                   ),
                   onRotate: () => _rotateComponent(
-                    name: 'Push-Button M5',
+                    name: 'Botão M5',
                     getRotation: () => _m5PushButtonRotation,
                     setRotation: (v) => _m5PushButtonRotation = v,
                   ),
-                  onTap: () {},
+                  onTap: () {
+                    if (_m5PushButtonInserted) {
+                      final prev = _m5PushButtonPressed;
+                      _undoRedoController.execute(ToggleBoolAction(
+                        description: 'Pressionar Botão M5',
+                        onApply: () => setState(() { _m5PushButtonPressed = !prev; _m5TestedHoldAndRelease = true; }),
+                        onUndo: () => setState(() { _m5PushButtonPressed = prev; }),
+                      ));
+                    }
+                  },
                   symbolWidget: PushButtonVectorWidget(
                     size: 65,
                     isPressed: _m5PushButtonPressed,
@@ -2847,13 +2856,22 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   isFilled: _m5PushButtonInserted,
                   showLabel: false,
                   onAccept: (_) => _insertComponent(
-                    name: 'Push-Button M5',
+                    name: 'Botão M5',
                     getInserted: () => _m5PushButtonInserted,
                     setInserted: (v) => _m5PushButtonInserted = v,
                     getRotation: () => _m5PushButtonRotation,
                     setRotation: (v) => _m5PushButtonRotation = v,
                   ),
-                  onTap: () {},
+                  onTap: () {
+                    if (_m5PushButtonInserted) {
+                      final prev = _m5PushButtonPressed;
+                      _undoRedoController.execute(ToggleBoolAction(
+                        description: 'Pressionar Botão M5',
+                        onApply: () => setState(() { _m5PushButtonPressed = !prev; _m5TestedHoldAndRelease = true; }),
+                        onUndo: () => setState(() { _m5PushButtonPressed = prev; }),
+                      ));
+                    }
+                  },
                   symbolWidget: SchematicSwitchWidget(
                     size: 50,
                     isPushButton: true,
