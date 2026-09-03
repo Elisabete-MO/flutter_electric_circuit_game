@@ -47,10 +47,10 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
   bool _m4SwitchInMainBranch = false;
   bool _m4SwitchClosed = true;
 
-  // --- Estado Missão 5: Demonstração Guiada ---
-  int _m5VisitorStep = 0;
-  bool _m5Switch1 = false;
-  bool _m5Switch2 = false;
+  // --- Estado Missão 5: Controle por Push-Button ---
+  bool _m5PushButtonInserted = false;
+  bool _m5PushButtonPressed = false;
+  bool _m5TestedHoldAndRelease = false;
 
   // Animação de Fluxo de Corrente e Pulsos Neon
   late AnimationController _currentFlowController;
@@ -278,13 +278,17 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
   }
 
   void _validateMission5() {
-    if (_m5VisitorStep >= 3) {
+    if (!_m5PushButtonInserted) {
+      _showFeedback(false, 'Instale o interruptor do tipo push-button no circuito!');
+      return;
+    }
+    if (_m5TestedHoldAndRelease) {
       _showFeedback(
         true,
-        'Demonstração impecável! Você cumpriu toda a sequência de pedidos dos visitantes do estande.',
+        'Excelente! O push-button só mantém a luz acesa enquanto o visitante o mantém pressionado.',
       );
     } else {
-      _showFeedback(false, _missions[4].failureFeedback);
+      _showFeedback(false, 'Mantenha o push-button pressionado para acender a luminária e solte em seguida antes de validar.');
     }
   }
 
@@ -916,19 +920,15 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
   }
 
   // ==========================================
-  // MISSÃO 5: Demonstração Guiada
+  // MISSÃO 5: Controle por Push-Button
   // ==========================================
   Widget _buildMission5UI(StandMission mission) {
-    final visitorRequests = [
-      '“1: Por favor, acione a iluminação da luminária principal (Chave 1 ON).”',
-      '“2: Agora desative a luz principal e ligue a luz de apoio (Chave 1 OFF, Chave 2 ON).”',
-      '“3: Excelente! Por fim, acione ambas as luminárias juntas (Chave 1 ON, Chave 2 ON).”',
-    ];
+    final isLit = _m5PushButtonInserted && _m5PushButtonPressed;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Terminal do Visitante Virtual
+        // Instrução do Prof. Volts para a missão 5
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -950,20 +950,19 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   color: Color(0xFF0284C7),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.person_pin_rounded, color: Colors.white, size: 28),
+                child: const Icon(Icons.touch_app_rounded, color: Colors.white, size: 28),
               ),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Solicitação do Visitante Virtual:', style: GoogleFonts.rajdhani(color: const Color(0xFF0284C7), fontWeight: FontWeight.bold, fontSize: 15)),
+                    Text('Luz Temporária por Pressão (Push-Button)',
+                        style: GoogleFonts.rajdhani(color: const Color(0xFF0284C7), fontWeight: FontWeight.bold, fontSize: 16)),
                     const SizedBox(height: 4),
                     Text(
-                      _m5VisitorStep < visitorRequests.length
-                          ? visitorRequests[_m5VisitorStep]
-                          : '✨ Todos os pedidos foram atendidos com sucesso!',
-                      style: GoogleFonts.outfit(color: const Color(0xFF0F172A), fontSize: 14.5, fontWeight: FontWeight.w600),
+                      'Instale o botão de pressão (push-button) e segure para manter a luminária acesa temporariamente.',
+                      style: GoogleFonts.outfit(color: const Color(0xFF0F172A), fontSize: 14, fontWeight: FontWeight.w500),
                     ),
                   ],
                 ),
@@ -974,48 +973,116 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
 
         const SizedBox(height: 16),
 
-        Row(
-          children: [
-            Expanded(
-              child: SwitchListTile(
-                title: Text('Chave 1', style: GoogleFonts.outfit(color: const Color(0xFF0F172A), fontWeight: FontWeight.w600)),
-                value: _m5Switch1,
-                activeTrackColor: const Color(0xFF0284C7),
-                onChanged: (val) {
-                  setState(() {
-                    _m5Switch1 = val;
-                    _checkMission5Sequence();
-                  });
-                },
+        // Bancada da Missão 5
+        Container(
+          height: 220,
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFCBD5E1), width: 1.2),
+          ),
+          child: Stack(
+            children: [
+              Positioned(
+                left: 20,
+                top: 60,
+                child: _buildRealisticBattery(),
               ),
-            ),
-            Expanded(
-              child: SwitchListTile(
-                title: Text('Chave 2', style: GoogleFonts.outfit(color: const Color(0xFF0F172A), fontWeight: FontWeight.w600)),
-                value: _m5Switch2,
-                activeTrackColor: const Color(0xFF0284C7),
-                onChanged: (val) {
-                  setState(() {
-                    _m5Switch2 = val;
-                    _checkMission5Sequence();
-                  });
-                },
+
+              // Soquete / Botão de encaixe do Push-Button
+              Positioned(
+                left: 200,
+                top: 60,
+                child: SchematicBlueprintSocket<String>(
+                  expectedData: 'push_button',
+                  isFilled: _m5PushButtonInserted,
+                  symbolWidget: PushButtonVectorWidget(
+                    size: 56,
+                    isPressed: _m5PushButtonPressed,
+                  ),
+                  placeholderWidget: const PushButtonVectorWidget(
+                    size: 48,
+                  ),
+                  label: 'PUSH-BUTTON',
+                  onAccept: (_) {
+                    setState(() {
+                      _m5PushButtonInserted = true;
+                    });
+                  },
+                  onTap: () {
+                    setState(() {
+                      _m5PushButtonInserted = !_m5PushButtonInserted;
+                    });
+                  },
+                ),
               ),
-            ),
-          ],
+
+              Positioned(
+                right: 25,
+                top: 50,
+                child: _buildRealisticBulb(isLit: isLit),
+              ),
+            ],
+          ),
         ),
+
+        const SizedBox(height: 16),
+
+        // Botão para Segurar / Pressionar
+        if (_m5PushButtonInserted)
+          Center(
+            child: GestureDetector(
+              onTapDown: (_) {
+                setState(() {
+                  _m5PushButtonPressed = true;
+                  _m5TestedHoldAndRelease = true;
+                });
+              },
+              onTapUp: (_) {
+                setState(() {
+                  _m5PushButtonPressed = false;
+                });
+              },
+              onTapCancel: () {
+                setState(() {
+                  _m5PushButtonPressed = false;
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                decoration: BoxDecoration(
+                  color: _m5PushButtonPressed ? const Color(0xFF0284C7) : const Color(0xFF0F172A),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: (_m5PushButtonPressed ? const Color(0xFF0284C7) : const Color(0xFF0F172A)).withValues(alpha: 0.25),
+                      blurRadius: 10,
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _m5PushButtonPressed ? Icons.lightbulb_rounded : Icons.touch_app_rounded,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      _m5PushButtonPressed ? 'LUMINÁRIA ACESA! (PRESSIONADO)' : 'SEGURE O PUSH-BUTTON PARA ACENDER',
+                      style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
       ],
     );
-  }
-
-  void _checkMission5Sequence() {
-    if (_m5VisitorStep == 0 && _m5Switch1 && !_m5Switch2) {
-      setState(() => _m5VisitorStep = 1);
-    } else if (_m5VisitorStep == 1 && !_m5Switch1 && _m5Switch2) {
-      setState(() => _m5VisitorStep = 2);
-    } else if (_m5VisitorStep == 2 && _m5Switch1 && _m5Switch2) {
-      setState(() => _m5VisitorStep = 3);
-    }
   }
 
   // --- Widgets Auxiliares de Componentes Realistas ---

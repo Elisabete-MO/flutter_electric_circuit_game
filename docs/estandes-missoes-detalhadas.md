@@ -27,11 +27,11 @@
 
 | Missão | Objetivo e componentes | Vitória | Falhas/feedback |
 |---|---|---|---|
-| 1. Interruptor da Luminária | Bateria, interruptor SPST, lâmpada | Inserir o interruptor no caminho e alternar seu estado | “O interruptor precisa estar no caminho da corrente.” |
-| 2. Aberto ou Fechado? | Dois esquemas de circuito simples | Prever corretamente o comportamento da luz nos estados ABERTO e FECHADO | “Circuito aberto interrompe a passagem da corrente.” |
-| 3. Mapeamento de Dois Controles | 2 interruptores, 2 lâmpadas | Testar uma chave por vez e associar cada controle à sua lâmpada | “Teste um interruptor por vez e observe qual luz responde.” |
-| 4. Correção de Ramo Inútil | Circuito com chave em desvio paralelo | Reposicionar o interruptor do ramo inútil para o ramo principal em série | “Essa chave em paralelo não interrompe a corrente da lâmpada.” |
-| 5. Demonstração Guiada do Visitante | Painel com pedidos sequenciais dos visitantes | Cumprir a sequência de comandos (ON/OFF) pedida pelos visitantes | “Leia o pedido do visitante antes de acionar a chave.” |
+| 1. Interruptor SPST em Série | Bateria, interruptor SPST, lâmpada, fios | Instalar um interruptor SPST em série para controlar uma luminária | “O interruptor SPST precisa estar no caminho da corrente.” |
+| 2. Previsão de Estado | Esquemas de circuito com chave aberta ou fechada | Prever o estado da lâmpada nos dois esquemas (aberta = apagada, fechada = acesa) | “Circuito aberto interrompe a passagem da corrente.” |
+| 3. Mapeamento de Chaves Sem Etiqueta | 2 interruptores sem etiqueta, 2 lâmpadas, bateria | Testar uma variável por vez e registrar qual lâmpada responde a qual chave | “Teste um interruptor por vez e observe qual luz responde.” |
+| 4. Correção de Desvio Paralelo | Circuito com chave em desvio paralelo | Corrigir uma chave em desvio paralelo que não consegue desligar a lâmpada, movendo-a para o ramo em série | “Essa chave em paralelo não interrompe a corrente da lâmpada.” |
+| 5. Controle por Push-Button | Bateria, botão de pressão (push-button), lâmpada | Montar um push-button para uma luz que só fica acesa enquanto o visitante o mantém pressionado | “O push-button deve manter a luz acesa apenas durante a pressão contínua.” |
 
 **Mediação Volts:** “Controle não é produzir energia; é abrir ou fechar o percurso.”
 
@@ -41,11 +41,11 @@
 
 | Missão | Objetivo e componentes | Vitória | Falhas/feedback |
 |---|---|---|---|
-| 1. Postes em Série | Bateria, 2 lâmpadas, fios | Conectar 2 lâmpadas na mesma rota em série | “Há apenas uma rota contínua para as duas lâmpadas.” |
-| 2. Comparação de Brilho | Circuito em série com 1 vs 2 lâmpadas | Medir/observar a queda de brilho e selecionar a razão física | “Adicionar cargas em série reduz a corrente disponível para cada uma.” |
-| 3. Bifurcação de Fios | Junção de fiação, 2 lâmpadas | Criar um ponto de junção (nó) para dividir o percurso | “A bifurcação precisa se reconectar ao polo negativo da fonte.” |
-| 4. Casas Independentes (Paralelo) | 2 lâmpadas em paralelo | Ambas as lâmpadas acesas com brilho total em ramos próprios | “Cada ramo deve ter seu caminho individual até a bateria.” |
-| 5. Teste de Manutenção do Bairro | Circuito em paralelo com simulação de defeito | Desconectar uma lâmpada e comprovar que a outra permanece acesa | “Em paralelo, os ramos funcionam de forma independente.” |
+| 1. Primeiro Poste de Rua | Bateria 4.5V, 1 lâmpada de poste, fios | Montar o primeiro poste de rua em circuito fechado simples | “Certifique-se de conectar a lâmpada do poste entre os dois polos da fonte.” |
+| 2. Comparação Série vs Paralelo | 2 lâmpadas de poste, opções de ligação em série e paralelo | Comparar as previsões para um segundo poste em série e em paralelo: brilho e efeito de remover uma lâmpada | “Em série o brilho cai e a remoção apaga ambos; em paralelo os ramos são independentes.” |
+| 3. Manutenção da Casa da Vizinhança | Circuito residencial em paralelo com chaves individuais | Manter uma casa desligada para manutenção sem apagar a vizinhança | “Cada casa deve estar em seu próprio ramo paralelo para permitir desligamento isolado.” |
+| 4. Rede de Casas e Postes | Fonte, 2 lâmpadas (casas), 2 lâmpadas (postes), junções | Projetar uma rede para duas casas e dois postes, com ramos independentes e retornos corretos | “Todos os 4 ramos precisam se conectar de forma independente à linha de retorno.” |
+| 5. Remoção de Lâmpada na Visita | Rede do bairro em paralelo com lâmpada removível | Remover uma lâmpada durante a visita e explicar por que os outros pontos continuam acesos | “Em paralelo, remover uma carga interrompe apenas aquele ramo específico.” |
 
 ---
 
@@ -53,11 +53,11 @@
 
 | Missão | Objetivo e componentes | Vitória | Falhas/feedback |
 |---|---|---|---|
-| 1. Polaridade do LED | Bateria 9V, LED vermelho, resistor 680Ω | Conectar o LED respeitando a orientação ânodo (+) e cátodo (-) | “Verifique a polaridade do LED: a corrente só passa em um sentido.” |
-| 2. Diagnóstico de LED Invertido | Circuito montado sem brilho | Identificar a inversão de polaridade do LED e inverter seus terminais | “O LED no sentido inverso bloqueia a corrente.” |
-| 3. Resistor Limitador de Corrente | Bateria 9V, LED, resistores variados | Escolher e posicionar o resistor em série adequado para evitar sobrecorrente | “Sem resistor de limitação, o LED receberá corrente excessiva!” |
-| 4. Painel de Sinalização Dupla | 2 LEDs, 2 resistores, bateria | Montar dois ramos em paralelo, cada um com seu LED e resistor protetor | “Cada LED precisa de proteção adequada em seu ramo.” |
-| 5. Revisão do Letreiro Defeituoso | Placa com 2 erros de montagem | Corrigir a polaridade de um LED e o resistor subdimensionado | “Inspecione a polaridade e os valores de resistência antes de energizar.” |
+| 1. Placa de Saída com LED | Bateria de 9 V, LED, resistor de 680 Ω | Montar uma placa de saída com LED, resistor de 680 Ω e bateria de 9 V, respeitando polaridade | “Verifique a polaridade do LED: o ânodo deve ir no positivo e a corrente precisa do resistor de 680 Ω.” |
+| 2. Hipótese do LED Invertido | Letreiro apagado com LED em sentido inverso | Formular e testar a hipótese de LED invertido em um letreiro apagado, invertendo seus terminais | “O LED no sentido inverso bloqueia a corrente.” |
+| 3. Escolha do Resistor Limitador | Bateria 9V, LED, resistores de 68 Ω, 680 Ω e 6,8 kΩ | Comparar 68 Ω, 680 Ω e 6,8 kΩ; prever brilho e segurança antes de escolher o resistor | “68 Ω causa risco de queima por sobrecorrente e 6.8 kΩ deixa a luz fraca demais.” |
+| 4. Letreiros Entrada e Saída Independentes | Bateria 9V, 2 LEDs, 2 resistores de 680 Ω | Construir letreiros de Entrada e Saída independentes, cada um com LED e resistor próprios | “Cada letreiro precisa de seu próprio resistor de limitação no ramo.” |
+| 5. Revisão de Placa Defeituosa | Placa de sinalização com 2 erros (polaridade e resistor) | Revisar uma placa com dois erros: polaridade invertida e resistor inadequado | “Inspecione a polaridade do LED e substitua o resistor subdimensionado antes de energizar.” |
 
 ---
 
@@ -65,11 +65,11 @@
 
 | Missão | Objetivo e componentes | Vitória | Falhas/feedback |
 |---|---|---|---|
-| 1. Primeiro Giro do Motor | Bateria, motor CC didático | Fechar o circuito e fazer o eixo do motor girar | “Confira se ambos os terminais do motor estão conectados.” |
-| 2. Inversão de Sentido de Rotação | Bateria, motor CC | Inverter os polos da fonte para mudar o sentido de giro (horário/anti-horário) | “Inverta a polaridade para alterar o sentido do campo magnético.” |
-| 3. Botão de Partida do Motor | Bateria, motor CC, interruptor tipo push-button | Controlar o acionamento do motor via botão de pressão | “O interruptor deve interromper a rota da corrente quando solto.” |
-| 4. Painel com LED Indicador | Bateria, motor CC, LED, resistor | Montar LED indicador em paralelo ao motor para sinalizar funcionamento | “O LED indicador também necessita de resistor de proteção.” |
-| 5. Diagnóstico do Mini Carrinho | Protótipo com motor travado | Descobrir mau contato nos terminais do motor e reparar a fiação | “Teste a fonte, a fiação e o interruptor para achar a interrupção.” |
+| 1. Mini Ventilador com Motor CC | Bateria, motor CC didático com hélice | Fazer o mini ventilador girar com motor CC e fonte | “Confira se ambos os terminais do motor estão conectados à fonte.” |
+| 2. Sentido do Carrinho e Inversão de Polaridade | Bateria comutável, motor CC de tração | Prever o sentido de um carrinho e inverter a polaridade para fazê-lo avançar ou retornar ao ponto indicado | “Inverta a polaridade para alterar o sentido do campo magnético e da rotação.” |
+| 3. Partida por Push-Button | Bateria, motor CC, interruptor tipo push-button | Instalar push-button para que o motor só funcione enquanto o botão estiver pressionado | “O interruptor deve interromper a rota da corrente quando solto.” |
+| 4. LED Indicador Protegido | Bateria, motor CC, LED, resistor | Criar um LED protegido em paralelo que indique motor energizado | “O LED indicador em paralelo necessita de resistor de proteção em série.” |
+| 5. Diagnóstico do Mini Carrinho | Protótipo de carrinho parado por mau contato | Diagnosticar um carrinho parado planejando testes de fonte, chave e terminais antes de reparar o mau contato | “Siga a sequência de testes (fonte, chave, terminais) para localizar o ponto de interrupção.” |
 
 ---
 
@@ -77,13 +77,11 @@
 
 | Missão | Objetivo e componentes | Vitória | Falhas/feedback |
 |---|---|---|---|
-| 1. Medindo Tensão da Bateria | Bateria 9V, voltímetro didático | Posicionar pontas de prova nos polos da bateria e ler a tensão correta | “O voltímetro deve ser conectado em paralelo com os pontos de medição.” |
-| 2. Queda de Tensão no Circuito | Bateria, lâmpada, voltímetro | Medir a diferença de potencial sobre a carga e interpretar a leitura | “Verifique exatamente entre quais dois pontos as pontas foram colocadas.” |
-| 3. Resistência e Corrente | Resistor variável, LED, amperímetro | Variar a resistência e observar o impacto direto na corrente medida | “Maior resistência elétrica resulta em menor corrente no circuito.” |
-| 4. Dimensionamento Seguro | Resistor de 68Ω, 680Ω e 6.8kΩ | Selecionar o resistor que garante corrente ideal (~10mA a 15mA) | “Selecione uma resistência que proteja a carga sem apagar o brilho.” |
-| 5. Diário de Investigação | Circuito com LED fraco + painel de relatório | Identificar a causa da falha por medições e registrar o relatório final | “Uma conclusão científica deve utilizar dados medidos com precisão.” |
-
----
+| 1. Tensão da Bateria em Paralelo | Bateria de 9 V, voltímetro didático | Confirmar a tensão de uma bateria de 9 V com voltímetro em paralelo | “O voltímetro deve ser conectado em paralelo com os terminais da fonte.” |
+| 2. Medição da Queda de Tensão na Carga | Bateria 9V, lâmpada/carga, voltímetro | Escolher os pontos certos para medir queda de tensão na carga e interpretar o valor | “Verifique exatamente entre quais dois pontos sobre a carga as pontas foram colocadas.” |
+| 3. Resistência Variável e Corrente (Amperímetro) | Resistor variável/reostato, LED, amperímetro em série | Prever e observar, com amperímetro, como resistência variável altera a corrente | “Maior resistência elétrica resulta em menor corrente no circuito (I = V / R).” |
+| 4. Dimensionamento da Corrente Segura do LED | Bateria 9V, LED, amperímetro, resistores de 68 Ω, 680 Ω, 6,8 kΩ | Escolher o resistor que produz brilho visível sem exceder a corrente segura do LED | “Selecione uma resistência que proteja a carga (10-15 mA) sem apagar o brilho.” |
+| 5. Resolução do Caso do LED Fraco | Circuito com LED fraco, voltímetro, amperímetro, diário | Resolver o caso do LED fraco: usar medições para eliminar as hipóteses de bateria fraca, resistor alto ou LED invertido e registrar a conclusão | “Uma conclusão científica deve utilizar dados medidos com precisão para descartar hipóteses.” |
 
 ## 7. Estande “Circuito Seguro” (Equipe Segurança)
 
