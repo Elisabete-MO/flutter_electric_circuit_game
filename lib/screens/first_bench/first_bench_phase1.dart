@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -454,279 +453,308 @@ class _FirstBenchPhase1State extends State<FirstBenchPhase1> {
   }
 
   // ==========================================
-  // VISTA DE EXPLORAÇÃO (BANCADA + PAINEL)
+  // VISTA DE EXPLORAÇÃO (STACK + SCENARIO ASSET)
   // ==========================================
   Widget _buildExplorationView() {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFF091C16),
-            Color(0xFF16120D),
-            Color(0xFF0B130E),
-          ],
-        ),
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final isDesktop = constraints.maxWidth >= 850;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= 850;
 
-          if (isDesktop) {
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Esquerda / Centro: Título + Bancada 2.5D
-                Expanded(
-                  flex: 65,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildTitleSection(),
-                        const SizedBox(height: 12),
-                        Expanded(child: _buildWorkbench2D(isMobile: false)),
-                      ],
-                    ),
+        if (isDesktop) {
+          return _buildDesktopStackView(constraints);
+        } else {
+          return _buildMobileResponsiveView(constraints);
+        }
+      },
+    );
+  }
+
+  // Composição Visual Principal Desktop/Tablet (Stack sobre o cenário)
+  Widget _buildDesktopStackView(BoxConstraints constraints) {
+    return Center(
+      child: FittedBox(
+        fit: BoxFit.cover,
+        clipBehavior: Clip.hardEdge,
+        child: SizedBox(
+          width: 1600,
+          height: 900,
+          child: Stack(
+            children: [
+              // 1. Cenário background_fase_01_bancada.png
+              Positioned.fill(
+                child: Image.asset(
+                  'assets/images/backgrounds/background_fase_01_bancada.png',
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Image.asset(
+                    'assets/backgrounds/background_fase_01_bancada.png',
+                    fit: BoxFit.cover,
                   ),
                 ),
-
-                // Direita: Painel Informativo + Progresso e Quiz
-                Container(
-                  width: min(380.0, constraints.maxWidth * 0.35),
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      Expanded(child: _buildInfoPanel()),
-                      const SizedBox(height: 12),
-                      _buildFooterProgressQuiz(),
-                    ],
-                  ),
-                ),
-              ],
-            );
-          } else {
-            // Layout Mobile / Tablet Vertical
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildTitleSection(),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    height: 240,
-                    child: _buildWorkbench2D(isMobile: true),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildInfoPanel(),
-                  const SizedBox(height: 16),
-                  _buildFooterProgressQuiz(),
-                ],
               ),
-            );
-          }
-        },
+
+              // 2. Título e instrução (sobre a região superior esquerda)
+              Positioned(
+                top: 32,
+                left: 44,
+                width: 680,
+                child: _buildTitleSectionStack(),
+              ),
+
+              // 3, 4, 5. Cinco componentes transparentes, placas e halos sobre a bancada
+              ...List.generate(_components.length, (index) {
+                return _buildBenchComponentItemPositioned(index);
+              }),
+
+              // 6 & 7. Painel informativo, progresso e botão do quiz (lado direito)
+              Positioned(
+                top: 28,
+                right: 36,
+                width: 370,
+                bottom: 28,
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: _buildInfoPanel(),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildFooterProgressQuiz(),
+                  ],
+                ),
+              ),
+
+              // 11. Botão de dúvidas (no topo direito da área principal)
+              if (!widget.showHeader)
+                Positioned(
+                  top: 32,
+                  right: 424,
+                  child: _buildHelpButton(),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  // Título
-  Widget _buildTitleSection() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+  // Título e instrução com gradiente suave localizado para legibilidade perfeita
+  Widget _buildTitleSectionStack() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [
+            Colors.black.withValues(alpha: 0.65),
+            Colors.black.withValues(alpha: 0.3),
+            Colors.transparent,
+          ],
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  const Icon(
-                    Icons.menu_book_rounded,
-                    color: Color(0xFF34D399),
-                    size: 22,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Fase 1 — Conheça os componentes',
-                    style: TextStyle(
-                      fontFamily: GoogleFonts.rajdhani().fontFamily,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ],
+              const Icon(
+                Icons.menu_book_rounded,
+                color: Color(0xFF34D399),
+                size: 24,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(width: 10),
               Text(
-                'Explore os cinco componentes usados para acender a primeira luz da maquete.',
+                'Fase 1 — Conheça os componentes',
                 style: TextStyle(
-                  fontFamily: GoogleFonts.outfit().fontFamily,
-                  fontSize: 13.5,
-                  color: Colors.white70,
+                  fontFamily: GoogleFonts.rajdhani().fontFamily,
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  letterSpacing: 0.5,
+                  shadows: const [
+                    Shadow(color: Colors.black87, blurRadius: 6, offset: Offset(0, 2)),
+                  ],
                 ),
               ),
             ],
           ),
-        ),
-        if (!widget.showHeader)
-          IconButton(
-            icon: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: const Color(0xFF04382B),
-                shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.5)),
-              ),
-              child: const Icon(
-                Icons.help_outline_rounded,
-                color: Color(0xFF10B981),
-                size: 20,
-              ),
+          const SizedBox(height: 6),
+          Text(
+            'Explore os cinco componentes usados para acender a primeira luz da maquete.',
+            style: TextStyle(
+              fontFamily: GoogleFonts.outfit().fontFamily,
+              fontSize: 15,
+              color: Colors.white.withValues(alpha: 0.9),
+              shadows: const [
+                Shadow(color: Colors.black87, blurRadius: 4, offset: Offset(0, 1)),
+              ],
             ),
-            tooltip: 'Como funciona esta fase?',
-            onPressed: _showHelpModal,
-          ),
-      ],
-    );
-  }
-
-  // Bancada de Madeira 2.5D
-  Widget _buildWorkbench2D({required bool isMobile}) {
-    final benchWidget = Container(
-      margin: const EdgeInsets.only(top: 8, bottom: 8),
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFFC4873A),
-            Color(0xFF915925),
-            Color(0xFF6B3D16),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFFDCA862).withValues(alpha: 0.5),
-          width: 2,
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0xA0000000),
-            blurRadius: 20,
-            spreadRadius: 2,
-            offset: Offset(0, 12),
           ),
         ],
       ),
-      child: isMobile
-          ? ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: _components.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 12),
-              itemBuilder: (context, index) => _buildBenchComponentItem(index, isMobile: true),
-            )
-          : Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: List.generate(_components.length, (index) {
-                return Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: _buildBenchComponentItem(index, isMobile: false),
-                  ),
-                );
-              }),
-            ),
     );
-
-    return benchWidget;
   }
 
-  // Item da Bancada (Imagem 2.5D + Halo quando selecionado + Plaquinha)
-  Widget _buildBenchComponentItem(int index, {required bool isMobile}) {
+  // Botão de dúvidas estilizado
+  Widget _buildHelpButton() {
+    return IconButton(
+      icon: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: const Color(0xFF04382B),
+          shape: BoxShape.circle,
+          border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.7), width: 1.5),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black45,
+              blurRadius: 8,
+            ),
+          ],
+        ),
+        child: const Icon(
+          Icons.help_outline_rounded,
+          color: Color(0xFF10B981),
+          size: 22,
+        ),
+      ),
+      tooltip: 'Como funciona esta fase?',
+      onPressed: _showHelpModal,
+    );
+  }
+
+  // Componente individual posicionado exatamente sobre a bancada no Stack Desktop
+  Widget _buildBenchComponentItemPositioned(int index) {
     final item = _components[index];
     final isSelected = _selectedIndex == index;
     final isExplored = _exploredIds.contains(item.id);
 
-    return InkWell(
-      onTap: () => _selectComponent(index),
-      borderRadius: BorderRadius.circular(16),
-      child: SizedBox(
-        width: isMobile ? 125 : null,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Imagem Físico 2.5D com Brilho quando selecionado
-            Expanded(
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: const Color(0xFF00FF9D).withValues(alpha: 0.6),
-                            blurRadius: 20,
-                            spreadRadius: 3,
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Center(
-                  child: Image.asset(
-                    item.assetPath,
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) => CustomPaint(
-                      painter: ComponentPhysicalPainter(
-                        type: item.type,
-                        isActive: true,
-                        isDarkMode: true,
-                      ),
-                      child: const SizedBox(width: 80, height: 80),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
+    // Posições relativas horizontais exatas especificadas (12%, 27%, 40%, 52%, 65% de 1600px)
+    final centerXList = [192.0, 432.0, 640.0, 832.0, 1040.0];
+    final widthList = [135.0, 155.0, 145.0, 95.0, 170.0];
+    final heightList = [145.0, 130.0, 95.0, 140.0, 120.0];
+    final topList = [385.0, 400.0, 435.0, 390.0, 410.0];
 
-            // Plaquinha integrada de madeira/metal escuro
-            AnimatedContainer(
+    final centerX = centerXList[index];
+    final width = widthList[index];
+    final height = heightList[index];
+    final top = topList[index];
+    final left = centerX - (width / 2);
+
+    // Largura das placas
+    final plaqueWidthList = [135.0, 140.0, 145.0, 135.0, 140.0];
+    final plaqueWidth = plaqueWidthList[index];
+    final plaqueLeft = centerX - (plaqueWidth / 2);
+
+    Widget imageWidget = Image.asset(
+      item.assetPath,
+      width: width,
+      height: height,
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) => CustomPaint(
+        painter: ComponentPhysicalPainter(
+          type: item.type,
+          isActive: true,
+          isDarkMode: true,
+        ),
+        child: SizedBox(width: width, height: height),
+      ),
+    );
+
+    // 8. Halo suave ao redor do objeto PNG quando selecionado
+    if (isSelected) {
+      imageWidget = Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF10B981).withValues(alpha: 0.65),
+              blurRadius: 16,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: imageWidget,
+      );
+    } else {
+      // Sombra natural de contato suave abaixo do objeto não selecionado
+      imageWidget = Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.35),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: imageWidget,
+      );
+    }
+
+    return Stack(
+      children: [
+        // Imagem do Componente PNG (Layer 3 & 5)
+        Positioned(
+          left: left,
+          top: top,
+          width: width,
+          height: height,
+          child: GestureDetector(
+            onTap: () => _selectComponent(index),
+            behavior: HitTestBehavior.opaque,
+            child: AnimatedScale(
+              scale: isSelected ? 1.04 : 1.0,
               duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              child: imageWidget,
+            ),
+          ),
+        ),
+
+        // 7. Placa com o nome diretamente abaixo do componente (Layer 4)
+        Positioned(
+          left: plaqueLeft,
+          top: 540,
+          width: plaqueWidth,
+          height: 38,
+          child: GestureDetector(
+            onTap: () => _selectComponent(index),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: isSelected
-                    ? const Color(0xFF10B981)
-                    : (isExplored ? const Color(0xFF0F3D30) : const Color(0xFF1A2721)),
-                borderRadius: BorderRadius.circular(8),
+                color: isSelected ? const Color(0xFF0F6B45) : const Color(0xFF133824),
+                borderRadius: BorderRadius.circular(6),
                 border: Border.all(
                   color: isSelected
-                      ? const Color(0xFF00FF9D)
-                      : (isExplored ? const Color(0xFF10B981) : const Color(0xFF334155)),
-                  width: isSelected ? 1.8 : 1.0,
+                      ? const Color(0xFF10B981)
+                      : (isExplored
+                          ? const Color(0xFF10B981).withValues(alpha: 0.6)
+                          : const Color(0xFF2E6B49)),
+                  width: isSelected ? 1.5 : 1.0,
                 ),
-                boxShadow: const [
+                boxShadow: [
                   BoxShadow(
-                    color: Colors.black45,
-                    blurRadius: 4,
-                    offset: Offset(0, 2),
+                    color: isSelected
+                        ? const Color(0xFF10B981).withValues(alpha: 0.3)
+                        : Colors.black.withValues(alpha: 0.4),
+                    blurRadius: isSelected ? 8 : 4,
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   if (isExplored && !isSelected)
                     const Padding(
                       padding: EdgeInsets.only(right: 4),
-                      child: Icon(Icons.check_circle_rounded, size: 12, color: Color(0xFF10B981)),
+                      child: Icon(
+                        Icons.check_circle_rounded,
+                        size: 12,
+                        color: Color(0xFF34D399),
+                      ),
                     ),
                   Flexible(
                     child: Text(
@@ -734,15 +762,140 @@ class _FirstBenchPhase1State extends State<FirstBenchPhase1> {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontFamily: GoogleFonts.rajdhani().fontFamily,
-                        fontSize: 12.5,
+                        fontSize: 13.5,
                         fontWeight: FontWeight.bold,
-                        color: isSelected ? Colors.black : Colors.white,
+                        color: Colors.white,
+                        letterSpacing: 0.3,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Vista responsiva para telas menores (< 850px / Mobile)
+  Widget _buildMobileResponsiveView(BoxConstraints constraints) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildTitleSectionStack(),
+          const SizedBox(height: 12),
+          // Cenário da Bancada em formato compacto responsivo
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: SizedBox(
+              height: 280,
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: Image.asset(
+                      'assets/images/backgrounds/background_fase_01_bancada.png',
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Image.asset(
+                        'assets/backgrounds/background_fase_01_bancada.png',
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      itemCount: _components.length,
+                      separatorBuilder: (_, _) => const SizedBox(width: 12),
+                      itemBuilder: (context, index) => _buildMobileBenchItem(index),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildInfoPanel(),
+          const SizedBox(height: 16),
+          _buildFooterProgressQuiz(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileBenchItem(int index) {
+    final item = _components[index];
+    final isSelected = _selectedIndex == index;
+
+    Widget imgWidget = Image.asset(
+      item.assetPath,
+      height: 110,
+      width: 110,
+      fit: BoxFit.contain,
+      errorBuilder: (context, error, stackTrace) => CustomPaint(
+        painter: ComponentPhysicalPainter(
+          type: item.type,
+          isActive: true,
+          isDarkMode: true,
+        ),
+        child: const SizedBox(width: 90, height: 110),
+      ),
+    );
+
+    if (isSelected) {
+      imgWidget = Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF10B981).withValues(alpha: 0.65),
+              blurRadius: 14,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: imgWidget,
+      );
+    }
+
+    return GestureDetector(
+      onTap: () => _selectComponent(index),
+      child: SizedBox(
+        width: 125,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            AnimatedScale(
+              scale: isSelected ? 1.04 : 1.0,
+              duration: const Duration(milliseconds: 200),
+              child: imgWidget,
+            ),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              decoration: BoxDecoration(
+                color: isSelected ? const Color(0xFF0F6B45) : const Color(0xFF133824),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: isSelected ? const Color(0xFF10B981) : const Color(0xFF2E6B49),
+                ),
+              ),
+              child: Text(
+                item.plaqueName,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: GoogleFonts.rajdhani().fontFamily,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],

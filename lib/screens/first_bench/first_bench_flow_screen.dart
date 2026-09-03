@@ -46,8 +46,10 @@ class _FirstBenchFlowScreenState extends ConsumerState<FirstBenchFlowScreen> {
     } finally {
       if (mounted) {
         setState(() {
+          _flowState = FirstBenchFlowState.safe();
           _isLoading = false;
         });
+        _saveState();
       }
     }
   }

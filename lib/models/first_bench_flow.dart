@@ -21,8 +21,11 @@ class FirstBenchFlowState {
     this.snapshotVersion = currentVersion,
   });
 
-  /// Estado inicial seguro.
-  factory FirstBenchFlowState.safe() => const FirstBenchFlowState();
+  /// Estado inicial padrão (Fases 1, 2 e 3 concluídas, Fase 4 ativa e desbloqueada).
+  factory FirstBenchFlowState.safe() => const FirstBenchFlowState(
+        currentPhaseId: 4,
+        completedPhaseIds: {1, 2, 3},
+      );
 
   /// Indica se o primeiro estande foi concluído por completo (Fase 4 concluída).
   bool get firstBenchCompleted => completedPhaseIds.contains(4);
@@ -31,10 +34,10 @@ class FirstBenchFlowState {
   bool get maquetteLit => firstBenchCompleted;
 
   /// Verifica se uma fase específica está desbloqueada.
-  /// A Fase 1 é sempre desbloqueada. As demais exigem que a anterior esteja concluída.
+  /// A Fase N exige que a Fase N-1 esteja concluída.
   bool isUnlocked(int phaseId) {
-    if (phaseId <= 1) return true;
-    if (phaseId > 4) return false;
+    if (phaseId < 1 || phaseId > 4) return false;
+    if (phaseId == 1) return true;
     return completedPhaseIds.contains(phaseId - 1);
   }
 
