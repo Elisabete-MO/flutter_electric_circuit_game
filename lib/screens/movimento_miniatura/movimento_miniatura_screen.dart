@@ -1016,14 +1016,18 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
                           height: 95,
                           showLabel: false,
                           onAccept: (_) => _insertComponent(
-                            name: 'Push-Button',
+                            name: 'Botão',
                             getInserted: () => _m3PushButtonInserted,
                             setInserted: (v) => _m3PushButtonInserted = v,
                             getRotation: () => 0,
                             setRotation: (v) {},
                           ),
                           onRotate: () {},
-                          onTap: () => setState(() => _m3PushButtonInserted = !_m3PushButtonInserted),
+                          onTap: () {
+                            if (_m3PushButtonInserted) {
+                              setState(() => _m3PushButtonPressed = !_m3PushButtonPressed);
+                            }
+                          },
                           symbolWidget: _usePhysicalStyle
                               ? const PushButtonVectorWidget(size: 55)
                               : const SchematicSwitchWidget(size: 55, isPushButton: true, color: Color(0xFFEF4444)),
