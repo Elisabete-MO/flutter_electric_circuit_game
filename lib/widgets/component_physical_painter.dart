@@ -821,87 +821,205 @@ class ComponentPhysicalPainter extends CustomPainter {
   /// --------------------------------------------------------------------------
   /// DIODO EMISSOR DE LUZ - LED 5mm 3D (Expandido)
   /// --------------------------------------------------------------------------
+  /// --------------------------------------------------------------------------
+  /// DIODO EMISSOR DE LUZ - LED 5mm 3D ULTRARREALISTA (Referência Componente T-1¾)
+  /// --------------------------------------------------------------------------
   void _drawPhysicalLED(Canvas canvas, Size size, double cx, double cy) {
-    final domeCenter = Offset(cx, cy - 6);
-    const ledRadius = 22.0;
+    // 1. Hastes de conexão de bancada
+    _drawCleanLeads(canvas, size, cx, cy, cx - 16, cx + 16);
 
-    _drawCleanLeads(canvas, size, cx, cy, domeCenter.dx - ledRadius - 2, domeCenter.dx + ledRadius + 2);
+    // Geometria do Pacote de LED 5mm (Domo + Cilindro + Flange de Base)
+    const double domeRadius = 14.0;
+    const double cylinderHeight = 15.0;
+    const double flangeWidth = 32.0;
+    const double flangeHeight = 5.0;
 
-    // Glow fotônico neon expandido quando energizado
+    final double ledTopY = cy - 18.0;
+    final double domeStartY = ledTopY + domeRadius;
+    final double cylinderBottomY = domeStartY + cylinderHeight;
+    final double flangeBottomY = cylinderBottomY + flangeHeight;
+
+    // 2. Pernas/Terminais metálicos verticais (Ânodo + longo à esquerda, Cátodo - curto à direita)
+    final pinPaint = Paint()
+      ..shader = const LinearGradient(
+        colors: [Color(0xFFE2E8F0), Color(0xFF94A3B8), Color(0xFF64748B)],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ).createShader(Rect.fromLTWH(cx - 15, flangeBottomY, 30, 25));
+
+    final pinCapPaint = Paint()..color = const Color(0xFFCBD5E1);
+
+    // Perna Ânodo (+) - mais longa (esquerda)
+    final anodeX = cx - 5.5;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromLTWH(anodeX - 1.2, flangeBottomY, 2.4, 22), const Radius.circular(0.8)),
+      pinPaint,
+    );
+    // Trava/Entalhe da perna do ânodo
+    canvas.drawRect(Rect.fromLTWH(anodeX - 2.0, flangeBottomY + 6, 4.0, 1.8), pinCapPaint);
+
+    // Perna Cátodo (-) - mais curta (direita)
+    final cathodeX = cx + 5.5;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromLTWH(cathodeX - 1.2, flangeBottomY, 2.4, 16), const Radius.circular(0.8)),
+      pinPaint,
+    );
+    // Trava/Entalhe da perna do cátodo
+    canvas.drawRect(Rect.fromLTWH(cathodeX - 2.0, flangeBottomY + 6, 4.0, 1.8), pinCapPaint);
+
+    // 3. Efeito de Fotoluminescência Neon Radial (quando energizado / isActive)
     if (isActive) {
+      final glowCenter = Offset(cx, domeStartY);
       canvas.drawCircle(
-        domeCenter,
-        ledRadius + 36,
+        glowCenter,
+        domeRadius + 28,
         Paint()
-          ..color = const Color(0xFF00FF9D).withValues(alpha: 0.35)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20),
+          ..color = const Color(0xFFEF4444).withValues(alpha: 0.35)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18),
       );
       canvas.drawCircle(
-        domeCenter,
-        ledRadius + 18,
+        glowCenter,
+        domeRadius + 14,
         Paint()
-          ..color = const Color(0xFF00E676).withValues(alpha: 0.75)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
+          ..color = const Color(0xFFF87171).withValues(alpha: 0.65)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
       );
 
       final rayPaint = Paint()
-        ..color = const Color(0xFF00FF9D).withValues(alpha: 0.9)
-        ..strokeWidth = 2.6
+        ..color = const Color(0xFFFECACA).withValues(alpha: 0.95)
+        ..strokeWidth = 2.2
         ..strokeCap = StrokeCap.round;
-      canvas.drawLine(Offset(cx - 22, domeCenter.dy - 18), Offset(cx - 32, domeCenter.dy - 28), rayPaint);
-      canvas.drawLine(Offset(cx + 22, domeCenter.dy - 18), Offset(cx + 32, domeCenter.dy - 28), rayPaint);
-      canvas.drawLine(Offset(cx, domeCenter.dy - 26), Offset(cx, domeCenter.dy - 38), rayPaint);
+      canvas.drawLine(Offset(cx - 16, ledTopY - 6), Offset(cx - 24, ledTopY - 16), rayPaint);
+      canvas.drawLine(Offset(cx + 16, ledTopY - 6), Offset(cx + 24, ledTopY - 16), rayPaint);
+      canvas.drawLine(Offset(cx, ledTopY - 10), Offset(cx, ledTopY - 22), rayPaint);
     }
 
-    // Armação metálica interna visível
-    final leadFramePaint = Paint()
-      ..color = Colors.blueGrey.shade300.withValues(alpha: 0.9)
-      ..strokeWidth = 2.8;
-    canvas.drawLine(Offset(cx - 6.0, domeCenter.dy + 10), Offset(cx - 6.0, domeCenter.dy - 3), leadFramePaint);
-    canvas.drawLine(Offset(cx + 6.0, domeCenter.dy + 10), Offset(cx + 6.0, domeCenter.dy - 6), leadFramePaint);
-
-    // Taça metálica do Cátodo
-    final anvilPath = Path()
-      ..moveTo(cx - 10.0, domeCenter.dy - 3)
-      ..lineTo(cx - 2.0, domeCenter.dy - 3)
-      ..lineTo(cx - 4.0, domeCenter.dy - 9)
-      ..close();
-    canvas.drawPath(anvilPath, Paint()..color = Colors.blueGrey.shade100);
-
-    // Domo esférico de resina epóxi
-    final domeShader = RadialGradient(
-      center: const Alignment(-0.35, -0.4),
-      radius: 0.85,
-      colors: isActive
-          ? const [Color(0xFFE8F5E9), Color(0xFF00E676), Color(0xFF00C853), Color(0xFF1B5E20)]
-          : const [Color(0xFFA5D6A7), Color(0xFF4CAF50), Color(0xFF1B5E20)],
-    ).createShader(Rect.fromCircle(center: domeCenter, radius: ledRadius));
-
-    canvas.drawCircle(domeCenter, ledRadius, Paint()..shader = domeShader);
-
-    // Colarinho/Anel de retenção de resina na base
+    // Sombra projetada sob o corpo do LED
+    final shadowBounds = Rect.fromLTRB(cx - 16, ledTopY, cx + 16, flangeBottomY);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(cx - ledRadius - 1.5, domeCenter.dy + 9, (ledRadius + 1.5) * 2, 5),
-        const Radius.circular(2.0),
-      ),
-      Paint()..color = isActive ? const Color(0xFF2E7D32) : const Color(0xFF1B5E20),
+      RRect.fromRectAndRadius(shadowBounds.translate(2, 3), const Radius.circular(10)),
+      Paint()..color = Colors.black.withValues(alpha: 0.25)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
     );
 
-    // Brilho especular curvo de lente de resina epóxi
-    final glassHighlightPath = Path()
-      ..addArc(
-        Rect.fromCircle(center: Offset(cx - 5.0, domeCenter.dy - 5.0), radius: ledRadius * 0.65),
-        -math.pi * 0.8,
-        math.pi * 0.5,
-      );
+    // 4. Armação Metálica Interna (Lead Frame - Anvil & Post)
+    // Haste do Cátodo com Taça Refletora (Anvil)
+    final anvilPath = Path()
+      ..moveTo(cathodeX - 0.8, cylinderBottomY)
+      ..lineTo(cathodeX - 0.8, domeStartY + 2)
+      ..lineTo(cx + 1.0, domeStartY - 2)
+      ..lineTo(cx - 4.5, domeStartY - 7)
+      ..lineTo(cx - 6.5, domeStartY - 2)
+      ..lineTo(cathodeX - 3.5, domeStartY + 2)
+      ..close();
+    canvas.drawPath(anvilPath, Paint()..color = const Color(0xFFCBD5E1).withValues(alpha: 0.85));
+
+    // Haste do Ânodo (Post)
+    final postPath = Path()
+      ..moveTo(anodeX + 0.8, cylinderBottomY)
+      ..lineTo(anodeX + 0.8, domeStartY + 1)
+      ..lineTo(anodeX - 2.5, domeStartY - 4)
+      ..lineTo(anodeX - 0.5, domeStartY - 4)
+      ..close();
+    canvas.drawPath(postPath, Paint()..color = const Color(0xFFE2E8F0).withValues(alpha: 0.85));
+
+    // Micro Fio de Ouro (Bond Wire) ligando a fita ao chip
+    final wirePath = Path()
+      ..moveTo(anodeX - 1.5, domeStartY - 4)
+      ..quadraticBezierTo(cx - 5, domeStartY - 9, cx - 3, domeStartY - 5);
     canvas.drawPath(
-      glassHighlightPath,
+      wirePath,
       Paint()
-        ..color = Colors.white.withValues(alpha: isActive ? 0.95 : 0.75)
-        ..strokeWidth = 3.0
+        ..color = const Color(0xFFFDE047).withValues(alpha: 0.9)
         ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0,
+    );
+
+    // Chip Semicondutor (LED Die) dentro da taça da Anvil
+    final dieRect = Rect.fromCenter(center: Offset(cx - 3.5, domeStartY - 4.5), width: 2.2, height: 2.2);
+    canvas.drawRect(
+      dieRect,
+      Paint()..color = isActive ? const Color(0xFFFFFFFF) : const Color(0xFFFEF08A),
+    );
+
+    // 5. Corpo de Resina Epóxi Translúcida Vermelha (Domo + Cilindro)
+    final ledPath = Path();
+    ledPath.moveTo(cx - domeRadius, cylinderBottomY);
+    ledPath.lineTo(cx - domeRadius, domeStartY);
+    ledPath.arcToPoint(
+      Offset(cx + domeRadius, domeStartY),
+      radius: const Radius.circular(domeRadius),
+      clockwise: true,
+    );
+    ledPath.lineTo(cx + domeRadius, cylinderBottomY);
+    ledPath.close();
+
+    final ledBodyRect = Rect.fromLTRB(cx - domeRadius, ledTopY, cx + domeRadius, cylinderBottomY);
+    final ledShader = RadialGradient(
+      center: const Alignment(-0.35, -0.45),
+      radius: 0.85,
+      colors: isActive
+          ? const [
+              Color(0xFFFEF2F2),
+              Color(0xFFF87171),
+              Color(0xFFEF4444),
+              Color(0xFFDC2626),
+              Color(0xFF991B1B),
+            ]
+          : const [
+              Color(0xFFFCA5A5),
+              Color(0xFFEF4444),
+              Color(0xFFDC2626),
+              Color(0xFFB91C1C),
+              Color(0xFF7F1D1D),
+            ],
+      stops: const [0.0, 0.25, 0.55, 0.8, 1.0],
+    ).createShader(ledBodyRect);
+
+    canvas.drawPath(ledPath, Paint()..shader = ledShader);
+
+    // 6. Flange / Anel de Base Proeminente (Borda inferior do LED igual à foto)
+    final flangeRect = Rect.fromLTRB(cx - (flangeWidth / 2), cylinderBottomY - 1, cx + (flangeWidth / 2), flangeBottomY);
+    final flangeRRect = RRect.fromRectAndRadius(flangeRect, const Radius.circular(2.0));
+
+    final flangeShader = LinearGradient(
+      colors: isActive
+          ? const [Color(0xFFEF4444), Color(0xFFDC2626), Color(0xFF991B1B)]
+          : const [Color(0xFFDC2626), Color(0xFFB91C1C), Color(0xFF7F1D1D)],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+    ).createShader(flangeRect);
+
+    canvas.drawRRect(flangeRRect, Paint()..shader = flangeShader);
+
+    // Destaque brilhante na borda da flange
+    canvas.drawLine(
+      Offset(cx - (flangeWidth / 2) + 2, cylinderBottomY + 1),
+      Offset(cx + (flangeWidth / 2) - 2, cylinderBottomY + 1),
+      Paint()..color = Colors.white.withValues(alpha: 0.4)..strokeWidth = 1.0,
+    );
+
+    // 7. Reflexos Especulares Glossy do Domo de Plástico (IGUAL À FOTO DA REFERÊNCIA)
+    final mainStreakPath = Path()
+      ..moveTo(cx - 7.5, ledTopY + 3)
+      ..cubicTo(
+        cx - 11.5, domeStartY - 2,
+        cx - 11.5, domeStartY + 6,
+        cx - 8.5, cylinderBottomY - 3,
+      );
+
+    canvas.drawPath(
+      mainStreakPath,
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.85)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.6
         ..strokeCap = StrokeCap.round,
+    );
+
+    canvas.drawCircle(
+      Offset(cx + 6.0, domeStartY - 6.0),
+      1.8,
+      Paint()..color = Colors.white.withValues(alpha: 0.55),
     );
   }
 

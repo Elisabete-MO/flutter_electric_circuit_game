@@ -4,7 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../models/stand_mission.dart';
 import '../../models/first_step_component.dart';
-import '../../models/component_terminals.dart';
 import '../../state/progress_controller.dart';
 import '../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
@@ -701,31 +700,45 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
                   final centerY = h * 0.5;
 
                   final batteryPlacement = ComponentPlacement(
-                    componentType: ComponentType.battery,
-                    center: Offset(batteryX, centerY),
+                    position: Offset(batteryX, centerY),
                     rotation: _m2BatteryRotation,
+                    type: ComponentType.battery,
                   );
                   final motorPlacement = ComponentPlacement(
-                    componentType: ComponentType.motor,
-                    center: Offset(motorX, centerY),
+                    position: Offset(motorX, centerY),
                     rotation: _m2MotorRotation,
+                    type: ComponentType.motor,
                   );
+
+                  final wires = <WirePath>[];
+                  if (_m2BatteryInserted && _m2MotorInserted) {
+                    wires.add(DynamicWirePath.fromComponents(
+                      compA: isReversed ? motorPlacement : batteryPlacement,
+                      terminalIndexA: isReversed ? 0 : 1,
+                      compB: isReversed ? batteryPlacement : motorPlacement,
+                      terminalIndexB: isReversed ? 1 : 0,
+                      color: isReversed ? const Color(0xFF0284C7) : const Color(0xFFD97706),
+                      isActive: true,
+                    ).toWirePath());
+                    wires.add(DynamicWirePath.fromComponents(
+                      compA: isReversed ? batteryPlacement : motorPlacement,
+                      terminalIndexA: isReversed ? 1 : 0,
+                      compB: isReversed ? motorPlacement : batteryPlacement,
+                      terminalIndexB: isReversed ? 0 : 1,
+                      color: const Color(0xFF64748B),
+                      isActive: true,
+                    ).toWirePath());
+                  }
 
                   return Stack(
                     children: [
                       // Wire paths
-                      if (_m2BatteryInserted && _m2MotorInserted)
+                      if (wires.isNotEmpty)
                         Positioned.fill(
-                          child: CustomPaint(
-                            painter: DynamicWirePath(
-                              startComponent: isReversed ? motorPlacement : batteryPlacement,
-                              endComponent: isReversed ? batteryPlacement : motorPlacement,
-                              startTerminalIndex: isReversed ? 0 : 1,
-                              endTerminalIndex: isReversed ? 1 : 0,
-                              wireColor: isReversed ? const Color(0xFF0284C7) : const Color(0xFFD97706),
-                              animationValue: _currentFlowController.value,
-                              showCurrent: _m2BatteryInserted && _m2MotorInserted,
-                            ),
+                          child: RealisticWireWidget(
+                            wires: wires,
+                            animationValue: _currentFlowController.value,
+                            showElectrons: true,
                           ),
                         ),
                       // Battery socket
@@ -736,7 +749,8 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
                           expectedData: 'battery',
                           isFilled: _m2BatteryInserted,
                           rotation: _m2BatteryRotation,
-                          size: 95,
+                          width: 95,
+                          height: 95,
                           showLabel: false,
                           onAccept: (_) => setState(() => _m2BatteryInserted = true),
                           onRotate: () => setState(() => _m2BatteryRotation = (_m2BatteryRotation + 90) % 360),
@@ -758,7 +772,8 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
                           expectedData: 'motor_cc',
                           isFilled: _m2MotorInserted,
                           rotation: _m2MotorRotation,
-                          size: 95,
+                          width: 95,
+                          height: 95,
                           showLabel: false,
                           onAccept: (_) => setState(() => _m2MotorInserted = true),
                           onRotate: () => setState(() => _m2MotorRotation = (_m2MotorRotation + 90) % 360),
@@ -825,62 +840,150 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _buildAnimatedMotorWidget(
-            isRunning: isMotorSpinning,
-            isReversed: false,
-          ),
-          const SizedBox(height: 20),
-          DragTarget<String>(
-            onWillAcceptWithDetails: (details) => details.data == 'push_button',
-            onAcceptWithDetails: (_) {
-              setState(() {
-                _m3PushButtonInserted = true;
-              });
-            },
-            builder: (context, candidateData, rejectedData) {
-              final isHovering = candidateData.isNotEmpty;
-              return InkWell(
-                onTap: () {
-                  setState(() {
-                    _m3PushButtonInserted = !_m3PushButtonInserted;
-                  });
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: _m3PushButtonInserted
-                          ? const Color(0xFF0284C7)
-                          : isHovering
-                              ? const Color(0xFF0284C7)
-                              : const Color(0xFFCBD5E1),
-                      width: 2,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final w = constraints.maxWidth;
+                  final h = constraints.maxHeight;
+                  final batteryX = w * 0.12;
+                  final switchX = w * 0.42;
+                  final motorX = w * 0.78;
+                  final centerY = h * 0.5;
+
+                  final batteryPlacement = ComponentPlacement(
+                    position: Offset(batteryX, centerY),
+                    rotation: _m3BatteryRotation,
+                    type: ComponentType.battery,
+                  );
+                  final switchPlacement = ComponentPlacement(
+                    position: Offset(switchX, centerY),
+                    rotation: 0,
+                    type: ComponentType.switchComponent,
+                  );
+                  final motorPlacement = ComponentPlacement(
+                    position: Offset(motorX, centerY),
+                    rotation: _m3MotorRotation,
+                    type: ComponentType.motor,
+                  );
+
+                  final wires = <WirePath>[];
+                  if (_m3BatteryInserted && _m3PushButtonInserted) {
+                    wires.add(DynamicWirePath.fromComponents(
+                      compA: batteryPlacement,
+                      terminalIndexA: 1,
+                      compB: switchPlacement,
+                      terminalIndexB: 0,
+                      color: const Color(0xFFD97706),
+                      isActive: isMotorSpinning,
+                    ).toWirePath());
+                  }
+                  if (_m3PushButtonInserted && _m3MotorInserted) {
+                    wires.add(DynamicWirePath.fromComponents(
+                      compA: switchPlacement,
+                      terminalIndexA: 1,
+                      compB: motorPlacement,
+                      terminalIndexB: 0,
+                      color: const Color(0xFF0284C7),
+                      isActive: isMotorSpinning,
+                    ).toWirePath());
+                  }
+                  if (_m3MotorInserted && _m3BatteryInserted) {
+                    wires.add(DynamicWirePath.fromComponents(
+                      compA: motorPlacement,
+                      terminalIndexA: 1,
+                      compB: batteryPlacement,
+                      terminalIndexB: 0,
+                      color: const Color(0xFF64748B),
+                      isActive: isMotorSpinning,
+                    ).toWirePath());
+                  }
+
+                  return Stack(
                     children: [
-                      Icon(
-                        _m3PushButtonInserted ? Icons.check_circle_rounded : Icons.touch_app_rounded,
-                        color: _m3PushButtonInserted ? const Color(0xFF0284C7) : const Color(0xFFD97706),
+                      // Wire paths
+                      if (wires.isNotEmpty)
+                        Positioned.fill(
+                          child: RealisticWireWidget(
+                            wires: wires,
+                            animationValue: isMotorSpinning ? _currentFlowController.value : 0,
+                            showElectrons: isMotorSpinning,
+                          ),
+                        ),
+                      // Battery socket
+                      Positioned(
+                        left: batteryX - 47.5,
+                        top: centerY - 47.5,
+                        child: PhysicalBlueprintSocket<String>(
+                          expectedData: 'battery',
+                          isFilled: _m3BatteryInserted,
+                          rotation: _m3BatteryRotation,
+                          width: 95,
+                          height: 95,
+                          showLabel: false,
+                          onAccept: (_) => setState(() => _m3BatteryInserted = true),
+                          onRotate: () => setState(() => _m3BatteryRotation = (_m3BatteryRotation + 90) % 360),
+                          onTap: () {},
+                          symbolWidget: CustomPaint(
+                            size: const Size(55, 55),
+                            painter: ComponentPhysicalPainter(
+                              type: ComponentType.battery,
+                              isDarkMode: false,
+                            ),
+                          ),
+                        ),
                       ),
-                      const SizedBox(width: 10),
-                      Text(
-                        _m3PushButtonInserted
-                            ? 'Push-Button Instalado no Circuito'
-                            : '➕ Encaixar Interruptor Push-Button',
-                        style: GoogleFonts.rajdhani(color: const Color(0xFF0F172A), fontWeight: FontWeight.bold, fontSize: 15),
+                      // Push-button socket (switch)
+                      Positioned(
+                        left: switchX - 47.5,
+                        top: centerY - 47.5,
+                        child: PhysicalBlueprintSocket<String>(
+                          expectedData: 'push_button',
+                          isFilled: _m3PushButtonInserted,
+                          rotation: 0,
+                          width: 95,
+                          height: 95,
+                          showLabel: false,
+                          onAccept: (_) => setState(() => _m3PushButtonInserted = true),
+                          onRotate: () {},
+                          onTap: () => setState(() => _m3PushButtonInserted = !_m3PushButtonInserted),
+                          symbolWidget: _usePhysicalStyle
+                              ? const PushButtonVectorWidget(size: 55)
+                              : const SchematicSwitchWidget(size: 55, isPushButton: true, color: Color(0xFFEF4444)),
+                        ),
+                      ),
+                      // Motor socket
+                      Positioned(
+                        left: motorX - 47.5,
+                        top: centerY - 47.5,
+                        child: PhysicalBlueprintSocket<String>(
+                          expectedData: 'motor_cc',
+                          isFilled: _m3MotorInserted,
+                          rotation: _m3MotorRotation,
+                          width: 95,
+                          height: 95,
+                          showLabel: false,
+                          onAccept: (_) => setState(() => _m3MotorInserted = true),
+                          onRotate: () => setState(() => _m3MotorRotation = (_m3MotorRotation + 90) % 360),
+                          onTap: () {},
+                          symbolWidget: CustomPaint(
+                            size: const Size(55, 55),
+                            painter: ComponentPhysicalPainter(
+                              type: ComponentType.motor,
+                              isActive: isMotorSpinning,
+                              isDarkMode: false,
+                            ),
+                          ),
+                        ),
                       ),
                     ],
-                  ),
-                ),
-              );
-            },
+                  );
+                },
+              ),
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           if (_m3PushButtonInserted)
             GestureDetector(
               onTapDown: (_) => setState(() => _m3PushButtonPressed = true),
@@ -905,20 +1008,21 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
                     Icon(_m3PushButtonPressed ? Icons.play_arrow_rounded : Icons.radio_button_checked_rounded, color: Colors.white, size: 28),
                     const SizedBox(width: 10),
                     Text(
-                      _m3PushButtonPressed ? 'MOTOR EM PARTIDA! (PRESSIONADO)' : 'SEGURE PARA ACIONAR O MOTOR',
+                      _m3PushButtonPressed ? 'MOTOR EM PARTIDA!' : 'SEGURE PARA ACIONAR',
                       style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
                     ),
                   ],
                 ),
               ),
             ),
+          const SizedBox(height: 16),
         ],
       ),
     );
   }
 
   // ==========================================
-  // MISSÃO 4: Painel com LED Indicador
+  // MISSÃO 4: Painel com LED Indicador em Paralelo
   // ==========================================
   Widget _buildM4UI() {
     final isSystemReady = _m4LedInserted && _m4ResistorInserted;
@@ -926,98 +1030,225 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildAnimatedMotorWidget(
-                isRunning: isSystemReady,
-                isReversed: false,
-              ),
-              const SizedBox(width: 40),
-              // LED Indicador em Paralelo
-              Column(
-                children: [
-                  Icon(
-                    Icons.lightbulb_rounded,
-                    size: 48,
-                    color: isSystemReady ? const Color(0xFF0284C7) : const Color(0xFF94A3B8),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    isSystemReady ? 'LED STATUS: ON 🟢' : 'LED STATUS: OFF 🔴',
-                    style: GoogleFonts.rajdhani(
-                      color: isSystemReady ? const Color(0xFF0284C7) : const Color(0xFF64748B),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Slot 1: LED Indicador
-              DragTarget<String>(
-                onWillAcceptWithDetails: (details) => details.data == 'led_indicator',
-                onAcceptWithDetails: (_) => setState(() => _m4LedInserted = true),
-                builder: (context, candidateData, rejectedData) {
-                  return InkWell(
-                    onTap: () => setState(() => _m4LedInserted = !_m4LedInserted),
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: _m4LedInserted ? const Color(0xFF0284C7) : const Color(0xFFCBD5E1)),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(_m4LedInserted ? Icons.check_circle_rounded : Icons.add_box_rounded, color: _m4LedInserted ? const Color(0xFF0284C7) : const Color(0xFFD97706)),
-                          const SizedBox(width: 8),
-                          Text(
-                            _m4LedInserted ? 'LED Indicador OK' : '➕ LED no Ramo Paralelo',
-                            style: GoogleFonts.rajdhani(color: const Color(0xFF0F172A), fontWeight: FontWeight.bold),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final w = constraints.maxWidth;
+                  final h = constraints.maxHeight;
+                  final batteryX = w * 0.1;
+                  final motorX = w * 0.45;
+                  final resistorX = w * 0.7;
+                  final ledX = w * 0.88;
+                  final topY = h * 0.3;
+                  final bottomY = h * 0.7;
+
+                  final batteryPlacement = ComponentPlacement(
+                    position: Offset(batteryX, topY),
+                    rotation: _m4BatteryRotation,
+                    type: ComponentType.battery,
+                  );
+                  final motorPlacement = ComponentPlacement(
+                    position: Offset(motorX, topY),
+                    rotation: _m4MotorRotation,
+                    type: ComponentType.motor,
+                  );
+                  final resistorPlacement = ComponentPlacement(
+                    position: Offset(resistorX, bottomY),
+                    rotation: 0,
+                    type: ComponentType.resistor,
+                  );
+                  final ledPlacement = ComponentPlacement(
+                    position: Offset(ledX, bottomY),
+                    rotation: 0,
+                    type: ComponentType.led,
+                  );
+
+                  final wires = <WirePath>[];
+                  if (_m4BatteryInserted && _m4MotorInserted) {
+                    wires.add(DynamicWirePath.fromComponents(
+                      compA: batteryPlacement,
+                      terminalIndexA: 1,
+                      compB: motorPlacement,
+                      terminalIndexB: 0,
+                      color: const Color(0xFFD97706),
+                      isActive: isSystemReady,
+                    ).toWirePath());
+                    wires.add(DynamicWirePath.fromComponents(
+                      compA: motorPlacement,
+                      terminalIndexA: 1,
+                      compB: batteryPlacement,
+                      terminalIndexB: 0,
+                      color: const Color(0xFF64748B),
+                      isActive: isSystemReady,
+                    ).toWirePath());
+                  }
+                  if (_m4BatteryInserted && _m4ResistorInserted) {
+                    wires.add(DynamicWirePath.fromComponents(
+                      compA: batteryPlacement,
+                      terminalIndexA: 1,
+                      compB: resistorPlacement,
+                      terminalIndexB: 0,
+                      color: const Color(0xFF10B981),
+                      isActive: isSystemReady,
+                    ).toWirePath());
+                  }
+                  if (_m4ResistorInserted && _m4LedInserted) {
+                    wires.add(DynamicWirePath.fromComponents(
+                      compA: resistorPlacement,
+                      terminalIndexA: 1,
+                      compB: ledPlacement,
+                      terminalIndexB: 0,
+                      color: const Color(0xFF10B981),
+                      isActive: isSystemReady,
+                    ).toWirePath());
+                  }
+                  if (_m4LedInserted && _m4BatteryInserted) {
+                    wires.add(DynamicWirePath.fromComponents(
+                      compA: ledPlacement,
+                      terminalIndexA: 1,
+                      compB: batteryPlacement,
+                      terminalIndexB: 0,
+                      color: const Color(0xFF64748B),
+                      isActive: isSystemReady,
+                    ).toWirePath());
+                  }
+
+                  return Stack(
+                    children: [
+                      // Wire paths
+                      if (wires.isNotEmpty)
+                        Positioned.fill(
+                          child: RealisticWireWidget(
+                            wires: wires,
+                            animationValue: isSystemReady ? _currentFlowController.value : 0,
+                            showElectrons: isSystemReady,
                           ),
-                        ],
+                        ),
+                      // Battery socket
+                      Positioned(
+                        left: batteryX - 47.5,
+                        top: topY - 47.5,
+                        child: PhysicalBlueprintSocket<String>(
+                          expectedData: 'battery',
+                          isFilled: _m4BatteryInserted,
+                          rotation: _m4BatteryRotation,
+                          width: 95,
+                          height: 95,
+                          showLabel: false,
+                          onAccept: (_) => setState(() => _m4BatteryInserted = true),
+                          onRotate: () => setState(() => _m4BatteryRotation = (_m4BatteryRotation + 90) % 360),
+                          onTap: () {},
+                          symbolWidget: CustomPaint(
+                            size: const Size(55, 55),
+                            painter: ComponentPhysicalPainter(
+                              type: ComponentType.battery,
+                              isDarkMode: false,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
+                      // Motor socket
+                      Positioned(
+                        left: motorX - 47.5,
+                        top: topY - 47.5,
+                        child: PhysicalBlueprintSocket<String>(
+                          expectedData: 'motor_cc',
+                          isFilled: _m4MotorInserted,
+                          rotation: _m4MotorRotation,
+                          width: 95,
+                          height: 95,
+                          showLabel: false,
+                          onAccept: (_) => setState(() => _m4MotorInserted = true),
+                          onRotate: () => setState(() => _m4MotorRotation = (_m4MotorRotation + 90) % 360),
+                          onTap: () {},
+                          symbolWidget: CustomPaint(
+                            size: const Size(55, 55),
+                            painter: ComponentPhysicalPainter(
+                              type: ComponentType.motor,
+                              isActive: isSystemReady,
+                              isDarkMode: false,
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Resistor socket
+                      Positioned(
+                        left: resistorX - 47.5,
+                        top: bottomY - 47.5,
+                        child: PhysicalBlueprintSocket<String>(
+                          expectedData: 'resistor_680',
+                          isFilled: _m4ResistorInserted,
+                          rotation: 0,
+                          width: 95,
+                          height: 95,
+                          showLabel: false,
+                          onAccept: (_) => setState(() => _m4ResistorInserted = true),
+                          onRotate: () {},
+                          onTap: () => setState(() => _m4ResistorInserted = !_m4ResistorInserted),
+                          symbolWidget: CustomPaint(
+                            size: const Size(55, 55),
+                            painter: ComponentPhysicalPainter(
+                              type: ComponentType.resistor,
+                              isDarkMode: false,
+                            ),
+                          ),
+                        ),
+                      ),
+                      // LED socket
+                      Positioned(
+                        left: ledX - 47.5,
+                        top: bottomY - 47.5,
+                        child: PhysicalBlueprintSocket<String>(
+                          expectedData: 'led_indicator',
+                          isFilled: _m4LedInserted,
+                          rotation: 0,
+                          width: 95,
+                          height: 95,
+                          showLabel: false,
+                          onAccept: (_) => setState(() => _m4LedInserted = true),
+                          onRotate: () {},
+                          onTap: () => setState(() => _m4LedInserted = !_m4LedInserted),
+                          symbolWidget: CustomPaint(
+                            size: const Size(55, 55),
+                            painter: ComponentPhysicalPainter(
+                              type: ComponentType.led,
+                              isActive: isSystemReady,
+                              isDarkMode: false,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   );
                 },
               ),
-              const SizedBox(width: 16),
-              // Slot 2: Resistor 680Ω
-              DragTarget<String>(
-                onWillAcceptWithDetails: (details) => details.data == 'resistor_680',
-                onAcceptWithDetails: (_) => setState(() => _m4ResistorInserted = true),
-                builder: (context, candidateData, rejectedData) {
-                  return InkWell(
-                    onTap: () => setState(() => _m4ResistorInserted = !_m4ResistorInserted),
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: _m4ResistorInserted ? const Color(0xFF0284C7) : const Color(0xFFCBD5E1)),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(_m4ResistorInserted ? Icons.check_circle_rounded : Icons.add_box_rounded, color: _m4ResistorInserted ? const Color(0xFF0284C7) : const Color(0xFFD97706)),
-                          const SizedBox(width: 8),
-                          Text(
-                            _m4ResistorInserted ? 'Resistor 680Ω OK' : '➕ Resistor de Proteção',
-                            style: GoogleFonts.rajdhani(color: const Color(0xFF0F172A), fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                isSystemReady ? Icons.check_circle : Icons.info_outline,
+                color: isSystemReady ? const Color(0xFF10B981) : const Color(0xFF64748B),
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                isSystemReady
+                    ? 'Circuito Paralelo Completo: Motor + LED'
+                    : 'Insira Resistor e LED no ramo paralelo',
+                style: GoogleFonts.rajdhani(
+                  color: isSystemReady ? const Color(0xFF10B981) : const Color(0xFF64748B),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
               ),
             ],
           ),
+          const SizedBox(height: 16),
         ],
       ),
     );
@@ -1027,23 +1258,134 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
   // MISSÃO 5: Diagnóstico do Mini Carrinho
   // ==========================================
   Widget _buildM5UI() {
+    final isWorking = _m5WireRepaired && _m5CarTested && _m5BatteryInserted && _m5MotorInserted;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Visualização do Carrinho com Motor
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.directions_car_filled_rounded, size: 72, color: Color(0xFF0284C7)),
-              const SizedBox(width: 20),
-              _buildAnimatedMotorWidget(
-                isRunning: _m5WireRepaired && _m5CarTested,
-                isReversed: false,
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final w = constraints.maxWidth;
+                  final h = constraints.maxHeight;
+                  final batteryX = w * 0.2;
+                  final motorX = w * 0.75;
+                  final centerY = h * 0.5;
+
+                  final batteryPlacement = ComponentPlacement(
+                    position: Offset(batteryX, centerY),
+                    rotation: _m5BatteryRotation,
+                    type: ComponentType.battery,
+                  );
+                  final motorPlacement = ComponentPlacement(
+                    position: Offset(motorX, centerY),
+                    rotation: _m5MotorRotation,
+                    type: ComponentType.motor,
+                  );
+
+                  final wires = <WirePath>[];
+                  if (_m5BatteryInserted && _m5MotorInserted) {
+                    // Top wire: battery(+) -> motor(+)
+                    wires.add(DynamicWirePath.fromComponents(
+                      compA: batteryPlacement,
+                      terminalIndexA: 1,
+                      compB: motorPlacement,
+                      terminalIndexB: 0,
+                      color: _m5WireRepaired ? const Color(0xFF10B981) : const Color(0xFFD97706),
+                      isActive: _m5WireRepaired,
+                    ).toWirePath());
+                    // Bottom wire: motor(-) -> battery(-)
+                    wires.add(DynamicWirePath.fromComponents(
+                      compA: motorPlacement,
+                      terminalIndexA: 1,
+                      compB: batteryPlacement,
+                      terminalIndexB: 0,
+                      color: const Color(0xFF64748B),
+                      isActive: _m5WireRepaired,
+                    ).toWirePath());
+                  }
+
+                  return Stack(
+                    children: [
+                      // Wire paths
+                      if (wires.isNotEmpty)
+                        Positioned.fill(
+                          child: RealisticWireWidget(
+                            wires: wires,
+                            animationValue: isWorking ? _currentFlowController.value : 0,
+                            showElectrons: isWorking,
+                          ),
+                        ),
+                      // Battery socket
+                      Positioned(
+                        left: batteryX - 47.5,
+                        top: centerY - 47.5,
+                        child: PhysicalBlueprintSocket<String>(
+                          expectedData: 'battery',
+                          isFilled: _m5BatteryInserted,
+                          rotation: _m5BatteryRotation,
+                          width: 95,
+                          height: 95,
+                          showLabel: false,
+                          onAccept: (_) => setState(() => _m5BatteryInserted = true),
+                          onRotate: () => setState(() => _m5BatteryRotation = (_m5BatteryRotation + 90) % 360),
+                          onTap: () {},
+                          symbolWidget: CustomPaint(
+                            size: const Size(55, 55),
+                            painter: ComponentPhysicalPainter(
+                              type: ComponentType.battery,
+                              isDarkMode: false,
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Motor socket
+                      Positioned(
+                        left: motorX - 47.5,
+                        top: centerY - 47.5,
+                        child: PhysicalBlueprintSocket<String>(
+                          expectedData: 'motor_cc',
+                          isFilled: _m5MotorInserted,
+                          rotation: _m5MotorRotation,
+                          width: 95,
+                          height: 95,
+                          showLabel: false,
+                          onAccept: (_) => setState(() => _m5MotorInserted = true),
+                          onRotate: () => setState(() => _m5MotorRotation = (_m5MotorRotation + 90) % 360),
+                          onTap: () {},
+                          symbolWidget: CustomPaint(
+                            size: const Size(55, 55),
+                            painter: ComponentPhysicalPainter(
+                              type: ComponentType.motor,
+                              isActive: isWorking,
+                              isDarkMode: false,
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Broken wire icon overlay
+                      if (_m5BatteryInserted && _m5MotorInserted && !_m5WireRepaired)
+                        Positioned(
+                          left: (batteryX + motorX) / 2 - 20,
+                          top: centerY - 40,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFD97706).withValues(alpha: 0.9),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 24),
+                          ),
+                        ),
+                    ],
+                  );
+                },
               ),
-            ],
+            ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
@@ -1061,8 +1403,8 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
                 const SizedBox(width: 10),
                 Text(
                   _m5WireRepaired
-                      ? 'Fiação Reparada: Mau contato corrigido no terminal!'
-                      : 'Diagnóstico: Fio do terminal positivo solto (Mau Contato)',
+                      ? 'Fiação Reparada: Mau contato corrigido!'
+                      : 'Diagnóstico: Fio solto no terminal positivo',
                   style: GoogleFonts.rajdhani(color: const Color(0xFF0F172A), fontWeight: FontWeight.bold, fontSize: 14),
                 ),
               ],
@@ -1080,14 +1422,10 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
                 ),
                 icon: const Icon(Icons.handyman_rounded, color: Color(0xFFD97706)),
                 label: Text(
-                  _m5WireRepaired ? 'Terminal Reparado (Soldado)' : 'Reparar Mau Contato no Terminal',
+                  _m5WireRepaired ? 'Reparado (Soldado)' : 'Reparar Mau Contato',
                   style: GoogleFonts.rajdhani(color: const Color(0xFF0F172A), fontWeight: FontWeight.bold),
                 ),
-                onPressed: () {
-                  setState(() {
-                    _m5WireRepaired = !_m5WireRepaired;
-                  });
-                },
+                onPressed: () => setState(() => _m5WireRepaired = !_m5WireRepaired),
               ),
               const SizedBox(width: 12),
               ElevatedButton.icon(
@@ -1100,14 +1438,11 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
                   'Testar Carrinho',
                   style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold),
                 ),
-                onPressed: () {
-                  setState(() {
-                    _m5CarTested = true;
-                  });
-                },
+                onPressed: () => setState(() => _m5CarTested = true),
               ),
             ],
           ),
+          const SizedBox(height: 16),
         ],
       ),
     );

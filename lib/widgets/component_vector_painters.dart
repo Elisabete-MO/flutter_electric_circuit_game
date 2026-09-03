@@ -143,67 +143,90 @@ class _LedPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    final baseColor = ledColor == Colors.redAccent ? const Color(0xFFEF4444) : ledColor;
 
-    // Pernas / Terminais Metálicos (Ânodo longo +, Cátodo curto -)
+    // 1. Pernas Metálicas Verticais (Ânodo longo +, Cátodo curto -)
     final legPaint = Paint()
       ..color = const Color(0xFFCBD5E1)
-      ..strokeWidth = 2.5
+      ..strokeWidth = 2.4
       ..strokeCap = StrokeCap.round;
 
     // Anodo (Esquerda - mais longo)
-    canvas.drawLine(Offset(w * 0.38, h * 0.5), Offset(w * 0.38, h * 0.95), legPaint);
+    canvas.drawLine(Offset(cx - 5, cy + 8), Offset(cx - 5, size.height * 0.95), legPaint);
     // Catodo (Direita - mais curto)
-    canvas.drawLine(Offset(w * 0.62, h * 0.5), Offset(w * 0.62, h * 0.85), legPaint);
+    canvas.drawLine(Offset(cx + 5, cy + 8), Offset(cx + 5, size.height * 0.82), legPaint);
 
-    // Domo de Vidro Transparente do LED
-    final domePath = Path();
-    domePath.moveTo(w * 0.25, h * 0.55);
-    domePath.lineTo(w * 0.25, h * 0.35);
-    domePath.arcToPoint(
-      Offset(w * 0.75, h * 0.35),
-      radius: Radius.circular(w * 0.25),
-      clockwise: true,
-    );
-    domePath.lineTo(w * 0.75, h * 0.55);
-    domePath.close();
+    // 2. Glow Efeito se Energizado
+    final domeCenter = Offset(cx, cy - 6);
+    final domeRadius = size.width * 0.28;
 
-    // Glow Efeito se Ligado
     if (isOn) {
-      final glowPaint = Paint()
-        ..color = ledColor.withValues(alpha: 0.6)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
-      canvas.drawPath(domePath, glowPaint);
+      canvas.drawCircle(
+        domeCenter,
+        domeRadius + 14,
+        Paint()
+          ..color = baseColor.withValues(alpha: 0.5)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
+      );
     }
 
-    // Corpo de Vidro Colorido
+    // 3. Armação Metálica Interna (Lead Frame - Anvil & Post)
+    final internalPaint = Paint()
+      ..color = const Color(0xFFE2E8F0).withValues(alpha: 0.8)
+      ..strokeWidth = 1.6;
+    canvas.drawLine(Offset(cx - 4, cy + 4), Offset(cx - 2, cy - 4), internalPaint);
+    canvas.drawLine(Offset(cx + 4, cy + 4), Offset(cx + 1, cy - 7), internalPaint);
+
+    // 4. Domo Cilindro de Resina Epóxi
+    final domePath = Path();
+    domePath.moveTo(cx - domeRadius, cy + 6);
+    domePath.lineTo(cx - domeRadius, cy - 6);
+    domePath.arcToPoint(
+      Offset(cx + domeRadius, cy - 6),
+      radius: Radius.circular(domeRadius),
+      clockwise: true,
+    );
+    domePath.lineTo(cx + domeRadius, cy + 6);
+    domePath.close();
+
     final glassPaint = Paint()
       ..shader = RadialGradient(
-        colors: [
-          isOn ? Colors.white : ledColor.withValues(alpha: 0.8),
-          ledColor,
-          isOn ? ledColor : const Color(0xFF1E293B),
-        ],
-        center: const Alignment(-0.3, -0.4),
+        colors: isOn
+            ? [const Color(0xFFFEF2F2), baseColor, const Color(0xFF991B1B)]
+            : [baseColor.withValues(alpha: 0.9), baseColor, const Color(0xFF7F1D1D)],
+        center: const Alignment(-0.35, -0.45),
+        radius: 0.85,
       ).createShader(domePath.getBounds());
 
     canvas.drawPath(domePath, glassPaint);
 
-    // Anel de Base Flangeada do LED
+    // 5. Anel Flange de Base
     final flangePath = Path();
     flangePath.addRRect(RRect.fromRectAndRadius(
-      Rect.fromLTWH(w * 0.2, h * 0.53, w * 0.6, h * 0.08),
-      const Radius.circular(3),
+      Rect.fromLTWH(cx - (domeRadius * 1.2), cy + 5, domeRadius * 2.4, 4),
+      const Radius.circular(2),
     ));
-    canvas.drawPath(flangePath, Paint()..color = ledColor.withValues(alpha: 0.9));
+    canvas.drawPath(flangePath, Paint()..color = baseColor.withValues(alpha: 0.95));
 
-    // Elemento Interno (Anvil e Post)
-    final internalPaint = Paint()
-      ..color = Colors.white70
-      ..strokeWidth = 1.5;
-    canvas.drawLine(Offset(w * 0.42, h * 0.5), Offset(w * 0.45, h * 0.35), internalPaint);
-    canvas.drawLine(Offset(w * 0.58, h * 0.5), Offset(w * 0.55, h * 0.38), internalPaint);
+    // 6. Reflexo Especular Glossy Curvo
+    final streakPath = Path()
+      ..moveTo(cx - (domeRadius * 0.5), cy - (domeRadius * 1.1))
+      ..cubicTo(
+        cx - (domeRadius * 0.8), cy - (domeRadius * 0.4),
+        cx - (domeRadius * 0.8), cy + (domeRadius * 0.1),
+        cx - (domeRadius * 0.6), cy + (domeRadius * 0.3),
+      );
+
+    canvas.drawPath(
+      streakPath,
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.8)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.0
+        ..strokeCap = StrokeCap.round,
+    );
   }
 
   @override
