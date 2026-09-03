@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../models/stand_mission.dart';
 import '../../widgets/glass_container.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
+import '../../widgets/schematic_blueprint_socket.dart';
+import '../../widgets/schematic_symbol_painters.dart';
 import '../../widgets/tech_grid_background.dart';
 import '../../widgets/workbench_components.dart';
 
@@ -318,9 +320,9 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
                 Expanded(
                   flex: 2,
                   child: WorkbenchSidePanel(
-                    teamTitle: 'Painel da Equipe Bairro',
+                    teamTitle: 'Gaveta de Símbolos — Maquete',
                     toolboxItems: [
-                      _buildMissionControlPanel(),
+                      _buildSideToolboxDrawer(),
                     ],
                     onEnergizePressed: _validateCurrentMission,
                   ),
@@ -428,104 +430,30 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
               ],
             ),
 
-            // Drop Target ou Botão de Interação
-            DragTarget<String>(
-              onWillAcceptWithDetails: (details) => details.data == 'fio_serie',
-              onAcceptWithDetails: (details) {
+            // Socket Esquemático de Encaixe do Fio em Série
+            SchematicBlueprintSocket<String>(
+              expectedData: 'fio_serie',
+              isFilled: _m1WireConnected,
+              symbolWidget: const SchematicSwitchWidget(
+                size: 50,
+                color: Color(0xFF10B981),
+                isClosed: true,
+              ),
+              placeholderWidget: const SchematicSwitchWidget(
+                size: 45,
+                color: Colors.amberAccent,
+                isClosed: false,
+              ),
+              label: 'FIO EM SÉRIE',
+              onAccept: (_) {
                 setState(() {
                   _m1WireConnected = true;
                 });
               },
-              builder: (context, candidateData, rejectedData) {
-                final isHovered = candidateData.isNotEmpty;
-                return InkWell(
-                  onTap: () {
-                    setState(() {
-                      _m1WireConnected = !_m1WireConnected;
-                    });
-                  },
-                  borderRadius: BorderRadius.circular(16),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: _m1WireConnected
-                          ? const Color(0xFF064E3B)
-                          : isHovered
-                              ? const Color(0xFF10B981).withValues(alpha: 0.3)
-                              : const Color(0xFF0F172A).withValues(alpha: 0.85),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: _m1WireConnected
-                            ? const Color(0xFF10B981)
-                            : isHovered
-                                ? const Color(0xFF10B981)
-                                : Colors.amber,
-                        width: isHovered ? 2.5 : 2.0,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: (_m1WireConnected || isHovered ? const Color(0xFF10B981) : Colors.amber).withValues(alpha: 0.3),
-                          blurRadius: 10,
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            color: (_m1WireConnected || isHovered ? const Color(0xFF10B981) : Colors.amber).withValues(alpha: 0.2),
-                            border: Border.all(
-                              color: _m1WireConnected || isHovered ? const Color(0xFF10B981) : Colors.amber,
-                              width: 1.5,
-                            ),
-                          ),
-                          child: Icon(
-                            _m1WireConnected
-                                ? Icons.check_circle_rounded
-                                : isHovered
-                                    ? Icons.move_to_inbox_rounded
-                                    : Icons.add_box_rounded,
-                            color: _m1WireConnected || isHovered ? const Color(0xFF10B981) : Colors.amber,
-                            size: 24,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _m1WireConnected
-                                  ? '⚡ Fio em Série Conectado (Rota Única)'
-                                  : isHovered
-                                      ? '🎯 Solte para Encaixar Fio!'
-                                      : '➕ Encaixar Fio em Série',
-                              style: GoogleFonts.rajdhani(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                            Text(
-                              _m1WireConnected
-                                  ? 'Clique para alternar conexão'
-                                  : 'Arraste o componente da gaveta ou clique aqui',
-                              style: GoogleFonts.rajdhani(
-                                color: Colors.white70,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 11,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                );
+              onTap: () {
+                setState(() {
+                  _m1WireConnected = !_m1WireConnected;
+                });
               },
             ),
           ],
@@ -822,80 +750,7 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
     );
   }
 
-  /// Painel da direita com ferramentas e formulários didáticos
-  Widget _buildMissionControlPanel() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF082B24),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.build_circle_rounded, color: Color(0xFF10B981)),
-              const SizedBox(width: 8),
-              Text(
-                'Painel de Controle',
-                style: GoogleFonts.rajdhani(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-            ],
-          ),
-          const Divider(color: Colors.white24, height: 20),
 
-          // Instruções da Missão Atual
-          Text(
-            _currentMission.objective,
-            style: GoogleFonts.rajdhani(
-              color: Colors.white70,
-              fontSize: 15,
-              height: 1.3,
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Conteúdo específico da Missão no Painel Lateral
-          Expanded(
-            child: SingleChildScrollView(
-              child: _buildSidePanelMissionContent(),
-            ),
-          ),
-
-          // Botões de Ação (Testar e Validar)
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF10B981),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              icon: const Icon(Icons.play_arrow_rounded, color: Colors.white),
-              label: Text(
-                'TESTAR E VALIDAR CIRCUITO',
-                style: GoogleFonts.rajdhani(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),
-              ),
-              onPressed: _validateCurrentMission,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   /// Conteúdo dinâmico do painel lateral para perguntas/ferramentas
   Widget _buildSidePanelMissionContent() {
@@ -938,6 +793,52 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
             ),
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildSideToolboxDrawer() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8.0),
+          child: Text(
+            'SÍMBOLOS DISPONÍVEIS (ARRASTE PARA O ESQUEMA):',
+            style: GoogleFonts.rajdhani(
+              color: Colors.white70,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.0,
+            ),
+          ),
+        ),
+        const Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            WorkbenchSymbolToolboxTile<String>(
+              data: 'fio_serie',
+              tooltip: 'Condutor em Série',
+              symbolWidget: SchematicSwitchWidget(size: 38, color: Color(0xFF10B981), isClosed: true),
+              color: Color(0xFF10B981),
+            ),
+            WorkbenchSymbolToolboxTile<String>(
+              data: 'no_paralelo',
+              tooltip: 'Nó / Bifurcação Paralela',
+              symbolWidget: SchematicMeterWidget(size: 38, color: Color(0xFF00E5FF), meterType: 'V'),
+              color: Color(0xFF00E5FF),
+            ),
+            WorkbenchSymbolToolboxTile<String>(
+              data: 'lamp_poste',
+              tooltip: 'Poste de Luz (Lâmpada)',
+              symbolWidget: SchematicLampWidget(size: 38, color: Colors.amberAccent, isOn: true),
+              color: Colors.amberAccent,
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _buildSidePanelMissionContent(),
       ],
     );
   }
