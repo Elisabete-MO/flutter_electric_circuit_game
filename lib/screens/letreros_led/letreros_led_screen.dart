@@ -5,7 +5,9 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../models/stand_mission.dart';
 import '../../models/first_step_component.dart';
 import '../../state/progress_controller.dart';
+import '../../models/circuit_action.dart';
 import '../../services/circuit_solver/mission_circuit_builder.dart';
+import '../../state/circuit_undo_redo_controller.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
 import '../../widgets/schematic_blueprint_socket.dart';
 import '../../widgets/component_physical_painter.dart';
@@ -25,6 +27,7 @@ class LetrerosLedScreen extends ConsumerStatefulWidget {
 class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _pulseAnimController;
+  final CircuitUndoRedoController _undoRedoController = CircuitUndoRedoController();
   final List<StandMission> _missions = StandMission.letrerosLedMissions;
   int _currentMissionIndex = 0;
   bool _usePhysicalStyle = true;
@@ -65,6 +68,36 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
     super.dispose();
   }
 
+  void _insertComponent({
+    required String name,
+    required bool Function() getInserted,
+    required void Function(bool) setInserted,
+    required double Function() getRotation,
+    required void Function(double) setRotation,
+  }) {
+    final prevInserted = getInserted();
+    final prevRotation = getRotation();
+    _undoRedoController.execute(InsertComponentAction(
+      description: 'Inserir $name',
+      onApply: () => setState(() { setInserted(true); setRotation(0); }),
+      onUndo: () => setState(() { setInserted(prevInserted); setRotation(prevRotation); }),
+    ));
+  }
+
+  void _rotateComponent({
+    required String name,
+    required double Function() getRotation,
+    required void Function(double) setRotation,
+  }) {
+    final prevRotation = getRotation();
+    final newRotation = (prevRotation + 90) % 360;
+    _undoRedoController.execute(RotateComponentAction(
+      description: 'Girar $name',
+      onApply: () => setState(() => setRotation(newRotation)),
+      onUndo: () => setState(() => setRotation(prevRotation)),
+    ));
+  }
+
   StandMission get _currentMission => _missions[_currentMissionIndex];
 
   void _nextMission() {
@@ -78,6 +111,7 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
   }
 
   void _resetCurrentMission() {
+    _undoRedoController.clear();
     setState(() {
       switch (_currentMissionIndex) {
         case 0:
@@ -594,8 +628,18 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
           isFilled: _m1LedInserted,
           showLabel: false,
           rotation: _m1LedRotation,
-          onAccept: (_) => setState(() => _m1LedInserted = true),
-          onRotate: () => setState(() => _m1LedRotation = (_m1LedRotation + 90) % 360),
+          onAccept: (_) => _insertComponent(
+            name: 'LED Vermelho',
+            getInserted: () => _m1LedInserted,
+            setInserted: (v) => _m1LedInserted = v,
+            getRotation: () => _m1LedRotation,
+            setRotation: (v) => _m1LedRotation = v,
+          ),
+          onRotate: () => _rotateComponent(
+            name: 'LED Vermelho',
+            getRotation: () => _m1LedRotation,
+            setRotation: (v) => _m1LedRotation = v,
+          ),
           onTap: () {},
           symbolWidget: _usePhysicalStyle
               ? CustomPaint(
@@ -652,9 +696,12 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
             style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
           ),
           onPressed: () {
-            setState(() {
-              _m1LedDirectPolarity = !_m1LedDirectPolarity;
-            });
+            final prev = _m1LedDirectPolarity;
+            _undoRedoController.execute(ToggleBoolAction(
+              description: 'Toggle Polaridade LED',
+              onApply: () => setState(() => _m1LedDirectPolarity = !prev),
+              onUndo: () => setState(() => _m1LedDirectPolarity = prev),
+            ));
           },
         ),
       ],
@@ -701,9 +748,12 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
                   style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
                 ),
                 onPressed: () {
-                  setState(() {
-                    _m2LedInvertedFixed = !_m2LedInvertedFixed;
-                  });
+                  final prev = _m2LedInvertedFixed;
+                  _undoRedoController.execute(ToggleBoolAction(
+                    description: 'Toggle LED Invertido',
+                    onApply: () => setState(() => _m2LedInvertedFixed = !prev),
+                    onUndo: () => setState(() => _m2LedInvertedFixed = prev),
+                  ));
                 },
               ),
             ],
@@ -769,9 +819,13 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
       label: Text(label),
       selected: isSelected,
       onSelected: (val) {
-        setState(() {
-          _m3SelectedResistor = val ? value : null;
-        });
+        final prev = _m3SelectedResistor;
+        final next = val ? value : null;
+        _undoRedoController.execute(SelectOptionAction(
+          description: 'Selecionar Resistor $value Ω',
+          onApply: () => setState(() => _m3SelectedResistor = next),
+          onUndo: () => setState(() => _m3SelectedResistor = prev),
+        ));
       },
       selectedColor: const Color(0xFF10B981),
       backgroundColor: const Color(0xFF1E293B),
@@ -816,9 +870,12 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
                 style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold),
               ),
               onPressed: () {
-                setState(() {
-                  _m4Branch1ResistorPlaced = !_m4Branch1ResistorPlaced;
-                });
+                final prev = _m4Branch1ResistorPlaced;
+                _undoRedoController.execute(ToggleBoolAction(
+                  description: 'Toggle Resistor Ramo 1',
+                  onApply: () => setState(() => _m4Branch1ResistorPlaced = !prev),
+                  onUndo: () => setState(() => _m4Branch1ResistorPlaced = prev),
+                ));
               },
             ),
             const SizedBox(width: 12),
@@ -833,9 +890,12 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
                 style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold),
               ),
               onPressed: () {
-                setState(() {
-                  _m4Branch2ResistorPlaced = !_m4Branch2ResistorPlaced;
-                });
+                final prev = _m4Branch2ResistorPlaced;
+                _undoRedoController.execute(ToggleBoolAction(
+                  description: 'Toggle Resistor Ramo 2',
+                  onApply: () => setState(() => _m4Branch2ResistorPlaced = !prev),
+                  onUndo: () => setState(() => _m4Branch2ResistorPlaced = prev),
+                ));
               },
             ),
           ],
@@ -890,9 +950,12 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
                   style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold),
                 ),
                 onPressed: () {
-                  setState(() {
-                    _m5GreenLedPolarityFixed = !_m5GreenLedPolarityFixed;
-                  });
+                  final prev = _m5GreenLedPolarityFixed;
+                  _undoRedoController.execute(ToggleBoolAction(
+                    description: 'Toggle Polaridade LED Verde',
+                    onApply: () => setState(() => _m5GreenLedPolarityFixed = !prev),
+                    onUndo: () => setState(() => _m5GreenLedPolarityFixed = prev),
+                  ));
                 },
               ),
               const SizedBox(width: 12),
@@ -907,9 +970,12 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
                   style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold),
                 ),
                 onPressed: () {
-                  setState(() {
-                    _m5RedResistorFixed = !_m5RedResistorFixed;
-                  });
+                  final prev = _m5RedResistorFixed;
+                  _undoRedoController.execute(ToggleBoolAction(
+                    description: 'Toggle Resistor LED Vermelho',
+                    onApply: () => setState(() => _m5RedResistorFixed = !prev),
+                    onUndo: () => setState(() => _m5RedResistorFixed = prev),
+                  ));
                 },
               ),
             ],
@@ -1036,6 +1102,8 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
           ),
         ),
         const SizedBox(height: 12),
+        _buildUndoRedoButtons(),
+        const SizedBox(height: 8),
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
@@ -1052,6 +1120,79 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildUndoRedoButtons() {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Tooltip(
+            message: _undoRedoController.canUndo
+                ? 'Desfazer: ${_undoRedoController.lastUndoDescription}'
+                : 'Nada para desfazer',
+            child: IconButton(
+              icon: Icon(
+                Icons.undo_rounded,
+                color: _undoRedoController.canUndo
+                    ? const Color(0xFF0284C7)
+                    : const Color(0xFFCBD5E1),
+                size: 22,
+              ),
+              onPressed: _undoRedoController.canUndo
+                  ? () => setState(() => _undoRedoController.undo())
+                  : null,
+              style: IconButton.styleFrom(
+                backgroundColor: _undoRedoController.canUndo
+                    ? const Color(0xFF0284C7).withValues(alpha: 0.1)
+                    : Colors.transparent,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              '${_undoRedoController.undoCount}',
+              style: GoogleFonts.rajdhani(
+                color: const Color(0xFF64748B),
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          Tooltip(
+            message: _undoRedoController.canRedo
+                ? 'Refazer: ${_undoRedoController.lastRedoDescription}'
+                : 'Nada para refazer',
+            child: IconButton(
+              icon: Icon(
+                Icons.redo_rounded,
+                color: _undoRedoController.canRedo
+                    ? const Color(0xFF0284C7)
+                    : const Color(0xFFCBD5E1),
+                size: 22,
+              ),
+              onPressed: _undoRedoController.canRedo
+                  ? () => setState(() => _undoRedoController.redo())
+                  : null,
+              style: IconButton.styleFrom(
+                backgroundColor: _undoRedoController.canRedo
+                    ? const Color(0xFF0284C7).withValues(alpha: 0.1)
+                    : Colors.transparent,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

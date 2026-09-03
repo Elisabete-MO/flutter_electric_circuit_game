@@ -2275,13 +2275,9 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                     setRotation: (v) => _m5PushButtonRotation = v,
                   ),
                   onTap: () {},
-                  symbolWidget: CustomPaint(
-                    size: const Size(90, 80),
-                    painter: ComponentPhysicalPainter(
-                      type: ComponentType.switchComponent,
-                      isActive: _m5PushButtonPressed,
-                      isDarkMode: false,
-                    ),
+                  symbolWidget: PushButtonVectorWidget(
+                    size: 65,
+                    isPressed: _m5PushButtonPressed,
                   ),
                 ),
               ),
@@ -2858,24 +2854,18 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                     setRotation: (v) => _m5PushButtonRotation = v,
                   ),
                   onTap: () {},
-                  symbolWidget: CustomPaint(
-                    size: const Size(54, 38),
-                    painter: CircuitSymbolPainter(
-                      type: ComponentType.switchComponent,
-                      isActive: _m5PushButtonPressed,
-                      color: const Color(0xFF0F172A),
-                      strokeWidth: 2.2,
-                    ),
+                  symbolWidget: SchematicSwitchWidget(
+                    size: 50,
+                    isPushButton: true,
+                    isClosed: _m5PushButtonPressed,
+                    color: const Color(0xFF0F172A),
                   ),
-                  placeholderWidget: Opacity(
+                  placeholderWidget: const Opacity(
                     opacity: 0.4,
-                    child: CustomPaint(
-                      size: const Size(48, 34),
-                      painter: CircuitSymbolPainter(
-                        type: ComponentType.switchComponent,
-                        color: const Color(0xFF94A3B8),
-                        strokeWidth: 2.0,
-                      ),
+                    child: SchematicSwitchWidget(
+                      size: 45,
+                      isPushButton: true,
+                      color: Color(0xFF94A3B8),
                     ),
                   ),
                   label: '',
