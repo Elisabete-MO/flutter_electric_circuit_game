@@ -27,6 +27,16 @@ class ComponentPhysicalPainter extends CustomPainter {
     final cx = size.width / 2;
     final cy = size.height / 2;
 
+    final double minDim = math.min(size.width, size.height);
+    final double scale = minDim < 68.0 ? (minDim / 68.0) : 1.0;
+
+    if (scale < 1.0) {
+      canvas.save();
+      canvas.translate(cx, cy);
+      canvas.scale(scale);
+      canvas.translate(-cx, -cy);
+    }
+
     switch (type) {
       case ComponentType.battery:
         _drawPhysicalBattery(canvas, size, cx, cy);
@@ -78,6 +88,10 @@ class ComponentPhysicalPainter extends CustomPainter {
         animationValue,
         isDark: isDarkMode,
       );
+    }
+
+    if (scale < 1.0) {
+      canvas.restore();
     }
   }
 
