@@ -444,122 +444,40 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
   // MISSÃO 1: Interruptor da Luminária
   // ==========================================
   Widget _buildMission1UI(StandMission mission) {
-    return GlassContainer(
-      borderRadius: 24,
-      accentColor: const Color(0xFF10B981),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildMissionHeader(mission),
-          const SizedBox(height: 10),
-
-          // Bancada de Montagem Esquemática Didática
-          Expanded(
-            child: _buildSchematicCanvasM1(),
-          ),
-
-          const SizedBox(height: 20),
-
-          // Botão Testar e Energizar
-          Align(
-            alignment: Alignment.centerRight,
-            child: ElevatedButton.icon(
-              onPressed: _validateMission1,
-              icon: const Icon(Icons.bolt_rounded),
-              label: Text(
-                'TESTAR E ENERGIZAR',
-                style: GoogleFonts.rajdhani(
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.2,
-                  fontSize: 15,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF10B981),
-                foregroundColor: const Color(0xFF021712),
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                elevation: 6,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+    return _buildSchematicCanvasM1();
   }
-
-
-
-
 
   // ==========================================
   // MISSÃO 2: Aberto ou Fechado?
   // ==========================================
   Widget _buildMission2UI(StandMission mission) {
-    return GlassContainer(
-      borderRadius: 24,
-      accentColor: const Color(0xFF10B981),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildMissionHeader(mission),
-          const SizedBox(height: 14),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Examine a posição da chave nos dois cenários e preveja se haverá passagem de corrente:',
+          style: GoogleFonts.outfit(color: const Color(0xFF334155), fontSize: 14.5, fontWeight: FontWeight.w500),
+        ),
+        const SizedBox(height: 16),
 
-          Text(
-            'Examine a posição da chave nos dois cenários e preveja se haverá passagem de corrente:',
-            style: GoogleFonts.outfit(color: Colors.white.withValues(alpha: 0.9), fontSize: 14.5),
-          ),
-          const SizedBox(height: 16),
+        // Questão 1: Estado A (Chave Aberta)
+        _buildPredictionCard(
+          title: 'Cenário A: Interruptor no estado ABERTO (OFF)',
+          subtitle: 'Existe um espaço vazio entre os contatos elétricos da chave.',
+          currentValue: _m2AnswerStateA,
+          onSelect: (val) => setState(() => _m2AnswerStateA = val),
+        ),
 
-          // Questão 1: Estado A (Chave Aberta)
-          _buildPredictionCard(
-            title: 'Cenário A: Interruptor no estado ABERTO (OFF)',
-            subtitle: 'Existe um espaço vazio entre os contatos elétricos da chave.',
-            currentValue: _m2AnswerStateA,
-            onSelect: (val) => setState(() => _m2AnswerStateA = val),
-          ),
+        const SizedBox(height: 12),
 
-          const SizedBox(height: 12),
-
-          // Questão 2: Estado B (Chave Fechada)
-          _buildPredictionCard(
-            title: 'Cenário B: Interruptor no estado FECHADO (ON)',
-            subtitle: 'Os contatos condutores da chave estão encostados.',
-            currentValue: _m2AnswerStateB,
-            onSelect: (val) => setState(() => _m2AnswerStateB = val),
-          ),
-
-          const SizedBox(height: 20),
-
-          Align(
-            alignment: Alignment.centerRight,
-            child: ElevatedButton.icon(
-              onPressed: _validateMission2,
-              icon: const Icon(Icons.verified_rounded),
-              label: Text(
-                'CONFIRMAR PREVISÕES',
-                style: GoogleFonts.rajdhani(
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.2,
-                  fontSize: 15,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF10B981),
-                foregroundColor: const Color(0xFF021712),
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+        // Questão 2: Estado B (Chave Fechada)
+        _buildPredictionCard(
+          title: 'Cenário B: Interruptor no estado FECHADO (ON)',
+          subtitle: 'Os contatos condutores da chave estão encostados.',
+          currentValue: _m2AnswerStateB,
+          onSelect: (val) => setState(() => _m2AnswerStateB = val),
+        ),
+      ],
     );
   }
 
@@ -572,12 +490,18 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF03261D),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: currentValue != null ? const Color(0xFF10B981) : Colors.white24,
-          width: currentValue != null ? 1.5 : 1.0,
+          color: currentValue != null ? const Color(0xFF0284C7) : const Color(0xFFCBD5E1),
+          width: currentValue != null ? 2.0 : 1.0,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -585,7 +509,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
           Text(
             title,
             style: GoogleFonts.rajdhani(
-              color: Colors.white,
+              color: const Color(0xFF0F172A),
               fontWeight: FontWeight.bold,
               fontSize: 16,
             ),
@@ -593,7 +517,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
           const SizedBox(height: 4),
           Text(
             subtitle,
-            style: GoogleFonts.outfit(color: Colors.white70, fontSize: 13),
+            style: GoogleFonts.outfit(color: const Color(0xFF64748B), fontSize: 13),
           ),
           const SizedBox(height: 12),
 
@@ -651,138 +575,106 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
   // MISSÃO 3: Dois Controles
   // ==========================================
   Widget _buildMission3UI(StandMission mission) {
-    return GlassContainer(
-      borderRadius: 24,
-      accentColor: const Color(0xFF10B981),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildMissionHeader(mission),
-          const SizedBox(height: 14),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Teste acionar um interruptor por vez para descobrir qual luz responde a cada controle:',
+          style: GoogleFonts.outfit(color: const Color(0xFF334155), fontSize: 14.5, fontWeight: FontWeight.w500),
+        ),
+        const SizedBox(height: 16),
 
-          Text(
-            'Teste acionar um interruptor por vez para descobrir qual luz responde a cada controle:',
-            style: GoogleFonts.outfit(color: Colors.white.withValues(alpha: 0.9), fontSize: 14.5),
-          ),
-          const SizedBox(height: 16),
-
-          // Bancada com 2 Interruptores e 2 Lâmpadas
-          Container(
-            height: 230,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF031D17), Color(0xFF021410)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                // Bateria Comum
-                _buildRealisticBattery(),
-
-                // Painel de 2 Chaves
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildSwitchControlCard(
-                      label: 'CHAVE 1',
-                      isClosed: _m3Switch1Closed,
-                      onToggle: () {
-                        setState(() {
-                          _m3Switch1Closed = !_m3Switch1Closed;
-                          _m3TestedSwitch1 = true;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    _buildSwitchControlCard(
-                      label: 'CHAVE 2',
-                      isClosed: _m3Switch2Closed,
-                      onToggle: () {
-                        setState(() {
-                          _m3Switch2Closed = !_m3Switch2Closed;
-                          _m3TestedSwitch2 = true;
-                        });
-                      },
-                    ),
-                  ],
-                ),
-
-                // Painel de 2 Lâmpadas (A e B)
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildRealisticBulb(
-                      isLit: _m3Switch1Closed,
-                      label: 'Luminária A',
-                    ),
-                    const SizedBox(height: 16),
-                    _buildRealisticBulb(
-                      isLit: _m3Switch2Closed,
-                      label: 'Luminária B',
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Mapeamento de Resposta do Aluno
-          Row(
-            children: [
-              Expanded(
-                child: _buildMappingSelector(
-                  title: 'Chave 1 controla:',
-                  currentSelection: _m3MapSwitch1,
-                  onSelect: (val) => setState(() => _m3MapSwitch1 = val),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildMappingSelector(
-                  title: 'Chave 2 controla:',
-                  currentSelection: _m3MapSwitch2,
-                  onSelect: (val) => setState(() => _m3MapSwitch2 = val),
-                ),
+        // Bancada com 2 Interruptores e 2 Lâmpadas
+        Container(
+          height: 230,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
               ),
             ],
           ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              // Bateria Comum
+              _buildRealisticBattery(),
 
-          const SizedBox(height: 20),
-
-          Align(
-            alignment: Alignment.centerRight,
-            child: ElevatedButton.icon(
-              onPressed: _validateMission3,
-              icon: const Icon(Icons.settings_input_component_rounded),
-              label: Text(
-                'VALIDAR MAPEAMENTO',
-                style: GoogleFonts.rajdhani(
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.2,
-                  fontSize: 15,
-                ),
+              // Painel de 2 Chaves
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildSwitchControlCard(
+                    label: 'CHAVE 1',
+                    isClosed: _m3Switch1Closed,
+                    onToggle: () {
+                      setState(() {
+                        _m3Switch1Closed = !_m3Switch1Closed;
+                        _m3TestedSwitch1 = true;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _buildSwitchControlCard(
+                    label: 'CHAVE 2',
+                    isClosed: _m3Switch2Closed,
+                    onToggle: () {
+                      setState(() {
+                        _m3Switch2Closed = !_m3Switch2Closed;
+                        _m3TestedSwitch2 = true;
+                      });
+                    },
+                  ),
+                ],
               ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF10B981),
-                foregroundColor: const Color(0xFF021712),
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
+
+              // Painel de 2 Lâmpadas (A e B)
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildRealisticBulb(
+                    isLit: _m3Switch1Closed,
+                    label: 'Luminária A',
+                  ),
+                  const SizedBox(height: 16),
+                  _buildRealisticBulb(
+                    isLit: _m3Switch2Closed,
+                    label: 'Luminária B',
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // Mapeamento de Resposta do Aluno
+        Row(
+          children: [
+            Expanded(
+              child: _buildMappingSelector(
+                title: 'Chave 1 controla:',
+                currentSelection: _m3MapSwitch1,
+                onSelect: (val) => setState(() => _m3MapSwitch1 = val),
               ),
             ),
-          ),
-        ],
-      ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildMappingSelector(
+                title: 'Chave 2 controla:',
+                currentSelection: _m3MapSwitch2,
+                onSelect: (val) => setState(() => _m3MapSwitch2 = val),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -794,19 +686,19 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF03261D),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: currentSelection != null ? const Color(0xFF10B981) : Colors.white24),
+        border: Border.all(color: currentSelection != null ? const Color(0xFF0284C7) : const Color(0xFFCBD5E1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+          Text(title, style: GoogleFonts.rajdhani(color: const Color(0xFF0F172A), fontWeight: FontWeight.bold, fontSize: 14)),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
             initialValue: currentSelection,
-            dropdownColor: const Color(0xFF021E18),
-            style: GoogleFonts.outfit(color: Colors.white, fontSize: 13),
+            dropdownColor: Colors.white,
+            style: GoogleFonts.outfit(color: const Color(0xFF0F172A), fontSize: 13),
             decoration: const InputDecoration(
               isDense: true,
               contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -829,236 +721,196 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
   // MISSÃO 4: Conferência (Correção de Ramo Inútil)
   // ==========================================
   Widget _buildMission4UI(StandMission mission) {
-    // Se o interruptor está no ramo inútil (paralelo), a lâmpada fica acesa SEMPRE.
-    // Se o interruptor está no ramo principal (série), a lâmpada obedece ao estado da chave (_m4SwitchClosed).
     final bool isLampLit = _m4SwitchInMainBranch ? _m4SwitchClosed : true;
 
-    return GlassContainer(
-      borderRadius: 24,
-      accentColor: const Color(0xFF10B981),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildMissionHeader(mission),
-          const SizedBox(height: 14),
-
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.amber.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 22),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Problema Detectado: O interruptor foi montado em um ramo paralelo (ramo inútil). A lâmpada permanece acesa mesmo quando tentamos desligar!',
-                    style: GoogleFonts.outfit(color: Colors.amberAccent, fontSize: 13.5),
-                  ),
-                ),
-              ],
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFEF3C7),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFF59E0B)),
           ),
-          const SizedBox(height: 16),
-
-          // Bancada Didática Interativa de Correção do Ramo
-          Container(
-            height: 250,
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF031D17), Color(0xFF021410)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+          child: Row(
+            children: [
+              const Icon(Icons.warning_amber_rounded, color: Color(0xFFD97706), size: 22),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Problema Detectado: O interruptor foi montado em um ramo paralelo (ramo inútil). A lâmpada permanece acesa mesmo quando tentamos desligar!',
+                  style: GoogleFonts.outfit(color: const Color(0xFF92400E), fontSize: 13.5, fontWeight: FontWeight.w500),
+                ),
               ),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4), width: 1.2),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.5),
-                  blurRadius: 16,
-                ),
-              ],
-            ),
-            child: Stack(
-              children: [
-                // 1. Fonte (Bateria 4.5V na Esquerda)
-                Positioned(
-                  left: 20,
-                  top: 75,
-                  child: _buildRealisticBattery(),
-                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
 
-                // 2. Opção A: Ramo Inútil (Paralelo - Topo)
-                Positioned(
-                  left: 210,
-                  top: 15,
-                  child: InkWell(
-                    onTap: () {
-                      setState(() {
-                        _m4SwitchInMainBranch = false;
-                      });
-                    },
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: !_m4SwitchInMainBranch
-                            ? Colors.amber.withValues(alpha: 0.2)
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: !_m4SwitchInMainBranch ? Colors.amber : Colors.white24,
-                          width: !_m4SwitchInMainBranch ? 2 : 1,
+        // Bancada Didática Interativa de Correção do Ramo
+        Container(
+          height: 250,
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFCBD5E1), width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+              ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              // 1. Fonte (Bateria 4.5V na Esquerda)
+              Positioned(
+                left: 20,
+                top: 75,
+                child: _buildRealisticBattery(),
+              ),
+
+              // 2. Opção A: Ramo Inútil (Paralelo - Topo)
+              Positioned(
+                left: 210,
+                top: 15,
+                child: InkWell(
+                  onTap: () {
+                    setState(() {
+                      _m4SwitchInMainBranch = false;
+                    });
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: !_m4SwitchInMainBranch
+                          ? const Color(0xFFFEF3C7)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: !_m4SwitchInMainBranch ? const Color(0xFFD97706) : const Color(0xFFCBD5E1),
+                        width: !_m4SwitchInMainBranch ? 2 : 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          !_m4SwitchInMainBranch
+                              ? Icons.warning_amber_rounded
+                              : Icons.radio_button_unchecked_rounded,
+                          color: !_m4SwitchInMainBranch ? const Color(0xFFD97706) : const Color(0xFF64748B),
+                          size: 20,
                         ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            !_m4SwitchInMainBranch
-                                ? Icons.warning_amber_rounded
-                                : Icons.radio_button_unchecked_rounded,
-                            color: !_m4SwitchInMainBranch ? Colors.amber : Colors.white54,
-                            size: 20,
+                        const SizedBox(width: 8),
+                        Text(
+                          !_m4SwitchInMainBranch
+                              ? 'Ramo Inútil (Chave Ineficaz)'
+                              : 'Mover Chave para Ramo Inútil',
+                          style: GoogleFonts.rajdhani(
+                            color: !_m4SwitchInMainBranch ? const Color(0xFF92400E) : const Color(0xFF475569),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
                           ),
-                          const SizedBox(width: 8),
-                          Text(
-                            !_m4SwitchInMainBranch
-                                ? 'Ramo Inútil (Chave Ineficaz)'
-                                : 'Mover Chave para Ramo Inútil',
-                            style: GoogleFonts.rajdhani(
-                              color: !_m4SwitchInMainBranch ? Colors.amber : Colors.white70,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
+              ),
 
-                // 3. Opção B: Ramo Principal (Em Série com a Lâmpada - Centro)
-                Positioned(
-                  left: 210,
-                  top: 80,
-                  child: InkWell(
-                    onTap: () {
-                      setState(() {
-                        _m4SwitchInMainBranch = true;
-                      });
-                    },
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: _m4SwitchInMainBranch
-                            ? const Color(0xFF10B981).withValues(alpha: 0.2)
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: _m4SwitchInMainBranch ? const Color(0xFF10B981) : Colors.white24,
-                          width: _m4SwitchInMainBranch ? 2 : 1,
+              // 3. Opção B: Ramo Principal (Em Série com a Lâmpada - Centro)
+              Positioned(
+                left: 210,
+                top: 80,
+                child: InkWell(
+                  onTap: () {
+                    setState(() {
+                      _m4SwitchInMainBranch = true;
+                    });
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: _m4SwitchInMainBranch
+                          ? const Color(0xFFEFF6FF)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _m4SwitchInMainBranch ? const Color(0xFF0284C7) : const Color(0xFFCBD5E1),
+                        width: _m4SwitchInMainBranch ? 2 : 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          _m4SwitchInMainBranch
+                              ? Icons.check_circle_rounded
+                              : Icons.radio_button_unchecked_rounded,
+                          color: _m4SwitchInMainBranch ? const Color(0xFF0284C7) : const Color(0xFF64748B),
+                          size: 20,
                         ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            _m4SwitchInMainBranch
-                                ? Icons.check_circle_rounded
-                                : Icons.radio_button_unchecked_rounded,
-                            color: _m4SwitchInMainBranch ? const Color(0xFF10B981) : Colors.white54,
-                            size: 20,
+                        const SizedBox(width: 8),
+                        Text(
+                          _m4SwitchInMainBranch
+                              ? 'Ramo Principal em Série (Correto!)'
+                              : 'Mover Chave para Ramo Principal (Série)',
+                          style: GoogleFonts.rajdhani(
+                            color: _m4SwitchInMainBranch ? const Color(0xFF0F172A) : const Color(0xFF475569),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
                           ),
-                          const SizedBox(width: 8),
-                          Text(
-                            _m4SwitchInMainBranch
-                                ? 'Ramo Principal em Série (Correto!)'
-                                : 'Mover Chave para Ramo Principal (Série)',
-                            style: GoogleFonts.rajdhani(
-                              color: _m4SwitchInMainBranch ? const Color(0xFF10B981) : Colors.white70,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
+              ),
 
-                // 4. Teste de Acionamento da Chave quando posicionada
-                Positioned(
-                  left: 210,
-                  top: 145,
-                  child: Row(
-                    children: [
-                      Text(
-                        'Estado da Chave:',
-                        style: GoogleFonts.outfit(color: Colors.white70, fontSize: 12),
-                      ),
-                      const SizedBox(width: 8),
-                      ChoiceChip(
-                        label: Text('OFF (Aberta)', style: GoogleFonts.rajdhani(fontSize: 12, fontWeight: FontWeight.bold)),
-                        selected: !_m4SwitchClosed,
-                        selectedColor: Colors.amber,
-                        onSelected: (_) => setState(() => _m4SwitchClosed = false),
-                      ),
-                      const SizedBox(width: 6),
-                      ChoiceChip(
-                        label: Text('ON (Fechada)', style: GoogleFonts.rajdhani(fontSize: 12, fontWeight: FontWeight.bold)),
-                        selected: _m4SwitchClosed,
-                        selectedColor: const Color(0xFF10B981),
-                        onSelected: (_) => setState(() => _m4SwitchClosed = true),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // 5. Luminária na Direita
-                Positioned(
-                  right: 25,
-                  top: 65,
-                  child: _buildRealisticBulb(isLit: isLampLit),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          Align(
-            alignment: Alignment.centerRight,
-            child: ElevatedButton.icon(
-              onPressed: _validateMission4,
-              icon: const Icon(Icons.build_rounded),
-              label: Text(
-                'CONFERIR MONTAGEM',
-                style: GoogleFonts.rajdhani(
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.2,
-                  fontSize: 15,
+              // 4. Teste de Acionamento da Chave quando posicionada
+              Positioned(
+                left: 210,
+                top: 145,
+                child: Row(
+                  children: [
+                    Text(
+                      'Estado da Chave:',
+                      style: GoogleFonts.outfit(color: const Color(0xFF475569), fontSize: 12),
+                    ),
+                    const SizedBox(width: 8),
+                    ChoiceChip(
+                      label: Text('OFF (Aberta)', style: GoogleFonts.rajdhani(fontSize: 12, fontWeight: FontWeight.bold)),
+                      selected: !_m4SwitchClosed,
+                      selectedColor: const Color(0xFFFDE68A),
+                      onSelected: (_) => setState(() => _m4SwitchClosed = false),
+                    ),
+                    const SizedBox(width: 6),
+                    ChoiceChip(
+                      label: Text('ON (Fechada)', style: GoogleFonts.rajdhani(fontSize: 12, fontWeight: FontWeight.bold)),
+                      selected: _m4SwitchClosed,
+                      selectedColor: const Color(0xFFBAE6FD),
+                      onSelected: (_) => setState(() => _m4SwitchClosed = true),
+                    ),
+                  ],
                 ),
               ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF10B981),
-                foregroundColor: const Color(0xFF021712),
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
+
+              // 5. Luminária na Direita
+              Positioned(
+                right: 25,
+                top: 65,
+                child: _buildRealisticBulb(isLit: isLampLit),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -1072,120 +924,86 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
       '“3: Excelente! Por fim, acione ambas as luminárias juntas (Chave 1 ON, Chave 2 ON).”',
     ];
 
-    return GlassContainer(
-      borderRadius: 24,
-      accentColor: const Color(0xFF10B981),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildMissionHeader(mission),
-          const SizedBox(height: 14),
-
-          // Terminal do Visitante Virtual
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF03261D),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFF10B981)),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                  blurRadius: 10,
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF059669),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.person_pin_rounded, color: Colors.white, size: 28),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Solicitação do Visitante Virtual:', style: GoogleFonts.rajdhani(color: const Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 15)),
-                      const SizedBox(height: 4),
-                      Text(
-                        _m5VisitorStep < visitorRequests.length
-                            ? visitorRequests[_m5VisitorStep]
-                            : '✨ Todos os pedidos foram atendidos com sucesso!',
-                        style: GoogleFonts.outfit(color: Colors.white, fontSize: 14.5, fontWeight: FontWeight.w600),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          Row(
-            children: [
-              Expanded(
-                child: SwitchListTile(
-                  title: Text('Chave 1', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.w600)),
-                  value: _m5Switch1,
-                  activeThumbColor: const Color(0xFF10B981),
-                  onChanged: (val) {
-                    setState(() {
-                      _m5Switch1 = val;
-                      _checkMission5Sequence();
-                    });
-                  },
-                ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Terminal do Visitante Virtual
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFF0284C7)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
               ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF0284C7),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.person_pin_rounded, color: Colors.white, size: 28),
+              ),
+              const SizedBox(width: 14),
               Expanded(
-                child: SwitchListTile(
-                  title: Text('Chave 2', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.w600)),
-                  value: _m5Switch2,
-                  activeThumbColor: const Color(0xFF10B981),
-                  onChanged: (val) {
-                    setState(() {
-                      _m5Switch2 = val;
-                      _checkMission5Sequence();
-                    });
-                  },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Solicitação do Visitante Virtual:', style: GoogleFonts.rajdhani(color: const Color(0xFF0284C7), fontWeight: FontWeight.bold, fontSize: 15)),
+                    const SizedBox(height: 4),
+                    Text(
+                      _m5VisitorStep < visitorRequests.length
+                          ? visitorRequests[_m5VisitorStep]
+                          : '✨ Todos os pedidos foram atendidos com sucesso!',
+                      style: GoogleFonts.outfit(color: const Color(0xFF0F172A), fontSize: 14.5, fontWeight: FontWeight.w600),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
+        ),
 
-          const SizedBox(height: 20),
+        const SizedBox(height: 16),
 
-          Align(
-            alignment: Alignment.centerRight,
-            child: ElevatedButton.icon(
-              onPressed: _validateMission5,
-              icon: const Icon(Icons.verified_rounded),
-              label: Text(
-                'CONCLUIR DEMONSTRAÇÃO',
-                style: GoogleFonts.rajdhani(
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.2,
-                  fontSize: 15,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF10B981),
-                foregroundColor: const Color(0xFF021712),
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
+        Row(
+          children: [
+            Expanded(
+              child: SwitchListTile(
+                title: Text('Chave 1', style: GoogleFonts.outfit(color: const Color(0xFF0F172A), fontWeight: FontWeight.w600)),
+                value: _m5Switch1,
+                activeTrackColor: const Color(0xFF0284C7),
+                onChanged: (val) {
+                  setState(() {
+                    _m5Switch1 = val;
+                    _checkMission5Sequence();
+                  });
+                },
               ),
             ),
-          ),
-        ],
-      ),
+            Expanded(
+              child: SwitchListTile(
+                title: Text('Chave 2', style: GoogleFonts.outfit(color: const Color(0xFF0F172A), fontWeight: FontWeight.w600)),
+                value: _m5Switch2,
+                activeTrackColor: const Color(0xFF0284C7),
+                onChanged: (val) {
+                  setState(() {
+                    _m5Switch2 = val;
+                    _checkMission5Sequence();
+                  });
+                },
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -1200,28 +1018,6 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
   }
 
   // --- Widgets Auxiliares de Componentes Realistas ---
-
-  Widget _buildMissionHeader(StandMission mission) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          mission.title.toUpperCase(),
-          style: GoogleFonts.rajdhani(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF10B981),
-            letterSpacing: 1.2,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          mission.objective,
-          style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14),
-        ),
-      ],
-    );
-  }
 
   Widget _buildRealisticBattery() {
     return Container(
