@@ -104,6 +104,7 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
       switch (_currentMissionIndex) {
         case 0:
           _m1WireConnected = false;
+          _m1WireInserted = false;
           break;
         case 1:
           _m2IsSeriesTwoBulbs = true;
@@ -129,142 +130,137 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
     setState(() => _isSimulating = true);
 
     try {
-    bool isSuccess = false;
-    String feedbackMessage = _currentMission.failureFeedback;
+      bool isSuccess = false;
+      String feedbackMessage = _currentMission.failureFeedback;
 
-    switch (_currentMissionIndex) {
-      case 0: // M1: Postes em Série — valida circuito série real
-        if (_m1WireConnected) {
-          final result = await MissionCircuitBuilder()
-              .addBattery(id: 'bat1', voltage: 4.5)
-              .addBulb(id: 'bulb1', resistance: 5.0)
-              .addBulb(id: 'bulb2', resistance: 5.0)
-              .connect('bat1', 'B', 'bulb1', 'A')
-              .connect('bulb1', 'B', 'bulb2', 'A')
-              .connect('bulb2', 'B', 'bat1', 'A')
-              .simulate();
-          if (result.hasClosedLoop && result.errorMessage == null) {
-            final currentMa = result.current * 1000;
-            feedbackMessage = 'Circuito em série validado! Corrente: ${currentMa.toStringAsFixed(1)}mA. '
-                'Ambas as lâmpadas recebem a mesma corrente.';
-            isSuccess = true;
-          } else {
-            feedbackMessage = result.errorMessage ?? 'Circuito em série incompleto. Verifique as conexões.';
-          }
-        } else {
-          feedbackMessage = 'Conecte o fio condutor em série entre a bateria e as duas lâmpadas!';
-        }
-        break;
-
-      case 1: // M2: Comparação de Brilho — questão teórica
-        if (_m2SelectedExplanation == 'corrente_reduzida') {
-          isSuccess = true;
-        } else if (_m2SelectedExplanation == null) {
-          feedbackMessage = 'Selecione a explicação física sobre o motivo do brilho atenuado em série.';
-        } else {
-          feedbackMessage = 'Pense bem: no circuito em série, adicionar mais resistências reduz a corrente total.';
-        }
-        break;
-
-      case 2: // M3: Bifurcação de Fios — valida nó com duas ramificações
-        if (_m3JunctionInserted && _m3ReturnConnected) {
-          final result = await MissionCircuitBuilder()
-              .addBattery(id: 'bat1', voltage: 4.5)
-              .addBulb(id: 'bulbA', resistance: 5.0)
-              .addBulb(id: 'bulbB', resistance: 5.0)
-              // Ramo A
-              .connect('bat1', 'B', 'bulbA', 'A')
-              .connect('bulbA', 'B', 'bat1', 'A')
-              // Ramo B
-              .connect('bat1', 'B', 'bulbB', 'A')
-              .connect('bulbB', 'B', 'bat1', 'A')
-              .simulate();
-          if (result.hasClosedLoop && result.errorMessage == null) {
-            feedbackMessage = 'Bifurcação validada! A corrente se divide em dois ramos independentes e reconverge ao polo negativo.';
-            isSuccess = true;
-          } else {
-            feedbackMessage = result.errorMessage ?? 'A bifurcação precisa se reconectar ao polo negativo da fonte.';
-          }
-        } else if (!_m3JunctionInserted) {
-          feedbackMessage = 'Insira o nó de bifurcação para dividir a corrente para as duas ruas.';
-        } else {
-          feedbackMessage = 'A bifurcação precisa se reconectar ao polo negativo da fonte.';
-        }
-        break;
-
-      case 3: // M4: Paralelo — valida circuito paralelo real
-        if (_m4ParallelWireConnected) {
-          final result = await MissionCircuitBuilder()
-              .addBattery(id: 'bat1', voltage: 4.5)
-              .addBulb(id: 'bulb1', resistance: 5.0)
-              .addBulb(id: 'bulb2', resistance: 5.0)
-              // Ramo paralelo 1
-              .connect('bat1', 'B', 'bulb1', 'A')
-              .connect('bulb1', 'B', 'bat1', 'A')
-              // Ramo paralelo 2
-              .connect('bat1', 'B', 'bulb2', 'A')
-              .connect('bulb2', 'B', 'bat1', 'A')
-              .simulate();
-          if (result.hasClosedLoop && result.errorMessage == null) {
-            final current1 = (result.componentCurrents['bulb1'] ?? 0) * 1000;
-            final current2 = (result.componentCurrents['bulb2'] ?? 0) * 1000;
-            feedbackMessage = 'Circuito em paralelo validado! '
-                'Lâmpada 1: ${current1.toStringAsFixed(1)}mA, Lâmpada 2: ${current2.toStringAsFixed(1)}mA. '
-                'Ambas recebem tensão total da bateria.';
-            isSuccess = true;
-          } else {
-            feedbackMessage = result.errorMessage ?? 'Monte as ligações em paralelo para que cada casa tenha seu ramo individual.';
-          }
-        } else {
-          feedbackMessage = 'Monte as ligações em paralelo para que cada casa tenha seu ramo individual.';
-        }
-        break;
-
-      case 4: // M5: Manutenção — paralelo com uma lâmpada queimada
-        if (_m5House1Broken && _m5MaintenanceConfirmed) {
-          final result = await MissionCircuitBuilder()
-              .addBattery(id: 'bat1', voltage: 4.5)
-              .addBulb(id: 'bulbB', resistance: 5.0)
-              // Ramo B funciona normalmente
-              .connect('bat1', 'B', 'bulbB', 'A')
-              .connect('bulbB', 'B', 'bat1', 'A')
-              .simulate();
-          if (result.hasClosedLoop && result.errorMessage == null) {
-            feedbackMessage = 'Manutenção validada! A Lâmpada B permanece acesa mesmo com a Lâmpada A desconectada. '
-                'Em paralelo, os ramos são independentes.';
-            isSuccess = true;
-          } else {
-            feedbackMessage = result.errorMessage ?? 'Erro na simulação do circuito.';
-          }
-        } else if (!_m5House1Broken) {
-          feedbackMessage = 'Simule o defeito na Lâmpada A para testar a independência do circuito!';
-        } else {
-          feedbackMessage = 'Confirme o resultado da manutenção ao observar que a Lâmpada B permanece acesa.';
-        }
-        break;
-    }
-
-    final fullMessage = isSuccess
-        ? 'Missão "${_currentMission.title}" concluída com êxito! ${_currentMission.victoryCriteria}.\n\nProf. Volts: "${_currentMission.voltsMediation}"'
-        : '$feedbackMessage\n\nProf. Volts: "${_currentMission.voltsMediation}"';
-
-    if (mounted) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => ProfVoltsFeedbackDialog(
-          isCorrect: isSuccess,
-          message: fullMessage,
-          onAction: () {
-            Navigator.of(context).pop();
-            if (isSuccess) {
-              showSuccessConfetti(context);
-              _nextMission();
+      switch (_currentMissionIndex) {
+        case 0: // M1: Postes em Série
+          if (_m1WireInserted || _m1WireConnected) {
+            final result = await MissionCircuitBuilder()
+                .addBattery(id: 'bat1', voltage: 4.5)
+                .addBulb(id: 'bulb1', resistance: 5.0)
+                .addBulb(id: 'bulb2', resistance: 5.0)
+                .connect('bat1', 'B', 'bulb1', 'A')
+                .connect('bulb1', 'B', 'bulb2', 'A')
+                .connect('bulb2', 'B', 'bat1', 'A')
+                .simulate();
+            if (result.hasClosedLoop && result.errorMessage == null) {
+              final currentMa = result.current * 1000;
+              feedbackMessage = 'Circuito em série validado! Corrente: ${currentMa.toStringAsFixed(1)}mA. '
+                  'Ambas as lâmpadas recebem a mesma corrente.';
+              isSuccess = true;
+            } else {
+              feedbackMessage = result.errorMessage ?? 'Circuito em série incompleto. Verifique as conexões.';
             }
-          },
-        ),
-      );
-    }
+          } else {
+            feedbackMessage = 'Conecte o fio condutor em série para fechar o circuito dos postes!';
+          }
+          break;
+
+        case 1: // M2: Comparação de Brilho
+          if (_m2SelectedExplanation == 'corrente_reduzida') {
+            isSuccess = true;
+          } else if (_m2SelectedExplanation == null) {
+            feedbackMessage = 'Selecione a explicação física sobre o motivo do brilho atenuado em série.';
+          } else {
+            feedbackMessage = 'Pense bem: no circuito em série, adicionar mais resistências reduz a corrente total.';
+          }
+          break;
+
+        case 2: // M3: Bifurcação de Fios
+          if (_m3JunctionInserted && _m3ReturnConnected) {
+            final result = await MissionCircuitBuilder()
+                .addBattery(id: 'bat1', voltage: 4.5)
+                .addBulb(id: 'bulbA', resistance: 5.0)
+                .addBulb(id: 'bulbB', resistance: 5.0)
+                .connect('bat1', 'B', 'bulbA', 'A')
+                .connect('bulbA', 'B', 'bat1', 'A')
+                .connect('bat1', 'B', 'bulbB', 'A')
+                .connect('bulbB', 'B', 'bat1', 'A')
+                .simulate();
+            if (result.hasClosedLoop && result.errorMessage == null) {
+              feedbackMessage = 'Bifurcação validada! A corrente se divide em dois ramos independentes e reconverge ao polo negativo.';
+              isSuccess = true;
+            } else {
+              feedbackMessage = result.errorMessage ?? 'A bifurcação precisa se reconectar ao polo negativo da fonte.';
+            }
+          } else if (!_m3JunctionInserted) {
+            feedbackMessage = 'Insira o nó de bifurcação para dividir a corrente para as duas ruas.';
+          } else {
+            feedbackMessage = 'A bifurcação precisa se reconectar ao polo negativo da fonte.';
+          }
+          break;
+
+        case 3: // M4: Paralelo
+          if (_m4ParallelWireConnected) {
+            final result = await MissionCircuitBuilder()
+                .addBattery(id: 'bat1', voltage: 4.5)
+                .addBulb(id: 'bulb1', resistance: 5.0)
+                .addBulb(id: 'bulb2', resistance: 5.0)
+                .connect('bat1', 'B', 'bulb1', 'A')
+                .connect('bulb1', 'B', 'bat1', 'A')
+                .connect('bat1', 'B', 'bulb2', 'A')
+                .connect('bulb2', 'B', 'bat1', 'A')
+                .simulate();
+            if (result.hasClosedLoop && result.errorMessage == null) {
+              final current1 = (result.componentCurrents['bulb1'] ?? 0) * 1000;
+              final current2 = (result.componentCurrents['bulb2'] ?? 0) * 1000;
+              feedbackMessage = 'Circuito em paralelo validado! '
+                  'Lâmpada 1: ${current1.toStringAsFixed(1)}mA, Lâmpada 2: ${current2.toStringAsFixed(1)}mA. '
+                  'Ambas recebem tensão total da bateria.';
+              isSuccess = true;
+            } else {
+              feedbackMessage = result.errorMessage ?? 'Monte as ligações em paralelo para que cada casa tenha seu ramo individual.';
+            }
+          } else {
+            feedbackMessage = 'Monte as ligações em paralelo para que cada casa tenha seu ramo individual.';
+          }
+          break;
+
+        case 4: // M5: Manutenção
+          if (_m5House1Broken && _m5MaintenanceConfirmed) {
+            final result = await MissionCircuitBuilder()
+                .addBattery(id: 'bat1', voltage: 4.5)
+                .addBulb(id: 'bulbB', resistance: 5.0)
+                .connect('bat1', 'B', 'bulbB', 'A')
+                .connect('bulbB', 'B', 'bat1', 'A')
+                .simulate();
+            if (result.hasClosedLoop && result.errorMessage == null) {
+              feedbackMessage = 'Manutenção validada! A Lâmpada B permanece acesa mesmo com a Lâmpada A desconectada. '
+                  'Em paralelo, os ramos são independentes.';
+              isSuccess = true;
+            } else {
+              feedbackMessage = result.errorMessage ?? 'Erro na simulação do circuito.';
+            }
+          } else if (!_m5House1Broken) {
+            feedbackMessage = 'Simule o defeito na Lâmpada A para testar a independência do circuito!';
+          } else {
+            feedbackMessage = 'Confirme o resultado da manutenção ao observar que a Lâmpada B permanece acesa.';
+          }
+          break;
+      }
+
+      final fullMessage = isSuccess
+          ? 'Missão "${_currentMission.title}" concluída com êxito! ${_currentMission.victoryCriteria}.\n\nProf. Volts: "${_currentMission.voltsMediation}"'
+          : '$feedbackMessage\n\nProf. Volts: "${_currentMission.voltsMediation}"';
+
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => ProfVoltsFeedbackDialog(
+            isCorrect: isSuccess,
+            message: fullMessage,
+            onAction: () {
+              Navigator.of(context).pop();
+              if (isSuccess) {
+                showSuccessConfetti(context);
+                _nextMission();
+              }
+            },
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isSimulating = false);
     }
@@ -552,444 +548,589 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
     );
   }
 
-  /// Desenho interativo da bancada simulando as Ruas da Maquete (Solto na Malha)
+  /// Desenho interativo da bancada simulando as Ruas da Maquete com alinhamento preciso
   Widget _buildMaqueteWorkbench() {
-    return Stack(
-      children: [
-        // Painter customizado com linhas esquemáticas e animação de elétrons soltos na malha
-        Positioned.fill(
-          child: AnimatedBuilder(
-            animation: _electronAnimController,
-            builder: (context, child) {
-              return CustomPaint(
-                painter: _RuasMaquetePainter(
-                  missionIndex: _currentMissionIndex,
-                  animValue: _electronAnimController.value,
-                  m1Connected: _m1WireConnected,
-                  m2Series: _m2IsSeriesTwoBulbs,
-                  m3Junction: _m3JunctionInserted,
-                  m3Return: _m3ReturnConnected,
-                  m4Parallel: _m4ParallelWireConnected,
-                  m5House1Broken: _m5House1Broken,
-                  usePhysicalStyle: _usePhysicalStyle,
-                ),
-              );
-            },
-          ),
-        ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final w = constraints.maxWidth;
+        final h = constraints.maxHeight;
 
-        // Interatividade Visual Específica por Missão
-        _buildMissionOverlayContent(),
-      ],
+        final lampY = h * 0.28;
+        final socketY = h * 0.80;
+        final lamp1X = w * 0.28;
+        final lamp2X = w * 0.72;
+        final socketX = w * 0.50;
+
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // Painter customizado com linhas esquemáticas e elétrons alinhados aos componentes
+            Positioned.fill(
+              child: AnimatedBuilder(
+                animation: _electronAnimController,
+                builder: (context, child) {
+                  return CustomPaint(
+                    painter: _RuasMaquetePainter(
+                      missionIndex: _currentMissionIndex,
+                      animValue: _electronAnimController.value,
+                      m1Connected: _m1WireInserted || _m1WireConnected,
+                      m2Series: _m2IsSeriesTwoBulbs,
+                      m3Junction: _m3JunctionInserted,
+                      m3Return: _m3ReturnConnected,
+                      m4Parallel: _m4ParallelWireConnected,
+                      m5House1Broken: _m5House1Broken,
+                      usePhysicalStyle: _usePhysicalStyle,
+                      lampY: lampY,
+                      socketY: socketY,
+                      lamp1X: lamp1X,
+                      lamp2X: lamp2X,
+                      socketX: socketX,
+                    ),
+                  );
+                },
+              ),
+            ),
+
+            // Interatividade Visual Específica por Missão com Alinhamento Exato
+            ..._buildMissionOverlayElements(
+              lamp1X: lamp1X,
+              lamp2X: lamp2X,
+              socketX: socketX,
+              lampY: lampY,
+              socketY: socketY,
+            ),
+          ],
+        );
+      },
     );
   }
 
-  /// Elementos visuais sobrepostos e interativos na bancada
-  Widget _buildMissionOverlayContent() {
+  /// Elementos visuais sobrepostos e interativos na bancada posicionados com precisão matemática
+  List<Widget> _buildMissionOverlayElements({
+    required double lamp1X,
+    required double lamp2X,
+    required double socketX,
+    required double lampY,
+    required double socketY,
+  }) {
     switch (_currentMissionIndex) {
-      case 0: // M1: Postes em Série
-        return _buildM1Overlay();
-      case 1: // M2: Comparação de Brilho
-        return _buildM2Overlay();
-      case 2: // M3: Bifurcação de Fios
-        return _buildM3Overlay();
-      case 3: // M4: Casas Independentes (Paralelo)
-        return _buildM4Overlay();
-      case 4: // M5: Teste de Manutenção
-        return _buildM5Overlay();
+      case 0:
+        return _buildM1OverlayElements(lamp1X, lamp2X, socketX, lampY, socketY);
+      case 1:
+        return _buildM2OverlayElements(lamp1X, lamp2X, socketX, lampY, socketY);
+      case 2:
+        return _buildM3OverlayElements(lamp1X, lamp2X, socketX, lampY, socketY);
+      case 3:
+        return _buildM4OverlayElements(lamp1X, lamp2X, socketX, lampY, socketY);
+      case 4:
+        return _buildM5OverlayElements(lamp1X, lamp2X, socketX, lampY, socketY);
       default:
-        return const SizedBox.shrink();
+        return [];
     }
   }
 
   /// Overlay da Missão 1: Conexão em Série de Postes
-  Widget _buildM1Overlay() {
-    return Positioned.fill(
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildStreetLamp(
-                  label: 'Poste 1 (Alameda)',
-                  isLit: _m1WireInserted,
-                  brightnessRatio: _m1WireInserted ? 0.5 : 0.0,
-                ),
-                _buildStreetLamp(
-                  label: 'Poste 2 (Avenida)',
-                  isLit: _m1WireInserted,
-                  brightnessRatio: _m1WireInserted ? 0.5 : 0.0,
-                ),
-              ],
-            ),
-
-            // Socket do Fio em Série
-            SchematicBlueprintSocket<String>(
-              expectedData: 'fio_serie',
-              isFilled: _m1WireInserted,
-              showLabel: false,
-              onAccept: (_) => _insertComponent(
-                name: 'Fio em Série',
-                getInserted: () => _m1WireInserted,
-                setInserted: (v) => _m1WireInserted = v,
-                getRotation: () => 0,
-                setRotation: (_) {},
-              ),
-              onTap: () {},
-              symbolWidget: _usePhysicalStyle
-                  ? CustomPaint(
-                      size: const Size(50, 50),
-                      painter: ComponentPhysicalPainter(
-                        type: ComponentType.connectingWire,
-                        isDarkMode: false,
-                      ),
-                    )
-                  : CustomPaint(
-                      size: const Size(50, 50),
-                      painter: CircuitSymbolPainter(
-                        type: ComponentType.connectingWire,
-                        color: const Color(0xFF0F172A),
-                        strokeWidth: 2.5,
-                      ),
-                    ),
-              placeholderWidget: _usePhysicalStyle
-                  ? CustomPaint(
-                      size: const Size(45, 45),
-                      painter: ComponentPhysicalPainter(
-                        type: ComponentType.connectingWire,
-                        isDarkMode: false,
-                      ),
-                    )
-                  : CustomPaint(
-                      size: const Size(45, 45),
-                      painter: CircuitSymbolPainter(
-                        type: ComponentType.connectingWire,
-                        color: const Color(0xFF94A3B8),
-                        strokeWidth: 2.0,
-                      ),
-                    ),
-              label: '',
-            ),
-          ],
+  List<Widget> _buildM1OverlayElements(double l1X, double l2X, double sX, double lY, double sY) {
+    final isLit = _m1WireInserted || _m1WireConnected;
+    return [
+      // Componente Poste 1 (Alameda)
+      Positioned(
+        left: l1X - 40,
+        top: lY - 30,
+        child: _buildLampSymbol(
+          isLit: isLit,
+          brightnessRatio: isLit ? 0.5 : 0.0,
         ),
       ),
-    );
+      Positioned(
+        left: l1X - 75,
+        top: lY + 34,
+        width: 150,
+        child: Center(child: _buildLabelBadge('Poste 1 (Alameda)')),
+      ),
+
+      // Componente Poste 2 (Avenida)
+      Positioned(
+        left: l2X - 40,
+        top: lY - 30,
+        child: _buildLampSymbol(
+          isLit: isLit,
+          brightnessRatio: isLit ? 0.5 : 0.0,
+        ),
+      ),
+      Positioned(
+        left: l2X - 75,
+        top: lY + 34,
+        width: 150,
+        child: Center(child: _buildLabelBadge('Poste 2 (Avenida)')),
+      ),
+
+      // Socket do Fio em Série
+      Positioned(
+        left: sX - 40,
+        top: sY - 32,
+        child: SizedBox(
+          width: 80,
+          height: 65,
+          child: SchematicBlueprintSocket<String>(
+            width: 80,
+            height: 65,
+            expectedData: 'fio_serie',
+            isFilled: isLit,
+            showLabel: false,
+            onAccept: (_) => _insertComponent(
+              name: 'Fio em Série',
+              getInserted: () => _m1WireInserted,
+              setInserted: (v) {
+                _m1WireInserted = v;
+                _m1WireConnected = v;
+              },
+              getRotation: () => 0,
+              setRotation: (_) {},
+            ),
+            onTap: () {
+              _insertComponent(
+                name: 'Fio em Série',
+                getInserted: () => _m1WireInserted,
+                setInserted: (v) {
+                  _m1WireInserted = v;
+                  _m1WireConnected = v;
+                },
+                getRotation: () => 0,
+                setRotation: (_) {},
+              );
+            },
+            symbolWidget: _usePhysicalStyle
+                ? CustomPaint(
+                    size: const Size(50, 50),
+                    painter: ComponentPhysicalPainter(
+                      type: ComponentType.connectingWire,
+                      isDarkMode: false,
+                    ),
+                  )
+                : CustomPaint(
+                    size: const Size(50, 50),
+                    painter: CircuitSymbolPainter(
+                      type: ComponentType.connectingWire,
+                      color: const Color(0xFF0F172A),
+                      strokeWidth: 2.5,
+                    ),
+                  ),
+            placeholderWidget: _usePhysicalStyle
+                ? CustomPaint(
+                    size: const Size(45, 45),
+                    painter: ComponentPhysicalPainter(
+                      type: ComponentType.connectingWire,
+                      isDarkMode: false,
+                    ),
+                  )
+                : CustomPaint(
+                    size: const Size(45, 45),
+                    painter: CircuitSymbolPainter(
+                      type: ComponentType.connectingWire,
+                      color: const Color(0xFF94A3B8),
+                      strokeWidth: 2.0,
+                    ),
+                  ),
+            label: '',
+          ),
+        ),
+      ),
+    ];
   }
 
   /// Overlay da Missão 2: Comparação de Brilho 1 vs 2 Lâmpadas
-  Widget _buildM2Overlay() {
-    return Positioned.fill(
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildStreetLamp(
-                  label: 'Poste Principal',
-                  isLit: true,
-                  brightnessRatio: _m2IsSeriesTwoBulbs ? 0.5 : 1.0,
-                ),
-                if (_m2IsSeriesTwoBulbs)
-                  _buildStreetLamp(
-                    label: 'Poste Secundário (Série)',
-                    isLit: true,
-                    brightnessRatio: 0.5,
-                  ),
-              ],
-            ),
-            const Spacer(),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0F172A),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.5)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Modo de Teste: ',
-                    style: GoogleFonts.rajdhani(color: Colors.white70, fontSize: 14),
-                  ),
-                  const SizedBox(width: 8),
-                  ChoiceChip(
-                    label: const Text('1 Poste (100% Brilho)'),
-                    selected: !_m2IsSeriesTwoBulbs,
-                    onSelected: (val) {
-                      setState(() {
-                        _m2IsSeriesTwoBulbs = !val;
-                      });
-                    },
-                    selectedColor: const Color(0xFF10B981),
-                    backgroundColor: const Color(0xFF1E293B),
-                    labelStyle: GoogleFonts.rajdhani(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  ChoiceChip(
-                    label: const Text('2 Postes em Série (50% Brilho)'),
-                    selected: _m2IsSeriesTwoBulbs,
-                    onSelected: (val) {
-                      setState(() {
-                        _m2IsSeriesTwoBulbs = val;
-                      });
-                    },
-                    selectedColor: Colors.amberAccent,
-                    backgroundColor: const Color(0xFF1E293B),
-                    labelStyle: GoogleFonts.rajdhani(
-                      color: _m2IsSeriesTwoBulbs ? Colors.black : Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+  List<Widget> _buildM2OverlayElements(double l1X, double l2X, double sX, double lY, double sY) {
+    return [
+      // Poste Principal
+      Positioned(
+        left: l1X - 40,
+        top: lY - 30,
+        child: _buildLampSymbol(
+          isLit: true,
+          brightnessRatio: _m2IsSeriesTwoBulbs ? 0.5 : 1.0,
         ),
       ),
-    );
+      Positioned(
+        left: l1X - 75,
+        top: lY + 34,
+        width: 150,
+        child: Center(child: _buildLabelBadge('Poste Principal')),
+      ),
+
+      // Poste Secundário (Série)
+      if (_m2IsSeriesTwoBulbs) ...[
+        Positioned(
+          left: l2X - 40,
+          top: lY - 30,
+          child: _buildLampSymbol(
+            isLit: true,
+            brightnessRatio: 0.5,
+          ),
+        ),
+        Positioned(
+          left: l2X - 75,
+          top: lY + 34,
+          width: 150,
+          child: Center(child: _buildLabelBadge('Poste Secundário (Série)')),
+        ),
+      ],
+
+      // Painel de Teste de Modo
+      Positioned(
+        left: sX - 220,
+        top: sY - 25,
+        width: 440,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0F172A),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.5)),
+            boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8)],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Modo de Teste: ',
+                style: GoogleFonts.rajdhani(color: Colors.white70, fontSize: 13),
+              ),
+              const SizedBox(width: 8),
+              ChoiceChip(
+                label: const Text('1 Poste (100% Brilho)'),
+                selected: !_m2IsSeriesTwoBulbs,
+                onSelected: (val) => setState(() => _m2IsSeriesTwoBulbs = !val),
+                selectedColor: const Color(0xFF10B981),
+                backgroundColor: const Color(0xFF1E293B),
+                labelStyle: GoogleFonts.rajdhani(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(width: 8),
+              ChoiceChip(
+                label: const Text('2 Postes em Série (50% Brilho)'),
+                selected: _m2IsSeriesTwoBulbs,
+                onSelected: (val) => setState(() => _m2IsSeriesTwoBulbs = val),
+                selectedColor: Colors.amberAccent,
+                backgroundColor: const Color(0xFF1E293B),
+                labelStyle: GoogleFonts.rajdhani(
+                  color: _m2IsSeriesTwoBulbs ? Colors.black : Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ];
   }
 
   /// Overlay da Missão 3: Bifurcação de Fios (Nó)
-  Widget _buildM3Overlay() {
+  List<Widget> _buildM3OverlayElements(double l1X, double l2X, double sX, double lY, double sY) {
     final bothLit = _m3JunctionInserted && _m3ReturnConnected;
-    return Positioned.fill(
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildStreetLamp(
-                  label: 'Rua A (Nó Norte)',
-                  isLit: bothLit,
-                  brightnessRatio: bothLit ? 1.0 : 0.0,
-                ),
-                _buildStreetLamp(
-                  label: 'Rua B (Nó Sul)',
-                  isLit: bothLit,
-                  brightnessRatio: bothLit ? 1.0 : 0.0,
-                ),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _m3JunctionInserted
-                        ? const Color(0xFF10B981)
-                        : const Color(0xFF1E293B),
-                    side: const BorderSide(color: Color(0xFF10B981)),
-                  ),
-                  icon: Icon(_m3JunctionInserted ? Icons.check : Icons.call_split_rounded),
-                  label: Text(
-                    _m3JunctionInserted ? 'Nó de Junção Inserido' : '1. Inserir Nó de Junção',
-                    style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
-                  onPressed: () {
-                    _insertComponent(
-                      name: 'Nó de Junção',
-                      getInserted: () => _m3JunctionInserted,
-                      setInserted: (v) => _m3JunctionInserted = v,
-                      getRotation: () => 0,
-                      setRotation: (_) {},
-                    );
-                  },
-                ),
-                const SizedBox(width: 12),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _m3ReturnConnected
-                        ? const Color(0xFF10B981)
-                        : const Color(0xFF1E293B),
-                    side: const BorderSide(color: Color(0xFF10B981)),
-                  ),
-                  icon: Icon(_m3ReturnConnected ? Icons.check : Icons.subdirectory_arrow_left_rounded),
-                  label: Text(
-                    _m3ReturnConnected ? 'Retorno Reconectado (-)' : '2. Reconectar Retorno (-)',
-                    style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
-                  onPressed: () {
-                    _insertComponent(
-                      name: 'Retorno Reconectado',
-                      getInserted: () => _m3ReturnConnected,
-                      setInserted: (v) => _m3ReturnConnected = v,
-                      getRotation: () => 0,
-                      setRotation: (_) {},
-                    );
-                  },
-                ),
-              ],
-            ),
-          ],
+    final nodeY = lY + 45.0;
+
+    return [
+      // Rua A (Nó Norte)
+      Positioned(
+        left: l1X - 40,
+        top: lY - 30,
+        child: _buildLampSymbol(
+          isLit: bothLit,
+          brightnessRatio: bothLit ? 1.0 : 0.0,
         ),
       ),
-    );
-  }
+      Positioned(
+        left: l1X - 75,
+        top: lY + 34,
+        width: 150,
+        child: Center(child: _buildLabelBadge('Rua A (Nó Norte)')),
+      ),
 
-  /// Overlay da Missão 4: Casas Independentes (Paralelo)
-  Widget _buildM4Overlay() {
-    return Positioned.fill(
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildHouseDisplay(
-                  name: 'Casa 01 (Alameda)',
-                  isLit: _m4ParallelWireConnected,
-                  brightness: 1.0,
-                ),
-                _buildHouseDisplay(
-                  name: 'Casa 02 (Praça)',
-                  isLit: _m4ParallelWireConnected,
-                  brightness: 1.0,
-                ),
-              ],
+      // Rua B (Nó Sul)
+      Positioned(
+        left: l2X - 40,
+        top: lY - 30,
+        child: _buildLampSymbol(
+          isLit: bothLit,
+          brightnessRatio: bothLit ? 1.0 : 0.0,
+        ),
+      ),
+      Positioned(
+        left: l2X - 75,
+        top: lY + 34,
+        width: 150,
+        child: Center(child: _buildLabelBadge('Rua B (Nó Sul)')),
+      ),
+
+      // Indicador Visual do Nó de Junção
+      Positioned(
+        left: sX - 40,
+        top: nodeY - 14,
+        width: 80,
+        child: Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: _m3JunctionInserted ? const Color(0xFF10B981) : const Color(0xFF64748B),
+              borderRadius: BorderRadius.circular(8),
             ),
-            InkWell(
-              onTap: () {
+            child: Text(
+              'Nó (+)',
+              style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+            ),
+          ),
+        ),
+      ),
+
+      // Botões de Ação da Missão 3
+      Positioned(
+        left: sX - 220,
+        top: sY - 25,
+        width: 440,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _m3JunctionInserted ? const Color(0xFF10B981) : const Color(0xFF1E293B),
+                side: const BorderSide(color: Color(0xFF10B981)),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
+              icon: Icon(_m3JunctionInserted ? Icons.check : Icons.call_split_rounded, size: 16),
+              label: Text(
+                _m3JunctionInserted ? 'Nó Inserido' : '1. Inserir Nó de Junção',
+                style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              onPressed: () {
                 _insertComponent(
-                  name: 'Fiação em Paralelo',
-                  getInserted: () => _m4ParallelWireConnected,
-                  setInserted: (v) => _m4ParallelWireConnected = v,
+                  name: 'Nó de Junção',
+                  getInserted: () => _m3JunctionInserted,
+                  setInserted: (v) => _m3JunctionInserted = v,
                   getRotation: () => 0,
                   setRotation: (_) {},
                 );
               },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                decoration: BoxDecoration(
-                  color: _m4ParallelWireConnected
-                      ? const Color(0xFF10B981).withValues(alpha: 0.2)
-                      : const Color(0xFF1E293B),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: _m4ParallelWireConnected ? const Color(0xFF10B981) : Colors.amberAccent,
-                    width: 2,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      _m4ParallelWireConnected ? Icons.check_circle_rounded : Icons.alt_route_rounded,
-                      color: _m4ParallelWireConnected ? const Color(0xFF10B981) : Colors.amberAccent,
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      _m4ParallelWireConnected
-                          ? 'Circuito em Paralelo Ativo (Brilho Máximo em Ambos)'
-                          : 'Clique para Conectar Fiação em Paralelo',
-                      style: GoogleFonts.rajdhani(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                ),
+            ),
+            const SizedBox(width: 10),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _m3ReturnConnected ? const Color(0xFF10B981) : const Color(0xFF1E293B),
+                side: const BorderSide(color: Color(0xFF10B981)),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               ),
+              icon: Icon(_m3ReturnConnected ? Icons.check : Icons.subdirectory_arrow_left_rounded, size: 16),
+              label: Text(
+                _m3ReturnConnected ? 'Retorno Reconectado' : '2. Reconectar Retorno (-)',
+                style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              onPressed: () {
+                _insertComponent(
+                  name: 'Retorno Reconectado',
+                  getInserted: () => _m3ReturnConnected,
+                  setInserted: (v) => _m3ReturnConnected = v,
+                  getRotation: () => 0,
+                  setRotation: (_) {},
+                );
+              },
             ),
           ],
         ),
       ),
-    );
+    ];
+  }
+
+  /// Overlay da Missão 4: Casas Independentes (Paralelo)
+  List<Widget> _buildM4OverlayElements(double l1X, double l2X, double sX, double lY, double sY) {
+    return [
+      // Casa 01
+      Positioned(
+        left: l1X - 40,
+        top: lY - 30,
+        child: _buildHouseSymbol(
+          name: 'Casa 01 (Alameda)',
+          isLit: _m4ParallelWireConnected,
+          brightness: 1.0,
+        ),
+      ),
+      Positioned(
+        left: l1X - 75,
+        top: lY + 34,
+        width: 150,
+        child: Center(child: _buildLabelBadge('Casa 01 (Alameda)')),
+      ),
+
+      // Casa 02
+      Positioned(
+        left: l2X - 40,
+        top: lY - 30,
+        child: _buildHouseSymbol(
+          name: 'Casa 02 (Praça)',
+          isLit: _m4ParallelWireConnected,
+          brightness: 1.0,
+        ),
+      ),
+      Positioned(
+        left: l2X - 75,
+        top: lY + 34,
+        width: 150,
+        child: Center(child: _buildLabelBadge('Casa 02 (Praça)')),
+      ),
+
+      // Botão Conectar Fiação em Paralelo
+      Positioned(
+        left: sX - 200,
+        top: sY - 25,
+        width: 400,
+        child: InkWell(
+          onTap: () {
+            _insertComponent(
+              name: 'Fiação em Paralelo',
+              getInserted: () => _m4ParallelWireConnected,
+              setInserted: (v) => _m4ParallelWireConnected = v,
+              getRotation: () => 0,
+              setRotation: (_) {},
+            );
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+            decoration: BoxDecoration(
+              color: _m4ParallelWireConnected
+                  ? const Color(0xFF10B981).withValues(alpha: 0.2)
+                  : const Color(0xFF1E293B),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: _m4ParallelWireConnected ? const Color(0xFF10B981) : Colors.amberAccent,
+                width: 2,
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  _m4ParallelWireConnected ? Icons.check_circle_rounded : Icons.alt_route_rounded,
+                  color: _m4ParallelWireConnected ? const Color(0xFF10B981) : Colors.amberAccent,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  _m4ParallelWireConnected
+                      ? 'Circuito em Paralelo Ativo (Brilho Máximo)'
+                      : 'Clique para Conectar Fiação em Paralelo',
+                  style: GoogleFonts.rajdhani(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ];
   }
 
   /// Overlay da Missão 5: Teste de Manutenção do Bairro
-  Widget _buildM5Overlay() {
-    return Positioned.fill(
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  List<Widget> _buildM5OverlayElements(double l1X, double l2X, double sX, double lY, double sY) {
+    return [
+      // Lâmpada A
+      Positioned(
+        left: l1X - 40,
+        top: lY - 30,
+        child: _buildHouseSymbol(
+          name: 'Lâmpada A (Simulada)',
+          isLit: !_m5House1Broken,
+          brightness: !_m5House1Broken ? 1.0 : 0.0,
+          isBroken: _m5House1Broken,
+        ),
+      ),
+      Positioned(
+        left: l1X - 75,
+        top: lY + 34,
+        width: 150,
+        child: Center(child: _buildLabelBadge('Lâmpada A (Simulada)', isBroken: _m5House1Broken)),
+      ),
+
+      // Lâmpada B
+      Positioned(
+        left: l2X - 40,
+        top: lY - 30,
+        child: _buildHouseSymbol(
+          name: 'Lâmpada B (Testada)',
+          isLit: true,
+          brightness: 1.0,
+        ),
+      ),
+      Positioned(
+        left: l2X - 75,
+        top: lY + 34,
+        width: 150,
+        child: Center(child: _buildLabelBadge('Lâmpada B (Testada)')),
+      ),
+
+      // Botões da Missão 5
+      Positioned(
+        left: sX - 230,
+        top: sY - 25,
+        width: 460,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildHouseDisplay(
-                  name: 'Lâmpada A (Simulada)',
-                  isLit: !_m5House1Broken,
-                  brightness: !_m5House1Broken ? 1.0 : 0.0,
-                  isBroken: _m5House1Broken,
-                ),
-                _buildHouseDisplay(
-                  name: 'Lâmpada B (Testada)',
-                  isLit: true,
-                  brightness: 1.0,
-                ),
-              ],
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _m5House1Broken ? Colors.redAccent.withValues(alpha: 0.8) : const Color(0xFF1E293B),
+                side: const BorderSide(color: Colors.redAccent),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              ),
+              icon: const Icon(Icons.flash_off_rounded, color: Colors.white, size: 16),
+              label: Text(
+                _m5House1Broken ? 'Lâmpada A Desconectada' : 'Simular Defeito Lâmpada A',
+                style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              onPressed: () {
+                _insertComponent(
+                  name: 'Simular Defeito Lâmpada A',
+                  getInserted: () => _m5House1Broken,
+                  setInserted: (v) => _m5House1Broken = v,
+                  getRotation: () => 0,
+                  setRotation: (_) {},
+                );
+              },
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _m5House1Broken ? Colors.redAccent.withValues(alpha: 0.8) : const Color(0xFF1E293B),
-                    side: const BorderSide(color: Colors.redAccent),
-                  ),
-                  icon: const Icon(Icons.flash_off_rounded, color: Colors.white),
-                  label: Text(
-                    _m5House1Broken ? 'Lâmpada A Desconectada' : 'Simular Defeito na Lâmpada A',
-                    style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
-                  onPressed: () {
-                    _insertComponent(
-                      name: 'Simular Defeito Lâmpada A',
-                      getInserted: () => _m5House1Broken,
-                      setInserted: (v) => _m5House1Broken = v,
-                      getRotation: () => 0,
-                      setRotation: (_) {},
-                    );
-                  },
-                ),
-                const SizedBox(width: 12),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _m5MaintenanceConfirmed ? const Color(0xFF10B981) : const Color(0xFF1E293B),
-                    side: const BorderSide(color: Color(0xFF10B981)),
-                  ),
-                  icon: Icon(_m5MaintenanceConfirmed ? Icons.verified_rounded : Icons.check_circle_outline_rounded),
-                  label: Text(
-                    _m5MaintenanceConfirmed ? 'Lâmpada B Continua Acesa (Confirmado)' : 'Confirmar Manutenção',
-                    style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
-                  onPressed: () {
-                    _insertComponent(
-                      name: 'Confirmar Manutenção',
-                      getInserted: () => _m5MaintenanceConfirmed,
-                      setInserted: (v) => _m5MaintenanceConfirmed = v,
-                      getRotation: () => 0,
-                      setRotation: (_) {},
-                    );
-                  },
-                ),
-              ],
+            const SizedBox(width: 8),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _m5MaintenanceConfirmed ? const Color(0xFF10B981) : const Color(0xFF1E293B),
+                side: const BorderSide(color: Color(0xFF10B981)),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              ),
+              icon: Icon(_m5MaintenanceConfirmed ? Icons.verified_rounded : Icons.check_circle_outline_rounded, size: 16),
+              label: Text(
+                _m5MaintenanceConfirmed ? 'Lâmpada B Acesa' : 'Confirmar Manutenção',
+                style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              onPressed: () {
+                _insertComponent(
+                  name: 'Confirmar Manutenção',
+                  getInserted: () => _m5MaintenanceConfirmed,
+                  setInserted: (v) => _m5MaintenanceConfirmed = v,
+                  getRotation: () => 0,
+                  setRotation: (_) {},
+                );
+              },
             ),
           ],
         ),
       ),
-    );
+    ];
   }
 
-
-
-  /// Conteúdo dinâmico do painel lateral para perguntas/ferramentas
+  /// Componente dinâmico do painel lateral para perguntas/ferramentas
   Widget _buildSidePanelMissionContent() {
     Widget content;
     switch (_currentMissionIndex) {
@@ -1216,7 +1357,7 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
         ),
         const SizedBox(height: 6),
         Text(
-          'Arraste o símbolo do Condutor em Série para o soquete esquemático na bancada para conectar os postes em circuito em série.',
+          'Arraste ou toque no símbolo do Condutor em Série para conectar os dois postes da maquete em circuito em série.',
           style: GoogleFonts.rajdhani(color: const Color(0xFF475569), fontSize: 13, height: 1.3),
         ),
       ],
@@ -1347,135 +1488,128 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
     );
   }
 
-  /// Componente didático visual de poste de iluminação pública
-  Widget _buildStreetLamp({
-    required String label,
+  /// Componente didático de lâmpada/poste centralizado
+  Widget _buildLampSymbol({
     required bool isLit,
     required double brightnessRatio,
   }) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(
-          width: 80,
-          height: 75,
-          child: Center(
-            child: _usePhysicalStyle
-                ? CustomPaint(
-                    size: const Size(65, 75),
-                    painter: StreetLampPainter(
-                      isActive: isLit,
-                      brightnessRatio: brightnessRatio,
-                      isDarkMode: false,
-                    ),
-                  )
-                : CustomPaint(
-                    size: const Size(55, 55),
-                    painter: CircuitSymbolPainter(
-                      type: ComponentType.bulb,
-                      isActive: isLit,
-                      color: const Color(0xFF0F172A),
-                      strokeWidth: 2.5,
-                    ),
-                  ),
-          ),
-        ),
-        const SizedBox(height: 6),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.85),
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: const Color(0xFFCBD5E1)),
-          ),
-          child: Text(
-            label,
-            style: GoogleFonts.rajdhani(
-              color: const Color(0xFF0F172A),
-              fontWeight: FontWeight.bold,
-              fontSize: 13,
-            ),
-          ),
-        ),
-      ],
+    return SizedBox(
+      width: 80,
+      height: 60,
+      child: Center(
+        child: _usePhysicalStyle
+            ? CustomPaint(
+                size: const Size(60, 60),
+                painter: StreetLampPainter(
+                  isActive: isLit,
+                  brightnessRatio: brightnessRatio,
+                  isDarkMode: false,
+                ),
+              )
+            : CustomPaint(
+                size: const Size(55, 55),
+                painter: CircuitSymbolPainter(
+                  type: ComponentType.bulb,
+                  isActive: isLit,
+                  color: const Color(0xFF0F172A),
+                  strokeWidth: 2.5,
+                ),
+              ),
+      ),
     );
   }
 
-  /// Componente didático visual de casa da maquete
-  Widget _buildHouseDisplay({
+  /// Componente didático visual de casa da maquete centralizado
+  Widget _buildHouseSymbol({
     required String name,
     required bool isLit,
     required double brightness,
     bool isBroken = false,
   }) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(
-          width: 80,
-          height: 75,
-          child: Center(
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: isLit ? const Color(0xFFFEF3C7) : Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: isBroken
-                          ? const Color(0xFFDC2626)
-                          : isLit
-                              ? const Color(0xFFD97706)
-                              : const Color(0xFFCBD5E1),
-                      width: 2,
-                    ),
-                    boxShadow: isLit
-                        ? [
-                            BoxShadow(
-                              color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
-                              blurRadius: 12,
-                            )
-                          ]
-                        : [],
-                  ),
-                  child: Icon(
-                    isBroken
-                        ? Icons.gavel_rounded
-                        : isLit
-                            ? Icons.home_rounded
-                            : Icons.home_outlined,
-                    size: 40,
+    return SizedBox(
+      width: 80,
+      height: 60,
+      child: Center(
+        child: _usePhysicalStyle
+            ? Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: isLit ? const Color(0xFFFEF3C7) : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
                     color: isBroken
                         ? const Color(0xFFDC2626)
                         : isLit
                             ? const Color(0xFFD97706)
-                            : const Color(0xFF64748B),
+                            : const Color(0xFFCBD5E1),
+                    width: 2,
                   ),
+                  boxShadow: isLit
+                      ? [
+                          BoxShadow(
+                            color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
+                            blurRadius: 10,
+                          )
+                        ]
+                      : [],
                 ),
-              ],
-            ),
-          ),
+                child: Icon(
+                  isBroken
+                      ? Icons.gavel_rounded
+                      : isLit
+                          ? Icons.home_rounded
+                          : Icons.home_outlined,
+                  size: 32,
+                  color: isBroken
+                      ? const Color(0xFFDC2626)
+                      : isLit
+                          ? const Color(0xFFD97706)
+                          : const Color(0xFF64748B),
+                ),
+              )
+            : CustomPaint(
+                size: const Size(55, 55),
+                painter: CircuitSymbolPainter(
+                  type: ComponentType.bulb,
+                  isActive: isLit && !isBroken,
+                  isBurned: isBroken,
+                  color: const Color(0xFF0F172A),
+                  strokeWidth: 2.5,
+                ),
+              ),
+      ),
+    );
+  }
+
+  /// Badge de Rótulo posicionado abaixo do componente
+  Widget _buildLabelBadge(String text, {bool isBroken = false}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: isBroken ? const Color(0xFFDC2626) : const Color(0xFFCBD5E1),
         ),
-        const SizedBox(height: 6),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.85),
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: const Color(0xFFCBD5E1)),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 3,
+            offset: Offset(0, 1),
           ),
-          child: Text(
-            name,
-            style: GoogleFonts.rajdhani(
-              color: isBroken ? const Color(0xFFDC2626) : const Color(0xFF0F172A),
-              fontWeight: FontWeight.bold,
-              fontSize: 13,
-            ),
-          ),
+        ],
+      ),
+      child: Text(
+        text,
+        style: GoogleFonts.rajdhani(
+          color: isBroken ? const Color(0xFFDC2626) : const Color(0xFF0F172A),
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
         ),
-      ],
+        textAlign: TextAlign.center,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
     );
   }
 }
@@ -1491,6 +1625,11 @@ class _RuasMaquetePainter extends CustomPainter {
   final bool m4Parallel;
   final bool m5House1Broken;
   final bool usePhysicalStyle;
+  final double lampY;
+  final double socketY;
+  final double lamp1X;
+  final double lamp2X;
+  final double socketX;
 
   _RuasMaquetePainter({
     required this.missionIndex,
@@ -1502,6 +1641,11 @@ class _RuasMaquetePainter extends CustomPainter {
     required this.m4Parallel,
     required this.m5House1Broken,
     required this.usePhysicalStyle,
+    required this.lampY,
+    required this.socketY,
+    required this.lamp1X,
+    required this.lamp2X,
+    required this.socketX,
   });
 
   @override
@@ -1528,14 +1672,7 @@ class _RuasMaquetePainter extends CustomPainter {
       ..color = activeWirePaint.color
       ..style = PaintingStyle.fill;
 
-    // Coordenadas fiéis dos componentes na bancada
-    final lampY = size.height * 0.28;
-    final socketY = size.height * 0.82;
-    final lamp1X = size.width * 0.28;
-    final lamp2X = size.width * 0.72;
-    final socketX = size.width * 0.50;
-
-    // Terminais dos postes (esquerda / direita)
+    // Terminais dos componentes (esquerda / direita)
     const termOffset = 32.0;
     const socketTermOffset = 30.0;
 
@@ -1608,23 +1745,24 @@ class _RuasMaquetePainter extends CustomPainter {
     } else if (missionIndex == 2) {
       // M3: Bifurcação de Fios (Nó de Junção)
       final isBothActive = m3Junction && m3Return;
+      final nodeY = lampY + 45.0;
 
       // Alimentação Principal (+)
       final pathFeed = Path()
         ..moveTo(socketX - socketTermOffset, socketY)
-        ..lineTo(socketX - socketTermOffset, lampY + 40)
-        ..lineTo(socketX, lampY + 40);
+        ..lineTo(socketX - socketTermOffset, nodeY)
+        ..lineTo(socketX, nodeY);
 
       // Ramo Lâmpada A
       final pathBranchA = Path()
-        ..moveTo(socketX, lampY + 40)
-        ..lineTo(lamp1X + termOffset, lampY + 40)
+        ..moveTo(socketX, nodeY)
+        ..lineTo(lamp1X + termOffset, nodeY)
         ..lineTo(lamp1X + termOffset, lampY);
 
       // Ramo Lâmpada B
       final pathBranchB = Path()
-        ..moveTo(socketX, lampY + 40)
-        ..lineTo(lamp2X - termOffset, lampY + 40)
+        ..moveTo(socketX, nodeY)
+        ..lineTo(lamp2X - termOffset, nodeY)
         ..lineTo(lamp2X - termOffset, lampY);
 
       // Retorno do Nó
@@ -1644,7 +1782,7 @@ class _RuasMaquetePainter extends CustomPainter {
       canvas.drawPath(pathReturn, m3Return ? activeWirePaint : wirePaint);
       canvas.drawPath(pathReturnB, m3Return ? activeWirePaint : wirePaint);
 
-      drawTerminalDot(Offset(socketX, lampY + 40));
+      drawTerminalDot(Offset(socketX, nodeY));
       drawTerminalDot(Offset(socketX - socketTermOffset, socketY));
       drawTerminalDot(Offset(socketX + socketTermOffset, socketY));
 
@@ -1659,35 +1797,36 @@ class _RuasMaquetePainter extends CustomPainter {
       // M4 e M5: Circuito em Paralelo
       final isActive = m4Parallel || missionIndex == 4;
       final currentPaint = isActive ? activeWirePaint : wirePaint;
+      const busOffset = 48.0;
 
       // Barramento Positivo Left
       final pathBusLeft = Path()
         ..moveTo(socketX - socketTermOffset, socketY)
-        ..lineTo(lamp1X - termOffset - 15, socketY)
-        ..lineTo(lamp1X - termOffset - 15, lampY)
-        ..lineTo(lamp2X - termOffset - 15, lampY);
+        ..lineTo(lamp1X - busOffset, socketY)
+        ..lineTo(lamp1X - busOffset, lampY)
+        ..lineTo(lamp2X - busOffset, lampY);
 
       final branch1Pos = Path()
-        ..moveTo(lamp1X - termOffset - 15, lampY)
+        ..moveTo(lamp1X - busOffset, lampY)
         ..lineTo(lamp1X - termOffset, lampY);
 
       final branch2Pos = Path()
-        ..moveTo(lamp2X - termOffset - 15, lampY)
+        ..moveTo(lamp2X - busOffset, lampY)
         ..lineTo(lamp2X - termOffset, lampY);
 
       // Barramento Negativo Right
       final pathBusRight = Path()
         ..moveTo(socketX + socketTermOffset, socketY)
-        ..lineTo(lamp2X + termOffset + 15, socketY)
-        ..lineTo(lamp2X + termOffset + 15, lampY)
-        ..lineTo(lamp1X + termOffset + 15, lampY);
+        ..lineTo(lamp2X + busOffset, socketY)
+        ..lineTo(lamp2X + busOffset, lampY)
+        ..lineTo(lamp1X + busOffset, lampY);
 
       final branch1Neg = Path()
-        ..moveTo(lamp1X + termOffset + 15, lampY)
+        ..moveTo(lamp1X + busOffset, lampY)
         ..lineTo(lamp1X + termOffset, lampY);
 
       final branch2Neg = Path()
-        ..moveTo(lamp2X + termOffset + 15, lampY)
+        ..moveTo(lamp2X + busOffset, lampY)
         ..lineTo(lamp2X + termOffset, lampY);
 
       canvas.drawPath(pathBusLeft, currentPaint);
@@ -1721,7 +1860,7 @@ class _RuasMaquetePainter extends CustomPainter {
     final metrics = path.computeMetrics().toList();
     for (final metric in metrics) {
       final length = metric.length;
-      final count = 6;
+      const count = 6;
       for (int i = 0; i < count; i++) {
         final distance = (length * ((animValue + i / count) % 1.0));
         final tangent = metric.getTangentForOffset(distance);
@@ -1741,6 +1880,12 @@ class _RuasMaquetePainter extends CustomPainter {
         oldDelegate.m3Junction != m3Junction ||
         oldDelegate.m3Return != m3Return ||
         oldDelegate.m4Parallel != m4Parallel ||
-        oldDelegate.m5House1Broken != m5House1Broken;
+        oldDelegate.m5House1Broken != m5House1Broken ||
+        oldDelegate.usePhysicalStyle != usePhysicalStyle ||
+        oldDelegate.lampY != lampY ||
+        oldDelegate.socketY != socketY ||
+        oldDelegate.lamp1X != lamp1X ||
+        oldDelegate.lamp2X != lamp2X ||
+        oldDelegate.socketX != socketX;
   }
 }

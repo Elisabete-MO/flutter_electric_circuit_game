@@ -17,6 +17,8 @@ class SchematicBlueprintSocket<T extends Object> extends StatelessWidget {
   final Color accentColor;
   final bool showLabel;
   final double rotation;
+  final double? width;
+  final double? height;
 
   const SchematicBlueprintSocket({
     super.key,
@@ -31,6 +33,8 @@ class SchematicBlueprintSocket<T extends Object> extends StatelessWidget {
     this.showLabel = true,
     this.rotation = 0.0,
     this.onRotate,
+    this.width,
+    this.height,
   });
 
   @override
@@ -53,8 +57,8 @@ class SchematicBlueprintSocket<T extends Object> extends StatelessWidget {
             children: [
               AnimatedContainer(
                 duration: const Duration(milliseconds: 250),
-                width: 95,
-                height: 75,
+                width: width ?? 95,
+                height: height ?? 75,
                 decoration: BoxDecoration(
                   color: isFilled
                       ? const Color(0xFFF0FDF4)
