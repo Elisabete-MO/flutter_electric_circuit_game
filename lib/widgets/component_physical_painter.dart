@@ -140,10 +140,8 @@ class ComponentPhysicalPainter extends CustomPainter {
   void _drawPhysicalBattery(Canvas canvas, Size size, double cx, double cy) {
     const batWidth = 60.0;
     const batHeight = 52.0;
-    final batRect = Rect.fromCenter(center: Offset(cx, cy), width: batWidth, height: batHeight);
+    final batRect = Rect.fromCenter(center: Offset(cx, cy + 4), width: batWidth, height: batHeight);
     final batRRect = RRect.fromRectAndRadius(batRect, const Radius.circular(8.0));
-
-    _drawCleanLeads(canvas, size, cx, cy, batRect.left - 4, batRect.right + 4);
 
     // Sombra projetada sob o corpo 3D
     canvas.drawRRect(
@@ -211,44 +209,28 @@ class ComponentPhysicalPainter extends CustomPainter {
     )..layout();
     textPainter.paint(canvas, Offset(cx - textPainter.width / 2, copperRect.top + 4.5));
 
-    // 5. Terminais Snap metálicos 3D no topo (+ e -)
-    final snapLeft = Offset(cx - 15.0, batRect.top - 4.0);
-    final snapRight = Offset(cx + 15.0, batRect.top - 5.0);
-
-    // Polo Negativo (-) - Soquete Sextavado prateado
-    canvas.drawCircle(snapLeft, 5.5, Paint()..color = const Color(0xFF78909C));
-    canvas.drawCircle(snapLeft, 3.2, Paint()..color = const Color(0xFF1E293B));
-
-    // Polo Positivo (+) - Conector Coroa de Latão Dourado 3D
-    canvas.drawCircle(snapRight, 6.5, Paint()..color = const Color(0xFFFFD54F));
-    canvas.drawCircle(snapRight, 6.5, Paint()..color = const Color(0xFFFFB300)..style = PaintingStyle.stroke..strokeWidth = 1.2);
-    canvas.drawCircle(snapRight, 3.6, Paint()..color = const Color(0xFFE65100));
-
-    // 6. Fios de saída isolados conectando o topo das snap ao circuito
-    final wireNegPath = Path()
-      ..moveTo(snapLeft.dx, snapLeft.dy)
-      ..cubicTo(snapLeft.dx - 10, snapLeft.dy - 4, batRect.left - 2, cy - 8, batRect.left - 4, cy);
-    final wirePosPath = Path()
-      ..moveTo(snapRight.dx, snapRight.dy)
-      ..cubicTo(snapRight.dx + 10, snapRight.dy - 4, batRect.right + 2, cy - 8, batRect.right + 4, cy);
-
-    canvas.drawPath(
-      wireNegPath,
-      Paint()
-        ..color = isDarkMode ? const Color(0xFF64748B) : const Color(0xFF1E293B)
-        ..strokeWidth = 3.5
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round,
+    // 5. Capa Plástica Preta do Conector Snap 9V no topo
+    final clipRect = Rect.fromLTWH(batRect.left - 2, batRect.top - 10, batWidth + 4, 10);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(clipRect, const Radius.circular(3)),
+      Paint()..color = const Color(0xFF0F172A),
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(clipRect, const Radius.circular(3)),
+      Paint()..color = const Color(0xFF475569)..style = PaintingStyle.stroke..strokeWidth = 1.0,
     );
 
-    canvas.drawPath(
-      wirePosPath,
-      Paint()
-        ..color = const Color(0xFFD32F2F)
-        ..strokeWidth = 3.5
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round,
-    );
+    // Pinos de saída do Snap: (-) Preto e (+) Vermelho
+    final pinNegPos = Offset(cx - 14, batRect.top - 18);
+    final pinPosPos = Offset(cx + 14, batRect.top - 18);
+
+    // Terminal (-) Preto
+    canvas.drawLine(Offset(cx - 14, batRect.top - 8), pinNegPos, Paint()..color = const Color(0xFF1E293B)..strokeWidth = 3.8..strokeCap = StrokeCap.round);
+    canvas.drawCircle(pinNegPos, 3.2, Paint()..color = const Color(0xFF475569));
+
+    // Terminal (+) Vermelho
+    canvas.drawLine(Offset(cx + 14, batRect.top - 8), pinPosPos, Paint()..color = const Color(0xFFDC2626)..strokeWidth = 3.8..strokeCap = StrokeCap.round);
+    canvas.drawCircle(pinPosPos, 3.2, Paint()..color = const Color(0xFFEF4444));
 
     // Marcação - e +
     TextPainter(text: const TextSpan(text: '-', style: TextStyle(color: Color(0xFF90A4AE), fontSize: 11, fontWeight: FontWeight.bold)), textDirection: TextDirection.ltr)
@@ -406,109 +388,120 @@ class ComponentPhysicalPainter extends CustomPainter {
   }
 
   /// --------------------------------------------------------------------------
-  /// CHAVE FACA DIDÁTICA DE LABORATÓRIO (Knife Switch 3D - Expandida)
+  /// INTERRUPTOR / PUSH-BUTTON TÁTIL 3D (4 Pinos com Botão Central Vermelho)
   /// --------------------------------------------------------------------------
   void _drawPhysicalSwitch(Canvas canvas, Size size, double cx, double cy) {
-    final pPivot = Offset(cx - 30, cy);
-    final pContact = Offset(cx + 30, cy);
-    final pLeverEnd = isActive
-        ? pContact
-        : Offset(cx + 4, cy - 34);
+    const boxWidth = 52.0;
+    const boxHeight = 44.0;
+    final boxRect = Rect.fromCenter(center: Offset(cx, cy), width: boxWidth, height: boxHeight);
+    final boxRRect = RRect.fromRectAndRadius(boxRect, const Radius.circular(10.0));
 
-    _drawCleanLeads(canvas, size, cx, cy, pPivot.dx, pContact.dx);
+    _drawCleanLeads(canvas, size, cx, cy, cx - 26, cx + 26);
 
-    // Placa isolante de baquelite preta com bevel
-    final basePlate = Rect.fromCenter(center: Offset(cx, cy + 3), width: 74, height: 16);
+    // 1. Sombra projetada do componente
     canvas.drawRRect(
-      RRect.fromRectAndRadius(basePlate.translate(2, 3), const Radius.circular(4)),
-      Paint()..color = Colors.black.withValues(alpha: 0.4)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
-    );
-    final baseShader = LinearGradient(
-      colors: isDarkMode ? const [Color(0xFF334155), Color(0xFF1E293B)] : const [Color(0xFF475569), Color(0xFF1E293B)],
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-    ).createShader(basePlate);
-    canvas.drawRRect(RRect.fromRectAndRadius(basePlate, const Radius.circular(4)), Paint()..shader = baseShader);
-
-    // Parafusos e Bornes de latão 3D nos polos
-    _drawBrassTerminalPost(canvas, pPivot);
-    _drawBrassTerminalPost(canvas, pContact);
-
-    // Garra de encaixe em U no terminal de contato
-    final jawPath = Path()
-      ..moveTo(pContact.dx - 4, pContact.dy - 8)
-      ..lineTo(pContact.dx - 4, pContact.dy + 4)
-      ..lineTo(pContact.dx + 4, pContact.dy + 4)
-      ..lineTo(pContact.dx + 4, pContact.dy - 8);
-    canvas.drawPath(
-      jawPath,
-      Paint()
-        ..color = const Color(0xFFFFD54F)
-        ..strokeWidth = 2.4
-        ..style = PaintingStyle.stroke,
+      RRect.fromRectAndRadius(boxRect.translate(2.5, 4.0), const Radius.circular(10.0)),
+      Paint()..color = Colors.black.withValues(alpha: 0.4)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
     );
 
-    // Faísca / Glow no contato quando fechado
-    if (isActive) {
-      canvas.drawCircle(
-        pContact,
-        9.0,
-        Paint()
-          ..color = const Color(0xFF00FF9D).withValues(alpha: 0.6)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
-      );
-      canvas.drawCircle(pContact, 3.5, Paint()..color = Colors.white);
+    // 2. 4 Pinos metálicos prateados nos cantos (2 à esquerda, 2 à direita)
+    final pinPaint = Paint()
+      ..color = const Color(0xFFCBD5E1)
+      ..style = PaintingStyle.fill;
+    final pinBorder = Paint()
+      ..color = const Color(0xFF64748B)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+
+    // Pinos Esquerdos
+    final pLeftTop = Rect.fromLTWH(boxRect.left - 9, boxRect.top + 6, 10, 8);
+    final pLeftBot = Rect.fromLTWH(boxRect.left - 9, boxRect.bottom - 14, 10, 8);
+    // Pinos Direitos
+    final pRightTop = Rect.fromLTWH(boxRect.right - 1, boxRect.top + 6, 10, 8);
+    final pRightBot = Rect.fromLTWH(boxRect.right - 1, boxRect.bottom - 14, 10, 8);
+
+    for (final pin in [pLeftTop, pLeftBot, pRightTop, pRightBot]) {
+      final pinRRect = RRect.fromRectAndRadius(pin, const Radius.circular(2));
+      canvas.drawRRect(pinRRect, pinPaint);
+      canvas.drawRRect(pinRRect, pinBorder);
+      // Furo central do pino
+      canvas.drawCircle(pin.center, 1.8, Paint()..color = const Color(0xFF475569));
     }
 
-    // Sombra projetada sob a lâmina metálica
-    canvas.drawLine(
-      pPivot.translate(2.5, 4.5),
-      pLeverEnd.translate(2.5, 4.5),
+    // 3. Corpo escuro isolante de plástico (Navy/Dark Slate Matte)
+    final bodyShader = LinearGradient(
+      colors: isDarkMode
+          ? const [Color(0xFF334155), Color(0xFF1E293B), Color(0xFF0F172A)]
+          : const [Color(0xFF475569), Color(0xFF1E293B), Color(0xFF0F172A)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    ).createShader(boxRect);
+    canvas.drawRRect(boxRRect, Paint()..shader = bodyShader);
+
+    // Borda chanfrada do corpo
+    canvas.drawRRect(
+      boxRRect,
       Paint()
-        ..color = Colors.black.withValues(alpha: 0.45)
-        ..strokeWidth = 6.5
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3)
-        ..strokeCap = StrokeCap.round,
+        ..color = Colors.white.withValues(alpha: 0.2)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2,
     );
 
-    // Lâmina articulada de Cobre/Latão polido
-    final leverPaint = Paint()
-      ..shader = LinearGradient(
-        colors: const [Color(0xFFFFD54F), Color(0xFFFFB300), Color(0xFFE65100), Color(0xFFBF360C)],
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-      ).createShader(Rect.fromPoints(pPivot, pLeverEnd))
-      ..strokeWidth = 6.0
-      ..strokeCap = StrokeCap.round;
-
-    canvas.drawLine(pPivot, pLeverEnd, leverPaint);
-
-    // Brilho especular na lâmina metálica
-    canvas.drawLine(
-      pPivot.translate(0, -1.2),
-      pLeverEnd.translate(0, -1.2),
-      Paint()
-        ..color = Colors.white.withValues(alpha: 0.8)
-        ..strokeWidth = 1.4
-        ..strokeCap = StrokeCap.round,
-    );
-
-    // Manopla isolante cilíndrica na ponta
-    final handleColor = isActive ? const Color(0xFF00E676) : const Color(0xFFD32F2F);
-    canvas.drawCircle(pLeverEnd, 8.5, Paint()..color = handleColor);
+    // 4. Anel central de rebaixo para o atuador
+    final recessCenter = Offset(cx, cy);
+    const recessRadius = 15.0;
     canvas.drawCircle(
-      Offset(pLeverEnd.dx - 2.5, pLeverEnd.dy - 2.5),
-      2.8,
-      Paint()..color = Colors.white.withValues(alpha: 0.85),
+      recessCenter,
+      recessRadius,
+      Paint()..color = const Color(0xFF090D16),
     );
-  }
+    canvas.drawCircle(
+      recessCenter,
+      recessRadius,
+      Paint()..color = const Color(0xFF475569)..style = PaintingStyle.stroke..strokeWidth = 1.0,
+    );
 
-  /// Desenha um borne de parafuso de latão 3D
-  void _drawBrassTerminalPost(Canvas canvas, Offset center) {
-    canvas.drawCircle(center, 5.8, Paint()..color = const Color(0xFFFFD54F));
-    canvas.drawCircle(center, 5.8, Paint()..color = const Color(0xFFB45309)..style = PaintingStyle.stroke..strokeWidth = 1.0);
-    // Ranhura do parafuso de fenda
-    canvas.drawLine(Offset(center.dx - 3.0, center.dy), Offset(center.dx + 3.0, center.dy), Paint()..color = const Color(0xFF78350F)..strokeWidth = 1.4);
+    // 5. Glow ao redor do botão se ativo/pressionado
+    if (isActive) {
+      canvas.drawCircle(
+        recessCenter,
+        recessRadius + 6,
+        Paint()
+          ..color = const Color(0xFFEF4444).withValues(alpha: 0.55)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+      );
+    }
+
+    // 6. Botão Vermelho Central de Atuação
+    final capRadius = isActive ? 11.5 : 13.0;
+    final capCenter = isActive ? Offset(cx, cy + 1.0) : Offset(cx, cy);
+
+    final capShader = RadialGradient(
+      colors: isActive
+          ? const [Color(0xFFF87171), Color(0xFFEF4444), Color(0xFF991B1B)]
+          : const [Color(0xFFEF4444), Color(0xFFDC2626), Color(0xFF7F1D1D)],
+      center: const Alignment(-0.35, -0.4),
+      radius: 0.85,
+    ).createShader(Rect.fromCircle(center: capCenter, radius: capRadius));
+
+    canvas.drawCircle(capCenter, capRadius, Paint()..shader = capShader);
+
+    // Borda do botão
+    canvas.drawCircle(
+      capCenter,
+      capRadius,
+      Paint()
+        ..color = const Color(0xFF7F1D1D)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2,
+    );
+
+    // Brilho especular no topo do botão vermelho
+    canvas.drawCircle(
+      Offset(capCenter.dx - capRadius * 0.35, capCenter.dy - capRadius * 0.35),
+      capRadius * 0.28,
+      Paint()..color = Colors.white.withValues(alpha: 0.65),
+    );
   }
 
   /// --------------------------------------------------------------------------
@@ -520,7 +513,17 @@ class ComponentPhysicalPainter extends CustomPainter {
     final bulbCenter = Offset(cx, cy - 20);
     const bulbRadius = 22.0;
 
-    _drawCleanLeads(canvas, size, cx, cy, socketRect.left, socketRect.right);
+    // 2 Terminais metálicos inferiores no soquete
+    final pinLeftPos = Offset(cx - 7, socketRect.bottom + 7);
+    final pinRightPos = Offset(cx + 7, socketRect.bottom + 7);
+
+    // Terminal de pino esquerdo (Metal Prata 3D)
+    canvas.drawLine(Offset(cx - 7, socketRect.bottom), pinLeftPos, Paint()..color = const Color(0xFF475569)..strokeWidth = 3.5..strokeCap = StrokeCap.round);
+    canvas.drawCircle(pinLeftPos, 2.5, Paint()..color = const Color(0xFF94A3B8));
+
+    // Terminal de pino direito (Metal Prata 3D)
+    canvas.drawLine(Offset(cx + 7, socketRect.bottom), pinRightPos, Paint()..color = const Color(0xFF475569)..strokeWidth = 3.5..strokeCap = StrokeCap.round);
+    canvas.drawCircle(pinRightPos, 2.5, Paint()..color = const Color(0xFF94A3B8));
 
     // 1. Soquete roscado de latão/alumínio E10
     canvas.drawRRect(
@@ -529,21 +532,21 @@ class ComponentPhysicalPainter extends CustomPainter {
     );
 
     final socketShader = const LinearGradient(
-      colors: [Color(0xFFFFD54F), Color(0xFFFFB300), Color(0xFFB45309), Color(0xFF78350F)],
+      colors: [Color(0xFF475569), Color(0xFF1E293B), Color(0xFF0F172A)],
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
     ).createShader(socketRect);
     canvas.drawRRect(RRect.fromRectAndRadius(socketRect, const Radius.circular(4)), Paint()..shader = socketShader);
 
-    // Roscas espirais de contato metálico
+    // Roscas espirais de contato metálico (Prateado / Aço)
     final threadPaint = Paint()
-      ..color = const Color(0xFF78350F)
+      ..color = const Color(0xFF94A3B8)
       ..strokeWidth = 1.6;
     canvas.drawLine(Offset(socketRect.left + 3, socketRect.top + 6), Offset(socketRect.right - 3, socketRect.top + 6), threadPaint);
     canvas.drawLine(Offset(socketRect.left + 3, socketRect.top + 13), Offset(socketRect.right - 3, socketRect.top + 13), threadPaint);
 
     // Ponto de solda metálico na base inferior do soquete
-    canvas.drawCircle(Offset(cx, socketRect.bottom + 1.5), 3.5, Paint()..color = const Color(0xFF90A4AE));
+    canvas.drawCircle(Offset(cx, socketRect.bottom + 1.5), 3.5, Paint()..color = const Color(0xFFCBD5E1));
 
     // 2. Glow estendido fotorrealista quando aceso
     if (isActive) {

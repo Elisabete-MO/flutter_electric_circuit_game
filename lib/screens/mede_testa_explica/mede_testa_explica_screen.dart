@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../models/stand_mission.dart';
+import '../../models/first_step_component.dart';
 import '../../state/progress_controller.dart';
 import '../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../widgets/component_vector_painters.dart';
+import '../../widgets/component_physical_painter.dart';
 import '../../widgets/prof_volts_speech.dart';
 import '../../widgets/tech_grid_background.dart';
 import '../../widgets/workbench_components.dart';
@@ -23,6 +25,7 @@ class MedeTestaExplicaScreen extends ConsumerStatefulWidget {
 class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen> {
   late final List<StandMission> _missions;
   int _currentMissionIndex = 0;
+  bool _usePhysicalStyle = true;
 
   StandMission get _currentMission => _missions[_currentMissionIndex];
 
@@ -388,6 +391,112 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
     );
   }
 
+  Widget _buildVisualModeSelector() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE2E8F0),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Opção 1: Esquemático
+          GestureDetector(
+            onTap: () => setState(() => _usePhysicalStyle = false),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+              decoration: BoxDecoration(
+                color: !_usePhysicalStyle
+                    ? const Color(0xFF0284C7)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: !_usePhysicalStyle
+                    ? [
+                        BoxShadow(
+                          color: const Color(0xFF0284C7).withValues(alpha: 0.3),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.architecture_rounded,
+                    size: 16,
+                    color: !_usePhysicalStyle
+                        ? Colors.white
+                        : const Color(0xFF64748B),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Esquemático',
+                    style: GoogleFonts.rajdhani(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: !_usePhysicalStyle
+                          ? Colors.white
+                          : const Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+          // Opção 2: Físico 3D
+          GestureDetector(
+            onTap: () => setState(() => _usePhysicalStyle = true),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+              decoration: BoxDecoration(
+                color: _usePhysicalStyle
+                    ? const Color(0xFF0284C7)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: _usePhysicalStyle
+                    ? [
+                        BoxShadow(
+                          color: const Color(0xFF0284C7).withValues(alpha: 0.3),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.electrical_services_rounded,
+                    size: 16,
+                    color: _usePhysicalStyle
+                        ? Colors.white
+                        : const Color(0xFF64748B),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Físico 3D',
+                    style: GoogleFonts.rajdhani(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: _usePhysicalStyle
+                          ? Colors.white
+                          : const Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -431,6 +540,9 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                   ? () => _onSelectMission(_currentMissionIndex + 1)
                   : null,
             ),
+            const SizedBox(height: 6),
+            _buildVisualModeSelector(),
+            const SizedBox(height: 6),
 
             // Balão de Mediação Didática do Prof. Volts
             Padding(
@@ -666,7 +778,16 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
             ),
             const SizedBox(width: 30),
             // Bateria 9V
-            const BatteryVectorWidget(size: 80),
+            if (_usePhysicalStyle)
+              CustomPaint(
+                size: const Size(80, 80),
+                painter: ComponentPhysicalPainter(
+                  type: ComponentType.battery,
+                  isDarkMode: false,
+                ),
+              )
+            else
+              const BatteryVectorWidget(size: 80),
             const SizedBox(width: 30),
             // Ponta Preta (-)
             _buildProbeSlot(

@@ -298,7 +298,7 @@ class WorkbenchToolboxItem<T extends Object> extends StatelessWidget {
   }
 }
 
-/// 4b. Card Tinkercad Style de Componentes com Símbolo e Rótulo
+/// 4b. Card de Componentes com Símbolo e Rótulo
 class WorkbenchSymbolToolboxTile<T extends Object> extends StatelessWidget {
   final T data;
   final Widget symbolWidget;
@@ -392,7 +392,7 @@ class WorkbenchSymbolToolboxTile<T extends Object> extends StatelessWidget {
   }
 }
 
-/// 5. Painel Lateral Unificado no Estilo Tinkercad Circuits
+/// 5. Painel Lateral Unificado da Bancada
 class WorkbenchSidePanel extends StatelessWidget {
   final String teamTitle;
   final List<Widget> toolboxItems;

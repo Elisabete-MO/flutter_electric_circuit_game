@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../app/theme.dart';
 
-/// Um fundo tecnológico/laboratorial reutilizável estilo Tinkercad & Crack the Circuit.
+/// Um fundo tecnológico/laboratorial reutilizável.
 class TechGridBackground extends StatelessWidget {
   const TechGridBackground({
     super.key,
@@ -43,7 +43,7 @@ class TechGridBackground extends StatelessWidget {
           ),
         ),
 
-        // Grade de Papel Blueprint / Dotted Grid (Crack the Circuit & Tinkercad Style)
+        // Grade de Papel Blueprint / Dotted Grid
         if (showGrid)
           Positioned.fill(
             child: CustomPaint(

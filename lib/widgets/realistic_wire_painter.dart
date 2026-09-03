@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// Painter realista para fios de circuito com isolamento colorido,
 /// sombra projetada, brilho especular e elétrons animados.
-/// Estilo Tinkercad: fios orgânicos com curvas de catenária.
+/// Fios orgânicos de bancada com curvas de catenária.
 class RealisticWirePainter extends CustomPainter {
   final List<WirePath> wires;
   final double animationValue;

@@ -4,12 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../models/stand_mission.dart';
+import '../../models/first_step_component.dart';
 import '../../state/progress_controller.dart';
 import '../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
 import '../../widgets/schematic_blueprint_socket.dart';
 import '../../widgets/schematic_symbol_painters.dart';
 import '../../widgets/component_vector_painters.dart';
+import '../../widgets/component_physical_painter.dart';
 import '../../widgets/tech_grid_background.dart';
 import '../../widgets/workbench_components.dart';
 import '../../widgets/success_confetti_overlay.dart';
@@ -26,6 +28,7 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
     with SingleTickerProviderStateMixin {
   late final List<StandMission> _missions;
   int _currentMissionIndex = 0;
+  bool _usePhysicalStyle = true;
 
   // Controller para rotação da hélice do motor CC
   late final AnimationController _fanController;
@@ -344,6 +347,8 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
                   child: Column(
                     children: [
                       _buildStepperHeader(),
+                      const SizedBox(height: 8),
+                      _buildVisualModeSelector(),
                       const SizedBox(height: 12),
                       Expanded(
                         child: _buildCurrentMissionUI(),
@@ -361,6 +366,112 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildVisualModeSelector() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE2E8F0),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Opção 1: Esquemático
+          GestureDetector(
+            onTap: () => setState(() => _usePhysicalStyle = false),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+              decoration: BoxDecoration(
+                color: !_usePhysicalStyle
+                    ? const Color(0xFF0284C7)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: !_usePhysicalStyle
+                    ? [
+                        BoxShadow(
+                          color: const Color(0xFF0284C7).withValues(alpha: 0.3),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.architecture_rounded,
+                    size: 16,
+                    color: !_usePhysicalStyle
+                        ? Colors.white
+                        : const Color(0xFF64748B),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Esquemático',
+                    style: GoogleFonts.rajdhani(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: !_usePhysicalStyle
+                          ? Colors.white
+                          : const Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+          // Opção 2: Físico 3D
+          GestureDetector(
+            onTap: () => setState(() => _usePhysicalStyle = true),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+              decoration: BoxDecoration(
+                color: _usePhysicalStyle
+                    ? const Color(0xFF0284C7)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: _usePhysicalStyle
+                    ? [
+                        BoxShadow(
+                          color: const Color(0xFF0284C7).withValues(alpha: 0.3),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.electrical_services_rounded,
+                    size: 16,
+                    color: _usePhysicalStyle
+                        ? Colors.white
+                        : const Color(0xFF64748B),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Físico 3D',
+                    style: GoogleFonts.rajdhani(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: _usePhysicalStyle
+                          ? Colors.white
+                          : const Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -823,44 +934,54 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
   Widget _buildAnimatedMotorWidget({required bool isRunning, required bool isReversed}) {
     return Column(
       children: [
-        AnimatedBuilder(
-          animation: _fanController,
-          builder: (context, child) {
-            final angle = isRunning
-                ? _fanController.value * 2 * math.pi * (isReversed ? -1 : 1)
-                : 0.0;
-            return Transform.rotate(
-              angle: angle,
-              child: Container(
-                width: 90,
-                height: 90,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isRunning ? const Color(0xFF10B981).withValues(alpha: 0.2) : const Color(0xFF1E293B),
-                  border: Border.all(
-                    color: isRunning ? const Color(0xFF10B981) : Colors.white24,
-                    width: 3,
+        if (_usePhysicalStyle)
+          CustomPaint(
+            size: const Size(100, 100),
+            painter: ComponentPhysicalPainter(
+              type: ComponentType.motor,
+              isActive: isRunning,
+              isDarkMode: false,
+            ),
+          )
+        else
+          AnimatedBuilder(
+            animation: _fanController,
+            builder: (context, child) {
+              final angle = isRunning
+                  ? _fanController.value * 2 * math.pi * (isReversed ? -1 : 1)
+                  : 0.0;
+              return Transform.rotate(
+                angle: angle,
+                child: Container(
+                  width: 90,
+                  height: 90,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isRunning ? const Color(0xFF10B981).withValues(alpha: 0.2) : const Color(0xFF1E293B),
+                    border: Border.all(
+                      color: isRunning ? const Color(0xFF10B981) : Colors.white24,
+                      width: 3,
+                    ),
+                    boxShadow: isRunning
+                        ? [
+                            BoxShadow(
+                              color: const Color(0xFF10B981).withValues(alpha: 0.5),
+                              blurRadius: 16,
+                            ),
+                          ]
+                        : null,
                   ),
-                  boxShadow: isRunning
-                      ? [
-                          BoxShadow(
-                            color: const Color(0xFF10B981).withValues(alpha: 0.5),
-                            blurRadius: 16,
-                          ),
-                        ]
-                      : null,
+                  child: const Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Icon(Icons.autorenew_rounded, size: 64, color: Colors.white),
+                      Icon(Icons.brightness_5_rounded, size: 24, color: Colors.amber),
+                    ],
+                  ),
                 ),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    const Icon(Icons.autorenew_rounded, size: 64, color: Colors.white),
-                    const Icon(Icons.brightness_5_rounded, size: 24, color: Colors.amber),
-                  ],
-                ),
-              ),
-            );
-          },
-        ),
+              );
+            },
+          ),
         const SizedBox(height: 8),
         Text(
           isRunning ? 'MOTOR CC EM OPERAÇÃO ⚡' : 'MOTOR CC DESLIGADO ⚪',

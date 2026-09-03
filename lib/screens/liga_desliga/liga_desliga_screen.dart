@@ -3,11 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../app/routes.dart';
+import '../../models/first_step_component.dart';
 import '../../models/stand_mission.dart';
 import '../../state/progress_controller.dart';
+import '../../widgets/circuit_symbol_painter.dart';
+import '../../widgets/component_physical_painter.dart';
 import '../../widgets/glass_container.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
 import '../../widgets/prof_volts_full_body.dart';
+import '../../widgets/realistic_wire_painter.dart';
 import '../../widgets/schematic_blueprint_socket.dart';
 import '../../widgets/schematic_symbol_painters.dart';
 import '../../widgets/component_vector_painters.dart';
@@ -26,6 +30,9 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
     with TickerProviderStateMixin {
   int _currentMissionIndex = 0;
   final List<StandMission> _missions = StandMission.estande3Missions;
+
+  // --- Modo de Visualizacao Visual: Esquemático (Blueprint) vs Físico 3D ---
+  bool _usePhysicalStyle = true;
 
   // --- Estado Missão 1: Interruptor da Luminária ---
   bool _m1SwitchInserted = false;
@@ -82,7 +89,9 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
 
   void _finishAllMissions() {
     // Registra progresso no Riverpod
-    ref.read(progressControllerProvider.notifier).markAsCompleted('liga_desliga', stars: 3);
+    ref
+        .read(progressControllerProvider.notifier)
+        .markAsCompleted('liga_desliga', stars: 3);
 
     showDialog(
       context: context,
@@ -129,7 +138,9 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   decoration: BoxDecoration(
                     color: const Color(0xFF042920),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.5)),
+                    border: Border.all(
+                      color: const Color(0xFF10B981).withValues(alpha: 0.5),
+                    ),
                     boxShadow: [
                       BoxShadow(
                         color: const Color(0xFF10B981).withValues(alpha: 0.2),
@@ -262,7 +273,10 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         'Muito bem! Você testou cada controle individualmente e mapeou corretamente Chave 1 -> Luminária A e Chave 2 -> Luminária B.',
       );
     } else {
-      _showFeedback(false, 'Mapeamento incorreto. Teste alternar uma chave por vez e observe qual luz responde.');
+      _showFeedback(
+        false,
+        'Mapeamento incorreto. Teste alternar uma chave por vez e observe qual luz responde.',
+      );
     }
   }
 
@@ -279,7 +293,10 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
 
   void _validateMission5() {
     if (!_m5PushButtonInserted) {
-      _showFeedback(false, 'Instale o interruptor do tipo push-button no circuito!');
+      _showFeedback(
+        false,
+        'Instale o interruptor do tipo push-button no circuito!',
+      );
       return;
     }
     if (_m5TestedHoldAndRelease) {
@@ -288,7 +305,10 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         'Excelente! O push-button só mantém a luz acesa enquanto o visitante o mantém pressionado.',
       );
     } else {
-      _showFeedback(false, 'Mantenha o push-button pressionado para acender a luminária e solte em seguida antes de validar.');
+      _showFeedback(
+        false,
+        'Mantenha o push-button pressionado para acender a luminária e solte em seguida antes de validar.',
+      );
     }
   }
 
@@ -314,13 +334,20 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
             ),
             Text(
               'Equipe Controle — Mini Painel de Iluminação',
-              style: GoogleFonts.outfit(color: const Color(0xFF64748B), fontSize: 12),
+              style: GoogleFonts.outfit(
+                color: const Color(0xFF64748B),
+                fontSize: 12,
+              ),
             ),
           ],
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF0284C7)),
-          onPressed: () => Navigator.of(context).pushReplacementNamed(Routes.home),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Color(0xFF0284C7),
+          ),
+          onPressed: () =>
+              Navigator.of(context).pushReplacementNamed(Routes.home),
         ),
       ),
       body: TechGridBackground(
@@ -338,7 +365,8 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                         totalMissions: _missions.length,
                         currentMissionIndex: _currentMissionIndex,
                         missionTitle: _missions[_currentMissionIndex].title,
-                        missionObjective: _missions[_currentMissionIndex].objective,
+                        missionObjective:
+                            _missions[_currentMissionIndex].objective,
                         onPrevious: _currentMissionIndex > 0
                             ? () => setState(() => _currentMissionIndex--)
                             : null,
@@ -346,6 +374,9 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                             ? () => setState(() => _currentMissionIndex++)
                             : null,
                       ),
+                      const SizedBox(height: 8),
+                      // Seletor de Estilo Visual (Esquemático vs Físico 3D)
+                      _buildVisualModeSelector(),
                       const SizedBox(height: 12),
                       Expanded(
                         child: AnimatedSwitcher(
@@ -377,6 +408,117 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
     );
   }
 
+  Widget _buildVisualModeSelector() {
+    return Container(
+      height: 38,
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFCBD5E1)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Opção 1: Esquemático (Blueprint)
+          GestureDetector(
+            onTap: () => setState(() => _usePhysicalStyle = false),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+              decoration: BoxDecoration(
+                color: !_usePhysicalStyle
+                    ? const Color(0xFF0284C7)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: !_usePhysicalStyle
+                    ? [
+                        BoxShadow(
+                          color: const Color(0xFF0284C7).withValues(alpha: 0.3),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.architecture_rounded,
+                    size: 16,
+                    color: !_usePhysicalStyle
+                        ? Colors.white
+                        : const Color(0xFF64748B),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Esquemático',
+                    style: GoogleFonts.rajdhani(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: !_usePhysicalStyle
+                          ? Colors.white
+                          : const Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+          // Opção 2: Físico Realista
+          GestureDetector(
+            onTap: () => setState(() => _usePhysicalStyle = true),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+              decoration: BoxDecoration(
+                color: _usePhysicalStyle
+                    ? const Color(0xFF0284C7)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: _usePhysicalStyle
+                    ? [
+                        BoxShadow(
+                          color: const Color(0xFF0284C7).withValues(alpha: 0.3),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.electrical_services_rounded,
+                    size: 16,
+                    color: _usePhysicalStyle
+                        ? Colors.white
+                        : const Color(0xFF64748B),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Físico 3D',
+                    style: GoogleFonts.rajdhani(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: _usePhysicalStyle
+                          ? Colors.white
+                          : const Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _validateCurrentMission() {
     switch (_currentMissionIndex) {
       case 0:
@@ -396,8 +538,6 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         break;
     }
   }
-
-
 
   Widget _buildCurrentMissionUI() {
     switch (_currentMissionIndex) {
@@ -424,12 +564,11 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF0284C7).withValues(alpha: 0.3)),
+        border: Border.all(
+          color: const Color(0xFF0284C7).withValues(alpha: 0.3),
+        ),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-          ),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8),
         ],
       ),
       child: Column(
@@ -487,7 +626,11 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.tips_and_updates_rounded, color: Color(0xFFD97706), size: 18),
+                const Icon(
+                  Icons.tips_and_updates_rounded,
+                  color: Color(0xFFD97706),
+                  size: 18,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -512,8 +655,12 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
     required double voltage,
     required double currentMa,
   }) {
-    final statusColor = isClosed ? const Color(0xFF10B981) : const Color(0xFF64748B);
-    final statusText = isClosed ? 'CIRCUITO FECHADO (ON)' : 'CIRCUITO ABERTO (OFF)';
+    final statusColor = isClosed
+        ? const Color(0xFF10B981)
+        : const Color(0xFF64748B);
+    final statusText = isClosed
+        ? 'CIRCUITO FECHADO (ON)'
+        : 'CIRCUITO ABERTO (OFF)';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -523,10 +670,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFCBD5E1)),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 6,
-          ),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6),
         ],
       ),
       child: Row(
@@ -566,20 +710,34 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
             children: [
               Text(
                 'TENSÃO: ',
-                style: GoogleFonts.rajdhani(color: const Color(0xFF64748B), fontWeight: FontWeight.bold, fontSize: 13),
+                style: GoogleFonts.rajdhani(
+                  color: const Color(0xFF64748B),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
               ),
               Text(
                 '${voltage.toStringAsFixed(1)}V  |  ',
-                style: GoogleFonts.outfit(color: const Color(0xFF0F172A), fontWeight: FontWeight.bold, fontSize: 13),
+                style: GoogleFonts.outfit(
+                  color: const Color(0xFF0F172A),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
               ),
               Text(
                 'CORRENTE: ',
-                style: GoogleFonts.rajdhani(color: const Color(0xFF64748B), fontWeight: FontWeight.bold, fontSize: 13),
+                style: GoogleFonts.rajdhani(
+                  color: const Color(0xFF64748B),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
               ),
               Text(
                 '${currentMa.toStringAsFixed(1)} mA',
                 style: GoogleFonts.outfit(
-                  color: isClosed ? const Color(0xFF0284C7) : const Color(0xFF0F172A),
+                  color: isClosed
+                      ? const Color(0xFF0284C7)
+                      : const Color(0xFF0F172A),
                   fontWeight: FontWeight.bold,
                   fontSize: 13,
                 ),
@@ -633,7 +791,11 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
           voltage: 4.5,
           currentMa: isBulbLit ? 90.0 : 0.0,
         ),
-        Expanded(child: _buildSchematicCanvasM1()),
+        Expanded(
+          child: _usePhysicalStyle
+              ? _buildPhysicalCanvasM1()
+              : _buildSchematicCanvasM1(),
+        ),
       ],
     );
   }
@@ -647,14 +809,19 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
       children: [
         Text(
           'Examine a posição da chave nos dois cenários e preveja se haverá passagem de corrente:',
-          style: GoogleFonts.outfit(color: const Color(0xFF334155), fontSize: 14.5, fontWeight: FontWeight.w500),
+          style: GoogleFonts.outfit(
+            color: const Color(0xFF334155),
+            fontSize: 14.5,
+            fontWeight: FontWeight.w500,
+          ),
         ),
         const SizedBox(height: 16),
 
         // Questão 1: Estado A (Chave Aberta)
         _buildPredictionCard(
           title: 'Cenário A: Interruptor no estado ABERTO (OFF)',
-          subtitle: 'Existe um espaço vazio entre os contatos elétricos da chave.',
+          subtitle:
+              'Existe um espaço vazio entre os contatos elétricos da chave.',
           currentValue: _m2AnswerStateA,
           onSelect: (val) => setState(() => _m2AnswerStateA = val),
         ),
@@ -684,14 +851,13 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: currentValue != null ? const Color(0xFF0284C7) : const Color(0xFFCBD5E1),
+          color: currentValue != null
+              ? const Color(0xFF0284C7)
+              : const Color(0xFFCBD5E1),
           width: currentValue != null ? 2.0 : 1.0,
         ),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-          ),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8),
         ],
       ),
       child: Column(
@@ -708,7 +874,10 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
           const SizedBox(height: 4),
           Text(
             subtitle,
-            style: GoogleFonts.outfit(color: const Color(0xFF64748B), fontSize: 13),
+            style: GoogleFonts.outfit(
+              color: const Color(0xFF64748B),
+              fontSize: 13,
+            ),
           ),
           const SizedBox(height: 12),
 
@@ -722,7 +891,9 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                       style: GoogleFonts.rajdhani(
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
-                        color: currentValue == 'fechado' ? Colors.black : Colors.white,
+                        color: currentValue == 'fechado'
+                            ? Colors.black
+                            : Colors.white,
                       ),
                     ),
                   ),
@@ -743,7 +914,9 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                       style: GoogleFonts.rajdhani(
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
-                        color: currentValue == 'aberto' ? Colors.black : Colors.white,
+                        color: currentValue == 'aberto'
+                            ? Colors.black
+                            : Colors.white,
                       ),
                     ),
                   ),
@@ -771,12 +944,18 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
       children: [
         Text(
           'Teste acionar um interruptor por vez para descobrir qual luz responde a cada controle:',
-          style: GoogleFonts.outfit(color: const Color(0xFF334155), fontSize: 14.5, fontWeight: FontWeight.w500),
+          style: GoogleFonts.outfit(
+            color: const Color(0xFF334155),
+            fontSize: 14.5,
+            fontWeight: FontWeight.w500,
+          ),
         ),
         const SizedBox(height: 16),
 
-        // Bancada Esquematica da Missão 3 (Dois Ramos em Paralelo)
-        _buildSchematicCanvasM3(),
+        // Bancada da Missão 3 (Clean Blueprint ou Físico 3D)
+        _usePhysicalStyle
+            ? _buildPhysicalCanvasM3()
+            : _buildSchematicCanvasM3(),
 
         const SizedBox(height: 16),
 
@@ -814,17 +993,31 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: currentSelection != null ? const Color(0xFF0284C7) : const Color(0xFFCBD5E1)),
+        border: Border.all(
+          color: currentSelection != null
+              ? const Color(0xFF0284C7)
+              : const Color(0xFFCBD5E1),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: GoogleFonts.rajdhani(color: const Color(0xFF0F172A), fontWeight: FontWeight.bold, fontSize: 14)),
+          Text(
+            title,
+            style: GoogleFonts.rajdhani(
+              color: const Color(0xFF0F172A),
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
+          ),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
             initialValue: currentSelection,
             dropdownColor: Colors.white,
-            style: GoogleFonts.outfit(color: const Color(0xFF0F172A), fontSize: 13),
+            style: GoogleFonts.outfit(
+              color: const Color(0xFF0F172A),
+              fontSize: 13,
+            ),
             decoration: const InputDecoration(
               isDense: true,
               contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -859,12 +1052,20 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
           ),
           child: Row(
             children: [
-              const Icon(Icons.warning_amber_rounded, color: Color(0xFFD97706), size: 22),
+              const Icon(
+                Icons.warning_amber_rounded,
+                color: Color(0xFFD97706),
+                size: 22,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   'Problema Detectado: O interruptor foi montado em um ramo paralelo (ramo inútil). A lâmpada permanece acesa mesmo quando tentamos desligar!',
-                  style: GoogleFonts.outfit(color: const Color(0xFF92400E), fontSize: 13.5, fontWeight: FontWeight.w500),
+                  style: GoogleFonts.outfit(
+                    color: const Color(0xFF92400E),
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ],
@@ -872,8 +1073,10 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         ),
         const SizedBox(height: 16),
 
-        // Bancada Didática Interativa de Correção do Ramo (Clean Blueprint)
-        _buildSchematicCanvasM4(),
+        // Bancada Didática Interativa de Correção do Ramo (Clean Blueprint ou Físico 3D)
+        _usePhysicalStyle
+            ? _buildPhysicalCanvasM4()
+            : _buildSchematicCanvasM4(),
       ],
     );
   }
@@ -885,53 +1088,10 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Instrução do Prof. Volts para a missão 5
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFF0284C7)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: const BoxDecoration(
-                  color: Color(0xFF0284C7),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.touch_app_rounded, color: Colors.white, size: 28),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Luz Temporária por Pressão (Push-Button)',
-                        style: GoogleFonts.rajdhani(color: const Color(0xFF0284C7), fontWeight: FontWeight.bold, fontSize: 16)),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Instale o botão de pressão (push-button) e segure para manter a luminária acesa temporariamente.',
-                      style: GoogleFonts.outfit(color: const Color(0xFF0F172A), fontSize: 14, fontWeight: FontWeight.w500),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 16),
-
-        // Bancada da Missão 5 (Clean Blueprint)
-        _buildSchematicCanvasM5(),
+        // Bancada da Missão 5 (Clean Blueprint ou Físico 3D)
+        _usePhysicalStyle
+            ? _buildPhysicalCanvasM5()
+            : _buildSchematicCanvasM5(),
 
         const SizedBox(height: 16),
 
@@ -957,13 +1117,22 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 150),
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 28,
+                  vertical: 14,
+                ),
                 decoration: BoxDecoration(
-                  color: _m5PushButtonPressed ? const Color(0xFF0284C7) : const Color(0xFF0F172A),
+                  color: _m5PushButtonPressed
+                      ? const Color(0xFF0284C7)
+                      : const Color(0xFF0F172A),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: (_m5PushButtonPressed ? const Color(0xFF0284C7) : const Color(0xFF0F172A)).withValues(alpha: 0.25),
+                      color:
+                          (_m5PushButtonPressed
+                                  ? const Color(0xFF0284C7)
+                                  : const Color(0xFF0F172A))
+                              .withValues(alpha: 0.25),
                       blurRadius: 10,
                     ),
                   ],
@@ -972,14 +1141,22 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      _m5PushButtonPressed ? Icons.lightbulb_rounded : Icons.touch_app_rounded,
+                      _m5PushButtonPressed
+                          ? Icons.lightbulb_rounded
+                          : Icons.touch_app_rounded,
                       color: Colors.white,
                       size: 24,
                     ),
                     const SizedBox(width: 10),
                     Text(
-                      _m5PushButtonPressed ? 'LUMINÁRIA ACESA! (PRESSIONADO)' : 'SEGURE O PUSH-BUTTON PARA ACENDER',
-                      style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                      _m5PushButtonPressed
+                          ? 'LUMINÁRIA ACESA! (PRESSIONADO)'
+                          : 'SEGURE O PUSH-BUTTON PARA ACENDER',
+                      style: GoogleFonts.rajdhani(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
                     ),
                   ],
                 ),
@@ -990,7 +1167,688 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
     );
   }
 
+  // ==========================================
+  // CANVASES FÍSICOS 3D
+  // ==========================================
 
+  Widget _buildPhysicalCanvasM1() {
+    final bool isClosed = _m1SwitchInserted && _m1SwitchClosed;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double width = constraints.maxWidth;
+        final double height = constraints.maxHeight > 0
+            ? constraints.maxHeight
+            : 270.0;
+
+        final batteryPos = Offset(75, height / 2);
+        final switchPos = Offset(width / 2, 60);
+        final lampPos = Offset(width - 75, height / 2);
+
+        final wires = [
+          // VCC (Vermelho): Pino (+) da Bateria Snap -> Terminal Esquerdo da Chave
+          WirePath(
+            points: [
+              Offset(batteryPos.dx + 14, batteryPos.dy - 40),
+              Offset(switchPos.dx - 30, switchPos.dy + 12),
+            ],
+            color: const Color(0xFFEF4444),
+            isActive: isClosed,
+            thickness: 4.5,
+          ),
+          // Saída (Laranja): Terminal Direito da Chave -> Pino Esquerdo da Lâmpada
+          WirePath(
+            points: [
+              Offset(switchPos.dx + 30, switchPos.dy + 12),
+              Offset(lampPos.dx - 7, lampPos.dy + 24),
+            ],
+            color: const Color(0xFFF97316),
+            isActive: isClosed,
+            thickness: 4.5,
+          ),
+          // GND (Preto): Pino Direito da Lâmpada -> Retorno para Pino (-) da Bateria Snap
+          WirePath(
+            points: [
+              Offset(lampPos.dx + 7, lampPos.dy + 24),
+              Offset(width / 2, height - 20),
+              Offset(batteryPos.dx - 14, batteryPos.dy - 40),
+            ],
+            color: const Color(0xFF1E293B),
+            isActive: isClosed,
+            thickness: 4.5,
+          ),
+        ];
+
+        return Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+              ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              // Fios realistas com elétrons animados
+              Positioned.fill(
+                child: RealisticWireWidget(
+                  wires: wires,
+                  animationValue: _currentFlowController.value,
+                  showElectrons: isClosed,
+                ),
+              ),
+
+              // Bateria 4.5V / 9V 3D Físico
+              Positioned(
+                left: batteryPos.dx - 40,
+                top: batteryPos.dy - 40,
+                child: CustomPaint(
+                  size: const Size(80, 80),
+                  painter: ComponentPhysicalPainter(
+                    type: ComponentType.battery,
+                    isActive: true,
+                    isDarkMode: false,
+                    value: 4.5,
+                  ),
+                ),
+              ),
+
+              // Soquete / Interruptor Físico
+              Positioned(
+                left: switchPos.dx - 45,
+                top: switchPos.dy - 40,
+                child: _m1SwitchInserted
+                    ? GestureDetector(
+                        onTap: () =>
+                            setState(() => _m1SwitchClosed = !_m1SwitchClosed),
+                        child: CustomPaint(
+                          size: const Size(90, 80),
+                          painter: ComponentPhysicalPainter(
+                            type: ComponentType.switchComponent,
+                            isActive: _m1SwitchClosed,
+                            isDarkMode: false,
+                          ),
+                        ),
+                      )
+                    : DragTarget<String>(
+                        onWillAcceptWithDetails: (details) =>
+                            details.data == 'switch',
+                        onAcceptWithDetails: (details) {
+                          setState(() {
+                            _m1SwitchInserted = true;
+                            _m1SwitchClosed = true;
+                          });
+                        },
+                        builder: (context, candidateData, rejectedData) {
+                          return Container(
+                            width: 90,
+                            height: 75,
+                            decoration: BoxDecoration(
+                              color: candidateData.isNotEmpty
+                                  ? const Color(
+                                      0xFF38BDF8,
+                                    ).withValues(alpha: 0.2)
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: candidateData.isNotEmpty
+                                    ? const Color(0xFF0284C7)
+                                    : const Color(0xFF94A3B8),
+                                width: 2,
+                              ),
+                            ),
+                            child: const Center(
+                              child: Icon(
+                                Icons.add_rounded,
+                                color: Color(0xFF64748B),
+                                size: 32,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+
+              // Lâmpada 3D Físico
+              Positioned(
+                left: lampPos.dx - 40,
+                top: lampPos.dy - 40,
+                child: CustomPaint(
+                  size: const Size(80, 80),
+                  painter: ComponentPhysicalPainter(
+                    type: ComponentType.bulb,
+                    isActive: isClosed,
+                    isDarkMode: false,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPhysicalCanvasM3() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double width = constraints.maxWidth;
+        const double height = 270.0;
+
+        final batteryPos = Offset(65, height / 2);
+        final switch1Pos = Offset(width * 0.42, 50);
+        final switch2Pos = Offset(width * 0.42, 180);
+        final lamp1Pos = Offset(width - 65, 50);
+        final lamp2Pos = Offset(width - 65, 180);
+
+        final wires = [
+          // VCC 1 (Vermelho): Pino (+) da Bateria Snap -> Chave 1
+          WirePath(
+            points: [
+              Offset(batteryPos.dx + 14, batteryPos.dy - 40),
+              Offset(switch1Pos.dx - 30, switch1Pos.dy + 10),
+            ],
+            color: const Color(0xFFEF4444),
+            isActive: _m3Switch1Closed,
+            thickness: 4.0,
+          ),
+          // VCC 2 (Amarelo): Pino (+) da Bateria Snap -> Chave 2
+          WirePath(
+            points: [
+              Offset(batteryPos.dx + 14, batteryPos.dy - 40),
+              Offset(switch2Pos.dx - 30, switch2Pos.dy + 10),
+            ],
+            color: const Color(0xFFEAB308),
+            isActive: _m3Switch2Closed,
+            thickness: 4.0,
+          ),
+          // Chave 1 -> Pino Esquerdo da Lâmpada A (Laranja)
+          WirePath(
+            points: [
+              Offset(switch1Pos.dx + 30, switch1Pos.dy + 10),
+              Offset(lamp1Pos.dx - 7, lamp1Pos.dy + 24),
+            ],
+            color: const Color(0xFFF97316),
+            isActive: _m3Switch1Closed,
+            thickness: 4.0,
+          ),
+          // Chave 2 -> Pino Esquerdo da Lâmpada B (Verde)
+          WirePath(
+            points: [
+              Offset(switch2Pos.dx + 30, switch2Pos.dy + 10),
+              Offset(lamp2Pos.dx - 7, lamp2Pos.dy + 24),
+            ],
+            color: const Color(0xFF10B981),
+            isActive: _m3Switch2Closed,
+            thickness: 4.0,
+          ),
+          // Retorno GND (Preto): Pinos Direitos das Lâmpadas -> Retorno para Pino (-) da Bateria Snap
+          WirePath(
+            points: [
+              Offset(lamp1Pos.dx + 7, lamp1Pos.dy + 24),
+              Offset(lamp2Pos.dx + 7, lamp2Pos.dy + 24),
+              Offset(batteryPos.dx - 14, batteryPos.dy - 40),
+            ],
+            color: const Color(0xFF1E293B),
+            isActive: _m3Switch1Closed || _m3Switch2Closed,
+            thickness: 4.0,
+          ),
+        ];
+
+        return Container(
+          height: height,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5),
+          ),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: RealisticWireWidget(
+                  wires: wires,
+                  animationValue: _currentFlowController.value,
+                  showElectrons: _m3Switch1Closed || _m3Switch2Closed,
+                ),
+              ),
+
+              // Bateria
+              Positioned(
+                left: batteryPos.dx - 40,
+                top: batteryPos.dy - 40,
+                child: CustomPaint(
+                  size: const Size(80, 80),
+                  painter: ComponentPhysicalPainter(
+                    type: ComponentType.battery,
+                    isActive: true,
+                    isDarkMode: false,
+                    value: 4.5,
+                  ),
+                ),
+              ),
+
+              // Chave 1
+              Positioned(
+                left: switch1Pos.dx - 40,
+                top: switch1Pos.dy - 35,
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _m3Switch1Closed = !_m3Switch1Closed;
+                      _m3TestedSwitch1 = true;
+                    });
+                  },
+                  child: CustomPaint(
+                    size: const Size(80, 70),
+                    painter: ComponentPhysicalPainter(
+                      type: ComponentType.switchComponent,
+                      isActive: _m3Switch1Closed,
+                      isDarkMode: false,
+                    ),
+                  ),
+                ),
+              ),
+
+              // Chave 2
+              Positioned(
+                left: switch2Pos.dx - 40,
+                top: switch2Pos.dy - 35,
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _m3Switch2Closed = !_m3Switch2Closed;
+                      _m3TestedSwitch2 = true;
+                    });
+                  },
+                  child: CustomPaint(
+                    size: const Size(80, 70),
+                    painter: ComponentPhysicalPainter(
+                      type: ComponentType.switchComponent,
+                      isActive: _m3Switch2Closed,
+                      isDarkMode: false,
+                    ),
+                  ),
+                ),
+              ),
+
+              // Lâmpada A
+              Positioned(
+                left: lamp1Pos.dx - 40,
+                top: lamp1Pos.dy - 35,
+                child: CustomPaint(
+                  size: const Size(80, 70),
+                  painter: ComponentPhysicalPainter(
+                    type: ComponentType.bulb,
+                    isActive: _m3Switch1Closed,
+                    isDarkMode: false,
+                  ),
+                ),
+              ),
+
+              // Lâmpada B
+              Positioned(
+                left: lamp2Pos.dx - 40,
+                top: lamp2Pos.dy - 35,
+                child: CustomPaint(
+                  size: const Size(80, 70),
+                  painter: ComponentPhysicalPainter(
+                    type: ComponentType.bulb,
+                    isActive: _m3Switch2Closed,
+                    isDarkMode: false,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPhysicalCanvasM4() {
+    final bool isLampLit = _m4SwitchInMainBranch ? _m4SwitchClosed : true;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double width = constraints.maxWidth;
+        const double height = 270.0;
+
+        final batteryPos = Offset(65, height / 2);
+        final switchUpperPos = Offset(width * 0.5, 40);
+        final switchSeriesPos = Offset(width * 0.5, height / 2);
+        final lampPos = Offset(width - 65, height / 2);
+
+        final wires = [
+          // VCC Principal (Vermelho): Pino (+) da Bateria Snap -> Chave Série Principal
+          WirePath(
+            points: [
+              Offset(batteryPos.dx + 14, batteryPos.dy - 40),
+              Offset(switchSeriesPos.dx - 35, switchSeriesPos.dy),
+            ],
+            color: const Color(0xFFEF4444),
+            isActive: isLampLit,
+            thickness: 4.0,
+          ),
+          // Ramo Inútil (Laranja): Pino (+) Bateria Snap -> Chave Topo -> Pino Esquerdo Lâmpada
+          WirePath(
+            points: [
+              Offset(batteryPos.dx + 14, batteryPos.dy - 40),
+              Offset(switchUpperPos.dx - 35, switchUpperPos.dy),
+              Offset(switchUpperPos.dx + 35, switchUpperPos.dy),
+              Offset(lampPos.dx - 7, lampPos.dy + 24),
+            ],
+            color: const Color(0xFFF97316),
+            isActive: !_m4SwitchInMainBranch,
+            thickness: 3.5,
+          ),
+          // Série Principal -> Pino Esquerdo da Lâmpada
+          WirePath(
+            points: [
+              Offset(switchSeriesPos.dx + 35, switchSeriesPos.dy),
+              Offset(lampPos.dx - 7, lampPos.dy + 24),
+            ],
+            color: const Color(0xFF10B981),
+            isActive: isLampLit,
+            thickness: 4.0,
+          ),
+          // GND Retorno (Preto): Pino Direito da Lâmpada -> Retorno para Pino (-) da Bateria Snap
+          WirePath(
+            points: [
+              Offset(lampPos.dx + 7, lampPos.dy + 24),
+              Offset(width / 2, height - 20),
+              Offset(batteryPos.dx - 14, batteryPos.dy - 40),
+            ],
+            color: const Color(0xFF1E293B),
+            isActive: isLampLit,
+            thickness: 4.0,
+          ),
+        ];
+
+        return Container(
+          height: height,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5),
+          ),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: RealisticWireWidget(
+                  wires: wires,
+                  animationValue: _currentFlowController.value,
+                  showElectrons: isLampLit,
+                ),
+              ),
+
+              // Bateria
+              Positioned(
+                left: batteryPos.dx - 40,
+                top: batteryPos.dy - 40,
+                child: CustomPaint(
+                  size: const Size(80, 80),
+                  painter: ComponentPhysicalPainter(
+                    type: ComponentType.battery,
+                    isActive: true,
+                    isDarkMode: false,
+                    value: 4.5,
+                  ),
+                ),
+              ),
+
+              // Posicionamento A: Ramo Inútil (Topo)
+              Positioned(
+                left: switchUpperPos.dx - 40,
+                top: switchUpperPos.dy - 35,
+                child: !_m4SwitchInMainBranch
+                    ? GestureDetector(
+                        onTap: () =>
+                            setState(() => _m4SwitchClosed = !_m4SwitchClosed),
+                        child: CustomPaint(
+                          size: const Size(80, 70),
+                          painter: ComponentPhysicalPainter(
+                            type: ComponentType.switchComponent,
+                            isActive: _m4SwitchClosed,
+                            isDarkMode: false,
+                          ),
+                        ),
+                      )
+                    : DragTarget<String>(
+                        onAcceptWithDetails: (_) =>
+                            setState(() => _m4SwitchInMainBranch = false),
+                        builder: (context, candidateData, rejectedData) =>
+                            Container(
+                              width: 80,
+                              height: 70,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: const Color(0xFF94A3B8),
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.add_rounded,
+                                color: Color(0xFF94A3B8),
+                              ),
+                            ),
+                      ),
+              ),
+
+              // Posicionamento B: Ramo Principal em Série (Centro)
+              Positioned(
+                left: switchSeriesPos.dx - 40,
+                top: switchSeriesPos.dy - 35,
+                child: _m4SwitchInMainBranch
+                    ? GestureDetector(
+                        onTap: () =>
+                            setState(() => _m4SwitchClosed = !_m4SwitchClosed),
+                        child: CustomPaint(
+                          size: const Size(80, 70),
+                          painter: ComponentPhysicalPainter(
+                            type: ComponentType.switchComponent,
+                            isActive: _m4SwitchClosed,
+                            isDarkMode: false,
+                          ),
+                        ),
+                      )
+                    : DragTarget<String>(
+                        onAcceptWithDetails: (_) =>
+                            setState(() => _m4SwitchInMainBranch = true),
+                        builder: (context, candidateData, rejectedData) =>
+                            Container(
+                              width: 80,
+                              height: 70,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: const Color(0xFF059669),
+                                  width: 2,
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.add_rounded,
+                                color: Color(0xFF059669),
+                              ),
+                            ),
+                      ),
+              ),
+
+              // Lâmpada
+              Positioned(
+                left: lampPos.dx - 40,
+                top: lampPos.dy - 40,
+                child: CustomPaint(
+                  size: const Size(80, 80),
+                  painter: ComponentPhysicalPainter(
+                    type: ComponentType.bulb,
+                    isActive: isLampLit,
+                    isDarkMode: false,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPhysicalCanvasM5() {
+    final bool isLit = _m5PushButtonInserted && _m5PushButtonPressed;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double width = constraints.maxWidth;
+        const double height = 270.0;
+
+        final batteryPos = Offset(65, height / 2);
+        final switchPos = Offset(width / 2, height / 2);
+        final lampPos = Offset(width - 65, height / 2);
+
+        final wires = [
+          WirePath(
+            points: [
+              Offset(batteryPos.dx + 14, batteryPos.dy - 40),
+              Offset(switchPos.dx - 35, switchPos.dy),
+            ],
+            color: const Color(0xFFEF4444),
+            isActive: isLit,
+            thickness: 4.5,
+          ),
+          WirePath(
+            points: [
+              Offset(switchPos.dx + 35, switchPos.dy),
+              Offset(lampPos.dx - 7, lampPos.dy + 24),
+            ],
+            color: const Color(0xFFF97316),
+            isActive: isLit,
+            thickness: 4.5,
+          ),
+          WirePath(
+            points: [
+              Offset(lampPos.dx + 7, lampPos.dy + 24),
+              Offset(width / 2, height - 20),
+              Offset(batteryPos.dx - 14, batteryPos.dy - 40),
+            ],
+            color: const Color(0xFF1E293B),
+            isActive: isLit,
+            thickness: 4.5,
+          ),
+        ];
+
+        return Container(
+          height: height,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5),
+          ),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: RealisticWireWidget(
+                  wires: wires,
+                  animationValue: _currentFlowController.value,
+                  showElectrons: isLit,
+                ),
+              ),
+
+              // Bateria
+              Positioned(
+                left: batteryPos.dx - 40,
+                top: batteryPos.dy - 40,
+                child: CustomPaint(
+                  size: const Size(80, 80),
+                  painter: ComponentPhysicalPainter(
+                    type: ComponentType.battery,
+                    isActive: true,
+                    isDarkMode: false,
+                    value: 4.5,
+                  ),
+                ),
+              ),
+
+              // Push-Button Físico Interativo (Pressione e Segure)
+              Positioned(
+                left: switchPos.dx - 45,
+                top: switchPos.dy - 40,
+                child: _m5PushButtonInserted
+                    ? GestureDetector(
+                        onTapDown: (_) => setState(() {
+                          _m5PushButtonPressed = true;
+                          _m5TestedHoldAndRelease = true;
+                        }),
+                        onTapUp: (_) =>
+                            setState(() => _m5PushButtonPressed = false),
+                        onTapCancel: () =>
+                            setState(() => _m5PushButtonPressed = false),
+                        child: CustomPaint(
+                          size: const Size(90, 80),
+                          painter: ComponentPhysicalPainter(
+                            type: ComponentType.switchComponent,
+                            isActive: _m5PushButtonPressed,
+                            isDarkMode: false,
+                          ),
+                        ),
+                      )
+                    : DragTarget<String>(
+                        onAcceptWithDetails: (_) =>
+                            setState(() => _m5PushButtonInserted = true),
+                        builder: (context, candidateData, rejectedData) =>
+                            Container(
+                              width: 90,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                color: candidateData.isNotEmpty
+                                    ? const Color(
+                                        0xFF38BDF8,
+                                      ).withValues(alpha: 0.2)
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: candidateData.isNotEmpty
+                                      ? const Color(0xFF0284C7)
+                                      : const Color(0xFF94A3B8),
+                                  width: 2,
+                                ),
+                              ),
+                              child: const Center(
+                                child: Icon(
+                                  Icons.add_rounded,
+                                  color: Color(0xFF64748B),
+                                  size: 32,
+                                ),
+                              ),
+                            ),
+                      ),
+              ),
+
+              // Lâmpada
+              Positioned(
+                left: lampPos.dx - 40,
+                top: lampPos.dy - 40,
+                child: CustomPaint(
+                  size: const Size(80, 80),
+                  painter: ComponentPhysicalPainter(
+                    type: ComponentType.bulb,
+                    isActive: isLit,
+                    isDarkMode: false,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   Widget _buildSchematicCanvasM1() {
     final bool isBulbLit = _m1SwitchInserted && _m1SwitchClosed;
@@ -1021,10 +1879,17 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
               Positioned(
                 left: batteryX - 47.5,
                 top: 70,
-                child: const SchematicComponentCard(
+                child: SchematicComponentCard(
                   label: '',
                   showLabel: false,
-                  symbolWidget: BatteryVectorWidget(size: 46),
+                  symbolWidget: CustomPaint(
+                    size: const Size(54, 38),
+                    painter: CircuitSymbolPainter(
+                      type: ComponentType.battery,
+                      color: const Color(0xFF0F172A),
+                      strokeWidth: 2.2,
+                    ),
+                  ),
                 ),
               ),
 
@@ -1036,9 +1901,15 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   label: '',
                   showLabel: false,
                   isActive: isBulbLit,
-                  symbolWidget: BulbVectorWidget(
-                    size: 46,
-                    isOn: isBulbLit,
+                  symbolWidget: CustomPaint(
+                    size: const Size(54, 38),
+                    painter: CircuitSymbolPainter(
+                      type: ComponentType.bulb,
+                      isActive: isBulbLit,
+                      color: const Color(0xFF0F172A),
+                      activeColor: const Color(0xFFD97706),
+                      strokeWidth: 2.2,
+                    ),
                   ),
                 ),
               ),
@@ -1057,12 +1928,25 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                       _m1SwitchClosed = !_m1SwitchClosed;
                     }
                   }),
-                  symbolWidget: PushButtonVectorWidget(
-                    size: 46,
-                    isPressed: _m1SwitchClosed,
+                  symbolWidget: CustomPaint(
+                    size: const Size(54, 38),
+                    painter: CircuitSymbolPainter(
+                      type: ComponentType.switchComponent,
+                      isActive: _m1SwitchClosed,
+                      color: const Color(0xFF0F172A),
+                      strokeWidth: 2.2,
+                    ),
                   ),
-                  placeholderWidget: const PushButtonVectorWidget(
-                    size: 42,
+                  placeholderWidget: Opacity(
+                    opacity: 0.4,
+                    child: CustomPaint(
+                      size: const Size(48, 34),
+                      painter: CircuitSymbolPainter(
+                        type: ComponentType.switchComponent,
+                        color: const Color(0xFF94A3B8),
+                        strokeWidth: 2.0,
+                      ),
+                    ),
                   ),
                   label: '',
                 ),
@@ -1099,10 +1983,17 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
               Positioned(
                 left: batteryX - 47.5,
                 top: 60,
-                child: const SchematicComponentCard(
+                child: SchematicComponentCard(
                   label: '',
                   showLabel: false,
-                  symbolWidget: BatteryVectorWidget(size: 46),
+                  symbolWidget: CustomPaint(
+                    size: const Size(54, 38),
+                    painter: CircuitSymbolPainter(
+                      type: ComponentType.battery,
+                      color: const Color(0xFF0F172A),
+                      strokeWidth: 2.2,
+                    ),
+                  ),
                 ),
               ),
 
@@ -1119,11 +2010,26 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                     _m3Switch1Closed = !_m3Switch1Closed;
                     _m3TestedSwitch1 = true;
                   }),
-                  symbolWidget: PushButtonVectorWidget(
-                    size: 46,
-                    isPressed: _m3Switch1Closed,
+                  symbolWidget: CustomPaint(
+                    size: const Size(54, 38),
+                    painter: CircuitSymbolPainter(
+                      type: ComponentType.switchComponent,
+                      isActive: _m3Switch1Closed,
+                      color: const Color(0xFF0F172A),
+                      strokeWidth: 2.2,
+                    ),
                   ),
-                  placeholderWidget: const PushButtonVectorWidget(size: 42),
+                  placeholderWidget: Opacity(
+                    opacity: 0.4,
+                    child: CustomPaint(
+                      size: const Size(48, 34),
+                      painter: CircuitSymbolPainter(
+                        type: ComponentType.switchComponent,
+                        color: const Color(0xFF94A3B8),
+                        strokeWidth: 2.0,
+                      ),
+                    ),
+                  ),
                   label: '',
                 ),
               ),
@@ -1141,11 +2047,26 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                     _m3Switch2Closed = !_m3Switch2Closed;
                     _m3TestedSwitch2 = true;
                   }),
-                  symbolWidget: PushButtonVectorWidget(
-                    size: 46,
-                    isPressed: _m3Switch2Closed,
+                  symbolWidget: CustomPaint(
+                    size: const Size(54, 38),
+                    painter: CircuitSymbolPainter(
+                      type: ComponentType.switchComponent,
+                      isActive: _m3Switch2Closed,
+                      color: const Color(0xFF0F172A),
+                      strokeWidth: 2.2,
+                    ),
                   ),
-                  placeholderWidget: const PushButtonVectorWidget(size: 42),
+                  placeholderWidget: Opacity(
+                    opacity: 0.4,
+                    child: CustomPaint(
+                      size: const Size(48, 34),
+                      painter: CircuitSymbolPainter(
+                        type: ComponentType.switchComponent,
+                        color: const Color(0xFF94A3B8),
+                        strokeWidth: 2.0,
+                      ),
+                    ),
+                  ),
                   label: '',
                 ),
               ),
@@ -1158,9 +2079,15 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   label: '',
                   showLabel: false,
                   isActive: _m3Switch1Closed,
-                  symbolWidget: BulbVectorWidget(
-                    size: 46,
-                    isOn: _m3Switch1Closed,
+                  symbolWidget: CustomPaint(
+                    size: const Size(54, 38),
+                    painter: CircuitSymbolPainter(
+                      type: ComponentType.bulb,
+                      isActive: _m3Switch1Closed,
+                      color: const Color(0xFF0F172A),
+                      activeColor: const Color(0xFFD97706),
+                      strokeWidth: 2.2,
+                    ),
                   ),
                 ),
               ),
@@ -1173,9 +2100,15 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   label: '',
                   showLabel: false,
                   isActive: _m3Switch2Closed,
-                  symbolWidget: BulbVectorWidget(
-                    size: 46,
-                    isOn: _m3Switch2Closed,
+                  symbolWidget: CustomPaint(
+                    size: const Size(54, 38),
+                    painter: CircuitSymbolPainter(
+                      type: ComponentType.bulb,
+                      isActive: _m3Switch2Closed,
+                      color: const Color(0xFF0F172A),
+                      activeColor: const Color(0xFFD97706),
+                      strokeWidth: 2.2,
+                    ),
                   ),
                 ),
               ),
@@ -1214,10 +2147,17 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
               Positioned(
                 left: batteryX - 47.5,
                 top: 70,
-                child: const SchematicComponentCard(
+                child: SchematicComponentCard(
                   label: '',
                   showLabel: false,
-                  symbolWidget: BatteryVectorWidget(size: 46),
+                  symbolWidget: CustomPaint(
+                    size: const Size(54, 38),
+                    painter: CircuitSymbolPainter(
+                      type: ComponentType.battery,
+                      color: const Color(0xFF0F172A),
+                      strokeWidth: 2.2,
+                    ),
+                  ),
                 ),
               ),
 
@@ -1229,9 +2169,15 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   label: '',
                   showLabel: false,
                   isActive: isLit,
-                  symbolWidget: BulbVectorWidget(
-                    size: 46,
-                    isOn: isLit,
+                  symbolWidget: CustomPaint(
+                    size: const Size(54, 38),
+                    painter: CircuitSymbolPainter(
+                      type: ComponentType.bulb,
+                      isActive: isLit,
+                      color: const Color(0xFF0F172A),
+                      activeColor: const Color(0xFFD97706),
+                      strokeWidth: 2.2,
+                    ),
                   ),
                 ),
               ),
@@ -1246,11 +2192,26 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   showLabel: false,
                   onAccept: (_) => setState(() => _m5PushButtonInserted = true),
                   onTap: () {},
-                  symbolWidget: PushButtonVectorWidget(
-                    size: 46,
-                    isPressed: _m5PushButtonPressed,
+                  symbolWidget: CustomPaint(
+                    size: const Size(54, 38),
+                    painter: CircuitSymbolPainter(
+                      type: ComponentType.switchComponent,
+                      isActive: _m5PushButtonPressed,
+                      color: const Color(0xFF0F172A),
+                      strokeWidth: 2.2,
+                    ),
                   ),
-                  placeholderWidget: const PushButtonVectorWidget(size: 42),
+                  placeholderWidget: Opacity(
+                    opacity: 0.4,
+                    child: CustomPaint(
+                      size: const Size(48, 34),
+                      painter: CircuitSymbolPainter(
+                        type: ComponentType.switchComponent,
+                        color: const Color(0xFF94A3B8),
+                        strokeWidth: 2.0,
+                      ),
+                    ),
+                  ),
                   label: '',
                 ),
               ),
@@ -1288,10 +2249,17 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
               Positioned(
                 left: batteryX - 47.5,
                 top: 70,
-                child: const SchematicComponentCard(
+                child: SchematicComponentCard(
                   label: '',
                   showLabel: false,
-                  symbolWidget: BatteryVectorWidget(size: 46),
+                  symbolWidget: CustomPaint(
+                    size: const Size(54, 38),
+                    painter: CircuitSymbolPainter(
+                      type: ComponentType.battery,
+                      color: const Color(0xFF0F172A),
+                      strokeWidth: 2.2,
+                    ),
+                  ),
                 ),
               ),
 
@@ -1303,9 +2271,15 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   label: '',
                   showLabel: false,
                   isActive: isLampLit,
-                  symbolWidget: BulbVectorWidget(
-                    size: 46,
-                    isOn: isLampLit,
+                  symbolWidget: CustomPaint(
+                    size: const Size(54, 38),
+                    painter: CircuitSymbolPainter(
+                      type: ComponentType.bulb,
+                      isActive: isLampLit,
+                      color: const Color(0xFF0F172A),
+                      activeColor: const Color(0xFFD97706),
+                      strokeWidth: 2.2,
+                    ),
                   ),
                 ),
               ),
@@ -1318,8 +2292,11 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   expectedData: 'switch',
                   isFilled: !_m4SwitchInMainBranch,
                   showLabel: false,
-                  accentColor: !_m4SwitchInMainBranch ? const Color(0xFFD97706) : const Color(0xFF94A3B8),
-                  onAccept: (_) => setState(() => _m4SwitchInMainBranch = false),
+                  accentColor: !_m4SwitchInMainBranch
+                      ? const Color(0xFFD97706)
+                      : const Color(0xFF94A3B8),
+                  onAccept: (_) =>
+                      setState(() => _m4SwitchInMainBranch = false),
                   onTap: () => setState(() {
                     if (!_m4SwitchInMainBranch) {
                       _m4SwitchClosed = !_m4SwitchClosed;
@@ -1327,11 +2304,26 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                       _m4SwitchInMainBranch = false;
                     }
                   }),
-                  symbolWidget: PushButtonVectorWidget(
-                    size: 46,
-                    isPressed: _m4SwitchClosed,
+                  symbolWidget: CustomPaint(
+                    size: const Size(54, 38),
+                    painter: CircuitSymbolPainter(
+                      type: ComponentType.switchComponent,
+                      isActive: _m4SwitchClosed,
+                      color: const Color(0xFF0F172A),
+                      strokeWidth: 2.2,
+                    ),
                   ),
-                  placeholderWidget: const PushButtonVectorWidget(size: 42),
+                  placeholderWidget: Opacity(
+                    opacity: 0.4,
+                    child: CustomPaint(
+                      size: const Size(48, 34),
+                      painter: CircuitSymbolPainter(
+                        type: ComponentType.switchComponent,
+                        color: const Color(0xFF94A3B8),
+                        strokeWidth: 2.0,
+                      ),
+                    ),
+                  ),
                   label: '',
                 ),
               ),
@@ -1344,7 +2336,9 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   expectedData: 'switch',
                   isFilled: _m4SwitchInMainBranch,
                   showLabel: false,
-                  accentColor: _m4SwitchInMainBranch ? const Color(0xFF059669) : const Color(0xFF94A3B8),
+                  accentColor: _m4SwitchInMainBranch
+                      ? const Color(0xFF059669)
+                      : const Color(0xFF94A3B8),
                   onAccept: (_) => setState(() => _m4SwitchInMainBranch = true),
                   onTap: () => setState(() {
                     if (_m4SwitchInMainBranch) {
@@ -1353,11 +2347,26 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                       _m4SwitchInMainBranch = true;
                     }
                   }),
-                  symbolWidget: PushButtonVectorWidget(
-                    size: 46,
-                    isPressed: _m4SwitchClosed,
+                  symbolWidget: CustomPaint(
+                    size: const Size(54, 38),
+                    painter: CircuitSymbolPainter(
+                      type: ComponentType.switchComponent,
+                      isActive: _m4SwitchClosed,
+                      color: const Color(0xFF0F172A),
+                      strokeWidth: 2.2,
+                    ),
                   ),
-                  placeholderWidget: const PushButtonVectorWidget(size: 42),
+                  placeholderWidget: Opacity(
+                    opacity: 0.4,
+                    child: CustomPaint(
+                      size: const Size(48, 34),
+                      painter: CircuitSymbolPainter(
+                        type: ComponentType.switchComponent,
+                        color: const Color(0xFF94A3B8),
+                        strokeWidth: 2.0,
+                      ),
+                    ),
+                  ),
                   label: '',
                 ),
               ),
@@ -1383,7 +2392,9 @@ class CircuitWirePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final neonColor = isClosed ? const Color(0xFF10B981) : const Color(0xFF475569);
+    final neonColor = isClosed
+        ? const Color(0xFF10B981)
+        : const Color(0xFF475569);
 
     final wirePaint = Paint()
       ..color = neonColor
@@ -1413,7 +2424,8 @@ class CircuitWirePainter extends CustomPainter {
     canvas.drawPath(path, wirePaint);
 
     // Desenha os nós de conexão (glowing pins)
-    final pinPaint = Paint()..color = isClosed ? const Color(0xFF34D399) : Colors.grey;
+    final pinPaint = Paint()
+      ..color = isClosed ? const Color(0xFF34D399) : Colors.grey;
     canvas.drawCircle(const Offset(75, 115), 5, pinPaint);
     canvas.drawCircle(const Offset(340, 115), 5, pinPaint);
 
@@ -1441,5 +2453,3 @@ class CircuitWirePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
-
-

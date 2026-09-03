@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../models/stand_mission.dart';
+import '../../models/first_step_component.dart';
 import '../../state/progress_controller.dart';
 import '../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
 import '../../widgets/schematic_blueprint_socket.dart';
 import '../../widgets/component_vector_painters.dart';
+import '../../widgets/component_physical_painter.dart';
 import '../../widgets/tech_grid_background.dart';
 import '../../widgets/workbench_components.dart';
 import '../../widgets/success_confetti_overlay.dart';
@@ -25,6 +27,7 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
   late AnimationController _pulseAnimController;
   final List<StandMission> _missions = StandMission.letrerosLedMissions;
   int _currentMissionIndex = 0;
+  bool _usePhysicalStyle = true;
 
   // Estados da Missão 1 (Polaridade do LED)
   bool _m1LedDirectPolarity = true; // true = Anodo (+), Cathodo (-)
@@ -412,6 +415,8 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
                             ? () => setState(() => _currentMissionIndex++)
                             : null,
                       ),
+                      const SizedBox(height: 8),
+                      _buildVisualModeSelector(),
                       const SizedBox(height: 12),
                       Expanded(
                         child: _buildLedWorkbench(),
@@ -436,6 +441,112 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildVisualModeSelector() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE2E8F0),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Opção 1: Esquemático
+          GestureDetector(
+            onTap: () => setState(() => _usePhysicalStyle = false),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+              decoration: BoxDecoration(
+                color: !_usePhysicalStyle
+                    ? const Color(0xFF0284C7)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: !_usePhysicalStyle
+                    ? [
+                        BoxShadow(
+                          color: const Color(0xFF0284C7).withValues(alpha: 0.3),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.architecture_rounded,
+                    size: 16,
+                    color: !_usePhysicalStyle
+                        ? Colors.white
+                        : const Color(0xFF64748B),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Esquemático',
+                    style: GoogleFonts.rajdhani(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: !_usePhysicalStyle
+                          ? Colors.white
+                          : const Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+          // Opção 2: Físico 3D
+          GestureDetector(
+            onTap: () => setState(() => _usePhysicalStyle = true),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+              decoration: BoxDecoration(
+                color: _usePhysicalStyle
+                    ? const Color(0xFF0284C7)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: _usePhysicalStyle
+                    ? [
+                        BoxShadow(
+                          color: const Color(0xFF0284C7).withValues(alpha: 0.3),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.electrical_services_rounded,
+                    size: 16,
+                    color: _usePhysicalStyle
+                        ? Colors.white
+                        : const Color(0xFF64748B),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Físico 3D',
+                    style: GoogleFonts.rajdhani(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: _usePhysicalStyle
+                          ? Colors.white
+                          : const Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -480,11 +591,20 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
         SchematicBlueprintSocket<String>(
           expectedData: 'led_red',
           isFilled: _m1LedInserted,
-          symbolWidget: LedVectorWidget(
-            size: 55,
-            ledColor: Colors.redAccent,
-            isOn: isLit,
-          ),
+          symbolWidget: _usePhysicalStyle
+              ? CustomPaint(
+                  size: const Size(60, 60),
+                  painter: ComponentPhysicalPainter(
+                    type: ComponentType.led,
+                    isActive: isLit,
+                    isDarkMode: false,
+                  ),
+                )
+              : LedVectorWidget(
+                  size: 55,
+                  ledColor: Colors.redAccent,
+                  isOn: isLit,
+                ),
           placeholderWidget: const LedVectorWidget(
             size: 45,
             ledColor: Colors.white38,

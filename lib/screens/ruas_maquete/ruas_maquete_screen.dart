@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../models/stand_mission.dart';
+import '../../models/first_step_component.dart';
 import '../../state/progress_controller.dart';
 import '../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
 import '../../widgets/schematic_blueprint_socket.dart';
 import '../../widgets/component_vector_painters.dart';
+import '../../widgets/component_physical_painter.dart';
 import '../../widgets/tech_grid_background.dart';
 import '../../widgets/workbench_components.dart';
 import '../../widgets/success_confetti_overlay.dart';
@@ -25,6 +27,7 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
   late AnimationController _electronAnimController;
   final List<StandMission> _missions = StandMission.ruasMaqueteMissions;
   int _currentMissionIndex = 0;
+  bool _usePhysicalStyle = true;
 
   // Estados da Missão 1 (Postes em Série)
   bool _m1WireConnected = false;
@@ -391,6 +394,8 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
                             ? () => setState(() => _currentMissionIndex++)
                             : null,
                       ),
+                      const SizedBox(height: 8),
+                      _buildVisualModeSelector(),
                       const SizedBox(height: 12),
                       Expanded(
                         child: _buildMaqueteWorkbench(),
@@ -415,6 +420,112 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildVisualModeSelector() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE2E8F0),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Opção 1: Esquemático
+          GestureDetector(
+            onTap: () => setState(() => _usePhysicalStyle = false),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+              decoration: BoxDecoration(
+                color: !_usePhysicalStyle
+                    ? const Color(0xFF0284C7)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: !_usePhysicalStyle
+                    ? [
+                        BoxShadow(
+                          color: const Color(0xFF0284C7).withValues(alpha: 0.3),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.architecture_rounded,
+                    size: 16,
+                    color: !_usePhysicalStyle
+                        ? Colors.white
+                        : const Color(0xFF64748B),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Esquemático',
+                    style: GoogleFonts.rajdhani(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: !_usePhysicalStyle
+                          ? Colors.white
+                          : const Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+          // Opção 2: Físico 3D
+          GestureDetector(
+            onTap: () => setState(() => _usePhysicalStyle = true),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+              decoration: BoxDecoration(
+                color: _usePhysicalStyle
+                    ? const Color(0xFF0284C7)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: _usePhysicalStyle
+                    ? [
+                        BoxShadow(
+                          color: const Color(0xFF0284C7).withValues(alpha: 0.3),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.electrical_services_rounded,
+                    size: 16,
+                    color: _usePhysicalStyle
+                        ? Colors.white
+                        : const Color(0xFF64748B),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Físico 3D',
+                    style: GoogleFonts.rajdhani(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: _usePhysicalStyle
+                          ? Colors.white
+                          : const Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1054,34 +1165,41 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
   }) {
     return Column(
       children: [
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            if (isLit)
-              Container(
-                width: 70 * brightnessRatio + 20,
-                height: 70 * brightnessRatio + 20,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: const Color(0xFFFDE68A),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFF59E0B).withValues(alpha: 0.5 * brightnessRatio),
-                      blurRadius: 24 * brightnessRatio,
-                      spreadRadius: 8 * brightnessRatio,
-                    ),
-                  ],
-                ),
-              ),
-            Icon(
-              Icons.lightbulb_rounded,
-              size: 48,
-              color: isLit
-                  ? const Color(0xFFD97706)
-                  : const Color(0xFF64748B),
+        if (_usePhysicalStyle)
+          CustomPaint(
+            size: const Size(70, 70),
+            painter: ComponentPhysicalPainter(
+              type: ComponentType.bulb,
+              isActive: isLit,
+              isDarkMode: false,
             ),
-          ],
-        ),
+          )
+        else
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              if (isLit)
+                Container(
+                  width: 70 * brightnessRatio + 20,
+                  height: 70 * brightnessRatio + 20,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFFFDE68A),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFF59E0B).withValues(alpha: 0.5 * brightnessRatio),
+                        blurRadius: 24 * brightnessRatio,
+                        spreadRadius: 8 * brightnessRatio,
+                      ),
+                    ],
+                  ),
+                ),
+              BulbVectorWidget(
+                size: 48,
+                isOn: isLit,
+              ),
+            ],
+          ),
         const SizedBox(height: 6),
         Text(
           label,
