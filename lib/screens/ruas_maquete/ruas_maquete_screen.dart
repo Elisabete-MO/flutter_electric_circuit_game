@@ -36,6 +36,7 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
   // Estados da Missão 1 (Postes em Série)
   bool _m1WireConnected = false;
   bool _m1WireInserted = false;
+  double _m1WireRotation = 0.0;
 
   // Estados da Missão 2 (Comparação de Brilho)
   bool _m2IsSeriesTwoBulbs = true;
@@ -44,9 +45,11 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
   // Estados da Missão 3 (Bifurcação de Fios / Nó)
   bool _m3JunctionInserted = false;
   bool _m3ReturnConnected = false;
+  double _m3JunctionRotation = 0.0;
 
   // Estados da Missão 4 (Casas Independentes / Paralelo)
   bool _m4ParallelWireConnected = false;
+  double _m4ParallelRotation = 0.0;
 
   // Estados da Missão 5 (Teste de Manutenção do Bairro)
   bool _m5House1Broken = false;
@@ -79,10 +82,31 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
   }) {
     final prevInserted = getInserted();
     final prevRotation = getRotation();
+    final nextInserted = !prevInserted;
     _undoRedoController.execute(InsertComponentAction(
-      description: 'Inserir $name',
-      onApply: () => setState(() { setInserted(true); setRotation(0); }),
-      onUndo: () => setState(() { setInserted(prevInserted); setRotation(prevRotation); }),
+      description: nextInserted ? 'Inserir $name' : 'Remover $name',
+      onApply: () => setState(() {
+        setInserted(nextInserted);
+        if (nextInserted) setRotation(0);
+      }),
+      onUndo: () => setState(() {
+        setInserted(prevInserted);
+        setRotation(prevRotation);
+      }),
+    ));
+  }
+
+  void _rotateComponent({
+    required String name,
+    required double Function() getRotation,
+    required void Function(double) setRotation,
+  }) {
+    final prevRotation = getRotation();
+    final newRotation = (prevRotation + 90) % 360;
+    _undoRedoController.execute(RotateComponentAction(
+      description: 'Girar $name (${newRotation.toInt()}°)',
+      onApply: () => setState(() => setRotation(newRotation)),
+      onUndo: () => setState(() => setRotation(prevRotation)),
     ));
   }
 
@@ -678,6 +702,12 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
             expectedData: 'fio_serie',
             isFilled: isLit,
             showLabel: false,
+            rotation: _m1WireRotation,
+            onRotate: () => _rotateComponent(
+              name: 'Fio em Série',
+              getRotation: () => _m1WireRotation,
+              setRotation: (v) => _m1WireRotation = v,
+            ),
             onAccept: (_) => _insertComponent(
               name: 'Fio em Série',
               getInserted: () => _m1WireInserted,
@@ -685,8 +715,8 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
                 _m1WireInserted = v;
                 _m1WireConnected = v;
               },
-              getRotation: () => 0,
-              setRotation: (_) {},
+              getRotation: () => _m1WireRotation,
+              setRotation: (v) => _m1WireRotation = v,
             ),
             onTap: () {
               _insertComponent(
@@ -911,8 +941,8 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
                   name: 'Nó de Junção',
                   getInserted: () => _m3JunctionInserted,
                   setInserted: (v) => _m3JunctionInserted = v,
-                  getRotation: () => 0,
-                  setRotation: (_) {},
+                  getRotation: () => _m3JunctionRotation,
+                  setRotation: (v) => _m3JunctionRotation = v,
                 );
               },
             ),
@@ -933,8 +963,8 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
                   name: 'Retorno Reconectado',
                   getInserted: () => _m3ReturnConnected,
                   setInserted: (v) => _m3ReturnConnected = v,
-                  getRotation: () => 0,
-                  setRotation: (_) {},
+                  getRotation: () => _m3JunctionRotation,
+                  setRotation: (v) => _m3JunctionRotation = v,
                 );
               },
             ),
@@ -992,8 +1022,8 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
               name: 'Fiação em Paralelo',
               getInserted: () => _m4ParallelWireConnected,
               setInserted: (v) => _m4ParallelWireConnected = v,
-              getRotation: () => 0,
-              setRotation: (_) {},
+              getRotation: () => _m4ParallelRotation,
+              setRotation: (v) => _m4ParallelRotation = v,
             );
           },
           child: Container(

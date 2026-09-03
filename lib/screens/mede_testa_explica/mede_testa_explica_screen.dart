@@ -139,10 +139,17 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
   }) {
     final prevInserted = getInserted();
     final prevRotation = getRotation();
+    final nextInserted = !prevInserted;
     _undoRedoController.execute(InsertComponentAction(
-      description: 'Inserir $name',
-      onApply: () => setState(() { setInserted(true); setRotation(0); }),
-      onUndo: () => setState(() { setInserted(prevInserted); setRotation(prevRotation); }),
+      description: nextInserted ? 'Inserir $name' : 'Remover $name',
+      onApply: () => setState(() {
+        setInserted(nextInserted);
+        if (nextInserted) setRotation(0);
+      }),
+      onUndo: () => setState(() {
+        setInserted(prevInserted);
+        setRotation(prevRotation);
+      }),
     ));
   }
 

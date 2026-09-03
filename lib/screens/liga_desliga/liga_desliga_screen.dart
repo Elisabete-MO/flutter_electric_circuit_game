@@ -117,11 +117,12 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
   }) {
     final prevInserted = getInserted();
     final prevRotation = getRotation();
+    final nextInserted = !prevInserted;
     _undoRedoController.execute(InsertComponentAction(
-      description: 'Inserir $name',
+      description: nextInserted ? 'Inserir $name' : 'Remover $name',
       onApply: () => setState(() {
-        setInserted(true);
-        setRotation(0);
+        setInserted(nextInserted);
+        if (nextInserted) setRotation(0);
       }),
       onUndo: () => setState(() {
         setInserted(prevInserted);
@@ -1528,7 +1529,13 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                     getRotation: () => _m1BatteryRotation,
                     setRotation: (v) => _m1BatteryRotation = v,
                   ),
-                  onTap: () {},
+                  onTap: () => _insertComponent(
+                    name: 'Bateria M1',
+                    getInserted: () => _m1BatteryInserted,
+                    setInserted: (v) => _m1BatteryInserted = v,
+                    getRotation: () => _m1BatteryRotation,
+                    setRotation: (v) => _m1BatteryRotation = v,
+                  ),
                   symbolWidget: CustomPaint(
                     size: const Size(80, 80),
                     painter: ComponentPhysicalPainter(

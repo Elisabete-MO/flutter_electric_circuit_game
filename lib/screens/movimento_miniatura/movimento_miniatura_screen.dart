@@ -2812,10 +2812,17 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
   }) {
     final prevInserted = getInserted();
     final prevRotation = getRotation();
+    final nextInserted = !prevInserted;
     _undoRedoController.execute(InsertComponentAction(
-      description: 'Inserir $name',
-      onApply: () => setState(() { setInserted(true); setRotation(0); }),
-      onUndo: () => setState(() { setInserted(prevInserted); setRotation(prevRotation); }),
+      description: nextInserted ? 'Inserir $name' : 'Remover $name',
+      onApply: () => setState(() {
+        setInserted(nextInserted);
+        if (nextInserted) setRotation(0);
+      }),
+      onUndo: () => setState(() {
+        setInserted(prevInserted);
+        setRotation(prevRotation);
+      }),
     ));
   }
 
@@ -2827,7 +2834,7 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
     final prevRotation = getRotation();
     final newRotation = (prevRotation + 90) % 360;
     _undoRedoController.execute(RotateComponentAction(
-      description: 'Girar $name',
+      description: 'Girar $name (${newRotation.toInt()}°)',
       onApply: () => setState(() => setRotation(newRotation)),
       onUndo: () => setState(() => setRotation(prevRotation)),
     ));

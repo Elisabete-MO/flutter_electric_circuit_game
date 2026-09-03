@@ -77,10 +77,17 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
   }) {
     final prevInserted = getInserted();
     final prevRotation = getRotation();
+    final nextInserted = !prevInserted;
     _undoRedoController.execute(InsertComponentAction(
-      description: 'Inserir $name',
-      onApply: () => setState(() { setInserted(true); setRotation(0); }),
-      onUndo: () => setState(() { setInserted(prevInserted); setRotation(prevRotation); }),
+      description: nextInserted ? 'Inserir $name' : 'Remover $name',
+      onApply: () => setState(() {
+        setInserted(nextInserted);
+        if (nextInserted) setRotation(0);
+      }),
+      onUndo: () => setState(() {
+        setInserted(prevInserted);
+        setRotation(prevRotation);
+      }),
     ));
   }
 
@@ -640,7 +647,13 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
             getRotation: () => _m1LedRotation,
             setRotation: (v) => _m1LedRotation = v,
           ),
-          onTap: () {},
+          onTap: () => _insertComponent(
+            name: 'LED Vermelho',
+            getInserted: () => _m1LedInserted,
+            setInserted: (v) => _m1LedInserted = v,
+            getRotation: () => _m1LedRotation,
+            setRotation: (v) => _m1LedRotation = v,
+          ),
           symbolWidget: _usePhysicalStyle
               ? CustomPaint(
                   size: const Size(60, 60),
