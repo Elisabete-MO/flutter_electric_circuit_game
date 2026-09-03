@@ -409,23 +409,61 @@ class ComponentPhysicalPainter extends CustomPainter {
   }
 
   void _drawPhysicalRelay(Canvas canvas, Size size, double cx, double cy) {
-    // Basic block for relay in physical mode since it uses an asset image typically
-    final Rect box = Rect.fromCenter(center: Offset(cx, cy), width: 60, height: 40);
+    final c1Y = cy - size.height * 0.25;
+    final c2Y = cy + size.height * 0.25;
+    final comY = cy;
+    final noY = cy - size.height * 0.35;
+    final ncY = cy + size.height * 0.35;
+    final leftX = cx - size.width * 0.45;
+    final rightX = cx + size.width * 0.45;
+
+    // Basic block for relay in physical mode
+    final Rect box = Rect.fromCenter(center: Offset(cx, cy), width: size.width * 0.7, height: size.height * 0.6);
     final paint = Paint()..color = const Color(0xFF1E88E5)..style = PaintingStyle.fill;
     canvas.drawRect(box, paint);
     
     final borderPaint = Paint()..color = Colors.black87..style = PaintingStyle.stroke..strokeWidth = 2;
     canvas.drawRect(box, borderPaint);
 
+    // Se estiver ativo (com corrente na bobina), acende um LED indicador
+    if (isActive) {
+      final activePaint = Paint()..color = const Color(0xFF00FF9D).withOpacity(0.3)..style = PaintingStyle.fill;
+      canvas.drawRect(box, activePaint);
+      
+      // Led aceso
+      canvas.drawCircle(Offset(cx, cy), 6, Paint()..color = const Color(0xFF00FF9D));
+      canvas.drawCircle(Offset(cx, cy), 6, Paint()..color = Colors.white..style = PaintingStyle.stroke..strokeWidth = 1);
+    } else {
+      // Led apagado
+      canvas.drawCircle(Offset(cx, cy), 6, Paint()..color = Colors.black54);
+      canvas.drawCircle(Offset(cx, cy), 6, Paint()..color = Colors.white30..style = PaintingStyle.stroke..strokeWidth = 1);
+    }
+
     // Pins on the left (C1, C2)
     final pinPaint = Paint()..color = Colors.grey.shade400..style = PaintingStyle.fill;
-    canvas.drawRect(Rect.fromCenter(center: Offset(cx - 32, cy - 10), width: 6, height: 4), pinPaint);
-    canvas.drawRect(Rect.fromCenter(center: Offset(cx - 32, cy + 10), width: 6, height: 4), pinPaint);
+    canvas.drawRect(Rect.fromCenter(center: Offset(leftX, c1Y), width: 8, height: 4), pinPaint);
+    canvas.drawRect(Rect.fromCenter(center: Offset(leftX, c2Y), width: 8, height: 4), pinPaint);
     
     // Pins on the right (NO, COM, NC)
-    canvas.drawRect(Rect.fromCenter(center: Offset(cx + 32, cy - 14), width: 6, height: 4), pinPaint);
-    canvas.drawRect(Rect.fromCenter(center: Offset(cx + 32, cy), width: 6, height: 4), pinPaint);
-    canvas.drawRect(Rect.fromCenter(center: Offset(cx + 32, cy + 14), width: 6, height: 4), pinPaint);
+    canvas.drawRect(Rect.fromCenter(center: Offset(rightX, noY), width: 8, height: 4), pinPaint);
+    canvas.drawRect(Rect.fromCenter(center: Offset(rightX, comY), width: 8, height: 4), pinPaint);
+    canvas.drawRect(Rect.fromCenter(center: Offset(rightX, ncY), width: 8, height: 4), pinPaint);
+    
+    // Labels for pins
+    final labelStyle = const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold);
+    _drawText(canvas, 'C1', Offset(leftX + 12, c1Y - 4), labelStyle);
+    _drawText(canvas, 'C2', Offset(leftX + 12, c2Y - 4), labelStyle);
+    _drawText(canvas, 'NO', Offset(rightX - 18, noY - 4), labelStyle);
+    _drawText(canvas, 'COM', Offset(rightX - 22, comY - 4), labelStyle);
+    _drawText(canvas, 'NC', Offset(rightX - 18, ncY - 4), labelStyle);
+  }
+
+  void _drawText(Canvas canvas, String text, Offset position, TextStyle style) {
+    final textPainter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    textPainter.paint(canvas, position);
   }
 
   /// --------------------------------------------------------------------------

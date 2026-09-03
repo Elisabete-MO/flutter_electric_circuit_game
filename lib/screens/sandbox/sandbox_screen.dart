@@ -82,7 +82,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
     Offset mousePos,
     double cellSize,
     List<SandboxComponent> components, {
-    double touchRadius = 30.0,
+    double touchRadius = 16.0,
   }) {
     ConnectionSource? nearest;
     double minDistance = touchRadius;
@@ -1265,7 +1265,6 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
               type: data,
               gridX: gridX,
               gridY: gridY,
-              value: data == ComponentType.battery ? 9.0 : (data == ComponentType.resistor ? 10.0 : 0.0),
             );
             ref.read(sandboxControllerProvider.notifier).addComponent(newComponent);
             setState(() {
@@ -1628,6 +1627,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
       width: cellSize,
       height: cellSize,
       child: Draggable<SandboxComponent>(
+        key: ValueKey('drag_${component.id}_$_isDraggingWire'),
         maxSimultaneousDrags: _isDraggingWire ? 0 : 1,
         data: component,
         onDragStarted: () {

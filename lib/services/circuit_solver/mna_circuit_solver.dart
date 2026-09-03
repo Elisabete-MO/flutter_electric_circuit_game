@@ -37,8 +37,16 @@ class MnaCircuitSolver implements CircuitSolverStrategy {
 
     // Cada terminal começa no seu próprio nó
     for (final c in components) {
-      find('${c.id}_A');
-      find('${c.id}_B');
+      if (c.type == ComponentType.relay) {
+        find('${c.id}_C1');
+        find('${c.id}_C2');
+        find('${c.id}_COM');
+        find('${c.id}_NO');
+        find('${c.id}_NC');
+      } else {
+        find('${c.id}_A');
+        find('${c.id}_B');
+      }
     }
 
     // Unir os terminais que estão conectados por fios
@@ -84,12 +92,18 @@ class MnaCircuitSolver implements CircuitSolverStrategy {
       );
     }
 
-    // Controle de estado dos diodos/LEDs: c.id -> isOpen (true/false)
+    // Controle de estado dos diodos/LEDs e Relés
     final diodeOpenStates = <String, bool>{};
     final diodes = components.where((c) =>
         c.type == ComponentType.diode || c.type == ComponentType.led).toList();
     for (final d in diodes) {
       diodeOpenStates[d.id] = false; // assume conduzindo inicialmente
+    }
+
+    final relayActiveStates = <String, bool>{};
+    final relays = components.where((c) => c.type == ComponentType.relay).toList();
+    for (final r in relays) {
+      relayActiveStates[r.id] = r.isActive; // Inicia com o estado atual do modelo
     }
 
     List<double>? solution;
@@ -113,12 +127,34 @@ class MnaCircuitSolver implements CircuitSolverStrategy {
           continue; // componentes queimados não conduzem (circuito aberto)
         }
 
+        if (c.type == ComponentType.relay) {
+          // Bobina
+          final nC1 = getTerminalNode(c.id, 'C1');
+          final nC2 = getTerminalNode(c.id, 'C2');
+          final double gCoil = 1.0 / 100.0; // 100 ohms
+          A[nC1][nC1] += gCoil;
+          A[nC2][nC2] += gCoil;
+          A[nC1][nC2] -= gCoil;
+          A[nC2][nC1] -= gCoil;
+
+          // Contatos
+          final nCOM = getTerminalNode(c.id, 'COM');
+          final isActive = relayActiveStates[c.id] ?? false;
+          final nActiveContact = isActive ? getTerminalNode(c.id, 'NO') : getTerminalNode(c.id, 'NC');
+          final double gContact = 1.0 / 0.01; // 0.01 ohms quando fechado
+          A[nCOM][nCOM] += gContact;
+          A[nActiveContact][nActiveContact] += gContact;
+          A[nCOM][nActiveContact] -= gContact;
+          A[nActiveContact][nCOM] -= gContact;
+          continue; // Já processado
+        }
+
         final nA = getTerminalNode(c.id, 'A');
         final nB = getTerminalNode(c.id, 'B');
 
         double? R;
         if (c.type == ComponentType.resistor || c.type == ComponentType.bulb) {
-          R = c.value;
+          R = c.value <= 0 ? 0.01 : c.value;
         } else if (c.type == ComponentType.potentiometer) {
           R = c.value <= 0 ? 0.01 : c.value;
         } else if (c.type == ComponentType.motor) {
@@ -207,6 +243,24 @@ class MnaCircuitSolver implements CircuitSolverStrategy {
         }
       }
 
+      // Atualizar o estado dos Relés
+      for (final r in relays) {
+        final nC1 = getTerminalNode(r.id, 'C1');
+        final nC2 = getTerminalNode(r.id, 'C2');
+        final vC1 = solution[nC1];
+        final vC2 = solution[nC2];
+        
+        final coilDrop = (vC2 - vC1).abs();
+        final coilCurrent = coilDrop / 100.0;
+        final hasCoilCurrent = coilCurrent >= 0.01;
+
+        final isCurrentlyActive = relayActiveStates[r.id] ?? false;
+        if (isCurrentlyActive != hasCoilCurrent) {
+          relayActiveStates[r.id] = hasCoilCurrent;
+          stateChanged = true;
+        }
+      }
+
       if (!stateChanged) {
         converged = true;
       }
@@ -227,6 +281,31 @@ class MnaCircuitSolver implements CircuitSolverStrategy {
 
     // Mapear a solução de volta para os componentes
     for (final c in components) {
+      if (c.type == ComponentType.relay) {
+        final nC1 = getTerminalNode(c.id, 'C1');
+        final nC2 = getTerminalNode(c.id, 'C2');
+        final nCOM = getTerminalNode(c.id, 'COM');
+        final nNO = getTerminalNode(c.id, 'NO');
+        final nNC = getTerminalNode(c.id, 'NC');
+
+        values['node_voltage_${c.id}_C1'] = solution[nC1];
+        values['node_voltage_${c.id}_C2'] = solution[nC2];
+        values['node_voltage_${c.id}_COM'] = solution[nCOM];
+        values['node_voltage_${c.id}_NO'] = solution[nNO];
+        values['node_voltage_${c.id}_NC'] = solution[nNC];
+
+        final coilDrop = (solution[nC2] - solution[nC1]).abs();
+        final coilCurrent = coilDrop / 100.0;
+        values['coil_current_${c.id}'] = coilCurrent;
+        values['current_${c.id}'] = coilCurrent; // Corrente principal pro HUD
+        values['voltage_drop_${c.id}'] = coilDrop;
+        values['power_${c.id}'] = coilDrop * coilCurrent;
+        if (coilCurrent > 0.001) {
+          values['active_${c.id}'] = 1.0;
+        }
+        continue; // Já processado
+      }
+
       final nA = getTerminalNode(c.id, 'A');
       final nB = getTerminalNode(c.id, 'B');
       final vA = solution[nA];
@@ -246,7 +325,7 @@ class MnaCircuitSolver implements CircuitSolverStrategy {
       } else if (!targetState.burnedComponentIds.contains(c.id)) {
         double? R;
         if (c.type == ComponentType.resistor || c.type == ComponentType.bulb) {
-          R = c.value;
+          R = c.value <= 0 ? 0.01 : c.value;
         } else if (c.type == ComponentType.potentiometer) {
           R = c.value <= 0 ? 0.01 : c.value;
         } else if (c.type == ComponentType.motor) {
@@ -332,7 +411,17 @@ class MnaCircuitSolver implements CircuitSolverStrategy {
       }
     }
 
+    // Atualizar os componentes baseados nos estados resolvidos
+    final newComponents = components.map((c) {
+      if (c.type == ComponentType.relay) {
+        final isActive = relayActiveStates[c.id] ?? c.isActive;
+        return c.copyWith(isActive: isActive);
+      }
+      return c;
+    }).toList();
+
     return targetState.copyWith(
+      components: newComponents,
       simulationValues: values,
       errorMessage: error,
       burnedComponentIds: newBurnedSet,

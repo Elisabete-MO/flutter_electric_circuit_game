@@ -425,45 +425,64 @@ class CircuitSymbolPainter extends CustomPainter {
   }
 
   void _drawRelay(Canvas canvas, Size size, double cx, double cy, Paint paint, Paint fillPaint) {
+    final c1Y = cy - size.height * 0.25;
+    final c2Y = cy + size.height * 0.25;
+    final comY = cy;
+    final noY = cy - size.height * 0.35;
+    final ncY = cy + size.height * 0.35;
+    
     // Left side: Coil
-    final coilRect = Rect.fromCenter(center: Offset(cx - 20, cy), width: 16, height: 32);
+    final coilRect = Rect.fromCenter(center: Offset(cx - size.width * 0.2, cy), width: size.width * 0.2, height: size.height * 0.4);
     canvas.drawRect(coilRect, fillPaint);
     canvas.drawRect(coilRect, paint);
     
     // Terminals C1 and C2 lines
-    canvas.drawLine(Offset(cx - 20, cy - 16), Offset(cx - 20, cy - 26), paint);
-    canvas.drawLine(Offset(cx - 20, cy + 16), Offset(cx - 20, cy + 26), paint);
+    canvas.drawLine(Offset(cx - size.width * 0.2, c1Y), Offset(cx - size.width * 0.45, c1Y), paint);
+    canvas.drawLine(Offset(cx - size.width * 0.2, c2Y), Offset(cx - size.width * 0.45, c2Y), paint);
 
     // Right side: Switch
-    final comPos = Offset(cx + 20, cy + 16);
-    final ncPos = Offset(cx + 8, cy - 16);
-    final noPos = Offset(cx + 32, cy - 16);
+    final comPos = Offset(cx + size.width * 0.45, comY);
+    final ncPos = Offset(cx + size.width * 0.45, ncY);
+    final noPos = Offset(cx + size.width * 0.45, noY);
+    
+    final pivotPos = Offset(cx + size.width * 0.1, comY);
 
-    // Switch terminals
+    // Conexões internas (linhas estáticas)
+    canvas.drawLine(comPos, pivotPos, paint);
+    
+    // Contatos fixos internos
+    final internalNcPos = Offset(cx + size.width * 0.1, ncY);
+    final internalNoPos = Offset(cx + size.width * 0.1, noY);
+    canvas.drawLine(ncPos, internalNcPos, paint);
+    canvas.drawLine(noPos, internalNoPos, paint);
+
+    // Switch terminals (dots)
     final dotPaint = Paint()
       ..color = paint.color
       ..style = PaintingStyle.fill;
     canvas.drawCircle(comPos, strokeWidth * 1.5, dotPaint);
     canvas.drawCircle(ncPos, strokeWidth * 1.5, dotPaint);
     canvas.drawCircle(noPos, strokeWidth * 1.5, dotPaint);
+    canvas.drawCircle(Offset(cx - size.width * 0.45, c1Y), strokeWidth * 1.5, dotPaint);
+    canvas.drawCircle(Offset(cx - size.width * 0.45, c2Y), strokeWidth * 1.5, dotPaint);
 
     // Switch Arm
     final originalStroke = paint.strokeWidth;
     if (isActive) {
-      canvas.drawLine(comPos, noPos, paint..strokeWidth = originalStroke * 1.2);
+      canvas.drawLine(pivotPos, internalNoPos, paint..strokeWidth = originalStroke * 1.2);
     } else {
-      canvas.drawLine(comPos, ncPos, paint..strokeWidth = originalStroke * 1.2);
+      canvas.drawLine(pivotPos, internalNcPos, paint..strokeWidth = originalStroke * 1.2);
     }
     paint.strokeWidth = originalStroke;
 
     // Dashed line representing magnetic coupling
     final dashedPaint = Paint()
-      ..color = paint.color.withValues(alpha: 0.5)
+      ..color = paint.color.withOpacity(0.5)
       ..strokeWidth = 1.2
       ..style = PaintingStyle.stroke;
     
-    double startX = cx - 12;
-    double endX = cx + 18;
+    double startX = cx - size.width * 0.1;
+    double endX = pivotPos.dx;
     for (double i = startX; i < endX; i += 5) {
       canvas.drawLine(Offset(i, cy), Offset(i + 2.5, cy), dashedPaint);
     }
