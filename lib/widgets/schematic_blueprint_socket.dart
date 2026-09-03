@@ -114,3 +114,61 @@ class SchematicBlueprintSocket<T extends Object> extends StatelessWidget {
     );
   }
 }
+
+/// Card de Exibição de Componente no Blueprint Esquemático (Bateria, Lâmpada, etc.).
+class SchematicComponentCard extends StatelessWidget {
+  final Widget symbolWidget;
+  final String label;
+  final bool isActive;
+  final Color accentColor;
+
+  const SchematicComponentCard({
+    super.key,
+    required this.symbolWidget,
+    required this.label,
+    this.isActive = false,
+    this.accentColor = const Color(0xFF0284C7),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final currentBorderColor = isActive ? const Color(0xFF059669) : accentColor;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 95,
+          height: 75,
+          decoration: BoxDecoration(
+            color: isActive ? const Color(0xFFF0FDF4) : const Color(0xFFFFFFFF),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: currentBorderColor,
+              width: isActive ? 2.5 : 1.8,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: currentBorderColor.withValues(alpha: isActive ? 0.25 : 0.10),
+                blurRadius: isActive ? 12 : 6,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Center(
+            child: symbolWidget,
+          ),
+        ),
+        const SizedBox(height: 5),
+        Text(
+          label,
+          style: GoogleFonts.rajdhani(
+            color: isActive ? const Color(0xFF059669) : const Color(0xFF334155),
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+}

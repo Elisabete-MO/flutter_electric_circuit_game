@@ -549,39 +549,38 @@ class SchematicCircuitWirePainter extends CustomPainter {
       ..strokeWidth = 8.0
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
 
-    final batteryX = 60.0;
-    final lampX = size.width - 60.0;
+    final batteryX = 75.0;
+    final lampX = size.width - 75.0;
     final switchCenterX = size.width / 2;
     final topWireY = 47.5;
-    final centerY = 105.0;
     final bottomWireY = 205.0;
 
     final path = Path();
-    // 1. Do polo positivo da bateria (topo) até a borda esquerda do soquete do switch
-    path.moveTo(batteryX, centerY);
-    path.lineTo(batteryX, topWireY);
+    // 1. Da borda direita do card da Bateria até a borda esquerda do soquete do Switch
+    path.moveTo(batteryX + 47.5, topWireY);
     path.lineTo(switchCenterX - 47.5, topWireY);
 
-    // 2. Da borda direita do soquete do switch até a lâmpada
+    // 2. Da borda direita do soquete do Switch até a borda esquerda do card da Lâmpada
     path.moveTo(switchCenterX + 47.5, topWireY);
-    path.lineTo(lampX, topWireY);
-    path.lineTo(lampX, centerY);
+    path.lineTo(lampX - 47.5, topWireY);
 
-    // 3. Retorno da lâmpada até a bateria (parte inferior)
-    path.moveTo(lampX, centerY);
+    // 3. Retorno da base do card da Lâmpada até a base do card da Bateria (parte inferior)
+    path.moveTo(lampX, 85.0);
     path.lineTo(lampX, bottomWireY);
     path.lineTo(batteryX, bottomWireY);
-    path.lineTo(batteryX, centerY);
+    path.lineTo(batteryX, 85.0);
 
     canvas.drawPath(path, glowPaint);
     canvas.drawPath(path, wirePaint);
 
-    // Bornes de conexão nos pontos exatos de encaixe do soquete
+    // Bornes de conexão nos pontos exatos de encaixe dos 3 cards
     final pinPaint = Paint()..color = isClosed ? const Color(0xFF0284C7) : const Color(0xFF64748B);
-    canvas.drawCircle(Offset(batteryX, centerY), 4.5, pinPaint);
-    canvas.drawCircle(Offset(lampX, centerY), 4.5, pinPaint);
+    canvas.drawCircle(Offset(batteryX + 47.5, topWireY), 4.5, pinPaint);
     canvas.drawCircle(Offset(switchCenterX - 47.5, topWireY), 4.5, pinPaint);
     canvas.drawCircle(Offset(switchCenterX + 47.5, topWireY), 4.5, pinPaint);
+    canvas.drawCircle(Offset(lampX - 47.5, topWireY), 4.5, pinPaint);
+    canvas.drawCircle(Offset(lampX, 85.0), 4.5, pinPaint);
+    canvas.drawCircle(Offset(batteryX, 85.0), 4.5, pinPaint);
 
     // Eletrons em movimento se o circuito estiver fechado
     if (isClosed) {

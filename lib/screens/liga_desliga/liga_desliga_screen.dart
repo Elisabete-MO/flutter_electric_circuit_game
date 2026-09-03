@@ -1414,8 +1414,8 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
     return LayoutBuilder(
       builder: (context, constraints) {
         final double width = constraints.maxWidth;
-        final double batteryX = 60.0;
-        final double lampX = width - 60.0;
+        final double batteryX = 75.0;
+        final double lampX = width - 75.0;
         final double switchCenterX = width / 2;
 
         return SizedBox(
@@ -1433,44 +1433,27 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                 ),
               ),
 
-              // 2. Símbolo da Fonte (Bateria na Esquerda)
+              // 2. Card da Fonte (Bateria na Esquerda)
               Positioned(
-                left: batteryX - 30,
-                top: 75,
-                child: const Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    BatteryVectorWidget(size: 60),
-                    SizedBox(height: 4),
-                    Text(
-                      'FONTE 4.5V',
-                      style: TextStyle(color: Color(0xFF0F172A), fontSize: 11, fontWeight: FontWeight.bold),
-                    ),
-                  ],
+                left: batteryX - 47.5,
+                top: 10,
+                child: const SchematicComponentCard(
+                  label: 'FONTE 4.5V',
+                  symbolWidget: BatteryVectorWidget(size: 46),
                 ),
               ),
 
-              // 3. Símbolo da Lâmpada (Na Direita, Perfeitamente Conectada aos Fios)
+              // 3. Card da Lâmpada (Na Direita)
               Positioned(
-                left: lampX - 30,
-                top: 75,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    BulbVectorWidget(
-                      size: 60,
-                      isOn: isBulbLit,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'LÂMPADA',
-                      style: TextStyle(
-                        color: isBulbLit ? const Color(0xFFD97706) : const Color(0xFF0F172A),
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
+                left: lampX - 47.5,
+                top: 10,
+                child: SchematicComponentCard(
+                  label: 'LÂMPADA',
+                  isActive: isBulbLit,
+                  symbolWidget: BulbVectorWidget(
+                    size: 46,
+                    isOn: isBulbLit,
+                  ),
                 ),
               ),
 
@@ -1488,11 +1471,11 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                     }
                   }),
                   symbolWidget: PushButtonVectorWidget(
-                    size: 56,
+                    size: 46,
                     isPressed: _m1SwitchClosed,
                   ),
                   placeholderWidget: const PushButtonVectorWidget(
-                    size: 48,
+                    size: 42,
                   ),
                   label: _m1SwitchInserted
                       ? (_m1SwitchClosed ? 'INTERRUPTOR (FECHADO)' : 'INTERRUPTOR (ABERTO)')
