@@ -272,5 +272,67 @@ class StandMission {
           voltsMediation: voltsMediationEstandeMovimentoMiniatura,
         ),
       ];
+
+  /// Fala oficial de mediação do Professor Volts para o Estande "Mede, Testa e Explica"
+  static const String voltsMediationEstandeMedeTestaExplica =
+      'Medir é enxergar o invisível: o multímetro revela quanta tensão e quanta corrente estão presentes no circuito.';
+
+  static List<StandMission> get medeTestaExplicaMissions => const [
+        StandMission(
+          id: 'mede_testa_m1',
+          standId: 'mede_testa',
+          number: 1,
+          title: 'Medindo Tensão da Bateria',
+          objective: 'Posicionar pontas de prova nos polos da bateria e ler a tensão correta.',
+          componentsInfo: 'Bateria 9V, voltímetro didático',
+          victoryCriteria: 'Posicionar pontas de prova nos polos da bateria e ler a tensão correta (9.0V)',
+          failureFeedback: 'O voltímetro deve ser conectado em paralelo com os pontos de medição.',
+          voltsMediation: voltsMediationEstandeMedeTestaExplica,
+        ),
+        StandMission(
+          id: 'mede_testa_m2',
+          standId: 'mede_testa',
+          number: 2,
+          title: 'Queda de Tensão no Circuito',
+          objective: 'Medir a diferença de potencial sobre a carga e interpretar a leitura.',
+          componentsInfo: 'Bateria 9V, lâmpada, voltímetro',
+          victoryCriteria: 'Medir a diferença de potencial sobre a carga e interpretar a leitura',
+          failureFeedback: 'Verifique exatamente entre quais dois pontos as pontas foram colocadas.',
+          voltsMediation: voltsMediationEstandeMedeTestaExplica,
+        ),
+        StandMission(
+          id: 'mede_testa_m3',
+          standId: 'mede_testa',
+          number: 3,
+          title: 'Resistência e Corrente',
+          objective: 'Variar a resistência do circuito e observar o impacto direto na corrente medida.',
+          componentsInfo: 'Resistor variável, LED, amperímetro',
+          victoryCriteria: 'Variar a resistência e observar o impacto direto na corrente medida (I = V / R)',
+          failureFeedback: 'Maior resistência elétrica resulta em menor corrente no circuito.',
+          voltsMediation: voltsMediationEstandeMedeTestaExplica,
+        ),
+        StandMission(
+          id: 'mede_testa_m4',
+          standId: 'mede_testa',
+          number: 4,
+          title: 'Dimensionamento Seguro',
+          objective: 'Selecionar o resistor ideal que garante corrente segura entre 10mA e 15mA.',
+          componentsInfo: 'Resistores de 68Ω, 680Ω e 6.8kΩ, LED, bateria 9V',
+          victoryCriteria: 'Selecionar o resistor que garante corrente ideal (~10mA a 15mA)',
+          failureFeedback: 'Selecione uma resistência que proteja a carga sem apagar o brilho.',
+          voltsMediation: voltsMediationEstandeMedeTestaExplica,
+        ),
+        StandMission(
+          id: 'mede_testa_m5',
+          standId: 'mede_testa',
+          number: 5,
+          title: 'Diário de Investigação',
+          objective: 'Diagnosticar a falha no circuito por medição e registrar a conclusão científica.',
+          componentsInfo: 'Circuito com LED fraco, painel de relatório',
+          victoryCriteria: 'Identificar a causa da falha por medições e registrar o relatório final',
+          failureFeedback: 'Uma conclusão científica deve utilizar dados medidos com precisão.',
+          voltsMediation: voltsMediationEstandeMedeTestaExplica,
+        ),
+      ];
 }
 
