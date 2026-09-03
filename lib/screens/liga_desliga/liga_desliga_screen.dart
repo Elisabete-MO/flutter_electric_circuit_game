@@ -25,7 +25,6 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
     with TickerProviderStateMixin {
   int _currentMissionIndex = 0;
   final List<StandMission> _missions = StandMission.estande3Missions;
-  bool _isSchematicView = true; // Inicia por padrão no modo Diagrama Esquemático
 
   // --- Estado Missão 1: Interruptor da Luminária ---
   bool _m1SwitchInserted = false;
@@ -441,8 +440,6 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
   // MISSÃO 1: Interruptor da Luminária
   // ==========================================
   Widget _buildMission1UI(StandMission mission) {
-    final bool isBulbLit = _m1SwitchInserted && _m1SwitchClosed;
-
     return GlassContainer(
       borderRadius: 24,
       accentColor: const Color(0xFF10B981),
@@ -453,194 +450,9 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
           _buildMissionHeader(mission),
           const SizedBox(height: 10),
 
-          // Seletor de Modo de Visualização (Esquemático vs. Realista)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    _isSchematicView ? Icons.schema_rounded : Icons.memory_rounded,
-                    color: _isSchematicView ? const Color(0xFF00E5FF) : const Color(0xFF10B981),
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _isSchematicView ? ' MODO: DIAGRAMA ESQUEMÁTICO DIDÁTICO' : ' MODO: BANCADA REALISTA',
-                    style: GoogleFonts.rajdhani(
-                      color: _isSchematicView ? const Color(0xFF00E5FF) : const Color(0xFF10B981),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      letterSpacing: 1.1,
-                    ),
-                  ),
-                ],
-              ),
-              SegmentedButton<bool>(
-                style: ButtonStyle(
-                  visualDensity: VisualDensity.compact,
-                  backgroundColor: WidgetStateProperty.resolveWith(
-                    (states) => const Color(0xFF0F172A),
-                  ),
-                ),
-                segments: const [
-                  ButtonSegment<bool>(
-                    value: true,
-                    label: Text('📐 ESQUEMÁTICO'),
-                  ),
-                  ButtonSegment<bool>(
-                    value: false,
-                    label: Text('🔬 REALISTA'),
-                  ),
-                ],
-                selected: {_isSchematicView},
-                onSelectionChanged: (set) => setState(() => _isSchematicView = set.first),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // Bancada de Montagem (Esquemática ou Realista)
+          // Bancada de Montagem Esquemática Didática
           Expanded(
-            child: _isSchematicView
-                ? _buildSchematicCanvasM1()
-                : Container(
-                    height: 270,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF031D17), Color(0xFF021410)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4), width: 1.2),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.5),
-                          blurRadius: 16,
-                        ),
-                      ],
-                    ),
-                    child: Stack(
-                      children: [
-                        // 1. Fios Neons com Animação de Elétrons
-                        CustomPaint(
-                          size: Size.infinite,
-                          painter: CircuitWirePainter(
-                            isClosed: isBulbLit,
-                            animationValue: _currentFlowController.value,
-                            switchInserted: _m1SwitchInserted,
-                          ),
-                        ),
-
-                        // 2. Fonte (Bateria 4.5V DragTarget)
-                        Positioned(
-                          left: 30,
-                          top: 80,
-                          child: DragTarget<String>(
-                            onWillAcceptWithDetails: (details) => details.data == 'battery',
-                            onAcceptWithDetails: (_) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('⚡ Bateria 4.5V fixada na fonte de energia!'),
-                                  duration: Duration(seconds: 1),
-                                ),
-                              );
-                            },
-                            builder: (context, candidateData, rejectedData) {
-                              final isHovering = candidateData.isNotEmpty;
-                              return AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                decoration: isHovering
-                                    ? BoxDecoration(
-                                        borderRadius: BorderRadius.circular(16),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: const Color(0xFF10B981).withValues(alpha: 0.8),
-                                            blurRadius: 16,
-                                            spreadRadius: 3,
-                                          ),
-                                        ],
-                                      )
-                                    : null,
-                                child: _buildRealisticBattery(),
-                              );
-                            },
-                          ),
-                        ),
-
-                        // 3. Slot DragTarget do Interruptor (Topo Centro)
-                        Positioned(
-                          left: 230,
-                          top: 15,
-                          child: _m1SwitchInserted
-                              ? _buildSwitchControlCard(
-                                  isClosed: _m1SwitchClosed,
-                                  onToggle: () {
-                                    setState(() {
-                                      _m1SwitchClosed = !_m1SwitchClosed;
-                                    });
-                                  },
-                                )
-                              : DragTarget<String>(
-                                  onWillAcceptWithDetails: (details) => details.data == 'switch',
-                                  onAcceptWithDetails: (details) {
-                                    setState(() {
-                                      _m1SwitchInserted = true;
-                                    });
-                                  },
-                                  builder: (context, candidateData, rejectedData) {
-                                    final isHovering = candidateData.isNotEmpty;
-                                    return _buildInsertSwitchSlot(
-                                      isHovering: isHovering,
-                                      onTap: () {
-                                        setState(() {
-                                          _m1SwitchInserted = true;
-                                        });
-                                      },
-                                    );
-                                  },
-                                ),
-                        ),
-
-                        // 4. Luminária (Direita com DragTarget)
-                        Positioned(
-                          right: 30,
-                          top: 70,
-                          child: DragTarget<String>(
-                            onWillAcceptWithDetails: (details) => details.data == 'lamp',
-                            onAcceptWithDetails: (_) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('💡 Lâmpada conectada ao soquete com sucesso!'),
-                                  duration: Duration(seconds: 1),
-                                ),
-                              );
-                            },
-                            builder: (context, candidateData, rejectedData) {
-                              final isHovering = candidateData.isNotEmpty;
-                              return AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                decoration: isHovering
-                                    ? BoxDecoration(
-                                        borderRadius: BorderRadius.circular(16),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.amberAccent.withValues(alpha: 0.8),
-                                            blurRadius: 16,
-                                            spreadRadius: 3,
-                                          ),
-                                        ],
-                                      )
-                                    : null,
-                                child: _buildRealisticBulb(isLit: isBulbLit),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+            child: _buildSchematicCanvasM1(),
           ),
 
           const SizedBox(height: 20),
@@ -1544,77 +1356,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
     );
   }
 
-  Widget _buildInsertSwitchSlot({bool isHovering = false, required VoidCallback onTap}) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: isHovering
-              ? const Color(0xFF10B981).withValues(alpha: 0.3)
-              : const Color(0xFF0F172A).withValues(alpha: 0.85),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isHovering ? const Color(0xFF10B981) : Colors.amber,
-            width: isHovering ? 2.5 : 2.0,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: (isHovering ? const Color(0xFF10B981) : Colors.amber).withValues(alpha: isHovering ? 0.5 : 0.2),
-              blurRadius: isHovering ? 14 : 8,
-              spreadRadius: isHovering ? 2 : 0,
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                color: (isHovering ? const Color(0xFF10B981) : Colors.amber).withValues(alpha: 0.2),
-                border: Border.all(
-                  color: isHovering ? const Color(0xFF10B981) : Colors.amber,
-                  width: 1.5,
-                ),
-              ),
-              child: Icon(
-                isHovering ? Icons.move_to_inbox_rounded : Icons.add_box_rounded,
-                color: isHovering ? const Color(0xFF10B981) : Colors.amber,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isHovering ? '🎯 Solte para Encaixar!' : '➕ Encaixar Interruptor',
-                  style: GoogleFonts.rajdhani(
-                    color: isHovering ? const Color(0xFF10B981) : Colors.amber,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-                Text(
-                  'Arraste o objeto ou clique aqui',
-                  style: GoogleFonts.rajdhani(
-                    color: Colors.white70,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+
 
   Widget _buildSchematicCanvasM1() {
     final bool isBulbLit = _m1SwitchInserted && _m1SwitchClosed;

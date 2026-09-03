@@ -7,6 +7,7 @@ import '../../widgets/glass_container.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
 import '../../widgets/schematic_blueprint_socket.dart';
 import '../../widgets/schematic_symbol_painters.dart';
+import '../../widgets/tech_grid_background.dart';
 import '../../widgets/workbench_components.dart';
 
 /// Estande 06 — "Movimento em Miniatura" (Equipe Mecânica)
@@ -222,31 +223,33 @@ class _MovimentoMiniaturaScreenState extends State<MovimentoMiniaturaScreen>
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            children: [
-              // Área Principal do Laboratório / Bancada
-              Expanded(
-                flex: 3,
-                child: Column(
-                  children: [
-                    _buildStepperHeader(),
-                    const SizedBox(height: 12),
-                    Expanded(
-                      child: _buildCurrentMissionUI(),
-                    ),
-                  ],
+      body: TechGridBackground(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                // Área Principal do Laboratório / Bancada
+                Expanded(
+                  flex: 3,
+                  child: Column(
+                    children: [
+                      _buildStepperHeader(),
+                      const SizedBox(height: 12),
+                      Expanded(
+                        child: _buildCurrentMissionUI(),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              // Painel Lateral (Gaveta de Componentes & Instruções)
-              Expanded(
-                flex: 2,
-                child: _buildSideControlPanel(),
-              ),
-            ],
+                const SizedBox(width: 16),
+                // Painel Lateral (Gaveta de Componentes & Instruções)
+                Expanded(
+                  flex: 2,
+                  child: _buildSideControlPanel(),
+                ),
+              ],
+            ),
           ),
         ),
       ),
