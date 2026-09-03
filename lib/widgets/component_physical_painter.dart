@@ -388,47 +388,41 @@ class ComponentPhysicalPainter extends CustomPainter {
   }
 
   /// --------------------------------------------------------------------------
-  /// INTERRUPTOR / PUSH-BUTTON TÁTIL 3D (4 Pinos com Botão Central Vermelho)
+  /// INTERRUPTOR DE ALAVANCA TIPO TOGGLE SWITCH 3D (Chave Basculante Metálica)
   /// --------------------------------------------------------------------------
   void _drawPhysicalSwitch(Canvas canvas, Size size, double cx, double cy) {
-    const boxWidth = 52.0;
+    const boxWidth = 56.0;
     const boxHeight = 44.0;
     final boxRect = Rect.fromCenter(center: Offset(cx, cy), width: boxWidth, height: boxHeight);
-    final boxRRect = RRect.fromRectAndRadius(boxRect, const Radius.circular(10.0));
+    final boxRRect = RRect.fromRectAndRadius(boxRect, const Radius.circular(8.0));
 
-    _drawCleanLeads(canvas, size, cx, cy, cx - 26, cx + 26);
+    // Hastes metálicas de bancada laterais
+    _drawCleanLeads(canvas, size, cx, cy, cx - 28, cx + 28);
 
     // 1. Sombra projetada do componente
     canvas.drawRRect(
-      RRect.fromRectAndRadius(boxRect.translate(2.5, 4.0), const Radius.circular(10.0)),
+      RRect.fromRectAndRadius(boxRect.translate(2.5, 4.0), const Radius.circular(8.0)),
       Paint()..color = Colors.black.withValues(alpha: 0.4)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
     );
 
-    // 2. 4 Pinos metálicos prateados nos cantos (2 à esquerda, 2 à direita)
-    final pinPaint = Paint()
-      ..color = const Color(0xFFCBD5E1)
-      ..style = PaintingStyle.fill;
-    final pinBorder = Paint()
-      ..color = const Color(0xFF64748B)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
+    // 2. Bornes de conexão metálicos / Parafusos laterais
+    final terminalPaint = Paint()
+      ..shader = const LinearGradient(
+        colors: [Color(0xFFCBD5E1), Color(0xFF64748B), Color(0xFF334155)],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ).createShader(Rect.fromLTWH(boxRect.left - 6, cy - 6, 8, 12));
 
-    // Pinos Esquerdos
-    final pLeftTop = Rect.fromLTWH(boxRect.left - 9, boxRect.top + 6, 10, 8);
-    final pLeftBot = Rect.fromLTWH(boxRect.left - 9, boxRect.bottom - 14, 10, 8);
-    // Pinos Direitos
-    final pRightTop = Rect.fromLTWH(boxRect.right - 1, boxRect.top + 6, 10, 8);
-    final pRightBot = Rect.fromLTWH(boxRect.right - 1, boxRect.bottom - 14, 10, 8);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromLTWH(boxRect.left - 6, cy - 6, 8, 12), const Radius.circular(2)),
+      terminalPaint,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromLTWH(boxRect.right - 2, cy - 6, 8, 12), const Radius.circular(2)),
+      terminalPaint,
+    );
 
-    for (final pin in [pLeftTop, pLeftBot, pRightTop, pRightBot]) {
-      final pinRRect = RRect.fromRectAndRadius(pin, const Radius.circular(2));
-      canvas.drawRRect(pinRRect, pinPaint);
-      canvas.drawRRect(pinRRect, pinBorder);
-      // Furo central do pino
-      canvas.drawCircle(pin.center, 1.8, Paint()..color = const Color(0xFF475569));
-    }
-
-    // 3. Corpo escuro isolante de plástico (Navy/Dark Slate Matte)
+    // 3. Corpo escuro isolante de plástico (Navy / Dark Slate Matte)
     final bodyShader = LinearGradient(
       colors: isDarkMode
           ? const [Color(0xFF334155), Color(0xFF1E293B), Color(0xFF0F172A)]
@@ -438,69 +432,110 @@ class ComponentPhysicalPainter extends CustomPainter {
     ).createShader(boxRect);
     canvas.drawRRect(boxRRect, Paint()..shader = bodyShader);
 
-    // Borda chanfrada do corpo
+    // Moldura chanfrada do corpo
     canvas.drawRRect(
       boxRRect,
       Paint()
-        ..color = Colors.white.withValues(alpha: 0.2)
+        ..color = Colors.white.withValues(alpha: 0.15)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.2,
     );
 
-    // 4. Anel central de rebaixo para o atuador
-    final recessCenter = Offset(cx, cy);
-    const recessRadius = 15.0;
-    canvas.drawCircle(
-      recessCenter,
-      recessRadius,
-      Paint()..color = const Color(0xFF090D16),
-    );
-    canvas.drawCircle(
-      recessCenter,
-      recessRadius,
-      Paint()..color = const Color(0xFF475569)..style = PaintingStyle.stroke..strokeWidth = 1.0,
+    // 4. Placa Central de Metal Escovado (Painel Bezel Cromado da Alavanca)
+    final bezelRect = Rect.fromCenter(center: Offset(cx, cy), width: 34, height: 26);
+    final bezelRRect = RRect.fromRectAndRadius(bezelRect, const Radius.circular(4.0));
+
+    final bezelShader = const LinearGradient(
+      colors: [Color(0xFFE2E8F0), Color(0xFF94A3B8), Color(0xFF475569)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    ).createShader(bezelRect);
+
+    canvas.drawRRect(bezelRRect, Paint()..shader = bezelShader);
+    canvas.drawRRect(
+      bezelRRect,
+      Paint()
+        ..color = const Color(0xFF1E293B)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0,
     );
 
-    // 5. Glow ao redor do botão se ativo/pressionado
+    // Parafusos de fixação nos 4 cantos da placa bezel
+    final screwPaint = Paint()..color = const Color(0xFF334155);
+    canvas.drawCircle(Offset(bezelRect.left + 3, bezelRect.top + 3), 1.2, screwPaint);
+    canvas.drawCircle(Offset(bezelRect.right - 3, bezelRect.top + 3), 1.2, screwPaint);
+    canvas.drawCircle(Offset(bezelRect.left + 3, bezelRect.bottom - 3), 1.2, screwPaint);
+    canvas.drawCircle(Offset(bezelRect.right - 3, bezelRect.bottom - 3), 1.2, screwPaint);
+
+    // 5. LED Indicador de Status / Estado (ON / OFF)
+    final ledCenter = Offset(cx, cy + 7);
     if (isActive) {
+      // Glow Verde quando LIGADO
       canvas.drawCircle(
-        recessCenter,
-        recessRadius + 6,
+        ledCenter,
+        5.5,
         Paint()
-          ..color = const Color(0xFFEF4444).withValues(alpha: 0.55)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+          ..color = const Color(0xFF10B981).withValues(alpha: 0.6)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
       );
+      canvas.drawCircle(ledCenter, 3.0, Paint()..color = const Color(0xFF34D399));
+      canvas.drawCircle(ledCenter, 1.2, Paint()..color = Colors.white);
+    } else {
+      // Ponto escuro/inativo quando DESLIGADO
+      canvas.drawCircle(ledCenter, 2.5, Paint()..color = const Color(0xFF334155));
+      canvas.drawCircle(ledCenter, 2.5, Paint()..color = const Color(0xFF1E293B)..style = PaintingStyle.stroke..strokeWidth = 0.8);
     }
 
-    // 6. Botão Vermelho Central de Atuação
-    final capRadius = isActive ? 11.5 : 13.0;
-    final capCenter = isActive ? Offset(cx, cy + 1.0) : Offset(cx, cy);
+    // 6. Base Esférica da Haste da Alavanca
+    final pivotCenter = Offset(cx, cy - 3);
+    canvas.drawCircle(pivotCenter, 7.5, Paint()..color = const Color(0xFF1E293B));
+    canvas.drawCircle(pivotCenter, 7.5, Paint()..color = const Color(0xFF64748B)..style = PaintingStyle.stroke..strokeWidth = 1.0);
 
-    final capShader = RadialGradient(
-      colors: isActive
-          ? const [Color(0xFFF87171), Color(0xFFEF4444), Color(0xFF991B1B)]
-          : const [Color(0xFFEF4444), Color(0xFFDC2626), Color(0xFF7F1D1D)],
-      center: const Alignment(-0.35, -0.4),
-      radius: 0.85,
-    ).createShader(Rect.fromCircle(center: capCenter, radius: capRadius));
+    // 7. Haste Metálica Basculante (Alavanca 3D em Tom Cromado)
+    // Tilted Left when OFF, Tilted Right when ON
+    final leverAngle = isActive ? 0.40 : -0.40; // Radianos
+    final leverLength = 18.0;
+    final tipX = pivotCenter.dx + leverLength * math.sin(leverAngle);
+    final tipY = pivotCenter.dy - leverLength * math.cos(leverAngle);
 
-    canvas.drawCircle(capCenter, capRadius, Paint()..shader = capShader);
-
-    // Borda do botão
-    canvas.drawCircle(
-      capCenter,
-      capRadius,
+    // Sombra da alavanca projetada no bezel
+    canvas.drawLine(
+      pivotCenter.translate(1.5, 1.5),
+      Offset(tipX + 2, tipY + 2),
       Paint()
-        ..color = const Color(0xFF7F1D1D)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.2,
+        ..color = Colors.black.withValues(alpha: 0.35)
+        ..strokeWidth = 5.0
+        ..strokeCap = StrokeCap.round,
     );
 
-    // Brilho especular no topo do botão vermelho
+    // Haste Metálica Cromada
+    final leverPaint = Paint()
+      ..shader = LinearGradient(
+        colors: const [Color(0xFFFFFFFF), Color(0xFFCBD5E1), Color(0xFF64748B)],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ).createShader(Rect.fromPoints(pivotCenter, Offset(tipX, tipY)))
+      ..strokeWidth = 4.2
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawLine(pivotCenter, Offset(tipX, tipY), leverPaint);
+
+    // Esfera/Knob metálico na ponta da alavanca
+    final knobCenter = Offset(tipX, tipY);
+    final knobShader = RadialGradient(
+      colors: const [Color(0xFFFFFFFF), Color(0xFF94A3B8), Color(0xFF475569)],
+      center: const Alignment(-0.3, -0.3),
+      radius: 0.8,
+    ).createShader(Rect.fromCircle(center: knobCenter, radius: 4.5));
+
+    canvas.drawCircle(knobCenter, 4.5, Paint()..shader = knobShader);
     canvas.drawCircle(
-      Offset(capCenter.dx - capRadius * 0.35, capCenter.dy - capRadius * 0.35),
-      capRadius * 0.28,
-      Paint()..color = Colors.white.withValues(alpha: 0.65),
+      knobCenter,
+      4.5,
+      Paint()
+        ..color = const Color(0xFF334155)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.8,
     );
   }
 

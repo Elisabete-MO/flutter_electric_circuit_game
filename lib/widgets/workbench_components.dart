@@ -337,8 +337,17 @@ class WorkbenchSymbolToolboxTile<T extends Object> extends StatelessWidget {
         children: [
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(top: 6, left: 4, right: 4),
-              child: Center(child: symbolWidget),
+              padding: const EdgeInsets.only(top: 4, left: 4, right: 4, bottom: 2),
+              child: Center(
+                child: FittedBox(
+                  fit: BoxFit.contain,
+                  child: SizedBox(
+                    width: 72,
+                    height: 72,
+                    child: Center(child: symbolWidget),
+                  ),
+                ),
+              ),
             ),
           ),
           if (label != null || tooltip != null)

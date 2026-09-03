@@ -8,8 +8,9 @@ import '../../state/progress_controller.dart';
 import '../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
 import '../../widgets/schematic_blueprint_socket.dart';
-import '../../widgets/component_vector_painters.dart';
 import '../../widgets/component_physical_painter.dart';
+import '../../widgets/circuit_symbol_painter.dart';
+import '../../widgets/street_lamp_painter.dart';
 import '../../widgets/tech_grid_background.dart';
 import '../../widgets/workbench_components.dart';
 import '../../widgets/success_confetti_overlay.dart';
@@ -607,13 +608,38 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
             SchematicBlueprintSocket<String>(
               expectedData: 'fio_serie',
               isFilled: _m1WireConnected,
-              symbolWidget: const PushButtonVectorWidget(
-                size: 50,
-                isPressed: true,
-              ),
-              placeholderWidget: const PushButtonVectorWidget(
-                size: 45,
-              ),
+              symbolWidget: _usePhysicalStyle
+                  ? CustomPaint(
+                      size: const Size(50, 50),
+                      painter: ComponentPhysicalPainter(
+                        type: ComponentType.connectingWire,
+                        isDarkMode: false,
+                      ),
+                    )
+                  : CustomPaint(
+                      size: const Size(50, 50),
+                      painter: CircuitSymbolPainter(
+                        type: ComponentType.connectingWire,
+                        color: const Color(0xFF0F172A),
+                        strokeWidth: 2.5,
+                      ),
+                    ),
+              placeholderWidget: _usePhysicalStyle
+                  ? CustomPaint(
+                      size: const Size(45, 45),
+                      painter: ComponentPhysicalPainter(
+                        type: ComponentType.connectingWire,
+                        isDarkMode: false,
+                      ),
+                    )
+                  : CustomPaint(
+                      size: const Size(45, 45),
+                      painter: CircuitSymbolPainter(
+                        type: ComponentType.connectingWire,
+                        color: const Color(0xFF94A3B8),
+                        strokeWidth: 2.0,
+                      ),
+                    ),
               label: 'FIO EM SÉRIE',
               onAccept: (_) {
                 setState(() {
@@ -983,7 +1009,7 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
             ),
           ),
         ),
-        const Wrap(
+        Wrap(
           spacing: 10,
           runSpacing: 10,
           children: [
@@ -991,22 +1017,67 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
               data: 'fio_serie',
               label: 'Condutor',
               tooltip: 'Condutor em Série',
-              symbolWidget: PushButtonVectorWidget(size: 34, isPressed: true),
-              color: Color(0xFF0284C7),
+              symbolWidget: _usePhysicalStyle
+                  ? CustomPaint(
+                      size: const Size(34, 34),
+                      painter: ComponentPhysicalPainter(
+                        type: ComponentType.connectingWire,
+                        isDarkMode: false,
+                      ),
+                    )
+                  : CustomPaint(
+                      size: const Size(34, 34),
+                      painter: CircuitSymbolPainter(
+                        type: ComponentType.connectingWire,
+                        color: const Color(0xFF0F172A),
+                        strokeWidth: 2.0,
+                      ),
+                    ),
+              color: const Color(0xFF0284C7),
             ),
             WorkbenchSymbolToolboxTile<String>(
               data: 'no_paralelo',
               label: 'Nó Paralelo',
               tooltip: 'Nó / Bifurcação Paralela',
-              symbolWidget: MeterVectorWidget(size: 34, meterType: 'V', accentColor: Color(0xFF0284C7)),
-              color: Color(0xFF0284C7),
+              symbolWidget: _usePhysicalStyle
+                  ? CustomPaint(
+                      size: const Size(34, 34),
+                      painter: ComponentPhysicalPainter(
+                        type: ComponentType.connectingWire,
+                        isDarkMode: false,
+                      ),
+                    )
+                  : CustomPaint(
+                      size: const Size(34, 34),
+                      painter: CircuitSymbolPainter(
+                        type: ComponentType.connectingWire,
+                        color: const Color(0xFF0F172A),
+                        strokeWidth: 2.0,
+                      ),
+                    ),
+              color: const Color(0xFF0284C7),
             ),
             WorkbenchSymbolToolboxTile<String>(
               data: 'lamp_poste',
               label: 'Poste LED',
               tooltip: 'Poste de Luz (Lâmpada)',
-              symbolWidget: BulbVectorWidget(size: 34, isOn: true),
-              color: Color(0xFFD97706),
+              symbolWidget: _usePhysicalStyle
+                  ? CustomPaint(
+                      size: const Size(34, 44),
+                      painter: StreetLampPainter(
+                        isActive: false,
+                        isDarkMode: false,
+                      ),
+                    )
+                  : CustomPaint(
+                      size: const Size(34, 34),
+                      painter: CircuitSymbolPainter(
+                        type: ComponentType.bulb,
+                        color: const Color(0xFF0F172A),
+                        strokeWidth: 2.0,
+                      ),
+                    ),
+              color: const Color(0xFFD97706),
             ),
           ],
         ),
@@ -1167,38 +1238,22 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
       children: [
         if (_usePhysicalStyle)
           CustomPaint(
-            size: const Size(70, 70),
-            painter: ComponentPhysicalPainter(
-              type: ComponentType.bulb,
+            size: const Size(75, 95),
+            painter: StreetLampPainter(
               isActive: isLit,
+              brightnessRatio: brightnessRatio,
               isDarkMode: false,
             ),
           )
         else
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              if (isLit)
-                Container(
-                  width: 70 * brightnessRatio + 20,
-                  height: 70 * brightnessRatio + 20,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: const Color(0xFFFDE68A),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFF59E0B).withValues(alpha: 0.5 * brightnessRatio),
-                        blurRadius: 24 * brightnessRatio,
-                        spreadRadius: 8 * brightnessRatio,
-                      ),
-                    ],
-                  ),
-                ),
-              BulbVectorWidget(
-                size: 48,
-                isOn: isLit,
-              ),
-            ],
+          CustomPaint(
+            size: const Size(60, 60),
+            painter: CircuitSymbolPainter(
+              type: ComponentType.bulb,
+              isActive: isLit,
+              color: const Color(0xFF0F172A),
+              strokeWidth: 2.5,
+            ),
           ),
         const SizedBox(height: 6),
         Text(

@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -10,8 +9,8 @@ import '../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
 import '../../widgets/schematic_blueprint_socket.dart';
 import '../../widgets/schematic_symbol_painters.dart';
-import '../../widgets/component_vector_painters.dart';
 import '../../widgets/component_physical_painter.dart';
+import '../../widgets/circuit_symbol_painter.dart';
 import '../../widgets/tech_grid_background.dart';
 import '../../widgets/workbench_components.dart';
 import '../../widgets/success_confetti_overlay.dart';
@@ -521,15 +520,30 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
           ),
         ),
 
-        // Fonte CC / Bateria Esquemática (Esquerda)
-        const Positioned(
+        // Fonte CC / Bateria (Esquerda)
+        Positioned(
           left: 40,
           top: 100,
           child: Column(
             children: [
-              BatteryVectorWidget(size: 60),
-              SizedBox(height: 6),
-              Text(
+              _usePhysicalStyle
+                  ? CustomPaint(
+                      size: const Size(60, 60),
+                      painter: ComponentPhysicalPainter(
+                        type: ComponentType.battery,
+                        isDarkMode: false,
+                      ),
+                    )
+                  : CustomPaint(
+                      size: const Size(55, 55),
+                      painter: CircuitSymbolPainter(
+                        type: ComponentType.battery,
+                        color: const Color(0xFF0F172A),
+                        strokeWidth: 2.5,
+                      ),
+                    ),
+              const SizedBox(height: 6),
+              const Text(
                 'FONTE 6.0V CC',
                 style: TextStyle(color: Color(0xFF0F172A), fontSize: 11, fontWeight: FontWeight.bold),
               ),
@@ -557,13 +571,42 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
           child: SchematicBlueprintSocket<String>(
             expectedData: 'motor_cc',
             isFilled: _m1MotorInserted,
-            symbolWidget: MotorCcVectorWidget(
-              size: 50,
-              isRunning: _m1MotorInserted,
-            ),
-            placeholderWidget: const MotorCcVectorWidget(
-              size: 45,
-            ),
+            symbolWidget: _usePhysicalStyle
+                ? CustomPaint(
+                    size: const Size(50, 50),
+                    painter: ComponentPhysicalPainter(
+                      type: ComponentType.motor,
+                      isActive: _m1MotorInserted,
+                      isDarkMode: false,
+                    ),
+                  )
+                : CustomPaint(
+                    size: const Size(50, 50),
+                    painter: CircuitSymbolPainter(
+                      type: ComponentType.motor,
+                      isActive: _m1MotorInserted,
+                      color: const Color(0xFF0F172A),
+                      strokeWidth: 2.5,
+                    ),
+                  ),
+            placeholderWidget: _usePhysicalStyle
+                ? CustomPaint(
+                    size: const Size(45, 45),
+                    painter: ComponentPhysicalPainter(
+                      type: ComponentType.motor,
+                      isActive: false,
+                      isDarkMode: false,
+                    ),
+                  )
+                : CustomPaint(
+                    size: const Size(45, 45),
+                    painter: CircuitSymbolPainter(
+                      type: ComponentType.motor,
+                      isActive: false,
+                      color: const Color(0xFF94A3B8),
+                      strokeWidth: 2.0,
+                    ),
+                  ),
             label: 'MOTOR CC',
             onAccept: (_) {
               setState(() {
@@ -944,43 +987,14 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
             ),
           )
         else
-          AnimatedBuilder(
-            animation: _fanController,
-            builder: (context, child) {
-              final angle = isRunning
-                  ? _fanController.value * 2 * math.pi * (isReversed ? -1 : 1)
-                  : 0.0;
-              return Transform.rotate(
-                angle: angle,
-                child: Container(
-                  width: 90,
-                  height: 90,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isRunning ? const Color(0xFF10B981).withValues(alpha: 0.2) : const Color(0xFF1E293B),
-                    border: Border.all(
-                      color: isRunning ? const Color(0xFF10B981) : Colors.white24,
-                      width: 3,
-                    ),
-                    boxShadow: isRunning
-                        ? [
-                            BoxShadow(
-                              color: const Color(0xFF10B981).withValues(alpha: 0.5),
-                              blurRadius: 16,
-                            ),
-                          ]
-                        : null,
-                  ),
-                  child: const Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Icon(Icons.autorenew_rounded, size: 64, color: Colors.white),
-                      Icon(Icons.brightness_5_rounded, size: 24, color: Colors.amber),
-                    ],
-                  ),
-                ),
-              );
-            },
+          CustomPaint(
+            size: const Size(90, 90),
+            painter: CircuitSymbolPainter(
+              type: ComponentType.motor,
+              isActive: isRunning,
+              color: const Color(0xFF0F172A),
+              strokeWidth: 2.5,
+            ),
           ),
         const SizedBox(height: 8),
         Text(
@@ -1007,7 +1021,7 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
   }
 
   Widget _buildSideToolboxDrawer() {
-    return const Wrap(
+    return Wrap(
       spacing: 10,
       runSpacing: 10,
       children: [
@@ -1015,29 +1029,93 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
           data: 'motor_cc',
           label: 'Motor CC',
           tooltip: 'Motor CC',
-          symbolWidget: MotorCcVectorWidget(size: 34, isRunning: true),
-          color: Color(0xFF0284C7),
+          symbolWidget: _usePhysicalStyle
+              ? CustomPaint(
+                  size: const Size(34, 34),
+                  painter: ComponentPhysicalPainter(
+                    type: ComponentType.motor,
+                    isActive: false,
+                    isDarkMode: false,
+                  ),
+                )
+              : CustomPaint(
+                  size: const Size(34, 34),
+                  painter: CircuitSymbolPainter(
+                    type: ComponentType.motor,
+                    isActive: false,
+                    color: const Color(0xFF0F172A),
+                    strokeWidth: 2.0,
+                  ),
+                ),
+          color: const Color(0xFF0284C7),
         ),
         WorkbenchSymbolToolboxTile<String>(
           data: 'push_button',
           label: 'Botão',
           tooltip: 'Push-Button',
-          symbolWidget: PushButtonVectorWidget(size: 34),
-          color: Color(0xFFD97706),
+          symbolWidget: _usePhysicalStyle
+              ? CustomPaint(
+                  size: const Size(34, 34),
+                  painter: ComponentPhysicalPainter(
+                    type: ComponentType.switchComponent,
+                    isDarkMode: false,
+                  ),
+                )
+              : CustomPaint(
+                  size: const Size(34, 34),
+                  painter: CircuitSymbolPainter(
+                    type: ComponentType.switchComponent,
+                    color: const Color(0xFF0F172A),
+                    strokeWidth: 2.0,
+                  ),
+                ),
+          color: const Color(0xFFD97706),
         ),
         WorkbenchSymbolToolboxTile<String>(
           data: 'led_indicator',
           label: 'LED',
           tooltip: 'LED Indicador',
-          symbolWidget: LedVectorWidget(size: 34, ledColor: Colors.redAccent, isOn: true),
+          symbolWidget: _usePhysicalStyle
+              ? CustomPaint(
+                  size: const Size(34, 34),
+                  painter: ComponentPhysicalPainter(
+                    type: ComponentType.led,
+                    isActive: false,
+                    isDarkMode: false,
+                  ),
+                )
+              : CustomPaint(
+                  size: const Size(34, 34),
+                  painter: CircuitSymbolPainter(
+                    type: ComponentType.led,
+                    isActive: false,
+                    color: const Color(0xFF0F172A),
+                    strokeWidth: 2.0,
+                  ),
+                ),
           color: Colors.redAccent,
         ),
         WorkbenchSymbolToolboxTile<String>(
           data: 'resistor_680',
           label: 'Resistor',
           tooltip: 'Resistor (680Ω)',
-          symbolWidget: ResistorVectorWidget(size: 34, resistanceValue: '680'),
-          color: Color(0xFFD97706),
+          symbolWidget: _usePhysicalStyle
+              ? CustomPaint(
+                  size: const Size(34, 34),
+                  painter: ComponentPhysicalPainter(
+                    type: ComponentType.resistor,
+                    isDarkMode: false,
+                  ),
+                )
+              : CustomPaint(
+                  size: const Size(34, 34),
+                  painter: CircuitSymbolPainter(
+                    type: ComponentType.resistor,
+                    color: const Color(0xFF0F172A),
+                    strokeWidth: 2.0,
+                  ),
+                ),
+          color: const Color(0xFFD97706),
         ),
       ],
     );

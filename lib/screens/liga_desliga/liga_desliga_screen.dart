@@ -14,7 +14,6 @@ import '../../widgets/prof_volts_full_body.dart';
 import '../../widgets/realistic_wire_painter.dart';
 import '../../widgets/schematic_blueprint_socket.dart';
 import '../../widgets/schematic_symbol_painters.dart';
-import '../../widgets/component_vector_painters.dart';
 import '../../widgets/tech_grid_background.dart';
 import '../../widgets/workbench_components.dart';
 
@@ -750,7 +749,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
   }
 
   Widget _buildSideToolboxDrawer() {
-    return const Wrap(
+    return Wrap(
       spacing: 10,
       runSpacing: 10,
       children: [
@@ -758,22 +757,68 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
           data: 'switch',
           label: 'Interruptor',
           tooltip: 'Interruptor (SPST)',
-          symbolWidget: PushButtonVectorWidget(size: 34),
-          color: Color(0xFFD97706),
+          symbolWidget: _usePhysicalStyle
+              ? CustomPaint(
+                  size: const Size(34, 34),
+                  painter: ComponentPhysicalPainter(
+                    type: ComponentType.switchComponent,
+                    isDarkMode: false,
+                  ),
+                )
+              : CustomPaint(
+                  size: const Size(34, 34),
+                  painter: CircuitSymbolPainter(
+                    type: ComponentType.switchComponent,
+                    color: const Color(0xFF0F172A),
+                    strokeWidth: 2.0,
+                  ),
+                ),
+          color: const Color(0xFFD97706),
         ),
         WorkbenchSymbolToolboxTile<String>(
           data: 'battery',
           label: 'Bateria',
           tooltip: 'Bateria 4.5V',
-          symbolWidget: BatteryVectorWidget(size: 34),
-          color: Color(0xFF0284C7),
+          symbolWidget: _usePhysicalStyle
+              ? CustomPaint(
+                  size: const Size(34, 34),
+                  painter: ComponentPhysicalPainter(
+                    type: ComponentType.battery,
+                    isDarkMode: false,
+                  ),
+                )
+              : CustomPaint(
+                  size: const Size(34, 34),
+                  painter: CircuitSymbolPainter(
+                    type: ComponentType.battery,
+                    color: const Color(0xFF0F172A),
+                    strokeWidth: 2.0,
+                  ),
+                ),
+          color: const Color(0xFF0284C7),
         ),
         WorkbenchSymbolToolboxTile<String>(
           data: 'lamp',
           label: 'Lâmpada',
           tooltip: 'Lâmpada (Carga)',
-          symbolWidget: BulbVectorWidget(size: 34, isOn: true),
-          color: Color(0xFFD97706),
+          symbolWidget: _usePhysicalStyle
+              ? CustomPaint(
+                  size: const Size(34, 34),
+                  painter: ComponentPhysicalPainter(
+                    type: ComponentType.bulb,
+                    isActive: false,
+                    isDarkMode: false,
+                  ),
+                )
+              : CustomPaint(
+                  size: const Size(34, 34),
+                  painter: CircuitSymbolPainter(
+                    type: ComponentType.bulb,
+                    color: const Color(0xFF0F172A),
+                    strokeWidth: 2.0,
+                  ),
+                ),
+          color: const Color(0xFFD97706),
         ),
       ],
     );

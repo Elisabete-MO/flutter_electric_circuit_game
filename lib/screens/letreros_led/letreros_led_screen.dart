@@ -8,8 +8,8 @@ import '../../state/progress_controller.dart';
 import '../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
 import '../../widgets/schematic_blueprint_socket.dart';
-import '../../widgets/component_vector_painters.dart';
 import '../../widgets/component_physical_painter.dart';
+import '../../widgets/circuit_symbol_painter.dart';
 import '../../widgets/tech_grid_background.dart';
 import '../../widgets/workbench_components.dart';
 import '../../widgets/success_confetti_overlay.dart';
@@ -600,16 +600,33 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
                     isDarkMode: false,
                   ),
                 )
-              : LedVectorWidget(
-                  size: 55,
-                  ledColor: Colors.redAccent,
-                  isOn: isLit,
+              : CustomPaint(
+                  size: const Size(55, 55),
+                  painter: CircuitSymbolPainter(
+                    type: ComponentType.led,
+                    isActive: isLit,
+                    color: const Color(0xFF0F172A),
+                    strokeWidth: 2.5,
+                  ),
                 ),
-          placeholderWidget: const LedVectorWidget(
-            size: 45,
-            ledColor: Colors.white38,
-            isOn: false,
-          ),
+          placeholderWidget: _usePhysicalStyle
+              ? CustomPaint(
+                  size: const Size(45, 45),
+                  painter: ComponentPhysicalPainter(
+                    type: ComponentType.led,
+                    isActive: false,
+                    isDarkMode: false,
+                  ),
+                )
+              : CustomPaint(
+                  size: const Size(45, 45),
+                  painter: CircuitSymbolPainter(
+                    type: ComponentType.led,
+                    isActive: false,
+                    color: const Color(0xFF94A3B8),
+                    strokeWidth: 2.0,
+                  ),
+                ),
           label: 'SOQUETE LED SEMICONDUTOR',
           onAccept: (_) {
             setState(() {
@@ -912,7 +929,7 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Wrap(
+        Wrap(
           spacing: 10,
           runSpacing: 10,
           children: [
@@ -920,22 +937,69 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
               data: 'led_red',
               label: 'LED',
               tooltip: 'LED Vermelho (Semicondutor)',
-              symbolWidget: LedVectorWidget(size: 34, ledColor: Colors.redAccent, isOn: true),
+              symbolWidget: _usePhysicalStyle
+                  ? CustomPaint(
+                      size: const Size(34, 34),
+                      painter: ComponentPhysicalPainter(
+                        type: ComponentType.led,
+                        isActive: false,
+                        isDarkMode: false,
+                      ),
+                    )
+                  : CustomPaint(
+                      size: const Size(34, 34),
+                      painter: CircuitSymbolPainter(
+                        type: ComponentType.led,
+                        isActive: false,
+                        color: const Color(0xFF0F172A),
+                        strokeWidth: 2.0,
+                      ),
+                    ),
               color: Colors.redAccent,
             ),
             WorkbenchSymbolToolboxTile<String>(
               data: 'resistor_680',
               label: 'Resistor',
               tooltip: 'Resistor Prot. 680Ω',
-              symbolWidget: ResistorVectorWidget(size: 34, resistanceValue: '680'),
-              color: Color(0xFFD97706),
+              symbolWidget: _usePhysicalStyle
+                  ? CustomPaint(
+                      size: const Size(34, 34),
+                      painter: ComponentPhysicalPainter(
+                        type: ComponentType.resistor,
+                        isDarkMode: false,
+                      ),
+                    )
+                  : CustomPaint(
+                      size: const Size(34, 34),
+                      painter: CircuitSymbolPainter(
+                        type: ComponentType.resistor,
+                        color: const Color(0xFF0F172A),
+                        strokeWidth: 2.0,
+                      ),
+                    ),
+              color: const Color(0xFFD97706),
             ),
             WorkbenchSymbolToolboxTile<String>(
               data: 'bateria_9v',
               label: 'Fonte 9V',
               tooltip: 'Fonte DC 9V',
-              symbolWidget: BatteryVectorWidget(size: 34),
-              color: Color(0xFF0284C7),
+              symbolWidget: _usePhysicalStyle
+                  ? CustomPaint(
+                      size: const Size(34, 34),
+                      painter: ComponentPhysicalPainter(
+                        type: ComponentType.battery,
+                        isDarkMode: false,
+                      ),
+                    )
+                  : CustomPaint(
+                      size: const Size(34, 34),
+                      painter: CircuitSymbolPainter(
+                        type: ComponentType.battery,
+                        color: const Color(0xFF0F172A),
+                        strokeWidth: 2.0,
+                      ),
+                    ),
+              color: const Color(0xFF0284C7),
             ),
           ],
         ),
