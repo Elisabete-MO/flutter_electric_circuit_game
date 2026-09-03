@@ -9,7 +9,6 @@ import '../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../widgets/component_vector_painters.dart';
 import '../../widgets/component_physical_painter.dart';
 import '../../widgets/circuit_symbol_painter.dart';
-import '../../widgets/prof_volts_speech.dart';
 import '../../widgets/tech_grid_background.dart';
 import '../../widgets/workbench_components.dart';
 import '../../widgets/success_confetti_overlay.dart';
@@ -545,13 +544,7 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
             _buildVisualModeSelector(),
             const SizedBox(height: 6),
 
-            // Balão de Mediação Didática do Prof. Volts
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-              child: ProfVoltsSpeech(
-                text: _currentMission.voltsMediation,
-              ),
-            ),
+
 
             // Área Principal de Trabalho (Dividida 60/40)
             Expanded(

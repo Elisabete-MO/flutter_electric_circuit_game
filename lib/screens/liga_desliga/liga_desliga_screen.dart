@@ -1088,36 +1088,6 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFEF3C7),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFF59E0B)),
-          ),
-          child: Row(
-            children: [
-              const Icon(
-                Icons.warning_amber_rounded,
-                color: Color(0xFFD97706),
-                size: 22,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Problema Detectado: O interruptor foi montado em um ramo paralelo (ramo inútil). A lâmpada permanece acesa mesmo quando tentamos desligar!',
-                  style: GoogleFonts.outfit(
-                    color: const Color(0xFF92400E),
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-
         // Bancada Didática Interativa de Correção do Ramo (Clean Blueprint ou Físico 3D)
         _usePhysicalStyle
             ? _buildPhysicalCanvasM4()
