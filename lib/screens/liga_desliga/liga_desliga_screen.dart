@@ -8,6 +8,7 @@ import '../../models/stand_mission.dart';
 import '../../state/progress_controller.dart';
 import '../../widgets/circuit_symbol_painter.dart';
 import '../../widgets/component_physical_painter.dart';
+import '../../widgets/component_vector_painters.dart';
 import '../../widgets/glass_container.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
 import '../../widgets/prof_volts_full_body.dart';
@@ -36,6 +37,11 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
   // --- Estado Missão 1: Interruptor da Luminária ---
   bool _m1SwitchInserted = false;
   bool _m1SwitchClosed = false;
+  bool _m1BatteryInserted = false;
+  bool _m1BulbInserted = false;
+  double _m1BatteryRotation = 0.0;
+  double _m1SwitchRotation = 0.0;
+  double _m1BulbRotation = 0.0;
 
   // --- Estado Missão 2: Aberto ou Fechado? ---
   String? _m2AnswerStateA; // 'aberto' / 'fechado'
@@ -46,6 +52,16 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
   bool _m3Switch2Closed = false;
   bool _m3TestedSwitch1 = false;
   bool _m3TestedSwitch2 = false;
+  bool _m3BatteryInserted = false;
+  bool _m3LampAInserted = false;
+  bool _m3LampBInserted = false;
+  bool _m3Switch1Inserted = false;
+  bool _m3Switch2Inserted = false;
+  double _m3BatteryRotation = 0.0;
+  double _m3LampARotation = 0.0;
+  double _m3LampBRotation = 0.0;
+  double _m3Switch1Rotation = 0.0;
+  double _m3Switch2Rotation = 0.0;
   String? _m3MapSwitch1; // 'lampA' / 'lampB'
   String? _m3MapSwitch2; // 'lampA' / 'lampB'
 
@@ -753,60 +769,116 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
       spacing: 10,
       runSpacing: 10,
       children: [
+        // Bateria
         WorkbenchSymbolToolboxTile<String>(
-          data: 'switch',
-          label: 'Interruptor',
-          tooltip: 'Interruptor (SPST)',
+          data: 'battery',
+          label: 'Bateria',
+          tooltip: 'Fonte de Alimentação 9V',
           symbolWidget: _usePhysicalStyle
-              ? CustomPaint(
-                  size: const Size(34, 34),
-                  painter: ComponentPhysicalPainter(
-                    type: ComponentType.switchComponent,
-                    isDarkMode: false,
-                  ),
-                )
+              ? const BatteryVectorWidget(size: 34)
               : CustomPaint(
                   size: const Size(34, 34),
                   painter: CircuitSymbolPainter(
-                    type: ComponentType.switchComponent,
-                    color: const Color(0xFF0F172A),
+                    type: ComponentType.battery,
+                    color: const Color(0xFFD97706),
                     strokeWidth: 2.0,
                   ),
                 ),
           color: const Color(0xFFD97706),
         ),
+        // SPST: Interruptor alavanca
         WorkbenchSymbolToolboxTile<String>(
-          data: 'battery',
-          label: 'Bateria',
-          tooltip: 'Bateria 4.5V',
+          data: 'switch',
+          label: 'SPST',
+          tooltip: 'Interruptor SPST (Alavanca)',
           symbolWidget: _usePhysicalStyle
               ? CustomPaint(
                   size: const Size(34, 34),
                   painter: ComponentPhysicalPainter(
-                    type: ComponentType.battery,
+                    type: ComponentType.switchComponent,
                     isDarkMode: false,
                   ),
                 )
               : CustomPaint(
                   size: const Size(34, 34),
                   painter: CircuitSymbolPainter(
-                    type: ComponentType.battery,
-                    color: const Color(0xFF0F172A),
+                    type: ComponentType.switchComponent,
+                    color: const Color(0xFFD97706),
+                    strokeWidth: 2.0,
+                  ),
+                ),
+          color: const Color(0xFFD97706),
+        ),
+        // Chave 1: Sem etiqueta, cor diferente
+        WorkbenchSymbolToolboxTile<String>(
+          data: 'switch1',
+          label: 'Chave 1',
+          tooltip: 'Interruptor 1 (Sem Etiqueta)',
+          symbolWidget: _usePhysicalStyle
+              ? CustomPaint(
+                  size: const Size(34, 34),
+                  painter: ComponentPhysicalPainter(
+                    type: ComponentType.switchComponent,
+                    isDarkMode: false,
+                  ),
+                )
+              : CustomPaint(
+                  size: const Size(34, 34),
+                  painter: CircuitSymbolPainter(
+                    type: ComponentType.switchComponent,
+                    color: const Color(0xFF0284C7),
                     strokeWidth: 2.0,
                   ),
                 ),
           color: const Color(0xFF0284C7),
         ),
+        // Chave 2: Sem etiqueta, cor diferente
         WorkbenchSymbolToolboxTile<String>(
-          data: 'lamp',
+          data: 'switch2',
+          label: 'Chave 2',
+          tooltip: 'Interruptor 2 (Sem Etiqueta)',
+          symbolWidget: _usePhysicalStyle
+              ? CustomPaint(
+                  size: const Size(34, 34),
+                  painter: ComponentPhysicalPainter(
+                    type: ComponentType.switchComponent,
+                    isDarkMode: false,
+                  ),
+                )
+              : CustomPaint(
+                  size: const Size(34, 34),
+                  painter: CircuitSymbolPainter(
+                    type: ComponentType.switchComponent,
+                    color: const Color(0xFF10B981),
+                    strokeWidth: 2.0,
+                  ),
+                ),
+          color: const Color(0xFF10B981),
+        ),
+        // Push-Button: Botão de pressão
+        WorkbenchSymbolToolboxTile<String>(
+          data: 'push_button',
+          label: 'Push-Button',
+          tooltip: 'Botão de Pressão (Momentâneo)',
+          symbolWidget: _usePhysicalStyle
+              ? const PushButtonVectorWidget(size: 34)
+              : const SchematicSwitchWidget(
+                  size: 34,
+                  isPushButton: true,
+                  color: Color(0xFFEF4444),
+                ),
+          color: const Color(0xFFEF4444),
+        ),
+        // Lâmpada
+        WorkbenchSymbolToolboxTile<String>(
+          data: 'bulb',
           label: 'Lâmpada',
-          tooltip: 'Lâmpada (Carga)',
+          tooltip: 'Lâmpada Incandescente E10',
           symbolWidget: _usePhysicalStyle
               ? CustomPaint(
                   size: const Size(34, 34),
                   painter: ComponentPhysicalPainter(
                     type: ComponentType.bulb,
-                    isActive: false,
                     isDarkMode: false,
                   ),
                 )
@@ -814,11 +886,34 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   size: const Size(34, 34),
                   painter: CircuitSymbolPainter(
                     type: ComponentType.bulb,
-                    color: const Color(0xFF0F172A),
+                    color: const Color(0xFF10B981),
                     strokeWidth: 2.0,
                   ),
                 ),
-          color: const Color(0xFFD97706),
+          color: const Color(0xFF10B981),
+        ),
+        // Motor CC
+        WorkbenchSymbolToolboxTile<String>(
+          data: 'motor_cc',
+          label: 'Motor CC',
+          tooltip: 'Motor de Corrente Contínua',
+          symbolWidget: _usePhysicalStyle
+              ? CustomPaint(
+                  size: const Size(34, 34),
+                  painter: ComponentPhysicalPainter(
+                    type: ComponentType.motor,
+                    isDarkMode: false,
+                  ),
+                )
+              : CustomPaint(
+                  size: const Size(34, 34),
+                  painter: CircuitSymbolPainter(
+                    type: ComponentType.motor,
+                    color: const Color(0xFF0284C7),
+                    strokeWidth: 2.0,
+                  ),
+                ),
+          color: const Color(0xFF0284C7),
         ),
       ],
     );
@@ -1205,7 +1300,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
           WirePath(
             points: [
               Offset(batteryPos.dx + 14, batteryPos.dy - 40),
-              Offset(switchPos.dx - 30, switchPos.dy + 12),
+              Offset(switchPos.dx - 35, switchPos.dy),
             ],
             color: const Color(0xFFEF4444),
             isActive: isClosed,
@@ -1214,7 +1309,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
           // Saída (Laranja): Terminal Direito da Chave -> Pino Esquerdo da Lâmpada
           WirePath(
             points: [
-              Offset(switchPos.dx + 30, switchPos.dy + 12),
+              Offset(switchPos.dx + 35, switchPos.dy),
               Offset(lampPos.dx - 7, lampPos.dy + 24),
             ],
             color: const Color(0xFFF97316),
@@ -1365,7 +1460,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
           WirePath(
             points: [
               Offset(batteryPos.dx + 14, batteryPos.dy - 40),
-              Offset(switch1Pos.dx - 30, switch1Pos.dy + 10),
+              Offset(switch1Pos.dx - 35, switch1Pos.dy),
             ],
             color: const Color(0xFFEF4444),
             isActive: _m3Switch1Closed,
@@ -1375,7 +1470,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
           WirePath(
             points: [
               Offset(batteryPos.dx + 14, batteryPos.dy - 40),
-              Offset(switch2Pos.dx - 30, switch2Pos.dy + 10),
+              Offset(switch2Pos.dx - 35, switch2Pos.dy),
             ],
             color: const Color(0xFFEAB308),
             isActive: _m3Switch2Closed,
@@ -1384,7 +1479,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
           // Chave 1 -> Pino Esquerdo da Lâmpada A (Laranja)
           WirePath(
             points: [
-              Offset(switch1Pos.dx + 30, switch1Pos.dy + 10),
+              Offset(switch1Pos.dx + 35, switch1Pos.dy),
               Offset(lamp1Pos.dx - 7, lamp1Pos.dy + 24),
             ],
             color: const Color(0xFFF97316),
@@ -1394,7 +1489,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
           // Chave 2 -> Pino Esquerdo da Lâmpada B (Verde)
           WirePath(
             points: [
-              Offset(switch2Pos.dx + 30, switch2Pos.dy + 10),
+              Offset(switch2Pos.dx + 35, switch2Pos.dy),
               Offset(lamp2Pos.dx - 7, lamp2Pos.dy + 24),
             ],
             color: const Color(0xFF10B981),
@@ -1866,7 +1961,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
   }
 
   Widget _buildSchematicCanvasM1() {
-    final bool isBulbLit = _m1SwitchInserted && _m1SwitchClosed;
+    final bool isBulbLit = _m1BatteryInserted && _m1SwitchInserted && _m1SwitchClosed && _m1BulbInserted;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -1890,13 +1985,18 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                 ),
               ),
 
-              // 2. Card da Fonte (Bateria na Esquerda - Posição Centralizada)
+              // 2. Socket da Bateria (Esquerda)
               Positioned(
                 left: batteryX - 47.5,
                 top: 70,
-                child: SchematicComponentCard(
-                  label: '',
+                child: SchematicBlueprintSocket<String>(
+                  expectedData: 'battery',
+                  isFilled: _m1BatteryInserted,
                   showLabel: false,
+                  rotation: _m1BatteryRotation,
+                  onAccept: (_) => setState(() => _m1BatteryInserted = true),
+                  onRotate: () => setState(() => _m1BatteryRotation = (_m1BatteryRotation + 90) % 360),
+                  onTap: () {},
                   symbolWidget: CustomPaint(
                     size: const Size(54, 38),
                     painter: CircuitSymbolPainter(
@@ -1905,17 +2005,33 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                       strokeWidth: 2.2,
                     ),
                   ),
+                  placeholderWidget: Opacity(
+                    opacity: 0.4,
+                    child: CustomPaint(
+                      size: const Size(48, 34),
+                      painter: CircuitSymbolPainter(
+                        type: ComponentType.battery,
+                        color: const Color(0xFF94A3B8),
+                        strokeWidth: 2.0,
+                      ),
+                    ),
+                  ),
+                  label: '',
                 ),
               ),
 
-              // 3. Card da Lâmpada (Na Direita - Posição Centralizada)
+              // 3. Socket da Lâmpada (Direita)
               Positioned(
                 left: lampX - 47.5,
                 top: 70,
-                child: SchematicComponentCard(
-                  label: '',
+                child: SchematicBlueprintSocket<String>(
+                  expectedData: 'bulb',
+                  isFilled: _m1BulbInserted,
                   showLabel: false,
-                  isActive: isBulbLit,
+                  rotation: _m1BulbRotation,
+                  onAccept: (_) => setState(() => _m1BulbInserted = true),
+                  onRotate: () => setState(() => _m1BulbRotation = (_m1BulbRotation + 90) % 360),
+                  onTap: () {},
                   symbolWidget: CustomPaint(
                     size: const Size(54, 38),
                     painter: CircuitSymbolPainter(
@@ -1926,10 +2042,22 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                       strokeWidth: 2.2,
                     ),
                   ),
+                  placeholderWidget: Opacity(
+                    opacity: 0.4,
+                    child: CustomPaint(
+                      size: const Size(48, 34),
+                      painter: CircuitSymbolPainter(
+                        type: ComponentType.bulb,
+                        color: const Color(0xFF94A3B8),
+                        strokeWidth: 2.0,
+                      ),
+                    ),
+                  ),
+                  label: '',
                 ),
               ),
 
-              // 4. Socket DragTarget do Interruptor (Centralizado no Topo)
+              // 4. Socket do Interruptor (Centralizado no Topo)
               Positioned(
                 left: switchCenterX - 47.5,
                 top: 10,
@@ -1937,7 +2065,9 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   expectedData: 'switch',
                   isFilled: _m1SwitchInserted,
                   showLabel: false,
+                  rotation: _m1SwitchRotation,
                   onAccept: (_) => setState(() => _m1SwitchInserted = true),
+                  onRotate: () => setState(() => _m1SwitchRotation = (_m1SwitchRotation + 90) % 360),
                   onTap: () => setState(() {
                     if (_m1SwitchInserted) {
                       _m1SwitchClosed = !_m1SwitchClosed;
@@ -1994,13 +2124,18 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                 ),
               ),
 
-              // Card da Bateria Comum (Centro Esquerda)
+              // Socket da Bateria (Centro Esquerda)
               Positioned(
                 left: batteryX - 47.5,
                 top: 60,
-                child: SchematicComponentCard(
-                  label: '',
+                child: SchematicBlueprintSocket<String>(
+                  expectedData: 'battery',
+                  isFilled: _m3BatteryInserted,
                   showLabel: false,
+                  rotation: _m3BatteryRotation,
+                  onAccept: (_) => setState(() => _m3BatteryInserted = true),
+                  onRotate: () => setState(() => _m3BatteryRotation = (_m3BatteryRotation + 90) % 360),
+                  onTap: () {},
                   symbolWidget: CustomPaint(
                     size: const Size(54, 38),
                     painter: CircuitSymbolPainter(
@@ -2009,6 +2144,18 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                       strokeWidth: 2.2,
                     ),
                   ),
+                  placeholderWidget: Opacity(
+                    opacity: 0.4,
+                    child: CustomPaint(
+                      size: const Size(48, 34),
+                      painter: CircuitSymbolPainter(
+                        type: ComponentType.battery,
+                        color: const Color(0xFF94A3B8),
+                        strokeWidth: 2.0,
+                      ),
+                    ),
+                  ),
+                  label: '',
                 ),
               ),
 
@@ -2018,12 +2165,16 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                 top: 10,
                 child: SchematicBlueprintSocket<String>(
                   expectedData: 'switch1',
-                  isFilled: true,
+                  isFilled: _m3Switch1Inserted,
                   showLabel: false,
-                  onAccept: (_) {},
+                  rotation: _m3Switch1Rotation,
+                  onAccept: (_) => setState(() => _m3Switch1Inserted = true),
+                  onRotate: () => setState(() => _m3Switch1Rotation = (_m3Switch1Rotation + 90) % 360),
                   onTap: () => setState(() {
-                    _m3Switch1Closed = !_m3Switch1Closed;
-                    _m3TestedSwitch1 = true;
+                    if (_m3Switch1Inserted) {
+                      _m3Switch1Closed = !_m3Switch1Closed;
+                      _m3TestedSwitch1 = true;
+                    }
                   }),
                   symbolWidget: CustomPaint(
                     size: const Size(54, 38),
@@ -2055,12 +2206,16 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                 top: 128,
                 child: SchematicBlueprintSocket<String>(
                   expectedData: 'switch2',
-                  isFilled: true,
+                  isFilled: _m3Switch2Inserted,
                   showLabel: false,
-                  onAccept: (_) {},
+                  rotation: _m3Switch2Rotation,
+                  onAccept: (_) => setState(() => _m3Switch2Inserted = true),
+                  onRotate: () => setState(() => _m3Switch2Rotation = (_m3Switch2Rotation + 90) % 360),
                   onTap: () => setState(() {
-                    _m3Switch2Closed = !_m3Switch2Closed;
-                    _m3TestedSwitch2 = true;
+                    if (_m3Switch2Inserted) {
+                      _m3Switch2Closed = !_m3Switch2Closed;
+                      _m3TestedSwitch2 = true;
+                    }
                   }),
                   symbolWidget: CustomPaint(
                     size: const Size(54, 38),
@@ -2086,14 +2241,18 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                 ),
               ),
 
-              // Card Lâmpada A (Ramo 1 - Topo)
+              // Socket Lâmpada A (Ramo 1 - Topo)
               Positioned(
                 left: lampX - 47.5,
                 top: 10,
-                child: SchematicComponentCard(
-                  label: '',
+                child: SchematicBlueprintSocket<String>(
+                  expectedData: 'bulb',
+                  isFilled: _m3LampAInserted,
                   showLabel: false,
-                  isActive: _m3Switch1Closed,
+                  rotation: _m3LampARotation,
+                  onAccept: (_) => setState(() => _m3LampAInserted = true),
+                  onRotate: () => setState(() => _m3LampARotation = (_m3LampARotation + 90) % 360),
+                  onTap: () {},
                   symbolWidget: CustomPaint(
                     size: const Size(54, 38),
                     painter: CircuitSymbolPainter(
@@ -2104,17 +2263,33 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                       strokeWidth: 2.2,
                     ),
                   ),
+                  placeholderWidget: Opacity(
+                    opacity: 0.4,
+                    child: CustomPaint(
+                      size: const Size(48, 34),
+                      painter: CircuitSymbolPainter(
+                        type: ComponentType.bulb,
+                        color: const Color(0xFF94A3B8),
+                        strokeWidth: 2.0,
+                      ),
+                    ),
+                  ),
+                  label: '',
                 ),
               ),
 
-              // Card Lâmpada B (Ramo 2 - Baixo)
+              // Socket Lâmpada B (Ramo 2 - Baixo)
               Positioned(
                 left: lampX - 47.5,
                 top: 128,
-                child: SchematicComponentCard(
-                  label: '',
+                child: SchematicBlueprintSocket<String>(
+                  expectedData: 'bulb',
+                  isFilled: _m3LampBInserted,
                   showLabel: false,
-                  isActive: _m3Switch2Closed,
+                  rotation: _m3LampBRotation,
+                  onAccept: (_) => setState(() => _m3LampBInserted = true),
+                  onRotate: () => setState(() => _m3LampBRotation = (_m3LampBRotation + 90) % 360),
+                  onTap: () {},
                   symbolWidget: CustomPaint(
                     size: const Size(54, 38),
                     painter: CircuitSymbolPainter(
@@ -2125,6 +2300,18 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                       strokeWidth: 2.2,
                     ),
                   ),
+                  placeholderWidget: Opacity(
+                    opacity: 0.4,
+                    child: CustomPaint(
+                      size: const Size(48, 34),
+                      painter: CircuitSymbolPainter(
+                        type: ComponentType.bulb,
+                        color: const Color(0xFF94A3B8),
+                        strokeWidth: 2.0,
+                      ),
+                    ),
+                  ),
+                  label: '',
                 ),
               ),
             ],

@@ -1035,50 +1035,6 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
                     ),
               color: const Color(0xFF0284C7),
             ),
-            WorkbenchSymbolToolboxTile<String>(
-              data: 'no_paralelo',
-              label: 'Nó Paralelo',
-              tooltip: 'Nó / Bifurcação Paralela',
-              symbolWidget: _usePhysicalStyle
-                  ? CustomPaint(
-                      size: const Size(34, 34),
-                      painter: ComponentPhysicalPainter(
-                        type: ComponentType.connectingWire,
-                        isDarkMode: false,
-                      ),
-                    )
-                  : CustomPaint(
-                      size: const Size(34, 34),
-                      painter: CircuitSymbolPainter(
-                        type: ComponentType.connectingWire,
-                        color: const Color(0xFF0F172A),
-                        strokeWidth: 2.0,
-                      ),
-                    ),
-              color: const Color(0xFF0284C7),
-            ),
-            WorkbenchSymbolToolboxTile<String>(
-              data: 'lamp_poste',
-              label: 'Poste LED',
-              tooltip: 'Poste de Luz (Lâmpada)',
-              symbolWidget: _usePhysicalStyle
-                  ? CustomPaint(
-                      size: const Size(34, 44),
-                      painter: StreetLampPainter(
-                        isActive: false,
-                        isDarkMode: false,
-                      ),
-                    )
-                  : CustomPaint(
-                      size: const Size(34, 34),
-                      painter: CircuitSymbolPainter(
-                        type: ComponentType.bulb,
-                        color: const Color(0xFF0F172A),
-                        strokeWidth: 2.0,
-                      ),
-                    ),
-              color: const Color(0xFFD97706),
-            ),
           ],
         ),
         const SizedBox(height: 16),

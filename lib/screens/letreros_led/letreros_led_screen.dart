@@ -957,50 +957,6 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
                     ),
               color: Colors.redAccent,
             ),
-            WorkbenchSymbolToolboxTile<String>(
-              data: 'resistor_680',
-              label: 'Resistor',
-              tooltip: 'Resistor Prot. 680Ω',
-              symbolWidget: _usePhysicalStyle
-                  ? CustomPaint(
-                      size: const Size(34, 34),
-                      painter: ComponentPhysicalPainter(
-                        type: ComponentType.resistor,
-                        isDarkMode: false,
-                      ),
-                    )
-                  : CustomPaint(
-                      size: const Size(34, 34),
-                      painter: CircuitSymbolPainter(
-                        type: ComponentType.resistor,
-                        color: const Color(0xFF0F172A),
-                        strokeWidth: 2.0,
-                      ),
-                    ),
-              color: const Color(0xFFD97706),
-            ),
-            WorkbenchSymbolToolboxTile<String>(
-              data: 'bateria_9v',
-              label: 'Fonte 9V',
-              tooltip: 'Fonte DC 9V',
-              symbolWidget: _usePhysicalStyle
-                  ? CustomPaint(
-                      size: const Size(34, 34),
-                      painter: ComponentPhysicalPainter(
-                        type: ComponentType.battery,
-                        isDarkMode: false,
-                      ),
-                    )
-                  : CustomPaint(
-                      size: const Size(34, 34),
-                      painter: CircuitSymbolPainter(
-                        type: ComponentType.battery,
-                        color: const Color(0xFF0F172A),
-                        strokeWidth: 2.0,
-                      ),
-                    ),
-              color: const Color(0xFF0284C7),
-            ),
           ],
         ),
         const SizedBox(height: 16),

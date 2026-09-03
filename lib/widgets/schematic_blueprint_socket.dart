@@ -1,18 +1,22 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 /// Socket/Slot de Encaixe para Diagramas Esquemáticos Didáticos.
 /// Suporta Drag and Drop de símbolos elétricos padrão (Bateria, Lâmpada, Interruptor, LED, Resistor, Motor, etc.).
+/// Suporta rotação de 90° ao tocar no componente preenchido.
 class SchematicBlueprintSocket<T extends Object> extends StatelessWidget {
   final T expectedData;
   final bool isFilled;
   final ValueSetter<T> onAccept;
   final VoidCallback onTap;
+  final VoidCallback? onRotate;
   final Widget symbolWidget;
   final Widget placeholderWidget;
   final String label;
   final Color accentColor;
   final bool showLabel;
+  final double rotation;
 
   const SchematicBlueprintSocket({
     super.key,
@@ -25,6 +29,8 @@ class SchematicBlueprintSocket<T extends Object> extends StatelessWidget {
     required this.label,
     this.accentColor = const Color(0xFF00E5FF),
     this.showLabel = true,
+    this.rotation = 0.0,
+    this.onRotate,
   });
 
   @override
@@ -41,7 +47,7 @@ class SchematicBlueprintSocket<T extends Object> extends StatelessWidget {
                 : accentColor;
 
         return GestureDetector(
-          onTap: onTap,
+          onTap: isFilled && onRotate != null ? onRotate : onTap,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -72,7 +78,34 @@ class SchematicBlueprintSocket<T extends Object> extends StatelessWidget {
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 200),
                     child: isFilled
-                        ? symbolWidget
+                        ? Stack(
+                            key: ValueKey('filled_$rotation'),
+                            children: [
+                              Center(
+                                child: Transform.rotate(
+                                  angle: rotation * math.pi / 180.0,
+                                  child: symbolWidget,
+                                ),
+                              ),
+                              if (onRotate != null)
+                                Positioned(
+                                  bottom: 2,
+                                  right: 2,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(2),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF0F172A).withValues(alpha: 0.7),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.screen_rotation_rounded,
+                                      size: 10,
+                                      color: Color(0xFF00FF9D),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          )
                         : (isHovering
                             ? Column(
                                 mainAxisAlignment: MainAxisAlignment.center,

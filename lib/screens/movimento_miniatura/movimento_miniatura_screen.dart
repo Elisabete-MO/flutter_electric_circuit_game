@@ -10,6 +10,7 @@ import '../../widgets/prof_volts_feedback_dialog.dart';
 import '../../widgets/schematic_blueprint_socket.dart';
 import '../../widgets/schematic_symbol_painters.dart';
 import '../../widgets/component_physical_painter.dart';
+import '../../widgets/component_vector_painters.dart';
 import '../../widgets/circuit_symbol_painter.dart';
 import '../../widgets/tech_grid_background.dart';
 import '../../widgets/workbench_components.dart';
@@ -24,7 +25,7 @@ class MovimentoMiniaturaScreen extends ConsumerStatefulWidget {
 }
 
 class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final List<StandMission> _missions;
   int _currentMissionIndex = 0;
   bool _usePhysicalStyle = true;
@@ -32,9 +33,15 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
   // Controller para rotação da hélice do motor CC
   late final AnimationController _fanController;
 
+  // Controller para animação de elétrons nos fios esquemáticos
+  late final AnimationController _currentFlowController;
+
   // Estátos das Missões:
   // M1: Primeiro Giro do Motor
   bool _m1MotorInserted = false;
+  bool _m1BatteryInserted = false;
+  double _m1BatteryRotation = 0.0;
+  double _m1MotorRotation = 0.0;
 
   // M2: Inversão de Sentido de Rotação
   bool _m2ReversedPolarity = false; // false = Horário (+/-), true = Anti-horário (-/+)
@@ -63,11 +70,16 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
       vsync: this,
       duration: const Duration(milliseconds: 600),
     )..repeat();
+    _currentFlowController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
   }
 
   @override
   void dispose() {
     _fanController.dispose();
+    _currentFlowController.dispose();
     super.dispose();
   }
 
@@ -507,120 +519,145 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
   // MISSÃO 1: Primeiro Giro do Motor
   // ==========================================
   Widget _buildM1UI() {
-    return Stack(
-      children: [
-        // Diagrama Blueprint Desenho do Circuito
-        Positioned.fill(
-          child: CustomPaint(
-            painter: SchematicCircuitWirePainter(
-              isClosed: _m1MotorInserted,
-              animationValue: 0.5,
-              wireColor: const Color(0xFF1E293B),
-            ),
-          ),
-        ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double width = constraints.maxWidth;
+        final double batteryX = 60.0;
+        final double motorX = width - 60.0;
 
-        // Fonte CC / Bateria (Esquerda)
-        Positioned(
-          left: 40,
-          top: 100,
-          child: Column(
+        return SizedBox(
+          height: 270,
+          child: Stack(
             children: [
-              _usePhysicalStyle
-                  ? CustomPaint(
-                      size: const Size(60, 60),
-                      painter: ComponentPhysicalPainter(
-                        type: ComponentType.battery,
-                        isDarkMode: false,
-                      ),
-                    )
-                  : CustomPaint(
-                      size: const Size(55, 55),
-                      painter: CircuitSymbolPainter(
-                        type: ComponentType.battery,
-                        color: const Color(0xFF0F172A),
-                        strokeWidth: 2.5,
-                      ),
-                    ),
-              const SizedBox(height: 6),
-              const Text(
-                'FONTE 6.0V CC',
-                style: TextStyle(color: Color(0xFF0F172A), fontSize: 11, fontWeight: FontWeight.bold),
+              // Fios esquemáticos Bateria-Motor
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: SchematicCircuitWirePainterMotor(
+                    isClosed: _m1BatteryInserted && _m1MotorInserted,
+                    animationValue: _currentFlowController.value,
+                    wireColor: const Color(0xFF1E293B),
+                  ),
+                ),
+              ),
+
+              // Socket da Bateria (Esquerda)
+              Positioned(
+                left: batteryX - 47.5,
+                top: 70,
+                child: SchematicBlueprintSocket<String>(
+                  expectedData: 'battery',
+                  isFilled: _m1BatteryInserted,
+                  showLabel: false,
+                  rotation: _m1BatteryRotation,
+                  onAccept: (_) => setState(() => _m1BatteryInserted = true),
+                  onRotate: () => setState(() => _m1BatteryRotation = (_m1BatteryRotation + 90) % 360),
+                  onTap: () {},
+                  symbolWidget: _usePhysicalStyle
+                      ? CustomPaint(
+                          size: const Size(54, 38),
+                          painter: ComponentPhysicalPainter(
+                            type: ComponentType.battery,
+                            isDarkMode: false,
+                          ),
+                        )
+                      : CustomPaint(
+                          size: const Size(54, 38),
+                          painter: CircuitSymbolPainter(
+                            type: ComponentType.battery,
+                            color: const Color(0xFF0F172A),
+                            strokeWidth: 2.2,
+                          ),
+                        ),
+                  placeholderWidget: _usePhysicalStyle
+                      ? CustomPaint(
+                          size: const Size(48, 34),
+                          painter: ComponentPhysicalPainter(
+                            type: ComponentType.battery,
+                            isActive: false,
+                            isDarkMode: false,
+                          ),
+                        )
+                      : CustomPaint(
+                          size: const Size(48, 34),
+                          painter: CircuitSymbolPainter(
+                            type: ComponentType.battery,
+                            isActive: false,
+                            color: const Color(0xFF94A3B8),
+                            strokeWidth: 2.0,
+                          ),
+                        ),
+                  label: '',
+                ),
+              ),
+
+              // Socket Esquemático para o Motor CC (Direita)
+              Positioned(
+                left: motorX - 47.5,
+                top: 70,
+                child: SchematicBlueprintSocket<String>(
+                  expectedData: 'motor_cc',
+                  isFilled: _m1MotorInserted,
+                  showLabel: false,
+                  rotation: _m1MotorRotation,
+                  onAccept: (_) => setState(() => _m1MotorInserted = true),
+                  onRotate: () => setState(() => _m1MotorRotation = (_m1MotorRotation + 90) % 360),
+                  onTap: () {},
+                  symbolWidget: _usePhysicalStyle
+                      ? CustomPaint(
+                          size: const Size(54, 38),
+                          painter: ComponentPhysicalPainter(
+                            type: ComponentType.motor,
+                            isActive: _m1MotorInserted,
+                            isDarkMode: false,
+                          ),
+                        )
+                      : CustomPaint(
+                          size: const Size(54, 38),
+                          painter: CircuitSymbolPainter(
+                            type: ComponentType.motor,
+                            isActive: _m1MotorInserted,
+                            color: const Color(0xFF0F172A),
+                            strokeWidth: 2.2,
+                          ),
+                        ),
+                  placeholderWidget: _usePhysicalStyle
+                      ? CustomPaint(
+                          size: const Size(48, 34),
+                          painter: ComponentPhysicalPainter(
+                            type: ComponentType.motor,
+                            isActive: false,
+                            isDarkMode: false,
+                          ),
+                        )
+                      : CustomPaint(
+                          size: const Size(48, 34),
+                          painter: CircuitSymbolPainter(
+                            type: ComponentType.motor,
+                            isActive: false,
+                            color: const Color(0xFF94A3B8),
+                            strokeWidth: 2.0,
+                          ),
+                        ),
+                  label: '',
+                ),
+              ),
+
+              // Motor CC com Hélice Animada (Centro Topo Visual)
+              Positioned(
+                left: 0,
+                right: 0,
+                top: 5,
+                child: Center(
+                  child: _buildAnimatedMotorWidget(
+                    isRunning: _m1BatteryInserted && _m1MotorInserted,
+                    isReversed: false,
+                  ),
+                ),
               ),
             ],
           ),
-        ),
-
-        // Motor CC com Hélice Animada (Centro Topo Visual)
-        Positioned(
-          left: 0,
-          right: 0,
-          top: 20,
-          child: Center(
-            child: _buildAnimatedMotorWidget(
-              isRunning: _m1MotorInserted,
-              isReversed: false,
-            ),
-          ),
-        ),
-
-        // Socket Esquemático para Arrastar o Motor CC (Direita / Linha)
-        Positioned(
-          right: 60,
-          top: 95,
-          child: SchematicBlueprintSocket<String>(
-            expectedData: 'motor_cc',
-            isFilled: _m1MotorInserted,
-            symbolWidget: _usePhysicalStyle
-                ? CustomPaint(
-                    size: const Size(50, 50),
-                    painter: ComponentPhysicalPainter(
-                      type: ComponentType.motor,
-                      isActive: _m1MotorInserted,
-                      isDarkMode: false,
-                    ),
-                  )
-                : CustomPaint(
-                    size: const Size(50, 50),
-                    painter: CircuitSymbolPainter(
-                      type: ComponentType.motor,
-                      isActive: _m1MotorInserted,
-                      color: const Color(0xFF0F172A),
-                      strokeWidth: 2.5,
-                    ),
-                  ),
-            placeholderWidget: _usePhysicalStyle
-                ? CustomPaint(
-                    size: const Size(45, 45),
-                    painter: ComponentPhysicalPainter(
-                      type: ComponentType.motor,
-                      isActive: false,
-                      isDarkMode: false,
-                    ),
-                  )
-                : CustomPaint(
-                    size: const Size(45, 45),
-                    painter: CircuitSymbolPainter(
-                      type: ComponentType.motor,
-                      isActive: false,
-                      color: const Color(0xFF94A3B8),
-                      strokeWidth: 2.0,
-                    ),
-                  ),
-            label: 'MOTOR CC',
-            onAccept: (_) {
-              setState(() {
-                _m1MotorInserted = true;
-              });
-            },
-            onTap: () {
-              setState(() {
-                _m1MotorInserted = !_m1MotorInserted;
-              });
-            },
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
 
@@ -1051,25 +1088,16 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
         ),
         WorkbenchSymbolToolboxTile<String>(
           data: 'push_button',
-          label: 'Botão',
-          tooltip: 'Push-Button',
+          label: 'Push-Button',
+          tooltip: 'Botão de Pressão (Momentâneo)',
           symbolWidget: _usePhysicalStyle
-              ? CustomPaint(
-                  size: const Size(34, 34),
-                  painter: ComponentPhysicalPainter(
-                    type: ComponentType.switchComponent,
-                    isDarkMode: false,
-                  ),
-                )
-              : CustomPaint(
-                  size: const Size(34, 34),
-                  painter: CircuitSymbolPainter(
-                    type: ComponentType.switchComponent,
-                    color: const Color(0xFF0F172A),
-                    strokeWidth: 2.0,
-                  ),
+              ? const PushButtonVectorWidget(size: 34)
+              : const SchematicSwitchWidget(
+                  size: 34,
+                  isPushButton: true,
+                  color: Color(0xFFEF4444),
                 ),
-          color: const Color(0xFFD97706),
+          color: const Color(0xFFEF4444),
         ),
         WorkbenchSymbolToolboxTile<String>(
           data: 'led_indicator',

@@ -645,12 +645,12 @@ class SchematicCircuitWirePainterM3 extends CustomPainter {
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
 
     final path1 = Path();
-    path1.moveTo(batteryX, 100.0);
+    path1.moveTo(batteryX, 97.5);
     path1.lineTo(batteryX, yRamo1);
     path1.lineTo(switchCenterX - 47.5, yRamo1);
     path1.moveTo(switchCenterX + 47.5, yRamo1);
     path1.lineTo(lampX, yRamo1);
-    path1.lineTo(lampX, 100.0);
+    path1.lineTo(lampX, 97.5);
 
     canvas.drawPath(path1, glow1);
     canvas.drawPath(path1, paint1);
@@ -669,7 +669,7 @@ class SchematicCircuitWirePainterM3 extends CustomPainter {
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
 
     final path2 = Path();
-    path2.moveTo(batteryX, 100.0);
+    path2.moveTo(batteryX, 97.5);
     path2.lineTo(batteryX, yRamo2);
     path2.lineTo(switchCenterX - 47.5, yRamo2);
     path2.moveTo(switchCenterX + 47.5, yRamo2);
@@ -802,6 +802,83 @@ class SchematicCircuitWirePainterM4 extends CustomPainter {
           final distance = ((animationValue + (i / 12)) % 1.0) * length;
           final tangent = metric.getTangentForOffset(distance);
           if (tangent != null) canvas.drawCircle(tangent.position, 4.0, electronPaint);
+        }
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+/// CustomPainter para circuito Bateria-Motor CC (2 componentes, sem chave)
+class SchematicCircuitWirePainterMotor extends CustomPainter {
+  final bool isClosed;
+  final double animationValue;
+  final Color wireColor;
+
+  SchematicCircuitWirePainterMotor({
+    required this.isClosed,
+    required this.animationValue,
+    this.wireColor = const Color(0xFF1E293B),
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final activeColor = isClosed ? const Color(0xFF0284C7) : const Color(0xFF94A3B8);
+
+    final wirePaint = Paint()
+      ..color = activeColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4.0
+      ..strokeCap = StrokeCap.round;
+
+    final glowPaint = Paint()
+      ..color = activeColor.withValues(alpha: isClosed ? 0.35 : 0.0)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 8.0
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+
+    final batteryX = 60.0;
+    final motorX = size.width - 60.0;
+    final topWireY = 47.5;
+    final bottomWireY = 210.0;
+
+    final path = Path();
+    path.moveTo(batteryX, 70.0);
+    path.lineTo(batteryX, topWireY);
+    path.lineTo(motorX, topWireY);
+    path.lineTo(motorX, 70.0);
+
+    path.moveTo(motorX, 145.0);
+    path.lineTo(motorX, bottomWireY);
+    path.lineTo(batteryX, bottomWireY);
+    path.lineTo(batteryX, 145.0);
+
+    canvas.drawPath(path, glowPaint);
+    canvas.drawPath(path, wirePaint);
+
+    final pinPaint = Paint()..color = isClosed ? const Color(0xFF0284C7) : const Color(0xFF64748B);
+    canvas.drawCircle(Offset(batteryX, 70.0), 4.5, pinPaint);
+    canvas.drawCircle(Offset(batteryX, 145.0), 4.5, pinPaint);
+    canvas.drawCircle(Offset(motorX, 70.0), 4.5, pinPaint);
+    canvas.drawCircle(Offset(motorX, 145.0), 4.5, pinPaint);
+
+    if (isClosed) {
+      final electronPaint = Paint()
+        ..color = const Color(0xFFD97706)
+        ..style = PaintingStyle.fill;
+
+      const totalDots = 12;
+      final metrics = path.computeMetrics();
+      for (final metric in metrics) {
+        final length = metric.length;
+        for (int i = 0; i < totalDots; i++) {
+          final distance = ((animationValue + (i / totalDots)) % 1.0) * length;
+          final tangent = metric.getTangentForOffset(distance);
+          if (tangent != null) {
+            canvas.drawCircle(tangent.position, 4.0, electronPaint);
+          }
         }
       }
     }

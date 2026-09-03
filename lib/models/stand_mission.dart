@@ -218,7 +218,7 @@ class StandMission {
   static List<StandMission> get movimentoMiniaturaMissions => const [
         StandMission(
           id: 'movimento_miniatura_m1',
-          standId: 'movimento_miniatura',
+          standId: 'movimento',
           number: 1,
           title: 'Mini Ventilador com Motor CC',
           objective: 'Fazer o mini ventilador girar com motor CC e fonte.',
@@ -229,7 +229,7 @@ class StandMission {
         ),
         StandMission(
           id: 'movimento_miniatura_m2',
-          standId: 'movimento_miniatura',
+          standId: 'movimento',
           number: 2,
           title: 'Sentido do Carrinho e Inversão de Polaridade',
           objective: 'Prever o sentido de um carrinho e inverter a polaridade para fazê-lo avançar ou retornar ao ponto indicado.',
@@ -240,7 +240,7 @@ class StandMission {
         ),
         StandMission(
           id: 'movimento_miniatura_m3',
-          standId: 'movimento_miniatura',
+          standId: 'movimento',
           number: 3,
           title: 'Partida por Push-Button',
           objective: 'Instalar push-button para que o motor só funcione enquanto o botão estiver pressionado.',
@@ -251,7 +251,7 @@ class StandMission {
         ),
         StandMission(
           id: 'movimento_miniatura_m4',
-          standId: 'movimento_miniatura',
+          standId: 'movimento',
           number: 4,
           title: 'LED Indicador Protegido',
           objective: 'Criar um LED protegido em paralelo que indique motor energizado.',
@@ -262,7 +262,7 @@ class StandMission {
         ),
         StandMission(
           id: 'movimento_miniatura_m5',
-          standId: 'movimento_miniatura',
+          standId: 'movimento',
           number: 5,
           title: 'Diagnóstico do Mini Carrinho',
           objective: 'Diagnosticar um carrinho parado planejando testes de fonte, chave e terminais antes de reparar o mau contato.',
