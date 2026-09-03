@@ -331,7 +331,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
               children: [
                 // Área Principal da Bancada
                 Expanded(
-                  flex: 3,
+                  flex: 7,
                   child: Column(
                     children: [
                       WorkbenchHeaderStepper(
@@ -359,10 +359,11 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                 const SizedBox(width: 16),
                 // Painel Lateral (Gaveta de Componentes & Validação)
                 Expanded(
-                  flex: 2,
+                  flex: 3,
                   child: WorkbenchSidePanel(
                     teamTitle: 'Painel da Equipe Controle',
                     toolboxItems: [
+                      _buildMissionBriefingCard(),
                       _buildSideToolboxDrawer(),
                     ],
                     onEnergizePressed: _validateCurrentMission,
@@ -415,6 +416,181 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
     }
   }
 
+  Widget _buildMissionBriefingCard() {
+    final mission = _missions[_currentMissionIndex];
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF0284C7).withValues(alpha: 0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0284C7),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'MISSÃO 0${_currentMissionIndex + 1}',
+                  style: GoogleFonts.rajdhani(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  mission.title,
+                  style: GoogleFonts.rajdhani(
+                    color: const Color(0xFF0F172A),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            mission.objective,
+            style: GoogleFonts.outfit(
+              color: const Color(0xFF334155),
+              fontSize: 12.5,
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFCBD5E1)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.tips_and_updates_rounded, color: Color(0xFFD97706), size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Prof. Volts: "${mission.voltsMediation}"',
+                    style: GoogleFonts.outfit(
+                      color: const Color(0xFF475569),
+                      fontSize: 11.5,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTelemetryBar({
+    required bool isClosed,
+    required double voltage,
+    required double currentMa,
+  }) {
+    final statusColor = isClosed ? const Color(0xFF10B981) : const Color(0xFF64748B);
+    final statusText = isClosed ? 'CIRCUITO FECHADO (ON)' : 'CIRCUITO ABERTO (OFF)';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFCBD5E1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 6,
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: statusColor,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    if (isClosed)
+                      BoxShadow(
+                        color: statusColor.withValues(alpha: 0.6),
+                        blurRadius: 8,
+                        spreadRadius: 2,
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                statusText,
+                style: GoogleFonts.rajdhani(
+                  color: statusColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              Text(
+                'TENSÃO: ',
+                style: GoogleFonts.rajdhani(color: const Color(0xFF64748B), fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              Text(
+                '${voltage.toStringAsFixed(1)}V  |  ',
+                style: GoogleFonts.outfit(color: const Color(0xFF0F172A), fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              Text(
+                'CORRENTE: ',
+                style: GoogleFonts.rajdhani(color: const Color(0xFF64748B), fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              Text(
+                '${currentMa.toStringAsFixed(1)} mA',
+                style: GoogleFonts.outfit(
+                  color: isClosed ? const Color(0xFF0284C7) : const Color(0xFF0F172A),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSideToolboxDrawer() {
     return const Wrap(
       spacing: 10,
@@ -449,7 +625,17 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
   // MISSÃO 1: Interruptor da Luminária
   // ==========================================
   Widget _buildMission1UI(StandMission mission) {
-    return _buildSchematicCanvasM1();
+    final bool isBulbLit = _m1SwitchInserted && _m1SwitchClosed;
+    return Column(
+      children: [
+        _buildTelemetryBar(
+          isClosed: isBulbLit,
+          voltage: 4.5,
+          currentMa: isBulbLit ? 90.0 : 0.0,
+        ),
+        Expanded(child: _buildSchematicCanvasM1()),
+      ],
+    );
   }
 
   // ==========================================
