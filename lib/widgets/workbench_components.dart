@@ -397,12 +397,14 @@ class WorkbenchSidePanel extends StatelessWidget {
   final String teamTitle;
   final List<Widget> toolboxItems;
   final VoidCallback onEnergizePressed;
+  final bool isLoading;
 
   const WorkbenchSidePanel({
     super.key,
     required this.teamTitle,
     required this.toolboxItems,
     required this.onEnergizePressed,
+    this.isLoading = false,
   });
 
   @override
@@ -481,16 +483,25 @@ class WorkbenchSidePanel extends StatelessWidget {
                 ),
                 elevation: 3,
               ),
-              icon: const Icon(Icons.play_arrow_rounded, color: Colors.white),
+              icon: isLoading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.play_arrow_rounded, color: Colors.white),
               label: Text(
-                'ENERGIZAR E VALIDAR BANCADA',
+                isLoading ? 'SIMULANDO...' : 'ENERGIZAR E VALIDAR BANCADA',
                 style: GoogleFonts.rajdhani(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
                 ),
               ),
-              onPressed: onEnergizePressed,
+              onPressed: isLoading ? null : onEnergizePressed,
             ),
           ),
         ],

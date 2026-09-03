@@ -1,22 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../models/stand_mission.dart';
+import '../../state/progress_controller.dart';
+import '../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
 import '../../widgets/schematic_blueprint_socket.dart';
-import '../../widgets/schematic_symbol_painters.dart';
+import '../../widgets/component_vector_painters.dart';
 import '../../widgets/tech_grid_background.dart';
 import '../../widgets/workbench_components.dart';
+import '../../widgets/success_confetti_overlay.dart';
 
 /// Tela Interativa do Estande 04 / Estande "Ruas da Maquete" (Equipe Bairro).
-class RuasMaqueteScreen extends StatefulWidget {
+class RuasMaqueteScreen extends ConsumerStatefulWidget {
   const RuasMaqueteScreen({super.key});
 
   @override
-  State<RuasMaqueteScreen> createState() => _RuasMaqueteScreenState();
+  ConsumerState<RuasMaqueteScreen> createState() => _RuasMaqueteScreenState();
 }
 
-class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
+class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _electronAnimController;
   final List<StandMission> _missions = StandMission.ruasMaqueteMissions;
@@ -39,6 +43,9 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
   // Estados da Missão 5 (Teste de Manutenção do Bairro)
   bool _m5House1Broken = false;
   bool _m5MaintenanceConfirmed = false;
+
+  // Estado de simulação
+  bool _isSimulating = false;
 
   @override
   void initState() {
@@ -92,20 +99,39 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
     });
   }
 
-  void _validateCurrentMission() {
+  Future<void> _validateCurrentMission() async {
+    if (_isSimulating) return;
+    setState(() => _isSimulating = true);
+
+    try {
     bool isSuccess = false;
     String feedbackMessage = _currentMission.failureFeedback;
 
     switch (_currentMissionIndex) {
-      case 0: // M1: Postes em Série
+      case 0: // M1: Postes em Série — valida circuito série real
         if (_m1WireConnected) {
-          isSuccess = true;
+          final result = await MissionCircuitBuilder()
+              .addBattery(id: 'bat1', voltage: 4.5)
+              .addBulb(id: 'bulb1', resistance: 5.0)
+              .addBulb(id: 'bulb2', resistance: 5.0)
+              .connect('bat1', 'B', 'bulb1', 'A')
+              .connect('bulb1', 'B', 'bulb2', 'A')
+              .connect('bulb2', 'B', 'bat1', 'A')
+              .simulate();
+          if (result.hasClosedLoop && result.errorMessage == null) {
+            final currentMa = result.current * 1000;
+            feedbackMessage = 'Circuito em série validado! Corrente: ${currentMa.toStringAsFixed(1)}mA. '
+                'Ambas as lâmpadas recebem a mesma corrente.';
+            isSuccess = true;
+          } else {
+            feedbackMessage = result.errorMessage ?? 'Circuito em série incompleto. Verifique as conexões.';
+          }
         } else {
           feedbackMessage = 'Conecte o fio condutor em série entre a bateria e as duas lâmpadas!';
         }
         break;
 
-      case 1: // M2: Comparação de Brilho
+      case 1: // M2: Comparação de Brilho — questão teórica
         if (_m2SelectedExplanation == 'corrente_reduzida') {
           isSuccess = true;
         } else if (_m2SelectedExplanation == null) {
@@ -115,9 +141,25 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
         }
         break;
 
-      case 2: // M3: Bifurcação de Fios
+      case 2: // M3: Bifurcação de Fios — valida nó com duas ramificações
         if (_m3JunctionInserted && _m3ReturnConnected) {
-          isSuccess = true;
+          final result = await MissionCircuitBuilder()
+              .addBattery(id: 'bat1', voltage: 4.5)
+              .addBulb(id: 'bulbA', resistance: 5.0)
+              .addBulb(id: 'bulbB', resistance: 5.0)
+              // Ramo A
+              .connect('bat1', 'B', 'bulbA', 'A')
+              .connect('bulbA', 'B', 'bat1', 'A')
+              // Ramo B
+              .connect('bat1', 'B', 'bulbB', 'A')
+              .connect('bulbB', 'B', 'bat1', 'A')
+              .simulate();
+          if (result.hasClosedLoop && result.errorMessage == null) {
+            feedbackMessage = 'Bifurcação validada! A corrente se divide em dois ramos independentes e reconverge ao polo negativo.';
+            isSuccess = true;
+          } else {
+            feedbackMessage = result.errorMessage ?? 'A bifurcação precisa se reconectar ao polo negativo da fonte.';
+          }
         } else if (!_m3JunctionInserted) {
           feedbackMessage = 'Insira o nó de bifurcação para dividir a corrente para as duas ruas.';
         } else {
@@ -125,17 +167,50 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
         }
         break;
 
-      case 3: // M4: Casas Independentes (Paralelo)
+      case 3: // M4: Paralelo — valida circuito paralelo real
         if (_m4ParallelWireConnected) {
-          isSuccess = true;
+          final result = await MissionCircuitBuilder()
+              .addBattery(id: 'bat1', voltage: 4.5)
+              .addBulb(id: 'bulb1', resistance: 5.0)
+              .addBulb(id: 'bulb2', resistance: 5.0)
+              // Ramo paralelo 1
+              .connect('bat1', 'B', 'bulb1', 'A')
+              .connect('bulb1', 'B', 'bat1', 'A')
+              // Ramo paralelo 2
+              .connect('bat1', 'B', 'bulb2', 'A')
+              .connect('bulb2', 'B', 'bat1', 'A')
+              .simulate();
+          if (result.hasClosedLoop && result.errorMessage == null) {
+            final current1 = (result.componentCurrents['bulb1'] ?? 0) * 1000;
+            final current2 = (result.componentCurrents['bulb2'] ?? 0) * 1000;
+            feedbackMessage = 'Circuito em paralelo validado! '
+                'Lâmpada 1: ${current1.toStringAsFixed(1)}mA, Lâmpada 2: ${current2.toStringAsFixed(1)}mA. '
+                'Ambas recebem tensão total da bateria.';
+            isSuccess = true;
+          } else {
+            feedbackMessage = result.errorMessage ?? 'Monte as ligações em paralelo para que cada casa tenha seu ramo individual.';
+          }
         } else {
           feedbackMessage = 'Monte as ligações em paralelo para que cada casa tenha seu ramo individual.';
         }
         break;
 
-      case 4: // M5: Teste de Manutenção do Bairro
+      case 4: // M5: Manutenção — paralelo com uma lâmpada queimada
         if (_m5House1Broken && _m5MaintenanceConfirmed) {
-          isSuccess = true;
+          final result = await MissionCircuitBuilder()
+              .addBattery(id: 'bat1', voltage: 4.5)
+              .addBulb(id: 'bulbB', resistance: 5.0)
+              // Ramo B funciona normalmente
+              .connect('bat1', 'B', 'bulbB', 'A')
+              .connect('bulbB', 'B', 'bat1', 'A')
+              .simulate();
+          if (result.hasClosedLoop && result.errorMessage == null) {
+            feedbackMessage = 'Manutenção validada! A Lâmpada B permanece acesa mesmo com a Lâmpada A desconectada. '
+                'Em paralelo, os ramos são independentes.';
+            isSuccess = true;
+          } else {
+            feedbackMessage = result.errorMessage ?? 'Erro na simulação do circuito.';
+          }
         } else if (!_m5House1Broken) {
           feedbackMessage = 'Simule o defeito na Lâmpada A para testar a independência do circuito!';
         } else {
@@ -146,25 +221,33 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
 
     final fullMessage = isSuccess
         ? 'Missão "${_currentMission.title}" concluída com êxito! ${_currentMission.victoryCriteria}.\n\nProf. Volts: "${_currentMission.voltsMediation}"'
-        : '$feedbackMessage\n\nProf. Volts: "No circuito em série há apenas uma rota; no circuito em paralelo, cada ramo é independente."';
+        : '$feedbackMessage\n\nProf. Volts: "${_currentMission.voltsMediation}"';
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => ProfVoltsFeedbackDialog(
-        isCorrect: isSuccess,
-        message: fullMessage,
-        onAction: () {
-          Navigator.of(context).pop();
-          if (isSuccess) {
-            _nextMission();
-          }
-        },
-      ),
-    );
+    if (mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => ProfVoltsFeedbackDialog(
+          isCorrect: isSuccess,
+          message: fullMessage,
+          onAction: () {
+            Navigator.of(context).pop();
+            if (isSuccess) {
+              showSuccessConfetti(context);
+              _nextMission();
+            }
+          },
+        ),
+      );
+    }
+    } finally {
+      if (mounted) setState(() => _isSimulating = false);
+    }
   }
 
   void _showStandCompletionDialog() {
+    ref.read(progressControllerProvider.notifier).markAsCompleted('ruas_maquete', stars: 3);
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -325,6 +408,7 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
                       _buildSideToolboxDrawer(),
                     ],
                     onEnergizePressed: _validateCurrentMission,
+                    isLoading: _isSimulating,
                   ),
                 ),
               ],
@@ -412,15 +496,12 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
             SchematicBlueprintSocket<String>(
               expectedData: 'fio_serie',
               isFilled: _m1WireConnected,
-              symbolWidget: const SchematicSwitchWidget(
+              symbolWidget: const PushButtonVectorWidget(
                 size: 50,
-                color: Color(0xFF10B981),
-                isClosed: true,
+                isPressed: true,
               ),
-              placeholderWidget: const SchematicSwitchWidget(
+              placeholderWidget: const PushButtonVectorWidget(
                 size: 45,
-                color: Colors.amberAccent,
-                isClosed: false,
               ),
               label: 'FIO EM SÉRIE',
               onAccept: (_) {
@@ -799,21 +880,21 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
               data: 'fio_serie',
               label: 'Condutor',
               tooltip: 'Condutor em Série',
-              symbolWidget: SchematicSwitchWidget(size: 34, color: Color(0xFF0284C7), isClosed: true),
+              symbolWidget: PushButtonVectorWidget(size: 34, isPressed: true),
               color: Color(0xFF0284C7),
             ),
             WorkbenchSymbolToolboxTile<String>(
               data: 'no_paralelo',
               label: 'Nó Paralelo',
               tooltip: 'Nó / Bifurcação Paralela',
-              symbolWidget: SchematicMeterWidget(size: 34, color: Color(0xFF0284C7), meterType: 'V'),
+              symbolWidget: MeterVectorWidget(size: 34, meterType: 'V', accentColor: Color(0xFF0284C7)),
               color: Color(0xFF0284C7),
             ),
             WorkbenchSymbolToolboxTile<String>(
               data: 'lamp_poste',
               label: 'Poste LED',
               tooltip: 'Poste de Luz (Lâmpada)',
-              symbolWidget: SchematicLampWidget(size: 34, color: Color(0xFFD97706), isOn: true),
+              symbolWidget: BulbVectorWidget(size: 34, isOn: true),
               color: Color(0xFFD97706),
             ),
           ],

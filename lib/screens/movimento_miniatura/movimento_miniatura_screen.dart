@@ -1,23 +1,28 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../models/stand_mission.dart';
+import '../../state/progress_controller.dart';
+import '../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
 import '../../widgets/schematic_blueprint_socket.dart';
 import '../../widgets/schematic_symbol_painters.dart';
+import '../../widgets/component_vector_painters.dart';
 import '../../widgets/tech_grid_background.dart';
 import '../../widgets/workbench_components.dart';
+import '../../widgets/success_confetti_overlay.dart';
 
 /// Estande 06 — "Movimento em Miniatura" (Equipe Mecânica)
-class MovimentoMiniaturaScreen extends StatefulWidget {
+class MovimentoMiniaturaScreen extends ConsumerStatefulWidget {
   const MovimentoMiniaturaScreen({super.key});
 
   @override
-  State<MovimentoMiniaturaScreen> createState() => _MovimentoMiniaturaScreenState();
+  ConsumerState<MovimentoMiniaturaScreen> createState() => _MovimentoMiniaturaScreenState();
 }
 
-class _MovimentoMiniaturaScreenState extends State<MovimentoMiniaturaScreen>
+class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScreen>
     with SingleTickerProviderStateMixin {
   late final List<StandMission> _missions;
   int _currentMissionIndex = 0;
@@ -44,6 +49,8 @@ class _MovimentoMiniaturaScreenState extends State<MovimentoMiniaturaScreen>
   bool _m5WireRepaired = false;
   bool _m5CarTested = false;
 
+  bool _isSimulating = false;
+
   StandMission get _currentMission => _missions[_currentMissionIndex];
 
   @override
@@ -66,6 +73,7 @@ class _MovimentoMiniaturaScreenState extends State<MovimentoMiniaturaScreen>
     if (_currentMissionIndex < _missions.length - 1) {
       setState(() {
         _currentMissionIndex++;
+        _resetCurrentMission();
       });
     } else {
       _showStandCompletionDialog();
@@ -76,83 +84,184 @@ class _MovimentoMiniaturaScreenState extends State<MovimentoMiniaturaScreen>
     if (_currentMissionIndex > 0) {
       setState(() {
         _currentMissionIndex--;
+        _resetCurrentMission();
       });
     }
   }
 
-  void _validateCurrentMission() {
+  void _resetCurrentMission() {
+    switch (_currentMissionIndex) {
+      case 0:
+        _m1MotorInserted = false;
+        break;
+      case 1:
+        _m2ReversedPolarity = false;
+        break;
+      case 2:
+        _m3PushButtonInserted = false;
+        _m3PushButtonPressed = false;
+        break;
+      case 3:
+        _m4LedInserted = false;
+        _m4ResistorInserted = false;
+        break;
+      case 4:
+        _m5WireRepaired = false;
+        _m5CarTested = false;
+        break;
+    }
+  }
+
+  Future<void> _validateCurrentMission() async {
+    if (_isSimulating) return;
+    setState(() => _isSimulating = true);
+
+    try {
     bool isSuccess = false;
     String feedbackMessage = _currentMission.failureFeedback;
 
     switch (_currentMissionIndex) {
       case 0: // M1: Primeiro Giro do Motor
         if (_m1MotorInserted) {
-          isSuccess = true;
+          final result = await MissionCircuitBuilder()
+              .addBattery(id: 'bat1', voltage: 6.0)
+              .addMotor(id: 'motor1')
+              .connect('bat1', 'B', 'motor1', 'A')
+              .connect('motor1', 'B', 'bat1', 'A')
+              .simulate();
+          if (result.hasClosedLoop && result.errorMessage == null) {
+            final currentMa = result.current * 1000;
+            feedbackMessage = 'Motor CC validado! Corrente: ${currentMa.toStringAsFixed(1)}mA. O eixo gera torque rotacional.';
+            isSuccess = true;
+          } else {
+            feedbackMessage = result.errorMessage ?? 'Confira se ambos os terminais do motor estao conectados!';
+          }
         } else {
-          feedbackMessage = 'Confira se ambos os terminais do motor estão conectados à fonte didática!';
+          feedbackMessage = 'Confira se ambos os terminais do motor estao conectados a fonte didatica!';
         }
         break;
 
-      case 1: // M2: Inversão de Sentido de Rotação
+      case 1: // M2: Inversao de Sentido
         if (_m2ReversedPolarity) {
-          isSuccess = true;
+          final result = await MissionCircuitBuilder()
+              .addBattery(id: 'bat1', voltage: 6.0)
+              .addMotor(id: 'motor1')
+              .connect('bat1', 'B', 'motor1', 'A')
+              .connect('motor1', 'B', 'bat1', 'A')
+              .simulate();
+          if (result.hasClosedLoop && result.errorMessage == null) {
+            feedbackMessage = 'Polaridade invertida! Campo magnetico reverso giro anti-horario.';
+            isSuccess = true;
+          } else {
+            feedbackMessage = result.errorMessage ?? 'Inverta a polaridade da fonte.';
+          }
         } else {
-          feedbackMessage = 'Inverta a polaridade da fonte (+/- ➔ -/+) para alterar o sentido do campo magnético.';
+          feedbackMessage = 'Inverta a polaridade da fonte para alterar o sentido do campo magnetico.';
         }
         break;
 
-      case 2: // M3: Botão de Partida do Motor (Push-button)
+      case 2: // M3: Botao de Partida
         if (_m3PushButtonInserted && _m3PushButtonPressed) {
-          isSuccess = true;
+          final result = await MissionCircuitBuilder()
+              .addBattery(id: 'bat1', voltage: 6.0)
+              .addSwitch(id: 'sw1', closed: true)
+              .addMotor(id: 'motor1')
+              .connect('bat1', 'B', 'sw1', 'A')
+              .connect('sw1', 'B', 'motor1', 'A')
+              .connect('motor1', 'B', 'bat1', 'A')
+              .simulate();
+          if (result.hasClosedLoop && result.errorMessage == null) {
+            feedbackMessage = 'Push-button acionado! Motor CC em operacao via interruptor de pressao.';
+            isSuccess = true;
+          } else {
+            feedbackMessage = result.errorMessage ?? 'O interruptor deve interromper a corrente quando solto.';
+          }
         } else if (!_m3PushButtonInserted) {
           feedbackMessage = 'Instale o interruptor tipo push-button na linha de corrente!';
         } else {
-          feedbackMessage = 'Pressione e segure o botão de partida para acionar o motor CC.';
+          feedbackMessage = 'Pressione e segure o botao de partida para acionar o motor CC.';
         }
         break;
 
-      case 3: // M4: Painel com LED Indicador
+      case 3: // M4: LED Indicador em Paralelo
         if (_m4LedInserted && _m4ResistorInserted) {
-          isSuccess = true;
+          final result = await MissionCircuitBuilder()
+              .addBattery(id: 'bat1', voltage: 6.0)
+              .addMotor(id: 'motor1')
+              .connect('bat1', 'B', 'motor1', 'A')
+              .connect('motor1', 'B', 'bat1', 'A')
+              .addResistor(id: 'r1', resistance: 680.0)
+              .addLed(id: 'led1')
+              .connect('bat1', 'B', 'r1', 'A')
+              .connect('r1', 'B', 'led1', 'A')
+              .connect('led1', 'B', 'bat1', 'A')
+              .simulate();
+          if (result.hasClosedLoop && result.errorMessage == null) {
+            final motorCurrent = (result.componentCurrents['motor1'] ?? 0) * 1000;
+            final ledCurrent = (result.componentCurrents['led1'] ?? 0) * 1000;
+            feedbackMessage = 'LED indicador em paralelo validado! Motor: ${motorCurrent.toStringAsFixed(1)}mA, LED: ${ledCurrent.toStringAsFixed(1)}mA.';
+            isSuccess = true;
+          } else {
+            feedbackMessage = result.errorMessage ?? 'O LED indicador precisa de resistor de protecao!';
+          }
         } else if (!_m4LedInserted) {
           feedbackMessage = 'Conecte o LED indicador no ramo em paralelo!';
         } else {
-          feedbackMessage = 'O LED indicador também necessita de resistor de proteção no seu ramo!';
+          feedbackMessage = 'O LED indicador tambem necessita de resistor de protecao!';
         }
         break;
 
-      case 4: // M5: Diagnóstico do Mini Carrinho
+      case 4: // M5: Diagnostico do Mini Carrinho
         if (_m5WireRepaired && _m5CarTested) {
-          isSuccess = true;
+          final result = await MissionCircuitBuilder()
+              .addBattery(id: 'bat1', voltage: 6.0)
+              .addMotor(id: 'motor1')
+              .connect('bat1', 'B', 'motor1', 'A')
+              .connect('motor1', 'B', 'bat1', 'A')
+              .simulate();
+          if (result.hasClosedLoop && result.errorMessage == null) {
+            feedbackMessage = 'Mau contato reparado! Carrinho funcional com corrente circulando.';
+            isSuccess = true;
+          } else {
+            feedbackMessage = result.errorMessage ?? 'Ainda ha problema na fiação.';
+          }
         } else if (!_m5WireRepaired) {
           feedbackMessage = 'Inspecione os terminais do motor para encontrar e reparar a fiação solta.';
         } else {
-          feedbackMessage = 'Teste o acionamento do mini carrinho após o reparo!';
+          feedbackMessage = 'Teste o acionamento do mini carrinho apos o reparo!';
         }
         break;
     }
 
     final fullMessage = isSuccess
-        ? 'Missão "${_currentMission.title}" concluída! ${_currentMission.victoryCriteria}.\n\nProf. Volts: "${_currentMission.voltsMediation}"'
-        : '$feedbackMessage\n\nProf. Volts: "A corrente elétrica gera um campo magnético no motor CC, transformando energia elétrica em torque mecânico."';
+        ? 'Missao "${_currentMission.title}" concluida! ${_currentMission.victoryCriteria}.\n\nProf. Volts: "${_currentMission.voltsMediation}"'
+        : '$feedbackMessage\n\nProf. Volts: "${_currentMission.voltsMediation}"';
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => ProfVoltsFeedbackDialog(
-        isCorrect: isSuccess,
-        message: fullMessage,
-        onAction: () {
-          Navigator.of(context).pop();
-          if (isSuccess) {
-            _nextMission();
-          }
-        },
-      ),
-    );
+    if (mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => ProfVoltsFeedbackDialog(
+          isCorrect: isSuccess,
+          message: fullMessage,
+          onAction: () {
+            Navigator.of(context).pop();
+            if (isSuccess) {
+              showSuccessConfetti(context);
+              _nextMission();
+            }
+          },
+        ),
+      );
+    }
+    } finally {
+      if (mounted) setState(() => _isSimulating = false);
+    }
   }
 
   void _showStandCompletionDialog() {
+    ref.read(progressControllerProvider.notifier).markAsCompleted('movimento_miniatura', stars: 3);
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -307,7 +416,7 @@ class _MovimentoMiniaturaScreenState extends State<MovimentoMiniaturaScreen>
           top: 100,
           child: Column(
             children: [
-              SchematicBatteryWidget(size: 60, color: Color(0xFF0284C7)),
+              BatteryVectorWidget(size: 60),
               SizedBox(height: 6),
               Text(
                 'FONTE 6.0V CC',
@@ -337,15 +446,12 @@ class _MovimentoMiniaturaScreenState extends State<MovimentoMiniaturaScreen>
           child: SchematicBlueprintSocket<String>(
             expectedData: 'motor_cc',
             isFilled: _m1MotorInserted,
-            symbolWidget: SchematicMotorWidget(
+            symbolWidget: MotorCcVectorWidget(
               size: 50,
-              color: const Color(0xFF0284C7),
               isRunning: _m1MotorInserted,
             ),
-            placeholderWidget: const SchematicMotorWidget(
+            placeholderWidget: const MotorCcVectorWidget(
               size: 45,
-              color: Color(0xFF94A3B8),
-              isRunning: false,
             ),
             label: 'MOTOR CC',
             onAccept: (_) {
@@ -775,6 +881,7 @@ class _MovimentoMiniaturaScreenState extends State<MovimentoMiniaturaScreen>
         _buildSideToolboxDrawer(),
       ],
       onEnergizePressed: _validateCurrentMission,
+      isLoading: _isSimulating,
     );
   }
 
@@ -787,28 +894,28 @@ class _MovimentoMiniaturaScreenState extends State<MovimentoMiniaturaScreen>
           data: 'motor_cc',
           label: 'Motor CC',
           tooltip: 'Motor CC',
-          symbolWidget: SchematicMotorWidget(size: 34, color: Color(0xFF0284C7), isRunning: true),
+          symbolWidget: MotorCcVectorWidget(size: 34, isRunning: true),
           color: Color(0xFF0284C7),
         ),
         WorkbenchSymbolToolboxTile<String>(
           data: 'push_button',
           label: 'Botão',
           tooltip: 'Push-Button',
-          symbolWidget: SchematicSwitchWidget(size: 34, color: Color(0xFFD97706), isClosed: false),
+          symbolWidget: PushButtonVectorWidget(size: 34),
           color: Color(0xFFD97706),
         ),
         WorkbenchSymbolToolboxTile<String>(
           data: 'led_indicator',
           label: 'LED',
           tooltip: 'LED Indicador',
-          symbolWidget: SchematicLedWidget(size: 34, color: Colors.redAccent, isOn: true),
+          symbolWidget: LedVectorWidget(size: 34, ledColor: Colors.redAccent, isOn: true),
           color: Colors.redAccent,
         ),
         WorkbenchSymbolToolboxTile<String>(
           data: 'resistor_680',
           label: 'Resistor',
           tooltip: 'Resistor (680Ω)',
-          symbolWidget: SchematicResistorWidget(size: 34, color: Color(0xFFD97706)),
+          symbolWidget: ResistorVectorWidget(size: 34, resistanceValue: '680'),
           color: Color(0xFFD97706),
         ),
       ],

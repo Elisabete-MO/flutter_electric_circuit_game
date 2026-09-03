@@ -516,3 +516,145 @@ class _BulbPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _BulbPainter oldDelegate) => oldDelegate.isOn != isOn;
 }
+
+// ==========================================================
+// 7. VETOR: MULTÍMETRO DIGITAL / MEDIDOR DE PANEL
+// ==========================================================
+class MeterVectorWidget extends StatelessWidget {
+  final double size;
+  final String meterType; // 'V' ou 'A'
+  final Color accentColor;
+
+  const MeterVectorWidget({
+    super.key,
+    this.size = 48.0,
+    this.meterType = 'V',
+    this.accentColor = const Color(0xFF0284C7),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: CustomPaint(painter: _MeterPainter(meterType: meterType, accentColor: accentColor)),
+    );
+  }
+}
+
+class _MeterPainter extends CustomPainter {
+  final String meterType;
+  final Color accentColor;
+
+  _MeterPainter({required this.meterType, required this.accentColor});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final cx = w / 2;
+    final cy = h / 2;
+    final radius = w * 0.42;
+
+    // Corpo do medidor (gradiente escuro)
+    final bodyRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(w * 0.08, h * 0.08, w * 0.84, h * 0.84),
+      Radius.circular(radius * 0.25),
+    );
+    final bodyPaint = Paint()
+      ..shader = const LinearGradient(
+        colors: [Color(0xFF1E293B), Color(0xFF0F172A), Color(0xFF020617)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ).createShader(bodyRect.outerRect);
+    canvas.drawRRect(bodyRect, bodyPaint);
+
+    // Borda externa
+    canvas.drawRRect(
+      bodyRect,
+      Paint()
+        ..color = accentColor.withValues(alpha: 0.6)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5,
+    );
+
+    // Display digital
+    final displayRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(w * 0.18, h * 0.18, w * 0.64, h * 0.28),
+      const Radius.circular(4),
+    );
+    canvas.drawRRect(
+      displayRect,
+      Paint()..color = const Color(0xFF064E3B),
+    );
+    canvas.drawRRect(
+      displayRect,
+      Paint()
+        ..color = const Color(0xFF10B981).withValues(alpha: 0.4)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.8,
+    );
+
+    // Símbolo do tipo no display
+    final symbolPainter = TextPainter(
+      text: TextSpan(
+        text: meterType == 'V' ? 'V' : 'mA',
+        style: TextStyle(
+          color: const Color(0xFF34D399),
+          fontSize: size.width * 0.16,
+          fontWeight: FontWeight.bold,
+          fontFamily: 'monospace',
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+    symbolPainter.layout();
+    symbolPainter.paint(
+      canvas,
+      Offset(cx - symbolPainter.width / 2, h * 0.22),
+    );
+
+    // Marcas de escala (pseudo-analog)
+    final scalePaint = Paint()
+      ..color = Colors.white24
+      ..strokeWidth = 0.8
+      ..strokeCap = StrokeCap.round;
+
+    for (int i = 0; i <= 10; i++) {
+      final angle = -math.pi * 0.75 + (i / 10) * math.pi * 1.5;
+      final innerR = radius * 0.55;
+      final outerR = radius * 0.72;
+      final p1 = Offset(cx + math.cos(angle) * innerR, cy + math.sin(angle) * innerR);
+      final p2 = Offset(cx + math.cos(angle) * outerR, cy + math.sin(angle) * outerR);
+      canvas.drawLine(p1, p2, scalePaint);
+    }
+
+    // Agulha (apontando para ~70% da escala)
+    final needleAngle = -math.pi * 0.75 + 0.7 * math.pi * 1.5;
+    final needleLen = radius * 0.68;
+    final needlePaint = Paint()
+      ..color = const Color(0xFFEF4444)
+      ..strokeWidth = 1.5
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(
+      Offset(cx, cy),
+      Offset(cx + math.cos(needleAngle) * needleLen, cy + math.sin(needleAngle) * needleLen),
+      needlePaint,
+    );
+
+    // Pivô da agulha
+    canvas.drawCircle(Offset(cx, cy), 2.5, Paint()..color = const Color(0xFFCBD5E1));
+
+    // Terminais de conexão (inferior)
+    final terminalRed = Paint()..color = const Color(0xFFEF4444);
+    final terminalBlack = Paint()..color = const Color(0xFF1E293B);
+    canvas.drawCircle(Offset(w * 0.3, h * 0.88), w * 0.06, terminalRed);
+    canvas.drawCircle(Offset(w * 0.7, h * 0.88), w * 0.06, terminalBlack);
+    canvas.drawCircle(Offset(w * 0.3, h * 0.88), w * 0.03, Paint()..color = Colors.white24);
+    canvas.drawCircle(Offset(w * 0.7, h * 0.88), w * 0.03, Paint()..color = Colors.white24);
+  }
+
+  @override
+  bool shouldRepaint(covariant _MeterPainter oldDelegate) =>
+      oldDelegate.meterType != meterType || oldDelegate.accentColor != accentColor;
+}

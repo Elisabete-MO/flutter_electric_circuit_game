@@ -10,6 +10,7 @@ import '../../widgets/prof_volts_feedback_dialog.dart';
 import '../../widgets/prof_volts_full_body.dart';
 import '../../widgets/schematic_blueprint_socket.dart';
 import '../../widgets/schematic_symbol_painters.dart';
+import '../../widgets/component_vector_painters.dart';
 import '../../widgets/tech_grid_background.dart';
 import '../../widgets/workbench_components.dart';
 
@@ -419,21 +420,21 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
           data: 'switch',
           label: 'Interruptor',
           tooltip: 'Interruptor (SPST)',
-          symbolWidget: SchematicSwitchWidget(size: 34, color: Color(0xFFD97706), isClosed: false),
+          symbolWidget: PushButtonVectorWidget(size: 34),
           color: Color(0xFFD97706),
         ),
         WorkbenchSymbolToolboxTile<String>(
           data: 'battery',
           label: 'Bateria',
           tooltip: 'Bateria 4.5V',
-          symbolWidget: SchematicBatteryWidget(size: 34, color: Color(0xFF0284C7)),
+          symbolWidget: BatteryVectorWidget(size: 34),
           color: Color(0xFF0284C7),
         ),
         WorkbenchSymbolToolboxTile<String>(
           data: 'lamp',
           label: 'Lâmpada',
           tooltip: 'Lâmpada (Carga)',
-          symbolWidget: SchematicLampWidget(size: 34, color: Color(0xFFD97706), isOn: true),
+          symbolWidget: BulbVectorWidget(size: 34, isOn: true),
           color: Color(0xFFD97706),
         ),
       ],
@@ -1183,7 +1184,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                SchematicBatteryWidget(size: 60, color: Color(0xFF0284C7)),
+                BatteryVectorWidget(size: 60),
                 SizedBox(height: 4),
                 Text(
                   'FONTE 4.5V',
@@ -1200,9 +1201,8 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                SchematicLampWidget(
+                BulbVectorWidget(
                   size: 60,
-                  color: isBulbLit ? const Color(0xFFD97706) : const Color(0xFF0284C7),
                   isOn: isBulbLit,
                 ),
                 const SizedBox(height: 4),
@@ -1233,15 +1233,12 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   _m1SwitchClosed = !_m1SwitchClosed;
                 }
               }),
-              symbolWidget: SchematicSwitchWidget(
+              symbolWidget: PushButtonVectorWidget(
                 size: 56,
-                color: _m1SwitchClosed ? const Color(0xFF10B981) : Colors.amber,
-                isClosed: _m1SwitchClosed,
+                isPressed: _m1SwitchClosed,
               ),
-              placeholderWidget: const SchematicSwitchWidget(
+              placeholderWidget: const PushButtonVectorWidget(
                 size: 48,
-                color: Colors.white38,
-                isClosed: false,
               ),
               label: _m1SwitchInserted
                   ? (_m1SwitchClosed ? 'INTERRUPTOR (FECHADO)' : 'INTERRUPTOR (ABERTO)')

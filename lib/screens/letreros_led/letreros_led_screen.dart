@@ -1,22 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../models/stand_mission.dart';
+import '../../state/progress_controller.dart';
+import '../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
 import '../../widgets/schematic_blueprint_socket.dart';
-import '../../widgets/schematic_symbol_painters.dart';
+import '../../widgets/component_vector_painters.dart';
 import '../../widgets/tech_grid_background.dart';
 import '../../widgets/workbench_components.dart';
+import '../../widgets/success_confetti_overlay.dart';
 
 /// Tela Interativa do Estande 05 / Estande "Letreiros de LED" (Equipe Sinalização).
-class LetrerosLedScreen extends StatefulWidget {
+class LetrerosLedScreen extends ConsumerStatefulWidget {
   const LetrerosLedScreen({super.key});
 
   @override
-  State<LetrerosLedScreen> createState() => _LetrerosLedScreenState();
+  ConsumerState<LetrerosLedScreen> createState() => _LetrerosLedScreenState();
 }
 
-class _LetrerosLedScreenState extends State<LetrerosLedScreen>
+class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _pulseAnimController;
   final List<StandMission> _missions = StandMission.letrerosLedMissions;
@@ -39,6 +43,8 @@ class _LetrerosLedScreenState extends State<LetrerosLedScreen>
   // Estados da Missão 5 (Revisão do Letreiro Defeituoso)
   bool _m5GreenLedPolarityFixed = false;
   bool _m5RedResistorFixed = false;
+
+  bool _isSimulating = false;
 
   @override
   void initState() {
@@ -92,83 +98,177 @@ class _LetrerosLedScreenState extends State<LetrerosLedScreen>
     });
   }
 
-  void _validateCurrentMission() {
+  Future<void> _validateCurrentMission() async {
+    if (_isSimulating) return;
+    setState(() => _isSimulating = true);
+
+    try {
     bool isSuccess = false;
     String feedbackMessage = _currentMission.failureFeedback;
 
     switch (_currentMissionIndex) {
       case 0: // M1: Polaridade do LED
         if (_m1LedInserted && _m1LedDirectPolarity) {
-          isSuccess = true;
+          final result = await MissionCircuitBuilder()
+              .addBattery(id: 'bat1', voltage: 9.0)
+              .addResistor(id: 'r1', resistance: 680.0)
+              .addLed(id: 'led1', reversed: false)
+              .connect('bat1', 'B', 'r1', 'A')
+              .connect('r1', 'B', 'led1', 'A')
+              .connect('led1', 'B', 'bat1', 'A')
+              .simulate();
+          if (result.hasClosedLoop && result.errorMessage == null) {
+            final currentMa = result.current * 1000;
+            feedbackMessage = 'LED com polaridade correta! Corrente: ${currentMa.toStringAsFixed(1)}mA.';
+            isSuccess = true;
+          } else {
+            feedbackMessage = result.errorMessage ?? 'Verifique a polaridade do LED.';
+          }
         } else if (!_m1LedInserted) {
           feedbackMessage = 'Insira o LED no soquete do circuito!';
         } else {
-          feedbackMessage = 'Verifique a polaridade do LED: a corrente só passa no sentido ânodo (+) → cátodo (-).';
+          feedbackMessage = 'Verifique a polaridade do LED: a corrente so passa no sentido anodo (+) para catodo (-).';
         }
         break;
 
-      case 1: // M2: Diagnóstico de LED Invertido
+      case 1: // M2: LED Invertido
         if (_m2LedInvertedFixed) {
-          isSuccess = true;
+          final result = await MissionCircuitBuilder()
+              .addBattery(id: 'bat1', voltage: 9.0)
+              .addResistor(id: 'r1', resistance: 680.0)
+              .addLed(id: 'led1', reversed: false)
+              .connect('bat1', 'B', 'r1', 'A')
+              .connect('r1', 'B', 'led1', 'A')
+              .connect('led1', 'B', 'bat1', 'A')
+              .simulate();
+          if (result.hasClosedLoop && result.errorMessage == null) {
+            feedbackMessage = 'LED invertido corrigido! A corrente flui e o LED emite luz.';
+            isSuccess = true;
+          } else {
+            feedbackMessage = result.errorMessage ?? 'Corrija a polaridade do LED.';
+          }
         } else {
-          feedbackMessage = 'O LED no sentido inverso bloqueia a corrente. Inverta os terminais para conduzir!';
+          feedbackMessage = 'O LED invertido bloqueia a corrente. Inverta os terminais!';
         }
         break;
 
-      case 2: // M3: Resistor Limitador de Corrente
-        if (_m3SelectedResistor == '680') {
-          isSuccess = true;
-        } else if (_m3SelectedResistor == null) {
-          feedbackMessage = 'Selecione um resistor para colocar em série com o LED!';
-        } else if (_m3SelectedResistor == '0') {
-          feedbackMessage = 'Perigo de sobrecorrente! Sem resistor de limitação, o LED queimará!';
-        } else if (_m3SelectedResistor == '220') {
-          feedbackMessage = 'Resistor de 220Ω permite corrente muito elevada para a fonte de 9V.';
+      case 2: // M3: Resistor Limitador
+        if (_m3SelectedResistor != null) {
+          final resistance = double.parse(_m3SelectedResistor!);
+          final result = await MissionCircuitBuilder()
+              .addBattery(id: 'bat1', voltage: 9.0)
+              .addResistor(id: 'r1', resistance: resistance)
+              .addLed(id: 'led1')
+              .connect('bat1', 'B', 'r1', 'A')
+              .connect('r1', 'B', 'led1', 'A')
+              .connect('led1', 'B', 'bat1', 'A')
+              .simulate();
+          if (result.hasClosedLoop && result.errorMessage == null) {
+            final currentMa = result.current * 1000;
+            if (currentMa >= 10 && currentMa <= 15) {
+              feedbackMessage = 'Resistor ideal! Corrente: ${currentMa.toStringAsFixed(1)}mA (faixa segura 10-15mA).';
+              isSuccess = true;
+            } else if (currentMa > 15) {
+              feedbackMessage = 'Corrente excessiva: ${currentMa.toStringAsFixed(1)}mA! O LED pode queimar.';
+            } else {
+              feedbackMessage = 'Corrente insuficiente: ${currentMa.toStringAsFixed(1)}mA. LED ficara fraco.';
+            }
+          } else if (result.isShortCircuit) {
+            feedbackMessage = 'Curto-circuito! Resistor de 0 ohm causou sobrecorrente!';
+          } else {
+            feedbackMessage = result.errorMessage ?? 'Circuito com problema.';
+          }
         } else {
-          feedbackMessage = 'Resistor de 10kΩ possui resistência excessiva, deixando o LED praticamente apagado.';
+          feedbackMessage = 'Selecione um resistor para colocar em serie com o LED!';
         }
         break;
 
-      case 3: // M4: Painel de Sinalização Dupla
+      case 3: // M4: Sinalizacao Dupla
         if (_m4Branch1ResistorPlaced && _m4Branch2ResistorPlaced) {
-          isSuccess = true;
+          final result = await MissionCircuitBuilder()
+              .addBattery(id: 'bat1', voltage: 9.0)
+              .addResistor(id: 'r1', resistance: 680.0)
+              .addLed(id: 'led1')
+              .connect('bat1', 'B', 'r1', 'A')
+              .connect('r1', 'B', 'led1', 'A')
+              .connect('led1', 'B', 'bat1', 'A')
+              .addResistor(id: 'r2', resistance: 680.0)
+              .addLed(id: 'led2')
+              .connect('bat1', 'B', 'r2', 'A')
+              .connect('r2', 'B', 'led2', 'A')
+              .connect('led2', 'B', 'bat1', 'A')
+              .simulate();
+          if (result.hasClosedLoop && result.errorMessage == null) {
+            final i1 = (result.componentCurrents['led1'] ?? 0) * 1000;
+            final i2 = (result.componentCurrents['led2'] ?? 0) * 1000;
+            feedbackMessage = 'Dois ramos paralelos validados! LED1: ${i1.toStringAsFixed(1)}mA, LED2: ${i2.toStringAsFixed(1)}mA.';
+            isSuccess = true;
+          } else {
+            feedbackMessage = result.errorMessage ?? 'Cada LED precisa de resistor protetor no seu ramo!';
+          }
         } else {
-          feedbackMessage = 'Cada LED precisa de seu próprio resistor protetor de 680Ω em seu ramo!';
+          feedbackMessage = 'Cada LED precisa de seu proprio resistor protetor de 680 ohm!';
         }
         break;
 
-      case 4: // M5: Revisão do Letreiro Defeituoso
+      case 4: // M5: Revisao do Letreiro
         if (_m5GreenLedPolarityFixed && _m5RedResistorFixed) {
-          isSuccess = true;
+          final result = await MissionCircuitBuilder()
+              .addBattery(id: 'bat1', voltage: 9.0)
+              .addResistor(id: 'r1', resistance: 680.0)
+              .addLed(id: 'led1', reversed: false)
+              .connect('bat1', 'B', 'r1', 'A')
+              .connect('r1', 'B', 'led1', 'A')
+              .connect('led1', 'B', 'bat1', 'A')
+              .addResistor(id: 'r2', resistance: 680.0)
+              .addLed(id: 'led2', reversed: false)
+              .connect('bat1', 'B', 'r2', 'A')
+              .connect('r2', 'B', 'led2', 'A')
+              .connect('led2', 'B', 'bat1', 'A')
+              .simulate();
+          if (result.hasClosedLoop && result.errorMessage == null) {
+            feedbackMessage = 'Placa corrigida! Polaridade e resistencia validadas pelo solver.';
+            isSuccess = true;
+          } else {
+            feedbackMessage = result.errorMessage ?? 'Ainda ha erros na placa.';
+          }
         } else if (!_m5GreenLedPolarityFixed) {
-          feedbackMessage = 'Corrija a polaridade invertida do LED Verde na placa Entrada.';
+          feedbackMessage = 'Corrija a polaridade invertida do LED Verde.';
         } else {
-          feedbackMessage = 'Substitua o resistor de 0Ω (jumper curto) por um resistor protetor de 680Ω no LED Vermelho.';
+          feedbackMessage = 'Substitua o resistor de 0 ohm por 680 ohm no LED Vermelho.';
         }
         break;
     }
 
     final fullMessage = isSuccess
-        ? 'Missão "${_currentMission.title}" concluída com êxito! ${_currentMission.victoryCriteria}.\n\nProf. Volts: "${_currentMission.voltsMediation}"'
+        ? 'Missao "${_currentMission.title}" concluida! ${_currentMission.victoryCriteria}.\n\nProf. Volts: "${_currentMission.voltsMediation}"'
         : '$feedbackMessage\n\nProf. Volts: "${_currentMission.voltsMediation}"';
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => ProfVoltsFeedbackDialog(
-        isCorrect: isSuccess,
-        message: fullMessage,
-        onAction: () {
-          Navigator.of(context).pop();
-          if (isSuccess) {
-            _nextMission();
-          }
-        },
-      ),
-    );
+    if (mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => ProfVoltsFeedbackDialog(
+          isCorrect: isSuccess,
+          message: fullMessage,
+          onAction: () {
+            Navigator.of(context).pop();
+            if (isSuccess) {
+              showSuccessConfetti(context);
+              _nextMission();
+            }
+          },
+        ),
+      );
+    }
+    } finally {
+      if (mounted) setState(() => _isSimulating = false);
+    }
   }
 
   void _showStandCompletionDialog() {
+    ref.read(progressControllerProvider.notifier).markAsCompleted('letreros_led', stars: 3);
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -329,6 +429,7 @@ class _LetrerosLedScreenState extends State<LetrerosLedScreen>
                       _buildSidePanelContent(),
                     ],
                     onEnergizePressed: _validateCurrentMission,
+                    isLoading: _isSimulating,
                   ),
                 ),
               ],
@@ -379,14 +480,14 @@ class _LetrerosLedScreenState extends State<LetrerosLedScreen>
         SchematicBlueprintSocket<String>(
           expectedData: 'led_red',
           isFilled: _m1LedInserted,
-          symbolWidget: SchematicLedWidget(
+          symbolWidget: LedVectorWidget(
             size: 55,
-            color: Colors.redAccent,
+            ledColor: Colors.redAccent,
             isOn: isLit,
           ),
-          placeholderWidget: const SchematicLedWidget(
+          placeholderWidget: const LedVectorWidget(
             size: 45,
-            color: Colors.white38,
+            ledColor: Colors.white38,
             isOn: false,
           ),
           label: 'SOQUETE LED SEMICONDUTOR',
@@ -699,21 +800,21 @@ class _LetrerosLedScreenState extends State<LetrerosLedScreen>
               data: 'led_red',
               label: 'LED',
               tooltip: 'LED Vermelho (Semicondutor)',
-              symbolWidget: SchematicLedWidget(size: 34, color: Colors.redAccent, isOn: true),
+              symbolWidget: LedVectorWidget(size: 34, ledColor: Colors.redAccent, isOn: true),
               color: Colors.redAccent,
             ),
             WorkbenchSymbolToolboxTile<String>(
               data: 'resistor_680',
               label: 'Resistor',
               tooltip: 'Resistor Prot. 680Ω',
-              symbolWidget: SchematicResistorWidget(size: 34, color: Color(0xFFD97706)),
+              symbolWidget: ResistorVectorWidget(size: 34, resistanceValue: '680'),
               color: Color(0xFFD97706),
             ),
             WorkbenchSymbolToolboxTile<String>(
               data: 'bateria_9v',
               label: 'Fonte 9V',
               tooltip: 'Fonte DC 9V',
-              symbolWidget: SchematicBatteryWidget(size: 34, color: Color(0xFF0284C7)),
+              symbolWidget: BatteryVectorWidget(size: 34),
               color: Color(0xFF0284C7),
             ),
           ],

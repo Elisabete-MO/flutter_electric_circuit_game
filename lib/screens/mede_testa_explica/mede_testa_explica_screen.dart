@@ -1,23 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../models/stand_mission.dart';
+import '../../state/progress_controller.dart';
+import '../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../widgets/component_vector_painters.dart';
 import '../../widgets/prof_volts_speech.dart';
-import '../../widgets/schematic_symbol_painters.dart';
 import '../../widgets/tech_grid_background.dart';
 import '../../widgets/workbench_components.dart';
+import '../../widgets/success_confetti_overlay.dart';
 
 /// Estande 07 — "Mede, Testa e Explica" (Equipe Investigação).
 /// Foco pedagógico: Medição de Tensão (V), Corrente (mA), Lei de Ohm (I = V / R) e Diagnóstico com Multímetro Didático.
-class MedeTestaExplicaScreen extends StatefulWidget {
+class MedeTestaExplicaScreen extends ConsumerStatefulWidget {
   const MedeTestaExplicaScreen({super.key});
 
   @override
-  State<MedeTestaExplicaScreen> createState() => _MedeTestaExplicaScreenState();
+  ConsumerState<MedeTestaExplicaScreen> createState() => _MedeTestaExplicaScreenState();
 }
 
-class _MedeTestaExplicaScreenState extends State<MedeTestaExplicaScreen> {
+class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen> {
   late final List<StandMission> _missions;
   int _currentMissionIndex = 0;
 
@@ -36,6 +39,8 @@ class _MedeTestaExplicaScreenState extends State<MedeTestaExplicaScreen> {
 
   // Estado Missão 5 (Diário de Investigação)
   int? _m5SelectedReportIndex;
+
+  bool _isSimulating = false;
 
   @override
   void initState() {
@@ -88,63 +93,133 @@ class _MedeTestaExplicaScreenState extends State<MedeTestaExplicaScreen> {
     });
   }
 
-  void _validateCurrentMission() {
+  Future<void> _validateCurrentMission() async {
+    if (_isSimulating) return;
+    setState(() => _isSimulating = true);
+
+    try {
     bool isSuccess = false;
     String feedback = _currentMission.failureFeedback;
 
     switch (_currentMissionIndex) {
       case 0:
-        // M1: Medir Tensão da Bateria (Provas conectadas em V_DC)
+        // M1: Medir tensao da bateria
         if (_redProbeConnected && _blackProbeConnected && _multimeterMode == 'V_DC') {
+          await MissionCircuitBuilder()
+              .addBattery(id: 'bat1', voltage: 9.0)
+              .connect('bat1', 'B', 'bat1', 'A')
+              .simulate();
+          feedback = 'Tensao da bateria: 9.0V DC. Voltimetro em paralelo com a fonte.';
           isSuccess = true;
         } else if (_multimeterMode != 'V_DC') {
-          feedback = 'Gire a chave do multímetro para o modo Tensão Contínua (V DC).';
+          feedback = 'Gire a chave do multimetro para o modo Tensao Continua (V DC).';
         } else {
-          feedback = 'Posicione ambas as pontas de prova (+ e -) nos terminais da bateria.';
+          feedback = 'Posicione ambas as pontas de prova nos terminais da bateria.';
         }
         break;
 
       case 1:
-        // M2: Queda de Tensão na Lâmpada (Provas sobre a lâmpada em V_DC)
+        // M2: Queda de tensao na lampada
         if (_redProbeConnected && _blackProbeConnected && _multimeterMode == 'V_DC') {
-          isSuccess = true;
+          final result = await MissionCircuitBuilder()
+              .addBattery(id: 'bat1', voltage: 9.0)
+              .addBulb(id: 'bulb1', resistance: 5.0)
+              .connect('bat1', 'B', 'bulb1', 'A')
+              .connect('bulb1', 'B', 'bat1', 'A')
+              .simulate();
+          if (result.hasClosedLoop) {
+            final vDrop = result.componentVoltages['bulb1'] ?? 0;
+            feedback = 'Queda de tensao na lampada: ${vDrop.toStringAsFixed(2)}V. '
+                'A carga consome tensao do circuito.';
+            isSuccess = true;
+          } else {
+            feedback = 'Circuito aberto. Verifique as conexoes.';
+          }
         } else if (_multimeterMode != 'V_DC') {
-          feedback = 'Selecione o modo Tensão (V DC) para medir a queda de potencial na lâmpada.';
+          feedback = 'Selecione o modo Tensao (V DC) para medir a queda de potencial na lampada.';
         } else {
-          feedback = 'Conecte as pontas de prova nos dois lados da lâmpada para medir a queda de tensão.';
+          feedback = 'Conecte as pontas de prova nos dois lados da lampada.';
         }
         break;
 
       case 2:
-        // M3: Resistência e Corrente (Observar variação de mA ao ajustar reostato)
+        // M3: Resistencia e Corrente (Ohm: I = V/R)
         if (_multimeterMode == 'mA') {
-          isSuccess = true;
+          final result = await MissionCircuitBuilder()
+              .addBattery(id: 'bat1', voltage: 9.0)
+              .addResistor(id: 'r1', resistance: _m3ResistanceValue)
+              .addLed(id: 'led1')
+              .connect('bat1', 'B', 'r1', 'A')
+              .connect('r1', 'B', 'led1', 'A')
+              .connect('led1', 'B', 'bat1', 'A')
+              .simulate();
+          if (result.hasClosedLoop && result.errorMessage == null) {
+            final currentMa = result.current * 1000;
+            feedback = 'Lei de Ohm: I = ${currentMa.toStringAsFixed(1)}mA com R = ${_m3ResistanceValue.round()} ohm. '
+                'Maior resistencia = menor corrente.';
+            isSuccess = true;
+          } else {
+            feedback = result.errorMessage ?? 'Ajuste o reostato para variar a corrente.';
+          }
         } else {
-          feedback = 'Alterne o multímetro para o modo Amperímetro (mA) para medir o fluxo de corrente!';
+          feedback = 'Alterne o multimetro para o modo Amperimetro (mA) para medir o fluxo de corrente!';
         }
         break;
 
       case 3:
-        // M4: Dimensionamento Seguro (Resistor ideal = 680Ω -> ~10-15mA)
-        if (_m4SelectedResistor == 680) {
-          isSuccess = true;
-        } else if (_m4SelectedResistor == 68) {
-          feedback = 'O resistor de 68Ω permite corrente excessiva (>100mA). O LED pode queimar!';
-        } else if (_m4SelectedResistor == 6800) {
-          feedback = 'O resistor de 6.8kΩ limita demais a corrente (<1.5mA). O LED ficará apagado!';
+        // M4: Dimensionamento Seguro (resistor ideal = 680 ohm -> ~10-15mA)
+        if (_m4SelectedResistor != null) {
+          final result = await MissionCircuitBuilder()
+              .addBattery(id: 'bat1', voltage: 9.0)
+              .addResistor(id: 'r1', resistance: _m4SelectedResistor!.toDouble())
+              .addLed(id: 'led1')
+              .connect('bat1', 'B', 'r1', 'A')
+              .connect('r1', 'B', 'led1', 'A')
+              .connect('led1', 'B', 'bat1', 'A')
+              .simulate();
+          if (result.hasClosedLoop && result.errorMessage == null) {
+            final currentMa = result.current * 1000;
+            if (currentMa >= 10 && currentMa <= 15) {
+              feedback = 'Resistor ideal! Corrente: ${currentMa.toStringAsFixed(1)}mA (faixa segura 10-15mA).';
+              isSuccess = true;
+            } else if (currentMa > 15) {
+              feedback = 'Corrente excessiva: ${currentMa.toStringAsFixed(1)}mA! O LED pode queimar.';
+            } else {
+              feedback = 'Corrente insuficiente: ${currentMa.toStringAsFixed(1)}mA. LED ficara apagado.';
+            }
+          } else if (result.isShortCircuit) {
+            feedback = 'Curto-circuito! Resistor muito baixo!';
+          } else {
+            feedback = result.errorMessage ?? 'Erro na simulacao.';
+          }
         } else {
-          feedback = 'Escolha um resistor na gaveta lateral para limitar a corrente com segurança.';
+          feedback = 'Escolha um resistor na gaveta lateral para limitar a corrente.';
         }
         break;
 
       case 4:
-        // M5: Diário de Investigação (Relatório correto = Opção index 1)
+        // M5: Diario de Investigacao (resposta correta = index 1: resistor 10k alto demais)
         if (_m5SelectedReportIndex == 1) {
-          isSuccess = true;
+          final result = await MissionCircuitBuilder()
+              .addBattery(id: 'bat1', voltage: 9.0)
+              .addResistor(id: 'r1', resistance: 10000.0)
+              .addLed(id: 'led1')
+              .connect('bat1', 'B', 'r1', 'A')
+              .connect('r1', 'B', 'led1', 'A')
+              .connect('led1', 'B', 'bat1', 'A')
+              .simulate();
+          if (result.hasClosedLoop) {
+            final currentMa = result.current * 1000;
+            feedback = 'Diagnostico confirmado! Com 10k ohm, a corrente e apenas ${currentMa.toStringAsFixed(2)}mA. '
+                'O resistor limita demais a corrente.';
+            isSuccess = true;
+          } else {
+            feedback = 'O resistor de 10k ohm e muito alto para este circuito.';
+          }
         } else if (_m5SelectedReportIndex == null) {
-          feedback = 'Faça as medições de tensão e selecione o diagnóstico no relatório final.';
+          feedback = 'Facas as medicoes e selecione o diagnostico no relatorio final.';
         } else {
-          feedback = 'Revise a medição: a queda de tensão excessiva ocorre sobre o resistor subdimensionado.';
+          feedback = 'Revise a medicao: o resistor subdimensionado causa corrente excessiva.';
         }
         break;
     }
@@ -153,6 +228,9 @@ class _MedeTestaExplicaScreenState extends State<MedeTestaExplicaScreen> {
       _showSuccessDialog();
     } else {
       _showFailureDialog(feedback);
+    }
+    } finally {
+      if (mounted) setState(() => _isSimulating = false);
     }
   }
 
@@ -215,6 +293,7 @@ class _MedeTestaExplicaScreenState extends State<MedeTestaExplicaScreen> {
             ),
             onPressed: () {
               Navigator.of(context).pop();
+              showSuccessConfetti(context);
               _nextMission();
             },
             child: Text(
@@ -268,6 +347,8 @@ class _MedeTestaExplicaScreenState extends State<MedeTestaExplicaScreen> {
   }
 
   void _showStandCompletionDialog() {
+    ref.read(progressControllerProvider.notifier).markAsCompleted('mede_testa_explica', stars: 3);
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -394,6 +475,7 @@ class _MedeTestaExplicaScreenState extends State<MedeTestaExplicaScreen> {
                       child: WorkbenchSidePanel(
                         teamTitle: 'Gaveta de Símbolos — Medição',
                         onEnergizePressed: _validateCurrentMission,
+                        isLoading: _isSimulating,
                         toolboxItems: [
                           _buildSidePanelContent(),
                         ],
@@ -802,21 +884,21 @@ class _MedeTestaExplicaScreenState extends State<MedeTestaExplicaScreen> {
               data: 'multimeter_v',
               label: 'Voltímetro',
               tooltip: 'Voltímetro (Medidor de Tensão)',
-              symbolWidget: SchematicMeterWidget(size: 34, color: Color(0xFF0284C7), meterType: 'V'),
+              symbolWidget: MeterVectorWidget(size: 34, meterType: 'V', accentColor: Color(0xFF0284C7)),
               color: Color(0xFF0284C7),
             ),
             WorkbenchSymbolToolboxTile<String>(
               data: 'multimeter_a',
               label: 'Amperímetro',
               tooltip: 'Amperímetro (Medidor de Corrente)',
-              symbolWidget: SchematicMeterWidget(size: 34, color: Color(0xFFD97706), meterType: 'A'),
+              symbolWidget: MeterVectorWidget(size: 34, meterType: 'A', accentColor: Color(0xFFD97706)),
               color: Color(0xFFD97706),
             ),
             WorkbenchSymbolToolboxTile<String>(
               data: 'bateria_9v',
               label: 'Fonte 9V',
               tooltip: 'Fonte DC 9V',
-              symbolWidget: SchematicBatteryWidget(size: 34, color: Color(0xFF0284C7)),
+              symbolWidget: BatteryVectorWidget(size: 34),
               color: Color(0xFF0284C7),
             ),
           ],

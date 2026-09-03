@@ -56,12 +56,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       Navigator.of(context).pushNamed(Routes.ruasMaquete);
     } else if (stand.number == 5 || stand.id == 'letreros_led') {
       Navigator.of(context).pushNamed(Routes.letrerosLed);
-    } else if (stand.number == 6 || stand.id == 'movimento_miniatura' || stand.id == 'movimento') {
+    } else if (stand.number == 6 || stand.id == 'movimento' || stand.id == 'movimento_miniatura') {
       Navigator.of(context).pushNamed(Routes.movimentoMiniatura);
     } else if (stand.number == 7 || stand.id == 'mede_testa') {
       Navigator.of(context).pushNamed(Routes.medeTestaExplica);
     } else {
-      Navigator.of(context).pushNamed(Routes.firstBench);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Estande "${stand.name}" ainda não disponível.',
+            style: const TextStyle(color: Colors.white),
+          ),
+          backgroundColor: const Color(0xFF1E293B),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
     }
   }
 
