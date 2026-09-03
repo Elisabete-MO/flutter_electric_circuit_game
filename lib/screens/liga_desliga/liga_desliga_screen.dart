@@ -1415,91 +1415,100 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
   Widget _buildSchematicCanvasM1() {
     final bool isBulbLit = _m1SwitchInserted && _m1SwitchClosed;
 
-    return SizedBox(
-      height: 270,
-      child: Stack(
-        children: [
-          // 1. Fios de Trançado Esquemático com Elétrons Animados (Solto na Malha)
-          CustomPaint(
-            size: Size.infinite,
-            painter: SchematicCircuitWirePainter(
-              isClosed: isBulbLit,
-              animationValue: _currentFlowController.value,
-              switchInserted: _m1SwitchInserted,
-              wireColor: const Color(0xFF1E293B),
-            ),
-          ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double width = constraints.maxWidth;
+        final double batteryX = 60.0;
+        final double lampX = width - 60.0;
+        final double switchCenterX = width / 2;
 
-          // 2. Símbolo da Fonte (Bateria Esquemática na Esquerda)
-          const Positioned(
-            left: 30,
-            top: 70,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                BatteryVectorWidget(size: 60),
-                SizedBox(height: 4),
-                Text(
-                  'FONTE 4.5V',
-                  style: TextStyle(color: Color(0xFF0F172A), fontSize: 11, fontWeight: FontWeight.bold),
+        return SizedBox(
+          height: 270,
+          child: Stack(
+            children: [
+              // 1. Fios de Trançado Esquemático com Elétrons Animados (Conexão Perfeita)
+              CustomPaint(
+                size: Size(width, 270),
+                painter: SchematicCircuitWirePainter(
+                  isClosed: isBulbLit,
+                  animationValue: _currentFlowController.value,
+                  switchInserted: _m1SwitchInserted,
+                  wireColor: const Color(0xFF1E293B),
                 ),
-              ],
-            ),
-          ),
+              ),
 
-          // 3. Símbolo da Lâmpada Esquemática na Direita
-          Positioned(
-            right: 30,
-            top: 70,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                BulbVectorWidget(
-                  size: 60,
-                  isOn: isBulbLit,
+              // 2. Símbolo da Fonte (Bateria na Esquerda)
+              Positioned(
+                left: batteryX - 30,
+                top: 75,
+                child: const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    BatteryVectorWidget(size: 60),
+                    SizedBox(height: 4),
+                    Text(
+                      'FONTE 4.5V',
+                      style: TextStyle(color: Color(0xFF0F172A), fontSize: 11, fontWeight: FontWeight.bold),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'LÂMPADA',
-                  style: TextStyle(
-                    color: isBulbLit ? const Color(0xFFD97706) : const Color(0xFF0F172A),
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
+              ),
+
+              // 3. Símbolo da Lâmpada (Na Direita, Perfeitamente Conectada aos Fios)
+              Positioned(
+                left: lampX - 30,
+                top: 75,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    BulbVectorWidget(
+                      size: 60,
+                      isOn: isBulbLit,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'LÂMPADA',
+                      style: TextStyle(
+                        color: isBulbLit ? const Color(0xFFD97706) : const Color(0xFF0F172A),
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // 4. Socket DragTarget do Interruptor (Centralizado no Topo)
+              Positioned(
+                left: switchCenterX - 110,
+                top: 10,
+                child: SchematicBlueprintSocket<String>(
+                  expectedData: 'switch',
+                  isFilled: _m1SwitchInserted,
+                  onAccept: (_) => setState(() => _m1SwitchInserted = true),
+                  onTap: () => setState(() {
+                    if (!_m1SwitchInserted) {
+                      _m1SwitchInserted = true;
+                    } else {
+                      _m1SwitchClosed = !_m1SwitchClosed;
+                    }
+                  }),
+                  symbolWidget: PushButtonVectorWidget(
+                    size: 56,
+                    isPressed: _m1SwitchClosed,
                   ),
+                  placeholderWidget: const PushButtonVectorWidget(
+                    size: 48,
+                  ),
+                  label: _m1SwitchInserted
+                      ? (_m1SwitchClosed ? 'INTERRUPTOR (FECHADO)' : 'INTERRUPTOR (ABERTO)')
+                      : 'SOLTE A CHAVE ESQUEMÁTICA',
                 ),
-              ],
-            ),
-          ),
-
-          // 4. Socket DragTarget do Interruptor Esquemático no Topo
-          Positioned(
-            left: 175,
-            top: 10,
-            child: SchematicBlueprintSocket<String>(
-              expectedData: 'switch',
-              isFilled: _m1SwitchInserted,
-              onAccept: (_) => setState(() => _m1SwitchInserted = true),
-              onTap: () => setState(() {
-                if (!_m1SwitchInserted) {
-                  _m1SwitchInserted = true;
-                } else {
-                  _m1SwitchClosed = !_m1SwitchClosed;
-                }
-              }),
-              symbolWidget: PushButtonVectorWidget(
-                size: 56,
-                isPressed: _m1SwitchClosed,
               ),
-              placeholderWidget: const PushButtonVectorWidget(
-                size: 48,
-              ),
-              label: _m1SwitchInserted
-                  ? (_m1SwitchClosed ? 'INTERRUPTOR (FECHADO)' : 'INTERRUPTOR (ABERTO)')
-                  : 'SOLTE A CHAVE ESQUEMÁTICA',
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
