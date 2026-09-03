@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../models/stand_mission.dart';
-import '../../widgets/glass_container.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
 import '../../widgets/schematic_blueprint_socket.dart';
 import '../../widgets/schematic_symbol_painters.dart';
@@ -258,17 +257,18 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF021712),
+      backgroundColor: const Color(0xFFF1F5F9),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF041C16),
-        elevation: 0,
+        backgroundColor: Colors.white,
+        elevation: 1,
+        shadowColor: Colors.black12,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'ESTANDE 04 — RUAS DA MAQUETE',
               style: GoogleFonts.rajdhani(
-                color: const Color(0xFF10B981),
+                color: const Color(0xFF0F172A),
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1.2,
@@ -276,12 +276,12 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
             ),
             Text(
               'Equipe Bairro — Circuito em Série e Paralelo',
-              style: GoogleFonts.outfit(color: Colors.white60, fontSize: 12),
+              style: GoogleFonts.outfit(color: const Color(0xFF64748B), fontSize: 12),
             ),
           ],
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF10B981)),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF0284C7)),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -335,56 +335,34 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
     );
   }
 
-
-
-  /// Desenho interativo da bancada simulando as Ruas da Maquete
+  /// Desenho interativo da bancada simulando as Ruas da Maquete (Solto na Malha)
   Widget _buildMaqueteWorkbench() {
-    return GlassContainer(
-      accentColor: const Color(0xFF10B981),
-      borderWidth: 1.5,
-      child: Stack(
-        children: [
-          // Fundo com visual de asfalto/rua da maquete
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    const Color(0xFF092A24),
-                    const Color(0xFF041916),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+    return Stack(
+      children: [
+        // Painter customizado com linhas esquemáticas e animação de elétrons soltos na malha
+        Positioned.fill(
+          child: AnimatedBuilder(
+            animation: _electronAnimController,
+            builder: (context, child) {
+              return CustomPaint(
+                painter: _RuasMaquetePainter(
+                  missionIndex: _currentMissionIndex,
+                  animValue: _electronAnimController.value,
+                  m1Connected: _m1WireConnected,
+                  m2Series: _m2IsSeriesTwoBulbs,
+                  m3Junction: _m3JunctionInserted,
+                  m3Return: _m3ReturnConnected,
+                  m4Parallel: _m4ParallelWireConnected,
+                  m5House1Broken: _m5House1Broken,
                 ),
-              ),
-            ),
+              );
+            },
           ),
+        ),
 
-          // Painter customizado com linhas neon e animação de elétrons
-          Positioned.fill(
-            child: AnimatedBuilder(
-              animation: _electronAnimController,
-              builder: (context, child) {
-                return CustomPaint(
-                  painter: _RuasMaquetePainter(
-                    missionIndex: _currentMissionIndex,
-                    animValue: _electronAnimController.value,
-                    m1Connected: _m1WireConnected,
-                    m2Series: _m2IsSeriesTwoBulbs,
-                    m3Junction: _m3JunctionInserted,
-                    m3Return: _m3ReturnConnected,
-                    m4Parallel: _m4ParallelWireConnected,
-                    m5House1Broken: _m5House1Broken,
-                  ),
-                );
-              },
-            ),
-          ),
-
-          // Interatividade Visual Específica por Missão
-          _buildMissionOverlayContent(),
-        ],
-      ),
+        // Interatividade Visual Específica por Missão
+        _buildMissionOverlayContent(),
+      ],
     );
   }
 
@@ -814,26 +792,29 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
           ),
         ),
         const Wrap(
-          spacing: 12,
-          runSpacing: 12,
+          spacing: 10,
+          runSpacing: 10,
           children: [
             WorkbenchSymbolToolboxTile<String>(
               data: 'fio_serie',
+              label: 'Condutor',
               tooltip: 'Condutor em Série',
-              symbolWidget: SchematicSwitchWidget(size: 38, color: Color(0xFF10B981), isClosed: true),
-              color: Color(0xFF10B981),
+              symbolWidget: SchematicSwitchWidget(size: 34, color: Color(0xFF0284C7), isClosed: true),
+              color: Color(0xFF0284C7),
             ),
             WorkbenchSymbolToolboxTile<String>(
               data: 'no_paralelo',
+              label: 'Nó Paralelo',
               tooltip: 'Nó / Bifurcação Paralela',
-              symbolWidget: SchematicMeterWidget(size: 38, color: Color(0xFF00E5FF), meterType: 'V'),
-              color: Color(0xFF00E5FF),
+              symbolWidget: SchematicMeterWidget(size: 34, color: Color(0xFF0284C7), meterType: 'V'),
+              color: Color(0xFF0284C7),
             ),
             WorkbenchSymbolToolboxTile<String>(
               data: 'lamp_poste',
+              label: 'Poste LED',
               tooltip: 'Poste de Luz (Lâmpada)',
-              symbolWidget: SchematicLampWidget(size: 38, color: Colors.amberAccent, isOn: true),
-              color: Colors.amberAccent,
+              symbolWidget: SchematicLampWidget(size: 34, color: Color(0xFFD97706), isOn: true),
+              color: Color(0xFFD97706),
             ),
           ],
         ),
@@ -848,16 +829,13 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Gaveta de Componentes:',
-          style: GoogleFonts.rajdhani(color: Colors.amberAccent, fontWeight: FontWeight.bold, fontSize: 14),
+          'Dica do Professor Volts:',
+          style: GoogleFonts.rajdhani(color: const Color(0xFF0284C7), fontWeight: FontWeight.bold, fontSize: 14),
         ),
-        const SizedBox(height: 10),
-        const WorkbenchToolboxItem<String>(
-          data: 'fio_serie',
-          title: 'Fio Condutor em Série',
-          subtitle: 'Interliga postes em rota única',
-          icon: Icons.alt_route_rounded,
-          color: Color(0xFF10B981),
+        const SizedBox(height: 6),
+        Text(
+          'Arraste o símbolo do Condutor em Série para o soquete esquemático na bancada para conectar os postes em circuito em série.',
+          style: GoogleFonts.rajdhani(color: const Color(0xFF475569), fontSize: 13, height: 1.3),
         ),
       ],
     );
@@ -869,12 +847,12 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
       children: [
         Text(
           'Pergunta de Investigação Física:',
-          style: GoogleFonts.rajdhani(color: Colors.amberAccent, fontWeight: FontWeight.bold, fontSize: 14),
+          style: GoogleFonts.rajdhani(color: const Color(0xFFD97706), fontWeight: FontWeight.bold, fontSize: 14),
         ),
         const SizedBox(height: 8),
         Text(
           'Por que o brilho dos dois postes diminuiu ao ligá-los no mesmo caminho em série?',
-          style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+          style: GoogleFonts.rajdhani(color: const Color(0xFF0F172A), fontSize: 14, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
         _buildExplanationOption(
@@ -905,10 +883,10 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF10B981).withValues(alpha: 0.2) : const Color(0xFF1E293B),
+          color: isSelected ? const Color(0xFFEFF6FF) : Colors.white,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? const Color(0xFF10B981) : Colors.white24,
+            color: isSelected ? const Color(0xFF0284C7) : const Color(0xFFCBD5E1),
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -916,7 +894,7 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
           children: [
             Icon(
               isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
-              color: isSelected ? const Color(0xFF10B981) : Colors.white60,
+              color: isSelected ? const Color(0xFF0284C7) : const Color(0xFF94A3B8),
               size: 20,
             ),
             const SizedBox(width: 10),
@@ -924,7 +902,7 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
               child: Text(
                 text,
                 style: GoogleFonts.rajdhani(
-                  color: isSelected ? Colors.white : Colors.white70,
+                  color: isSelected ? const Color(0xFF0F172A) : const Color(0xFF475569),
                   fontSize: 13,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
@@ -942,12 +920,12 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
       children: [
         Text(
           'Dica Pedagógica do Prof. Volts:',
-          style: GoogleFonts.rajdhani(color: Colors.amberAccent, fontWeight: FontWeight.bold, fontSize: 14),
+          style: GoogleFonts.rajdhani(color: const Color(0xFFD97706), fontWeight: FontWeight.bold, fontSize: 14),
         ),
         const SizedBox(height: 6),
         Text(
           'Uma bifurcação (nó) divide a corrente em duas rotas separadas (Rua A e Rua B). Ambas precisam se reconectar ao polo negativo para fechar o circuito!',
-          style: GoogleFonts.rajdhani(color: Colors.white70, fontSize: 14, height: 1.3),
+          style: GoogleFonts.rajdhani(color: const Color(0xFF475569), fontSize: 14, height: 1.3),
         ),
       ],
     );
@@ -959,12 +937,12 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
       children: [
         Text(
           'Vantagem do Circuito em Paralelo:',
-          style: GoogleFonts.rajdhani(color: Colors.amberAccent, fontWeight: FontWeight.bold, fontSize: 14),
+          style: GoogleFonts.rajdhani(color: const Color(0xFFD97706), fontWeight: FontWeight.bold, fontSize: 14),
         ),
         const SizedBox(height: 6),
         Text(
-          'Cada casa do bairro recebe a tensão total da bateria (4.5V). Assim, todas as lâmpadas acendem com 100% de brilho máximo sem interference!',
-          style: GoogleFonts.rajdhani(color: Colors.white70, fontSize: 14, height: 1.3),
+          'Cada casa do bairro recebe a tensão total da bateria (4.5V). Assim, todas as lâmpadas acendem com 100% de brilho máximo sem interferência!',
+          style: GoogleFonts.rajdhani(color: const Color(0xFF475569), fontSize: 14, height: 1.3),
         ),
       ],
     );
@@ -976,18 +954,16 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
       children: [
         Text(
           'Conclusão da Equipe Bairro:',
-          style: GoogleFonts.rajdhani(color: Colors.amberAccent, fontWeight: FontWeight.bold, fontSize: 14),
+          style: GoogleFonts.rajdhani(color: const Color(0xFFD97706), fontWeight: FontWeight.bold, fontSize: 14),
         ),
         const SizedBox(height: 6),
         Text(
           'Em paralelo, quando a Lâmpada A se queima ou é removida, a Lâmpada B continua recebendo corrente em seu ramo independente. É por isso que as casas da cidade usam ligação em paralelo!',
-          style: GoogleFonts.rajdhani(color: Colors.white70, fontSize: 14, height: 1.3),
+          style: GoogleFonts.rajdhani(color: const Color(0xFF475569), fontSize: 14, height: 1.3),
         ),
       ],
     );
   }
-
-
 
   /// Componente didático visual de poste de iluminação pública
   Widget _buildStreetLamp({
@@ -995,10 +971,6 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
     required bool isLit,
     required double brightnessRatio,
   }) {
-    final glowColor = isLit
-        ? Colors.amberAccent.withValues(alpha: brightnessRatio)
-        : Colors.white10;
-
     return Column(
       children: [
         Stack(
@@ -1010,12 +982,12 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
                 height: 70 * brightnessRatio + 20,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: glowColor,
+                  color: const Color(0xFFFDE68A),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.amberAccent.withValues(alpha: 0.6 * brightnessRatio),
-                      blurRadius: 30 * brightnessRatio,
-                      spreadRadius: 10 * brightnessRatio,
+                      color: const Color(0xFFF59E0B).withValues(alpha: 0.5 * brightnessRatio),
+                      blurRadius: 24 * brightnessRatio,
+                      spreadRadius: 8 * brightnessRatio,
                     ),
                   ],
                 ),
@@ -1024,8 +996,8 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
               Icons.lightbulb_rounded,
               size: 48,
               color: isLit
-                  ? Color.lerp(Colors.white, Colors.amberAccent, brightnessRatio)
-                  : Colors.white24,
+                  ? const Color(0xFFD97706)
+                  : const Color(0xFF64748B),
             ),
           ],
         ),
@@ -1033,7 +1005,7 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
         Text(
           label,
           style: GoogleFonts.rajdhani(
-            color: isLit ? Colors.white : Colors.white60,
+            color: const Color(0xFF0F172A),
             fontWeight: FontWeight.bold,
             fontSize: 14,
           ),
@@ -1058,21 +1030,21 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: isLit
-                    ? const Color(0xFF1E293B)
-                    : const Color(0xFF0F172A),
+                    ? const Color(0xFFFEF3C7)
+                    : Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: isBroken
-                      ? Colors.redAccent
+                      ? const Color(0xFFDC2626)
                       : isLit
-                          ? const Color(0xFF10B981)
-                          : Colors.white24,
+                          ? const Color(0xFFD97706)
+                          : const Color(0xFFCBD5E1),
                   width: 2,
                 ),
                 boxShadow: isLit
                     ? [
                         BoxShadow(
-                          color: const Color(0xFF10B981).withValues(alpha: 0.4),
+                          color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
                           blurRadius: 16,
                         )
                       ]
@@ -1086,10 +1058,10 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
                         : Icons.home_outlined,
                 size: 50,
                 color: isBroken
-                    ? Colors.redAccent
+                    ? const Color(0xFFDC2626)
                     : isLit
-                        ? Colors.amberAccent
-                        : Colors.white30,
+                        ? const Color(0xFFD97706)
+                        : const Color(0xFF64748B),
               ),
             ),
           ],
@@ -1098,7 +1070,7 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
         Text(
           name,
           style: GoogleFonts.rajdhani(
-            color: isBroken ? Colors.redAccent : Colors.white,
+            color: isBroken ? const Color(0xFFDC2626) : const Color(0xFF0F172A),
             fontWeight: FontWeight.bold,
             fontSize: 14,
           ),
@@ -1108,7 +1080,7 @@ class _RuasMaqueteScreenState extends State<RuasMaqueteScreen>
   }
 }
 
-/// Custom Painter com traçados neon e animação de elétrons para as Ruas da Maquete
+/// Custom Painter com traçados esquemáticos soltos na malha e animação de elétrons
 class _RuasMaquetePainter extends CustomPainter {
   final int missionIndex;
   final double animValue;
@@ -1133,17 +1105,17 @@ class _RuasMaquetePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final wirePaint = Paint()
-      ..color = const Color(0xFF0D9488).withValues(alpha: 0.4)
-      ..strokeWidth = 4
+      ..color = const Color(0xFF94A3B8)
+      ..strokeWidth = 3.5
       ..style = PaintingStyle.stroke;
 
     final activeWirePaint = Paint()
-      ..color = const Color(0xFF10B981)
-      ..strokeWidth = 5
+      ..color = const Color(0xFF0284C7)
+      ..strokeWidth = 5.0
       ..style = PaintingStyle.stroke;
 
     final electronPaint = Paint()
-      ..color = Colors.amberAccent
+      ..color = const Color(0xFFD97706)
       ..style = PaintingStyle.fill;
 
     // Desenhar caminhos de fios conforme a missão

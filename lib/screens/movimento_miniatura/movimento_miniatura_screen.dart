@@ -196,17 +196,18 @@ class _MovimentoMiniaturaScreenState extends State<MovimentoMiniaturaScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF021712),
+      backgroundColor: const Color(0xFFF1F5F9),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF06231E),
-        elevation: 0,
+        backgroundColor: Colors.white,
+        elevation: 1,
+        shadowColor: Colors.black12,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'ESTANDE 06 — MOVIMENTO EM MINIATURA',
               style: GoogleFonts.rajdhani(
-                color: const Color(0xFF10B981),
+                color: const Color(0xFF0F172A),
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1.2,
@@ -214,12 +215,12 @@ class _MovimentoMiniaturaScreenState extends State<MovimentoMiniaturaScreen>
             ),
             Text(
               'Equipe Mecânica — Conservação e Transmutação de Energia',
-              style: GoogleFonts.outfit(color: Colors.white60, fontSize: 12),
+              style: GoogleFonts.outfit(color: const Color(0xFF64748B), fontSize: 12),
             ),
           ],
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF10B981)),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF0284C7)),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -908,32 +909,36 @@ class _MovimentoMiniaturaScreenState extends State<MovimentoMiniaturaScreen>
 
   Widget _buildSideToolboxDrawer() {
     return const Wrap(
-      spacing: 12,
-      runSpacing: 12,
+      spacing: 10,
+      runSpacing: 10,
       children: [
         WorkbenchSymbolToolboxTile<String>(
           data: 'motor_cc',
+          label: 'Motor CC',
           tooltip: 'Motor CC',
-          symbolWidget: SchematicMotorWidget(size: 40, color: Color(0xFF10B981), isRunning: true),
-          color: Color(0xFF10B981),
-        ),
-        WorkbenchSymbolToolboxTile<String>(
-          data: 'push_button',
-          tooltip: 'Push-Button',
-          symbolWidget: SchematicSwitchWidget(size: 40, color: Color(0xFF0284C7), isClosed: false),
+          symbolWidget: SchematicMotorWidget(size: 34, color: Color(0xFF0284C7), isRunning: true),
           color: Color(0xFF0284C7),
         ),
         WorkbenchSymbolToolboxTile<String>(
+          data: 'push_button',
+          label: 'Botão',
+          tooltip: 'Push-Button',
+          symbolWidget: SchematicSwitchWidget(size: 34, color: Color(0xFFD97706), isClosed: false),
+          color: Color(0xFFD97706),
+        ),
+        WorkbenchSymbolToolboxTile<String>(
           data: 'led_indicator',
+          label: 'LED',
           tooltip: 'LED Indicador',
-          symbolWidget: SchematicLedWidget(size: 40, color: Colors.amberAccent, isOn: true),
-          color: Colors.amberAccent,
+          symbolWidget: SchematicLedWidget(size: 34, color: Colors.redAccent, isOn: true),
+          color: Colors.redAccent,
         ),
         WorkbenchSymbolToolboxTile<String>(
           data: 'resistor_680',
+          label: 'Resistor',
           tooltip: 'Resistor (680Ω)',
-          symbolWidget: SchematicResistorWidget(size: 40, color: Colors.amber),
-          color: Colors.amber,
+          symbolWidget: SchematicResistorWidget(size: 34, color: Color(0xFFD97706)),
+          color: Color(0xFFD97706),
         ),
       ],
     );

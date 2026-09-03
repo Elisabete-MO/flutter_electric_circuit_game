@@ -33,10 +33,10 @@ class SchematicBlueprintSocket<T extends Object> extends StatelessWidget {
       builder: (context, candidateData, rejectedData) {
         final isHovering = candidateData.isNotEmpty;
         final currentBorderColor = isFilled
-            ? const Color(0xFF10B981)
+            ? const Color(0xFF059669)
             : isHovering
-                ? Colors.amberAccent
-                : accentColor.withValues(alpha: 0.5);
+                ? const Color(0xFFD97706)
+                : accentColor;
 
         return GestureDetector(
           onTap: onTap,
@@ -45,23 +45,24 @@ class SchematicBlueprintSocket<T extends Object> extends StatelessWidget {
             children: [
               AnimatedContainer(
                 duration: const Duration(milliseconds: 250),
-                width: 90,
-                height: 70,
+                width: 95,
+                height: 75,
                 decoration: BoxDecoration(
                   color: isFilled
-                      ? const Color(0xFF042F2E).withValues(alpha: 0.8)
+                      ? const Color(0xFFF0FDF4)
                       : isHovering
-                          ? Colors.amber.withValues(alpha: 0.2)
-                          : const Color(0xFF0F172A).withValues(alpha: 0.6),
-                  borderRadius: BorderRadius.circular(12),
+                          ? const Color(0xFFFEF3C7)
+                          : const Color(0xFFFFFFFF),
+                  borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: currentBorderColor,
-                    width: isFilled || isHovering ? 2.5 : 1.5,
+                    width: isFilled || isHovering ? 2.5 : 1.8,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: currentBorderColor.withValues(alpha: isHovering ? 0.4 : 0.15),
+                      color: currentBorderColor.withValues(alpha: isHovering ? 0.25 : 0.10),
                       blurRadius: isHovering ? 12 : 6,
+                      offset: const Offset(0, 3),
                     ),
                   ],
                 ),
@@ -74,13 +75,13 @@ class SchematicBlueprintSocket<T extends Object> extends StatelessWidget {
                             ? Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Icon(Icons.add_circle_rounded, color: Colors.amberAccent, size: 24),
+                                  const Icon(Icons.add_circle_rounded, color: Color(0xFFD97706), size: 24),
                                   const SizedBox(height: 2),
                                   Text(
                                     'SOLTE AQUI',
                                     style: GoogleFonts.rajdhani(
-                                      color: Colors.amberAccent,
-                                      fontSize: 10,
+                                      color: const Color(0xFFD97706),
+                                      fontSize: 11,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -90,12 +91,12 @@ class SchematicBlueprintSocket<T extends Object> extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 5),
               Text(
                 label,
                 style: GoogleFonts.rajdhani(
-                  color: isFilled ? const Color(0xFF10B981) : Colors.white70,
-                  fontSize: 11,
+                  color: isFilled ? const Color(0xFF059669) : const Color(0xFF334155),
+                  fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),
               ),

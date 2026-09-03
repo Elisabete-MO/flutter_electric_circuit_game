@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../models/stand_mission.dart';
-import '../../widgets/component_vector_painters.dart';
-import '../../widgets/glass_container.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
+import '../../widgets/schematic_blueprint_socket.dart';
+import '../../widgets/schematic_symbol_painters.dart';
 import '../../widgets/tech_grid_background.dart';
 import '../../widgets/workbench_components.dart';
 
@@ -261,17 +261,18 @@ class _LetrerosLedScreenState extends State<LetrerosLedScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF021712),
+      backgroundColor: const Color(0xFFF1F5F9),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF041C16),
-        elevation: 0,
+        backgroundColor: Colors.white,
+        elevation: 1,
+        shadowColor: Colors.black12,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'ESTANDE 05 — LETREIROS DE LED',
               style: GoogleFonts.rajdhani(
-                color: const Color(0xFF10B981),
+                color: const Color(0xFF0F172A),
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1.2,
@@ -279,12 +280,12 @@ class _LetrerosLedScreenState extends State<LetrerosLedScreen>
             ),
             Text(
               'Equipe Sinalização — Semicondutores e Proteção',
-              style: GoogleFonts.outfit(color: Colors.white60, fontSize: 12),
+              style: GoogleFonts.outfit(color: const Color(0xFF64748B), fontSize: 12),
             ),
           ],
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF10B981)),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF0284C7)),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -323,7 +324,7 @@ class _LetrerosLedScreenState extends State<LetrerosLedScreen>
                 Expanded(
                   flex: 2,
                   child: WorkbenchSidePanel(
-                    teamTitle: 'Painel da Equipe Sinalização',
+                    teamTitle: 'Componentes — Sinalização',
                     toolboxItems: [
                       _buildSidePanelContent(),
                     ],
@@ -338,39 +339,10 @@ class _LetrerosLedScreenState extends State<LetrerosLedScreen>
     );
   }
 
-
-
   Widget _buildLedWorkbench() {
-    return GlassContainer(
-      accentColor: const Color(0xFF10B981),
-      borderWidth: 1.5,
-      child: Stack(
-        children: [
-          // Fundo com textura de placa de circuito impresso (PCB)
-          Positioned.fill(
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Color(0xFF041D17),
-                    Color(0xFF02120F),
-                  ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
-            ),
-          ),
-
-          // Renderização das placas de letreiro conforme a missão
-          Positioned.fill(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: _buildMissionSignDisplay(),
-            ),
-          ),
-        ],
-      ),
+    return Padding(
+      padding: const EdgeInsets.all(12.0),
+      child: _buildMissionSignDisplay(),
     );
   }
 
@@ -403,121 +375,52 @@ class _LetrerosLedScreenState extends State<LetrerosLedScreen>
           isLit: isLit,
         ),
 
-        // Soquete do LED na Bancada com DragTarget
-        DragTarget<String>(
-          onWillAcceptWithDetails: (details) => details.data == 'led_red',
-          onAcceptWithDetails: (details) {
+        // Socket Esquemático do LED Semicondutor
+        SchematicBlueprintSocket<String>(
+          expectedData: 'led_red',
+          isFilled: _m1LedInserted,
+          symbolWidget: SchematicLedWidget(
+            size: 55,
+            color: Colors.redAccent,
+            isOn: isLit,
+          ),
+          placeholderWidget: const SchematicLedWidget(
+            size: 45,
+            color: Colors.white38,
+            isOn: false,
+          ),
+          label: 'SOQUETE LED SEMICONDUTOR',
+          onAccept: (_) {
             setState(() {
               _m1LedInserted = true;
             });
           },
-          builder: (context, candidateData, rejectedData) {
-            final isHovered = candidateData.isNotEmpty;
-            return Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: isHovered
-                    ? const Color(0xFF10B981).withValues(alpha: 0.25)
-                    : const Color(0xFF0F172A),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: isHovered
-                      ? const Color(0xFF10B981)
-                      : isLit
-                          ? Colors.redAccent
-                          : Colors.amber,
-                  width: isHovered ? 2.5 : 2.0,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: (isHovered || isLit ? Colors.redAccent : Colors.amber).withValues(alpha: 0.3),
-                    blurRadius: 10,
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text('Polo (+) Ânodo', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
-                      const SizedBox(width: 20),
-                      Icon(
-                        _m1LedDirectPolarity ? Icons.arrow_forward_rounded : Icons.arrow_back_rounded,
-                        color: isLit ? Colors.amberAccent : Colors.white60,
-                      ),
-                      const SizedBox(width: 20),
-                      const Text('Polo (-) Cátodo', style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      InkWell(
-                        onTap: () {
-                          setState(() {
-                            _m1LedInserted = !_m1LedInserted;
-                          });
-                        },
-                        borderRadius: BorderRadius.circular(12),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: _m1LedInserted ? const Color(0xFF064E3B) : const Color(0xFF1E293B),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: _m1LedInserted ? const Color(0xFF10B981) : Colors.amber,
-                              width: 1.5,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                _m1LedInserted
-                                    ? Icons.check_circle_rounded
-                                    : isHovered
-                                        ? Icons.move_to_inbox_rounded
-                                        : Icons.add_box_rounded,
-                                color: _m1LedInserted ? const Color(0xFF10B981) : Colors.amber,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                _m1LedInserted
-                                    ? 'LED No Soquete'
-                                    : isHovered
-                                        ? '🎯 Solte Aqui!'
-                                        : '➕ Encaixar LED Vermelho',
-                                style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1E293B),
-                          side: const BorderSide(color: Colors.amberAccent),
-                        ),
-                        icon: const Icon(Icons.flip_camera_android_rounded, color: Colors.amberAccent),
-                        label: Text(
-                          _m1LedDirectPolarity ? 'Polaridade: Ânodo (+) → Cátodo (-)' : 'Polaridade: Cátodo (-) → Ânodo (+)',
-                          style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold),
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _m1LedDirectPolarity = !_m1LedDirectPolarity;
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            );
+          onTap: () {
+            setState(() {
+              _m1LedInserted = !_m1LedInserted;
+            });
+          },
+        ),
+
+        // Controle Clean de Polaridade (Ânodo / Cátodo)
+        OutlinedButton.icon(
+          style: OutlinedButton.styleFrom(
+            backgroundColor: const Color(0xFF0F172A),
+            side: const BorderSide(color: Color(0xFF00E5FF)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
+          icon: const Icon(Icons.flip_camera_android_rounded, color: Color(0xFF00E5FF)),
+          label: Text(
+            _m1LedDirectPolarity
+                ? 'Polaridade: Direta [Ânodo (+) → Cátodo (-)]'
+                : 'Polaridade: Inversa [Cátodo (-) → Ânodo (+)]',
+            style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+          ),
+          onPressed: () {
+            setState(() {
+              _m1LedDirectPolarity = !_m1LedDirectPolarity;
+            });
           },
         ),
       ],
@@ -788,59 +691,62 @@ class _LetrerosLedScreenState extends State<LetrerosLedScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Gaveta de Componentes Arrastáveis:',
-          style: GoogleFonts.rajdhani(color: const Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 14),
+        const Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            WorkbenchSymbolToolboxTile<String>(
+              data: 'led_red',
+              label: 'LED',
+              tooltip: 'LED Vermelho (Semicondutor)',
+              symbolWidget: SchematicLedWidget(size: 34, color: Colors.redAccent, isOn: true),
+              color: Colors.redAccent,
+            ),
+            WorkbenchSymbolToolboxTile<String>(
+              data: 'resistor_680',
+              label: 'Resistor',
+              tooltip: 'Resistor Prot. 680Ω',
+              symbolWidget: SchematicResistorWidget(size: 34, color: Color(0xFFD97706)),
+              color: Color(0xFFD97706),
+            ),
+            WorkbenchSymbolToolboxTile<String>(
+              data: 'bateria_9v',
+              label: 'Fonte 9V',
+              tooltip: 'Fonte DC 9V',
+              symbolWidget: SchematicBatteryWidget(size: 34, color: Color(0xFF0284C7)),
+              color: Color(0xFF0284C7),
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
-
-        const WorkbenchToolboxItem<String>(
-          data: 'led_red',
-          title: 'LED Vermelho (Semicondutor)',
-          subtitle: 'Encaixe no soquete do circuito',
-          icon: Icons.emoji_objects_rounded,
-          customVectorWidget: LedVectorWidget(size: 24, isOn: true, ledColor: Colors.redAccent),
-          color: Colors.redAccent,
-        ),
-        const WorkbenchToolboxItem<String>(
-          data: 'resistor_680',
-          title: 'Resistor Prot. 680Ω',
-          subtitle: 'Proteção de sobrecorrente',
-          icon: Icons.shield_rounded,
-          customVectorWidget: ResistorVectorWidget(size: 24, resistanceValue: '680'),
-          color: Colors.amber,
-        ),
-
         const SizedBox(height: 16),
-
         Text(
-          'Simbologia e Regras do LED:',
-          style: GoogleFonts.rajdhani(color: Colors.amberAccent, fontWeight: FontWeight.bold, fontSize: 14),
+          'Simbologia e Regras:',
+          style: GoogleFonts.rajdhani(color: const Color(0xFF0F172A), fontWeight: FontWeight.bold, fontSize: 14),
         ),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: const Color(0xFF1E293B),
+            color: Colors.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '• Ânodo (+): Terminal maior do LED (conecta ao polo positivo).',
-                style: GoogleFonts.rajdhani(color: Colors.white70, fontSize: 13),
+                '• Ânodo (+): Terminal maior do LED (polo positivo).',
+                style: GoogleFonts.rajdhani(color: const Color(0xFF334155), fontSize: 13, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 4),
               Text(
-                '• Cátodo (-): Terminal menor e lado chanfrado (conecta ao polo negativo).',
-                style: GoogleFonts.rajdhani(color: Colors.white70, fontSize: 13),
+                '• Cátodo (-): Terminal menor (polo negativo).',
+                style: GoogleFonts.rajdhani(color: const Color(0xFF334155), fontSize: 13, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 4),
               Text(
-                '• Resistor Limitador: Obrigatório em fontes > 3V para evitar destruição do componente por corrente excessiva.',
-                style: GoogleFonts.rajdhani(color: Colors.amberAccent, fontSize: 13),
+                '• Resistor: Limita a corrente para evitar a queima do diodo.',
+                style: GoogleFonts.rajdhani(color: const Color(0xFF334155), fontSize: 13, fontWeight: FontWeight.w600),
               ),
             ],
           ),

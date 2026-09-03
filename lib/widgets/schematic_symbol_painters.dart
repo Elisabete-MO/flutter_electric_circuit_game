@@ -530,21 +530,21 @@ class SchematicCircuitWirePainter extends CustomPainter {
     required this.isClosed,
     required this.animationValue,
     this.switchInserted = true,
-    this.wireColor = const Color(0xFF00E5FF),
+    this.wireColor = const Color(0xFF1E293B),
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final cyanColor = isClosed ? wireColor : const Color(0xFF0284C7);
+    final activeColor = isClosed ? const Color(0xFF0284C7) : const Color(0xFF94A3B8);
 
     final wirePaint = Paint()
-      ..color = cyanColor
+      ..color = activeColor
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.5
+      ..strokeWidth = 3.5
       ..strokeCap = StrokeCap.round;
 
     final glowPaint = Paint()
-      ..color = cyanColor.withValues(alpha: isClosed ? 0.6 : 0.0)
+      ..color = activeColor.withValues(alpha: isClosed ? 0.3 : 0.0)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 6.0
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
@@ -568,7 +568,7 @@ class SchematicCircuitWirePainter extends CustomPainter {
 
     if (isClosed) {
       final electronPaint = Paint()
-        ..color = Colors.white
+        ..color = const Color(0xFFD97706)
         ..style = PaintingStyle.fill;
 
       const totalDots = 12;
@@ -579,7 +579,7 @@ class SchematicCircuitWirePainter extends CustomPainter {
           final distance = ((animationValue + (i / totalDots)) % 1.0) * length;
           final tangent = metric.getTangentForOffset(distance);
           if (tangent != null) {
-            canvas.drawCircle(tangent.position, 3.0, electronPaint);
+            canvas.drawCircle(tangent.position, 3.5, electronPaint);
           }
         }
       }

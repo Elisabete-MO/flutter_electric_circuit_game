@@ -25,17 +25,24 @@ class WorkbenchHeaderStepper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF06231E),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: const Icon(Icons.chevron_left_rounded, color: Colors.white70),
+            icon: const Icon(Icons.chevron_left_rounded, color: Color(0xFF334155)),
             onPressed: onPrevious,
             tooltip: 'Missão Anterior',
           ),
@@ -52,10 +59,10 @@ class WorkbenchHeaderStepper extends StatelessWidget {
                   height: 12,
                   decoration: BoxDecoration(
                     color: isCurrent
-                        ? const Color(0xFF10B981)
+                        ? const Color(0xFF0284C7)
                         : isCompleted
-                            ? const Color(0xFF059669)
-                            : const Color(0xFF1E293B),
+                            ? const Color(0xFF10B981)
+                            : const Color(0xFFE2E8F0),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: isCompleted
@@ -66,7 +73,7 @@ class WorkbenchHeaderStepper extends StatelessWidget {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.chevron_right_rounded, color: Colors.white70),
+            icon: const Icon(Icons.chevron_right_rounded, color: Color(0xFF334155)),
             onPressed: onNext,
             tooltip: 'Próxima Missão',
           ),
@@ -95,16 +102,16 @@ class WorkbenchMissionHeader extends StatelessWidget {
         Text(
           title.toUpperCase(),
           style: GoogleFonts.rajdhani(
-            fontSize: 22,
+            fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: const Color(0xFF10B981),
-            letterSpacing: 1.2,
+            color: const Color(0xFF0F172A),
+            letterSpacing: 0.8,
           ),
         ),
         const SizedBox(height: 2),
         Text(
           objective,
-          style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14),
+          style: GoogleFonts.outfit(color: const Color(0xFF475569), fontSize: 13.5),
         ),
       ],
     );
@@ -291,10 +298,11 @@ class WorkbenchToolboxItem<T extends Object> extends StatelessWidget {
   }
 }
 
-/// 4b. Card Minimalista de Gaveta Apenas com Desenho/Símbolo Esquemático (Sem Texto)
+/// 4b. Card Tinkercad Style de Componentes com Símbolo e Rótulo
 class WorkbenchSymbolToolboxTile<T extends Object> extends StatelessWidget {
   final T data;
   final Widget symbolWidget;
+  final String? label;
   final String? tooltip;
   final Color color;
 
@@ -302,31 +310,53 @@ class WorkbenchSymbolToolboxTile<T extends Object> extends StatelessWidget {
     super.key,
     required this.data,
     required this.symbolWidget,
+    this.label,
     this.tooltip,
-    this.color = const Color(0xFF00E5FF),
+    this.color = const Color(0xFF0284C7),
   });
 
   @override
   Widget build(BuildContext context) {
     final tileContent = Container(
-      width: 72,
-      height: 72,
+      width: 84,
+      height: 84,
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.6), width: 1.8),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: color.withValues(alpha: 0.2),
-            blurRadius: 10,
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: symbolWidget,
-        ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 6, left: 4, right: 4),
+              child: Center(child: symbolWidget),
+            ),
+          ),
+          if (label != null || tooltip != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6, left: 4, right: 4),
+              child: Text(
+                label ?? tooltip ?? '',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.outfit(
+                  color: const Color(0xFF334155),
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+        ],
       ),
     );
 
@@ -335,16 +365,17 @@ class WorkbenchSymbolToolboxTile<T extends Object> extends StatelessWidget {
       feedback: Material(
         color: Colors.transparent,
         child: Container(
-          width: 80,
-          height: 80,
+          width: 88,
+          height: 88,
           decoration: BoxDecoration(
-            color: const Color(0xFF0284C7).withValues(alpha: 0.9),
-            shape: BoxShape.circle,
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: color, width: 2.5),
             boxShadow: [
               BoxShadow(
-                color: color.withValues(alpha: 0.8),
-                blurRadius: 16,
-                spreadRadius: 3,
+                color: color.withValues(alpha: 0.35),
+                blurRadius: 14,
+                spreadRadius: 2,
               ),
             ],
           ),
@@ -361,7 +392,7 @@ class WorkbenchSymbolToolboxTile<T extends Object> extends StatelessWidget {
   }
 }
 
-/// 5. Painel Lateral Unificado com Gaveta de Ferramentas e Botão de Energizar
+/// 5. Painel Lateral Unificado no Estilo Tinkercad Circuits
 class WorkbenchSidePanel extends StatelessWidget {
   final String teamTitle;
   final List<Widget> toolboxItems;
@@ -379,38 +410,54 @@ class WorkbenchSidePanel extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF082B24),
+        color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Icon(Icons.settings_input_component_rounded, color: Color(0xFF10B981)),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  teamTitle,
-                  style: GoogleFonts.rajdhani(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.widgets_rounded, color: Color(0xFF0284C7), size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    teamTitle,
+                    style: GoogleFonts.rajdhani(
+                      color: const Color(0xFF0F172A),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const Divider(color: Colors.white24, height: 20),
+          const SizedBox(height: 12),
           Text(
-            'Gaveta de Componentes Arrastáveis:',
+            'Componentes Básicos:',
             style: GoogleFonts.rajdhani(
-              color: const Color(0xFF10B981),
+              color: const Color(0xFF64748B),
               fontWeight: FontWeight.bold,
-              fontSize: 14,
+              fontSize: 13,
+              letterSpacing: 0.5,
             ),
           ),
           const SizedBox(height: 8),
@@ -427,10 +474,12 @@ class WorkbenchSidePanel extends StatelessWidget {
             height: 48,
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF10B981),
+                backgroundColor: const Color(0xFF0284C7),
+                foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
+                elevation: 3,
               ),
               icon: const Icon(Icons.play_arrow_rounded, color: Colors.white),
               label: Text(

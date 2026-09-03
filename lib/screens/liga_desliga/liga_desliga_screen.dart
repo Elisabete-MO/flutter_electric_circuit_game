@@ -290,17 +290,18 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF021712),
+      backgroundColor: const Color(0xFFF1F5F9),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF041C16),
-        elevation: 0,
+        backgroundColor: Colors.white,
+        elevation: 1,
+        shadowColor: Colors.black12,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'ESTANDE 03 — LIGA E DESLIGA',
               style: GoogleFonts.rajdhani(
-                color: const Color(0xFF10B981),
+                color: const Color(0xFF0F172A),
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1.2,
@@ -308,12 +309,12 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
             ),
             Text(
               'Equipe Controle — Mini Painel de Iluminação',
-              style: GoogleFonts.outfit(color: Colors.white60, fontSize: 12),
+              style: GoogleFonts.outfit(color: const Color(0xFF64748B), fontSize: 12),
             ),
           ],
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF10B981)),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF0284C7)),
           onPressed: () => Navigator.of(context).pushReplacementNamed(Routes.home),
         ),
       ),
@@ -411,26 +412,29 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
 
   Widget _buildSideToolboxDrawer() {
     return const Wrap(
-      spacing: 12,
-      runSpacing: 12,
+      spacing: 10,
+      runSpacing: 10,
       children: [
         WorkbenchSymbolToolboxTile<String>(
           data: 'switch',
+          label: 'Interruptor',
           tooltip: 'Interruptor (SPST)',
-          symbolWidget: SchematicSwitchWidget(size: 40, color: Colors.amber, isClosed: false),
-          color: Colors.amber,
+          symbolWidget: SchematicSwitchWidget(size: 34, color: Color(0xFFD97706), isClosed: false),
+          color: Color(0xFFD97706),
         ),
         WorkbenchSymbolToolboxTile<String>(
           data: 'battery',
+          label: 'Bateria',
           tooltip: 'Bateria 4.5V',
-          symbolWidget: SchematicBatteryWidget(size: 40, color: Color(0xFF00E5FF)),
-          color: Color(0xFF00E5FF),
+          symbolWidget: SchematicBatteryWidget(size: 34, color: Color(0xFF0284C7)),
+          color: Color(0xFF0284C7),
         ),
         WorkbenchSymbolToolboxTile<String>(
           data: 'lamp',
+          label: 'Lâmpada',
           tooltip: 'Lâmpada (Carga)',
-          symbolWidget: SchematicLampWidget(size: 40, color: Colors.amberAccent, isOn: true),
-          color: Colors.amberAccent,
+          symbolWidget: SchematicLampWidget(size: 34, color: Color(0xFFD97706), isOn: true),
+          color: Color(0xFFD97706),
         ),
       ],
     );
@@ -1361,29 +1365,18 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
   Widget _buildSchematicCanvasM1() {
     final bool isBulbLit = _m1SwitchInserted && _m1SwitchClosed;
 
-    return Container(
+    return SizedBox(
       height: 270,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF031822),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF00E5FF).withValues(alpha: 0.5), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF00E5FF).withValues(alpha: 0.15),
-            blurRadius: 16,
-          ),
-        ],
-      ),
       child: Stack(
         children: [
-          // 1. Fios de Trançado Esquemático com Elétrons Cyan Animados
+          // 1. Fios de Trançado Esquemático com Elétrons Animados (Solto na Malha)
           CustomPaint(
             size: Size.infinite,
             painter: SchematicCircuitWirePainter(
               isClosed: isBulbLit,
               animationValue: _currentFlowController.value,
               switchInserted: _m1SwitchInserted,
+              wireColor: const Color(0xFF1E293B),
             ),
           ),
 
@@ -1394,11 +1387,11 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                SchematicBatteryWidget(size: 60, color: Color(0xFF00E5FF)),
+                SchematicBatteryWidget(size: 60, color: Color(0xFF0284C7)),
                 SizedBox(height: 4),
                 Text(
                   'FONTE 4.5V',
-                  style: TextStyle(color: Color(0xFF00E5FF), fontSize: 10, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: Color(0xFF0F172A), fontSize: 11, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -1413,15 +1406,15 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
               children: [
                 SchematicLampWidget(
                   size: 60,
-                  color: isBulbLit ? Colors.amberAccent : const Color(0xFF00E5FF),
+                  color: isBulbLit ? const Color(0xFFD97706) : const Color(0xFF0284C7),
                   isOn: isBulbLit,
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'LÂMPADA',
                   style: TextStyle(
-                    color: isBulbLit ? Colors.amberAccent : const Color(0xFF00E5FF),
-                    fontSize: 10,
+                    color: isBulbLit ? const Color(0xFFD97706) : const Color(0xFF0F172A),
+                    fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

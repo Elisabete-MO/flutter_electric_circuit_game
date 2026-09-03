@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../models/stand_mission.dart';
 import '../../widgets/component_vector_painters.dart';
 import '../../widgets/prof_volts_speech.dart';
+import '../../widgets/schematic_symbol_painters.dart';
 import '../../widgets/tech_grid_background.dart';
 import '../../widgets/workbench_components.dart';
 
@@ -309,17 +310,18 @@ class _MedeTestaExplicaScreenState extends State<MedeTestaExplicaScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF021712),
+      backgroundColor: const Color(0xFFF1F5F9),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF06231E),
-        elevation: 0,
+        backgroundColor: Colors.white,
+        elevation: 1,
+        shadowColor: Colors.black12,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'ESTANDE 07 — MEDE, TESTA E EXPLICA',
               style: GoogleFonts.rajdhani(
-                color: const Color(0xFF10B981),
+                color: const Color(0xFF0F172A),
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1.2,
@@ -327,7 +329,7 @@ class _MedeTestaExplicaScreenState extends State<MedeTestaExplicaScreen> {
             ),
             Text(
               'Equipe Investigação — Medição Elétrica & Diagnóstico',
-              style: GoogleFonts.outfit(color: Colors.white60, fontSize: 12),
+              style: GoogleFonts.outfit(color: const Color(0xFF64748B), fontSize: 12),
             ),
           ],
         ),
@@ -370,9 +372,16 @@ class _MedeTestaExplicaScreenState extends State<MedeTestaExplicaScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF082B24).withValues(alpha: 0.9),
+                          color: Colors.white,
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+                          border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
                         child: _buildSimulationBench(),
                       ),
@@ -383,7 +392,7 @@ class _MedeTestaExplicaScreenState extends State<MedeTestaExplicaScreen> {
                     Expanded(
                       flex: 2,
                       child: WorkbenchSidePanel(
-                        teamTitle: 'Painel da Equipe Investigação',
+                        teamTitle: 'Gaveta de Símbolos — Medição',
                         onEnergizePressed: _validateCurrentMission,
                         toolboxItems: [
                           _buildSidePanelContent(),
@@ -400,7 +409,7 @@ class _MedeTestaExplicaScreenState extends State<MedeTestaExplicaScreen> {
     );
   }
 
-  /// Constrói a bancada didática principal com o Multímetro e o Circuito de Teste
+  /// Constrói a bancada didática principal com o Multímetro e o Circuito de Teste (Solto na Malha)
   Widget _buildSimulationBench() {
     return Column(
       children: [
@@ -408,15 +417,10 @@ class _MedeTestaExplicaScreenState extends State<MedeTestaExplicaScreen> {
         _buildDigitalMultimeterWidget(),
         const SizedBox(height: 16),
 
-        // Área Central do Circuito Sob Medição
+        // Área Central do Circuito Sob Medição (Solto na Malha)
         Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF09201B),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
-            ),
+          child: Padding(
+            padding: const EdgeInsets.all(8),
             child: _buildCircuitBenchForCurrentMission(),
           ),
         ),
@@ -565,7 +569,7 @@ class _MedeTestaExplicaScreenState extends State<MedeTestaExplicaScreen> {
       children: [
         Text(
           'Medição Direta da Bateria 9V',
-          style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+          style: GoogleFonts.rajdhani(color: const Color(0xFF0F172A), fontWeight: FontWeight.bold, fontSize: 16),
         ),
         const SizedBox(height: 20),
         Row(
@@ -790,15 +794,43 @@ class _MedeTestaExplicaScreenState extends State<MedeTestaExplicaScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            WorkbenchSymbolToolboxTile<String>(
+              data: 'multimeter_v',
+              label: 'Voltímetro',
+              tooltip: 'Voltímetro (Medidor de Tensão)',
+              symbolWidget: SchematicMeterWidget(size: 34, color: Color(0xFF0284C7), meterType: 'V'),
+              color: Color(0xFF0284C7),
+            ),
+            WorkbenchSymbolToolboxTile<String>(
+              data: 'multimeter_a',
+              label: 'Amperímetro',
+              tooltip: 'Amperímetro (Medidor de Corrente)',
+              symbolWidget: SchematicMeterWidget(size: 34, color: Color(0xFFD97706), meterType: 'A'),
+              color: Color(0xFFD97706),
+            ),
+            WorkbenchSymbolToolboxTile<String>(
+              data: 'bateria_9v',
+              label: 'Fonte 9V',
+              tooltip: 'Fonte DC 9V',
+              symbolWidget: SchematicBatteryWidget(size: 34, color: Color(0xFF0284C7)),
+              color: Color(0xFF0284C7),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
         if (_currentMissionIndex == 3) ...[
           Text(
             'Selecione o Resistor de Proteção:',
-            style: GoogleFonts.rajdhani(color: const Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 14),
+            style: GoogleFonts.rajdhani(color: const Color(0xFF00E5FF), fontWeight: FontWeight.bold, fontSize: 14),
           ),
           const SizedBox(height: 8),
           _buildResistorOptionTile(68, '68 Ω (Baixa Resistência — Perigo!)', Colors.redAccent),
           const SizedBox(height: 6),
-          _buildResistorOptionTile(680, '680 Ω (Resistência Ideal — ~13mA)', const Color(0xFF10B981)),
+          _buildResistorOptionTile(680, '680 Ω (Resistência Ideal — ~13mA)', const Color(0xFF00E5FF)),
           const SizedBox(height: 6),
           _buildResistorOptionTile(6800, '6.8 kΩ (Alta Resistência — LED fraco)', Colors.amber),
         ] else if (_currentMissionIndex == 4) ...[
@@ -815,15 +847,15 @@ class _MedeTestaExplicaScreenState extends State<MedeTestaExplicaScreen> {
         ] else ...[
           Text(
             'Instruções de Medição:',
-            style: GoogleFonts.rajdhani(color: const Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 14),
+            style: GoogleFonts.rajdhani(color: const Color(0xFF00E5FF), fontWeight: FontWeight.bold, fontSize: 14),
           ),
           const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFF1E293B),
+              color: const Color(0xFF0F172A),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+              border: Border.all(color: const Color(0xFF00E5FF).withValues(alpha: 0.25)),
             ),
             child: Text(
               '1. Conecte as pontas de prova (+ Vermelha e - Preta) nos terminais do circuito.\n2. Escolha a escala correta no Multímetro (V DC para Tensão ou mA para Corrente).\n3. Clique em ENERGIZAR E VALIDAR.',
