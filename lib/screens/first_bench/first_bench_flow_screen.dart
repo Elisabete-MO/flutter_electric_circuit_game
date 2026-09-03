@@ -8,7 +8,7 @@ import '../../state/progress_controller.dart';
 import '../../widgets/eletrolab_header_brand.dart';
 import '../../widgets/glass_container.dart';
 import '../../widgets/tech_grid_background.dart';
-import '../first_steps/first_steps_screen.dart';
+import 'first_bench_phase1.dart';
 import 'first_bench_phase2.dart';
 import 'first_bench_phase3.dart';
 import 'first_bench_phase4.dart';
@@ -317,7 +317,7 @@ class _FirstBenchFlowScreenState extends ConsumerState<FirstBenchFlowScreen> {
 
   Widget _buildCurrentPhaseWidget() {
     return switch (_flowState.currentPhaseId) {
-      1 => FirstStepsScreen(
+      1 => FirstBenchPhase1(
           onPhaseComplete: () => _onPhaseCompleted(1),
         ),
       2 => FirstBenchPhase2(
@@ -329,7 +329,7 @@ class _FirstBenchFlowScreenState extends ConsumerState<FirstBenchFlowScreen> {
       4 => FirstBenchPhase4(
           onPhaseComplete: () => _onPhaseCompleted(4),
         ),
-      _ => FirstStepsScreen(
+      _ => FirstBenchPhase1(
           onPhaseComplete: () => _onPhaseCompleted(1),
         ),
     };
