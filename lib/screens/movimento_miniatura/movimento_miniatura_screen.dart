@@ -4,10 +4,13 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../models/stand_mission.dart';
 import '../../models/first_step_component.dart';
+import '../../models/component_terminals.dart';
 import '../../state/progress_controller.dart';
 import '../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
 import '../../widgets/schematic_blueprint_socket.dart';
+import '../../widgets/physical_blueprint_socket.dart';
+import '../../widgets/realistic_wire_painter.dart';
 import '../../widgets/schematic_symbol_painters.dart';
 import '../../widgets/component_physical_painter.dart';
 import '../../widgets/component_vector_painters.dart';
@@ -44,19 +47,35 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
   double _m1MotorRotation = 0.0;
 
   // M2: Inversão de Sentido de Rotação
-  bool _m2ReversedPolarity = false; // false = Horário (+/-), true = Anti-horário (-/+)
+  bool _m2ReversedPolarity = false;
+  bool _m2BatteryInserted = false;
+  double _m2BatteryRotation = 0.0;
+  bool _m2MotorInserted = false;
+  double _m2MotorRotation = 0.0;
 
   // M3: Botão de Partida do Motor (Push-button)
   bool _m3PushButtonInserted = false;
   bool _m3PushButtonPressed = false;
+  bool _m3BatteryInserted = false;
+  double _m3BatteryRotation = 0.0;
+  bool _m3MotorInserted = false;
+  double _m3MotorRotation = 0.0;
 
   // M4: Painel com LED Indicador em Paralelo
   bool _m4LedInserted = false;
   bool _m4ResistorInserted = false;
+  bool _m4BatteryInserted = false;
+  double _m4BatteryRotation = 0.0;
+  bool _m4MotorInserted = false;
+  double _m4MotorRotation = 0.0;
 
   // M5: Diagnóstico do Mini Carrinho
   bool _m5WireRepaired = false;
   bool _m5CarTested = false;
+  bool _m5BatteryInserted = false;
+  double _m5BatteryRotation = 0.0;
+  bool _m5MotorInserted = false;
+  double _m5MotorRotation = 0.0;
 
   bool _isSimulating = false;
 
@@ -665,49 +684,133 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
   // MISSÃO 2: Inversão de Sentido de Rotação
   // ==========================================
   Widget _buildM2UI() {
+    final isReversed = _m2ReversedPolarity;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _buildAnimatedMotorWidget(
-            isRunning: true,
-            isReversed: _m2ReversedPolarity,
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final w = constraints.maxWidth;
+                  final h = constraints.maxHeight;
+                  final batteryX = w * 0.15;
+                  final motorX = w * 0.85;
+                  final centerY = h * 0.5;
+
+                  final batteryPlacement = ComponentPlacement(
+                    componentType: ComponentType.battery,
+                    center: Offset(batteryX, centerY),
+                    rotation: _m2BatteryRotation,
+                  );
+                  final motorPlacement = ComponentPlacement(
+                    componentType: ComponentType.motor,
+                    center: Offset(motorX, centerY),
+                    rotation: _m2MotorRotation,
+                  );
+
+                  return Stack(
+                    children: [
+                      // Wire paths
+                      if (_m2BatteryInserted && _m2MotorInserted)
+                        Positioned.fill(
+                          child: CustomPaint(
+                            painter: DynamicWirePath(
+                              startComponent: isReversed ? motorPlacement : batteryPlacement,
+                              endComponent: isReversed ? batteryPlacement : motorPlacement,
+                              startTerminalIndex: isReversed ? 0 : 1,
+                              endTerminalIndex: isReversed ? 1 : 0,
+                              wireColor: isReversed ? const Color(0xFF0284C7) : const Color(0xFFD97706),
+                              animationValue: _currentFlowController.value,
+                              showCurrent: _m2BatteryInserted && _m2MotorInserted,
+                            ),
+                          ),
+                        ),
+                      // Battery socket
+                      Positioned(
+                        left: batteryX - 47.5,
+                        top: centerY - 47.5,
+                        child: PhysicalBlueprintSocket<String>(
+                          expectedData: 'battery',
+                          isFilled: _m2BatteryInserted,
+                          rotation: _m2BatteryRotation,
+                          size: 95,
+                          showLabel: false,
+                          onAccept: (_) => setState(() => _m2BatteryInserted = true),
+                          onRotate: () => setState(() => _m2BatteryRotation = (_m2BatteryRotation + 90) % 360),
+                          onTap: () {},
+                          symbolWidget: CustomPaint(
+                            size: const Size(55, 55),
+                            painter: ComponentPhysicalPainter(
+                              type: ComponentType.battery,
+                              isDarkMode: false,
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Motor socket
+                      Positioned(
+                        left: motorX - 47.5,
+                        top: centerY - 47.5,
+                        child: PhysicalBlueprintSocket<String>(
+                          expectedData: 'motor_cc',
+                          isFilled: _m2MotorInserted,
+                          rotation: _m2MotorRotation,
+                          size: 95,
+                          showLabel: false,
+                          onAccept: (_) => setState(() => _m2MotorInserted = true),
+                          onRotate: () => setState(() => _m2MotorRotation = (_m2MotorRotation + 90) % 360),
+                          onTap: () {},
+                          symbolWidget: CustomPaint(
+                            size: const Size(55, 55),
+                            painter: ComponentPhysicalPainter(
+                              type: ComponentType.motor,
+                              isActive: _m2BatteryInserted && _m2MotorInserted,
+                              isDarkMode: false,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 8),
           Text(
-            _m2ReversedPolarity
-                ? 'Sentido de Rotação: ANTI-HORÁRIO ↺ (Polaridade Invertida -/+)'
-                : 'Sentido de Rotação: HORÁRIO ↻ (Polaridade Padrão +/-)',
+            isReversed
+                ? 'Sentido: ANTI-HORÁRIO ↺ (Polaridade Invertida -/+)'
+                : 'Sentido: HORÁRIO ↻ (Polaridade Padrão +/-)',
             style: GoogleFonts.rajdhani(
-              color: _m2ReversedPolarity ? const Color(0xFF0284C7) : const Color(0xFFD97706),
+              color: isReversed ? const Color(0xFF0284C7) : const Color(0xFFD97706),
               fontWeight: FontWeight.bold,
               fontSize: 16,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,
               foregroundColor: const Color(0xFF0F172A),
               side: BorderSide(
-                color: _m2ReversedPolarity ? const Color(0xFF0284C7) : const Color(0xFFD97706),
+                color: isReversed ? const Color(0xFF0284C7) : const Color(0xFFD97706),
                 width: 2,
               ),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
             ),
             icon: const Icon(Icons.sync_alt_rounded, color: Color(0xFF0284C7)),
             label: Text(
-              _m2ReversedPolarity
-                ? 'Polaridade Atual: Polo (-) → Polo (+)'
-                : 'Inverter Polaridade da Fonte (+/- ➔ -/+)',
+              isReversed
+                ? 'Polaridade: Polo (-) → Polo (+)'
+                : 'Inverter Polaridade (+/- ➔ -/+)',
               style: GoogleFonts.rajdhani(color: const Color(0xFF0F172A), fontWeight: FontWeight.bold, fontSize: 15),
             ),
-            onPressed: () {
-              setState(() {
-                _m2ReversedPolarity = !_m2ReversedPolarity;
-              });
-            },
+            onPressed: () => setState(() => _m2ReversedPolarity = !_m2ReversedPolarity),
           ),
+          const SizedBox(height: 16),
         ],
       ),
     );
