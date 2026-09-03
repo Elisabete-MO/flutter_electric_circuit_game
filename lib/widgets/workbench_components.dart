@@ -291,6 +291,76 @@ class WorkbenchToolboxItem<T extends Object> extends StatelessWidget {
   }
 }
 
+/// 4b. Card Minimalista de Gaveta Apenas com Desenho/Símbolo Esquemático (Sem Texto)
+class WorkbenchSymbolToolboxTile<T extends Object> extends StatelessWidget {
+  final T data;
+  final Widget symbolWidget;
+  final String? tooltip;
+  final Color color;
+
+  const WorkbenchSymbolToolboxTile({
+    super.key,
+    required this.data,
+    required this.symbolWidget,
+    this.tooltip,
+    this.color = const Color(0xFF00E5FF),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tileContent = Container(
+      width: 72,
+      height: 72,
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.6), width: 1.8),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.2),
+            blurRadius: 10,
+          ),
+        ],
+      ),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: symbolWidget,
+        ),
+      ),
+    );
+
+    return Draggable<T>(
+      data: data,
+      feedback: Material(
+        color: Colors.transparent,
+        child: Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            color: const Color(0xFF0284C7).withValues(alpha: 0.9),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: color.withValues(alpha: 0.8),
+                blurRadius: 16,
+                spreadRadius: 3,
+              ),
+            ],
+          ),
+          child: Center(child: symbolWidget),
+        ),
+      ),
+      child: tooltip != null
+          ? Tooltip(
+              message: tooltip!,
+              child: tileContent,
+            )
+          : tileContent,
+    );
+  }
+}
+
 /// 5. Painel Lateral Unificado com Gaveta de Ferramentas e Botão de Energizar
 class WorkbenchSidePanel extends StatelessWidget {
   final String teamTitle;

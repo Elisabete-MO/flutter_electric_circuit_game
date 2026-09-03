@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../app/routes.dart';
 import '../../models/stand_mission.dart';
 import '../../state/progress_controller.dart';
-import '../../widgets/component_vector_painters.dart';
 import '../../widgets/glass_container.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
 import '../../widgets/prof_volts_full_body.dart';
@@ -412,33 +411,26 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
   }
 
   Widget _buildSideToolboxDrawer() {
-    return const Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return const Wrap(
+      spacing: 12,
+      runSpacing: 12,
       children: [
-        WorkbenchToolboxItem<String>(
+        WorkbenchSymbolToolboxTile<String>(
           data: 'switch',
-          title: 'Interruptor (SPST)',
-          subtitle: 'Chave de controle de fluxo',
-          icon: Icons.toggle_off_rounded,
-          customVectorWidget: PushButtonVectorWidget(size: 24),
+          tooltip: 'Interruptor (SPST)',
+          symbolWidget: SchematicSwitchWidget(size: 40, color: Colors.amber, isClosed: false),
           color: Colors.amber,
         ),
-        SizedBox(height: 8),
-        WorkbenchToolboxItem<String>(
+        WorkbenchSymbolToolboxTile<String>(
           data: 'battery',
-          title: 'Bateria 4.5V',
-          subtitle: 'Fonte de alimentação didática',
-          icon: Icons.battery_charging_full_rounded,
-          customVectorWidget: BatteryVectorWidget(size: 24),
-          color: Color(0xFF10B981),
+          tooltip: 'Bateria 4.5V',
+          symbolWidget: SchematicBatteryWidget(size: 40, color: Color(0xFF00E5FF)),
+          color: Color(0xFF00E5FF),
         ),
-        SizedBox(height: 8),
-        WorkbenchToolboxItem<String>(
+        WorkbenchSymbolToolboxTile<String>(
           data: 'lamp',
-          title: 'Lâmpada Incandescente',
-          subtitle: 'Carga de iluminação',
-          icon: Icons.lightbulb_rounded,
-          customVectorWidget: BulbVectorWidget(size: 24, isOn: true),
+          tooltip: 'Lâmpada (Carga)',
+          symbolWidget: SchematicLampWidget(size: 40, color: Colors.amberAccent, isOn: true),
           color: Colors.amberAccent,
         ),
       ],
@@ -1804,71 +1796,4 @@ class CircuitWirePainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 
-/// Custom Painter Esquemático com Trançado Blueprint Cyan
-class SchematicCircuitWirePainter extends CustomPainter {
-  final bool isClosed;
-  final double animationValue;
-  final bool switchInserted;
 
-  SchematicCircuitWirePainter({
-    required this.isClosed,
-    required this.animationValue,
-    required this.switchInserted,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final cyanColor = isClosed ? const Color(0xFF00E5FF) : const Color(0xFF0284C7);
-
-    final wirePaint = Paint()
-      ..color = cyanColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.5
-      ..strokeCap = StrokeCap.round;
-
-    final glowPaint = Paint()
-      ..color = cyanColor.withValues(alpha: isClosed ? 0.6 : 0.0)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 6.0
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
-
-    final path = Path();
-    path.moveTo(60, 100);
-    path.lineTo(60, 45);
-    path.lineTo(175, 45);
-
-    path.moveTo(265, 45);
-    path.lineTo(370, 45);
-    path.lineTo(370, 100);
-
-    path.moveTo(60, 100);
-    path.lineTo(60, 180);
-    path.lineTo(370, 180);
-    path.lineTo(370, 100);
-
-    canvas.drawPath(path, glowPaint);
-    canvas.drawPath(path, wirePaint);
-
-    if (isClosed) {
-      final electronPaint = Paint()
-        ..color = Colors.white
-        ..style = PaintingStyle.fill;
-
-      const totalDots = 12;
-      final metrics = path.computeMetrics();
-      for (final metric in metrics) {
-        final length = metric.length;
-        for (int i = 0; i < totalDots; i++) {
-          final distance = ((animationValue + (i / totalDots)) % 1.0) * length;
-          final tangent = metric.getTangentForOffset(distance);
-          if (tangent != null) {
-            canvas.drawCircle(tangent.position, 3.0, electronPaint);
-          }
-        }
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-}

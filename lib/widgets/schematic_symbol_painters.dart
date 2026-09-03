@@ -516,3 +516,76 @@ class _SchematicMeterPainter extends CustomPainter {
   bool shouldRepaint(covariant _SchematicMeterPainter oldDelegate) =>
       oldDelegate.color != color || oldDelegate.meterType != meterType;
 }
+
+// ==========================================================
+// 8. CUSTOM PAINTER ESQUEMÁTICO COM TRANÇADO BLUEPRINT CYAN
+// ==========================================================
+class SchematicCircuitWirePainter extends CustomPainter {
+  final bool isClosed;
+  final double animationValue;
+  final bool switchInserted;
+  final Color wireColor;
+
+  SchematicCircuitWirePainter({
+    required this.isClosed,
+    required this.animationValue,
+    this.switchInserted = true,
+    this.wireColor = const Color(0xFF00E5FF),
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cyanColor = isClosed ? wireColor : const Color(0xFF0284C7);
+
+    final wirePaint = Paint()
+      ..color = cyanColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5
+      ..strokeCap = StrokeCap.round;
+
+    final glowPaint = Paint()
+      ..color = cyanColor.withValues(alpha: isClosed ? 0.6 : 0.0)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 6.0
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+
+    final path = Path();
+    path.moveTo(60, 100);
+    path.lineTo(60, 45);
+    path.lineTo(175, 45);
+
+    path.moveTo(265, 45);
+    path.lineTo(370, 45);
+    path.lineTo(370, 100);
+
+    path.moveTo(60, 100);
+    path.lineTo(60, 180);
+    path.lineTo(370, 180);
+    path.lineTo(370, 100);
+
+    canvas.drawPath(path, glowPaint);
+    canvas.drawPath(path, wirePaint);
+
+    if (isClosed) {
+      final electronPaint = Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.fill;
+
+      const totalDots = 12;
+      final metrics = path.computeMetrics();
+      for (final metric in metrics) {
+        final length = metric.length;
+        for (int i = 0; i < totalDots; i++) {
+          final distance = ((animationValue + (i / totalDots)) % 1.0) * length;
+          final tangent = metric.getTangentForOffset(distance);
+          if (tangent != null) {
+            canvas.drawCircle(tangent.position, 3.0, electronPaint);
+          }
+        }
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}

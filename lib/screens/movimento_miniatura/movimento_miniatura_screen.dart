@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../models/stand_mission.dart';
-import '../../widgets/component_vector_painters.dart';
 import '../../widgets/glass_container.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
+import '../../widgets/schematic_blueprint_socket.dart';
+import '../../widgets/schematic_symbol_painters.dart';
 import '../../widgets/workbench_components.dart';
 
 /// Estande 06 — "Movimento em Miniatura" (Equipe Mecânica)
@@ -294,98 +295,96 @@ class _MovimentoMiniaturaScreenState extends State<MovimentoMiniaturaScreen>
           _buildMissionTitleHeader(),
           const SizedBox(height: 16),
           Expanded(
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF09201B),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4)),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF031926), Color(0xFF010D15)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Motor CC com Hélice Animada
-                    _buildAnimatedMotorWidget(
-                      isRunning: _m1MotorInserted,
-                      isReversed: false,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFF00E5FF).withValues(alpha: 0.4), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    blurRadius: 16,
+                  ),
+                ],
+              ),
+              child: Stack(
+                children: [
+                  // Diagrama Blueprint Desenho do Circuito
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: SchematicCircuitWirePainter(
+                        isClosed: _m1MotorInserted,
+                        animationValue: 0.5,
+                        wireColor: const Color(0xFF00E5FF),
+                      ),
                     ),
-                    const SizedBox(height: 24),
-                    // DropTarget para Encaixar Motor CC
-                    DragTarget<String>(
-                      onWillAcceptWithDetails: (details) => details.data == 'motor_cc',
-                      onAcceptWithDetails: (_) {
+                  ),
+
+                  // Fonte CC / Bateria Esquemática (Esquerda)
+                  const Positioned(
+                    left: 40,
+                    top: 100,
+                    child: Column(
+                      children: [
+                        SchematicBatteryWidget(size: 60, color: Color(0xFF00E5FF)),
+                        SizedBox(height: 6),
+                        Text(
+                          'FONTE 6.0V CC',
+                          style: TextStyle(color: Color(0xFF00E5FF), fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Motor CC com Hélice Animada (Centro Topo Visual)
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    top: 20,
+                    child: Center(
+                      child: _buildAnimatedMotorWidget(
+                        isRunning: _m1MotorInserted,
+                        isReversed: false,
+                      ),
+                    ),
+                  ),
+
+                  // Socket Esquemático para Arrastar o Motor CC (Direita / Linha)
+                  Positioned(
+                    right: 60,
+                    top: 95,
+                    child: SchematicBlueprintSocket<String>(
+                      expectedData: 'motor_cc',
+                      isFilled: _m1MotorInserted,
+                      symbolWidget: SchematicMotorWidget(
+                        size: 50,
+                        color: const Color(0xFF10B981),
+                        isRunning: _m1MotorInserted,
+                      ),
+                      placeholderWidget: const SchematicMotorWidget(
+                        size: 45,
+                        color: Colors.white38,
+                        isRunning: false,
+                      ),
+                      label: 'MOTOR CC',
+                      onAccept: (_) {
                         setState(() {
                           _m1MotorInserted = true;
                         });
                       },
-                      builder: (context, candidateData, rejectedData) {
-                        final isHovering = candidateData.isNotEmpty;
-                        return InkWell(
-                          onTap: () {
-                            setState(() {
-                              _m1MotorInserted = !_m1MotorInserted;
-                            });
-                          },
-                          borderRadius: BorderRadius.circular(16),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                            decoration: BoxDecoration(
-                              color: _m1MotorInserted
-                                  ? const Color(0xFF064E3B)
-                                  : isHovering
-                                      ? const Color(0xFF10B981).withValues(alpha: 0.25)
-                                      : const Color(0xFF1E293B),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: _m1MotorInserted
-                                    ? const Color(0xFF10B981)
-                                    : isHovering
-                                        ? const Color(0xFF10B981)
-                                        : Colors.amber,
-                                width: 2.0,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: (_m1MotorInserted ? const Color(0xFF10B981) : Colors.amber).withValues(alpha: 0.3),
-                                  blurRadius: 10,
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  _m1MotorInserted
-                                      ? Icons.check_circle_rounded
-                                      : isHovering
-                                          ? Icons.move_to_inbox_rounded
-                                          : Icons.add_box_rounded,
-                                  color: _m1MotorInserted ? const Color(0xFF10B981) : Colors.amber,
-                                  size: 24,
-                                ),
-                                const SizedBox(width: 10),
-                                Text(
-                                  _m1MotorInserted
-                                      ? 'Motor CC Conectado à Fonte'
-                                      : isHovering
-                                          ? '🎯 Solte Aqui para Encaixar!'
-                                          : '➕ Encaixar Motor CC na Bancada',
-                                  style: GoogleFonts.rajdhani(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
+                      onTap: () {
+                        setState(() {
+                          _m1MotorInserted = !_m1MotorInserted;
+                        });
                       },
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -905,39 +904,32 @@ class _MovimentoMiniaturaScreenState extends State<MovimentoMiniaturaScreen>
   }
 
   Widget _buildSideToolboxDrawer() {
-    return const Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return const Wrap(
+      spacing: 12,
+      runSpacing: 12,
       children: [
-        WorkbenchToolboxItem<String>(
+        WorkbenchSymbolToolboxTile<String>(
           data: 'motor_cc',
-          title: 'Motor CC Didático',
-          subtitle: 'Converte energia elétrica em giro',
-          icon: Icons.autorenew_rounded,
-          customVectorWidget: MotorCcVectorWidget(size: 24, isRunning: true),
+          tooltip: 'Motor CC',
+          symbolWidget: SchematicMotorWidget(size: 40, color: Color(0xFF10B981), isRunning: true),
           color: Color(0xFF10B981),
         ),
-        WorkbenchToolboxItem<String>(
+        WorkbenchSymbolToolboxTile<String>(
           data: 'push_button',
-          title: 'Push-Button (Pressão)',
-          subtitle: 'Retorno automático via mola',
-          icon: Icons.touch_app_rounded,
-          customVectorWidget: PushButtonVectorWidget(size: 24),
+          tooltip: 'Push-Button',
+          symbolWidget: SchematicSwitchWidget(size: 40, color: Color(0xFF0284C7), isClosed: false),
           color: Color(0xFF0284C7),
         ),
-        WorkbenchToolboxItem<String>(
+        WorkbenchSymbolToolboxTile<String>(
           data: 'led_indicator',
-          title: 'LED Indicador',
-          subtitle: 'Sinalização visual paralela',
-          icon: Icons.lightbulb_rounded,
-          customVectorWidget: LedVectorWidget(size: 24, isOn: true, ledColor: Colors.amberAccent),
+          tooltip: 'LED Indicador',
+          symbolWidget: SchematicLedWidget(size: 40, color: Colors.amberAccent, isOn: true),
           color: Colors.amberAccent,
         ),
-        WorkbenchToolboxItem<String>(
+        WorkbenchSymbolToolboxTile<String>(
           data: 'resistor_680',
-          title: 'Resistor de Proteção (680Ω)',
-          subtitle: 'Limitação de corrente no LED',
-          icon: Icons.shield_rounded,
-          customVectorWidget: ResistorVectorWidget(size: 24, resistanceValue: '680'),
+          tooltip: 'Resistor (680Ω)',
+          symbolWidget: SchematicResistorWidget(size: 40, color: Colors.amber),
           color: Colors.amber,
         ),
       ],
