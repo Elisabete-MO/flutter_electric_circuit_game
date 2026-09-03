@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../models/stand_mission.dart';
 import '../../models/first_step_component.dart';
+import '../../state/circuit_undo_redo_controller.dart';
 import '../../state/progress_controller.dart';
 import '../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
@@ -31,6 +32,7 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
   late final List<StandMission> _missions;
   int _currentMissionIndex = 0;
   bool _usePhysicalStyle = true;
+  final CircuitUndoRedoController _undoRedoController = CircuitUndoRedoController();
 
   // Controller para rotação da hélice do motor CC
   late final AnimationController _fanController;
@@ -1488,10 +1490,85 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
     return WorkbenchSidePanel(
       teamTitle: 'Painel da Equipe Mecânica',
       toolboxItems: [
+        _buildUndoRedoButtons(),
         _buildSideToolboxDrawer(),
       ],
       onEnergizePressed: _validateCurrentMission,
       isLoading: _isSimulating,
+    );
+  }
+
+  Widget _buildUndoRedoButtons() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Tooltip(
+            message: _undoRedoController.canUndo
+                ? 'Desfazer: ${_undoRedoController.lastUndoDescription}'
+                : 'Nada para desfazer',
+            child: IconButton(
+              icon: Icon(
+                Icons.undo_rounded,
+                color: _undoRedoController.canUndo
+                    ? const Color(0xFF0284C7)
+                    : const Color(0xFFCBD5E1),
+                size: 22,
+              ),
+              onPressed: _undoRedoController.canUndo
+                  ? () => setState(() => _undoRedoController.undo())
+                  : null,
+              style: IconButton.styleFrom(
+                backgroundColor: _undoRedoController.canUndo
+                    ? const Color(0xFF0284C7).withValues(alpha: 0.1)
+                    : Colors.transparent,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              '${_undoRedoController.undoCount}',
+              style: GoogleFonts.rajdhani(
+                color: const Color(0xFF64748B),
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          Tooltip(
+            message: _undoRedoController.canRedo
+                ? 'Refazer: ${_undoRedoController.lastRedoDescription}'
+                : 'Nada para refazer',
+            child: IconButton(
+              icon: Icon(
+                Icons.redo_rounded,
+                color: _undoRedoController.canRedo
+                    ? const Color(0xFF0284C7)
+                    : const Color(0xFFCBD5E1),
+                size: 22,
+              ),
+              onPressed: _undoRedoController.canRedo
+                  ? () => setState(() => _undoRedoController.redo())
+                  : null,
+              style: IconButton.styleFrom(
+                backgroundColor: _undoRedoController.canRedo
+                    ? const Color(0xFF0284C7).withValues(alpha: 0.1)
+                    : Colors.transparent,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

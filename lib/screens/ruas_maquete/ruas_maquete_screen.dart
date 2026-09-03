@@ -4,7 +4,9 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../models/stand_mission.dart';
 import '../../models/first_step_component.dart';
+import '../../models/circuit_action.dart';
 import '../../state/progress_controller.dart';
+import '../../state/circuit_undo_redo_controller.dart';
 import '../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
 import '../../widgets/schematic_blueprint_socket.dart';
@@ -26,6 +28,7 @@ class RuasMaqueteScreen extends ConsumerStatefulWidget {
 class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _electronAnimController;
+  final CircuitUndoRedoController _undoRedoController = CircuitUndoRedoController();
   final List<StandMission> _missions = StandMission.ruasMaqueteMissions;
   int _currentMissionIndex = 0;
   bool _usePhysicalStyle = true;
@@ -67,6 +70,22 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
     super.dispose();
   }
 
+  void _insertComponent({
+    required String name,
+    required bool Function() getInserted,
+    required void Function(bool) setInserted,
+    required double Function() getRotation,
+    required void Function(double) setRotation,
+  }) {
+    final prevInserted = getInserted();
+    final prevRotation = getRotation();
+    _undoRedoController.execute(InsertComponentAction(
+      description: 'Inserir $name',
+      onApply: () => setState(() { setInserted(true); setRotation(0); }),
+      onUndo: () => setState(() { setInserted(prevInserted); setRotation(prevRotation); }),
+    ));
+  }
+
   StandMission get _currentMission => _missions[_currentMissionIndex];
 
   void _nextMission() {
@@ -80,6 +99,7 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
   }
 
   void _resetCurrentMission() {
+    _undoRedoController.clear();
     setState(() {
       switch (_currentMissionIndex) {
         case 0:
@@ -551,6 +571,7 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
                   m3Return: _m3ReturnConnected,
                   m4Parallel: _m4ParallelWireConnected,
                   m5House1Broken: _m5House1Broken,
+                  usePhysicalStyle: _usePhysicalStyle,
                 ),
               );
             },
@@ -610,10 +631,13 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
               expectedData: 'fio_serie',
               isFilled: _m1WireInserted,
               showLabel: false,
-              onAccept: (_) => setState(() {
-                _m1WireInserted = true;
-                _m1WireConnected = true;
-              }),
+              onAccept: (_) => _insertComponent(
+                name: 'Fio em Série',
+                getInserted: () => _m1WireInserted,
+                setInserted: (v) => _m1WireInserted = v,
+                getRotation: () => 0,
+                setRotation: (_) {},
+              ),
               onTap: () {},
               symbolWidget: _usePhysicalStyle
                   ? CustomPaint(
@@ -774,9 +798,13 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
                     style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                   onPressed: () {
-                    setState(() {
-                      _m3JunctionInserted = !_m3JunctionInserted;
-                    });
+                    _insertComponent(
+                      name: 'Nó de Junção',
+                      getInserted: () => _m3JunctionInserted,
+                      setInserted: (v) => _m3JunctionInserted = v,
+                      getRotation: () => 0,
+                      setRotation: (_) {},
+                    );
                   },
                 ),
                 const SizedBox(width: 12),
@@ -793,9 +821,13 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
                     style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                   onPressed: () {
-                    setState(() {
-                      _m3ReturnConnected = !_m3ReturnConnected;
-                    });
+                    _insertComponent(
+                      name: 'Retorno Reconectado',
+                      getInserted: () => _m3ReturnConnected,
+                      setInserted: (v) => _m3ReturnConnected = v,
+                      getRotation: () => 0,
+                      setRotation: (_) {},
+                    );
                   },
                 ),
               ],
@@ -831,9 +863,13 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
             ),
             InkWell(
               onTap: () {
-                setState(() {
-                  _m4ParallelWireConnected = !_m4ParallelWireConnected;
-                });
+                _insertComponent(
+                  name: 'Fiação em Paralelo',
+                  getInserted: () => _m4ParallelWireConnected,
+                  setInserted: (v) => _m4ParallelWireConnected = v,
+                  getRotation: () => 0,
+                  setRotation: (_) {},
+                );
               },
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
@@ -913,9 +949,13 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
                     style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                   onPressed: () {
-                    setState(() {
-                      _m5House1Broken = !_m5House1Broken;
-                    });
+                    _insertComponent(
+                      name: 'Simular Defeito Lâmpada A',
+                      getInserted: () => _m5House1Broken,
+                      setInserted: (v) => _m5House1Broken = v,
+                      getRotation: () => 0,
+                      setRotation: (_) {},
+                    );
                   },
                 ),
                 const SizedBox(width: 12),
@@ -930,9 +970,13 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
                     style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                   onPressed: () {
-                    setState(() {
-                      _m5MaintenanceConfirmed = !_m5MaintenanceConfirmed;
-                    });
+                    _insertComponent(
+                      name: 'Confirmar Manutenção',
+                      getInserted: () => _m5MaintenanceConfirmed,
+                      setInserted: (v) => _m5MaintenanceConfirmed = v,
+                      getRotation: () => 0,
+                      setRotation: (_) {},
+                    );
                   },
                 ),
               ],
@@ -1082,8 +1126,83 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
           ],
         ),
         const SizedBox(height: 16),
+        _buildUndoRedoButtons(),
         _buildSidePanelMissionContent(),
       ],
+    );
+  }
+
+  Widget _buildUndoRedoButtons() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Tooltip(
+            message: _undoRedoController.canUndo
+                ? 'Desfazer: ${_undoRedoController.lastUndoDescription}'
+                : 'Nada para desfazer',
+            child: IconButton(
+              icon: Icon(
+                Icons.undo_rounded,
+                color: _undoRedoController.canUndo
+                    ? const Color(0xFF0284C7)
+                    : const Color(0xFFCBD5E1),
+                size: 22,
+              ),
+              onPressed: _undoRedoController.canUndo
+                  ? () => setState(() => _undoRedoController.undo())
+                  : null,
+              style: IconButton.styleFrom(
+                backgroundColor: _undoRedoController.canUndo
+                    ? const Color(0xFF0284C7).withValues(alpha: 0.1)
+                    : Colors.transparent,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              '${_undoRedoController.undoCount}',
+              style: GoogleFonts.rajdhani(
+                color: const Color(0xFF64748B),
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          Tooltip(
+            message: _undoRedoController.canRedo
+                ? 'Refazer: ${_undoRedoController.lastRedoDescription}'
+                : 'Nada para refazer',
+            child: IconButton(
+              icon: Icon(
+                Icons.redo_rounded,
+                color: _undoRedoController.canRedo
+                    ? const Color(0xFF0284C7)
+                    : const Color(0xFFCBD5E1),
+                size: 22,
+              ),
+              onPressed: _undoRedoController.canRedo
+                  ? () => setState(() => _undoRedoController.redo())
+                  : null,
+              style: IconButton.styleFrom(
+                backgroundColor: _undoRedoController.canRedo
+                    ? const Color(0xFF0284C7).withValues(alpha: 0.1)
+                    : Colors.transparent,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1235,33 +1354,47 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
     required double brightnessRatio,
   }) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        if (_usePhysicalStyle)
-          CustomPaint(
-            size: const Size(75, 95),
-            painter: StreetLampPainter(
-              isActive: isLit,
-              brightnessRatio: brightnessRatio,
-              isDarkMode: false,
-            ),
-          )
-        else
-          CustomPaint(
-            size: const Size(60, 60),
-            painter: CircuitSymbolPainter(
-              type: ComponentType.bulb,
-              isActive: isLit,
-              color: const Color(0xFF0F172A),
-              strokeWidth: 2.5,
-            ),
+        SizedBox(
+          width: 80,
+          height: 75,
+          child: Center(
+            child: _usePhysicalStyle
+                ? CustomPaint(
+                    size: const Size(65, 75),
+                    painter: StreetLampPainter(
+                      isActive: isLit,
+                      brightnessRatio: brightnessRatio,
+                      isDarkMode: false,
+                    ),
+                  )
+                : CustomPaint(
+                    size: const Size(55, 55),
+                    painter: CircuitSymbolPainter(
+                      type: ComponentType.bulb,
+                      isActive: isLit,
+                      color: const Color(0xFF0F172A),
+                      strokeWidth: 2.5,
+                    ),
+                  ),
           ),
+        ),
         const SizedBox(height: 6),
-        Text(
-          label,
-          style: GoogleFonts.rajdhani(
-            color: const Color(0xFF0F172A),
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.85),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: const Color(0xFFCBD5E1)),
+          ),
+          child: Text(
+            label,
+            style: GoogleFonts.rajdhani(
+              color: const Color(0xFF0F172A),
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
           ),
         ),
       ],
@@ -1276,57 +1409,70 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
     bool isBroken = false,
   }) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: isLit
-                    ? const Color(0xFFFEF3C7)
-                    : Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: isBroken
-                      ? const Color(0xFFDC2626)
-                      : isLit
-                          ? const Color(0xFFD97706)
-                          : const Color(0xFFCBD5E1),
-                  width: 2,
+        SizedBox(
+          width: 80,
+          height: 75,
+          child: Center(
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isLit ? const Color(0xFFFEF3C7) : Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: isBroken
+                          ? const Color(0xFFDC2626)
+                          : isLit
+                              ? const Color(0xFFD97706)
+                              : const Color(0xFFCBD5E1),
+                      width: 2,
+                    ),
+                    boxShadow: isLit
+                        ? [
+                            BoxShadow(
+                              color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
+                              blurRadius: 12,
+                            )
+                          ]
+                        : [],
+                  ),
+                  child: Icon(
+                    isBroken
+                        ? Icons.gavel_rounded
+                        : isLit
+                            ? Icons.home_rounded
+                            : Icons.home_outlined,
+                    size: 40,
+                    color: isBroken
+                        ? const Color(0xFFDC2626)
+                        : isLit
+                            ? const Color(0xFFD97706)
+                            : const Color(0xFF64748B),
+                  ),
                 ),
-                boxShadow: isLit
-                    ? [
-                        BoxShadow(
-                          color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
-                          blurRadius: 16,
-                        )
-                      ]
-                    : [],
-              ),
-              child: Icon(
-                isBroken
-                    ? Icons.gavel_rounded
-                    : isLit
-                        ? Icons.home_rounded
-                        : Icons.home_outlined,
-                size: 50,
-                color: isBroken
-                    ? const Color(0xFFDC2626)
-                    : isLit
-                        ? const Color(0xFFD97706)
-                        : const Color(0xFF64748B),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
         const SizedBox(height: 6),
-        Text(
-          name,
-          style: GoogleFonts.rajdhani(
-            color: isBroken ? const Color(0xFFDC2626) : const Color(0xFF0F172A),
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.85),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: const Color(0xFFCBD5E1)),
+          ),
+          child: Text(
+            name,
+            style: GoogleFonts.rajdhani(
+              color: isBroken ? const Color(0xFFDC2626) : const Color(0xFF0F172A),
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
           ),
         ),
       ],
@@ -1334,7 +1480,7 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
   }
 }
 
-/// Custom Painter com traçados esquemáticos soltos na malha e animação de elétrons
+/// Custom Painter com traçados esquemáticos e físicos ajustados aos terminais dos componentes
 class _RuasMaquetePainter extends CustomPainter {
   final int missionIndex;
   final double animValue;
@@ -1344,6 +1490,7 @@ class _RuasMaquetePainter extends CustomPainter {
   final bool m3Return;
   final bool m4Parallel;
   final bool m5House1Broken;
+  final bool usePhysicalStyle;
 
   _RuasMaquetePainter({
     required this.missionIndex,
@@ -1354,57 +1501,218 @@ class _RuasMaquetePainter extends CustomPainter {
     required this.m3Return,
     required this.m4Parallel,
     required this.m5House1Broken,
+    required this.usePhysicalStyle,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     final wirePaint = Paint()
-      ..color = const Color(0xFF94A3B8)
-      ..strokeWidth = 3.5
-      ..style = PaintingStyle.stroke;
+      ..color = usePhysicalStyle ? const Color(0xFF94A3B8) : const Color(0xFF64748B)
+      ..strokeWidth = usePhysicalStyle ? 4.0 : 3.0
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
 
     final activeWirePaint = Paint()
-      ..color = const Color(0xFF0284C7)
-      ..strokeWidth = 5.0
-      ..style = PaintingStyle.stroke;
+      ..color = usePhysicalStyle ? const Color(0xFF0284C7) : const Color(0xFF0F172A)
+      ..strokeWidth = usePhysicalStyle ? 5.0 : 3.5
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
 
     final electronPaint = Paint()
       ..color = const Color(0xFFD97706)
       ..style = PaintingStyle.fill;
 
+    final nodePaint = Paint()
+      ..color = activeWirePaint.color
+      ..style = PaintingStyle.fill;
+
+    // Coordenadas fiéis dos componentes na bancada
+    final lampY = size.height * 0.28;
+    final socketY = size.height * 0.82;
+    final lamp1X = size.width * 0.28;
+    final lamp2X = size.width * 0.72;
+    final socketX = size.width * 0.50;
+
+    // Terminais dos postes (esquerda / direita)
+    const termOffset = 32.0;
+    const socketTermOffset = 30.0;
+
+    void drawTerminalDot(Offset pos) {
+      canvas.drawCircle(pos, usePhysicalStyle ? 4.5 : 3.5, nodePaint);
+    }
+
     // Desenhar caminhos de fios conforme a missão
-    if (missionIndex == 0) { // M1: Série
-      final path = Path()
-        ..moveTo(size.width * 0.1, size.height * 0.8)
-        ..lineTo(size.width * 0.3, size.height * 0.3)
-        ..lineTo(size.width * 0.7, size.height * 0.3)
-        ..lineTo(size.width * 0.9, size.height * 0.8);
+    if (missionIndex == 0 || (missionIndex == 1 && m2Series)) {
+      // M1 e M2 (2 Lâmpadas em Série): Socket (+) -> Lamp1 -> Lamp2 -> Socket (-)
+      final isConnected = missionIndex == 0 ? m1Connected : true;
+      final currentPaint = isConnected ? activeWirePaint : wirePaint;
 
-      canvas.drawPath(path, m1Connected ? activeWirePaint : wirePaint);
+      // Haste 1: Do Socket (+ esquerda) subindo até a esquerda da Lâmpada 1
+      final path1 = Path()
+        ..moveTo(socketX - socketTermOffset, socketY)
+        ..lineTo(lamp1X - termOffset, socketY)
+        ..lineTo(lamp1X - termOffset, lampY);
 
-      if (m1Connected) {
-        _drawElectronsOnPath(canvas, path, electronPaint);
+      // Haste 2 (Série): Da direita da Lâmpada 1 até a esquerda da Lâmpada 2
+      final path2 = Path()
+        ..moveTo(lamp1X + termOffset, lampY)
+        ..lineTo(lamp2X - termOffset, lampY);
+
+      // Haste 3: Da direita da Lâmpada 2 descendo até o Socket (- direita)
+      final path3 = Path()
+        ..moveTo(lamp2X + termOffset, lampY)
+        ..lineTo(lamp2X + termOffset, socketY)
+        ..lineTo(socketX + socketTermOffset, socketY);
+
+      canvas.drawPath(path1, currentPaint);
+      canvas.drawPath(path2, currentPaint);
+      canvas.drawPath(path3, currentPaint);
+
+      // Nós de conexão visual nos terminais
+      drawTerminalDot(Offset(socketX - socketTermOffset, socketY));
+      drawTerminalDot(Offset(lamp1X - termOffset, lampY));
+      drawTerminalDot(Offset(lamp1X + termOffset, lampY));
+      drawTerminalDot(Offset(lamp2X - termOffset, lampY));
+      drawTerminalDot(Offset(lamp2X + termOffset, lampY));
+      drawTerminalDot(Offset(socketX + socketTermOffset, socketY));
+
+      if (isConnected) {
+        _drawElectronsOnPath(canvas, path1, electronPaint);
+        _drawElectronsOnPath(canvas, path2, electronPaint);
+        _drawElectronsOnPath(canvas, path3, electronPaint);
       }
-    } else if (missionIndex == 3 || missionIndex == 4) { // M4 e M5: Paralelo
-      final pathRamo1 = Path()
-        ..moveTo(size.width * 0.1, size.height * 0.8)
-        ..lineTo(size.width * 0.3, size.height * 0.3)
-        ..lineTo(size.width * 0.9, size.height * 0.8);
+    } else if (missionIndex == 1 && !m2Series) {
+      // M2 (1 Lâmpada Apenas): Socket (+) -> Lamp1 -> Socket (-)
+      final path1 = Path()
+        ..moveTo(socketX - socketTermOffset, socketY)
+        ..lineTo(lamp1X - termOffset, socketY)
+        ..lineTo(lamp1X - termOffset, lampY);
 
-      final pathRamo2 = Path()
-        ..moveTo(size.width * 0.1, size.height * 0.8)
-        ..lineTo(size.width * 0.7, size.height * 0.3)
-        ..lineTo(size.width * 0.9, size.height * 0.8);
+      final pathReturn = Path()
+        ..moveTo(lamp1X + termOffset, lampY)
+        ..lineTo(lamp1X + termOffset, socketY)
+        ..lineTo(socketX + socketTermOffset, socketY);
 
+      canvas.drawPath(path1, activeWirePaint);
+      canvas.drawPath(pathReturn, activeWirePaint);
+
+      drawTerminalDot(Offset(socketX - socketTermOffset, socketY));
+      drawTerminalDot(Offset(lamp1X - termOffset, lampY));
+      drawTerminalDot(Offset(lamp1X + termOffset, lampY));
+      drawTerminalDot(Offset(socketX + socketTermOffset, socketY));
+
+      _drawElectronsOnPath(canvas, path1, electronPaint);
+      _drawElectronsOnPath(canvas, pathReturn, electronPaint);
+    } else if (missionIndex == 2) {
+      // M3: Bifurcação de Fios (Nó de Junção)
+      final isBothActive = m3Junction && m3Return;
+
+      // Alimentação Principal (+)
+      final pathFeed = Path()
+        ..moveTo(socketX - socketTermOffset, socketY)
+        ..lineTo(socketX - socketTermOffset, lampY + 40)
+        ..lineTo(socketX, lampY + 40);
+
+      // Ramo Lâmpada A
+      final pathBranchA = Path()
+        ..moveTo(socketX, lampY + 40)
+        ..lineTo(lamp1X + termOffset, lampY + 40)
+        ..lineTo(lamp1X + termOffset, lampY);
+
+      // Ramo Lâmpada B
+      final pathBranchB = Path()
+        ..moveTo(socketX, lampY + 40)
+        ..lineTo(lamp2X - termOffset, lampY + 40)
+        ..lineTo(lamp2X - termOffset, lampY);
+
+      // Retorno do Nó
+      final pathReturn = Path()
+        ..moveTo(lamp1X - termOffset, lampY)
+        ..lineTo(lamp1X - termOffset, socketY)
+        ..lineTo(socketX + socketTermOffset, socketY);
+
+      final pathReturnB = Path()
+        ..moveTo(lamp2X + termOffset, lampY)
+        ..lineTo(lamp2X + termOffset, socketY)
+        ..lineTo(socketX + socketTermOffset, socketY);
+
+      canvas.drawPath(pathFeed, m3Junction ? activeWirePaint : wirePaint);
+      canvas.drawPath(pathBranchA, m3Junction ? activeWirePaint : wirePaint);
+      canvas.drawPath(pathBranchB, m3Junction ? activeWirePaint : wirePaint);
+      canvas.drawPath(pathReturn, m3Return ? activeWirePaint : wirePaint);
+      canvas.drawPath(pathReturnB, m3Return ? activeWirePaint : wirePaint);
+
+      drawTerminalDot(Offset(socketX, lampY + 40));
+      drawTerminalDot(Offset(socketX - socketTermOffset, socketY));
+      drawTerminalDot(Offset(socketX + socketTermOffset, socketY));
+
+      if (isBothActive) {
+        _drawElectronsOnPath(canvas, pathFeed, electronPaint);
+        _drawElectronsOnPath(canvas, pathBranchA, electronPaint);
+        _drawElectronsOnPath(canvas, pathBranchB, electronPaint);
+        _drawElectronsOnPath(canvas, pathReturn, electronPaint);
+        _drawElectronsOnPath(canvas, pathReturnB, electronPaint);
+      }
+    } else if (missionIndex == 3 || missionIndex == 4) {
+      // M4 e M5: Circuito em Paralelo
       final isActive = m4Parallel || missionIndex == 4;
-      canvas.drawPath(pathRamo1, isActive ? activeWirePaint : wirePaint);
-      canvas.drawPath(pathRamo2, isActive ? activeWirePaint : wirePaint);
+      final currentPaint = isActive ? activeWirePaint : wirePaint;
+
+      // Barramento Positivo Left
+      final pathBusLeft = Path()
+        ..moveTo(socketX - socketTermOffset, socketY)
+        ..lineTo(lamp1X - termOffset - 15, socketY)
+        ..lineTo(lamp1X - termOffset - 15, lampY)
+        ..lineTo(lamp2X - termOffset - 15, lampY);
+
+      final branch1Pos = Path()
+        ..moveTo(lamp1X - termOffset - 15, lampY)
+        ..lineTo(lamp1X - termOffset, lampY);
+
+      final branch2Pos = Path()
+        ..moveTo(lamp2X - termOffset - 15, lampY)
+        ..lineTo(lamp2X - termOffset, lampY);
+
+      // Barramento Negativo Right
+      final pathBusRight = Path()
+        ..moveTo(socketX + socketTermOffset, socketY)
+        ..lineTo(lamp2X + termOffset + 15, socketY)
+        ..lineTo(lamp2X + termOffset + 15, lampY)
+        ..lineTo(lamp1X + termOffset + 15, lampY);
+
+      final branch1Neg = Path()
+        ..moveTo(lamp1X + termOffset + 15, lampY)
+        ..lineTo(lamp1X + termOffset, lampY);
+
+      final branch2Neg = Path()
+        ..moveTo(lamp2X + termOffset + 15, lampY)
+        ..lineTo(lamp2X + termOffset, lampY);
+
+      canvas.drawPath(pathBusLeft, currentPaint);
+      canvas.drawPath(branch1Pos, currentPaint);
+      canvas.drawPath(branch2Pos, currentPaint);
+      canvas.drawPath(pathBusRight, currentPaint);
+      canvas.drawPath(branch1Neg, currentPaint);
+      canvas.drawPath(branch2Neg, currentPaint);
+
+      drawTerminalDot(Offset(lamp1X - termOffset, lampY));
+      drawTerminalDot(Offset(lamp1X + termOffset, lampY));
+      drawTerminalDot(Offset(lamp2X - termOffset, lampY));
+      drawTerminalDot(Offset(lamp2X + termOffset, lampY));
+      drawTerminalDot(Offset(socketX - socketTermOffset, socketY));
+      drawTerminalDot(Offset(socketX + socketTermOffset, socketY));
 
       if (isActive) {
         if (!m5House1Broken || missionIndex != 4) {
-          _drawElectronsOnPath(canvas, pathRamo1, electronPaint);
+          _drawElectronsOnPath(canvas, branch1Pos, electronPaint);
+          _drawElectronsOnPath(canvas, branch1Neg, electronPaint);
         }
-        _drawElectronsOnPath(canvas, pathRamo2, electronPaint);
+        _drawElectronsOnPath(canvas, pathBusLeft, electronPaint);
+        _drawElectronsOnPath(canvas, branch2Pos, electronPaint);
+        _drawElectronsOnPath(canvas, pathBusRight, electronPaint);
+        _drawElectronsOnPath(canvas, branch2Neg, electronPaint);
       }
     }
   }

@@ -4,8 +4,11 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../models/stand_mission.dart';
 import '../../models/first_step_component.dart';
+import '../../state/circuit_undo_redo_controller.dart';
 import '../../state/progress_controller.dart';
 import '../../services/circuit_solver/mission_circuit_builder.dart';
+import '../../widgets/physical_blueprint_socket.dart';
+import '../../widgets/realistic_wire_painter.dart';
 import '../../widgets/component_vector_painters.dart';
 import '../../widgets/component_physical_painter.dart';
 import '../../widgets/circuit_symbol_painter.dart';
@@ -26,21 +29,50 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
   late final List<StandMission> _missions;
   int _currentMissionIndex = 0;
   bool _usePhysicalStyle = true;
+  final CircuitUndoRedoController _undoRedoController = CircuitUndoRedoController();
 
   StandMission get _currentMission => _missions[_currentMissionIndex];
 
   // Estados do Multímetro Didático e Provas de Medição
-  String _multimeterMode = 'V_DC'; // 'V_DC', 'mA'
+  String _multimeterMode = 'V_DC';
   bool _redProbeConnected = false;
   bool _blackProbeConnected = false;
-  
-  // Estado Missão 3 (Resistência e Corrente)
-  double _m3ResistanceValue = 300.0; // ohms
 
-  // Estado Missão 4 (Dimensionamento Seguro)
-  int? _m4SelectedResistor; // 68, 680, 6800
+  // M1: Battery socket
+  bool _m1BatteryInserted = false;
+  double _m1BatteryRotation = 0.0;
 
-  // Estado Missão 5 (Diário de Investigação)
+  // M2: Battery + Bulb
+  bool _m2BatteryInserted = false;
+  double _m2BatteryRotation = 0.0;
+  bool _m2BulbInserted = false;
+  double _m2BulbRotation = 0.0;
+
+  // M3: Battery + Resistor + LED
+  bool _m3BatteryInserted = false;
+  double _m3BatteryRotation = 0.0;
+  bool _m3ResistorInserted = false;
+  double _m3ResistorRotation = 0.0;
+  bool _m3LedInserted = false;
+  double _m3LedRotation = 0.0;
+  double _m3ResistanceValue = 300.0;
+
+  // M4: Battery + Resistor + LED
+  bool _m4BatteryInserted = false;
+  double _m4BatteryRotation = 0.0;
+  bool _m4ResistorInserted = false;
+  double _m4ResistorRotation = 0.0;
+  bool _m4LedInserted = false;
+  double _m4LedRotation = 0.0;
+  int? _m4SelectedResistor;
+
+  // M5: Battery + Resistor + LED
+  bool _m5BatteryInserted = false;
+  double _m5BatteryRotation = 0.0;
+  bool _m5ResistorInserted = false;
+  double _m5ResistorRotation = 0.0;
+  bool _m5LedInserted = false;
+  double _m5LedRotation = 0.0;
   int? _m5SelectedReportIndex;
 
   bool _isSimulating = false;
@@ -751,6 +783,80 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
   }
 
   /// M1: Medir Tensão da Bateria 9V
+  Widget _buildUndoRedoButtons() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Tooltip(
+            message: _undoRedoController.canUndo
+                ? 'Desfazer: ${_undoRedoController.lastUndoDescription}'
+                : 'Nada para desfazer',
+            child: IconButton(
+              icon: Icon(
+                Icons.undo_rounded,
+                color: _undoRedoController.canUndo
+                    ? const Color(0xFF0284C7)
+                    : const Color(0xFFCBD5E1),
+                size: 22,
+              ),
+              onPressed: _undoRedoController.canUndo
+                  ? () => setState(() => _undoRedoController.undo())
+                  : null,
+              style: IconButton.styleFrom(
+                backgroundColor: _undoRedoController.canUndo
+                    ? const Color(0xFF0284C7).withValues(alpha: 0.1)
+                    : Colors.transparent,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              '${_undoRedoController.undoCount}',
+              style: GoogleFonts.rajdhani(
+                color: const Color(0xFF64748B),
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          Tooltip(
+            message: _undoRedoController.canRedo
+                ? 'Refazer: ${_undoRedoController.lastRedoDescription}'
+                : 'Nada para refazer',
+            child: IconButton(
+              icon: Icon(
+                Icons.redo_rounded,
+                color: _undoRedoController.canRedo
+                    ? const Color(0xFF0284C7)
+                    : const Color(0xFFCBD5E1),
+                size: 22,
+              ),
+              onPressed: _undoRedoController.canRedo
+                  ? () => setState(() => _undoRedoController.redo())
+                  : null,
+              style: IconButton.styleFrom(
+                backgroundColor: _undoRedoController.canRedo
+                    ? const Color(0xFF0284C7).withValues(alpha: 0.1)
+                    : Colors.transparent,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildM1Circuit() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -759,44 +865,79 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
           'Medição Direta da Bateria 9V',
           style: GoogleFonts.rajdhani(color: const Color(0xFF0F172A), fontWeight: FontWeight.bold, fontSize: 16),
         ),
-        const SizedBox(height: 20),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Ponta Vermelha (+)
-            _buildProbeSlot(
-              isRed: true,
-              isConnected: _redProbeConnected,
-              onTap: () => setState(() => _redProbeConnected = !_redProbeConnected),
-              label: 'Polo (+)',
-            ),
-            const SizedBox(width: 30),
-            // Bateria 9V
-            _usePhysicalStyle
-                ? CustomPaint(
-                    size: const Size(80, 80),
-                    painter: ComponentPhysicalPainter(
-                      type: ComponentType.battery,
-                      isDarkMode: false,
+        const SizedBox(height: 12),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final w = constraints.maxWidth;
+                final h = constraints.maxHeight;
+                final batteryX = w * 0.5;
+                final centerY = h * 0.5;
+
+                return Stack(
+                  children: [
+                    // Battery socket
+                    Positioned(
+                      left: batteryX - 47.5,
+                      top: centerY - 47.5,
+                      child: PhysicalBlueprintSocket<String>(
+                        expectedData: 'battery',
+                        isFilled: _m1BatteryInserted,
+                        rotation: _m1BatteryRotation,
+                        width: 95,
+                        height: 95,
+                        showLabel: false,
+                        onAccept: (_) => setState(() => _m1BatteryInserted = true),
+                        onRotate: () => setState(() => _m1BatteryRotation = (_m1BatteryRotation + 90) % 360),
+                        onTap: () {},
+                        symbolWidget: _usePhysicalStyle
+                            ? CustomPaint(
+                                size: const Size(55, 55),
+                                painter: ComponentPhysicalPainter(
+                                  type: ComponentType.battery,
+                                  isDarkMode: false,
+                                ),
+                              )
+                            : CustomPaint(
+                                size: const Size(55, 55),
+                                painter: CircuitSymbolPainter(
+                                  type: ComponentType.battery,
+                                  color: const Color(0xFF0F172A),
+                                  strokeWidth: 2.5,
+                                ),
+                              ),
+                      ),
                     ),
-                  )
-                : CustomPaint(
-                    size: const Size(70, 70),
-                    painter: CircuitSymbolPainter(
-                      type: ComponentType.battery,
-                      color: const Color(0xFF0F172A),
-                      strokeWidth: 2.5,
-                    ),
-                  ),
-            const SizedBox(width: 30),
-            // Ponta Preta (-)
-            _buildProbeSlot(
-              isRed: false,
-              isConnected: _blackProbeConnected,
-              onTap: () => setState(() => _blackProbeConnected = !_blackProbeConnected),
-              label: 'Polo (-)',
+                    // Probe indicators
+                    if (_m1BatteryInserted)
+                      Positioned(
+                        left: batteryX + 60,
+                        top: centerY - 30,
+                        child: _buildProbeSlot(
+                          isRed: true,
+                          isConnected: _redProbeConnected,
+                          onTap: () => setState(() => _redProbeConnected = !_redProbeConnected),
+                          label: 'Polo (+)',
+                        ),
+                      ),
+                    if (_m1BatteryInserted)
+                      Positioned(
+                        left: batteryX + 60,
+                        top: centerY + 10,
+                        child: _buildProbeSlot(
+                          isRed: false,
+                          isConnected: _blackProbeConnected,
+                          onTap: () => setState(() => _blackProbeConnected = !_blackProbeConnected),
+                          label: 'Polo (-)',
+                        ),
+                      ),
+                  ],
+                );
+              },
             ),
-          ],
+          ),
         ),
       ],
     );
@@ -811,60 +952,153 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
           'Circuito Energizado com Lâmpada em Carga',
           style: GoogleFonts.rajdhani(color: const Color(0xFF0F172A), fontWeight: FontWeight.bold, fontSize: 16),
         ),
-        const SizedBox(height: 20),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _usePhysicalStyle
-                ? CustomPaint(
-                    size: const Size(60, 60),
-                    painter: ComponentPhysicalPainter(
-                      type: ComponentType.battery,
-                      isDarkMode: false,
+        const SizedBox(height: 12),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final w = constraints.maxWidth;
+                final h = constraints.maxHeight;
+                final batteryX = w * 0.2;
+                final bulbX = w * 0.75;
+                final centerY = h * 0.5;
+
+                final batteryPlacement = ComponentPlacement(
+                  position: Offset(batteryX, centerY),
+                  rotation: _m2BatteryRotation,
+                  type: ComponentType.battery,
+                );
+                final bulbPlacement = ComponentPlacement(
+                  position: Offset(bulbX, centerY),
+                  rotation: _m2BulbRotation,
+                  type: ComponentType.bulb,
+                );
+
+                final wires = <WirePath>[];
+                if (_m2BatteryInserted && _m2BulbInserted) {
+                  wires.add(DynamicWirePath.fromComponents(
+                    compA: batteryPlacement,
+                    terminalIndexA: 1,
+                    compB: bulbPlacement,
+                    terminalIndexB: 0,
+                    color: const Color(0xFFEF4444),
+                    isActive: true,
+                  ).toWirePath());
+                  wires.add(DynamicWirePath.fromComponents(
+                    compA: bulbPlacement,
+                    terminalIndexA: 1,
+                    compB: batteryPlacement,
+                    terminalIndexB: 0,
+                    color: const Color(0xFF1E293B),
+                    isActive: true,
+                  ).toWirePath());
+                }
+
+                return Stack(
+                  children: [
+                    if (wires.isNotEmpty)
+                      Positioned.fill(
+                        child: RealisticWireWidget(
+                          wires: wires,
+                          animationValue: 0,
+                          showElectrons: false,
+                        ),
+                      ),
+                    // Battery socket
+                    Positioned(
+                      left: batteryX - 47.5,
+                      top: centerY - 47.5,
+                      child: PhysicalBlueprintSocket<String>(
+                        expectedData: 'battery',
+                        isFilled: _m2BatteryInserted,
+                        rotation: _m2BatteryRotation,
+                        width: 95,
+                        height: 95,
+                        showLabel: false,
+                        onAccept: (_) => setState(() => _m2BatteryInserted = true),
+                        onRotate: () => setState(() => _m2BatteryRotation = (_m2BatteryRotation + 90) % 360),
+                        onTap: () {},
+                        symbolWidget: _usePhysicalStyle
+                            ? CustomPaint(
+                                size: const Size(55, 55),
+                                painter: ComponentPhysicalPainter(
+                                  type: ComponentType.battery,
+                                  isDarkMode: false,
+                                ),
+                              )
+                            : CustomPaint(
+                                size: const Size(55, 55),
+                                painter: CircuitSymbolPainter(
+                                  type: ComponentType.battery,
+                                  color: const Color(0xFF0F172A),
+                                  strokeWidth: 2.5,
+                                ),
+                              ),
+                      ),
                     ),
-                  )
-                : CustomPaint(
-                    size: const Size(55, 55),
-                    painter: CircuitSymbolPainter(
-                      type: ComponentType.battery,
-                      color: const Color(0xFF0F172A),
-                      strokeWidth: 2.5,
+                    // Bulb socket
+                    Positioned(
+                      left: bulbX - 47.5,
+                      top: centerY - 47.5,
+                      child: PhysicalBlueprintSocket<String>(
+                        expectedData: 'bulb',
+                        isFilled: _m2BulbInserted,
+                        rotation: _m2BulbRotation,
+                        width: 95,
+                        height: 95,
+                        showLabel: false,
+                        onAccept: (_) => setState(() => _m2BulbInserted = true),
+                        onRotate: () => setState(() => _m2BulbRotation = (_m2BulbRotation + 90) % 360),
+                        onTap: () {},
+                        symbolWidget: _usePhysicalStyle
+                            ? CustomPaint(
+                                size: const Size(55, 55),
+                                painter: ComponentPhysicalPainter(
+                                  type: ComponentType.bulb,
+                                  isActive: _m2BatteryInserted && _m2BulbInserted,
+                                  isDarkMode: false,
+                                ),
+                              )
+                            : CustomPaint(
+                                size: const Size(55, 55),
+                                painter: CircuitSymbolPainter(
+                                  type: ComponentType.bulb,
+                                  isActive: _m2BatteryInserted && _m2BulbInserted,
+                                  color: const Color(0xFF0F172A),
+                                  strokeWidth: 2.5,
+                                ),
+                              ),
+                      ),
                     ),
-                  ),
-            const SizedBox(width: 20),
-            _buildProbeSlot(
-              isRed: true,
-              isConnected: _redProbeConnected,
-              onTap: () => setState(() => _redProbeConnected = !_redProbeConnected),
-              label: 'Terminal A',
+                    // Probe indicators
+                    if (_m2BatteryInserted && _m2BulbInserted)
+                      Positioned(
+                        left: (batteryX + bulbX) / 2 - 10,
+                        top: centerY - 50,
+                        child: _buildProbeSlot(
+                          isRed: true,
+                          isConnected: _redProbeConnected,
+                          onTap: () => setState(() => _redProbeConnected = !_redProbeConnected),
+                          label: 'A',
+                        ),
+                      ),
+                    if (_m2BatteryInserted && _m2BulbInserted)
+                      Positioned(
+                        left: (batteryX + bulbX) / 2 - 10,
+                        top: centerY + 30,
+                        child: _buildProbeSlot(
+                          isRed: false,
+                          isConnected: _blackProbeConnected,
+                          onTap: () => setState(() => _blackProbeConnected = !_blackProbeConnected),
+                          label: 'B',
+                        ),
+                      ),
+                  ],
+                );
+              },
             ),
-            const SizedBox(width: 10),
-            _usePhysicalStyle
-                ? CustomPaint(
-                    size: const Size(50, 50),
-                    painter: ComponentPhysicalPainter(
-                      type: ComponentType.bulb,
-                      isActive: true,
-                      isDarkMode: false,
-                    ),
-                  )
-                : CustomPaint(
-                    size: const Size(50, 50),
-                    painter: CircuitSymbolPainter(
-                      type: ComponentType.bulb,
-                      isActive: true,
-                      color: const Color(0xFF0F172A),
-                      strokeWidth: 2.5,
-                    ),
-                  ),
-            const SizedBox(width: 10),
-            _buildProbeSlot(
-              isRed: false,
-              isConnected: _blackProbeConnected,
-              onTap: () => setState(() => _blackProbeConnected = !_blackProbeConnected),
-              label: 'Terminal B',
-            ),
-          ],
+          ),
         ),
       ],
     );
@@ -880,67 +1114,143 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
           'Lei de Ohm: I = V / R (${currentMa.toStringAsFixed(1)} mA)',
           style: GoogleFonts.rajdhani(color: const Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 18),
         ),
-        const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _usePhysicalStyle
-                ? CustomPaint(
-                    size: const Size(50, 50),
-                    painter: ComponentPhysicalPainter(
-                      type: ComponentType.battery,
-                      isDarkMode: false,
+        const SizedBox(height: 8),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final w = constraints.maxWidth;
+                final h = constraints.maxHeight;
+                final batteryX = w * 0.12;
+                final resistorX = w * 0.45;
+                final ledX = w * 0.82;
+                final centerY = h * 0.45;
+
+                final batteryPlacement = ComponentPlacement(
+                  position: Offset(batteryX, centerY),
+                  rotation: _m3BatteryRotation,
+                  type: ComponentType.battery,
+                );
+                final resistorPlacement = ComponentPlacement(
+                  position: Offset(resistorX, centerY),
+                  rotation: _m3ResistorRotation,
+                  type: ComponentType.resistor,
+                );
+                final ledPlacement = ComponentPlacement(
+                  position: Offset(ledX, centerY),
+                  rotation: _m3LedRotation,
+                  type: ComponentType.led,
+                );
+
+                final wires = <WirePath>[];
+                if (_m3BatteryInserted && _m3ResistorInserted) {
+                  wires.add(DynamicWirePath.fromComponents(
+                    compA: batteryPlacement,
+                    terminalIndexA: 1,
+                    compB: resistorPlacement,
+                    terminalIndexB: 0,
+                    color: const Color(0xFFEF4444),
+                    isActive: true,
+                  ).toWirePath());
+                }
+                if (_m3ResistorInserted && _m3LedInserted) {
+                  wires.add(DynamicWirePath.fromComponents(
+                    compA: resistorPlacement,
+                    terminalIndexA: 1,
+                    compB: ledPlacement,
+                    terminalIndexB: 0,
+                    color: const Color(0xFFF97316),
+                    isActive: true,
+                  ).toWirePath());
+                }
+                if (_m3LedInserted && _m3BatteryInserted) {
+                  wires.add(DynamicWirePath.fromComponents(
+                    compA: ledPlacement,
+                    terminalIndexA: 1,
+                    compB: batteryPlacement,
+                    terminalIndexB: 0,
+                    color: const Color(0xFF1E293B),
+                    isActive: true,
+                  ).toWirePath());
+                }
+
+                return Stack(
+                  children: [
+                    if (wires.isNotEmpty)
+                      Positioned.fill(
+                        child: RealisticWireWidget(
+                          wires: wires,
+                          animationValue: 0,
+                          showElectrons: false,
+                        ),
+                      ),
+                    // Battery socket
+                    Positioned(
+                      left: batteryX - 47.5,
+                      top: centerY - 47.5,
+                      child: PhysicalBlueprintSocket<String>(
+                        expectedData: 'battery',
+                        isFilled: _m3BatteryInserted,
+                        rotation: _m3BatteryRotation,
+                        width: 95,
+                        height: 95,
+                        showLabel: false,
+                        onAccept: (_) => setState(() => _m3BatteryInserted = true),
+                        onRotate: () => setState(() => _m3BatteryRotation = (_m3BatteryRotation + 90) % 360),
+                        onTap: () {},
+                        symbolWidget: _usePhysicalStyle
+                            ? CustomPaint(size: const Size(55, 55), painter: ComponentPhysicalPainter(type: ComponentType.battery, isDarkMode: false))
+                            : CustomPaint(size: const Size(55, 55), painter: CircuitSymbolPainter(type: ComponentType.battery, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
+                      ),
                     ),
-                  )
-                : CustomPaint(
-                    size: const Size(45, 45),
-                    painter: CircuitSymbolPainter(
-                      type: ComponentType.battery,
-                      color: const Color(0xFF0F172A),
-                      strokeWidth: 2.5,
+                    // Resistor socket
+                    Positioned(
+                      left: resistorX - 47.5,
+                      top: centerY - 47.5,
+                      child: PhysicalBlueprintSocket<String>(
+                        expectedData: 'resistor',
+                        isFilled: _m3ResistorInserted,
+                        rotation: _m3ResistorRotation,
+                        width: 95,
+                        height: 95,
+                        showLabel: false,
+                        onAccept: (_) => setState(() => _m3ResistorInserted = true),
+                        onRotate: () => setState(() => _m3ResistorRotation = (_m3ResistorRotation + 90) % 360),
+                        onTap: () {},
+                        symbolWidget: _usePhysicalStyle
+                            ? CustomPaint(size: const Size(55, 55), painter: ComponentPhysicalPainter(type: ComponentType.resistor, isDarkMode: false))
+                            : CustomPaint(size: const Size(55, 55), painter: CircuitSymbolPainter(type: ComponentType.resistor, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
+                      ),
                     ),
-                  ),
-            const SizedBox(width: 20),
-            _usePhysicalStyle
-                ? CustomPaint(
-                    size: const Size(50, 50),
-                    painter: ComponentPhysicalPainter(
-                      type: ComponentType.resistor,
-                      isDarkMode: false,
+                    // LED socket
+                    Positioned(
+                      left: ledX - 47.5,
+                      top: centerY - 47.5,
+                      child: PhysicalBlueprintSocket<String>(
+                        expectedData: 'led',
+                        isFilled: _m3LedInserted,
+                        rotation: _m3LedRotation,
+                        width: 95,
+                        height: 95,
+                        showLabel: false,
+                        onAccept: (_) => setState(() => _m3LedInserted = true),
+                        onRotate: () => setState(() => _m3LedRotation = (_m3LedRotation + 90) % 360),
+                        onTap: () {},
+                        symbolWidget: _usePhysicalStyle
+                            ? CustomPaint(size: const Size(55, 55), painter: ComponentPhysicalPainter(type: ComponentType.led, isActive: true, isDarkMode: false))
+                            : CustomPaint(size: const Size(55, 55), painter: CircuitSymbolPainter(type: ComponentType.led, isActive: true, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
+                      ),
                     ),
-                  )
-                : CustomPaint(
-                    size: const Size(45, 45),
-                    painter: CircuitSymbolPainter(
-                      type: ComponentType.resistor,
-                      color: const Color(0xFF0F172A),
-                      strokeWidth: 2.5,
-                    ),
-                  ),
-            const SizedBox(width: 20),
-            _usePhysicalStyle
-                ? CustomPaint(
-                    size: const Size(44, 44),
-                    painter: ComponentPhysicalPainter(
-                      type: ComponentType.led,
-                      isActive: true,
-                      isDarkMode: false,
-                    ),
-                  )
-                : CustomPaint(
-                    size: const Size(44, 44),
-                    painter: CircuitSymbolPainter(
-                      type: ComponentType.led,
-                      isActive: true,
-                      color: const Color(0xFF0F172A),
-                      strokeWidth: 2.5,
-                    ),
-                  ),
-          ],
+                  ],
+                );
+              },
+            ),
+          ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 8),
         Text(
-          'Ajuste o Reostato de Resistência:',
+          'Ajuste o Reostato:',
           style: GoogleFonts.rajdhani(color: const Color(0xFF0F172A), fontSize: 14, fontWeight: FontWeight.bold),
         ),
         Slider(
@@ -979,78 +1289,139 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
             fontSize: 16,
           ),
         ),
-        const SizedBox(height: 20),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _usePhysicalStyle
-                ? CustomPaint(
-                    size: const Size(60, 60),
-                    painter: ComponentPhysicalPainter(
-                      type: ComponentType.battery,
-                      isDarkMode: false,
-                    ),
-                  )
-                : CustomPaint(
-                    size: const Size(55, 55),
-                    painter: CircuitSymbolPainter(
-                      type: ComponentType.battery,
-                      color: const Color(0xFF0F172A),
-                      strokeWidth: 2.5,
-                    ),
-                  ),
-            const SizedBox(width: 16),
-            if (hasResistor)
-              _usePhysicalStyle
-                  ? CustomPaint(
-                      size: const Size(50, 50),
-                      painter: ComponentPhysicalPainter(
-                        type: ComponentType.resistor,
-                        isDarkMode: false,
+        const SizedBox(height: 8),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final w = constraints.maxWidth;
+                final h = constraints.maxHeight;
+                final batteryX = w * 0.12;
+                final resistorX = w * 0.45;
+                final ledX = w * 0.82;
+                final centerY = h * 0.45;
+
+                final batteryPlacement = ComponentPlacement(
+                  position: Offset(batteryX, centerY),
+                  rotation: _m4BatteryRotation,
+                  type: ComponentType.battery,
+                );
+                final resistorPlacement = ComponentPlacement(
+                  position: Offset(resistorX, centerY),
+                  rotation: _m4ResistorRotation,
+                  type: ComponentType.resistor,
+                );
+                final ledPlacement = ComponentPlacement(
+                  position: Offset(ledX, centerY),
+                  rotation: _m4LedRotation,
+                  type: ComponentType.led,
+                );
+
+                final wires = <WirePath>[];
+                if (_m4BatteryInserted && _m4ResistorInserted) {
+                  wires.add(DynamicWirePath.fromComponents(
+                    compA: batteryPlacement,
+                    terminalIndexA: 1,
+                    compB: resistorPlacement,
+                    terminalIndexB: 0,
+                    color: const Color(0xFFEF4444),
+                    isActive: hasResistor,
+                  ).toWirePath());
+                }
+                if (_m4ResistorInserted && _m4LedInserted) {
+                  wires.add(DynamicWirePath.fromComponents(
+                    compA: resistorPlacement,
+                    terminalIndexA: 1,
+                    compB: ledPlacement,
+                    terminalIndexB: 0,
+                    color: const Color(0xFFF97316),
+                    isActive: hasResistor,
+                  ).toWirePath());
+                }
+                if (_m4LedInserted && _m4BatteryInserted) {
+                  wires.add(DynamicWirePath.fromComponents(
+                    compA: ledPlacement,
+                    terminalIndexA: 1,
+                    compB: batteryPlacement,
+                    terminalIndexB: 0,
+                    color: const Color(0xFF1E293B),
+                    isActive: hasResistor,
+                  ).toWirePath());
+                }
+
+                return Stack(
+                  children: [
+                    if (wires.isNotEmpty)
+                      Positioned.fill(
+                        child: RealisticWireWidget(
+                          wires: wires,
+                          animationValue: 0,
+                          showElectrons: false,
+                        ),
                       ),
-                    )
-                  : CustomPaint(
-                      size: const Size(45, 45),
-                      painter: CircuitSymbolPainter(
-                        type: ComponentType.resistor,
-                        color: const Color(0xFF0F172A),
-                        strokeWidth: 2.5,
+                    // Battery socket
+                    Positioned(
+                      left: batteryX - 47.5,
+                      top: centerY - 47.5,
+                      child: PhysicalBlueprintSocket<String>(
+                        expectedData: 'battery',
+                        isFilled: _m4BatteryInserted,
+                        rotation: _m4BatteryRotation,
+                        width: 95,
+                        height: 95,
+                        showLabel: false,
+                        onAccept: (_) => setState(() => _m4BatteryInserted = true),
+                        onRotate: () => setState(() => _m4BatteryRotation = (_m4BatteryRotation + 90) % 360),
+                        onTap: () {},
+                        symbolWidget: _usePhysicalStyle
+                            ? CustomPaint(size: const Size(55, 55), painter: ComponentPhysicalPainter(type: ComponentType.battery, isDarkMode: false))
+                            : CustomPaint(size: const Size(55, 55), painter: CircuitSymbolPainter(type: ComponentType.battery, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
                       ),
-                    )
-            else
-              Container(
-                width: 60,
-                height: 40,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.amber, width: 2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Center(
-                  child: Text('?', style: GoogleFonts.rajdhani(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 20)),
-                ),
-              ),
-            const SizedBox(width: 16),
-            _usePhysicalStyle
-                ? CustomPaint(
-                    size: const Size(50, 50),
-                    painter: ComponentPhysicalPainter(
-                      type: ComponentType.led,
-                      isActive: hasResistor && !isBurned,
-                      isBurned: isBurned,
-                      isDarkMode: false,
                     ),
-                  )
-                : CustomPaint(
-                    size: const Size(48, 48),
-                    painter: CircuitSymbolPainter(
-                      type: ComponentType.led,
-                      isActive: hasResistor && !isBurned,
-                      isBurned: isBurned,
-                      color: const Color(0xFF0F172A),
-                      strokeWidth: 2.5,
+                    // Resistor socket
+                    Positioned(
+                      left: resistorX - 47.5,
+                      top: centerY - 47.5,
+                      child: PhysicalBlueprintSocket<String>(
+                        expectedData: 'resistor',
+                        isFilled: _m4ResistorInserted,
+                        rotation: _m4ResistorRotation,
+                        width: 95,
+                        height: 95,
+                        showLabel: false,
+                        onAccept: (_) => setState(() => _m4ResistorInserted = true),
+                        onRotate: () => setState(() => _m4ResistorRotation = (_m4ResistorRotation + 90) % 360),
+                        onTap: () {},
+                        symbolWidget: _usePhysicalStyle
+                            ? CustomPaint(size: const Size(55, 55), painter: ComponentPhysicalPainter(type: ComponentType.resistor, isDarkMode: false))
+                            : CustomPaint(size: const Size(55, 55), painter: CircuitSymbolPainter(type: ComponentType.resistor, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
+                      ),
                     ),
-                  ),
-          ],
+                    // LED socket
+                    Positioned(
+                      left: ledX - 47.5,
+                      top: centerY - 47.5,
+                      child: PhysicalBlueprintSocket<String>(
+                        expectedData: 'led',
+                        isFilled: _m4LedInserted,
+                        rotation: _m4LedRotation,
+                        width: 95,
+                        height: 95,
+                        showLabel: false,
+                        onAccept: (_) => setState(() => _m4LedInserted = true),
+                        onRotate: () => setState(() => _m4LedRotation = (_m4LedRotation + 90) % 360),
+                        onTap: () {},
+                        symbolWidget: _usePhysicalStyle
+                            ? CustomPaint(size: const Size(55, 55), painter: ComponentPhysicalPainter(type: ComponentType.led, isActive: hasResistor && !isBurned, isBurned: isBurned, isDarkMode: false))
+                            : CustomPaint(size: const Size(55, 55), painter: CircuitSymbolPainter(type: ComponentType.led, isActive: hasResistor && !isBurned, isBurned: isBurned, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
         ),
       ],
     );
@@ -1062,66 +1433,142 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          'Diagnóstico: Por que o LED está fraco neste circuito?',
+          'Diagnóstico: Por que o LED está fraco?',
           style: GoogleFonts.rajdhani(color: const Color(0xFFD97706), fontWeight: FontWeight.bold, fontSize: 16),
         ),
-        const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _usePhysicalStyle
-                ? CustomPaint(
-                    size: const Size(50, 50),
-                    painter: ComponentPhysicalPainter(
-                      type: ComponentType.battery,
-                      isDarkMode: false,
+        const SizedBox(height: 8),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final w = constraints.maxWidth;
+                final h = constraints.maxHeight;
+                final batteryX = w * 0.12;
+                final resistorX = w * 0.45;
+                final ledX = w * 0.82;
+                final centerY = h * 0.45;
+
+                final batteryPlacement = ComponentPlacement(
+                  position: Offset(batteryX, centerY),
+                  rotation: _m5BatteryRotation,
+                  type: ComponentType.battery,
+                );
+                final resistorPlacement = ComponentPlacement(
+                  position: Offset(resistorX, centerY),
+                  rotation: _m5ResistorRotation,
+                  type: ComponentType.resistor,
+                );
+                final ledPlacement = ComponentPlacement(
+                  position: Offset(ledX, centerY),
+                  rotation: _m5LedRotation,
+                  type: ComponentType.led,
+                );
+
+                final wires = <WirePath>[];
+                if (_m5BatteryInserted && _m5ResistorInserted) {
+                  wires.add(DynamicWirePath.fromComponents(
+                    compA: batteryPlacement,
+                    terminalIndexA: 1,
+                    compB: resistorPlacement,
+                    terminalIndexB: 0,
+                    color: const Color(0xFFEF4444),
+                    isActive: true,
+                  ).toWirePath());
+                }
+                if (_m5ResistorInserted && _m5LedInserted) {
+                  wires.add(DynamicWirePath.fromComponents(
+                    compA: resistorPlacement,
+                    terminalIndexA: 1,
+                    compB: ledPlacement,
+                    terminalIndexB: 0,
+                    color: const Color(0xFFF97316),
+                    isActive: true,
+                  ).toWirePath());
+                }
+                if (_m5LedInserted && _m5BatteryInserted) {
+                  wires.add(DynamicWirePath.fromComponents(
+                    compA: ledPlacement,
+                    terminalIndexA: 1,
+                    compB: batteryPlacement,
+                    terminalIndexB: 0,
+                    color: const Color(0xFF1E293B),
+                    isActive: true,
+                  ).toWirePath());
+                }
+
+                return Stack(
+                  children: [
+                    if (wires.isNotEmpty)
+                      Positioned.fill(
+                        child: RealisticWireWidget(
+                          wires: wires,
+                          animationValue: 0,
+                          showElectrons: false,
+                        ),
+                      ),
+                    // Battery socket
+                    Positioned(
+                      left: batteryX - 47.5,
+                      top: centerY - 47.5,
+                      child: PhysicalBlueprintSocket<String>(
+                        expectedData: 'battery',
+                        isFilled: _m5BatteryInserted,
+                        rotation: _m5BatteryRotation,
+                        width: 95,
+                        height: 95,
+                        showLabel: false,
+                        onAccept: (_) => setState(() => _m5BatteryInserted = true),
+                        onRotate: () => setState(() => _m5BatteryRotation = (_m5BatteryRotation + 90) % 360),
+                        onTap: () {},
+                        symbolWidget: _usePhysicalStyle
+                            ? CustomPaint(size: const Size(55, 55), painter: ComponentPhysicalPainter(type: ComponentType.battery, isDarkMode: false))
+                            : CustomPaint(size: const Size(55, 55), painter: CircuitSymbolPainter(type: ComponentType.battery, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
+                      ),
                     ),
-                  )
-                : CustomPaint(
-                    size: const Size(45, 45),
-                    painter: CircuitSymbolPainter(
-                      type: ComponentType.battery,
-                      color: const Color(0xFF0F172A),
-                      strokeWidth: 2.5,
+                    // Resistor socket
+                    Positioned(
+                      left: resistorX - 47.5,
+                      top: centerY - 47.5,
+                      child: PhysicalBlueprintSocket<String>(
+                        expectedData: 'resistor',
+                        isFilled: _m5ResistorInserted,
+                        rotation: _m5ResistorRotation,
+                        width: 95,
+                        height: 95,
+                        showLabel: false,
+                        onAccept: (_) => setState(() => _m5ResistorInserted = true),
+                        onRotate: () => setState(() => _m5ResistorRotation = (_m5ResistorRotation + 90) % 360),
+                        onTap: () {},
+                        symbolWidget: _usePhysicalStyle
+                            ? CustomPaint(size: const Size(55, 55), painter: ComponentPhysicalPainter(type: ComponentType.resistor, isDarkMode: false))
+                            : CustomPaint(size: const Size(55, 55), painter: CircuitSymbolPainter(type: ComponentType.resistor, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
+                      ),
                     ),
-                  ),
-            const SizedBox(width: 16),
-            _usePhysicalStyle
-                ? CustomPaint(
-                    size: const Size(45, 45),
-                    painter: ComponentPhysicalPainter(
-                      type: ComponentType.resistor,
-                      isDarkMode: false,
+                    // LED socket
+                    Positioned(
+                      left: ledX - 47.5,
+                      top: centerY - 47.5,
+                      child: PhysicalBlueprintSocket<String>(
+                        expectedData: 'led',
+                        isFilled: _m5LedInserted,
+                        rotation: _m5LedRotation,
+                        width: 95,
+                        height: 95,
+                        showLabel: false,
+                        onAccept: (_) => setState(() => _m5LedInserted = true),
+                        onRotate: () => setState(() => _m5LedRotation = (_m5LedRotation + 90) % 360),
+                        onTap: () {},
+                        symbolWidget: _usePhysicalStyle
+                            ? CustomPaint(size: const Size(55, 55), painter: ComponentPhysicalPainter(type: ComponentType.led, isActive: true, isDarkMode: false))
+                            : CustomPaint(size: const Size(55, 55), painter: CircuitSymbolPainter(type: ComponentType.led, isActive: true, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
+                      ),
                     ),
-                  )
-                : CustomPaint(
-                    size: const Size(42, 42),
-                    painter: CircuitSymbolPainter(
-                      type: ComponentType.resistor,
-                      color: const Color(0xFF0F172A),
-                      strokeWidth: 2.5,
-                    ),
-                  ),
-            const SizedBox(width: 16),
-            _usePhysicalStyle
-                ? CustomPaint(
-                    size: const Size(45, 45),
-                    painter: ComponentPhysicalPainter(
-                      type: ComponentType.led,
-                      isActive: true,
-                      isDarkMode: false,
-                    ),
-                  )
-                : CustomPaint(
-                    size: const Size(42, 42),
-                    painter: CircuitSymbolPainter(
-                      type: ComponentType.led,
-                      isActive: true,
-                      color: const Color(0xFF0F172A),
-                      strokeWidth: 2.5,
-                    ),
-                  ),
-          ],
+                  ],
+                );
+              },
+            ),
+          ),
         ),
       ],
     );
@@ -1168,6 +1615,7 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _buildUndoRedoButtons(),
         Wrap(
           spacing: 10,
           runSpacing: 10,

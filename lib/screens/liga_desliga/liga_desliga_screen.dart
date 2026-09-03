@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../app/routes.dart';
+import '../../models/circuit_action.dart';
 import '../../models/first_step_component.dart';
 import '../../models/stand_mission.dart';
+import '../../state/circuit_undo_redo_controller.dart';
 import '../../state/progress_controller.dart';
 import '../../widgets/circuit_symbol_painter.dart';
 import '../../widgets/component_physical_painter.dart';
@@ -31,6 +33,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
     with TickerProviderStateMixin {
   int _currentMissionIndex = 0;
   final List<StandMission> _missions = StandMission.estande3Missions;
+  final CircuitUndoRedoController _undoRedoController = CircuitUndoRedoController();
 
   // --- Modo de Visualizacao Visual: Esquemático (Blueprint) vs Físico 3D ---
   bool _usePhysicalStyle = true;
@@ -102,6 +105,58 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
   void dispose() {
     _currentFlowController.dispose();
     super.dispose();
+  }
+
+  // --- Helper methods for undo/redo ---
+  void _insertComponent({
+    required String name,
+    required bool Function() getInserted,
+    required void Function(bool) setInserted,
+    required double Function() getRotation,
+    required void Function(double) setRotation,
+  }) {
+    final prevInserted = getInserted();
+    final prevRotation = getRotation();
+    _undoRedoController.execute(InsertComponentAction(
+      description: 'Inserir $name',
+      onApply: () => setState(() {
+        setInserted(true);
+        setRotation(0);
+      }),
+      onUndo: () => setState(() {
+        setInserted(prevInserted);
+        setRotation(prevRotation);
+      }),
+    ));
+  }
+
+  void _rotateComponent({
+    required String name,
+    required double Function() getRotation,
+    required void Function(double) setRotation,
+  }) {
+    final prevRotation = getRotation();
+    final newRotation = (prevRotation + 90) % 360;
+    _undoRedoController.execute(RotateComponentAction(
+      description: 'Girar $name',
+      onApply: () => setState(() => setRotation(newRotation)),
+      onUndo: () => setState(() => setRotation(prevRotation)),
+    ));
+  }
+
+  // Helper method for toggling boolean states with undo/redo support.
+  // ignore: unused_element
+  void _toggleBool({
+    required String name,
+    required bool Function() getValue,
+    required void Function(bool) setValue,
+  }) {
+    final prevValue = getValue();
+    _undoRedoController.execute(ToggleBoolAction(
+      description: 'Alternar $name',
+      onApply: () => setState(() => setValue(!prevValue)),
+      onUndo: () => setState(() => setValue(prevValue)),
+    ));
   }
 
   void _nextMission() {
@@ -421,6 +476,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   child: WorkbenchSidePanel(
                     teamTitle: 'Painel da Equipe Controle',
                     toolboxItems: [
+                      _buildUndoRedoButtons(),
                       _buildMissionBriefingCard(),
                       _buildSideToolboxDrawer(),
                     ],
@@ -581,6 +637,83 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
       default:
         return Container();
     }
+  }
+
+  Widget _buildUndoRedoButtons() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Botão Undo
+          Tooltip(
+            message: _undoRedoController.canUndo
+                ? 'Desfazer: ${_undoRedoController.lastUndoDescription}'
+                : 'Nada para desfazer',
+            child: IconButton(
+              icon: Icon(
+                Icons.undo_rounded,
+                color: _undoRedoController.canUndo
+                    ? const Color(0xFF0284C7)
+                    : const Color(0xFFCBD5E1),
+                size: 22,
+              ),
+              onPressed: _undoRedoController.canUndo
+                  ? () => setState(() => _undoRedoController.undo())
+                  : null,
+              style: IconButton.styleFrom(
+                backgroundColor: _undoRedoController.canUndo
+                    ? const Color(0xFF0284C7).withValues(alpha: 0.1)
+                    : Colors.transparent,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ),
+          // Contador
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              '${_undoRedoController.undoCount}',
+              style: GoogleFonts.rajdhani(
+                color: const Color(0xFF64748B),
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          // Botão Redo
+          Tooltip(
+            message: _undoRedoController.canRedo
+                ? 'Refazer: ${_undoRedoController.lastRedoDescription}'
+                : 'Nada para refazer',
+            child: IconButton(
+              icon: Icon(
+                Icons.redo_rounded,
+                color: _undoRedoController.canRedo
+                    ? const Color(0xFF0284C7)
+                    : const Color(0xFFCBD5E1),
+                size: 22,
+              ),
+              onPressed: _undoRedoController.canRedo
+                  ? () => setState(() => _undoRedoController.redo())
+                  : null,
+              style: IconButton.styleFrom(
+                backgroundColor: _undoRedoController.canRedo
+                    ? const Color(0xFF0284C7).withValues(alpha: 0.1)
+                    : Colors.transparent,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildMissionBriefingCard() {
@@ -1383,8 +1516,18 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   isFilled: _m1BatteryInserted,
                   showLabel: false,
                   rotation: _m1BatteryRotation,
-                  onAccept: (_) => setState(() => _m1BatteryInserted = true),
-                  onRotate: () => setState(() => _m1BatteryRotation = (_m1BatteryRotation + 90) % 360),
+                  onAccept: (_) => _insertComponent(
+                    name: 'Bateria M1',
+                    getInserted: () => _m1BatteryInserted,
+                    setInserted: (v) => _m1BatteryInserted = v,
+                    getRotation: () => _m1BatteryRotation,
+                    setRotation: (v) => _m1BatteryRotation = v,
+                  ),
+                  onRotate: () => _rotateComponent(
+                    name: 'Bateria M1',
+                    getRotation: () => _m1BatteryRotation,
+                    setRotation: (v) => _m1BatteryRotation = v,
+                  ),
                   onTap: () {},
                   symbolWidget: CustomPaint(
                     size: const Size(80, 80),
@@ -1407,16 +1550,47 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   isFilled: _m1SwitchInserted,
                   showLabel: false,
                   rotation: _m1SwitchRotation,
-                  onAccept: (_) => setState(() {
-                    _m1SwitchInserted = true;
-                    _m1SwitchClosed = true;
-                  }),
-                  onRotate: () => setState(() => _m1SwitchRotation = (_m1SwitchRotation + 90) % 360),
-                  onTap: () => setState(() {
+                  onAccept: (_) {
+                    final prevSwitchInserted = _m1SwitchInserted;
+                    final prevSwitchClosed = _m1SwitchClosed;
+                    final prevSwitchRotation = _m1SwitchRotation;
+                    _undoRedoController.execute(CompoundAction(
+                      description: 'Inserir Interruptor M1',
+                      actions: [
+                        InsertComponentAction(
+                          description: 'Inserir Interruptor',
+                          onApply: () => setState(() {
+                            _m1SwitchInserted = true;
+                            _m1SwitchRotation = 0;
+                          }),
+                          onUndo: () => setState(() {
+                            _m1SwitchInserted = prevSwitchInserted;
+                            _m1SwitchRotation = prevSwitchRotation;
+                          }),
+                        ),
+                        ToggleBoolAction(
+                          description: 'Fechar Interruptor',
+                          onApply: () => setState(() => _m1SwitchClosed = true),
+                          onUndo: () => setState(() => _m1SwitchClosed = prevSwitchClosed),
+                        ),
+                      ],
+                    ));
+                  },
+                  onRotate: () => _rotateComponent(
+                    name: 'Interruptor M1',
+                    getRotation: () => _m1SwitchRotation,
+                    setRotation: (v) => _m1SwitchRotation = v,
+                  ),
+                  onTap: () {
                     if (_m1SwitchInserted) {
-                      _m1SwitchClosed = !_m1SwitchClosed;
+                      final prev = _m1SwitchClosed;
+                      _undoRedoController.execute(ToggleBoolAction(
+                        description: 'Toggle Interruptor M1',
+                        onApply: () => setState(() => _m1SwitchClosed = !prev),
+                        onUndo: () => setState(() => _m1SwitchClosed = prev),
+                      ));
                     }
-                  }),
+                  },
                   symbolWidget: CustomPaint(
                     size: const Size(90, 80),
                     painter: ComponentPhysicalPainter(
@@ -1437,8 +1611,18 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   isFilled: _m1BulbInserted,
                   showLabel: false,
                   rotation: _m1BulbRotation,
-                  onAccept: (_) => setState(() => _m1BulbInserted = true),
-                  onRotate: () => setState(() => _m1BulbRotation = (_m1BulbRotation + 90) % 360),
+                  onAccept: (_) => _insertComponent(
+                    name: 'Lâmpada M1',
+                    getInserted: () => _m1BulbInserted,
+                    setInserted: (v) => _m1BulbInserted = v,
+                    getRotation: () => _m1BulbRotation,
+                    setRotation: (v) => _m1BulbRotation = v,
+                  ),
+                  onRotate: () => _rotateComponent(
+                    name: 'Lâmpada M1',
+                    getRotation: () => _m1BulbRotation,
+                    setRotation: (v) => _m1BulbRotation = v,
+                  ),
                   onTap: () {},
                   symbolWidget: CustomPaint(
                     size: const Size(80, 80),
@@ -1560,8 +1744,18 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   isFilled: _m3BatteryInserted,
                   showLabel: false,
                   rotation: _m3BatteryRotation,
-                  onAccept: (_) => setState(() => _m3BatteryInserted = true),
-                  onRotate: () => setState(() => _m3BatteryRotation = (_m3BatteryRotation + 90) % 360),
+                  onAccept: (_) => _insertComponent(
+                    name: 'Bateria M3',
+                    getInserted: () => _m3BatteryInserted,
+                    setInserted: (v) => _m3BatteryInserted = v,
+                    getRotation: () => _m3BatteryRotation,
+                    setRotation: (v) => _m3BatteryRotation = v,
+                  ),
+                  onRotate: () => _rotateComponent(
+                    name: 'Bateria M3',
+                    getRotation: () => _m3BatteryRotation,
+                    setRotation: (v) => _m3BatteryRotation = v,
+                  ),
                   onTap: () {},
                   symbolWidget: CustomPaint(
                     size: const Size(80, 80),
@@ -1584,17 +1778,41 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   isFilled: _m3Switch1Inserted,
                   showLabel: false,
                   rotation: _m3Switch1Rotation,
-                  onAccept: (_) => setState(() {
-                    _m3Switch1Inserted = true;
-                    _m3Switch1Closed = true;
-                  }),
-                  onRotate: () => setState(() => _m3Switch1Rotation = (_m3Switch1Rotation + 90) % 360),
-                  onTap: () => setState(() {
+                  onAccept: (_) {
+                    final prevInserted = _m3Switch1Inserted;
+                    final prevClosed = _m3Switch1Closed;
+                    final prevRotation = _m3Switch1Rotation;
+                    _undoRedoController.execute(CompoundAction(
+                      description: 'Inserir Chave 1 M3',
+                      actions: [
+                        InsertComponentAction(
+                          description: 'Inserir Chave 1',
+                          onApply: () => setState(() { _m3Switch1Inserted = true; _m3Switch1Rotation = 0; }),
+                          onUndo: () => setState(() { _m3Switch1Inserted = prevInserted; _m3Switch1Rotation = prevRotation; }),
+                        ),
+                        ToggleBoolAction(
+                          description: 'Fechar Chave 1',
+                          onApply: () => setState(() => _m3Switch1Closed = true),
+                          onUndo: () => setState(() => _m3Switch1Closed = prevClosed),
+                        ),
+                      ],
+                    ));
+                  },
+                  onRotate: () => _rotateComponent(
+                    name: 'Chave 1 M3',
+                    getRotation: () => _m3Switch1Rotation,
+                    setRotation: (v) => _m3Switch1Rotation = v,
+                  ),
+                  onTap: () {
                     if (_m3Switch1Inserted) {
-                      _m3Switch1Closed = !_m3Switch1Closed;
-                      _m3TestedSwitch1 = true;
+                      final prev = _m3Switch1Closed;
+                      _undoRedoController.execute(ToggleBoolAction(
+                        description: 'Toggle Chave 1 M3',
+                        onApply: () => setState(() { _m3Switch1Closed = !prev; _m3TestedSwitch1 = true; }),
+                        onUndo: () => setState(() { _m3Switch1Closed = prev; _m3TestedSwitch1 = false; }),
+                      ));
                     }
-                  }),
+                  },
                   symbolWidget: CustomPaint(
                     size: const Size(80, 70),
                     painter: ComponentPhysicalPainter(
@@ -1615,17 +1833,41 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   isFilled: _m3Switch2Inserted,
                   showLabel: false,
                   rotation: _m3Switch2Rotation,
-                  onAccept: (_) => setState(() {
-                    _m3Switch2Inserted = true;
-                    _m3Switch2Closed = true;
-                  }),
-                  onRotate: () => setState(() => _m3Switch2Rotation = (_m3Switch2Rotation + 90) % 360),
-                  onTap: () => setState(() {
+                  onAccept: (_) {
+                    final prevInserted = _m3Switch2Inserted;
+                    final prevClosed = _m3Switch2Closed;
+                    final prevRotation = _m3Switch2Rotation;
+                    _undoRedoController.execute(CompoundAction(
+                      description: 'Inserir Chave 2 M3',
+                      actions: [
+                        InsertComponentAction(
+                          description: 'Inserir Chave 2',
+                          onApply: () => setState(() { _m3Switch2Inserted = true; _m3Switch2Rotation = 0; }),
+                          onUndo: () => setState(() { _m3Switch2Inserted = prevInserted; _m3Switch2Rotation = prevRotation; }),
+                        ),
+                        ToggleBoolAction(
+                          description: 'Fechar Chave 2',
+                          onApply: () => setState(() => _m3Switch2Closed = true),
+                          onUndo: () => setState(() => _m3Switch2Closed = prevClosed),
+                        ),
+                      ],
+                    ));
+                  },
+                  onRotate: () => _rotateComponent(
+                    name: 'Chave 2 M3',
+                    getRotation: () => _m3Switch2Rotation,
+                    setRotation: (v) => _m3Switch2Rotation = v,
+                  ),
+                  onTap: () {
                     if (_m3Switch2Inserted) {
-                      _m3Switch2Closed = !_m3Switch2Closed;
-                      _m3TestedSwitch2 = true;
+                      final prev = _m3Switch2Closed;
+                      _undoRedoController.execute(ToggleBoolAction(
+                        description: 'Toggle Chave 2 M3',
+                        onApply: () => setState(() { _m3Switch2Closed = !prev; _m3TestedSwitch2 = true; }),
+                        onUndo: () => setState(() { _m3Switch2Closed = prev; _m3TestedSwitch2 = false; }),
+                      ));
                     }
-                  }),
+                  },
                   symbolWidget: CustomPaint(
                     size: const Size(80, 70),
                     painter: ComponentPhysicalPainter(
@@ -1646,8 +1888,18 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   isFilled: _m3LampAInserted,
                   showLabel: false,
                   rotation: _m3LampARotation,
-                  onAccept: (_) => setState(() => _m3LampAInserted = true),
-                  onRotate: () => setState(() => _m3LampARotation = (_m3LampARotation + 90) % 360),
+                  onAccept: (_) => _insertComponent(
+                    name: 'Lâmpada A M3',
+                    getInserted: () => _m3LampAInserted,
+                    setInserted: (v) => _m3LampAInserted = v,
+                    getRotation: () => _m3LampARotation,
+                    setRotation: (v) => _m3LampARotation = v,
+                  ),
+                  onRotate: () => _rotateComponent(
+                    name: 'Lâmpada A M3',
+                    getRotation: () => _m3LampARotation,
+                    setRotation: (v) => _m3LampARotation = v,
+                  ),
                   onTap: () {},
                   symbolWidget: CustomPaint(
                     size: const Size(80, 70),
@@ -1669,8 +1921,18 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   isFilled: _m3LampBInserted,
                   showLabel: false,
                   rotation: _m3LampBRotation,
-                  onAccept: (_) => setState(() => _m3LampBInserted = true),
-                  onRotate: () => setState(() => _m3LampBRotation = (_m3LampBRotation + 90) % 360),
+                  onAccept: (_) => _insertComponent(
+                    name: 'Lâmpada B M3',
+                    getInserted: () => _m3LampBInserted,
+                    setInserted: (v) => _m3LampBInserted = v,
+                    getRotation: () => _m3LampBRotation,
+                    setRotation: (v) => _m3LampBRotation = v,
+                  ),
+                  onRotate: () => _rotateComponent(
+                    name: 'Lâmpada B M3',
+                    getRotation: () => _m3LampBRotation,
+                    setRotation: (v) => _m3LampBRotation = v,
+                  ),
                   onTap: () {},
                   symbolWidget: CustomPaint(
                     size: const Size(80, 70),
@@ -1768,8 +2030,18 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   isFilled: _m4BatteryInserted,
                   showLabel: false,
                   rotation: _m4BatteryRotation,
-                  onAccept: (_) => setState(() => _m4BatteryInserted = true),
-                  onRotate: () => setState(() => _m4BatteryRotation = (_m4BatteryRotation + 90) % 360),
+                  onAccept: (_) => _insertComponent(
+                    name: 'Bateria M4',
+                    getInserted: () => _m4BatteryInserted,
+                    setInserted: (v) => _m4BatteryInserted = v,
+                    getRotation: () => _m4BatteryRotation,
+                    setRotation: (v) => _m4BatteryRotation = v,
+                  ),
+                  onRotate: () => _rotateComponent(
+                    name: 'Bateria M4',
+                    getRotation: () => _m4BatteryRotation,
+                    setRotation: (v) => _m4BatteryRotation = v,
+                  ),
                   onTap: () {},
                   symbolWidget: CustomPaint(
                     size: const Size(80, 80),
@@ -1792,16 +2064,41 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   isFilled: _m4SwitchSeriesInserted,
                   showLabel: false,
                   rotation: _m4SwitchSeriesRotation,
-                  onAccept: (_) => setState(() {
-                    _m4SwitchSeriesInserted = true;
-                    _m4SwitchInMainBranch = true;
-                  }),
-                  onRotate: () => setState(() => _m4SwitchSeriesRotation = (_m4SwitchSeriesRotation + 90) % 360),
-                  onTap: () => setState(() {
+                  onAccept: (_) {
+                    final prevInserted = _m4SwitchSeriesInserted;
+                    final prevInMain = _m4SwitchInMainBranch;
+                    final prevRotation = _m4SwitchSeriesRotation;
+                    _undoRedoController.execute(CompoundAction(
+                      description: 'Inserir Interruptor Série M4',
+                      actions: [
+                        InsertComponentAction(
+                          description: 'Inserir Interruptor Série',
+                          onApply: () => setState(() { _m4SwitchSeriesInserted = true; _m4SwitchSeriesRotation = 0; }),
+                          onUndo: () => setState(() { _m4SwitchSeriesInserted = prevInserted; _m4SwitchSeriesRotation = prevRotation; }),
+                        ),
+                        ToggleBoolAction(
+                          description: 'Mover para Ramo Principal',
+                          onApply: () => setState(() => _m4SwitchInMainBranch = true),
+                          onUndo: () => setState(() => _m4SwitchInMainBranch = prevInMain),
+                        ),
+                      ],
+                    ));
+                  },
+                  onRotate: () => _rotateComponent(
+                    name: 'Interruptor Série M4',
+                    getRotation: () => _m4SwitchSeriesRotation,
+                    setRotation: (v) => _m4SwitchSeriesRotation = v,
+                  ),
+                  onTap: () {
                     if (_m4SwitchSeriesInserted) {
-                      _m4SwitchClosed = !_m4SwitchClosed;
+                      final prev = _m4SwitchClosed;
+                      _undoRedoController.execute(ToggleBoolAction(
+                        description: 'Toggle Interruptor M4',
+                        onApply: () => setState(() => _m4SwitchClosed = !prev),
+                        onUndo: () => setState(() => _m4SwitchClosed = prev),
+                      ));
                     }
-                  }),
+                  },
                   symbolWidget: CustomPaint(
                     size: const Size(80, 70),
                     painter: ComponentPhysicalPainter(
@@ -1822,8 +2119,18 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   isFilled: _m4LampInserted,
                   showLabel: false,
                   rotation: _m4LampRotation,
-                  onAccept: (_) => setState(() => _m4LampInserted = true),
-                  onRotate: () => setState(() => _m4LampRotation = (_m4LampRotation + 90) % 360),
+                  onAccept: (_) => _insertComponent(
+                    name: 'Lâmpada M4',
+                    getInserted: () => _m4LampInserted,
+                    setInserted: (v) => _m4LampInserted = v,
+                    getRotation: () => _m4LampRotation,
+                    setRotation: (v) => _m4LampRotation = v,
+                  ),
+                  onRotate: () => _rotateComponent(
+                    name: 'Lâmpada M4',
+                    getRotation: () => _m4LampRotation,
+                    setRotation: (v) => _m4LampRotation = v,
+                  ),
                   onTap: () {},
                   symbolWidget: CustomPaint(
                     size: const Size(80, 80),
@@ -1921,8 +2228,18 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   isFilled: _m5BatteryInserted,
                   showLabel: false,
                   rotation: _m5BatteryRotation,
-                  onAccept: (_) => setState(() => _m5BatteryInserted = true),
-                  onRotate: () => setState(() => _m5BatteryRotation = (_m5BatteryRotation + 90) % 360),
+                  onAccept: (_) => _insertComponent(
+                    name: 'Bateria M5',
+                    getInserted: () => _m5BatteryInserted,
+                    setInserted: (v) => _m5BatteryInserted = v,
+                    getRotation: () => _m5BatteryRotation,
+                    setRotation: (v) => _m5BatteryRotation = v,
+                  ),
+                  onRotate: () => _rotateComponent(
+                    name: 'Bateria M5',
+                    getRotation: () => _m5BatteryRotation,
+                    setRotation: (v) => _m5BatteryRotation = v,
+                  ),
                   onTap: () {},
                   symbolWidget: CustomPaint(
                     size: const Size(80, 80),
@@ -1945,14 +2262,19 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   isFilled: _m5PushButtonInserted,
                   showLabel: false,
                   rotation: _m5PushButtonRotation,
-                  onAccept: (_) => setState(() => _m5PushButtonInserted = true),
-                  onRotate: () => setState(() => _m5PushButtonRotation = (_m5PushButtonRotation + 90) % 360),
-                  onTap: () => setState(() {
-                    if (_m5PushButtonInserted) {
-                      _m5PushButtonPressed = !_m5PushButtonPressed;
-                      _m5TestedHoldAndRelease = true;
-                    }
-                  }),
+                  onAccept: (_) => _insertComponent(
+                    name: 'Push-Button M5',
+                    getInserted: () => _m5PushButtonInserted,
+                    setInserted: (v) => _m5PushButtonInserted = v,
+                    getRotation: () => _m5PushButtonRotation,
+                    setRotation: (v) => _m5PushButtonRotation = v,
+                  ),
+                  onRotate: () => _rotateComponent(
+                    name: 'Push-Button M5',
+                    getRotation: () => _m5PushButtonRotation,
+                    setRotation: (v) => _m5PushButtonRotation = v,
+                  ),
+                  onTap: () {},
                   symbolWidget: CustomPaint(
                     size: const Size(90, 80),
                     painter: ComponentPhysicalPainter(
@@ -1973,8 +2295,18 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   isFilled: _m5LampInserted,
                   showLabel: false,
                   rotation: _m5LampRotation,
-                  onAccept: (_) => setState(() => _m5LampInserted = true),
-                  onRotate: () => setState(() => _m5LampRotation = (_m5LampRotation + 90) % 360),
+                  onAccept: (_) => _insertComponent(
+                    name: 'Lâmpada M5',
+                    getInserted: () => _m5LampInserted,
+                    setInserted: (v) => _m5LampInserted = v,
+                    getRotation: () => _m5LampRotation,
+                    setRotation: (v) => _m5LampRotation = v,
+                  ),
+                  onRotate: () => _rotateComponent(
+                    name: 'Lâmpada M5',
+                    getRotation: () => _m5LampRotation,
+                    setRotation: (v) => _m5LampRotation = v,
+                  ),
                   onTap: () {},
                   symbolWidget: CustomPaint(
                     size: const Size(80, 80),
@@ -2027,8 +2359,18 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   isFilled: _m1BatteryInserted,
                   showLabel: false,
                   rotation: _m1BatteryRotation,
-                  onAccept: (_) => setState(() => _m1BatteryInserted = true),
-                  onRotate: () => setState(() => _m1BatteryRotation = (_m1BatteryRotation + 90) % 360),
+                  onAccept: (_) => _insertComponent(
+                    name: 'Bateria M1',
+                    getInserted: () => _m1BatteryInserted,
+                    setInserted: (v) => _m1BatteryInserted = v,
+                    getRotation: () => _m1BatteryRotation,
+                    setRotation: (v) => _m1BatteryRotation = v,
+                  ),
+                  onRotate: () => _rotateComponent(
+                    name: 'Bateria M1',
+                    getRotation: () => _m1BatteryRotation,
+                    setRotation: (v) => _m1BatteryRotation = v,
+                  ),
                   onTap: () {},
                   symbolWidget: CustomPaint(
                     size: const Size(54, 38),
@@ -2062,8 +2404,18 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   isFilled: _m1BulbInserted,
                   showLabel: false,
                   rotation: _m1BulbRotation,
-                  onAccept: (_) => setState(() => _m1BulbInserted = true),
-                  onRotate: () => setState(() => _m1BulbRotation = (_m1BulbRotation + 90) % 360),
+                  onAccept: (_) => _insertComponent(
+                    name: 'Lâmpada M1',
+                    getInserted: () => _m1BulbInserted,
+                    setInserted: (v) => _m1BulbInserted = v,
+                    getRotation: () => _m1BulbRotation,
+                    setRotation: (v) => _m1BulbRotation = v,
+                  ),
+                  onRotate: () => _rotateComponent(
+                    name: 'Lâmpada M1',
+                    getRotation: () => _m1BulbRotation,
+                    setRotation: (v) => _m1BulbRotation = v,
+                  ),
                   onTap: () {},
                   symbolWidget: CustomPaint(
                     size: const Size(54, 38),
@@ -2099,13 +2451,28 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   isFilled: _m1SwitchInserted,
                   showLabel: false,
                   rotation: _m1SwitchRotation,
-                  onAccept: (_) => setState(() => _m1SwitchInserted = true),
-                  onRotate: () => setState(() => _m1SwitchRotation = (_m1SwitchRotation + 90) % 360),
-                  onTap: () => setState(() {
+                  onAccept: (_) => _insertComponent(
+                    name: 'Interruptor M1',
+                    getInserted: () => _m1SwitchInserted,
+                    setInserted: (v) => _m1SwitchInserted = v,
+                    getRotation: () => _m1SwitchRotation,
+                    setRotation: (v) => _m1SwitchRotation = v,
+                  ),
+                  onRotate: () => _rotateComponent(
+                    name: 'Interruptor M1',
+                    getRotation: () => _m1SwitchRotation,
+                    setRotation: (v) => _m1SwitchRotation = v,
+                  ),
+                  onTap: () {
                     if (_m1SwitchInserted) {
-                      _m1SwitchClosed = !_m1SwitchClosed;
+                      final prev = _m1SwitchClosed;
+                      _undoRedoController.execute(ToggleBoolAction(
+                        description: 'Toggle Interruptor M1',
+                        onApply: () => setState(() => _m1SwitchClosed = !prev),
+                        onUndo: () => setState(() => _m1SwitchClosed = prev),
+                      ));
                     }
-                  }),
+                  },
                   symbolWidget: CustomPaint(
                     size: const Size(54, 38),
                     painter: CircuitSymbolPainter(
@@ -2166,8 +2533,18 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   isFilled: _m3BatteryInserted,
                   showLabel: false,
                   rotation: _m3BatteryRotation,
-                  onAccept: (_) => setState(() => _m3BatteryInserted = true),
-                  onRotate: () => setState(() => _m3BatteryRotation = (_m3BatteryRotation + 90) % 360),
+                  onAccept: (_) => _insertComponent(
+                    name: 'Bateria M3',
+                    getInserted: () => _m3BatteryInserted,
+                    setInserted: (v) => _m3BatteryInserted = v,
+                    getRotation: () => _m3BatteryRotation,
+                    setRotation: (v) => _m3BatteryRotation = v,
+                  ),
+                  onRotate: () => _rotateComponent(
+                    name: 'Bateria M3',
+                    getRotation: () => _m3BatteryRotation,
+                    setRotation: (v) => _m3BatteryRotation = v,
+                  ),
                   onTap: () {},
                   symbolWidget: CustomPaint(
                     size: const Size(54, 38),
@@ -2201,14 +2578,28 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   isFilled: _m3Switch1Inserted,
                   showLabel: false,
                   rotation: _m3Switch1Rotation,
-                  onAccept: (_) => setState(() => _m3Switch1Inserted = true),
-                  onRotate: () => setState(() => _m3Switch1Rotation = (_m3Switch1Rotation + 90) % 360),
-                  onTap: () => setState(() {
+                  onAccept: (_) => _insertComponent(
+                    name: 'Chave 1 M3',
+                    getInserted: () => _m3Switch1Inserted,
+                    setInserted: (v) => _m3Switch1Inserted = v,
+                    getRotation: () => _m3Switch1Rotation,
+                    setRotation: (v) => _m3Switch1Rotation = v,
+                  ),
+                  onRotate: () => _rotateComponent(
+                    name: 'Chave 1 M3',
+                    getRotation: () => _m3Switch1Rotation,
+                    setRotation: (v) => _m3Switch1Rotation = v,
+                  ),
+                  onTap: () {
                     if (_m3Switch1Inserted) {
-                      _m3Switch1Closed = !_m3Switch1Closed;
-                      _m3TestedSwitch1 = true;
+                      final prev = _m3Switch1Closed;
+                      _undoRedoController.execute(ToggleBoolAction(
+                        description: 'Toggle Chave 1 M3',
+                        onApply: () => setState(() { _m3Switch1Closed = !prev; _m3TestedSwitch1 = true; }),
+                        onUndo: () => setState(() { _m3Switch1Closed = prev; _m3TestedSwitch1 = false; }),
+                      ));
                     }
-                  }),
+                  },
                   symbolWidget: CustomPaint(
                     size: const Size(54, 38),
                     painter: CircuitSymbolPainter(
@@ -2242,14 +2633,28 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   isFilled: _m3Switch2Inserted,
                   showLabel: false,
                   rotation: _m3Switch2Rotation,
-                  onAccept: (_) => setState(() => _m3Switch2Inserted = true),
-                  onRotate: () => setState(() => _m3Switch2Rotation = (_m3Switch2Rotation + 90) % 360),
-                  onTap: () => setState(() {
+                  onAccept: (_) => _insertComponent(
+                    name: 'Chave 2 M3',
+                    getInserted: () => _m3Switch2Inserted,
+                    setInserted: (v) => _m3Switch2Inserted = v,
+                    getRotation: () => _m3Switch2Rotation,
+                    setRotation: (v) => _m3Switch2Rotation = v,
+                  ),
+                  onRotate: () => _rotateComponent(
+                    name: 'Chave 2 M3',
+                    getRotation: () => _m3Switch2Rotation,
+                    setRotation: (v) => _m3Switch2Rotation = v,
+                  ),
+                  onTap: () {
                     if (_m3Switch2Inserted) {
-                      _m3Switch2Closed = !_m3Switch2Closed;
-                      _m3TestedSwitch2 = true;
+                      final prev = _m3Switch2Closed;
+                      _undoRedoController.execute(ToggleBoolAction(
+                        description: 'Toggle Chave 2 M3',
+                        onApply: () => setState(() { _m3Switch2Closed = !prev; _m3TestedSwitch2 = true; }),
+                        onUndo: () => setState(() { _m3Switch2Closed = prev; _m3TestedSwitch2 = false; }),
+                      ));
                     }
-                  }),
+                  },
                   symbolWidget: CustomPaint(
                     size: const Size(54, 38),
                     painter: CircuitSymbolPainter(
@@ -2283,8 +2688,18 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   isFilled: _m3LampAInserted,
                   showLabel: false,
                   rotation: _m3LampARotation,
-                  onAccept: (_) => setState(() => _m3LampAInserted = true),
-                  onRotate: () => setState(() => _m3LampARotation = (_m3LampARotation + 90) % 360),
+                  onAccept: (_) => _insertComponent(
+                    name: 'Lâmpada A M3',
+                    getInserted: () => _m3LampAInserted,
+                    setInserted: (v) => _m3LampAInserted = v,
+                    getRotation: () => _m3LampARotation,
+                    setRotation: (v) => _m3LampARotation = v,
+                  ),
+                  onRotate: () => _rotateComponent(
+                    name: 'Lâmpada A M3',
+                    getRotation: () => _m3LampARotation,
+                    setRotation: (v) => _m3LampARotation = v,
+                  ),
                   onTap: () {},
                   symbolWidget: CustomPaint(
                     size: const Size(54, 38),
@@ -2320,8 +2735,18 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   isFilled: _m3LampBInserted,
                   showLabel: false,
                   rotation: _m3LampBRotation,
-                  onAccept: (_) => setState(() => _m3LampBInserted = true),
-                  onRotate: () => setState(() => _m3LampBRotation = (_m3LampBRotation + 90) % 360),
+                  onAccept: (_) => _insertComponent(
+                    name: 'Lâmpada B M3',
+                    getInserted: () => _m3LampBInserted,
+                    setInserted: (v) => _m3LampBInserted = v,
+                    getRotation: () => _m3LampBRotation,
+                    setRotation: (v) => _m3LampBRotation = v,
+                  ),
+                  onRotate: () => _rotateComponent(
+                    name: 'Lâmpada B M3',
+                    getRotation: () => _m3LampBRotation,
+                    setRotation: (v) => _m3LampBRotation = v,
+                  ),
                   onTap: () {},
                   symbolWidget: CustomPaint(
                     size: const Size(54, 38),
@@ -2425,7 +2850,13 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   expectedData: 'push_button',
                   isFilled: _m5PushButtonInserted,
                   showLabel: false,
-                  onAccept: (_) => setState(() => _m5PushButtonInserted = true),
+                  onAccept: (_) => _insertComponent(
+                    name: 'Push-Button M5',
+                    getInserted: () => _m5PushButtonInserted,
+                    setInserted: (v) => _m5PushButtonInserted = v,
+                    getRotation: () => _m5PushButtonRotation,
+                    setRotation: (v) => _m5PushButtonRotation = v,
+                  ),
                   onTap: () {},
                   symbolWidget: CustomPaint(
                     size: const Size(54, 38),
@@ -2530,15 +2961,42 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   accentColor: !_m4SwitchInMainBranch
                       ? const Color(0xFFD97706)
                       : const Color(0xFF94A3B8),
-                  onAccept: (_) =>
-                      setState(() => _m4SwitchInMainBranch = false),
-                  onTap: () => setState(() {
+                  onAccept: (_) {
+                    final prevInMain = _m4SwitchInMainBranch;
+                    final prevClosed = _m4SwitchClosed;
+                    _undoRedoController.execute(CompoundAction(
+                      description: 'Inserir no Ramo Inútil M4',
+                      actions: [
+                        ToggleBoolAction(
+                          description: 'Mover para Ramo Inútil',
+                          onApply: () => setState(() => _m4SwitchInMainBranch = false),
+                          onUndo: () => setState(() => _m4SwitchInMainBranch = prevInMain),
+                        ),
+                        ToggleBoolAction(
+                          description: 'Fechar Interruptor',
+                          onApply: () => setState(() => _m4SwitchClosed = true),
+                          onUndo: () => setState(() => _m4SwitchClosed = prevClosed),
+                        ),
+                      ],
+                    ));
+                  },
+                  onTap: () {
                     if (!_m4SwitchInMainBranch) {
-                      _m4SwitchClosed = !_m4SwitchClosed;
+                      final prev = _m4SwitchClosed;
+                      _undoRedoController.execute(ToggleBoolAction(
+                        description: 'Toggle Interruptor M4',
+                        onApply: () => setState(() => _m4SwitchClosed = !prev),
+                        onUndo: () => setState(() => _m4SwitchClosed = prev),
+                      ));
                     } else {
-                      _m4SwitchInMainBranch = false;
+                      final prevInMain = _m4SwitchInMainBranch;
+                      _undoRedoController.execute(ToggleBoolAction(
+                        description: 'Mover para Ramo Inútil M4',
+                        onApply: () => setState(() => _m4SwitchInMainBranch = false),
+                        onUndo: () => setState(() => _m4SwitchInMainBranch = prevInMain),
+                      ));
                     }
-                  }),
+                  },
                   symbolWidget: CustomPaint(
                     size: const Size(54, 38),
                     painter: CircuitSymbolPainter(
@@ -2574,14 +3032,42 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   accentColor: _m4SwitchInMainBranch
                       ? const Color(0xFF059669)
                       : const Color(0xFF94A3B8),
-                  onAccept: (_) => setState(() => _m4SwitchInMainBranch = true),
-                  onTap: () => setState(() {
+                  onAccept: (_) {
+                    final prevInMain = _m4SwitchInMainBranch;
+                    final prevClosed = _m4SwitchClosed;
+                    _undoRedoController.execute(CompoundAction(
+                      description: 'Inserir no Ramo Principal M4',
+                      actions: [
+                        ToggleBoolAction(
+                          description: 'Mover para Ramo Principal',
+                          onApply: () => setState(() => _m4SwitchInMainBranch = true),
+                          onUndo: () => setState(() => _m4SwitchInMainBranch = prevInMain),
+                        ),
+                        ToggleBoolAction(
+                          description: 'Fechar Interruptor',
+                          onApply: () => setState(() => _m4SwitchClosed = true),
+                          onUndo: () => setState(() => _m4SwitchClosed = prevClosed),
+                        ),
+                      ],
+                    ));
+                  },
+                  onTap: () {
                     if (_m4SwitchInMainBranch) {
-                      _m4SwitchClosed = !_m4SwitchClosed;
+                      final prev = _m4SwitchClosed;
+                      _undoRedoController.execute(ToggleBoolAction(
+                        description: 'Toggle Interruptor M4',
+                        onApply: () => setState(() => _m4SwitchClosed = !prev),
+                        onUndo: () => setState(() => _m4SwitchClosed = prev),
+                      ));
                     } else {
-                      _m4SwitchInMainBranch = true;
+                      final prevInMain = _m4SwitchInMainBranch;
+                      _undoRedoController.execute(ToggleBoolAction(
+                        description: 'Mover para Ramo Principal M4',
+                        onApply: () => setState(() => _m4SwitchInMainBranch = true),
+                        onUndo: () => setState(() => _m4SwitchInMainBranch = prevInMain),
+                      ));
                     }
-                  }),
+                  },
                   symbolWidget: CustomPaint(
                     size: const Size(54, 38),
                     painter: CircuitSymbolPainter(
