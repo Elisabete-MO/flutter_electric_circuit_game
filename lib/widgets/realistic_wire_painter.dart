@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../models/component_terminals.dart';
+import '../models/first_step_component.dart';
 
 /// Painter realista para fios de circuito com isolamento colorido,
 /// sombra projetada, brilho especular e elétrons animados.
@@ -175,5 +177,112 @@ class RealisticWireWidget extends StatelessWidget {
       ),
       size: Size.infinite,
     );
+  }
+}
+
+/// Posição e rotação de um componente no canvas físico.
+class ComponentPlacement {
+  final Offset position;
+  final double rotation;
+  final ComponentType type;
+
+  const ComponentPlacement({
+    required this.position,
+    required this.rotation,
+    required this.type,
+  });
+
+  /// Retorna a posição absoluta de um terminal no canvas.
+  Offset getTerminalPosition(int terminalIndex) {
+    return getTerminalPositionStatic(
+      componentCenter: position,
+      componentType: type,
+      terminalIndex: terminalIndex,
+      rotationDegrees: rotation,
+    );
+  }
+}
+
+/// Calcula posição de terminal (função estática para uso externo).
+Offset getTerminalPositionStatic({
+  required Offset componentCenter,
+  required ComponentType componentType,
+  required int terminalIndex,
+  required double rotationDegrees,
+}) {
+  final terminals = componentTerminals[componentType];
+  if (terminals == null || terminalIndex >= terminals.length) {
+    return componentCenter;
+  }
+  final terminal = terminals[terminalIndex];
+  final rotatedOffset = rotateTerminalOffset(terminal.offset, rotationDegrees);
+  return componentCenter + rotatedOffset;
+}
+
+/// Fio dinâmico que conecta terminais de dois componentes.
+class DynamicWirePath {
+  final Offset start;
+  final Offset end;
+  final Color color;
+  final bool isActive;
+  final double thickness;
+
+  const DynamicWirePath({
+    required this.start,
+    required this.end,
+    this.color = const Color(0xFFDC2626),
+    this.isActive = true,
+    this.thickness = 4.0,
+  });
+
+  /// Cria um DynamicWirePath conectando terminais de dois componentes.
+  factory DynamicWirePath.fromComponents({
+    required ComponentPlacement compA,
+    required int terminalIndexA,
+    required ComponentPlacement compB,
+    required int terminalIndexB,
+    required Color color,
+    bool isActive = true,
+    double thickness = 4.0,
+  }) {
+    return DynamicWirePath(
+      start: compA.getTerminalPosition(terminalIndexA),
+      end: compB.getTerminalPosition(terminalIndexB),
+      color: color,
+      isActive: isActive,
+      thickness: thickness,
+    );
+  }
+
+  /// Converte para WirePath (com curva intermediária se necessário).
+  WirePath toWirePath({List<Offset>? intermediatePoints}) {
+    final points = <Offset>[start];
+    if (intermediatePoints != null) {
+      points.addAll(intermediatePoints);
+    }
+    points.add(end);
+    return WirePath(
+      points: points,
+      color: color,
+      isActive: isActive,
+      thickness: thickness,
+    );
+  }
+}
+
+/// Lista de fios dinâmicos que só aparecem quando ambos os terminais existem.
+class DynamicWireBundle {
+  final List<DynamicWirePath> _wires;
+
+  const DynamicWireBundle(this._wires);
+
+  /// Cria a lista de WirePath, filtrando fios onde os componentes não existem.
+  List<WirePath> toWirePaths({
+    List<Offset>? Function(DynamicWirePath wire)? intermediatePointsBuilder,
+  }) {
+    return _wires.map((wire) {
+      final intermediate = intermediatePointsBuilder?.call(wire);
+      return wire.toWirePath(intermediatePoints: intermediate);
+    }).toList();
   }
 }

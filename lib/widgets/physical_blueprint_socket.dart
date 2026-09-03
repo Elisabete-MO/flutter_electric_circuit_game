@@ -2,35 +2,36 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Socket/Slot de Encaixe para Diagramas Esquemáticos Didáticos.
-/// Suporta Drag and Drop de símbolos elétricos padrão (Bateria, Lâmpada, Interruptor, LED, Resistor, Motor, etc.).
-/// Suporta rotação de 90° ao tocar no componente preenchido.
-class SchematicBlueprintSocket<T extends Object> extends StatelessWidget {
+/// Socket/Slot de Encaixe para o canvas físico 3D.
+/// Suporta Drag and Drop, rotação de 90° ao tocar, e visual de bancada.
+class PhysicalBlueprintSocket<T extends Object> extends StatelessWidget {
   final T expectedData;
   final bool isFilled;
   final ValueSetter<T> onAccept;
   final VoidCallback onTap;
   final VoidCallback? onRotate;
   final Widget symbolWidget;
-  final Widget placeholderWidget;
   final String label;
   final Color accentColor;
   final bool showLabel;
   final double rotation;
+  final double width;
+  final double height;
 
-  const SchematicBlueprintSocket({
+  const PhysicalBlueprintSocket({
     super.key,
     required this.expectedData,
     required this.isFilled,
     required this.onAccept,
     required this.onTap,
     required this.symbolWidget,
-    required this.placeholderWidget,
-    required this.label,
+    this.label = '',
     this.accentColor = const Color(0xFF00E5FF),
     this.showLabel = true,
     this.rotation = 0.0,
     this.onRotate,
+    this.width = 95,
+    this.height = 80,
   });
 
   @override
@@ -53,23 +54,23 @@ class SchematicBlueprintSocket<T extends Object> extends StatelessWidget {
             children: [
               AnimatedContainer(
                 duration: const Duration(milliseconds: 250),
-                width: 95,
-                height: 75,
+                width: width,
+                height: height,
                 decoration: BoxDecoration(
                   color: isFilled
-                      ? const Color(0xFFF0FDF4)
+                      ? const Color(0xFFF1F5F9)
                       : isHovering
                           ? const Color(0xFFFEF3C7)
-                          : const Color(0xFFFFFFFF),
-                  borderRadius: BorderRadius.circular(14),
+                          : const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: currentBorderColor,
-                    width: isFilled || isHovering ? 2.5 : 1.8,
+                    width: isFilled || isHovering ? 2.5 : 1.5,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: currentBorderColor.withValues(alpha: isHovering ? 0.25 : 0.10),
-                      blurRadius: isHovering ? 12 : 6,
+                      color: Colors.black.withValues(alpha: isHovering ? 0.15 : 0.08),
+                      blurRadius: isHovering ? 10 : 5,
                       offset: const Offset(0, 3),
                     ),
                   ],
@@ -80,17 +81,16 @@ class SchematicBlueprintSocket<T extends Object> extends StatelessWidget {
                     child: isFilled
                         ? Stack(
                             key: ValueKey('filled_$rotation'),
+                            alignment: Alignment.center,
                             children: [
-                              Center(
-                                child: Transform.rotate(
-                                  angle: rotation * math.pi / 180.0,
-                                  child: symbolWidget,
-                                ),
+                              Transform.rotate(
+                                angle: rotation * math.pi / 180.0,
+                                child: symbolWidget,
                               ),
                               if (onRotate != null)
                                 Positioned(
-                                  bottom: 2,
-                                  right: 2,
+                                  bottom: 3,
+                                  right: 3,
                                   child: GestureDetector(
                                     onTap: onRotate,
                                     child: Container(
@@ -114,7 +114,7 @@ class SchematicBlueprintSocket<T extends Object> extends StatelessWidget {
                             ? Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Icon(Icons.add_circle_rounded, color: Color(0xFFD97706), size: 24),
+                                  Icon(Icons.add_circle_rounded, color: const Color(0xFFD97706), size: 26),
                                   const SizedBox(height: 2),
                                   Text(
                                     'SOLTE AQUI',
@@ -126,51 +126,51 @@ class SchematicBlueprintSocket<T extends Object> extends StatelessWidget {
                                   ),
                                 ],
                               )
-                            : const Icon(Icons.add_rounded, color: Color(0xFF94A3B8), size: 26)),
+                            : Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.add_rounded, color: const Color(0xFF94A3B8), size: 26),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    label.isNotEmpty ? label : '',
+                                    style: GoogleFonts.rajdhani(
+                                      color: const Color(0xFF94A3B8),
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              )),
                   ),
                 ),
               ),
-              if (showLabel && label.isNotEmpty) ...[
-                const SizedBox(height: 5),
-                Text(
-                  label,
-                  style: GoogleFonts.rajdhani(
-                    color: isFilled ? const Color(0xFF059669) : const Color(0xFF334155),
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
             ],
           ),
         );
       },
     );
   }
-
-  Widget opacityPlaceholder(Widget child) {
-    return Opacity(
-      opacity: 0.4,
-      child: child,
-    );
-  }
 }
 
-/// Card de Exibição de Componente no Blueprint Esquemático (Bateria, Lâmpada, etc.).
-class SchematicComponentCard extends StatelessWidget {
+/// Card de exibição de componente físico (sem drag-and-drop, apenas visual).
+class PhysicalComponentCard extends StatelessWidget {
   final Widget symbolWidget;
   final String label;
   final bool isActive;
   final Color accentColor;
   final bool showLabel;
+  final double width;
+  final double height;
 
-  const SchematicComponentCard({
+  const PhysicalComponentCard({
     super.key,
     required this.symbolWidget,
     required this.label,
     this.isActive = false,
     this.accentColor = const Color(0xFF0284C7),
     this.showLabel = true,
+    this.width = 95,
+    this.height = 80,
   });
 
   @override
@@ -181,19 +181,19 @@ class SchematicComponentCard extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 95,
-          height: 75,
+          width: width,
+          height: height,
           decoration: BoxDecoration(
-            color: isActive ? const Color(0xFFF0FDF4) : const Color(0xFFFFFFFF),
-            borderRadius: BorderRadius.circular(14),
+            color: isActive ? const Color(0xFFF0FDF4) : const Color(0xFFF1F5F9),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: currentBorderColor,
-              width: isActive ? 2.5 : 1.8,
+              width: isActive ? 2.5 : 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: currentBorderColor.withValues(alpha: isActive ? 0.25 : 0.10),
-                blurRadius: isActive ? 12 : 6,
+                color: Colors.black.withValues(alpha: isActive ? 0.12 : 0.06),
+                blurRadius: isActive ? 8 : 4,
                 offset: const Offset(0, 3),
               ),
             ],
@@ -203,12 +203,12 @@ class SchematicComponentCard extends StatelessWidget {
           ),
         ),
         if (showLabel && label.isNotEmpty) ...[
-          const SizedBox(height: 5),
+          const SizedBox(height: 4),
           Text(
             label,
             style: GoogleFonts.rajdhani(
               color: isActive ? const Color(0xFF059669) : const Color(0xFF334155),
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.bold,
             ),
           ),

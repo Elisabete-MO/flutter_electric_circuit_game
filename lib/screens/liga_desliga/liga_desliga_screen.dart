@@ -10,6 +10,7 @@ import '../../widgets/circuit_symbol_painter.dart';
 import '../../widgets/component_physical_painter.dart';
 import '../../widgets/component_vector_painters.dart';
 import '../../widgets/glass_container.dart';
+import '../../widgets/physical_blueprint_socket.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
 import '../../widgets/prof_volts_full_body.dart';
 import '../../widgets/realistic_wire_painter.dart';
@@ -68,11 +69,22 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
   // --- Estado Missão 4: Conferência ---
   bool _m4SwitchInMainBranch = false;
   bool _m4SwitchClosed = true;
+  bool _m4BatteryInserted = false;
+  bool _m4SwitchSeriesInserted = false;
+  bool _m4LampInserted = false;
+  double _m4BatteryRotation = 0.0;
+  double _m4SwitchSeriesRotation = 0.0;
+  double _m4LampRotation = 0.0;
 
   // --- Estado Missão 5: Controle por Push-Button ---
   bool _m5PushButtonInserted = false;
   bool _m5PushButtonPressed = false;
   bool _m5TestedHoldAndRelease = false;
+  bool _m5BatteryInserted = false;
+  bool _m5LampInserted = false;
+  double _m5BatteryRotation = 0.0;
+  double _m5PushButtonRotation = 0.0;
+  double _m5LampRotation = 0.0;
 
   // Animação de Fluxo de Corrente e Pulsos Neon
   late AnimationController _currentFlowController;
@@ -1282,7 +1294,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
   // ==========================================
 
   Widget _buildPhysicalCanvasM1() {
-    final bool isClosed = _m1SwitchInserted && _m1SwitchClosed;
+    final bool isClosed = _m1BatteryInserted && _m1SwitchInserted && _m1SwitchClosed && _m1BulbInserted;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -1295,39 +1307,49 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         final switchPos = Offset(width / 2, 60);
         final lampPos = Offset(width - 75, height / 2);
 
-        final wires = [
-          // VCC (Vermelho): Pino (+) da Bateria Snap -> Terminal Esquerdo da Chave
-          WirePath(
-            points: [
-              Offset(batteryPos.dx + 14, batteryPos.dy - 40),
-              Offset(switchPos.dx - 35, switchPos.dy),
-            ],
+        // Fios dinâmicos - só aparecem quando componentes inseridos
+        final wires = <WirePath>[];
+
+        if (_m1BatteryInserted && _m1SwitchInserted) {
+          // VCC: Bateria(+) -> Switch(A)
+          wires.add(DynamicWirePath.fromComponents(
+            compA: ComponentPlacement(position: batteryPos, rotation: _m1BatteryRotation, type: ComponentType.battery),
+            terminalIndexA: 1,
+            compB: ComponentPlacement(position: switchPos, rotation: _m1SwitchRotation, type: ComponentType.switchComponent),
+            terminalIndexB: 0,
             color: const Color(0xFFEF4444),
             isActive: isClosed,
             thickness: 4.5,
-          ),
-          // Saída (Laranja): Terminal Direito da Chave -> Pino Esquerdo da Lâmpada
-          WirePath(
-            points: [
-              Offset(switchPos.dx + 35, switchPos.dy),
-              Offset(lampPos.dx - 7, lampPos.dy + 24),
-            ],
+          ).toWirePath());
+        }
+
+        if (_m1SwitchInserted && _m1BulbInserted) {
+          // Switch(B) -> Bulb(A)
+          wires.add(DynamicWirePath.fromComponents(
+            compA: ComponentPlacement(position: switchPos, rotation: _m1SwitchRotation, type: ComponentType.switchComponent),
+            terminalIndexA: 1,
+            compB: ComponentPlacement(position: lampPos, rotation: _m1BulbRotation, type: ComponentType.bulb),
+            terminalIndexB: 0,
             color: const Color(0xFFF97316),
             isActive: isClosed,
             thickness: 4.5,
-          ),
-          // GND (Preto): Pino Direito da Lâmpada -> Retorno para Pino (-) da Bateria Snap
-          WirePath(
-            points: [
-              Offset(lampPos.dx + 7, lampPos.dy + 24),
-              Offset(width / 2, height - 20),
-              Offset(batteryPos.dx - 14, batteryPos.dy - 40),
-            ],
+          ).toWirePath());
+        }
+
+        if (_m1BulbInserted && _m1BatteryInserted) {
+          // Bulb(B) -> Bateria(-) ( retorno por baixo )
+          wires.add(DynamicWirePath.fromComponents(
+            compA: ComponentPlacement(position: lampPos, rotation: _m1BulbRotation, type: ComponentType.bulb),
+            terminalIndexA: 1,
+            compB: ComponentPlacement(position: batteryPos, rotation: _m1BatteryRotation, type: ComponentType.battery),
+            terminalIndexB: 0,
             color: const Color(0xFF1E293B),
             isActive: isClosed,
             thickness: 4.5,
-          ),
-        ];
+          ).toWirePath(intermediatePoints: [
+            Offset(width / 2, height - 20),
+          ]));
+        }
 
         return Container(
           decoration: BoxDecoration(
@@ -1352,87 +1374,79 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                 ),
               ),
 
-              // Bateria 4.5V / 9V 3D Físico
+              // Socket da Bateria (Esquerda)
               Positioned(
-                left: batteryPos.dx - 40,
+                left: batteryPos.dx - 47.5,
                 top: batteryPos.dy - 40,
-                child: CustomPaint(
-                  size: const Size(80, 80),
-                  painter: ComponentPhysicalPainter(
-                    type: ComponentType.battery,
-                    isActive: true,
-                    isDarkMode: false,
-                    value: 4.5,
+                child: PhysicalBlueprintSocket<String>(
+                  expectedData: 'battery',
+                  isFilled: _m1BatteryInserted,
+                  showLabel: false,
+                  rotation: _m1BatteryRotation,
+                  onAccept: (_) => setState(() => _m1BatteryInserted = true),
+                  onRotate: () => setState(() => _m1BatteryRotation = (_m1BatteryRotation + 90) % 360),
+                  onTap: () {},
+                  symbolWidget: CustomPaint(
+                    size: const Size(80, 80),
+                    painter: ComponentPhysicalPainter(
+                      type: ComponentType.battery,
+                      isActive: true,
+                      isDarkMode: false,
+                      value: 4.5,
+                    ),
                   ),
                 ),
               ),
 
-              // Soquete / Interruptor Físico
+              // Socket do Interruptor (Centro)
               Positioned(
-                left: switchPos.dx - 45,
+                left: switchPos.dx - 47.5,
                 top: switchPos.dy - 40,
-                child: _m1SwitchInserted
-                    ? GestureDetector(
-                        onTap: () =>
-                            setState(() => _m1SwitchClosed = !_m1SwitchClosed),
-                        child: CustomPaint(
-                          size: const Size(90, 80),
-                          painter: ComponentPhysicalPainter(
-                            type: ComponentType.switchComponent,
-                            isActive: _m1SwitchClosed,
-                            isDarkMode: false,
-                          ),
-                        ),
-                      )
-                    : DragTarget<String>(
-                        onWillAcceptWithDetails: (details) =>
-                            details.data == 'switch',
-                        onAcceptWithDetails: (details) {
-                          setState(() {
-                            _m1SwitchInserted = true;
-                            _m1SwitchClosed = true;
-                          });
-                        },
-                        builder: (context, candidateData, rejectedData) {
-                          return Container(
-                            width: 90,
-                            height: 75,
-                            decoration: BoxDecoration(
-                              color: candidateData.isNotEmpty
-                                  ? const Color(
-                                      0xFF38BDF8,
-                                    ).withValues(alpha: 0.2)
-                                  : Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: candidateData.isNotEmpty
-                                    ? const Color(0xFF0284C7)
-                                    : const Color(0xFF94A3B8),
-                                width: 2,
-                              ),
-                            ),
-                            child: const Center(
-                              child: Icon(
-                                Icons.add_rounded,
-                                color: Color(0xFF64748B),
-                                size: 32,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
+                child: PhysicalBlueprintSocket<String>(
+                  expectedData: 'switch',
+                  isFilled: _m1SwitchInserted,
+                  showLabel: false,
+                  rotation: _m1SwitchRotation,
+                  onAccept: (_) => setState(() {
+                    _m1SwitchInserted = true;
+                    _m1SwitchClosed = true;
+                  }),
+                  onRotate: () => setState(() => _m1SwitchRotation = (_m1SwitchRotation + 90) % 360),
+                  onTap: () => setState(() {
+                    if (_m1SwitchInserted) {
+                      _m1SwitchClosed = !_m1SwitchClosed;
+                    }
+                  }),
+                  symbolWidget: CustomPaint(
+                    size: const Size(90, 80),
+                    painter: ComponentPhysicalPainter(
+                      type: ComponentType.switchComponent,
+                      isActive: _m1SwitchClosed,
+                      isDarkMode: false,
+                    ),
+                  ),
+                ),
               ),
 
-              // Lâmpada 3D Físico
+              // Socket da Lâmpada (Direita)
               Positioned(
-                left: lampPos.dx - 40,
+                left: lampPos.dx - 47.5,
                 top: lampPos.dy - 40,
-                child: CustomPaint(
-                  size: const Size(80, 80),
-                  painter: ComponentPhysicalPainter(
-                    type: ComponentType.bulb,
-                    isActive: isClosed,
-                    isDarkMode: false,
+                child: PhysicalBlueprintSocket<String>(
+                  expectedData: 'bulb',
+                  isFilled: _m1BulbInserted,
+                  showLabel: false,
+                  rotation: _m1BulbRotation,
+                  onAccept: (_) => setState(() => _m1BulbInserted = true),
+                  onRotate: () => setState(() => _m1BulbRotation = (_m1BulbRotation + 90) % 360),
+                  onTap: () {},
+                  symbolWidget: CustomPaint(
+                    size: const Size(80, 80),
+                    painter: ComponentPhysicalPainter(
+                      type: ComponentType.bulb,
+                      isActive: isClosed,
+                      isDarkMode: false,
+                    ),
                   ),
                 ),
               ),
@@ -1455,59 +1469,70 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         final lamp1Pos = Offset(width - 65, 50);
         final lamp2Pos = Offset(width - 65, 180);
 
-        final wires = [
-          // VCC 1 (Vermelho): Pino (+) da Bateria Snap -> Chave 1
-          WirePath(
-            points: [
-              Offset(batteryPos.dx + 14, batteryPos.dy - 40),
-              Offset(switch1Pos.dx - 35, switch1Pos.dy),
-            ],
+        // Fios dinâmicos
+        final wires = <WirePath>[];
+
+        if (_m3BatteryInserted && _m3Switch1Inserted) {
+          wires.add(DynamicWirePath.fromComponents(
+            compA: ComponentPlacement(position: batteryPos, rotation: _m3BatteryRotation, type: ComponentType.battery),
+            terminalIndexA: 1,
+            compB: ComponentPlacement(position: switch1Pos, rotation: _m3Switch1Rotation, type: ComponentType.switchComponent),
+            terminalIndexB: 0,
             color: const Color(0xFFEF4444),
             isActive: _m3Switch1Closed,
             thickness: 4.0,
-          ),
-          // VCC 2 (Amarelo): Pino (+) da Bateria Snap -> Chave 2
-          WirePath(
-            points: [
-              Offset(batteryPos.dx + 14, batteryPos.dy - 40),
-              Offset(switch2Pos.dx - 35, switch2Pos.dy),
-            ],
+          ).toWirePath());
+        }
+
+        if (_m3BatteryInserted && _m3Switch2Inserted) {
+          wires.add(DynamicWirePath.fromComponents(
+            compA: ComponentPlacement(position: batteryPos, rotation: _m3BatteryRotation, type: ComponentType.battery),
+            terminalIndexA: 1,
+            compB: ComponentPlacement(position: switch2Pos, rotation: _m3Switch2Rotation, type: ComponentType.switchComponent),
+            terminalIndexB: 0,
             color: const Color(0xFFEAB308),
             isActive: _m3Switch2Closed,
             thickness: 4.0,
-          ),
-          // Chave 1 -> Pino Esquerdo da Lâmpada A (Laranja)
-          WirePath(
-            points: [
-              Offset(switch1Pos.dx + 35, switch1Pos.dy),
-              Offset(lamp1Pos.dx - 7, lamp1Pos.dy + 24),
-            ],
+          ).toWirePath());
+        }
+
+        if (_m3Switch1Inserted && _m3LampAInserted) {
+          wires.add(DynamicWirePath.fromComponents(
+            compA: ComponentPlacement(position: switch1Pos, rotation: _m3Switch1Rotation, type: ComponentType.switchComponent),
+            terminalIndexA: 1,
+            compB: ComponentPlacement(position: lamp1Pos, rotation: _m3LampARotation, type: ComponentType.bulb),
+            terminalIndexB: 0,
             color: const Color(0xFFF97316),
             isActive: _m3Switch1Closed,
             thickness: 4.0,
-          ),
-          // Chave 2 -> Pino Esquerdo da Lâmpada B (Verde)
-          WirePath(
-            points: [
-              Offset(switch2Pos.dx + 35, switch2Pos.dy),
-              Offset(lamp2Pos.dx - 7, lamp2Pos.dy + 24),
-            ],
+          ).toWirePath());
+        }
+
+        if (_m3Switch2Inserted && _m3LampBInserted) {
+          wires.add(DynamicWirePath.fromComponents(
+            compA: ComponentPlacement(position: switch2Pos, rotation: _m3Switch2Rotation, type: ComponentType.switchComponent),
+            terminalIndexA: 1,
+            compB: ComponentPlacement(position: lamp2Pos, rotation: _m3LampBRotation, type: ComponentType.bulb),
+            terminalIndexB: 0,
             color: const Color(0xFF10B981),
             isActive: _m3Switch2Closed,
             thickness: 4.0,
-          ),
-          // Retorno GND (Preto): Pinos Direitos das Lâmpadas -> Retorno para Pino (-) da Bateria Snap
-          WirePath(
-            points: [
-              Offset(lamp1Pos.dx + 7, lamp1Pos.dy + 24),
-              Offset(lamp2Pos.dx + 7, lamp2Pos.dy + 24),
-              Offset(batteryPos.dx - 14, batteryPos.dy - 40),
-            ],
+          ).toWirePath());
+        }
+
+        if (_m3LampAInserted && _m3LampBInserted && _m3BatteryInserted) {
+          wires.add(DynamicWirePath.fromComponents(
+            compA: ComponentPlacement(position: lamp1Pos, rotation: _m3LampARotation, type: ComponentType.bulb),
+            terminalIndexA: 1,
+            compB: ComponentPlacement(position: batteryPos, rotation: _m3BatteryRotation, type: ComponentType.battery),
+            terminalIndexB: 0,
             color: const Color(0xFF1E293B),
             isActive: _m3Switch1Closed || _m3Switch2Closed,
             thickness: 4.0,
-          ),
-        ];
+          ).toWirePath(intermediatePoints: [
+            Offset(lamp2Pos.dx + 7, lamp2Pos.dy + 24),
+          ]));
+        }
 
         return Container(
           height: height,
@@ -1526,33 +1551,51 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                 ),
               ),
 
-              // Bateria
+              // Socket Bateria
               Positioned(
-                left: batteryPos.dx - 40,
+                left: batteryPos.dx - 47.5,
                 top: batteryPos.dy - 40,
-                child: CustomPaint(
-                  size: const Size(80, 80),
-                  painter: ComponentPhysicalPainter(
-                    type: ComponentType.battery,
-                    isActive: true,
-                    isDarkMode: false,
-                    value: 4.5,
+                child: PhysicalBlueprintSocket<String>(
+                  expectedData: 'battery',
+                  isFilled: _m3BatteryInserted,
+                  showLabel: false,
+                  rotation: _m3BatteryRotation,
+                  onAccept: (_) => setState(() => _m3BatteryInserted = true),
+                  onRotate: () => setState(() => _m3BatteryRotation = (_m3BatteryRotation + 90) % 360),
+                  onTap: () {},
+                  symbolWidget: CustomPaint(
+                    size: const Size(80, 80),
+                    painter: ComponentPhysicalPainter(
+                      type: ComponentType.battery,
+                      isActive: true,
+                      isDarkMode: false,
+                      value: 4.5,
+                    ),
                   ),
                 ),
               ),
 
-              // Chave 1
+              // Socket Chave 1
               Positioned(
-                left: switch1Pos.dx - 40,
+                left: switch1Pos.dx - 45,
                 top: switch1Pos.dy - 35,
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() {
+                child: PhysicalBlueprintSocket<String>(
+                  expectedData: 'switch1',
+                  isFilled: _m3Switch1Inserted,
+                  showLabel: false,
+                  rotation: _m3Switch1Rotation,
+                  onAccept: (_) => setState(() {
+                    _m3Switch1Inserted = true;
+                    _m3Switch1Closed = true;
+                  }),
+                  onRotate: () => setState(() => _m3Switch1Rotation = (_m3Switch1Rotation + 90) % 360),
+                  onTap: () => setState(() {
+                    if (_m3Switch1Inserted) {
                       _m3Switch1Closed = !_m3Switch1Closed;
                       _m3TestedSwitch1 = true;
-                    });
-                  },
-                  child: CustomPaint(
+                    }
+                  }),
+                  symbolWidget: CustomPaint(
                     size: const Size(80, 70),
                     painter: ComponentPhysicalPainter(
                       type: ComponentType.switchComponent,
@@ -1563,18 +1606,27 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                 ),
               ),
 
-              // Chave 2
+              // Socket Chave 2
               Positioned(
-                left: switch2Pos.dx - 40,
+                left: switch2Pos.dx - 45,
                 top: switch2Pos.dy - 35,
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() {
+                child: PhysicalBlueprintSocket<String>(
+                  expectedData: 'switch2',
+                  isFilled: _m3Switch2Inserted,
+                  showLabel: false,
+                  rotation: _m3Switch2Rotation,
+                  onAccept: (_) => setState(() {
+                    _m3Switch2Inserted = true;
+                    _m3Switch2Closed = true;
+                  }),
+                  onRotate: () => setState(() => _m3Switch2Rotation = (_m3Switch2Rotation + 90) % 360),
+                  onTap: () => setState(() {
+                    if (_m3Switch2Inserted) {
                       _m3Switch2Closed = !_m3Switch2Closed;
                       _m3TestedSwitch2 = true;
-                    });
-                  },
-                  child: CustomPaint(
+                    }
+                  }),
+                  symbolWidget: CustomPaint(
                     size: const Size(80, 70),
                     painter: ComponentPhysicalPainter(
                       type: ComponentType.switchComponent,
@@ -1585,30 +1637,48 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                 ),
               ),
 
-              // Lâmpada A
+              // Socket Lâmpada A
               Positioned(
-                left: lamp1Pos.dx - 40,
+                left: lamp1Pos.dx - 47.5,
                 top: lamp1Pos.dy - 35,
-                child: CustomPaint(
-                  size: const Size(80, 70),
-                  painter: ComponentPhysicalPainter(
-                    type: ComponentType.bulb,
-                    isActive: _m3Switch1Closed,
-                    isDarkMode: false,
+                child: PhysicalBlueprintSocket<String>(
+                  expectedData: 'bulb',
+                  isFilled: _m3LampAInserted,
+                  showLabel: false,
+                  rotation: _m3LampARotation,
+                  onAccept: (_) => setState(() => _m3LampAInserted = true),
+                  onRotate: () => setState(() => _m3LampARotation = (_m3LampARotation + 90) % 360),
+                  onTap: () {},
+                  symbolWidget: CustomPaint(
+                    size: const Size(80, 70),
+                    painter: ComponentPhysicalPainter(
+                      type: ComponentType.bulb,
+                      isActive: _m3Switch1Closed,
+                      isDarkMode: false,
+                    ),
                   ),
                 ),
               ),
 
-              // Lâmpada B
+              // Socket Lâmpada B
               Positioned(
-                left: lamp2Pos.dx - 40,
+                left: lamp2Pos.dx - 47.5,
                 top: lamp2Pos.dy - 35,
-                child: CustomPaint(
-                  size: const Size(80, 70),
-                  painter: ComponentPhysicalPainter(
-                    type: ComponentType.bulb,
-                    isActive: _m3Switch2Closed,
-                    isDarkMode: false,
+                child: PhysicalBlueprintSocket<String>(
+                  expectedData: 'bulb',
+                  isFilled: _m3LampBInserted,
+                  showLabel: false,
+                  rotation: _m3LampBRotation,
+                  onAccept: (_) => setState(() => _m3LampBInserted = true),
+                  onRotate: () => setState(() => _m3LampBRotation = (_m3LampBRotation + 90) % 360),
+                  onTap: () {},
+                  symbolWidget: CustomPaint(
+                    size: const Size(80, 70),
+                    painter: ComponentPhysicalPainter(
+                      type: ComponentType.bulb,
+                      isActive: _m3Switch2Closed,
+                      isDarkMode: false,
+                    ),
                   ),
                 ),
               ),
@@ -1620,7 +1690,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
   }
 
   Widget _buildPhysicalCanvasM4() {
-    final bool isLampLit = _m4SwitchInMainBranch ? _m4SwitchClosed : true;
+    final bool isLampLit = _m4BatteryInserted && _m4SwitchSeriesInserted && _m4SwitchClosed && _m4LampInserted;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -1628,55 +1698,49 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         const double height = 270.0;
 
         final batteryPos = Offset(65, height / 2);
-        final switchUpperPos = Offset(width * 0.5, 40);
         final switchSeriesPos = Offset(width * 0.5, height / 2);
         final lampPos = Offset(width - 65, height / 2);
 
-        final wires = [
-          // VCC Principal (Vermelho): Pino (+) da Bateria Snap -> Chave Série Principal
-          WirePath(
-            points: [
-              Offset(batteryPos.dx + 14, batteryPos.dy - 40),
-              Offset(switchSeriesPos.dx - 35, switchSeriesPos.dy),
-            ],
+        // Fios dinâmicos
+        final wires = <WirePath>[];
+
+        if (_m4BatteryInserted && _m4SwitchSeriesInserted) {
+          wires.add(DynamicWirePath.fromComponents(
+            compA: ComponentPlacement(position: batteryPos, rotation: _m4BatteryRotation, type: ComponentType.battery),
+            terminalIndexA: 1,
+            compB: ComponentPlacement(position: switchSeriesPos, rotation: _m4SwitchSeriesRotation, type: ComponentType.switchComponent),
+            terminalIndexB: 0,
             color: const Color(0xFFEF4444),
             isActive: isLampLit,
             thickness: 4.0,
-          ),
-          // Ramo Inútil (Laranja): Pino (+) Bateria Snap -> Chave Topo -> Pino Esquerdo Lâmpada
-          WirePath(
-            points: [
-              Offset(batteryPos.dx + 14, batteryPos.dy - 40),
-              Offset(switchUpperPos.dx - 35, switchUpperPos.dy),
-              Offset(switchUpperPos.dx + 35, switchUpperPos.dy),
-              Offset(lampPos.dx - 7, lampPos.dy + 24),
-            ],
-            color: const Color(0xFFF97316),
-            isActive: !_m4SwitchInMainBranch,
-            thickness: 3.5,
-          ),
-          // Série Principal -> Pino Esquerdo da Lâmpada
-          WirePath(
-            points: [
-              Offset(switchSeriesPos.dx + 35, switchSeriesPos.dy),
-              Offset(lampPos.dx - 7, lampPos.dy + 24),
-            ],
+          ).toWirePath());
+        }
+
+        if (_m4SwitchSeriesInserted && _m4LampInserted) {
+          wires.add(DynamicWirePath.fromComponents(
+            compA: ComponentPlacement(position: switchSeriesPos, rotation: _m4SwitchSeriesRotation, type: ComponentType.switchComponent),
+            terminalIndexA: 1,
+            compB: ComponentPlacement(position: lampPos, rotation: _m4LampRotation, type: ComponentType.bulb),
+            terminalIndexB: 0,
             color: const Color(0xFF10B981),
             isActive: isLampLit,
             thickness: 4.0,
-          ),
-          // GND Retorno (Preto): Pino Direito da Lâmpada -> Retorno para Pino (-) da Bateria Snap
-          WirePath(
-            points: [
-              Offset(lampPos.dx + 7, lampPos.dy + 24),
-              Offset(width / 2, height - 20),
-              Offset(batteryPos.dx - 14, batteryPos.dy - 40),
-            ],
+          ).toWirePath());
+        }
+
+        if (_m4LampInserted && _m4BatteryInserted) {
+          wires.add(DynamicWirePath.fromComponents(
+            compA: ComponentPlacement(position: lampPos, rotation: _m4LampRotation, type: ComponentType.bulb),
+            terminalIndexA: 1,
+            compB: ComponentPlacement(position: batteryPos, rotation: _m4BatteryRotation, type: ComponentType.battery),
+            terminalIndexB: 0,
             color: const Color(0xFF1E293B),
             isActive: isLampLit,
             thickness: 4.0,
-          ),
-        ];
+          ).toWirePath(intermediatePoints: [
+            Offset(width / 2, height - 20),
+          ]));
+        }
 
         return Container(
           height: height,
@@ -1695,111 +1759,79 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                 ),
               ),
 
-              // Bateria
+              // Socket Bateria
               Positioned(
-                left: batteryPos.dx - 40,
+                left: batteryPos.dx - 47.5,
                 top: batteryPos.dy - 40,
-                child: CustomPaint(
-                  size: const Size(80, 80),
-                  painter: ComponentPhysicalPainter(
-                    type: ComponentType.battery,
-                    isActive: true,
-                    isDarkMode: false,
-                    value: 4.5,
+                child: PhysicalBlueprintSocket<String>(
+                  expectedData: 'battery',
+                  isFilled: _m4BatteryInserted,
+                  showLabel: false,
+                  rotation: _m4BatteryRotation,
+                  onAccept: (_) => setState(() => _m4BatteryInserted = true),
+                  onRotate: () => setState(() => _m4BatteryRotation = (_m4BatteryRotation + 90) % 360),
+                  onTap: () {},
+                  symbolWidget: CustomPaint(
+                    size: const Size(80, 80),
+                    painter: ComponentPhysicalPainter(
+                      type: ComponentType.battery,
+                      isActive: true,
+                      isDarkMode: false,
+                      value: 4.5,
+                    ),
                   ),
                 ),
               ),
 
-              // Posicionamento A: Ramo Inútil (Topo)
+              // Socket Chave Série (Centro)
               Positioned(
-                left: switchUpperPos.dx - 40,
-                top: switchUpperPos.dy - 35,
-                child: !_m4SwitchInMainBranch
-                    ? GestureDetector(
-                        onTap: () =>
-                            setState(() => _m4SwitchClosed = !_m4SwitchClosed),
-                        child: CustomPaint(
-                          size: const Size(80, 70),
-                          painter: ComponentPhysicalPainter(
-                            type: ComponentType.switchComponent,
-                            isActive: _m4SwitchClosed,
-                            isDarkMode: false,
-                          ),
-                        ),
-                      )
-                    : DragTarget<String>(
-                        onAcceptWithDetails: (_) =>
-                            setState(() => _m4SwitchInMainBranch = false),
-                        builder: (context, candidateData, rejectedData) =>
-                            Container(
-                              width: 80,
-                              height: 70,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: const Color(0xFF94A3B8),
-                                  width: 1.5,
-                                ),
-                              ),
-                              child: const Icon(
-                                Icons.add_rounded,
-                                color: Color(0xFF94A3B8),
-                              ),
-                            ),
-                      ),
-              ),
-
-              // Posicionamento B: Ramo Principal em Série (Centro)
-              Positioned(
-                left: switchSeriesPos.dx - 40,
+                left: switchSeriesPos.dx - 45,
                 top: switchSeriesPos.dy - 35,
-                child: _m4SwitchInMainBranch
-                    ? GestureDetector(
-                        onTap: () =>
-                            setState(() => _m4SwitchClosed = !_m4SwitchClosed),
-                        child: CustomPaint(
-                          size: const Size(80, 70),
-                          painter: ComponentPhysicalPainter(
-                            type: ComponentType.switchComponent,
-                            isActive: _m4SwitchClosed,
-                            isDarkMode: false,
-                          ),
-                        ),
-                      )
-                    : DragTarget<String>(
-                        onAcceptWithDetails: (_) =>
-                            setState(() => _m4SwitchInMainBranch = true),
-                        builder: (context, candidateData, rejectedData) =>
-                            Container(
-                              width: 80,
-                              height: 70,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: const Color(0xFF059669),
-                                  width: 2,
-                                ),
-                              ),
-                              child: const Icon(
-                                Icons.add_rounded,
-                                color: Color(0xFF059669),
-                              ),
-                            ),
-                      ),
+                child: PhysicalBlueprintSocket<String>(
+                  expectedData: 'switch',
+                  isFilled: _m4SwitchSeriesInserted,
+                  showLabel: false,
+                  rotation: _m4SwitchSeriesRotation,
+                  onAccept: (_) => setState(() {
+                    _m4SwitchSeriesInserted = true;
+                    _m4SwitchInMainBranch = true;
+                  }),
+                  onRotate: () => setState(() => _m4SwitchSeriesRotation = (_m4SwitchSeriesRotation + 90) % 360),
+                  onTap: () => setState(() {
+                    if (_m4SwitchSeriesInserted) {
+                      _m4SwitchClosed = !_m4SwitchClosed;
+                    }
+                  }),
+                  symbolWidget: CustomPaint(
+                    size: const Size(80, 70),
+                    painter: ComponentPhysicalPainter(
+                      type: ComponentType.switchComponent,
+                      isActive: _m4SwitchClosed,
+                      isDarkMode: false,
+                    ),
+                  ),
+                ),
               ),
 
-              // Lâmpada
+              // Socket Lâmpada
               Positioned(
-                left: lampPos.dx - 40,
+                left: lampPos.dx - 47.5,
                 top: lampPos.dy - 40,
-                child: CustomPaint(
-                  size: const Size(80, 80),
-                  painter: ComponentPhysicalPainter(
-                    type: ComponentType.bulb,
-                    isActive: isLampLit,
-                    isDarkMode: false,
+                child: PhysicalBlueprintSocket<String>(
+                  expectedData: 'bulb',
+                  isFilled: _m4LampInserted,
+                  showLabel: false,
+                  rotation: _m4LampRotation,
+                  onAccept: (_) => setState(() => _m4LampInserted = true),
+                  onRotate: () => setState(() => _m4LampRotation = (_m4LampRotation + 90) % 360),
+                  onTap: () {},
+                  symbolWidget: CustomPaint(
+                    size: const Size(80, 80),
+                    painter: ComponentPhysicalPainter(
+                      type: ComponentType.bulb,
+                      isActive: isLampLit,
+                      isDarkMode: false,
+                    ),
                   ),
                 ),
               ),
@@ -1811,7 +1843,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
   }
 
   Widget _buildPhysicalCanvasM5() {
-    final bool isLit = _m5PushButtonInserted && _m5PushButtonPressed;
+    final bool isLit = _m5BatteryInserted && _m5PushButtonInserted && _m5PushButtonPressed && _m5LampInserted;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -1819,39 +1851,49 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         const double height = 270.0;
 
         final batteryPos = Offset(65, height / 2);
-        final switchPos = Offset(width / 2, height / 2);
+        final pushButtonPos = Offset(width / 2, height / 2);
         final lampPos = Offset(width - 65, height / 2);
 
-        final wires = [
-          WirePath(
-            points: [
-              Offset(batteryPos.dx + 14, batteryPos.dy - 40),
-              Offset(switchPos.dx - 35, switchPos.dy),
-            ],
+        // Fios dinâmicos
+        final wires = <WirePath>[];
+
+        if (_m5BatteryInserted && _m5PushButtonInserted) {
+          wires.add(DynamicWirePath.fromComponents(
+            compA: ComponentPlacement(position: batteryPos, rotation: _m5BatteryRotation, type: ComponentType.battery),
+            terminalIndexA: 1,
+            compB: ComponentPlacement(position: pushButtonPos, rotation: _m5PushButtonRotation, type: ComponentType.switchComponent),
+            terminalIndexB: 0,
             color: const Color(0xFFEF4444),
             isActive: isLit,
             thickness: 4.5,
-          ),
-          WirePath(
-            points: [
-              Offset(switchPos.dx + 35, switchPos.dy),
-              Offset(lampPos.dx - 7, lampPos.dy + 24),
-            ],
+          ).toWirePath());
+        }
+
+        if (_m5PushButtonInserted && _m5LampInserted) {
+          wires.add(DynamicWirePath.fromComponents(
+            compA: ComponentPlacement(position: pushButtonPos, rotation: _m5PushButtonRotation, type: ComponentType.switchComponent),
+            terminalIndexA: 1,
+            compB: ComponentPlacement(position: lampPos, rotation: _m5LampRotation, type: ComponentType.bulb),
+            terminalIndexB: 0,
             color: const Color(0xFFF97316),
             isActive: isLit,
             thickness: 4.5,
-          ),
-          WirePath(
-            points: [
-              Offset(lampPos.dx + 7, lampPos.dy + 24),
-              Offset(width / 2, height - 20),
-              Offset(batteryPos.dx - 14, batteryPos.dy - 40),
-            ],
+          ).toWirePath());
+        }
+
+        if (_m5LampInserted && _m5BatteryInserted) {
+          wires.add(DynamicWirePath.fromComponents(
+            compA: ComponentPlacement(position: lampPos, rotation: _m5LampRotation, type: ComponentType.bulb),
+            terminalIndexA: 1,
+            compB: ComponentPlacement(position: batteryPos, rotation: _m5BatteryRotation, type: ComponentType.battery),
+            terminalIndexB: 0,
             color: const Color(0xFF1E293B),
             isActive: isLit,
             thickness: 4.5,
-          ),
-        ];
+          ).toWirePath(intermediatePoints: [
+            Offset(width / 2, height - 20),
+          ]));
+        }
 
         return Container(
           height: height,
@@ -1870,86 +1912,77 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                 ),
               ),
 
-              // Bateria
+              // Socket Bateria
               Positioned(
-                left: batteryPos.dx - 40,
+                left: batteryPos.dx - 47.5,
                 top: batteryPos.dy - 40,
-                child: CustomPaint(
-                  size: const Size(80, 80),
-                  painter: ComponentPhysicalPainter(
-                    type: ComponentType.battery,
-                    isActive: true,
-                    isDarkMode: false,
-                    value: 4.5,
+                child: PhysicalBlueprintSocket<String>(
+                  expectedData: 'battery',
+                  isFilled: _m5BatteryInserted,
+                  showLabel: false,
+                  rotation: _m5BatteryRotation,
+                  onAccept: (_) => setState(() => _m5BatteryInserted = true),
+                  onRotate: () => setState(() => _m5BatteryRotation = (_m5BatteryRotation + 90) % 360),
+                  onTap: () {},
+                  symbolWidget: CustomPaint(
+                    size: const Size(80, 80),
+                    painter: ComponentPhysicalPainter(
+                      type: ComponentType.battery,
+                      isActive: true,
+                      isDarkMode: false,
+                      value: 4.5,
+                    ),
                   ),
                 ),
               ),
 
-              // Push-Button Físico Interativo (Pressione e Segure)
+              // Socket Push-Button
               Positioned(
-                left: switchPos.dx - 45,
-                top: switchPos.dy - 40,
-                child: _m5PushButtonInserted
-                    ? GestureDetector(
-                        onTapDown: (_) => setState(() {
-                          _m5PushButtonPressed = true;
-                          _m5TestedHoldAndRelease = true;
-                        }),
-                        onTapUp: (_) =>
-                            setState(() => _m5PushButtonPressed = false),
-                        onTapCancel: () =>
-                            setState(() => _m5PushButtonPressed = false),
-                        child: CustomPaint(
-                          size: const Size(90, 80),
-                          painter: ComponentPhysicalPainter(
-                            type: ComponentType.switchComponent,
-                            isActive: _m5PushButtonPressed,
-                            isDarkMode: false,
-                          ),
-                        ),
-                      )
-                    : DragTarget<String>(
-                        onAcceptWithDetails: (_) =>
-                            setState(() => _m5PushButtonInserted = true),
-                        builder: (context, candidateData, rejectedData) =>
-                            Container(
-                              width: 90,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                color: candidateData.isNotEmpty
-                                    ? const Color(
-                                        0xFF38BDF8,
-                                      ).withValues(alpha: 0.2)
-                                    : Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: candidateData.isNotEmpty
-                                      ? const Color(0xFF0284C7)
-                                      : const Color(0xFF94A3B8),
-                                  width: 2,
-                                ),
-                              ),
-                              child: const Center(
-                                child: Icon(
-                                  Icons.add_rounded,
-                                  color: Color(0xFF64748B),
-                                  size: 32,
-                                ),
-                              ),
-                            ),
-                      ),
+                left: pushButtonPos.dx - 45,
+                top: pushButtonPos.dy - 40,
+                child: PhysicalBlueprintSocket<String>(
+                  expectedData: 'push_button',
+                  isFilled: _m5PushButtonInserted,
+                  showLabel: false,
+                  rotation: _m5PushButtonRotation,
+                  onAccept: (_) => setState(() => _m5PushButtonInserted = true),
+                  onRotate: () => setState(() => _m5PushButtonRotation = (_m5PushButtonRotation + 90) % 360),
+                  onTap: () => setState(() {
+                    if (_m5PushButtonInserted) {
+                      _m5PushButtonPressed = !_m5PushButtonPressed;
+                      _m5TestedHoldAndRelease = true;
+                    }
+                  }),
+                  symbolWidget: CustomPaint(
+                    size: const Size(90, 80),
+                    painter: ComponentPhysicalPainter(
+                      type: ComponentType.switchComponent,
+                      isActive: _m5PushButtonPressed,
+                      isDarkMode: false,
+                    ),
+                  ),
+                ),
               ),
 
-              // Lâmpada
+              // Socket Lâmpada
               Positioned(
-                left: lampPos.dx - 40,
+                left: lampPos.dx - 47.5,
                 top: lampPos.dy - 40,
-                child: CustomPaint(
-                  size: const Size(80, 80),
-                  painter: ComponentPhysicalPainter(
-                    type: ComponentType.bulb,
-                    isActive: isLit,
-                    isDarkMode: false,
+                child: PhysicalBlueprintSocket<String>(
+                  expectedData: 'bulb',
+                  isFilled: _m5LampInserted,
+                  showLabel: false,
+                  rotation: _m5LampRotation,
+                  onAccept: (_) => setState(() => _m5LampInserted = true),
+                  onRotate: () => setState(() => _m5LampRotation = (_m5LampRotation + 90) % 360),
+                  onTap: () {},
+                  symbolWidget: CustomPaint(
+                    size: const Size(80, 80),
+                    painter: ComponentPhysicalPainter(
+                      type: ComponentType.bulb,
+                      isActive: isLit,
+                      isDarkMode: false,
+                    ),
                   ),
                 ),
               ),

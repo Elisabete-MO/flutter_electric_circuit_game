@@ -32,9 +32,10 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
 
   // Estados da Missão 1 (Postes em Série)
   bool _m1WireConnected = false;
+  bool _m1WireInserted = false;
 
   // Estados da Missão 2 (Comparação de Brilho)
-  bool _m2IsSeriesTwoBulbs = true; // true = 2 postes em série (50%), false = 1 poste (100%)
+  bool _m2IsSeriesTwoBulbs = true;
   String? _m2SelectedExplanation;
 
   // Estados da Missão 3 (Bifurcação de Fios / Nó)
@@ -593,21 +594,27 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
               children: [
                 _buildStreetLamp(
                   label: 'Poste 1 (Alameda)',
-                  isLit: _m1WireConnected,
-                  brightnessRatio: _m1WireConnected ? 0.5 : 0.0,
+                  isLit: _m1WireInserted,
+                  brightnessRatio: _m1WireInserted ? 0.5 : 0.0,
                 ),
                 _buildStreetLamp(
                   label: 'Poste 2 (Avenida)',
-                  isLit: _m1WireConnected,
-                  brightnessRatio: _m1WireConnected ? 0.5 : 0.0,
+                  isLit: _m1WireInserted,
+                  brightnessRatio: _m1WireInserted ? 0.5 : 0.0,
                 ),
               ],
             ),
 
-            // Socket Esquemático de Encaixe do Fio em Série
+            // Socket do Fio em Série
             SchematicBlueprintSocket<String>(
               expectedData: 'fio_serie',
-              isFilled: _m1WireConnected,
+              isFilled: _m1WireInserted,
+              showLabel: false,
+              onAccept: (_) => setState(() {
+                _m1WireInserted = true;
+                _m1WireConnected = true;
+              }),
+              onTap: () {},
               symbolWidget: _usePhysicalStyle
                   ? CustomPaint(
                       size: const Size(50, 50),
@@ -640,17 +647,7 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
                         strokeWidth: 2.0,
                       ),
                     ),
-              label: 'FIO EM SÉRIE',
-              onAccept: (_) {
-                setState(() {
-                  _m1WireConnected = true;
-                });
-              },
-              onTap: () {
-                setState(() {
-                  _m1WireConnected = !_m1WireConnected;
-                });
-              },
+              label: '',
             ),
           ],
         ),
@@ -1013,6 +1010,53 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
           spacing: 10,
           runSpacing: 10,
           children: [
+            // Bateria
+            WorkbenchSymbolToolboxTile<String>(
+              data: 'battery',
+              label: 'Bateria',
+              tooltip: 'Fonte de Alimentação 4.5V',
+              symbolWidget: _usePhysicalStyle
+                  ? CustomPaint(
+                      size: const Size(34, 34),
+                      painter: ComponentPhysicalPainter(
+                        type: ComponentType.battery,
+                        isDarkMode: false,
+                      ),
+                    )
+                  : CustomPaint(
+                      size: const Size(34, 34),
+                      painter: CircuitSymbolPainter(
+                        type: ComponentType.battery,
+                        color: const Color(0xFFD97706),
+                        strokeWidth: 2.0,
+                      ),
+                    ),
+              color: const Color(0xFFD97706),
+            ),
+            // Lâmpada
+            WorkbenchSymbolToolboxTile<String>(
+              data: 'bulb',
+              label: 'Lâmpada',
+              tooltip: 'Poste de Iluminação',
+              symbolWidget: _usePhysicalStyle
+                  ? CustomPaint(
+                      size: const Size(34, 34),
+                      painter: ComponentPhysicalPainter(
+                        type: ComponentType.bulb,
+                        isDarkMode: false,
+                      ),
+                    )
+                  : CustomPaint(
+                      size: const Size(34, 34),
+                      painter: CircuitSymbolPainter(
+                        type: ComponentType.bulb,
+                        color: const Color(0xFF10B981),
+                        strokeWidth: 2.0,
+                      ),
+                    ),
+              color: const Color(0xFF10B981),
+            ),
+            // Condutor
             WorkbenchSymbolToolboxTile<String>(
               data: 'fio_serie',
               label: 'Condutor',

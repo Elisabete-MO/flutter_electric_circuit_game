@@ -30,8 +30,9 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
   bool _usePhysicalStyle = true;
 
   // Estados da Missão 1 (Polaridade do LED)
-  bool _m1LedDirectPolarity = true; // true = Anodo (+), Cathodo (-)
+  bool _m1LedDirectPolarity = true;
   bool _m1LedInserted = false;
+  double _m1LedRotation = 0.0;
 
   // Estados da Missão 2 (Diagnóstico de LED Invertido)
   bool _m2LedInvertedFixed = false;
@@ -591,6 +592,11 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
         SchematicBlueprintSocket<String>(
           expectedData: 'led_red',
           isFilled: _m1LedInserted,
+          showLabel: false,
+          rotation: _m1LedRotation,
+          onAccept: (_) => setState(() => _m1LedInserted = true),
+          onRotate: () => setState(() => _m1LedRotation = (_m1LedRotation + 90) % 360),
+          onTap: () {},
           symbolWidget: _usePhysicalStyle
               ? CustomPaint(
                   size: const Size(60, 60),
@@ -627,17 +633,7 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
                     strokeWidth: 2.0,
                   ),
                 ),
-          label: 'SOQUETE LED SEMICONDUTOR',
-          onAccept: (_) {
-            setState(() {
-              _m1LedInserted = true;
-            });
-          },
-          onTap: () {
-            setState(() {
-              _m1LedInserted = !_m1LedInserted;
-            });
-          },
+          label: '',
         ),
 
         // Controle Clean de Polaridade (Ânodo / Cátodo)
@@ -933,6 +929,30 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
           spacing: 10,
           runSpacing: 10,
           children: [
+            // Bateria
+            WorkbenchSymbolToolboxTile<String>(
+              data: 'battery',
+              label: 'Bateria',
+              tooltip: 'Fonte 9V',
+              symbolWidget: _usePhysicalStyle
+                  ? CustomPaint(
+                      size: const Size(34, 34),
+                      painter: ComponentPhysicalPainter(
+                        type: ComponentType.battery,
+                        isDarkMode: false,
+                      ),
+                    )
+                  : CustomPaint(
+                      size: const Size(34, 34),
+                      painter: CircuitSymbolPainter(
+                        type: ComponentType.battery,
+                        color: const Color(0xFFD97706),
+                        strokeWidth: 2.0,
+                      ),
+                    ),
+              color: const Color(0xFFD97706),
+            ),
+            // LED
             WorkbenchSymbolToolboxTile<String>(
               data: 'led_red',
               label: 'LED',
@@ -956,6 +976,29 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
                       ),
                     ),
               color: Colors.redAccent,
+            ),
+            // Resistor
+            WorkbenchSymbolToolboxTile<String>(
+              data: 'resistor',
+              label: 'Resistor',
+              tooltip: 'Resistor 680Ω',
+              symbolWidget: _usePhysicalStyle
+                  ? CustomPaint(
+                      size: const Size(34, 34),
+                      painter: ComponentPhysicalPainter(
+                        type: ComponentType.resistor,
+                        isDarkMode: false,
+                      ),
+                    )
+                  : CustomPaint(
+                      size: const Size(34, 34),
+                      painter: CircuitSymbolPainter(
+                        type: ComponentType.resistor,
+                        color: const Color(0xFF10B981),
+                        strokeWidth: 2.0,
+                      ),
+                    ),
+              color: const Color(0xFF10B981),
             ),
           ],
         ),
