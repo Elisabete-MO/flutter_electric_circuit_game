@@ -608,3 +608,205 @@ class SchematicCircuitWirePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
+
+/// CustomPainter para a Missão 3 (Dois Ramos Independentes em Paralelo)
+class SchematicCircuitWirePainterM3 extends CustomPainter {
+  final bool branch1Closed;
+  final bool branch2Closed;
+  final double animationValue;
+
+  SchematicCircuitWirePainterM3({
+    required this.branch1Closed,
+    required this.branch2Closed,
+    required this.animationValue,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final batteryX = 60.0;
+    final lampX = size.width - 60.0;
+    final switchCenterX = size.width / 2;
+
+    final yRamo1 = 47.5;
+    final yRamo2 = 165.0;
+    final yBottom = 235.0;
+
+    // Ramo 1 (Superior)
+    final color1 = branch1Closed ? const Color(0xFF0284C7) : const Color(0xFF94A3B8);
+    final paint1 = Paint()
+      ..color = color1
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4.0
+      ..strokeCap = StrokeCap.round;
+    final glow1 = Paint()
+      ..color = color1.withValues(alpha: branch1Closed ? 0.35 : 0.0)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 8.0
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+
+    final path1 = Path();
+    path1.moveTo(batteryX, 100.0);
+    path1.lineTo(batteryX, yRamo1);
+    path1.lineTo(switchCenterX - 47.5, yRamo1);
+    path1.moveTo(switchCenterX + 47.5, yRamo1);
+    path1.lineTo(lampX, yRamo1);
+    path1.lineTo(lampX, 100.0);
+
+    canvas.drawPath(path1, glow1);
+    canvas.drawPath(path1, paint1);
+
+    // Ramo 2 (Inferior)
+    final color2 = branch2Closed ? const Color(0xFF0284C7) : const Color(0xFF94A3B8);
+    final paint2 = Paint()
+      ..color = color2
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4.0
+      ..strokeCap = StrokeCap.round;
+    final glow2 = Paint()
+      ..color = color2.withValues(alpha: branch2Closed ? 0.35 : 0.0)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 8.0
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+
+    final path2 = Path();
+    path2.moveTo(batteryX, 100.0);
+    path2.lineTo(batteryX, yRamo2);
+    path2.lineTo(switchCenterX - 47.5, yRamo2);
+    path2.moveTo(switchCenterX + 47.5, yRamo2);
+    path2.lineTo(lampX, yRamo2);
+    path2.lineTo(lampX, 175.0);
+
+    canvas.drawPath(path2, glow2);
+    canvas.drawPath(path2, paint2);
+
+    // Linha de retorno comum
+    final returnPath = Path();
+    returnPath.moveTo(lampX, 175.0);
+    returnPath.lineTo(lampX, yBottom);
+    returnPath.lineTo(batteryX, yBottom);
+    returnPath.lineTo(batteryX, 175.0);
+    canvas.drawPath(returnPath, paint1);
+
+    // Bornes
+    final pinPaint = Paint()..color = const Color(0xFF0284C7);
+    canvas.drawCircle(Offset(switchCenterX - 47.5, yRamo1), 4.5, pinPaint);
+    canvas.drawCircle(Offset(switchCenterX + 47.5, yRamo1), 4.5, pinPaint);
+    canvas.drawCircle(Offset(switchCenterX - 47.5, yRamo2), 4.5, pinPaint);
+    canvas.drawCircle(Offset(switchCenterX + 47.5, yRamo2), 4.5, pinPaint);
+
+    // Eletrons no Ramo 1
+    if (branch1Closed) {
+      final electronPaint = Paint()..color = const Color(0xFFD97706);
+      for (final metric in path1.computeMetrics()) {
+        final length = metric.length;
+        for (int i = 0; i < 10; i++) {
+          final distance = ((animationValue + (i / 10)) % 1.0) * length;
+          final tangent = metric.getTangentForOffset(distance);
+          if (tangent != null) canvas.drawCircle(tangent.position, 4.0, electronPaint);
+        }
+      }
+    }
+
+    // Eletrons no Ramo 2
+    if (branch2Closed) {
+      final electronPaint = Paint()..color = const Color(0xFFD97706);
+      for (final metric in path2.computeMetrics()) {
+        final length = metric.length;
+        for (int i = 0; i < 10; i++) {
+          final distance = ((animationValue + (i / 10)) % 1.0) * length;
+          final tangent = metric.getTangentForOffset(distance);
+          if (tangent != null) canvas.drawCircle(tangent.position, 4.0, electronPaint);
+        }
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+/// CustomPainter para a Missão 4 (Conferência de Ramo Inútil vs Série)
+class SchematicCircuitWirePainterM4 extends CustomPainter {
+  final bool isClosed;
+  final bool switchInMainBranch;
+  final double animationValue;
+
+  SchematicCircuitWirePainterM4({
+    required this.isClosed,
+    required this.switchInMainBranch,
+    required this.animationValue,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final batteryX = 60.0;
+    final lampX = size.width - 60.0;
+    final switchCenterX = size.width / 2;
+
+    final topParallelY = 47.5;
+    final mainBranchY = 107.5;
+    final bottomWireY = 210.0;
+
+    final wireColor = isClosed ? const Color(0xFF0284C7) : const Color(0xFF94A3B8);
+    final wirePaint = Paint()
+      ..color = wireColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4.0
+      ..strokeCap = StrokeCap.round;
+
+    final glowPaint = Paint()
+      ..color = wireColor.withValues(alpha: isClosed ? 0.35 : 0.0)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 8.0
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+
+    final path = Path();
+    // Ramo Principal
+    path.moveTo(batteryX, 70.0);
+    path.lineTo(batteryX, mainBranchY);
+    path.lineTo(switchCenterX - 47.5, mainBranchY);
+    path.moveTo(switchCenterX + 47.5, mainBranchY);
+    path.lineTo(lampX, mainBranchY);
+    path.lineTo(lampX, 70.0);
+
+    // Ramo Paralelo (Inútil no topo)
+    final parallelPath = Path();
+    parallelPath.moveTo(batteryX + 15, mainBranchY);
+    parallelPath.lineTo(batteryX + 15, topParallelY);
+    parallelPath.lineTo(switchCenterX - 47.5, topParallelY);
+    parallelPath.moveTo(switchCenterX + 47.5, topParallelY);
+    parallelPath.lineTo(lampX - 15, topParallelY);
+    parallelPath.lineTo(lampX - 15, mainBranchY);
+
+    // Retorno do fundo
+    path.moveTo(lampX, 145.0);
+    path.lineTo(lampX, bottomWireY);
+    path.lineTo(batteryX, bottomWireY);
+    path.lineTo(batteryX, 145.0);
+
+    canvas.drawPath(path, glowPaint);
+    canvas.drawPath(path, wirePaint);
+    canvas.drawPath(parallelPath, wirePaint);
+
+    final pinPaint = Paint()..color = const Color(0xFF0284C7);
+    canvas.drawCircle(Offset(switchCenterX - 47.5, topParallelY), 4.5, pinPaint);
+    canvas.drawCircle(Offset(switchCenterX + 47.5, topParallelY), 4.5, pinPaint);
+    canvas.drawCircle(Offset(switchCenterX - 47.5, mainBranchY), 4.5, pinPaint);
+    canvas.drawCircle(Offset(switchCenterX + 47.5, mainBranchY), 4.5, pinPaint);
+
+    if (isClosed) {
+      final electronPaint = Paint()..color = const Color(0xFFD97706);
+      for (final metric in path.computeMetrics()) {
+        final length = metric.length;
+        for (int i = 0; i < 12; i++) {
+          final distance = ((animationValue + (i / 12)) % 1.0) * length;
+          final tangent = metric.getTangentForOffset(distance);
+          if (tangent != null) canvas.drawCircle(tangent.position, 4.0, electronPaint);
+        }
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}

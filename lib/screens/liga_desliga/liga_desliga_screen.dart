@@ -775,73 +775,8 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         ),
         const SizedBox(height: 16),
 
-        // Bancada com 2 Interruptores e 2 Lâmpadas
-        Container(
-          height: 230,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 10,
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              // Bateria Comum
-              _buildRealisticBattery(),
-
-              // Painel de 2 Chaves
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _buildSwitchControlCard(
-                    label: 'CHAVE 1',
-                    isClosed: _m3Switch1Closed,
-                    onToggle: () {
-                      setState(() {
-                        _m3Switch1Closed = !_m3Switch1Closed;
-                        _m3TestedSwitch1 = true;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  _buildSwitchControlCard(
-                    label: 'CHAVE 2',
-                    isClosed: _m3Switch2Closed,
-                    onToggle: () {
-                      setState(() {
-                        _m3Switch2Closed = !_m3Switch2Closed;
-                        _m3TestedSwitch2 = true;
-                      });
-                    },
-                  ),
-                ],
-              ),
-
-              // Painel de 2 Lâmpadas (A e B)
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _buildRealisticBulb(
-                    isLit: _m3Switch1Closed,
-                    label: 'Luminária A',
-                  ),
-                  const SizedBox(height: 16),
-                  _buildRealisticBulb(
-                    isLit: _m3Switch2Closed,
-                    label: 'Luminária B',
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
+        // Bancada Esquematica da Missão 3 (Dois Ramos em Paralelo)
+        _buildSchematicCanvasM3(),
 
         const SizedBox(height: 16),
 
@@ -912,8 +847,6 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
   // MISSÃO 4: Conferência (Correção de Ramo Inútil)
   // ==========================================
   Widget _buildMission4UI(StandMission mission) {
-    final bool isLampLit = _m4SwitchInMainBranch ? _m4SwitchClosed : true;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -939,168 +872,8 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         ),
         const SizedBox(height: 16),
 
-        // Bancada Didática Interativa de Correção do Ramo
-        Container(
-          height: 250,
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFCBD5E1), width: 1.2),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-              ),
-            ],
-          ),
-          child: Stack(
-            children: [
-              // 1. Fonte (Bateria 4.5V na Esquerda)
-              Positioned(
-                left: 20,
-                top: 75,
-                child: _buildRealisticBattery(),
-              ),
-
-              // 2. Opção A: Ramo Inútil (Paralelo - Topo)
-              Positioned(
-                left: 210,
-                top: 15,
-                child: InkWell(
-                  onTap: () {
-                    setState(() {
-                      _m4SwitchInMainBranch = false;
-                    });
-                  },
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: !_m4SwitchInMainBranch
-                          ? const Color(0xFFFEF3C7)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: !_m4SwitchInMainBranch ? const Color(0xFFD97706) : const Color(0xFFCBD5E1),
-                        width: !_m4SwitchInMainBranch ? 2 : 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          !_m4SwitchInMainBranch
-                              ? Icons.warning_amber_rounded
-                              : Icons.radio_button_unchecked_rounded,
-                          color: !_m4SwitchInMainBranch ? const Color(0xFFD97706) : const Color(0xFF64748B),
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          !_m4SwitchInMainBranch
-                              ? 'Ramo Inútil (Chave Ineficaz)'
-                              : 'Mover Chave para Ramo Inútil',
-                          style: GoogleFonts.rajdhani(
-                            color: !_m4SwitchInMainBranch ? const Color(0xFF92400E) : const Color(0xFF475569),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
-              // 3. Opção B: Ramo Principal (Em Série com a Lâmpada - Centro)
-              Positioned(
-                left: 210,
-                top: 80,
-                child: InkWell(
-                  onTap: () {
-                    setState(() {
-                      _m4SwitchInMainBranch = true;
-                    });
-                  },
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: _m4SwitchInMainBranch
-                          ? const Color(0xFFEFF6FF)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: _m4SwitchInMainBranch ? const Color(0xFF0284C7) : const Color(0xFFCBD5E1),
-                        width: _m4SwitchInMainBranch ? 2 : 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          _m4SwitchInMainBranch
-                              ? Icons.check_circle_rounded
-                              : Icons.radio_button_unchecked_rounded,
-                          color: _m4SwitchInMainBranch ? const Color(0xFF0284C7) : const Color(0xFF64748B),
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          _m4SwitchInMainBranch
-                              ? 'Ramo Principal em Série (Correto!)'
-                              : 'Mover Chave para Ramo Principal (Série)',
-                          style: GoogleFonts.rajdhani(
-                            color: _m4SwitchInMainBranch ? const Color(0xFF0F172A) : const Color(0xFF475569),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
-              // 4. Teste de Acionamento da Chave quando posicionada
-              Positioned(
-                left: 210,
-                top: 145,
-                child: Row(
-                  children: [
-                    Text(
-                      'Estado da Chave:',
-                      style: GoogleFonts.outfit(color: const Color(0xFF475569), fontSize: 12),
-                    ),
-                    const SizedBox(width: 8),
-                    ChoiceChip(
-                      label: Text('OFF (Aberta)', style: GoogleFonts.rajdhani(fontSize: 12, fontWeight: FontWeight.bold)),
-                      selected: !_m4SwitchClosed,
-                      selectedColor: const Color(0xFFFDE68A),
-                      onSelected: (_) => setState(() => _m4SwitchClosed = false),
-                    ),
-                    const SizedBox(width: 6),
-                    ChoiceChip(
-                      label: Text('ON (Fechada)', style: GoogleFonts.rajdhani(fontSize: 12, fontWeight: FontWeight.bold)),
-                      selected: _m4SwitchClosed,
-                      selectedColor: const Color(0xFFBAE6FD),
-                      onSelected: (_) => setState(() => _m4SwitchClosed = true),
-                    ),
-                  ],
-                ),
-              ),
-
-              // 5. Luminária na Direita
-              Positioned(
-                right: 25,
-                top: 65,
-                child: _buildRealisticBulb(isLit: isLampLit),
-              ),
-            ],
-          ),
-        ),
+        // Bancada Didática Interativa de Correção do Ramo (Clean Blueprint)
+        _buildSchematicCanvasM4(),
       ],
     );
   }
@@ -1109,8 +882,6 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
   // MISSÃO 5: Controle por Push-Button
   // ==========================================
   Widget _buildMission5UI(StandMission mission) {
-    final isLit = _m5PushButtonInserted && _m5PushButtonPressed;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1159,56 +930,8 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
 
         const SizedBox(height: 16),
 
-        // Bancada da Missão 5
-        Container(
-          height: 220,
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFCBD5E1), width: 1.2),
-          ),
-          child: Stack(
-            children: [
-              Positioned(
-                left: 20,
-                top: 60,
-                child: _buildRealisticBattery(),
-              ),
-
-              // Soquete / Botão de encaixe do Push-Button
-              Positioned(
-                left: 200,
-                top: 60,
-                child: SchematicBlueprintSocket<String>(
-                  expectedData: 'push_button',
-                  isFilled: _m5PushButtonInserted,
-                  symbolWidget: PushButtonVectorWidget(
-                    size: 56,
-                    isPressed: _m5PushButtonPressed,
-                  ),
-                  placeholderWidget: const PushButtonVectorWidget(
-                    size: 48,
-                  ),
-                  label: 'PUSH-BUTTON',
-                  onAccept: (_) {
-                    setState(() {
-                      _m5PushButtonInserted = true;
-                    });
-                  },
-                  onTap: () {},
-                ),
-              ),
-
-              Positioned(
-                right: 25,
-                top: 50,
-                child: _buildRealisticBulb(isLit: isLit),
-              ),
-            ],
-          ),
-        ),
+        // Bancada da Missão 5 (Clean Blueprint)
+        _buildSchematicCanvasM5(),
 
         const SizedBox(height: 16),
 
@@ -1264,145 +987,6 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
             ),
           ),
       ],
-    );
-  }
-
-  // --- Widgets Auxiliares de Componentes Realistas ---
-
-  Widget _buildRealisticBattery() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF042920),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF10B981), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF10B981).withValues(alpha: 0.25),
-            blurRadius: 10,
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.battery_charging_full_rounded, color: Color(0xFF10B981), size: 38),
-          const SizedBox(height: 4),
-          Text(
-            'BATERIA 4.5V',
-            style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 0.8),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRealisticBulb({required bool isLit, String? label}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: isLit ? const Color(0xFF451A03) : const Color(0xFF0F172A),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isLit ? Colors.amberAccent : Colors.white24,
-          width: 1.5,
-        ),
-        boxShadow: [
-          if (isLit)
-            BoxShadow(
-              color: Colors.amberAccent.withValues(alpha: 0.4),
-              blurRadius: 16,
-              spreadRadius: 2,
-            ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.lightbulb_rounded,
-            size: 42,
-            color: isLit ? Colors.amberAccent : Colors.white30,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label ?? (isLit ? 'LUMINÁRIA ACESA' : 'LUMINÁRIA DESLIGADA'),
-            style: GoogleFonts.rajdhani(
-              color: isLit ? Colors.amberAccent : Colors.white54,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-              letterSpacing: 0.8,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSwitchControlCard({required bool isClosed, required VoidCallback onToggle, String? label}) {
-    return InkWell(
-      onTap: onToggle,
-      borderRadius: BorderRadius.circular(16),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: isClosed ? const Color(0xFF064E3B) : const Color(0xFF1E293B),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isClosed ? const Color(0xFF10B981) : Colors.amber.withValues(alpha: 0.6),
-            width: 2.0,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: isClosed ? const Color(0xFF10B981).withValues(alpha: 0.4) : Colors.black45,
-              blurRadius: 12,
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                color: isClosed
-                    ? const Color(0xFF10B981).withValues(alpha: 0.3)
-                    : Colors.white10,
-              ),
-              child: Icon(
-                isClosed ? Icons.toggle_on_rounded : Icons.toggle_off_rounded,
-                color: isClosed ? const Color(0xFF34D399) : Colors.amber,
-                size: 26,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label ?? 'INTERRUPTOR (SPST)',
-                  style: GoogleFonts.rajdhani(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                ),
-                Text(
-                  isClosed ? 'FECHADO (ON)' : 'ABERTO (OFF)',
-                  style: GoogleFonts.rajdhani(
-                    color: isClosed ? const Color(0xFF34D399) : Colors.amber,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -1480,6 +1064,300 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   placeholderWidget: const PushButtonVectorWidget(
                     size: 42,
                   ),
+                  label: '',
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSchematicCanvasM3() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double width = constraints.maxWidth;
+        final double batteryX = 60.0;
+        final double lampX = width - 60.0;
+        final double switchCenterX = width / 2;
+
+        return SizedBox(
+          height: 270,
+          child: Stack(
+            children: [
+              CustomPaint(
+                size: Size(width, 270),
+                painter: SchematicCircuitWirePainterM3(
+                  branch1Closed: _m3Switch1Closed,
+                  branch2Closed: _m3Switch2Closed,
+                  animationValue: _currentFlowController.value,
+                ),
+              ),
+
+              // Card da Bateria Comum (Centro Esquerda)
+              Positioned(
+                left: batteryX - 47.5,
+                top: 60,
+                child: const SchematicComponentCard(
+                  label: '',
+                  showLabel: false,
+                  symbolWidget: BatteryVectorWidget(size: 46),
+                ),
+              ),
+
+              // Socket Chave 1 (Ramo 1 - Topo)
+              Positioned(
+                left: switchCenterX - 47.5,
+                top: 10,
+                child: SchematicBlueprintSocket<String>(
+                  expectedData: 'switch1',
+                  isFilled: true,
+                  showLabel: false,
+                  onAccept: (_) {},
+                  onTap: () => setState(() {
+                    _m3Switch1Closed = !_m3Switch1Closed;
+                    _m3TestedSwitch1 = true;
+                  }),
+                  symbolWidget: PushButtonVectorWidget(
+                    size: 46,
+                    isPressed: _m3Switch1Closed,
+                  ),
+                  placeholderWidget: const PushButtonVectorWidget(size: 42),
+                  label: '',
+                ),
+              ),
+
+              // Socket Chave 2 (Ramo 2 - Baixo)
+              Positioned(
+                left: switchCenterX - 47.5,
+                top: 128,
+                child: SchematicBlueprintSocket<String>(
+                  expectedData: 'switch2',
+                  isFilled: true,
+                  showLabel: false,
+                  onAccept: (_) {},
+                  onTap: () => setState(() {
+                    _m3Switch2Closed = !_m3Switch2Closed;
+                    _m3TestedSwitch2 = true;
+                  }),
+                  symbolWidget: PushButtonVectorWidget(
+                    size: 46,
+                    isPressed: _m3Switch2Closed,
+                  ),
+                  placeholderWidget: const PushButtonVectorWidget(size: 42),
+                  label: '',
+                ),
+              ),
+
+              // Card Lâmpada A (Ramo 1 - Topo)
+              Positioned(
+                left: lampX - 47.5,
+                top: 10,
+                child: SchematicComponentCard(
+                  label: '',
+                  showLabel: false,
+                  isActive: _m3Switch1Closed,
+                  symbolWidget: BulbVectorWidget(
+                    size: 46,
+                    isOn: _m3Switch1Closed,
+                  ),
+                ),
+              ),
+
+              // Card Lâmpada B (Ramo 2 - Baixo)
+              Positioned(
+                left: lampX - 47.5,
+                top: 128,
+                child: SchematicComponentCard(
+                  label: '',
+                  showLabel: false,
+                  isActive: _m3Switch2Closed,
+                  symbolWidget: BulbVectorWidget(
+                    size: 46,
+                    isOn: _m3Switch2Closed,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSchematicCanvasM5() {
+    final isLit = _m5PushButtonInserted && _m5PushButtonPressed;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double width = constraints.maxWidth;
+        final double batteryX = 60.0;
+        final double lampX = width - 60.0;
+        final double switchCenterX = width / 2;
+
+        return SizedBox(
+          height: 270,
+          child: Stack(
+            children: [
+              CustomPaint(
+                size: Size(width, 270),
+                painter: SchematicCircuitWirePainter(
+                  isClosed: isLit,
+                  animationValue: _currentFlowController.value,
+                  switchInserted: _m5PushButtonInserted,
+                  wireColor: const Color(0xFF1E293B),
+                ),
+              ),
+
+              // Bateria em Card (Esquerda)
+              Positioned(
+                left: batteryX - 47.5,
+                top: 70,
+                child: const SchematicComponentCard(
+                  label: '',
+                  showLabel: false,
+                  symbolWidget: BatteryVectorWidget(size: 46),
+                ),
+              ),
+
+              // Lâmpada em Card (Direita)
+              Positioned(
+                left: lampX - 47.5,
+                top: 70,
+                child: SchematicComponentCard(
+                  label: '',
+                  showLabel: false,
+                  isActive: isLit,
+                  symbolWidget: BulbVectorWidget(
+                    size: 46,
+                    isOn: isLit,
+                  ),
+                ),
+              ),
+
+              // Soquete do Push-Button (Topo Centro) - Sem icone fantasma ao estar vazio
+              Positioned(
+                left: switchCenterX - 47.5,
+                top: 10,
+                child: SchematicBlueprintSocket<String>(
+                  expectedData: 'push_button',
+                  isFilled: _m5PushButtonInserted,
+                  showLabel: false,
+                  onAccept: (_) => setState(() => _m5PushButtonInserted = true),
+                  onTap: () {},
+                  symbolWidget: PushButtonVectorWidget(
+                    size: 46,
+                    isPressed: _m5PushButtonPressed,
+                  ),
+                  placeholderWidget: const PushButtonVectorWidget(size: 42),
+                  label: '',
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSchematicCanvasM4() {
+    final bool isLampLit = _m4SwitchInMainBranch ? _m4SwitchClosed : true;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double width = constraints.maxWidth;
+        final double batteryX = 60.0;
+        final double lampX = width - 60.0;
+        final double switchCenterX = width / 2;
+
+        return SizedBox(
+          height: 270,
+          child: Stack(
+            children: [
+              CustomPaint(
+                size: Size(width, 270),
+                painter: SchematicCircuitWirePainterM4(
+                  isClosed: isLampLit,
+                  switchInMainBranch: _m4SwitchInMainBranch,
+                  animationValue: _currentFlowController.value,
+                ),
+              ),
+
+              // Bateria Card (Esquerda - Posição Centralizada)
+              Positioned(
+                left: batteryX - 47.5,
+                top: 70,
+                child: const SchematicComponentCard(
+                  label: '',
+                  showLabel: false,
+                  symbolWidget: BatteryVectorWidget(size: 46),
+                ),
+              ),
+
+              // Lâmpada Card (Direita - Posição Centralizada)
+              Positioned(
+                left: lampX - 47.5,
+                top: 70,
+                child: SchematicComponentCard(
+                  label: '',
+                  showLabel: false,
+                  isActive: isLampLit,
+                  symbolWidget: BulbVectorWidget(
+                    size: 46,
+                    isOn: isLampLit,
+                  ),
+                ),
+              ),
+
+              // Posicionamento A: Ramo Inútil (Topo)
+              Positioned(
+                left: switchCenterX - 47.5,
+                top: 10,
+                child: SchematicBlueprintSocket<String>(
+                  expectedData: 'switch',
+                  isFilled: !_m4SwitchInMainBranch,
+                  showLabel: false,
+                  accentColor: !_m4SwitchInMainBranch ? const Color(0xFFD97706) : const Color(0xFF94A3B8),
+                  onAccept: (_) => setState(() => _m4SwitchInMainBranch = false),
+                  onTap: () => setState(() {
+                    if (!_m4SwitchInMainBranch) {
+                      _m4SwitchClosed = !_m4SwitchClosed;
+                    } else {
+                      _m4SwitchInMainBranch = false;
+                    }
+                  }),
+                  symbolWidget: PushButtonVectorWidget(
+                    size: 46,
+                    isPressed: _m4SwitchClosed,
+                  ),
+                  placeholderWidget: const PushButtonVectorWidget(size: 42),
+                  label: '',
+                ),
+              ),
+
+              // Posicionamento B: Ramo Principal em Série (Centro)
+              Positioned(
+                left: switchCenterX - 47.5,
+                top: 70,
+                child: SchematicBlueprintSocket<String>(
+                  expectedData: 'switch',
+                  isFilled: _m4SwitchInMainBranch,
+                  showLabel: false,
+                  accentColor: _m4SwitchInMainBranch ? const Color(0xFF059669) : const Color(0xFF94A3B8),
+                  onAccept: (_) => setState(() => _m4SwitchInMainBranch = true),
+                  onTap: () => setState(() {
+                    if (_m4SwitchInMainBranch) {
+                      _m4SwitchClosed = !_m4SwitchClosed;
+                    } else {
+                      _m4SwitchInMainBranch = true;
+                    }
+                  }),
+                  symbolWidget: PushButtonVectorWidget(
+                    size: 46,
+                    isPressed: _m4SwitchClosed,
+                  ),
+                  placeholderWidget: const PushButtonVectorWidget(size: 42),
                   label: '',
                 ),
               ),

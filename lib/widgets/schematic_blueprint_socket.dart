@@ -89,7 +89,7 @@ class SchematicBlueprintSocket<T extends Object> extends StatelessWidget {
                                   ),
                                 ],
                               )
-                            : opacityPlaceholder(placeholderWidget)),
+                            : const Icon(Icons.add_rounded, color: Color(0xFF94A3B8), size: 26)),
                   ),
                 ),
               ),
