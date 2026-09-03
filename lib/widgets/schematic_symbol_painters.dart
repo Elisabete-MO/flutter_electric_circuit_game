@@ -552,18 +552,18 @@ class SchematicCircuitWirePainter extends CustomPainter {
     final batteryX = 60.0;
     final lampX = size.width - 60.0;
     final switchCenterX = size.width / 2;
-    final topWireY = 42.0;
+    final topWireY = 47.5;
     final centerY = 105.0;
-    final bottomWireY = 210.0;
+    final bottomWireY = 205.0;
 
     final path = Path();
-    // 1. Do polo positivo da bateria (topo) até a entrada do switch
+    // 1. Do polo positivo da bateria (topo) até a borda esquerda do soquete do switch
     path.moveTo(batteryX, centerY);
     path.lineTo(batteryX, topWireY);
-    path.lineTo(switchCenterX - 75, topWireY);
+    path.lineTo(switchCenterX - 47.5, topWireY);
 
-    // 2. Da saída do switch até a lâmpada
-    path.moveTo(switchCenterX + 75, topWireY);
+    // 2. Da borda direita do soquete do switch até a lâmpada
+    path.moveTo(switchCenterX + 47.5, topWireY);
     path.lineTo(lampX, topWireY);
     path.lineTo(lampX, centerY);
 
@@ -576,12 +576,12 @@ class SchematicCircuitWirePainter extends CustomPainter {
     canvas.drawPath(path, glowPaint);
     canvas.drawPath(path, wirePaint);
 
-    // Bornes de conexão (glowing terminals)
+    // Bornes de conexão nos pontos exatos de encaixe do soquete
     final pinPaint = Paint()..color = isClosed ? const Color(0xFF0284C7) : const Color(0xFF64748B);
     canvas.drawCircle(Offset(batteryX, centerY), 4.5, pinPaint);
     canvas.drawCircle(Offset(lampX, centerY), 4.5, pinPaint);
-    canvas.drawCircle(Offset(switchCenterX - 75, topWireY), 4.5, pinPaint);
-    canvas.drawCircle(Offset(switchCenterX + 75, topWireY), 4.5, pinPaint);
+    canvas.drawCircle(Offset(switchCenterX - 47.5, topWireY), 4.5, pinPaint);
+    canvas.drawCircle(Offset(switchCenterX + 47.5, topWireY), 4.5, pinPaint);
 
     // Eletrons em movimento se o circuito estiver fechado
     if (isClosed) {

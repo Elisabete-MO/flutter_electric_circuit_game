@@ -1197,11 +1197,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                       _m5PushButtonInserted = true;
                     });
                   },
-                  onTap: () {
-                    setState(() {
-                      _m5PushButtonInserted = !_m5PushButtonInserted;
-                    });
-                  },
+                  onTap: () {},
                 ),
               ),
 
@@ -1480,16 +1476,14 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
 
               // 4. Socket DragTarget do Interruptor (Centralizado no Topo)
               Positioned(
-                left: switchCenterX - 110,
+                left: switchCenterX - 47.5,
                 top: 10,
                 child: SchematicBlueprintSocket<String>(
                   expectedData: 'switch',
                   isFilled: _m1SwitchInserted,
                   onAccept: (_) => setState(() => _m1SwitchInserted = true),
                   onTap: () => setState(() {
-                    if (!_m1SwitchInserted) {
-                      _m1SwitchInserted = true;
-                    } else {
+                    if (_m1SwitchInserted) {
                       _m1SwitchClosed = !_m1SwitchClosed;
                     }
                   }),
