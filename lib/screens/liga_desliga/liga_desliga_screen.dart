@@ -9,6 +9,8 @@ import '../../widgets/component_vector_painters.dart';
 import '../../widgets/glass_container.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
 import '../../widgets/prof_volts_full_body.dart';
+import '../../widgets/schematic_blueprint_socket.dart';
+import '../../widgets/schematic_symbol_painters.dart';
 import '../../widgets/tech_grid_background.dart';
 import '../../widgets/workbench_components.dart';
 
@@ -24,6 +26,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
     with TickerProviderStateMixin {
   int _currentMissionIndex = 0;
   final List<StandMission> _missions = StandMission.estande3Missions;
+  bool _isSchematicView = true; // Inicia por padrão no modo Diagrama Esquemático
 
   // --- Estado Missão 1: Interruptor da Luminária ---
   bool _m1SwitchInserted = false;
@@ -456,148 +459,197 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildMissionHeader(mission),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
 
-          // Bancada de Montagem com DragTarget
-          Expanded(
-            child: Container(
-              height: 270,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF031D17), Color(0xFF021410)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4), width: 1.2),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.5),
-                    blurRadius: 16,
+          // Seletor de Modo de Visualização (Esquemático vs. Realista)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    _isSchematicView ? Icons.schema_rounded : Icons.memory_rounded,
+                    color: _isSchematicView ? const Color(0xFF00E5FF) : const Color(0xFF10B981),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _isSchematicView ? ' MODO: DIAGRAMA ESQUEMÁTICO DIDÁTICO' : ' MODO: BANCADA REALISTA',
+                    style: GoogleFonts.rajdhani(
+                      color: _isSchematicView ? const Color(0xFF00E5FF) : const Color(0xFF10B981),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      letterSpacing: 1.1,
+                    ),
                   ),
                 ],
               ),
-                  child: Stack(
-                    children: [
-                      // 1. Fios Neons com Animação de Elétrons
-                      CustomPaint(
-                        size: Size.infinite,
-                        painter: CircuitWirePainter(
-                          isClosed: isBulbLit,
-                          animationValue: _currentFlowController.value,
-                          switchInserted: _m1SwitchInserted,
-                        ),
-                      ),
-
-                      // 2. Fonte (Bateria 4.5V DragTarget)
-                      Positioned(
-                        left: 30,
-                        top: 80,
-                        child: DragTarget<String>(
-                          onWillAcceptWithDetails: (details) => details.data == 'battery',
-                          onAcceptWithDetails: (_) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('⚡ Bateria 4.5V fixada na fonte de energia!'),
-                                duration: Duration(seconds: 1),
-                              ),
-                            );
-                          },
-                          builder: (context, candidateData, rejectedData) {
-                            final isHovering = candidateData.isNotEmpty;
-                            return AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              decoration: isHovering
-                                  ? BoxDecoration(
-                                      borderRadius: BorderRadius.circular(16),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: const Color(0xFF10B981).withValues(alpha: 0.8),
-                                          blurRadius: 16,
-                                          spreadRadius: 3,
-                                        ),
-                                      ],
-                                    )
-                                  : null,
-                              child: _buildRealisticBattery(),
-                            );
-                          },
-                        ),
-                      ),
-
-                      // 3. Slot DragTarget do Interruptor (Topo Centro)
-                      Positioned(
-                        left: 230,
-                        top: 15,
-                        child: _m1SwitchInserted
-                            ? _buildSwitchControlCard(
-                                isClosed: _m1SwitchClosed,
-                                onToggle: () {
-                                  setState(() {
-                                    _m1SwitchClosed = !_m1SwitchClosed;
-                                  });
-                                },
-                              )
-                            : DragTarget<String>(
-                                onWillAcceptWithDetails: (details) => details.data == 'switch',
-                                onAcceptWithDetails: (details) {
-                                  setState(() {
-                                    _m1SwitchInserted = true;
-                                  });
-                                },
-                                builder: (context, candidateData, rejectedData) {
-                                  final isHovering = candidateData.isNotEmpty;
-                                  return _buildInsertSwitchSlot(
-                                    isHovering: isHovering,
-                                    onTap: () {
-                                      setState(() {
-                                        _m1SwitchInserted = true;
-                                      });
-                                    },
-                                  );
-                                },
-                              ),
-                      ),
-
-                      // 4. Luminária (Direita com DragTarget)
-                      Positioned(
-                        right: 30,
-                        top: 70,
-                        child: DragTarget<String>(
-                          onWillAcceptWithDetails: (details) => details.data == 'lamp',
-                          onAcceptWithDetails: (_) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('💡 Lâmpada conectada ao soquete com sucesso!'),
-                                duration: Duration(seconds: 1),
-                              ),
-                            );
-                          },
-                          builder: (context, candidateData, rejectedData) {
-                            final isHovering = candidateData.isNotEmpty;
-                            return AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              decoration: isHovering
-                                  ? BoxDecoration(
-                                      borderRadius: BorderRadius.circular(16),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.amberAccent.withValues(alpha: 0.8),
-                                          blurRadius: 16,
-                                          spreadRadius: 3,
-                                        ),
-                                      ],
-                                    )
-                                  : null,
-                              child: _buildRealisticBulb(isLit: isBulbLit),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
+              SegmentedButton<bool>(
+                style: ButtonStyle(
+                  visualDensity: VisualDensity.compact,
+                  backgroundColor: WidgetStateProperty.resolveWith(
+                    (states) => const Color(0xFF0F172A),
                   ),
                 ),
+                segments: const [
+                  ButtonSegment<bool>(
+                    value: true,
+                    label: Text('📐 ESQUEMÁTICO'),
+                  ),
+                  ButtonSegment<bool>(
+                    value: false,
+                    label: Text('🔬 REALISTA'),
+                  ),
+                ],
+                selected: {_isSchematicView},
+                onSelectionChanged: (set) => setState(() => _isSchematicView = set.first),
               ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Bancada de Montagem (Esquemática ou Realista)
+          Expanded(
+            child: _isSchematicView
+                ? _buildSchematicCanvasM1()
+                : Container(
+                    height: 270,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF031D17), Color(0xFF021410)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4), width: 1.2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.5),
+                          blurRadius: 16,
+                        ),
+                      ],
+                    ),
+                    child: Stack(
+                      children: [
+                        // 1. Fios Neons com Animação de Elétrons
+                        CustomPaint(
+                          size: Size.infinite,
+                          painter: CircuitWirePainter(
+                            isClosed: isBulbLit,
+                            animationValue: _currentFlowController.value,
+                            switchInserted: _m1SwitchInserted,
+                          ),
+                        ),
+
+                        // 2. Fonte (Bateria 4.5V DragTarget)
+                        Positioned(
+                          left: 30,
+                          top: 80,
+                          child: DragTarget<String>(
+                            onWillAcceptWithDetails: (details) => details.data == 'battery',
+                            onAcceptWithDetails: (_) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('⚡ Bateria 4.5V fixada na fonte de energia!'),
+                                  duration: Duration(seconds: 1),
+                                ),
+                              );
+                            },
+                            builder: (context, candidateData, rejectedData) {
+                              final isHovering = candidateData.isNotEmpty;
+                              return AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                decoration: isHovering
+                                    ? BoxDecoration(
+                                        borderRadius: BorderRadius.circular(16),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: const Color(0xFF10B981).withValues(alpha: 0.8),
+                                            blurRadius: 16,
+                                            spreadRadius: 3,
+                                          ),
+                                        ],
+                                      )
+                                    : null,
+                                child: _buildRealisticBattery(),
+                              );
+                            },
+                          ),
+                        ),
+
+                        // 3. Slot DragTarget do Interruptor (Topo Centro)
+                        Positioned(
+                          left: 230,
+                          top: 15,
+                          child: _m1SwitchInserted
+                              ? _buildSwitchControlCard(
+                                  isClosed: _m1SwitchClosed,
+                                  onToggle: () {
+                                    setState(() {
+                                      _m1SwitchClosed = !_m1SwitchClosed;
+                                    });
+                                  },
+                                )
+                              : DragTarget<String>(
+                                  onWillAcceptWithDetails: (details) => details.data == 'switch',
+                                  onAcceptWithDetails: (details) {
+                                    setState(() {
+                                      _m1SwitchInserted = true;
+                                    });
+                                  },
+                                  builder: (context, candidateData, rejectedData) {
+                                    final isHovering = candidateData.isNotEmpty;
+                                    return _buildInsertSwitchSlot(
+                                      isHovering: isHovering,
+                                      onTap: () {
+                                        setState(() {
+                                          _m1SwitchInserted = true;
+                                        });
+                                      },
+                                    );
+                                  },
+                                ),
+                        ),
+
+                        // 4. Luminária (Direita com DragTarget)
+                        Positioned(
+                          right: 30,
+                          top: 70,
+                          child: DragTarget<String>(
+                            onWillAcceptWithDetails: (details) => details.data == 'lamp',
+                            onAcceptWithDetails: (_) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('💡 Lâmpada conectada ao soquete com sucesso!'),
+                                  duration: Duration(seconds: 1),
+                                ),
+                              );
+                            },
+                            builder: (context, candidateData, rejectedData) {
+                              final isHovering = candidateData.isNotEmpty;
+                              return AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                decoration: isHovering
+                                    ? BoxDecoration(
+                                        borderRadius: BorderRadius.circular(16),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.amberAccent.withValues(alpha: 0.8),
+                                            blurRadius: 16,
+                                            spreadRadius: 3,
+                                          ),
+                                        ],
+                                      )
+                                    : null,
+                                child: _buildRealisticBulb(isLit: isBulbLit),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+          ),
 
           const SizedBox(height: 20),
 
@@ -1572,6 +1624,111 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
     );
   }
 
+  Widget _buildSchematicCanvasM1() {
+    final bool isBulbLit = _m1SwitchInserted && _m1SwitchClosed;
+
+    return Container(
+      height: 270,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF031822),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFF00E5FF).withValues(alpha: 0.5), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF00E5FF).withValues(alpha: 0.15),
+            blurRadius: 16,
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // 1. Fios de Trançado Esquemático com Elétrons Cyan Animados
+          CustomPaint(
+            size: Size.infinite,
+            painter: SchematicCircuitWirePainter(
+              isClosed: isBulbLit,
+              animationValue: _currentFlowController.value,
+              switchInserted: _m1SwitchInserted,
+            ),
+          ),
+
+          // 2. Símbolo da Fonte (Bateria Esquemática na Esquerda)
+          const Positioned(
+            left: 30,
+            top: 70,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SchematicBatteryWidget(size: 60, color: Color(0xFF00E5FF)),
+                SizedBox(height: 4),
+                Text(
+                  'FONTE 4.5V',
+                  style: TextStyle(color: Color(0xFF00E5FF), fontSize: 10, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ),
+
+          // 3. Símbolo da Lâmpada Esquemática na Direita
+          Positioned(
+            right: 30,
+            top: 70,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SchematicLampWidget(
+                  size: 60,
+                  color: isBulbLit ? Colors.amberAccent : const Color(0xFF00E5FF),
+                  isOn: isBulbLit,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'LÂMPADA',
+                  style: TextStyle(
+                    color: isBulbLit ? Colors.amberAccent : const Color(0xFF00E5FF),
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // 4. Socket DragTarget do Interruptor Esquemático no Topo
+          Positioned(
+            left: 175,
+            top: 10,
+            child: SchematicBlueprintSocket<String>(
+              expectedData: 'switch',
+              isFilled: _m1SwitchInserted,
+              onAccept: (_) => setState(() => _m1SwitchInserted = true),
+              onTap: () => setState(() {
+                if (!_m1SwitchInserted) {
+                  _m1SwitchInserted = true;
+                } else {
+                  _m1SwitchClosed = !_m1SwitchClosed;
+                }
+              }),
+              symbolWidget: SchematicSwitchWidget(
+                size: 56,
+                color: _m1SwitchClosed ? const Color(0xFF10B981) : Colors.amber,
+                isClosed: _m1SwitchClosed,
+              ),
+              placeholderWidget: const SchematicSwitchWidget(
+                size: 48,
+                color: Colors.white38,
+                isClosed: false,
+              ),
+              label: _m1SwitchInserted
+                  ? (_m1SwitchClosed ? 'INTERRUPTOR (FECHADO)' : 'INTERRUPTOR (ABERTO)')
+                  : 'SOLTE A CHAVE ESQUEMÁTICA',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// Custom Painter com Tracados Neon e Fluxo de Elétrons Animados
@@ -1637,6 +1794,75 @@ class CircuitWirePainter extends CustomPainter {
           final tangent = metric.getTangentForOffset(distance);
           if (tangent != null) {
             canvas.drawCircle(tangent.position, 3.5, electronPaint);
+          }
+        }
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+/// Custom Painter Esquemático com Trançado Blueprint Cyan
+class SchematicCircuitWirePainter extends CustomPainter {
+  final bool isClosed;
+  final double animationValue;
+  final bool switchInserted;
+
+  SchematicCircuitWirePainter({
+    required this.isClosed,
+    required this.animationValue,
+    required this.switchInserted,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cyanColor = isClosed ? const Color(0xFF00E5FF) : const Color(0xFF0284C7);
+
+    final wirePaint = Paint()
+      ..color = cyanColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5
+      ..strokeCap = StrokeCap.round;
+
+    final glowPaint = Paint()
+      ..color = cyanColor.withValues(alpha: isClosed ? 0.6 : 0.0)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 6.0
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+
+    final path = Path();
+    path.moveTo(60, 100);
+    path.lineTo(60, 45);
+    path.lineTo(175, 45);
+
+    path.moveTo(265, 45);
+    path.lineTo(370, 45);
+    path.lineTo(370, 100);
+
+    path.moveTo(60, 100);
+    path.lineTo(60, 180);
+    path.lineTo(370, 180);
+    path.lineTo(370, 100);
+
+    canvas.drawPath(path, glowPaint);
+    canvas.drawPath(path, wirePaint);
+
+    if (isClosed) {
+      final electronPaint = Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.fill;
+
+      const totalDots = 12;
+      final metrics = path.computeMetrics();
+      for (final metric in metrics) {
+        final length = metric.length;
+        for (int i = 0; i < totalDots; i++) {
+          final distance = ((animationValue + (i / totalDots)) % 1.0) * length;
+          final tangent = metric.getTangentForOffset(distance);
+          if (tangent != null) {
+            canvas.drawCircle(tangent.position, 3.0, electronPaint);
           }
         }
       }
