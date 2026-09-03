@@ -1414,8 +1414,8 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
     return LayoutBuilder(
       builder: (context, constraints) {
         final double width = constraints.maxWidth;
-        final double batteryX = 75.0;
-        final double lampX = width - 75.0;
+        final double batteryX = 60.0;
+        final double lampX = width - 60.0;
         final double switchCenterX = width / 2;
 
         return SizedBox(
@@ -1433,22 +1433,24 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                 ),
               ),
 
-              // 2. Card da Fonte (Bateria na Esquerda)
+              // 2. Card da Fonte (Bateria na Esquerda - Posição Centralizada)
               Positioned(
                 left: batteryX - 47.5,
-                top: 10,
+                top: 70,
                 child: const SchematicComponentCard(
-                  label: 'FONTE 4.5V',
+                  label: '',
+                  showLabel: false,
                   symbolWidget: BatteryVectorWidget(size: 46),
                 ),
               ),
 
-              // 3. Card da Lâmpada (Na Direita)
+              // 3. Card da Lâmpada (Na Direita - Posição Centralizada)
               Positioned(
                 left: lampX - 47.5,
-                top: 10,
+                top: 70,
                 child: SchematicComponentCard(
-                  label: 'LÂMPADA',
+                  label: '',
+                  showLabel: false,
                   isActive: isBulbLit,
                   symbolWidget: BulbVectorWidget(
                     size: 46,
@@ -1464,6 +1466,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                 child: SchematicBlueprintSocket<String>(
                   expectedData: 'switch',
                   isFilled: _m1SwitchInserted,
+                  showLabel: false,
                   onAccept: (_) => setState(() => _m1SwitchInserted = true),
                   onTap: () => setState(() {
                     if (_m1SwitchInserted) {
@@ -1477,9 +1480,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                   placeholderWidget: const PushButtonVectorWidget(
                     size: 42,
                   ),
-                  label: _m1SwitchInserted
-                      ? (_m1SwitchClosed ? 'INTERRUPTOR (FECHADO)' : 'INTERRUPTOR (ABERTO)')
-                      : 'SOLTE A CHAVE ESQUEMÁTICA',
+                  label: '',
                 ),
               ),
             ],

@@ -12,6 +12,7 @@ class SchematicBlueprintSocket<T extends Object> extends StatelessWidget {
   final Widget placeholderWidget;
   final String label;
   final Color accentColor;
+  final bool showLabel;
 
   const SchematicBlueprintSocket({
     super.key,
@@ -23,6 +24,7 @@ class SchematicBlueprintSocket<T extends Object> extends StatelessWidget {
     required this.placeholderWidget,
     required this.label,
     this.accentColor = const Color(0xFF00E5FF),
+    this.showLabel = true,
   });
 
   @override
@@ -91,15 +93,17 @@ class SchematicBlueprintSocket<T extends Object> extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 5),
-              Text(
-                label,
-                style: GoogleFonts.rajdhani(
-                  color: isFilled ? const Color(0xFF059669) : const Color(0xFF334155),
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+              if (showLabel && label.isNotEmpty) ...[
+                const SizedBox(height: 5),
+                Text(
+                  label,
+                  style: GoogleFonts.rajdhani(
+                    color: isFilled ? const Color(0xFF059669) : const Color(0xFF334155),
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         );
@@ -121,6 +125,7 @@ class SchematicComponentCard extends StatelessWidget {
   final String label;
   final bool isActive;
   final Color accentColor;
+  final bool showLabel;
 
   const SchematicComponentCard({
     super.key,
@@ -128,6 +133,7 @@ class SchematicComponentCard extends StatelessWidget {
     required this.label,
     this.isActive = false,
     this.accentColor = const Color(0xFF0284C7),
+    this.showLabel = true,
   });
 
   @override
@@ -159,15 +165,17 @@ class SchematicComponentCard extends StatelessWidget {
             child: symbolWidget,
           ),
         ),
-        const SizedBox(height: 5),
-        Text(
-          label,
-          style: GoogleFonts.rajdhani(
-            color: isActive ? const Color(0xFF059669) : const Color(0xFF334155),
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
+        if (showLabel && label.isNotEmpty) ...[
+          const SizedBox(height: 5),
+          Text(
+            label,
+            style: GoogleFonts.rajdhani(
+              color: isActive ? const Color(0xFF059669) : const Color(0xFF334155),
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-        ),
+        ],
       ],
     );
   }
