@@ -238,22 +238,21 @@ class ComponentPhysicalPainter extends CustomPainter {
     canvas.drawRect(Rect.fromLTWH(cx - 15, holderTop + holderHeight - 2, 6, 2), metallicPaint);
     canvas.drawRect(Rect.fromLTWH(cx + 9, holderTop + holderHeight - 2, 6, 2), metallicPaint);
 
-    // 5. Cabos Elétricos de Saída no Topo (Vermelho + e Preto -)
-    final wireY = holderTop;
+    // 5. Cabos Elétricos de Saída (Vermelho + para a esquerda, Azul - para a direita)
     canvas.drawLine(
-      Offset(cx - 6, wireY),
+      Offset(holderLeft, cy),
       Offset(0, cy),
       Paint()
         ..color = const Color(0xFFEF4444)
-        ..strokeWidth = 2.5
+        ..strokeWidth = 3.2
         ..strokeCap = StrokeCap.round,
     );
     canvas.drawLine(
-      Offset(cx + 6, wireY),
+      Offset(holderLeft + holderWidth, cy),
       Offset(size.width, cy),
       Paint()
-        ..color = const Color(0xFF18181B)
-        ..strokeWidth = 2.5
+        ..color = const Color(0xFF2563EB)
+        ..strokeWidth = 3.2
         ..strokeCap = StrokeCap.round,
     );
 
