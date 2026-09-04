@@ -13,6 +13,7 @@ class ComponentPhysicalPainter extends CustomPainter {
     required this.isDarkMode,
     this.value = 10.0,
     this.animationValue = 0.0,
+    this.wireKind = 'series',
   });
 
   final ComponentType type;
@@ -21,6 +22,7 @@ class ComponentPhysicalPainter extends CustomPainter {
   final bool isDarkMode;
   final double value;
   final double animationValue;
+  final String wireKind;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -324,94 +326,183 @@ class ComponentPhysicalPainter extends CustomPainter {
   }
 
   void _drawPhysicalWire(Canvas canvas, Size size, double cx, double cy) {
-    // 1. Sombra de apoio sob o conjunto de jumpers em arco
+    if (wireKind == 'junction') {
+      _drawPhysicalJunctionNode(canvas, size, cx, cy);
+    } else if (wireKind == 'parallel') {
+      _drawPhysicalParallelWire(canvas, size, cx, cy);
+    } else {
+      _drawPhysicalSeriesWire(canvas, size, cx, cy);
+    }
+  }
+
+  /// 1. Fio Condutor em Série 3D (Silicone com conectores metálicos nas extremidades)
+  void _drawPhysicalSeriesWire(Canvas canvas, Size size, double cx, double cy) {
+    final leftX = 0.0;
+    final rightX = size.width;
+
+    // Sombra do fio no plano de bancada
     final shadowPaint = Paint()
-      ..color = Colors.black.withValues(alpha: isDarkMode ? 0.35 : 0.18)
+      ..color = Colors.black.withValues(alpha: isDarkMode ? 0.35 : 0.22)
+      ..strokeWidth = 6.5
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 6.0
       ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0);
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
+    canvas.drawLine(Offset(leftX + 4, cy + 2.5), Offset(rightX - 4, cy + 2.5), shadowPaint);
 
-    // 5 Fios em arco estilo jumpers de protoboard (Preto, Vermelho, Amarelo, Verde, Azul)
-    final wireData = [
-      {'color': const Color(0xFF263238), 'highlight': const Color(0xFF78909C), 'topY': cy - size.height * 0.28, 'w': size.width * 0.74},
-      {'color': const Color(0xFFE53935), 'highlight': const Color(0xFFFF8A80), 'topY': cy - size.height * 0.16, 'w': size.width * 0.64},
-      {'color': const Color(0xFFFBC02D), 'highlight': const Color(0xFFFFE082), 'topY': cy - size.height * 0.04, 'w': size.width * 0.54},
-      {'color': const Color(0xFF00897B), 'highlight': const Color(0xFF80CBC4), 'topY': cy + size.height * 0.08, 'w': size.width * 0.44},
-      {'color': const Color(0xFF1E88E5), 'highlight': const Color(0xFF90CAF9), 'topY': cy + size.height * 0.20, 'w': size.width * 0.34},
-    ];
+    // Corpo do Fio em Silicone Azul Industrial
+    final wirePaint = Paint()
+      ..shader = LinearGradient(
+        colors: const [Color(0xFF38BDF8), Color(0xFF0284C7), Color(0xFF0369A1)],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ).createShader(Rect.fromLTWH(0, cy - 3, size.width, 6))
+      ..strokeWidth = 5.2
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(Offset(leftX + 2, cy), Offset(rightX - 2, cy), wirePaint);
 
-    const dropY = 16.0;
-    const shoulderX = 14.0;
+    // Brilho Especular no Topo do Fio
+    final highlightPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.65)
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(Offset(leftX + 4, cy - 1.4), Offset(rightX - 4, cy - 1.4), highlightPaint);
 
-    // A) Desenho da Sombra
-    for (final item in wireData) {
-      final topY = (item['topY'] as double) + 3.0;
-      final w = item['w'] as double;
-      final leftX = cx - w / 2;
-      final rightX = cx + w / 2;
+    // Terminais Metálicos Cilíndricos 3D (Pin Headers) nas duas extremidades
+    _drawJumperHeaderPin(canvas, Offset(leftX + 6, cy), 0);
+    _drawJumperHeaderPin(canvas, Offset(rightX - 6, cy), math.pi);
+  }
 
-      final path = Path()
-        ..moveTo(leftX - 6, topY + dropY)
-        ..lineTo(leftX + shoulderX, topY)
-        ..lineTo(rightX - shoulderX, topY)
-        ..lineTo(rightX + 6, topY + dropY);
+  /// 2. Nó de Junção / Bifurcação 3D (Bloco Conector T com 3 saídas e indicador)
+  void _drawPhysicalJunctionNode(Canvas canvas, Size size, double cx, double cy) {
+    // Fio Horizontal Passante
+    _drawPhysicalSeriesWire(canvas, size, cx, cy);
 
-      canvas.drawPath(path, shadowPaint);
-    }
+    // Haste Vertical para a Terceira Conexão (Nó T)
+    final verticalStemY = cy + 18.0;
 
-    // B) Desenho dos Fios e Terminais
-    for (final item in wireData) {
-      final color = item['color'] as Color;
-      final highlight = item['highlight'] as Color;
-      final topY = item['topY'] as double;
-      final w = item['w'] as double;
+    final stemShadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.25)
+      ..strokeWidth = 6.0
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
+    canvas.drawLine(Offset(cx + 2, cy), Offset(cx + 2, verticalStemY), stemShadowPaint);
 
-      final leftX = cx - w / 2;
-      final rightX = cx + w / 2;
-      final leftEnd = Offset(leftX - 6, topY + dropY);
-      final rightEnd = Offset(rightX + 6, topY + dropY);
-      final leftShoulder = Offset(leftX + shoulderX, topY);
-      final rightShoulder = Offset(rightX - shoulderX, topY);
+    final stemPaint = Paint()
+      ..shader = const LinearGradient(
+        colors: [Color(0xFFA855F7), Color(0xFF7E22CE), Color(0xFF581C87)],
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+      ).createShader(Rect.fromLTWH(cx - 3, cy, 6, 18))
+      ..strokeWidth = 5.0
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(Offset(cx, cy), Offset(cx, verticalStemY), stemPaint);
 
-      final wirePath = Path()
-        ..moveTo(leftEnd.dx, leftEnd.dy)
-        ..lineTo(leftShoulder.dx, leftShoulder.dy)
-        ..lineTo(rightShoulder.dx, rightShoulder.dy)
-        ..lineTo(rightEnd.dx, rightEnd.dy);
+    // Bloco de Junção Central (Módulo Plástico Selado de Conexão T)
+    final blockRect = Rect.fromCenter(center: Offset(cx, cy), width: 28, height: 20);
+    final blockRRect = RRect.fromRectAndRadius(blockRect, const Radius.circular(5.0));
 
-      // Traçado do fio de silicone
-      final wirePaint = Paint()
-        ..color = color
+    // Sombra do Bloco
+    canvas.drawRRect(
+      blockRRect.shift(const Offset(2.0, 3.0)),
+      Paint()..color = Colors.black.withValues(alpha: 0.35)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0),
+    );
+
+    // Corpo Escuro do Conector T
+    final blockPaint = Paint()
+      ..shader = const LinearGradient(
+        colors: [Color(0xFF334155), Color(0xFF1E293B), Color(0xFF0F172A)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ).createShader(blockRect);
+    canvas.drawRRect(blockRRect, blockPaint);
+
+    canvas.drawRRect(
+      blockRRect,
+      Paint()
+        ..color = const Color(0xFFA855F7).withValues(alpha: 0.6)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 4.2
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round;
+        ..strokeWidth = 1.2,
+    );
 
-      canvas.drawPath(wirePath, wirePaint);
+    // Ponto Dourado/Cobre do Nó Elétrico no Centro
+    final nodeDotCenter = Offset(cx, cy);
+    final nodeShader = const RadialGradient(
+      colors: [Color(0xFFFDE047), Color(0xFFCA8A04), Color(0xFF854D0E)],
+    ).createShader(Rect.fromCircle(center: nodeDotCenter, radius: 4.5));
 
-      // Brilho especular no topo do arco
-      final highlightPaint = Paint()
-        ..color = highlight.withValues(alpha: 0.7)
+    canvas.drawCircle(nodeDotCenter, 4.5, Paint()..shader = nodeShader);
+    canvas.drawCircle(nodeDotCenter, 1.5, Paint()..color = Colors.white);
+
+    // Terminal na ponta vertical
+    _drawJumperHeaderPin(canvas, Offset(cx, verticalStemY), math.pi / 2);
+  }
+
+  /// 3. Fiação Paralela 3D (Cabo Par Paralelo / Fio Duplo Vermelho e Azul)
+  void _drawPhysicalParallelWire(Canvas canvas, Size size, double cx, double cy) {
+    final leftX = 0.0;
+    final rightX = size.width;
+
+    final dy = 7.0;
+    final topWireY = cy - dy;
+    final bottomWireY = cy + dy;
+
+    // Sombra dos dois fios
+    final shadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: isDarkMode ? 0.35 : 0.20)
+      ..strokeWidth = 5.0
+      ..strokeCap = StrokeCap.round
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
+    canvas.drawLine(Offset(leftX + 4, topWireY + 2), Offset(rightX - 4, topWireY + 2), shadowPaint);
+    canvas.drawLine(Offset(leftX + 4, bottomWireY + 2), Offset(rightX - 4, bottomWireY + 2), shadowPaint);
+
+    // Fio Superior (Vermelho +)
+    final redWirePaint = Paint()
+      ..shader = const LinearGradient(
+        colors: [Color(0xFFF87171), Color(0xFFDC2626), Color(0xFF991B1B)],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ).createShader(Rect.fromLTWH(0, topWireY - 2, size.width, 4))
+      ..strokeWidth = 4.2
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(Offset(leftX + 2, topWireY), Offset(rightX - 2, topWireY), redWirePaint);
+
+    // Fio Inferior (Azul -)
+    final blueWirePaint = Paint()
+      ..shader = const LinearGradient(
+        colors: [Color(0xFF60A5FA), Color(0xFF2563EB), Color(0xFF1D4ED8)],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ).createShader(Rect.fromLTWH(0, bottomWireY - 2, size.width, 4))
+      ..strokeWidth = 4.2
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(Offset(leftX + 2, bottomWireY), Offset(rightX - 2, bottomWireY), blueWirePaint);
+
+    // Destaques especulares
+    final highlightPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.60)
+      ..strokeWidth = 1.2
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(Offset(leftX + 4, topWireY - 1.2), Offset(rightX - 4, topWireY - 1.2), highlightPaint);
+    canvas.drawLine(Offset(leftX + 4, bottomWireY - 1.2), Offset(rightX - 4, bottomWireY - 1.2), highlightPaint);
+
+    // Braçadeira / Junta isolante preta unindo o par de fios no centro
+    final bandRect = Rect.fromCenter(center: Offset(cx, cy), width: 10, height: 22);
+    final bandRRect = RRect.fromRectAndRadius(bandRect, const Radius.circular(2.5));
+    canvas.drawRRect(bandRRect, Paint()..color = const Color(0xFF18181B));
+    canvas.drawRRect(
+      bandRRect,
+      Paint()
+        ..color = const Color(0xFF52525B)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.2
-        ..strokeCap = StrokeCap.round;
+        ..strokeWidth = 0.8,
+    );
 
-      canvas.drawLine(
-        Offset(leftShoulder.dx + 2, topY - 0.8),
-        Offset(rightShoulder.dx - 2, topY - 0.8),
-        highlightPaint,
-      );
-
-      // Ângulos reais dos segmentos das pontas dos fios
-      final leftAngle = math.atan2(leftEnd.dy - leftShoulder.dy, leftEnd.dx - leftShoulder.dx);
-      final rightAngle = math.atan2(rightEnd.dy - rightShoulder.dy, rightEnd.dx - rightShoulder.dx);
-
-      // Conectores / Terminais pretos cilíndricos alinhados perfeitamente com os fios
-      _drawJumperHeaderPin(canvas, leftEnd, leftAngle);
-      _drawJumperHeaderPin(canvas, rightEnd, rightAngle);
-    }
+    // Terminais Duplos
+    _drawJumperHeaderPin(canvas, Offset(leftX + 5, topWireY), 0);
+    _drawJumperHeaderPin(canvas, Offset(rightX - 5, topWireY), math.pi);
+    _drawJumperHeaderPin(canvas, Offset(leftX + 5, bottomWireY), 0);
+    _drawJumperHeaderPin(canvas, Offset(rightX - 5, bottomWireY), math.pi);
   }
 
   void _drawJumperHeaderPin(Canvas canvas, Offset pos, double angle) {
@@ -1396,6 +1487,7 @@ class ComponentPhysicalPainter extends CustomPainter {
         oldDelegate.isBurned != isBurned ||
         oldDelegate.isDarkMode != isDarkMode ||
         oldDelegate.value != value ||
-        oldDelegate.animationValue != animationValue;
+        oldDelegate.animationValue != animationValue ||
+        oldDelegate.wireKind != wireKind;
   }
 }

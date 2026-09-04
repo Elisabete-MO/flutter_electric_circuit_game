@@ -739,6 +739,9 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
                 painter: ComponentPhysicalPainter(
                   type: symbolType,
                   isDarkMode: false,
+                  wireKind: expectedData == 'junction_node'
+                      ? 'junction'
+                      : (expectedData == 'fio_paralelo' ? 'parallel' : 'series'),
                 ),
               ))
         : CustomPaint(
@@ -746,6 +749,8 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
             painter: CircuitSymbolPainter(
               type: symbolType,
               isActive: isFilled,
+              isJunction: expectedData == 'junction_node',
+              isParallel: expectedData == 'fio_paralelo',
               color: const Color(0xFF0F172A),
               strokeWidth: 2.5,
             ),
@@ -766,12 +771,17 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
                 painter: ComponentPhysicalPainter(
                   type: symbolType,
                   isDarkMode: false,
+                  wireKind: expectedData == 'junction_node'
+                      ? 'junction'
+                      : (expectedData == 'fio_paralelo' ? 'parallel' : 'series'),
                 ),
               ))
         : CustomPaint(
             size: Size(width - 25, height - 25),
             painter: CircuitSymbolPainter(
               type: symbolType,
+              isJunction: expectedData == 'junction_node',
+              isParallel: expectedData == 'fio_paralelo',
               color: const Color(0xFF94A3B8),
               strokeWidth: 2.0,
             ),
@@ -1442,6 +1452,7 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
                       size: const Size(34, 34),
                       painter: ComponentPhysicalPainter(
                         type: ComponentType.connectingWire,
+                        wireKind: 'series',
                         isDarkMode: false,
                       ),
                     )
@@ -1449,6 +1460,8 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
                       size: const Size(34, 34),
                       painter: CircuitSymbolPainter(
                         type: ComponentType.connectingWire,
+                        isJunction: false,
+                        isParallel: false,
                         color: const Color(0xFF0F172A),
                         strokeWidth: 2.0,
                       ),
@@ -1465,6 +1478,7 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
                       size: const Size(34, 34),
                       painter: ComponentPhysicalPainter(
                         type: ComponentType.connectingWire,
+                        wireKind: 'junction',
                         isDarkMode: false,
                       ),
                     )
@@ -1472,6 +1486,8 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
                       size: const Size(34, 34),
                       painter: CircuitSymbolPainter(
                         type: ComponentType.connectingWire,
+                        isJunction: true,
+                        isParallel: false,
                         color: const Color(0xFF8B5CF6),
                         strokeWidth: 2.0,
                       ),
@@ -1488,6 +1504,7 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
                       size: const Size(34, 34),
                       painter: ComponentPhysicalPainter(
                         type: ComponentType.connectingWire,
+                        wireKind: 'parallel',
                         isDarkMode: false,
                       ),
                     )
@@ -1495,6 +1512,8 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
                       size: const Size(34, 34),
                       painter: CircuitSymbolPainter(
                         type: ComponentType.connectingWire,
+                        isJunction: false,
+                        isParallel: true,
                         color: const Color(0xFFEC4899),
                         strokeWidth: 2.0,
                       ),

@@ -16,6 +16,8 @@ class CircuitSymbolPainter extends CustomPainter {
     this.isVertical = false,
     this.value = 10.0,
     this.animationValue = 0.0,
+    this.isJunction = false,
+    this.isParallel = false,
   });
 
   final ComponentType type;
@@ -27,6 +29,8 @@ class CircuitSymbolPainter extends CustomPainter {
   final bool isVertical;
   final double value;
   final double animationValue;
+  final bool isJunction;
+  final bool isParallel;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -140,15 +144,25 @@ class CircuitSymbolPainter extends CustomPainter {
     final leftX = 0.0;
     final rightX = size.width;
 
-    // Linha horizontal principal centralizada na altura cy (alinhada com os terminais dos soquetes)
-    canvas.drawLine(Offset(leftX, cy), Offset(rightX, cy), paint);
-    // Haste vertical de junção de nó
-    canvas.drawLine(Offset(cx, cy), Offset(cx, size.height * 0.85), paint);
+    if (isParallel) {
+      // Duas linhas paralelas para a fiação em paralelo
+      final dy = 5.0;
+      canvas.drawLine(Offset(leftX, cy - dy), Offset(rightX, cy - dy), paint);
+      canvas.drawLine(Offset(leftX, cy + dy), Offset(rightX, cy + dy), paint);
+    } else {
+      // Linha horizontal principal centralizada na altura cy (alinhada com os terminais dos soquetes)
+      canvas.drawLine(Offset(leftX, cy), Offset(rightX, cy), paint);
 
-    final dotPaint = Paint()
-      ..color = paint.color
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset(cx, cy), strokeWidth * 1.5, dotPaint);
+      if (isJunction) {
+        // Haste vertical de junção de nó apenas se for um nó/bifurcação
+        canvas.drawLine(Offset(cx, cy), Offset(cx, size.height * 0.85), paint);
+
+        final dotPaint = Paint()
+          ..color = paint.color
+          ..style = PaintingStyle.fill;
+        canvas.drawCircle(Offset(cx, cy), strokeWidth * 1.5, dotPaint);
+      }
+    }
   }
 
   void _drawSwitch(Canvas canvas, Size size, double cx, double cy, Paint paint) {
@@ -430,6 +444,8 @@ class CircuitSymbolPainter extends CustomPainter {
         oldDelegate.activeColor != activeColor ||
         oldDelegate.strokeWidth != strokeWidth ||
         oldDelegate.value != value ||
-        oldDelegate.animationValue != animationValue;
+        oldDelegate.animationValue != animationValue ||
+        oldDelegate.isJunction != isJunction ||
+        oldDelegate.isParallel != isParallel;
   }
 }
