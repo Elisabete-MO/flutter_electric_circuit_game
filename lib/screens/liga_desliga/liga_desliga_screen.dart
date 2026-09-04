@@ -1452,7 +1452,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
             terminalIndexA: 1,
             compB: ComponentPlacement(position: batteryPos, rotation: _m1BatteryRotation, type: ComponentType.battery),
             terminalIndexB: 0,
-            color: const Color(0xFF1E293B),
+            color: const Color(0xFF2563EB),
             isActive: isClosed,
             thickness: 4.5,
           ).toWirePath(intermediatePoints: [
@@ -1657,7 +1657,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
           terminalIndexA: 1,
           compB: ComponentPlacement(position: posABat, rotation: 0, type: ComponentType.battery),
           terminalIndexB: 0,
-          color: const Color(0xFF1E293B),
+          color: const Color(0xFF2563EB),
           isActive: _m2SwitchAClosed,
           thickness: 4.0,
         ).toWirePath(intermediatePoints: [Offset(width * 0.27, 100.0)]));
@@ -1688,7 +1688,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
           terminalIndexA: 1,
           compB: ComponentPlacement(position: posBBat, rotation: 0, type: ComponentType.battery),
           terminalIndexB: 0,
-          color: const Color(0xFF1E293B),
+          color: const Color(0xFF2563EB),
           isActive: _m2SwitchBClosed,
           thickness: 4.0,
         ).toWirePath(intermediatePoints: [Offset(width * 0.73, 100.0)]));
@@ -1853,7 +1853,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
             terminalIndexA: 1,
             compB: ComponentPlacement(position: batteryPos, rotation: _m3BatteryRotation, type: ComponentType.battery),
             terminalIndexB: 0,
-            color: const Color(0xFF1E293B),
+            color: const Color(0xFF2563EB),
             isActive: _m3Switch1Closed || _m3Switch2Closed,
             thickness: 4.0,
           ).toWirePath(intermediatePoints: [
@@ -2186,7 +2186,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
             terminalIndexA: 1,
             compB: ComponentPlacement(position: batteryPos, rotation: _m4BatteryRotation, type: ComponentType.battery),
             terminalIndexB: 0,
-            color: const Color(0xFF1E293B),
+            color: const Color(0xFF2563EB),
             isActive: isLampLit,
             thickness: 4.0,
           ).toWirePath(intermediatePoints: [
@@ -2470,7 +2470,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
             terminalIndexA: 1,
             compB: ComponentPlacement(position: batteryPos, rotation: _m5BatteryRotation, type: ComponentType.battery),
             terminalIndexB: 0,
-            color: const Color(0xFF1E293B),
+            color: const Color(0xFF2563EB),
             isActive: isLit,
             thickness: 4.5,
           ).toWirePath(intermediatePoints: [
