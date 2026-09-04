@@ -1422,11 +1422,11 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         if (_m1BatteryInserted && _m1SwitchInserted) {
           final batTermA = ComponentPlacement(position: batteryPos, rotation: _m1BatteryRotation, type: ComponentType.battery).getTerminalPosition(0);
           final switchTermA = ComponentPlacement(position: switchPos, rotation: _m1SwitchRotation, type: ComponentType.switchComponent).getTerminalPosition(0);
-          final leftX = batteryPos.dx - 55.0;
-          final leftOfSwitch = switchPos.dx - 55.0;
-          final bottomY = centerY + 65.0;
+          final leftX = batteryPos.dx - 70.0;
+          final leftOfSwitch = switchPos.dx - 70.0;
+          final bottomY = centerY + 70.0;
 
-          // VCC: Bateria(+) -> Switch(A) (contornando por fora pela esquerda do soquete da chave)
+          // VCC: Bateria(+) -> Switch(A) (contornando bem por fora dos soquetes)
           final intermediate = (_m1BatteryRotation % 360 == 270.0)
               ? [
                   Offset(leftX, batTermA.dy),
@@ -1450,12 +1450,10 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         if (_m1SwitchInserted && _m1BulbInserted) {
           final switchTermB = ComponentPlacement(position: switchPos, rotation: _m1SwitchRotation, type: ComponentType.switchComponent).getTerminalPosition(1);
           final lampTermA = ComponentPlacement(position: lampPos, rotation: _m1BulbRotation, type: ComponentType.bulb).getTerminalPosition(0);
-          final rightOfSwitch = switchPos.dx + 55.0;
 
-          // Switch(B) -> Bulb(A) (contornando a direita da chave e entrando horizontalmente no pino da lâmpada)
+          // Switch(B) -> Bulb(A) (linha reta horizontal contínua até a lâmpada, descendo direto no pino)
           final intermediateOrange = [
-            Offset(rightOfSwitch, switchTermB.dy),
-            Offset(rightOfSwitch, lampTermA.dy),
+            Offset(lampTermA.dx, switchTermB.dy),
           ];
 
           wires.add(DynamicWirePath.fromComponents(
@@ -1472,12 +1470,12 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         if (_m1BulbInserted && _m1BatteryInserted) {
           final bulbTermB = ComponentPlacement(position: lampPos, rotation: _m1BulbRotation, type: ComponentType.bulb).getTerminalPosition(1);
           final batTermB = ComponentPlacement(position: batteryPos, rotation: _m1BatteryRotation, type: ComponentType.battery).getTerminalPosition(1);
-          final rightX = lampPos.dx + 55.0;
-          final leftX = batteryPos.dx - 55.0;
-          final topY = centerY - 65.0;
-          final bottomY = centerY + 65.0;
+          final rightX = lampPos.dx + 70.0;
+          final leftX = batteryPos.dx - 70.0;
+          final topY = centerY - 70.0;
+          final bottomY = centerY + 70.0;
 
-          // Bulb(B) -> Bateria(-) (retorno contornando a lâmpada pela direita e topo)
+          // Bulb(B) -> Bateria(-) (retorno contornando a lâmpada e bateria bem por fora)
           final intermediate = (_m1BatteryRotation % 360 == 270.0)
               ? [
                   Offset(rightX, bulbTermB.dy),
@@ -2239,10 +2237,10 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
 
           final lampTerm = ComponentPlacement(position: lampPos, rotation: _m4LampRotation, type: ComponentType.bulb).getTerminalPosition(1);
           final batTerm = ComponentPlacement(position: batteryPos, rotation: _m4BatteryRotation, type: ComponentType.battery).getTerminalPosition(1);
-          final rightX = lampPos.dx + 55.0;
-          final leftX = batteryPos.dx - 55.0;
-          final topY = centerY - 65.0;
-          final bottomY = centerY + 65.0;
+          final rightX = lampPos.dx + 70.0;
+          final leftX = batteryPos.dx - 70.0;
+          final topY = centerY - 70.0;
+          final bottomY = centerY + 70.0;
 
           final intermediateReturn = (_m4BatteryRotation % 360 == 270.0)
               ? [
@@ -2540,10 +2538,10 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         if (_m5LampInserted && _m5BatteryInserted) {
           final lampTerm = ComponentPlacement(position: lampPos, rotation: _m5LampRotation, type: ComponentType.bulb).getTerminalPosition(1);
           final batTerm = ComponentPlacement(position: batteryPos, rotation: _m5BatteryRotation, type: ComponentType.battery).getTerminalPosition(1);
-          final rightX = lampPos.dx + 55.0;
-          final leftX = batteryPos.dx - 55.0;
-          final topY = centerY - 65.0;
-          final bottomY = centerY + 65.0;
+          final rightX = lampPos.dx + 70.0;
+          final leftX = batteryPos.dx - 70.0;
+          final topY = centerY - 70.0;
+          final bottomY = centerY + 70.0;
 
           final intermediateReturn = (_m5BatteryRotation % 360 == 270.0)
               ? [

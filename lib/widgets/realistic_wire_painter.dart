@@ -10,11 +10,13 @@ class RealisticWirePainter extends CustomPainter {
   final List<WirePath> wires;
   final double animationValue;
   final bool showElectrons;
+  final bool showTerminalSpots;
 
   RealisticWirePainter({
     required this.wires,
     this.animationValue = 0.0,
     this.showElectrons = true,
+    this.showTerminalSpots = false,
   });
 
   @override
@@ -57,7 +59,9 @@ class RealisticWirePainter extends CustomPainter {
     canvas.drawPath(path.shift(const Offset(0, -1.2)), specularPaint);
 
     // 4. Bornes/pontos de solda em cobre metálico
-    _drawTerminalSpots(canvas, wire);
+    if (showTerminalSpots) {
+      _drawTerminalSpots(canvas, wire);
+    }
 
     // 5. Elétrons animados amarelos com brilho (glow)
     if (isActive && showElectrons) {
