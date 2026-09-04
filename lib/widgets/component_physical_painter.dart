@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../models/first_step_component.dart';
 import 'burned_effects_painter.dart';
 
@@ -152,200 +151,172 @@ class ComponentPhysicalPainter extends CustomPainter {
   }
 
   /// --------------------------------------------------------------------------
-  /// SUPORTE DE PILHAS AA / BATERIA 4.5V (Horizontal - Conforme referência)
+  /// BATERIA DE 9V (Horizontal de Bancada com Tarja de Cobre e Snap 9V)
   /// --------------------------------------------------------------------------
   void _drawPhysicalBattery(Canvas canvas, Size size, double cx, double cy) {
-    // Dimensões do Suporte Plastico Preto de Pilhas AA (Orientação Horizontal)
-    const double holderWidth = 52.0;
-    const double holderHeight = 34.0;
-    final double holderLeft = cx - holderWidth / 2;
-    final double holderTop = cy - holderHeight / 2;
+    // Corpo principal da Bateria de 9V (Orientação Horizontal)
+    const double bodyWidth = 50.0;
+    const double bodyHeight = 36.0;
+    final double bodyLeft = cx - 28.0;
+    final double bodyTop = cy - bodyHeight / 2;
 
-    final holderRect = Rect.fromLTWH(holderLeft, holderTop, holderWidth, holderHeight);
-    final holderRRect = RRect.fromRectAndRadius(holderRect, const Radius.circular(4.0));
+    final batRect = Rect.fromLTWH(bodyLeft, bodyTop, bodyWidth, bodyHeight);
+    final batRRect = RRect.fromRectAndRadius(batRect, const Radius.circular(5.0));
 
-    // 1. Sombra do Suporte de Pilhas
+    // Sombra projetada sob o corpo 3D
     canvas.drawRRect(
-      holderRRect.shift(const Offset(2.0, 3.5)),
+      RRect.fromRectAndRadius(batRect.translate(2.5, 4.0), const Radius.circular(5.0)),
       Paint()
-        ..color = Colors.black.withValues(alpha: 0.35)
+        ..color = Colors.black.withValues(alpha: 0.40)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0),
     );
 
-    // 2. Corpo do Suporte Plástico Preto Fosco
-    final housingPaint = Paint()
-      ..shader = const LinearGradient(
-        colors: [Color(0xFF334155), Color(0xFF1E293B), Color(0xFF0F172A)],
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-      ).createShader(holderRect);
-    canvas.drawRRect(holderRRect, housingPaint);
+    // 1. Corpo principal metálico escuro (Navy/Black)
+    final bodyShader = const LinearGradient(
+      colors: [Color(0xFF334155), Color(0xFF1E293B), Color(0xFF0F172A)],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+    ).createShader(batRect);
+    canvas.drawRRect(batRRect, Paint()..shader = bodyShader);
 
-    // Moldura chanfrada de contorno fino do suporte
-    canvas.drawRRect(
-      holderRRect,
-      Paint()
-        ..color = const Color(0xFF475569)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0,
-    );
-
-    // Divisória Horizontal de Plástico do Suporte
-    canvas.drawLine(
-      Offset(holderLeft + 2, cy),
-      Offset(holderLeft + holderWidth - 2, cy),
-      Paint()
-        ..color = const Color(0xFF020617)
-        ..strokeWidth = 1.6,
-    );
-
-    // 3. Pilhas AA Turquesa / Teal Horizontais
-    const double cellW = 46.0;
-    const double cellH = 13.0;
-
-    // A) Pilha AA Superior (Polo Positivo + na esquerda)
-    final topCellRect = Rect.fromLTWH(cx - cellW / 2, cy - cellH - 1.5, cellW, cellH);
-    _drawAABatteryCellHorizontal(
-      canvas,
-      topCellRect,
-      isPositiveLeft: true,
-      label: 'AA 1.5V',
-    );
-
-    // B) Pilha AA Inferior (Polo Positivo + na direita - invertida para circuito em série)
-    final bottomCellRect = Rect.fromLTWH(cx - cellW / 2, cy + 1.5, cellW, cellH);
-    _drawAABatteryCellHorizontal(
-      canvas,
-      bottomCellRect,
-      isPositiveLeft: false,
-      label: 'AA 1.5V',
-    );
-
-    // 4. Molas e Contatos Metálicos Prateados nas Extremidades Esquerda e Direita
-    final metallicPaint = Paint()
-      ..shader = const LinearGradient(
-        colors: [Color(0xFFF1F5F9), Color(0xFF94A3B8), Color(0xFF475569)],
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-      ).createShader(holderRect);
-
-    // Contatos Prata Esquerda
-    canvas.drawRect(Rect.fromLTWH(holderLeft, cy - 10, 2, 5), metallicPaint);
-    canvas.drawRect(Rect.fromLTWH(holderLeft, cy + 5, 2, 5), metallicPaint);
-
-    // Contatos Prata Direita
-    canvas.drawRect(Rect.fromLTWH(holderLeft + holderWidth - 2, cy - 10, 2, 5), metallicPaint);
-    canvas.drawRect(Rect.fromLTWH(holderLeft + holderWidth - 2, cy + 5, 2, 5), metallicPaint);
-
-    // 5. Cabos Elétricos de Saída (Vermelho + na esquerda, Azul - na direita)
-    canvas.drawLine(
-      Offset(holderLeft, cy),
-      Offset(0, cy),
-      Paint()
-        ..color = const Color(0xFFEF4444)
-        ..strokeWidth = 3.2
-        ..strokeCap = StrokeCap.round,
-    );
-    canvas.drawLine(
-      Offset(holderLeft + holderWidth, cy),
-      Offset(size.width, cy),
-      Paint()
-        ..color = const Color(0xFF2563EB)
-        ..strokeWidth = 3.2
-        ..strokeCap = StrokeCap.round,
-    );
-
-    // Terminais metálicos para conexão limpa nos polos da bancada
-    _drawCleanLeads(canvas, size, cx, cy, holderLeft, holderLeft + holderWidth);
-  }
-
-  /// Desenha uma pilha individual AA turquesa (Teal) horizontal fotorrealista
-  void _drawAABatteryCellHorizontal(Canvas canvas, Rect rect, {required bool isPositiveLeft, required String label}) {
-    final cellRRect = RRect.fromRectAndRadius(rect, const Radius.circular(2.5));
-
-    // Corpo Turquesa/Teal Principal da Pilha AA
-    final bodyPaint = Paint()
-      ..shader = const LinearGradient(
-        colors: [Color(0xFF0D9488), Color(0xFF0F766E), Color(0xFF115E59)],
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-      ).createShader(rect);
-    canvas.drawRRect(cellRRect, bodyPaint);
-
-    // Bloco/Faixa de Destaque Turquesa Claro do Polo Positivo (+)
-    final posWidth = rect.width * 0.32;
-    final posRect = isPositiveLeft
-        ? Rect.fromLTWH(rect.left, rect.top, posWidth, rect.height)
-        : Rect.fromLTWH(rect.right - posWidth, rect.top, posWidth, rect.height);
-
-    final posPaint = Paint()
-      ..shader = const LinearGradient(
-        colors: [Color(0xFF2DD4BF), Color(0xFF14B8A6), Color(0xFF0D9488)],
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-      ).createShader(posRect);
+    // 2. Tarja metálica de Cobre/Dourado estilo Duracell/Industrial na extremidade esquerda
+    const double copperWidth = 14.0;
+    final copperRect = Rect.fromLTWH(bodyLeft, bodyTop, copperWidth, bodyHeight);
+    final copperShader = const LinearGradient(
+      colors: [Color(0xFFFFB74D), Color(0xFFF57C00), Color(0xFFE65100), Color(0xFFBF360C)],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+    ).createShader(copperRect);
 
     canvas.save();
-    canvas.clipRRect(cellRRect);
-    canvas.drawRect(posRect, posPaint);
+    canvas.clipRRect(batRRect);
+    canvas.drawRect(copperRect, Paint()..shader = copperShader);
 
-    // Brilho Especular no Topo do Cilindro da Pilha
+    // Destaque de brilho metálico no topo da faixa de cobre
     canvas.drawLine(
-      Offset(rect.left + 2, rect.top + 1),
-      Offset(rect.right - 2, rect.top + 1),
-      Paint()..color = Colors.white.withValues(alpha: 0.45)..strokeWidth = 0.8,
+      Offset(copperRect.left, copperRect.top + 1.2),
+      Offset(copperRect.right, copperRect.top + 1.2),
+      Paint()..color = Colors.white.withValues(alpha: 0.5)..strokeWidth = 1.2,
+    );
+
+    // Linha de vinco de transição entre a faixa de cobre e o corpo preto
+    canvas.drawLine(
+      Offset(copperRect.right, bodyTop),
+      Offset(copperRect.right, bodyTop + bodyHeight),
+      Paint()..color = const Color(0xFF18181B)..strokeWidth = 1.2,
     );
     canvas.restore();
 
-    // Marcador de Polo Positivo '+'
-    final posCenterX = isPositiveLeft ? rect.left + posWidth / 2 : rect.right - posWidth / 2;
-    final posText = TextPainter(
+    // Moldura chanfrada de contorno fino
+    canvas.drawRRect(
+      batRRect,
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.12)
+        ..strokeWidth = 1.0
+        ..style = PaintingStyle.stroke,
+    );
+
+    // 3. Tipografia de Tensão "9V" gravada na seção preta
+    final voltStr = value > 0 ? '${value.toStringAsFixed(value % 1 == 0 ? 0 : 1)}V' : '9V';
+    final textPainter = TextPainter(
       text: TextSpan(
-        text: '+',
-        style: GoogleFonts.rajdhani(
+        text: voltStr,
+        style: const TextStyle(
           color: Colors.white,
-          fontWeight: FontWeight.bold,
-          fontSize: 12,
+          fontSize: 13.0,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 1.0,
+          fontFamily: 'sans-serif',
         ),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    posText.paint(canvas, Offset(posCenterX - posText.width / 2, rect.center.dy - posText.height / 2));
+    textPainter.paint(
+      canvas,
+      Offset(bodyLeft + copperWidth + (bodyWidth - copperWidth - textPainter.width) / 2, cy - textPainter.height / 2),
+    );
 
-    // Marcador de Polo Negativo 'I' (Conforme a imagem de referência)
-    final negCenterX = isPositiveLeft ? rect.right - (rect.width - posWidth) / 4 : rect.left + (rect.width - posWidth) / 4;
-    final negText = TextPainter(
-      text: TextSpan(
-        text: 'I',
-        style: GoogleFonts.rajdhani(
-          color: Colors.white.withValues(alpha: 0.9),
-          fontWeight: FontWeight.bold,
-          fontSize: 10,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    negText.paint(canvas, Offset(negCenterX - negText.width / 2, rect.center.dy - negText.height / 2));
+    // 4. Terminais Metálicos Cilíndricos (Postes Prata projetados para a direita)
+    const double postWidth = 6.5;
+    const double postHeight = 9.5;
+    final double topPostY = cy - 7.5 - postHeight / 2;
+    final double bottomPostY = cy + 7.5 - postHeight / 2;
+    final double postX = bodyLeft + bodyWidth;
 
-    // Inscrição 'AA 1.5V' horizontal legível no corpo da pilha
-    final labelCenterX = isPositiveLeft
-        ? rect.left + posWidth + (rect.width - posWidth) * 0.45
-        : rect.left + (rect.width - posWidth) * 0.55;
+    final postPaint = Paint()
+      ..shader = const LinearGradient(
+        colors: [Color(0xFFE2E8F0), Color(0xFF94A3B8), Color(0xFF64748B)],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ).createShader(Rect.fromLTWH(postX, topPostY, postWidth, bodyHeight));
 
-    final labelPainter = TextPainter(
-      text: TextSpan(
-        text: label,
-        style: GoogleFonts.rajdhani(
-          color: Colors.white,
-          fontWeight: FontWeight.w800,
-          fontSize: 8.5,
-          letterSpacing: 0.5,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    labelPainter.paint(canvas, Offset(labelCenterX - labelPainter.width / 2, rect.center.dy - labelPainter.height / 2));
+    // Terminal Superior (+)
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromLTWH(postX, topPostY, postWidth, postHeight), const Radius.circular(2.0)),
+      postPaint,
+    );
+    // Terminal Inferior (-)
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromLTWH(postX, bottomPostY, postWidth, postHeight), const Radius.circular(2.0)),
+      postPaint,
+    );
+
+    // 5. Placa Plástica Preta do Conector Snap 9V (Barra Vertical à direita dos postes)
+    const double clipWidth = 3.5;
+    const double clipHeight = 28.0;
+    final double clipX = postX + postWidth;
+    final double clipY = cy - clipHeight / 2;
+
+    final clipPaint = Paint()..color = const Color(0xFF18181B);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromLTWH(clipX, clipY, clipWidth, clipHeight), const Radius.circular(1.5)),
+      clipPaint,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromLTWH(clipX, clipY, clipWidth, clipHeight), const Radius.circular(1.5)),
+      Paint()
+        ..color = const Color(0xFF52525B)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.8,
+    );
+
+    // 6. Fios e Pontas de Terminais (+ Vermelho e - Preto) estendidos para a direita até cx + 35.0
+    final double wireStartX = clipX + clipWidth;
+    final double topWireY = cy - 7.5;
+    final double bottomWireY = cy + 7.5;
+    final double wireEndX = cx + 35.0;
+
+    // Fio Superior (Vermelho +) -> Terminal 1 (Offset: 35, -7.5)
+    canvas.drawLine(
+      Offset(wireStartX, topWireY),
+      Offset(wireEndX, topWireY),
+      Paint()
+        ..color = const Color(0xFFEF4444)
+        ..strokeWidth = 2.2
+        ..strokeCap = StrokeCap.round,
+    );
+    // Pino Vermelho (+)
+    canvas.drawCircle(Offset(wireEndX, topWireY), 2.5, Paint()..color = const Color(0xFFDC2626));
+    canvas.drawCircle(Offset(wireEndX, topWireY), 1.0, Paint()..color = Colors.white);
+
+    // Fio Inferior (Preto -) -> Terminal 0 (Offset: 35, 7.5)
+    canvas.drawLine(
+      Offset(wireStartX, bottomWireY),
+      Offset(wireEndX, bottomWireY),
+      Paint()
+        ..color = const Color(0xFF18181B)
+        ..strokeWidth = 2.2
+        ..strokeCap = StrokeCap.round,
+    );
+    // Pino Preto (-)
+    canvas.drawCircle(Offset(wireEndX, bottomWireY), 2.5, Paint()..color = const Color(0xFF09090B));
+    canvas.drawCircle(Offset(wireEndX, bottomWireY), 1.0, Paint()..color = const Color(0xFFA1A1AA));
+
+    // Hastes metálicas para conexão
+    _drawCleanLeads(canvas, size, cx, cy, bodyLeft, wireEndX);
   }
+
+
 
   void _drawPhysicalWire(Canvas canvas, Size size, double cx, double cy) {
     if (wireKind == 'junction') {
