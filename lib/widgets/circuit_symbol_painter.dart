@@ -139,16 +139,16 @@ class CircuitSymbolPainter extends CustomPainter {
   void _drawConnectingWire(Canvas canvas, Size size, double cx, double cy, Paint paint) {
     final leftX = 0.0;
     final rightX = size.width;
-    final topY = size.height * 0.2;
-    final bottomY = size.height * 0.8;
 
-    canvas.drawLine(Offset(leftX, topY), Offset(rightX, topY), paint);
-    canvas.drawLine(Offset(cx, topY), Offset(cx, bottomY), paint);
+    // Linha horizontal principal centralizada na altura cy (alinhada com os terminais dos soquetes)
+    canvas.drawLine(Offset(leftX, cy), Offset(rightX, cy), paint);
+    // Haste vertical de junção de nó
+    canvas.drawLine(Offset(cx, cy), Offset(cx, size.height * 0.85), paint);
 
     final dotPaint = Paint()
       ..color = paint.color
       ..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset(cx, topY), strokeWidth * 1.5, dotPaint);
+    canvas.drawCircle(Offset(cx, cy), strokeWidth * 1.5, dotPaint);
   }
 
   void _drawSwitch(Canvas canvas, Size size, double cx, double cy, Paint paint) {
