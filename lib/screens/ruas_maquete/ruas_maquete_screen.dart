@@ -10,6 +10,7 @@ import '../../state/circuit_undo_redo_controller.dart';
 import '../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
 import '../../widgets/schematic_blueprint_socket.dart';
+import '../../widgets/physical_blueprint_socket.dart';
 import '../../widgets/component_physical_painter.dart';
 import '../../widgets/circuit_symbol_painter.dart';
 import '../../widgets/street_lamp_painter.dart';
@@ -39,13 +40,15 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
   double _m1WireRotation = 0.0;
 
   // Estados da Missão 2 (Comparação de Brilho)
-  bool _m2IsSeriesTwoBulbs = true;
+  bool _m2IsSeriesTwoBulbs = false;
   String? _m2SelectedExplanation;
+  double _m2SecondaryBulbRotation = 0.0;
 
   // Estados da Missão 3 (Bifurcação de Fios / Nó)
   bool _m3JunctionInserted = false;
   bool _m3ReturnConnected = false;
   double _m3JunctionRotation = 0.0;
+  double _m3ReturnRotation = 0.0;
 
   // Estados da Missão 4 (Casas Independentes / Paralelo)
   bool _m4ParallelWireConnected = false;
@@ -54,6 +57,8 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
   // Estados da Missão 5 (Teste de Manutenção do Bairro)
   bool _m5House1Broken = false;
   bool _m5MaintenanceConfirmed = false;
+  double _m5House1Rotation = 0.0;
+  double _m5MaintenanceRotation = 0.0;
 
   // Estado de simulação
   bool _isSimulating = false;
@@ -129,21 +134,28 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
         case 0:
           _m1WireConnected = false;
           _m1WireInserted = false;
+          _m1WireRotation = 0.0;
           break;
         case 1:
-          _m2IsSeriesTwoBulbs = true;
+          _m2IsSeriesTwoBulbs = false;
           _m2SelectedExplanation = null;
+          _m2SecondaryBulbRotation = 0.0;
           break;
         case 2:
           _m3JunctionInserted = false;
           _m3ReturnConnected = false;
+          _m3JunctionRotation = 0.0;
+          _m3ReturnRotation = 0.0;
           break;
         case 3:
           _m4ParallelWireConnected = false;
+          _m4ParallelRotation = 0.0;
           break;
         case 4:
           _m5House1Broken = false;
           _m5MaintenanceConfirmed = false;
+          _m5House1Rotation = 0.0;
+          _m5MaintenanceRotation = 0.0;
           break;
       }
     });
@@ -653,6 +665,84 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
     }
   }
 
+  Widget _buildSocketTile({
+    required double width,
+    required double height,
+    required String expectedData,
+    required bool isFilled,
+    required VoidCallback onAccept,
+    required VoidCallback onTap,
+    required VoidCallback onRotate,
+    required double rotation,
+    required ComponentType symbolType,
+    required String label,
+  }) {
+    final symbolWidget = _usePhysicalStyle
+        ? CustomPaint(
+            size: Size(width - 20, height - 20),
+            painter: ComponentPhysicalPainter(
+              type: symbolType,
+              isDarkMode: false,
+            ),
+          )
+        : CustomPaint(
+            size: Size(width - 20, height - 20),
+            painter: CircuitSymbolPainter(
+              type: symbolType,
+              color: const Color(0xFF0F172A),
+              strokeWidth: 2.5,
+            ),
+          );
+
+    final placeholderWidget = _usePhysicalStyle
+        ? CustomPaint(
+            size: Size(width - 25, height - 25),
+            painter: ComponentPhysicalPainter(
+              type: symbolType,
+              isDarkMode: false,
+            ),
+          )
+        : CustomPaint(
+            size: Size(width - 25, height - 25),
+            painter: CircuitSymbolPainter(
+              type: symbolType,
+              color: const Color(0xFF94A3B8),
+              strokeWidth: 2.0,
+            ),
+          );
+
+    if (_usePhysicalStyle) {
+      return PhysicalBlueprintSocket<String>(
+        width: width,
+        height: height,
+        expectedData: expectedData,
+        isFilled: isFilled,
+        onAccept: (_) => onAccept(),
+        onTap: onTap,
+        onRotate: onRotate,
+        rotation: rotation,
+        symbolWidget: symbolWidget,
+        showLabel: label.isNotEmpty,
+        label: label,
+      );
+    } else {
+      return SchematicBlueprintSocket<String>(
+        width: width,
+        height: height,
+        expectedData: expectedData,
+        isFilled: isFilled,
+        onAccept: (_) => onAccept(),
+        onTap: onTap,
+        onRotate: onRotate,
+        rotation: rotation,
+        symbolWidget: symbolWidget,
+        placeholderWidget: placeholderWidget,
+        showLabel: label.isNotEmpty,
+        label: label,
+      );
+    }
+  }
+
   /// Overlay da Missão 1: Conexão em Série de Postes
   List<Widget> _buildM1OverlayElements(double l1X, double l2X, double sX, double lY, double sY) {
     final isLit = _m1WireInserted || _m1WireConnected;
@@ -696,19 +786,20 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
         child: SizedBox(
           width: 80,
           height: 65,
-          child: SchematicBlueprintSocket<String>(
+          child: _buildSocketTile(
             width: 80,
             height: 65,
             expectedData: 'fio_serie',
             isFilled: isLit,
-            showLabel: false,
+            symbolType: ComponentType.connectingWire,
+            label: 'Fio em Série',
             rotation: _m1WireRotation,
             onRotate: () => _rotateComponent(
               name: 'Fio em Série',
               getRotation: () => _m1WireRotation,
               setRotation: (v) => _m1WireRotation = v,
             ),
-            onAccept: (_) => _insertComponent(
+            onAccept: () => _insertComponent(
               name: 'Fio em Série',
               getInserted: () => _m1WireInserted,
               setInserted: (v) {
@@ -718,51 +809,16 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
               getRotation: () => _m1WireRotation,
               setRotation: (v) => _m1WireRotation = v,
             ),
-            onTap: () {
-              _insertComponent(
-                name: 'Fio em Série',
-                getInserted: () => _m1WireInserted,
-                setInserted: (v) {
-                  _m1WireInserted = v;
-                  _m1WireConnected = v;
-                },
-                getRotation: () => 0,
-                setRotation: (_) {},
-              );
-            },
-            symbolWidget: _usePhysicalStyle
-                ? CustomPaint(
-                    size: const Size(50, 50),
-                    painter: ComponentPhysicalPainter(
-                      type: ComponentType.connectingWire,
-                      isDarkMode: false,
-                    ),
-                  )
-                : CustomPaint(
-                    size: const Size(50, 50),
-                    painter: CircuitSymbolPainter(
-                      type: ComponentType.connectingWire,
-                      color: const Color(0xFF0F172A),
-                      strokeWidth: 2.5,
-                    ),
-                  ),
-            placeholderWidget: _usePhysicalStyle
-                ? CustomPaint(
-                    size: const Size(45, 45),
-                    painter: ComponentPhysicalPainter(
-                      type: ComponentType.connectingWire,
-                      isDarkMode: false,
-                    ),
-                  )
-                : CustomPaint(
-                    size: const Size(45, 45),
-                    painter: CircuitSymbolPainter(
-                      type: ComponentType.connectingWire,
-                      color: const Color(0xFF94A3B8),
-                      strokeWidth: 2.0,
-                    ),
-                  ),
-            label: '',
+            onTap: () => _insertComponent(
+              name: 'Fio em Série',
+              getInserted: () => _m1WireInserted,
+              setInserted: (v) {
+                _m1WireInserted = v;
+                _m1WireConnected = v;
+              },
+              getRotation: () => _m1WireRotation,
+              setRotation: (v) => _m1WireRotation = v,
+            ),
           ),
         ),
       ),
@@ -772,7 +828,7 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
   /// Overlay da Missão 2: Comparação de Brilho 1 vs 2 Lâmpadas
   List<Widget> _buildM2OverlayElements(double l1X, double l2X, double sX, double lY, double sY) {
     return [
-      // Poste Principal
+      // Poste Principal (Sempre Ligado na Rede)
       Positioned(
         left: l1X - 40,
         top: lY - 30,
@@ -785,77 +841,53 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
         left: l1X - 75,
         top: lY + 34,
         width: 150,
-        child: Center(child: _buildLabelBadge('Poste Principal')),
+        child: Center(child: _buildLabelBadge('Poste Principal (${_m2IsSeriesTwoBulbs ? "50%" : "100%"})')),
       ),
 
-      // Poste Secundário (Série)
-      if (_m2IsSeriesTwoBulbs) ...[
-        Positioned(
-          left: l2X - 40,
-          top: lY - 30,
-          child: _buildLampSymbol(
-            isLit: true,
-            brightnessRatio: 0.5,
+      // Soquete Interativo do Poste Secundário (Série)
+      Positioned(
+        left: l2X - 40,
+        top: lY - 32,
+        child: SizedBox(
+          width: 80,
+          height: 65,
+          child: _buildSocketTile(
+            width: 80,
+            height: 65,
+            expectedData: 'bulb',
+            isFilled: _m2IsSeriesTwoBulbs,
+            symbolType: ComponentType.bulb,
+            label: 'Poste Secundário',
+            rotation: _m2SecondaryBulbRotation,
+            onRotate: () => _rotateComponent(
+              name: 'Poste Secundário',
+              getRotation: () => _m2SecondaryBulbRotation,
+              setRotation: (v) => _m2SecondaryBulbRotation = v,
+            ),
+            onAccept: () => _insertComponent(
+              name: 'Poste Secundário',
+              getInserted: () => _m2IsSeriesTwoBulbs,
+              setInserted: (v) => _m2IsSeriesTwoBulbs = v,
+              getRotation: () => _m2SecondaryBulbRotation,
+              setRotation: (v) => _m2SecondaryBulbRotation = v,
+            ),
+            onTap: () => _insertComponent(
+              name: 'Poste Secundário',
+              getInserted: () => _m2IsSeriesTwoBulbs,
+              setInserted: (v) => _m2IsSeriesTwoBulbs = v,
+              getRotation: () => _m2SecondaryBulbRotation,
+              setRotation: (v) => _m2SecondaryBulbRotation = v,
+            ),
           ),
         ),
+      ),
+      if (_m2IsSeriesTwoBulbs)
         Positioned(
           left: l2X - 75,
-          top: lY + 34,
+          top: lY + 38,
           width: 150,
-          child: Center(child: _buildLabelBadge('Poste Secundário (Série)')),
+          child: Center(child: _buildLabelBadge('Poste 2 em Série (50%)')),
         ),
-      ],
-
-      // Painel de Teste de Modo
-      Positioned(
-        left: sX - 220,
-        top: sY - 25,
-        width: 440,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: const Color(0xFF0F172A),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.5)),
-            boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8)],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Modo de Teste: ',
-                style: GoogleFonts.rajdhani(color: Colors.white70, fontSize: 13),
-              ),
-              const SizedBox(width: 8),
-              ChoiceChip(
-                label: const Text('1 Poste (100% Brilho)'),
-                selected: !_m2IsSeriesTwoBulbs,
-                onSelected: (val) => setState(() => _m2IsSeriesTwoBulbs = !val),
-                selectedColor: const Color(0xFF10B981),
-                backgroundColor: const Color(0xFF1E293B),
-                labelStyle: GoogleFonts.rajdhani(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-              ),
-              const SizedBox(width: 8),
-              ChoiceChip(
-                label: const Text('2 Postes em Série (50% Brilho)'),
-                selected: _m2IsSeriesTwoBulbs,
-                onSelected: (val) => setState(() => _m2IsSeriesTwoBulbs = val),
-                selectedColor: Colors.amberAccent,
-                backgroundColor: const Color(0xFF1E293B),
-                labelStyle: GoogleFonts.rajdhani(
-                  color: _m2IsSeriesTwoBulbs ? Colors.black : Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     ];
   }
 
@@ -897,78 +929,79 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
         child: Center(child: _buildLabelBadge('Rua B (Nó Sul)')),
       ),
 
-      // Indicador Visual do Nó de Junção
+      // Soquete 1: Nó de Junção (Bifurcação (+))
       Positioned(
         left: sX - 40,
-        top: nodeY - 14,
-        width: 80,
-        child: Center(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: _m3JunctionInserted ? const Color(0xFF10B981) : const Color(0xFF64748B),
-              borderRadius: BorderRadius.circular(8),
+        top: nodeY - 32,
+        child: SizedBox(
+          width: 80,
+          height: 65,
+          child: _buildSocketTile(
+            width: 80,
+            height: 65,
+            expectedData: 'junction_node',
+            isFilled: _m3JunctionInserted,
+            symbolType: ComponentType.connectingWire,
+            label: 'Nó (+)',
+            rotation: _m3JunctionRotation,
+            onRotate: () => _rotateComponent(
+              name: 'Nó de Junção',
+              getRotation: () => _m3JunctionRotation,
+              setRotation: (v) => _m3JunctionRotation = v,
             ),
-            child: Text(
-              'Nó (+)',
-              style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+            onAccept: () => _insertComponent(
+              name: 'Nó de Junção',
+              getInserted: () => _m3JunctionInserted,
+              setInserted: (v) => _m3JunctionInserted = v,
+              getRotation: () => _m3JunctionRotation,
+              setRotation: (v) => _m3JunctionRotation = v,
+            ),
+            onTap: () => _insertComponent(
+              name: 'Nó de Junção',
+              getInserted: () => _m3JunctionInserted,
+              setInserted: (v) => _m3JunctionInserted = v,
+              getRotation: () => _m3JunctionRotation,
+              setRotation: (v) => _m3JunctionRotation = v,
             ),
           ),
         ),
       ),
 
-      // Botões de Ação da Missão 3
+      // Soquete 2: Retorno (- )
       Positioned(
-        left: sX - 220,
-        top: sY - 25,
-        width: 440,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _m3JunctionInserted ? const Color(0xFF10B981) : const Color(0xFF1E293B),
-                side: const BorderSide(color: Color(0xFF10B981)),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              ),
-              icon: Icon(_m3JunctionInserted ? Icons.check : Icons.call_split_rounded, size: 16),
-              label: Text(
-                _m3JunctionInserted ? 'Nó Inserido' : '1. Inserir Nó de Junção',
-                style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-              ),
-              onPressed: () {
-                _insertComponent(
-                  name: 'Nó de Junção',
-                  getInserted: () => _m3JunctionInserted,
-                  setInserted: (v) => _m3JunctionInserted = v,
-                  getRotation: () => _m3JunctionRotation,
-                  setRotation: (v) => _m3JunctionRotation = v,
-                );
-              },
+        left: sX - 40,
+        top: sY - 32,
+        child: SizedBox(
+          width: 80,
+          height: 65,
+          child: _buildSocketTile(
+            width: 80,
+            height: 65,
+            expectedData: 'fio_serie',
+            isFilled: _m3ReturnConnected,
+            symbolType: ComponentType.connectingWire,
+            label: 'Retorno (-)',
+            rotation: _m3ReturnRotation,
+            onRotate: () => _rotateComponent(
+              name: 'Retorno Reconectado',
+              getRotation: () => _m3ReturnRotation,
+              setRotation: (v) => _m3ReturnRotation = v,
             ),
-            const SizedBox(width: 10),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _m3ReturnConnected ? const Color(0xFF10B981) : const Color(0xFF1E293B),
-                side: const BorderSide(color: Color(0xFF10B981)),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              ),
-              icon: Icon(_m3ReturnConnected ? Icons.check : Icons.subdirectory_arrow_left_rounded, size: 16),
-              label: Text(
-                _m3ReturnConnected ? 'Retorno Reconectado' : '2. Reconectar Retorno (-)',
-                style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-              ),
-              onPressed: () {
-                _insertComponent(
-                  name: 'Retorno Reconectado',
-                  getInserted: () => _m3ReturnConnected,
-                  setInserted: (v) => _m3ReturnConnected = v,
-                  getRotation: () => _m3JunctionRotation,
-                  setRotation: (v) => _m3JunctionRotation = v,
-                );
-              },
+            onAccept: () => _insertComponent(
+              name: 'Retorno Reconectado',
+              getInserted: () => _m3ReturnConnected,
+              setInserted: (v) => _m3ReturnConnected = v,
+              getRotation: () => _m3ReturnRotation,
+              setRotation: (v) => _m3ReturnRotation = v,
             ),
-          ],
+            onTap: () => _insertComponent(
+              name: 'Retorno Reconectado',
+              getInserted: () => _m3ReturnConnected,
+              setInserted: (v) => _m3ReturnConnected = v,
+              getRotation: () => _m3ReturnRotation,
+              setRotation: (v) => _m3ReturnRotation = v,
+            ),
+          ),
         ),
       ),
     ];
@@ -1011,53 +1044,39 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
         child: Center(child: _buildLabelBadge('Casa 02 (Praça)')),
       ),
 
-      // Botão Conectar Fiação em Paralelo
+      // Soquete da Fiação em Paralelo
       Positioned(
-        left: sX - 200,
-        top: sY - 25,
-        width: 400,
-        child: InkWell(
-          onTap: () {
-            _insertComponent(
+        left: sX - 40,
+        top: sY - 32,
+        child: SizedBox(
+          width: 80,
+          height: 65,
+          child: _buildSocketTile(
+            width: 80,
+            height: 65,
+            expectedData: 'fio_paralelo',
+            isFilled: _m4ParallelWireConnected,
+            symbolType: ComponentType.connectingWire,
+            label: 'Fiação Paralela',
+            rotation: _m4ParallelRotation,
+            onRotate: () => _rotateComponent(
+              name: 'Fiação em Paralelo',
+              getRotation: () => _m4ParallelRotation,
+              setRotation: (v) => _m4ParallelRotation = v,
+            ),
+            onAccept: () => _insertComponent(
               name: 'Fiação em Paralelo',
               getInserted: () => _m4ParallelWireConnected,
               setInserted: (v) => _m4ParallelWireConnected = v,
               getRotation: () => _m4ParallelRotation,
               setRotation: (v) => _m4ParallelRotation = v,
-            );
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-            decoration: BoxDecoration(
-              color: _m4ParallelWireConnected
-                  ? const Color(0xFF10B981).withValues(alpha: 0.2)
-                  : const Color(0xFF1E293B),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: _m4ParallelWireConnected ? const Color(0xFF10B981) : Colors.amberAccent,
-                width: 2,
-              ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  _m4ParallelWireConnected ? Icons.check_circle_rounded : Icons.alt_route_rounded,
-                  color: _m4ParallelWireConnected ? const Color(0xFF10B981) : Colors.amberAccent,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  _m4ParallelWireConnected
-                      ? 'Circuito em Paralelo Ativo (Brilho Máximo)'
-                      : 'Clique para Conectar Fiação em Paralelo',
-                  style: GoogleFonts.rajdhani(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
+            onTap: () => _insertComponent(
+              name: 'Fiação em Paralelo',
+              getInserted: () => _m4ParallelWireConnected,
+              setInserted: (v) => _m4ParallelWireConnected = v,
+              getRotation: () => _m4ParallelRotation,
+              setRotation: (v) => _m4ParallelRotation = v,
             ),
           ),
         ),
@@ -1068,25 +1087,51 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
   /// Overlay da Missão 5: Teste de Manutenção do Bairro
   List<Widget> _buildM5OverlayElements(double l1X, double l2X, double sX, double lY, double sY) {
     return [
-      // Lâmpada A
+      // Soquete da Lâmpada A (Casa 01)
       Positioned(
         left: l1X - 40,
-        top: lY - 30,
-        child: _buildHouseSymbol(
-          name: 'Lâmpada A (Simulada)',
-          isLit: !_m5House1Broken,
-          brightness: !_m5House1Broken ? 1.0 : 0.0,
-          isBroken: _m5House1Broken,
+        top: lY - 32,
+        child: SizedBox(
+          width: 80,
+          height: 65,
+          child: _buildSocketTile(
+            width: 80,
+            height: 65,
+            expectedData: 'bulb',
+            isFilled: !_m5House1Broken,
+            symbolType: ComponentType.bulb,
+            label: 'Lâmpada A',
+            rotation: _m5House1Rotation,
+            onRotate: () => _rotateComponent(
+              name: 'Lâmpada A',
+              getRotation: () => _m5House1Rotation,
+              setRotation: (v) => _m5House1Rotation = v,
+            ),
+            onAccept: () => _insertComponent(
+              name: 'Lâmpada A',
+              getInserted: () => !_m5House1Broken,
+              setInserted: (v) => _m5House1Broken = !v,
+              getRotation: () => _m5House1Rotation,
+              setRotation: (v) => _m5House1Rotation = v,
+            ),
+            onTap: () => _insertComponent(
+              name: 'Lâmpada A',
+              getInserted: () => !_m5House1Broken,
+              setInserted: (v) => _m5House1Broken = !v,
+              getRotation: () => _m5House1Rotation,
+              setRotation: (v) => _m5House1Rotation = v,
+            ),
+          ),
         ),
       ),
       Positioned(
         left: l1X - 75,
-        top: lY + 34,
+        top: lY + 38,
         width: 150,
         child: Center(child: _buildLabelBadge('Lâmpada A (Simulada)', isBroken: _m5House1Broken)),
       ),
 
-      // Lâmpada B
+      // Lâmpada B (Casa 02 - Sempre Funcional)
       Positioned(
         left: l2X - 40,
         top: lY - 30,
@@ -1103,58 +1148,41 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
         child: Center(child: _buildLabelBadge('Lâmpada B (Testada)')),
       ),
 
-      // Botões da Missão 5
+      // Soquete do Conector de Manutenção
       Positioned(
-        left: sX - 230,
-        top: sY - 25,
-        width: 460,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _m5House1Broken ? Colors.redAccent.withValues(alpha: 0.8) : const Color(0xFF1E293B),
-                side: const BorderSide(color: Colors.redAccent),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              ),
-              icon: const Icon(Icons.flash_off_rounded, color: Colors.white, size: 16),
-              label: Text(
-                _m5House1Broken ? 'Lâmpada A Desconectada' : 'Simular Defeito Lâmpada A',
-                style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-              ),
-              onPressed: () {
-                _insertComponent(
-                  name: 'Simular Defeito Lâmpada A',
-                  getInserted: () => _m5House1Broken,
-                  setInserted: (v) => _m5House1Broken = v,
-                  getRotation: () => 0,
-                  setRotation: (_) {},
-                );
-              },
+        left: sX - 40,
+        top: sY - 32,
+        child: SizedBox(
+          width: 80,
+          height: 65,
+          child: _buildSocketTile(
+            width: 80,
+            height: 65,
+            expectedData: 'fio_serie',
+            isFilled: _m5MaintenanceConfirmed,
+            symbolType: ComponentType.connectingWire,
+            label: 'Manutenção',
+            rotation: _m5MaintenanceRotation,
+            onRotate: () => _rotateComponent(
+              name: 'Conector de Manutenção',
+              getRotation: () => _m5MaintenanceRotation,
+              setRotation: (v) => _m5MaintenanceRotation = v,
             ),
-            const SizedBox(width: 8),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _m5MaintenanceConfirmed ? const Color(0xFF10B981) : const Color(0xFF1E293B),
-                side: const BorderSide(color: Color(0xFF10B981)),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              ),
-              icon: Icon(_m5MaintenanceConfirmed ? Icons.verified_rounded : Icons.check_circle_outline_rounded, size: 16),
-              label: Text(
-                _m5MaintenanceConfirmed ? 'Lâmpada B Acesa' : 'Confirmar Manutenção',
-                style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-              ),
-              onPressed: () {
-                _insertComponent(
-                  name: 'Confirmar Manutenção',
-                  getInserted: () => _m5MaintenanceConfirmed,
-                  setInserted: (v) => _m5MaintenanceConfirmed = v,
-                  getRotation: () => 0,
-                  setRotation: (_) {},
-                );
-              },
+            onAccept: () => _insertComponent(
+              name: 'Conector de Manutenção',
+              getInserted: () => _m5MaintenanceConfirmed,
+              setInserted: (v) => _m5MaintenanceConfirmed = v,
+              getRotation: () => _m5MaintenanceRotation,
+              setRotation: (v) => _m5MaintenanceRotation = v,
             ),
-          ],
+            onTap: () => _insertComponent(
+              name: 'Conector de Manutenção',
+              getInserted: () => _m5MaintenanceConfirmed,
+              setInserted: (v) => _m5MaintenanceConfirmed = v,
+              getRotation: () => _m5MaintenanceRotation,
+              setRotation: (v) => _m5MaintenanceRotation = v,
+            ),
+          ),
         ),
       ),
     ];
@@ -1252,7 +1280,7 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
             WorkbenchSymbolToolboxTile<String>(
               data: 'bulb',
               label: 'Lâmpada',
-              tooltip: 'Poste de Iluminação',
+              tooltip: 'Poste / Lâmpada',
               symbolWidget: _usePhysicalStyle
                   ? CustomPaint(
                       size: const Size(34, 34),
@@ -1271,11 +1299,11 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
                     ),
               color: const Color(0xFF10B981),
             ),
-            // Condutor
+            // Condutor Série
             WorkbenchSymbolToolboxTile<String>(
               data: 'fio_serie',
               label: 'Condutor',
-              tooltip: 'Condutor em Série',
+              tooltip: 'Fio Condutor',
               symbolWidget: _usePhysicalStyle
                   ? CustomPaint(
                       size: const Size(34, 34),
@@ -1293,6 +1321,52 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
                       ),
                     ),
               color: const Color(0xFF0284C7),
+            ),
+            // Nó de Junção
+            WorkbenchSymbolToolboxTile<String>(
+              data: 'junction_node',
+              label: 'Nó Junção',
+              tooltip: 'Nó / Bifurcação',
+              symbolWidget: _usePhysicalStyle
+                  ? CustomPaint(
+                      size: const Size(34, 34),
+                      painter: ComponentPhysicalPainter(
+                        type: ComponentType.connectingWire,
+                        isDarkMode: false,
+                      ),
+                    )
+                  : CustomPaint(
+                      size: const Size(34, 34),
+                      painter: CircuitSymbolPainter(
+                        type: ComponentType.connectingWire,
+                        color: const Color(0xFF8B5CF6),
+                        strokeWidth: 2.0,
+                      ),
+                    ),
+              color: const Color(0xFF8B5CF6),
+            ),
+            // Fiação Paralela
+            WorkbenchSymbolToolboxTile<String>(
+              data: 'fio_paralelo',
+              label: 'Fio Paralelo',
+              tooltip: 'Fio de Ramo Paralelo',
+              symbolWidget: _usePhysicalStyle
+                  ? CustomPaint(
+                      size: const Size(34, 34),
+                      painter: ComponentPhysicalPainter(
+                        type: ComponentType.connectingWire,
+                        isDarkMode: false,
+                      ),
+                    )
+                  : CustomPaint(
+                      size: const Size(34, 34),
+                      painter: CircuitSymbolPainter(
+                        type: ComponentType.connectingWire,
+                        color: const Color(0xFFEC4899),
+                        strokeWidth: 2.0,
+                      ),
+                    ),
+              color: const Color(0xFFEC4899),
             ),
           ],
         ),
