@@ -2,652 +2,440 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../models/first_step_component.dart';
-import '../../widgets/circuit_symbol_painter.dart';
+import '../../widgets/prof_volts_feedback_dialog.dart';
+import 'second_bench_tokens.dart';
+import 'widgets/second_bench_action_bar.dart';
+import 'widgets/second_bench_item_grid.dart';
+import 'widgets/second_bench_phase_scaffold.dart';
+import 'widgets/second_bench_side_panel.dart';
 
-/// Identificadores dos 4 encaixes do circuito em série da Fase 3.
-enum SlotId {
-  battery, // Lado esquerdo (Vertical)
-  resistor, // Parte superior (Horizontal)
-  led, // Lado direito (Vertical)
-  switchComp, // Parte inferior (Horizontal)
+/// Tipos de símbolos elétricos esquemáticos da Fase 3 (4 corretos + 2 distratores reais)
+enum Phase3SymbolType {
+  battery,         // Bateria (Pólos + e -)
+  resistor,        // Resistor (Zigue-zague)
+  led,             // LED (Diodo com setas de emissão)
+  switchComponent, // Interruptor SPST aberto
+  lamp,            // Lâmpada Incandescente (Círculo com X) - Distrator 1
+  diode,           // Diodo Retificador (Diodo sem setas) - Distrator 2
 }
 
-/// Representação interna de um símbolo elétrico na biblioteca ou posicionado num encaixe.
-class SymbolItemData {
-  final String id;
-  final ComponentType type;
-  final bool isRotated; // Relevante para orientação do LED (false = anodo no topo, true = invertido)
-  final bool isSwitchOpen; // Relevante para estado do interruptor (true = aberto)
-
-  const SymbolItemData({
-    required this.id,
-    required this.type,
-    this.isRotated = false,
-    this.isSwitchOpen = true,
-  });
-
-  SymbolItemData copyWith({
-    bool? isRotated,
-    bool? isSwitchOpen,
-  }) {
-    return SymbolItemData(
-      id: id,
-      type: type,
-      isRotated: isRotated ?? this.isRotated,
-      isSwitchOpen: isSwitchOpen ?? this.isSwitchOpen,
-    );
-  }
+/// Identificadores dos 4 encaixes do circuito em série na Fase 3
+enum Phase3SlotId {
+  battery,    // Lado Esquerdo (Vertical)
+  resistor,   // Topo (Horizontal)
+  led,        // Lado Direito (Vertical)
+  switchComp, // Base (Horizontal)
 }
 
-/// Fase 3 do Segundo Estande (Acende Aí): Associação de componentes físicos a símbolos elétricos.
+/// Fase 3 do Segundo Estande (Acende Aí): Do componente ao símbolo esquemático.
 class SecondBenchPhase3 extends StatefulWidget {
-  final VoidCallback onPhaseComplete;
+  final VoidCallback? onPhaseComplete;
 
   const SecondBenchPhase3({
     super.key,
-    required this.onPhaseComplete,
+    this.onPhaseComplete,
   });
 
   @override
   State<SecondBenchPhase3> createState() => _SecondBenchPhase3State();
 }
 
-class _SecondBenchPhase3State extends State<SecondBenchPhase3> with SingleTickerProviderStateMixin {
-  // Modo de visualização: Diagrama (padrão) ou Físico (apenas consulta)
+class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
+  // Seletor de Modo: true = Diagrama (Interativo), false = Físico (Consulta)
   bool _isDiagramMode = true;
 
-  // Os 4 encaixes do circuito fechado
-  final Map<SlotId, SymbolItemData?> _slots = {
-    SlotId.battery: null,
-    SlotId.resistor: null,
-    SlotId.led: null,
-    SlotId.switchComp: null,
+  // Mapa dos 4 Encaixes no Circuito
+  final Map<Phase3SlotId, Phase3SymbolType?> _slots = {
+    Phase3SlotId.battery: null,
+    Phase3SlotId.resistor: null,
+    Phase3SlotId.led: null,
+    Phase3SlotId.switchComp: null,
   };
 
-  // Status individual de validação de cada slot (null = sem checagem, true = correto, false = incorreto)
-  final Map<SlotId, bool?> _slotStatus = {
-    SlotId.battery: null,
-    SlotId.resistor: null,
-    SlotId.led: null,
-    SlotId.switchComp: null,
+  // Status de validação individual de cada slot (null = não checado, true = OK, false = Erro)
+  final Map<Phase3SlotId, bool?> _slotValidation = {
+    Phase3SlotId.battery: null,
+    Phase3SlotId.resistor: null,
+    Phase3SlotId.led: null,
+    Phase3SlotId.switchComp: null,
   };
 
-  // Os 6 símbolos disponíveis na biblioteca (4 corretos + 2 distratores)
-  late List<SymbolItemData> _availableLibrarySymbols;
+  // Símbolo selecionado por toque na biblioteca para acessibilidade
+  Phase3SymbolType? _selectedLibrarySymbol;
 
-  // Símbolo selecionado por toque (para acessibilidade/toque alternativo)
-  SymbolItemData? _selectedLibrarySymbol;
-
-  // Animação de vibração (shake) ao tentar verificar com erros
-  late AnimationController _shakeController;
+  // Lista dos 6 símbolos esquemáticos na biblioteca
+  late List<Phase3SymbolType> _librarySymbols;
 
   @override
   void initState() {
     super.initState();
-    _shakeController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 400),
-    );
     _initLibrarySymbols();
-  }
-
-  @override
-  void dispose() {
-    _shakeController.dispose();
-    super.dispose();
   }
 
   void _initLibrarySymbols() {
-    final symbols = <SymbolItemData>[
-      const SymbolItemData(id: 'battery_sym', type: ComponentType.battery),
-      const SymbolItemData(id: 'resistor_sym', type: ComponentType.resistor),
-      const SymbolItemData(id: 'led_sym', type: ComponentType.led, isRotated: false),
-      const SymbolItemData(id: 'switch_sym', type: ComponentType.switchComponent, isSwitchOpen: true),
-      const SymbolItemData(id: 'bulb_distractor', type: ComponentType.bulb), // Distrator 1
-      const SymbolItemData(id: 'diode_distractor', type: ComponentType.diode), // Distrator 2
+    final list = [
+      Phase3SymbolType.battery,
+      Phase3SymbolType.resistor,
+      Phase3SymbolType.led,
+      Phase3SymbolType.switchComponent,
+      Phase3SymbolType.lamp,
+      Phase3SymbolType.diode,
     ];
-    symbols.shuffle();
-    setState(() {
-      _availableLibrarySymbols = symbols;
-    });
+    list.shuffle();
+    _librarySymbols = list;
   }
 
-  void _resetPhase() {
+  void _resetDiagram() {
     setState(() {
       for (final key in _slots.keys) {
         _slots[key] = null;
-        _slotStatus[key] = null;
+        _slotValidation[key] = null;
       }
       _selectedLibrarySymbol = null;
     });
-    _initLibrarySymbols();
   }
 
-  void _assignSymbolToSlot(SlotId slotKey, SymbolItemData symbol) {
+  void _assignSymbolToSlot(Phase3SlotId slot, Phase3SymbolType symbol) {
     setState(() {
-      // Se o mesmo símbolo já estava em outro slot, limpa o slot anterior
+      // Se o mesmo símbolo já estava em outro slot, remove do slot anterior
       _slots.forEach((key, val) {
-        if (val?.id == symbol.id) {
+        if (val == symbol) {
           _slots[key] = null;
-          _slotStatus[key] = null;
+          _slotValidation[key] = null;
         }
       });
 
-      _slots[slotKey] = symbol;
-      _slotStatus[slotKey] = null;
+      _slots[slot] = symbol;
+      _slotValidation[slot] = null;
       _selectedLibrarySymbol = null;
     });
   }
 
-  void _removeSymbolFromSlot(SlotId slotKey) {
+  void _removeSymbolFromSlot(Phase3SlotId slot) {
     setState(() {
-      _slots[slotKey] = null;
-      _slotStatus[slotKey] = null;
+      _slots[slot] = null;
+      _slotValidation[slot] = null;
     });
   }
 
-  void _toggleLedOrientation(SlotId slotKey) {
-    final current = _slots[slotKey];
-    if (current != null && current.type == ComponentType.led) {
-      setState(() {
-        _slots[slotKey] = current.copyWith(isRotated: !current.isRotated);
-        _slotStatus[slotKey] = null;
-      });
-    }
-  }
+  int get _filledSlotsCount => _slots.values.where((v) => v != null).length;
+  bool get _isAllSlotsFilled => _filledSlotsCount == 4;
 
-  void _checkSolution() {
-    final batterySymbol = _slots[SlotId.battery];
-    final resistorSymbol = _slots[SlotId.resistor];
-    final ledSymbol = _slots[SlotId.led];
-    final switchSymbol = _slots[SlotId.switchComp];
+  void _verifyDiagram() {
+    final batSym = _slots[Phase3SlotId.battery];
+    final resSym = _slots[Phase3SlotId.resistor];
+    final ledSym = _slots[Phase3SlotId.led];
+    final swSym = _slots[Phase3SlotId.switchComp];
 
-    final isBatteryCorrect = batterySymbol?.type == ComponentType.battery;
-    final isResistorCorrect = resistorSymbol?.type == ComponentType.resistor;
-
-    // LED: precisa ser LED e estar na orientação correta (ânodo positivo no topo / resistor)
-    final isLedType = ledSymbol?.type == ComponentType.led;
-    final isLedOrientationCorrect = isLedType && ledSymbol!.isRotated == false;
-    final isLedCorrect = isLedType && isLedOrientationCorrect;
-
-    // Interruptor: precisa ser interruptor e estar no estado aberto (matching físico)
-    final isSwitchType = switchSymbol?.type == ComponentType.switchComponent;
-    final isSwitchStateCorrect = isSwitchType && switchSymbol!.isSwitchOpen == true;
-    final isSwitchCorrect = isSwitchType && isSwitchStateCorrect;
-
-    final isAllCorrect = isBatteryCorrect && isResistorCorrect && isLedCorrect && isSwitchCorrect;
+    final isBatOk = batSym == Phase3SymbolType.battery;
+    final isResOk = resSym == Phase3SymbolType.resistor;
+    final isLedOk = ledSym == Phase3SymbolType.led;
+    final isSwOk = swSym == Phase3SymbolType.switchComponent;
 
     setState(() {
-      _slotStatus[SlotId.battery] = isBatteryCorrect;
-      _slotStatus[SlotId.resistor] = isResistorCorrect;
-      _slotStatus[SlotId.led] = isLedCorrect;
-      _slotStatus[SlotId.switchComp] = isSwitchCorrect;
+      _slotValidation[Phase3SlotId.battery] = isBatOk;
+      _slotValidation[Phase3SlotId.resistor] = isResOk;
+      _slotValidation[Phase3SlotId.led] = isLedOk;
+      _slotValidation[Phase3SlotId.switchComp] = isSwOk;
     });
+
+    final isAllCorrect = isBatOk && isResOk && isLedOk && isSwOk;
 
     if (isAllCorrect) {
-      _showFeedbackDialog(
-        isSuccess: true,
-        title: 'DIAGRAMA CORRETO!',
-        message: 'Muito bem! Você representou o circuito da bancada. Agora monte esse circuito sozinho.',
-        onAction: () {
-          Navigator.of(context).pop();
-          widget.onPhaseComplete();
-        },
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => ProfVoltsFeedbackDialog(
+          isCorrect: true,
+          message: 'Parabéns! Você associou corretamente todos os componentes físicos aos seus símbolos esquemáticos técnicos.',
+          onAction: () {
+            Navigator.of(context).pop();
+            widget.onPhaseComplete?.call();
+          },
+        ),
       );
     } else {
-      _shakeController.forward(from: 0.0);
-
-      String errorMessage = 'Revise os símbolos posicionados no circuito.';
-
-      if (ledSymbol?.type == ComponentType.bulb) {
-        errorMessage = 'Observe: o LED possui duas setas indicando a emissão de luz.';
-      } else if (ledSymbol?.type == ComponentType.diode) {
-        errorMessage = 'O LED é um tipo de diodo, mas seu símbolo possui setas de emissão.';
-      } else if (isLedType && !isLedOrientationCorrect) {
-        errorMessage = 'Confira a orientação do ânodo e do cátodo no LED.';
-      } else if (switchSymbol != null && !isSwitchType) {
-        errorMessage = 'O símbolo do interruptor deve controlar a abertura da corrente.';
-      } else if (isSwitchType && !isSwitchStateCorrect) {
-        errorMessage = 'O símbolo precisa representar o mesmo estado do circuito físico (aberto).';
-      } else if (!isBatteryCorrect) {
-        errorMessage = 'Verifique a representação da bateria com os polos positivo (+) e negativo (-).';
-      } else if (!isResistorCorrect) {
-        errorMessage = 'Verifique a representação do resistor no topo do circuito.';
+      String hint = 'Verifique a posição dos símbolos esquemáticos no circuito.';
+      if (ledSym == Phase3SymbolType.lamp) {
+        hint = 'Observe: a lâmpada incandescente (círculo com X) não é equivalente ao LED esquemático.';
+      } else if (ledSym == Phase3SymbolType.diode) {
+        hint = 'O LED é um diodo emissor de luz. Seu símbolo esquemático precisa ter as duas setas apontando para fora.';
+      } else if (!isBatOk) {
+        hint = 'Confira o símbolo da Bateria (duas linhas paralelas de comprimentos diferentes).';
+      } else if (!isResOk) {
+        hint = 'Confira o símbolo do Resistor (zigue-zague ou retângulo IEC).';
+      } else if (!isSwOk) {
+        hint = 'Confira o símbolo do Interruptor SPST (dois contatos e chave aberta).';
       }
 
-      _showFeedbackDialog(
-        isSuccess: false,
-        title: 'VERIFICAÇÃO DO DIAGRAMA',
-        message: errorMessage,
-        onAction: () {
-          Navigator.of(context).pop();
-        },
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => ProfVoltsFeedbackDialog(
+          isCorrect: false,
+          message: hint,
+          onAction: () {
+            Navigator.of(context).pop();
+          },
+        ),
       );
     }
   }
 
-  void _showFeedbackDialog({
-    required bool isSuccess,
-    required String title,
-    required String message,
-    required VoidCallback onAction,
-  }) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        final accentColor = isSuccess ? const Color(0xFF00FF9D) : const Color(0xFFFF5252);
-
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 460),
-            child: Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFF071C14),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: accentColor, width: 1.5),
-                boxShadow: const [
-                  BoxShadow(color: Colors.black54, blurRadius: 16, offset: Offset(0, 6)),
-                ],
-              ),
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    isSuccess ? Icons.check_circle_rounded : Icons.warning_amber_rounded,
-                    size: 54,
-                    color: accentColor,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontFamily: GoogleFonts.rajdhani().fontFamily,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: accentColor,
-                      letterSpacing: 1.2,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    message,
-                    style: TextStyle(
-                      fontFamily: GoogleFonts.outfit().fontFamily,
-                      fontSize: 15,
-                      color: Colors.white.withValues(alpha: 0.9),
-                      height: 1.45,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: FilledButton.icon(
-                      onPressed: onAction,
-                      icon: Icon(isSuccess ? Icons.arrow_forward_rounded : Icons.replay_rounded),
-                      label: Text(
-                        isSuccess ? 'AVANÇAR PARA A FASE 4' : 'TENTAR NOVAMENTE',
-                        style: TextStyle(
-                          fontFamily: GoogleFonts.rajdhani().fontFamily,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
-                          fontSize: 15,
-                        ),
-                      ),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: accentColor,
-                        foregroundColor: Colors.black,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  void _showHelpDialog() {
+  void _showHelpModal() {
     showDialog(
       context: context,
       builder: (context) => Dialog(
         backgroundColor: Colors.transparent,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 440),
-          child: Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFF071C14),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFF00FF9D), width: 1.5),
-            ),
-            padding: const EdgeInsets.all(22),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.help_outline_rounded, color: Color(0xFF00FF9D)),
-                    const SizedBox(width: 10),
-                    Text(
-                      'Ajuda — Fase 3',
-                      style: TextStyle(
-                        fontFamily: GoogleFonts.rajdhani().fontFamily,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 460),
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0F172A),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: SecondBenchLayoutTokens.primaryGreen, width: 1.5),
+            boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 16)],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.schema_rounded, color: SecondBenchLayoutTokens.primaryGreen, size: 26),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Ajuda — Fase 3',
+                    style: TextStyle(
+                      fontFamily: GoogleFonts.rajdhani().fontFamily,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  '• Alternador de Modo:\nUtilize o seletor (Físico | Diagrama) no topo para consultar a montagem real da bancada.\n\n'
-                  '• Associação de Símbolos:\nNo modo Diagrama, arraste cada símbolo da biblioteca à direita para o seu encaixe no circuito.\n\n'
-                  '• Toque Alternativo:\nVocê também pode tocar num símbolo da biblioteca para selecioná-lo e depois tocar no encaixe desejado.\n\n'
-                  '• Polaridade & Orientação:\nFique atento às setas do símbolo do LED e ao estado do interruptor (aberto/fechado).',
-                  style: TextStyle(
-                    fontFamily: GoogleFonts.outfit().fontFamily,
-                    fontSize: 13.5,
-                    color: Colors.white70,
-                    height: 1.45,
                   ),
-                ),
-                const SizedBox(height: 20),
-                Center(
-                  child: FilledButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF00FF9D),
-                      foregroundColor: Colors.black,
-                    ),
-                    child: const Text('ENTENDI'),
+                ],
+              ),
+              const SizedBox(height: 14),
+              _buildHelpBullet('Alternador de Modo: Alterne entre "Físico" para consultar a bancada real e "Diagrama" para preencher.'),
+              _buildHelpBullet('Arrastre ou Toque: Arraste os símbolos esquemáticos da biblioteca para os 4 encaixes do circuito.'),
+              _buildHelpBullet('Atenção aos Distratores: A lâmpada incandescente e o diodo simples possuem símbolos diferentes do LED.'),
+              const SizedBox(height: 18),
+              Center(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: SecondBenchLayoutTokens.primaryGreen,
+                    side: const BorderSide(color: SecondBenchLayoutTokens.primaryGreen),
                   ),
+                  child: const Text('ENTENDI'),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
+  Widget _buildHelpBullet(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('• ', style: TextStyle(color: SecondBenchLayoutTokens.primaryGreen, fontWeight: FontWeight.bold)),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(fontSize: 13.5, color: Colors.white.withValues(alpha: 0.9)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final filledCount = _slots.values.where((val) => val != null).length;
-    final isAllFilled = filledCount == 4;
+    return SecondBenchPhaseScaffold(
+      phase: 3,
+      title: 'Do componente ao símbolo',
+      instruction: 'Associe cada componente físico da bancada ao seu símbolo esquemático no diagrama elétrico.',
+      introIcon: Icons.schema_rounded,
+      onHelpTap: _showHelpModal,
+      backgroundAsset: 'assets/backgrounds/background_fase_03_prancheta_tecnica.png',
+      workspace: _buildWorkspace(),
+      sidePanel: _buildSidePanel(),
+      actionBar: SecondBenchActionBar(
+        statusText: _isDiagramMode
+            ? 'Arraste ou toque nos símbolos esquemáticos para completar o diagrama.'
+            : 'Modo de consulta física ativo. Alterne para "Diagrama" para editar.',
+        progressText: '$_filledSlotsCount de 4 símbolos posicionados',
+        actions: [
+          OutlinedButton.icon(
+            onPressed: _resetDiagram,
+            icon: const Icon(Icons.refresh_rounded, size: 18),
+            label: Text(
+              'REINICIAR',
+              style: TextStyle(
+                fontFamily: GoogleFonts.rajdhani().fontFamily,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.white70,
+              side: const BorderSide(color: Colors.white30),
+            ),
+          ),
+          const SizedBox(width: 8),
+          FilledButton.icon(
+            onPressed: _isAllSlotsFilled ? _verifyDiagram : null,
+            icon: const Icon(Icons.check_circle_rounded),
+            label: Text(
+              'VERIFICAR DIAGRAMA',
+              style: TextStyle(
+                fontFamily: GoogleFonts.rajdhani().fontFamily,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.1,
+              ),
+            ),
+            style: FilledButton.styleFrom(
+              backgroundColor: SecondBenchLayoutTokens.primaryGreen,
+              foregroundColor: Colors.black,
+              disabledBackgroundColor: Colors.white12,
+              disabledForegroundColor: Colors.white38,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
+  // ==========================================
+  // ÁREA DA WORKSPACE (Circuito Esquemático ou Físico)
+  // ==========================================
+  Widget _buildWorkspace() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final containerW = constraints.maxWidth;
-        final containerH = constraints.maxHeight;
+        final w = constraints.maxWidth;
+        final h = constraints.maxHeight;
 
-        // Cálculo de escala proporcional BoxFit.cover do background (1672 x 941) sem margens pretas
-        const bgWidth = 1672.0;
-        const bgHeight = 941.0;
-        final scale = math.max(containerW / bgWidth, containerH / bgHeight);
-        final renderedBgW = bgWidth * scale;
-        final renderedBgH = bgHeight * scale;
-        final offsetX = (containerW - renderedBgW) / 2;
-        final offsetY = (containerH - renderedBgH) / 2;
+        // Posições dos 4 Encaixes no Circuito Fechado
+        final batRect = Rect.fromCenter(center: Offset(w * 0.22, h * 0.50), width: w * 0.12, height: h * 0.28);
+        final resRect = Rect.fromCenter(center: Offset(w * 0.50, h * 0.25), width: w * 0.24, height: h * 0.16);
+        final ledRect = Rect.fromCenter(center: Offset(w * 0.78, h * 0.50), width: w * 0.12, height: h * 0.28);
+        final swRect = Rect.fromCenter(center: Offset(w * 0.50, h * 0.75), width: w * 0.24, height: h * 0.16);
 
-        double toX(double rx) => offsetX + rx * renderedBgW;
-        double toY(double ry) => offsetY + ry * renderedBgH;
-        double toW(double rw) => rw * renderedBgW;
-        double toH(double rh) => rh * renderedBgH;
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // 1. Seletor de Modo (Físico | Diagrama) no topo da área livre
+            Positioned(
+              top: 14,
+              left: (w - 200) / 2,
+              child: _buildModeSelector(),
+            ),
 
-        // Coordenadas centrais do circuito na prancheta
-        final batteryX = toX(0.185);
-        final resistorY = toY(0.285);
-        final ledX = toX(0.585);
-        final switchY = toY(0.755);
-
-        // Dimensões compactas dos 4 encaixes
-        final vertSlotW = toW(0.068);
-        final vertSlotH = toH(0.190);
-        final horizSlotW = toW(0.108);
-        final horizSlotH = toH(0.092);
-
-        // Rects dos 4 encaixes para conexão exata dos fios aos terminais
-        final batteryRect = Rect.fromCenter(
-          center: Offset(batteryX, toY(0.520)),
-          width: vertSlotW,
-          height: vertSlotH,
-        );
-        final resistorRect = Rect.fromCenter(
-          center: Offset(toX(0.385), resistorY),
-          width: horizSlotW,
-          height: horizSlotH,
-        );
-        final ledRect = Rect.fromCenter(
-          center: Offset(ledX, toY(0.520)),
-          width: vertSlotW,
-          height: vertSlotH,
-        );
-        final switchRect = Rect.fromCenter(
-          center: Offset(toX(0.385), switchY),
-          width: horizSlotW,
-          height: horizSlotH,
-        );
-
-        return AnimatedBuilder(
-          animation: _shakeController,
-          builder: (context, child) {
-            final shakeOffset = math.sin(_shakeController.value * math.pi * 6) * 6.0;
-            return Transform.translate(
-              offset: Offset(shakeOffset, 0),
-              child: child,
-            );
-          },
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // 1. Fundo Oficial da Prancheta Técnica
-              Positioned.fill(
-                child: Image.asset(
-                  'assets/backgrounds/background_fase_03_prancheta_tecnica.png',
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Image.asset(
-                    'assets/images/backgrounds/background_fase_03_prancheta_tecnica.png',
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-
-              // 2. Fios do circuito (CustomPainter) diretamente conectados aos terminais dos 4 encaixes
+            if (_isDiagramMode) ...[
+              // 2. Traçado ortogonal do circuito (CustomPainter)
               Positioned.fill(
                 child: CustomPaint(
-                  painter: _Phase3TerminalConnectedWirePainter(
-                    batteryRect: batteryRect,
-                    resistorRect: resistorRect,
+                  painter: _OrthogonalCircuitPainter(
+                    batRect: batRect,
+                    resRect: resRect,
                     ledRect: ledRect,
-                    switchRect: switchRect,
-                    cornerRadius: toW(0.022),
+                    swRect: swRect,
                   ),
                 ),
               ),
 
-              // 3. Título e Subtítulo
+              // Indicadores discretos de polaridade (+) e (-)
               Positioned(
-                left: toX(0.06),
-                top: toY(0.045),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Fase 3 — Do componente ao símbolo',
-                      style: TextStyle(
-                        fontFamily: GoogleFonts.rajdhani().fontFamily,
-                        fontSize: math.max(16, toW(0.016)),
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFFEDE7D7),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Transforme o circuito físico em seu diagrama elétrico.',
-                      style: TextStyle(
-                        fontFamily: GoogleFonts.outfit().fontFamily,
-                        fontSize: math.max(11, toW(0.010)),
-                        color: Colors.white70,
-                      ),
-                    ),
-                  ],
-                ),
+                left: batRect.right + 6,
+                top: batRect.top + 6,
+                child: const Text('+', style: TextStyle(color: Color(0xFFEDE7D7), fontSize: 18, fontWeight: FontWeight.bold)),
+              ),
+              Positioned(
+                left: batRect.right + 6,
+                bottom: (h - batRect.bottom) + 6,
+                child: const Text('−', style: TextStyle(color: Color(0xFFEDE7D7), fontSize: 20, fontWeight: FontWeight.bold)),
+              ),
+              Positioned(
+                right: (w - ledRect.left) + 6,
+                top: ledRect.top + 6,
+                child: const Text('+', style: TextStyle(color: Color(0xFFEDE7D7), fontSize: 18, fontWeight: FontWeight.bold)),
+              ),
+              Positioned(
+                right: (w - ledRect.left) + 6,
+                bottom: (h - ledRect.bottom) + 6,
+                child: const Text('−', style: TextStyle(color: Color(0xFFEDE7D7), fontSize: 20, fontWeight: FontWeight.bold)),
               ),
 
-              // 4. Seletor de Modo (Físico | Diagrama) centralizado acima da prancheta
+              // 3. Os 4 Encaixes Interativos (Slots)
+              _buildSlotWidget(Phase3SlotId.battery, batRect, isVertical: true),
+              _buildSlotWidget(Phase3SlotId.resistor, resRect, isVertical: false),
+              _buildSlotWidget(Phase3SlotId.led, ledRect, isVertical: true),
+              _buildSlotWidget(Phase3SlotId.switchComp, swRect, isVertical: false),
+            ] else ...[
+              // Modo Físico de Consulta (Bancada Real)
               Positioned(
-                left: toX(0.40),
-                top: toY(0.040),
-                child: _buildModeSelector(),
+                left: batRect.left,
+                top: batRect.top,
+                width: batRect.width,
+                height: batRect.height,
+                child: Image.asset('assets/components/battery.png', fit: BoxFit.contain),
               ),
-
-              // 5. Circuito Central: Encaixes ou Componentes Físicos
-              if (_isDiagramMode) ...[
-                // Modo Diagrama: Exibe os 4 Encaixes com Pistas Transparentes & Símbolos
-                _buildSlotWidget(
-                  slotKey: SlotId.battery,
-                  rect: batteryRect,
-                  clueAsset: 'assets/components/battery.png',
-                  isVertical: true,
-                ),
-                _buildSlotWidget(
-                  slotKey: SlotId.resistor,
-                  rect: resistorRect,
-                  clueAsset: 'assets/components/resistor.png',
-                  isVertical: false,
-                ),
-                _buildSlotWidget(
-                  slotKey: SlotId.led,
-                  rect: ledRect,
-                  clueAsset: 'assets/components/led_off.png',
-                  isVertical: true,
-                  allowRotation: true,
-                ),
-                _buildSlotWidget(
-                  slotKey: SlotId.switchComp,
-                  rect: switchRect,
-                  clueAsset: 'assets/components/switch_open.png',
-                  isVertical: false,
-                ),
-
-                // Indicações de Polaridade discretas na Bateria e LED
-                Positioned(
-                  left: batteryRect.right + 6,
-                  top: batteryRect.top + 2,
-                  child: const Text(
-                    '+',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFEDE7D7)),
-                  ),
-                ),
-                Positioned(
-                  left: batteryRect.right + 6,
-                  bottom: (containerH - batteryRect.bottom) + 2,
-                  child: const Text(
-                    '−',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFEDE7D7)),
-                  ),
-                ),
-                Positioned(
-                  right: (containerW - ledRect.left) + 6,
-                  top: ledRect.top + 2,
-                  child: const Text(
-                    '+',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFEDE7D7)),
-                  ),
-                ),
-                Positioned(
-                  right: (containerW - ledRect.left) + 6,
-                  bottom: (containerH - ledRect.bottom) + 2,
-                  child: const Text(
-                    '−',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFEDE7D7)),
-                  ),
-                ),
-              ] else ...[
-                // Modo Físico de Consulta (Componentes reais totalmente opacos)
-                _buildPhysicalComponentView(
-                  asset: 'assets/components/battery.png',
-                  rect: batteryRect,
-                  isVertical: false,
-                ),
-                _buildPhysicalComponentView(
-                  asset: 'assets/components/resistor.png',
-                  rect: resistorRect,
-                  isVertical: false,
-                ),
-                _buildPhysicalComponentView(
-                  asset: 'assets/components/led_off.png',
-                  rect: ledRect,
-                  isVertical: false,
-                ),
-                _buildPhysicalComponentView(
-                  asset: 'assets/components/switch_open.png',
-                  rect: switchRect,
-                  isVertical: false,
-                ),
-                Positioned(
-                  left: toX(0.22),
-                  top: toY(0.50),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0F172A).withValues(alpha: 0.9),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFF00FF9D)),
-                    ),
-                    child: const Text(
-                      'Modo Físico de Consulta (Sem edição)',
-                      style: TextStyle(fontSize: 11, color: Color(0xFF00FF9D), fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-              ],
-
-              // 6. Biblioteca Lateral em Tom Creme na Área Livre à Direita da Bancada
               Positioned(
-                left: toX(0.75),
-                top: toY(0.12),
-                width: toW(0.22),
-                height: toH(0.74),
-                child: _buildLateralLibraryPanel(),
+                left: resRect.left,
+                top: resRect.top,
+                width: resRect.width,
+                height: resRect.height,
+                child: Image.asset('assets/components/resistor.png', fit: BoxFit.contain),
               ),
-
-              // 7. Rodapé Integrado de Ações (Progresso, Reiniciar, Verificar, Ajuda)
               Positioned(
-                left: toX(0.04),
-                bottom: toY(0.03),
-                width: toW(0.93),
-                child: _buildBottomControls(isAllFilled, filledCount),
+                left: ledRect.left,
+                top: ledRect.top,
+                width: ledRect.width,
+                height: ledRect.height,
+                child: Image.asset('assets/components/led_off.png', fit: BoxFit.contain),
+              ),
+              Positioned(
+                left: swRect.left,
+                top: swRect.top,
+                width: swRect.width,
+                height: swRect.height,
+                child: Image.asset('assets/components/switch_open.png', fit: BoxFit.contain),
+              ),
+              Positioned(
+                left: (w - 280) / 2,
+                top: h * 0.48,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0F172A).withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: SecondBenchLayoutTokens.primaryGreen),
+                  ),
+                  child: const Text(
+                    'Modo Físico de Consulta (Sem Edição)',
+                    style: TextStyle(color: SecondBenchLayoutTokens.primaryGreen, fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
+                ),
               ),
             ],
-          ),
+          ],
         );
       },
     );
   }
 
-  // --- SELETOR DE MODO (Físico | Diagrama) ---
   Widget _buildModeSelector() {
     return Container(
-      padding: const EdgeInsets.all(3),
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: const Color(0xFF061811).withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF00FF9D).withValues(alpha: 0.5)),
+        border: Border.all(color: SecondBenchLayoutTokens.primaryGreen.withValues(alpha: 0.5)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -677,18 +465,18 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> with SingleTicker
       borderRadius: BorderRadius.circular(16),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFF0A2E20) : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
-          border: isSelected ? Border.all(color: const Color(0xFF00FF9D), width: 1.2) : null,
+          border: isSelected ? Border.all(color: SecondBenchLayoutTokens.primaryGreen, width: 1.2) : null,
         ),
         child: Text(
           title,
           style: TextStyle(
             fontFamily: GoogleFonts.rajdhani().fontFamily,
             fontWeight: FontWeight.bold,
-            fontSize: 13,
+            fontSize: 13.5,
             color: isSelected ? Colors.white : Colors.white60,
           ),
         ),
@@ -696,46 +484,16 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> with SingleTicker
     );
   }
 
-  // --- COMPONENTE FÍSICO (Modo Físico de Consulta) ---
-  Widget _buildPhysicalComponentView({
-    required String asset,
-    required Rect rect,
-    required bool isVertical,
-  }) {
-    return Positioned(
-      left: rect.left,
-      top: rect.top,
-      width: rect.width,
-      height: rect.height,
-      child: Center(
-        child: Transform.rotate(
-          angle: isVertical ? math.pi / 2 : 0,
-          child: Image.asset(
-            asset,
-            fit: BoxFit.contain,
-          ),
-        ),
-      ),
-    );
-  }
-
-  // --- ENCAIXE (SLOT) COMPACTO DO CIRCUITO NO MODO DIAGRAMA ---
-  Widget _buildSlotWidget({
-    required SlotId slotKey,
-    required Rect rect,
-    required String clueAsset,
-    required bool isVertical,
-    bool allowRotation = false,
-  }) {
-    final symbolPlaced = _slots[slotKey];
-    final validation = _slotStatus[slotKey];
+  Widget _buildSlotWidget(Phase3SlotId slotKey, Rect rect, {required bool isVertical}) {
+    final placedSymbol = _slots[slotKey];
+    final validation = _slotValidation[slotKey];
 
     return Positioned(
       left: rect.left,
       top: rect.top,
       width: rect.width,
       height: rect.height,
-      child: DragTarget<SymbolItemData>(
+      child: DragTarget<Phase3SymbolType>(
         onAcceptWithDetails: (details) {
           _assignSymbolToSlot(slotKey, details.data);
         },
@@ -744,48 +502,44 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> with SingleTicker
 
           Color borderColor;
           if (validation == true) {
-            borderColor = const Color(0xFF00FF9D);
+            borderColor = SecondBenchLayoutTokens.primaryGreen;
           } else if (validation == false) {
             borderColor = const Color(0xFFFF5252);
           } else if (isHovering) {
-            borderColor = const Color(0xFF00FF9D);
-          } else if (symbolPlaced != null) {
+            borderColor = SecondBenchLayoutTokens.primaryGreen;
+          } else if (placedSymbol != null) {
             borderColor = const Color(0xFF38BDF8);
           } else {
-            borderColor = const Color(0xFFD6CFC0).withValues(alpha: 0.5);
+            borderColor = const Color(0xFFD6CFC0).withValues(alpha: 0.6);
           }
 
           return InkWell(
             onTap: () {
               if (_selectedLibrarySymbol != null) {
                 _assignSymbolToSlot(slotKey, _selectedLibrarySymbol!);
-              } else if (symbolPlaced != null) {
-                if (allowRotation && symbolPlaced.type == ComponentType.led) {
-                  _toggleLedOrientation(slotKey);
-                } else {
-                  _removeSymbolFromSlot(slotKey);
-                }
+              } else if (placedSymbol != null) {
+                _removeSymbolFromSlot(slotKey);
               }
             },
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               decoration: BoxDecoration(
                 color: isHovering
-                    ? const Color(0xFF00FF9D).withValues(alpha: 0.15)
+                    ? SecondBenchLayoutTokens.primaryGreen.withValues(alpha: 0.15)
                     : const Color(0xFF071B12).withValues(alpha: 0.95),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: borderColor,
-                  width: (isHovering || validation != null) ? 2.5 : 1.2,
+                  width: (isHovering || validation != null) ? 2.5 : 1.4,
                 ),
                 boxShadow: isHovering
                     ? [
                         BoxShadow(
-                          color: const Color(0xFF00FF9D).withValues(alpha: 0.4),
+                          color: SecondBenchLayoutTokens.primaryGreen.withValues(alpha: 0.4),
                           blurRadius: 10,
                           spreadRadius: 2,
-                        )
+                        ),
                       ]
                     : const [
                         BoxShadow(color: Colors.black38, blurRadius: 4, offset: Offset(0, 2)),
@@ -794,68 +548,34 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> with SingleTicker
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  // 1. Pista Física Transparente
-                  Opacity(
-                    opacity: symbolPlaced != null ? 0.05 : 0.30,
-                    child: Image.asset(
-                      clueAsset,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-
-                  // 2. Símbolo Elétrico Posicionado
-                  if (symbolPlaced != null)
-                    Transform.rotate(
-                      angle: symbolPlaced.isRotated ? math.pi : 0,
-                      child: Padding(
-                        padding: const EdgeInsets.all(6),
-                        child: CustomPaint(
-                          painter: CircuitSymbolPainter(
-                            type: symbolPlaced.type,
-                            isActive: symbolPlaced.isSwitchOpen,
-                            color: validation == false
-                                ? const Color(0xFFFF5252)
-                                : const Color(0xFF00FF9D),
-                            activeColor: const Color(0xFF00FF9D),
-                            strokeWidth: 2.4,
-                            isVertical: isVertical,
-                          ),
-                          child: const SizedBox.expand(),
-                        ),
+                  if (placedSymbol != null)
+                    CustomPaint(
+                      size: Size(rect.width * 0.8, rect.height * 0.8),
+                      painter: _Phase3SymbolPainter(
+                        symbolType: placedSymbol,
+                        color: const Color(0xFFEDE7D7),
+                        isVertical: isVertical,
                       ),
-                    ),
-
-                  // 3. Indicador visual de confirmação ou erro
-                  if (validation == true)
-                    const Positioned(
-                      top: 3,
-                      right: 3,
-                      child: Icon(Icons.check_circle_rounded, color: Color(0xFF00FF9D), size: 14),
                     )
-                  else if (validation == false)
-                    const Positioned(
-                      top: 3,
-                      right: 3,
-                      child: Icon(Icons.cancel_rounded, color: Color(0xFFFF5252), size: 14),
-                    ),
-
-                  // 4. Botão discreto para inverter rotação do LED (se aplicável)
-                  if (allowRotation && symbolPlaced != null && symbolPlaced.type == ComponentType.led)
-                    Positioned(
-                      bottom: 2,
-                      right: 2,
-                      child: InkWell(
-                        onTap: () => _toggleLedOrientation(slotKey),
-                        child: Container(
-                          padding: const EdgeInsets.all(2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF0F172A),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: const Color(0xFF00FF9D)),
-                          ),
-                          child: const Icon(Icons.screen_rotation_rounded, size: 10, color: Color(0xFF00FF9D)),
+                  else
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.add_circle_outline_rounded,
+                          size: 22,
+                          color: Colors.white.withValues(alpha: 0.4),
                         ),
-                      ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Encaixe',
+                          style: TextStyle(
+                            fontFamily: GoogleFonts.rajdhani().fontFamily,
+                            fontSize: 11,
+                            color: Colors.white.withValues(alpha: 0.5),
+                          ),
+                        ),
+                      ],
                     ),
                 ],
               ),
@@ -866,323 +586,259 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> with SingleTicker
     );
   }
 
-  // --- PAINEL DA BIBLIOTECA LATERAL EM TOM CREME ---
-  Widget _buildLateralLibraryPanel() {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFFAF6EE),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF2C3E33), width: 1.2),
-        boxShadow: const [
-          BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4)),
-        ],
-      ),
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        children: [
-          Text(
-            'Símbolos disponíveis',
-            style: TextStyle(
-              fontFamily: GoogleFonts.rajdhani().fontFamily,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF1B2E24),
-            ),
-          ),
-          const SizedBox(height: 10),
+  // ==========================================
+  // PAINEL LATERAL (Biblioteca Exclusiva de Símbolos Esquemáticos)
+  // ==========================================
+  Widget _buildSidePanel() {
+    final gridItems = _librarySymbols.map((sym) {
+      final label = switch (sym) {
+        Phase3SymbolType.battery => 'Bateria',
+        Phase3SymbolType.resistor => 'Resistor',
+        Phase3SymbolType.led => 'LED',
+        Phase3SymbolType.switchComponent => 'Interruptor',
+        Phase3SymbolType.lamp => 'Lâmpada',
+        Phase3SymbolType.diode => 'Diodo',
+      };
 
-          // Grid de 6 Símbolos Embaralhados (2 colunas x 3 linhas)
-          Expanded(
-            child: GridView.builder(
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
-                childAspectRatio: 1.0,
-              ),
-              itemCount: _availableLibrarySymbols.length,
-              itemBuilder: (context, index) {
-                final symbol = _availableLibrarySymbols[index];
-                final isAssigned = _slots.values.any((val) => val?.id == symbol.id);
-                final isSelected = _selectedLibrarySymbol?.id == symbol.id;
+      final isSelected = _selectedLibrarySymbol == sym;
+      final isUsedInSlot = _slots.containsValue(sym);
 
-                return _buildLibrarySymbolCard(symbol, isAssigned, isSelected);
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLibrarySymbolCard(SymbolItemData symbol, bool isAssigned, bool isSelected) {
-    final cardWidget = Container(
-      decoration: BoxDecoration(
-        color: isSelected ? const Color(0xFFE5DEC9) : const Color(0xFFEFEAD8),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isSelected ? const Color(0xFF00FF9D) : const Color(0xFFD6CFC0),
-          width: isSelected ? 2.0 : 1.0,
-        ),
-      ),
-      padding: const EdgeInsets.all(8),
-      child: Center(
-        child: CustomPaint(
-          painter: CircuitSymbolPainter(
-            type: symbol.type,
-            isActive: symbol.isSwitchOpen,
-            color: isAssigned ? const Color(0xFF9E988A) : const Color(0xFF0F1D15),
+      return SecondBenchGridItemData<Phase3SymbolType>(
+        id: sym.name,
+        value: sym,
+        label: label,
+        isSelected: isSelected,
+        isDisabled: isUsedInSlot,
+        customPainterWidget: CustomPaint(
+          size: const Size(64, 40),
+          painter: _Phase3SymbolPainter(
+            symbolType: sym,
+            color: isUsedInSlot ? Colors.grey : const Color(0xFF1E293B),
             strokeWidth: 2.2,
           ),
-          child: const SizedBox.expand(),
         ),
-      ),
-    );
-
-    if (isAssigned) {
-      return Opacity(
-        opacity: 0.25,
-        child: cardWidget,
       );
-    }
+    }).toList();
 
-    return Draggable<SymbolItemData>(
-      data: symbol,
-      feedback: Material(
-        color: Colors.transparent,
-        child: Container(
-          width: 80,
-          height: 80,
-          decoration: BoxDecoration(
-            color: const Color(0xFFFAF6EE),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFF00FF9D), width: 2.0),
-            boxShadow: const [
-              BoxShadow(color: Colors.black38, blurRadius: 12, offset: Offset(0, 4)),
-            ],
-          ),
-          padding: const EdgeInsets.all(8),
-          child: CustomPaint(
-            painter: CircuitSymbolPainter(
-              type: symbol.type,
-              isActive: symbol.isSwitchOpen,
-              color: const Color(0xFF0F1D15),
-              strokeWidth: 2.5,
-            ),
-            child: const SizedBox.expand(),
-          ),
-        ),
-      ),
-      childWhenDragging: Opacity(
-        opacity: 0.3,
-        child: cardWidget,
-      ),
-      child: InkWell(
-        onTap: () {
+    return SecondBenchSidePanel(
+      title: 'Biblioteca de Símbolos',
+      subtitle: 'Selecione ou arraste os símbolos esquemáticos para o circuito.',
+      icon: Icons.auto_awesome_mosaic_rounded,
+      child: SecondBenchItemGrid<Phase3SymbolType>(
+        items: gridItems,
+        assetHeight: 52,
+        onItemTap: (item) {
           setState(() {
-            _selectedLibrarySymbol = isSelected ? null : symbol;
+            _selectedLibrarySymbol = item.isSelected ? null : item.value;
           });
         },
-        borderRadius: BorderRadius.circular(12),
-        child: cardWidget,
-      ),
-    );
-  }
-
-  // --- RODAPÉ INTEGRADO DE AÇÕES (Progresso, Reiniciar, Verificar, Ajuda) ---
-  Widget _buildBottomControls(bool isAllFilled, int filledCount) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF082218).withValues(alpha: 0.95),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF1B382B), width: 1.2),
-        boxShadow: const [
-          BoxShadow(color: Colors.black45, blurRadius: 10, offset: Offset(0, 4)),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          // Ponto verde indicador e contador de progresso
-          Container(
-            width: 10,
-            height: 10,
-            decoration: const BoxDecoration(
-              color: Color(0xFF00FF9D),
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            '$filledCount de 4 símbolos posicionados',
-            style: TextStyle(
-              fontFamily: GoogleFonts.outfit().fontFamily,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Colors.white,
-            ),
-          ),
-          const Spacer(),
-
-          // Botão Reiniciar
-          OutlinedButton.icon(
-            onPressed: _resetPhase,
-            icon: const Icon(Icons.refresh_rounded, size: 16, color: Colors.white),
-            label: Text(
-              'Reiniciar',
-              style: TextStyle(
-                fontFamily: GoogleFonts.outfit().fontFamily,
-                fontWeight: FontWeight.w500,
-                fontSize: 13,
-                color: Colors.white,
-              ),
-            ),
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: Color(0xFF1B382B)),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-
-          // Botão Verificar diagrama
-          FilledButton.icon(
-            onPressed: isAllFilled ? _checkSolution : null,
-            icon: Icon(
-              isAllFilled ? Icons.check_circle_rounded : Icons.check_circle_outline_rounded,
-              size: 16,
-            ),
-            label: Text(
-              'Verificar diagrama',
-              style: TextStyle(
-                fontFamily: GoogleFonts.outfit().fontFamily,
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-              ),
-            ),
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF00FF9D),
-              foregroundColor: Colors.black,
-              disabledBackgroundColor: const Color(0xFF132D21),
-              disabledForegroundColor: const Color(0xFF4A6356),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-
-          // Botão de Ajuda no Canto Direito do Rodapé
-          IconButton(
-            onPressed: _showHelpDialog,
-            icon: const Icon(Icons.help_outline_rounded, color: Colors.white, size: 20),
-            tooltip: 'Ajuda',
-            style: IconButton.styleFrom(
-              backgroundColor: const Color(0xFF0F2D20),
-              side: const BorderSide(color: Color(0xFF1B382B)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-          ),
-        ],
       ),
     );
   }
 }
 
-/// Painter que desenha os fios contínuos do circuito fechado em curva suave,
-/// conectando-se exatamente aos terminais de entrada e saída dos 4 encaixes.
-class _Phase3TerminalConnectedWirePainter extends CustomPainter {
-  final Rect batteryRect;
-  final Rect resistorRect;
+/// Painter ortogonal da linha do circuito fechado em formato retangular com cantos arredondados
+class _OrthogonalCircuitPainter extends CustomPainter {
+  final Rect batRect;
+  final Rect resRect;
   final Rect ledRect;
-  final Rect switchRect;
-  final double cornerRadius;
+  final Rect swRect;
 
-  _Phase3TerminalConnectedWirePainter({
-    required this.batteryRect,
-    required this.resistorRect,
+  _OrthogonalCircuitPainter({
+    required this.batRect,
+    required this.resRect,
     required this.ledRect,
-    required this.switchRect,
-    required this.cornerRadius,
+    required this.swRect,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final wirePaint = Paint()
-      ..color = const Color(0xFFEDE7D7)
-      ..strokeWidth = 3.2
+    final paint = Paint()
+      ..color = const Color(0xFFEDE7D7) // Linha creme com alto contraste
+      ..strokeWidth = 3.5
       ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    final wireGlowPaint = Paint()
-      ..color = const Color(0xFF00FF9D).withValues(alpha: 0.10)
-      ..strokeWidth = 6.0
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    final batteryX = batteryRect.center.dx;
-    final resistorY = resistorRect.center.dy;
-    final ledX = ledRect.center.dx;
-    final switchY = switchRect.center.dy;
-
-    final R = cornerRadius;
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
 
     final path = Path();
 
-    // Seg. 1: Topo do Encaixe Bateria -> Canto Sup. Esq. -> Esquerda do Encaixe Resistor
-    path.moveTo(batteryX, batteryRect.top);
-    path.lineTo(batteryX, resistorY + R);
-    path.arcToPoint(
-      Offset(batteryX + R, resistorY),
-      radius: Radius.circular(R),
-      clockwise: true,
-    );
-    path.lineTo(resistorRect.left, resistorY);
+    // Circuito ortogonal passando pelos centros das conexões dos 4 slots
+    final leftX = batRect.center.dx;
+    final topY = resRect.center.dy;
+    final rightX = ledRect.center.dx;
+    final bottomY = swRect.center.dy;
 
-    // Seg. 2: Direita do Encaixe Resistor -> Canto Sup. Dir. -> Topo do Encaixe LED
-    path.moveTo(resistorRect.right, resistorY);
-    path.lineTo(ledX - R, resistorY);
-    path.arcToPoint(
-      Offset(ledX, resistorY + R),
-      radius: Radius.circular(R),
-      clockwise: true,
-    );
-    path.lineTo(ledX, ledRect.top);
+    const cornerRadius = 16.0;
 
-    // Seg. 3: Base do Encaixe LED -> Canto Inf. Dir. -> Direita do Encaixe Interruptor
-    path.moveTo(ledX, ledRect.bottom);
-    path.lineTo(ledX, switchY - R);
-    path.arcToPoint(
-      Offset(ledX - R, switchY),
-      radius: Radius.circular(R),
-      clockwise: true,
-    );
-    path.lineTo(switchRect.right, switchY);
+    path.moveTo(leftX, topY + cornerRadius);
+    path.quadraticBezierTo(leftX, topY, leftX + cornerRadius, topY);
+    path.lineTo(rightX - cornerRadius, topY);
+    path.quadraticBezierTo(rightX, topY, rightX, topY + cornerRadius);
+    path.lineTo(rightX, bottomY - cornerRadius);
+    path.quadraticBezierTo(rightX, bottomY, rightX - cornerRadius, bottomY);
+    path.lineTo(leftX + cornerRadius, bottomY);
+    path.quadraticBezierTo(leftX, bottomY, leftX, bottomY - cornerRadius);
+    path.close();
 
-    // Seg. 4: Esquerda do Encaixe Interruptor -> Canto Inf. Esq. -> Base do Encaixe Bateria
-    path.moveTo(switchRect.left, switchY);
-    path.lineTo(batteryX + R, switchY);
-    path.arcToPoint(
-      Offset(batteryX, switchY - R),
-      radius: Radius.circular(R),
-      clockwise: true,
-    );
-    path.lineTo(batteryX, batteryRect.bottom);
-
-    canvas.drawPath(path, wireGlowPaint);
-    canvas.drawPath(path, wirePaint);
+    canvas.drawPath(path, paint);
   }
 
   @override
-  bool shouldRepaint(covariant _Phase3TerminalConnectedWirePainter oldDelegate) {
-    return oldDelegate.batteryRect != batteryRect ||
-        oldDelegate.resistorRect != resistorRect ||
-        oldDelegate.ledRect != ledRect ||
-        oldDelegate.switchRect != switchRect ||
-        oldDelegate.cornerRadius != cornerRadius;
+  bool shouldRepaint(covariant _OrthogonalCircuitPainter oldDelegate) => false;
+}
+
+/// Painter para desenhar os símbolos esquemáticos vetoriais puros (técnicos)
+class _Phase3SymbolPainter extends CustomPainter {
+  final Phase3SymbolType symbolType;
+  final Color color;
+  final double strokeWidth;
+  final bool isVertical;
+
+  _Phase3SymbolPainter({
+    required this.symbolType,
+    required this.color,
+    this.strokeWidth = 2.2,
+    this.isVertical = false,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final fillPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    if (isVertical) {
+      canvas.save();
+      canvas.translate(size.width / 2, size.height / 2);
+      canvas.rotate(math.pi / 2);
+      canvas.translate(-size.height / 2, -size.width / 2);
+      final rotatedSize = Size(size.height, size.width);
+      _drawSymbol(canvas, rotatedSize, rotatedSize.width / 2, rotatedSize.height / 2, paint, fillPaint);
+      canvas.restore();
+    } else {
+      _drawSymbol(canvas, size, size.width / 2, size.height / 2, paint, fillPaint);
+    }
+  }
+
+  void _drawSymbol(Canvas canvas, Size size, double cx, double cy, Paint paint, Paint fillPaint) {
+    final w = size.width;
+
+    switch (symbolType) {
+      case Phase3SymbolType.battery:
+        // Símbolo de Bateria DC: linha maior (+), linha menor (-)
+        canvas.drawLine(Offset(0, cy), Offset(cx - 12, cy), paint);
+        canvas.drawLine(Offset(cx + 12, cy), Offset(w, cy), paint);
+        // Polo Negativo (-) linha curta e mais espessa
+        canvas.drawLine(Offset(cx - 12, cy - 12), Offset(cx - 12, cy + 12), paint..strokeWidth = strokeWidth * 1.8);
+        // Polo Positivo (+) linha longa e fina
+        canvas.drawLine(Offset(cx + 12, cy - 20), Offset(cx + 12, cy + 20), paint..strokeWidth = strokeWidth);
+        break;
+
+      case Phase3SymbolType.resistor:
+        // Símbolo de Resistor: zigue-zague IEEE
+        canvas.drawLine(Offset(0, cy), Offset(cx - 24, cy), paint);
+        canvas.drawLine(Offset(cx + 24, cy), Offset(w, cy), paint);
+
+        final p = Path();
+        p.moveTo(cx - 24, cy);
+        p.lineTo(cx - 18, cy - 10);
+        p.lineTo(cx - 10, cy + 10);
+        p.lineTo(cx - 2, cy - 10);
+        p.lineTo(cx + 6, cy + 10);
+        p.lineTo(cx + 14, cy - 10);
+        p.lineTo(cx + 20, cy + 10);
+        p.lineTo(cx + 24, cy);
+        canvas.drawPath(p, paint);
+        break;
+
+      case Phase3SymbolType.led:
+        // Símbolo de LED: Diodo + 2 setas diagonais para fora
+        _drawDiodeBase(canvas, size, cx, cy, paint, fillPaint);
+
+        // Setas de emissão de luz
+        final arrowPaint = Paint()
+          ..color = color
+          ..strokeWidth = strokeWidth * 0.8
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round;
+
+        canvas.drawLine(Offset(cx - 4, cy - 14), Offset(cx + 6, cy - 24), arrowPaint);
+        canvas.drawLine(Offset(cx + 6, cy - 24), Offset(cx + 2, cy - 24), arrowPaint);
+        canvas.drawLine(Offset(cx + 6, cy - 24), Offset(cx + 6, cy - 20), arrowPaint);
+
+        canvas.drawLine(Offset(cx + 6, cy - 10), Offset(cx + 16, cy - 20), arrowPaint);
+        canvas.drawLine(Offset(cx + 16, cy - 20), Offset(cx + 12, cy - 20), arrowPaint);
+        canvas.drawLine(Offset(cx + 16, cy - 20), Offset(cx + 16, cy - 16), arrowPaint);
+        break;
+
+      case Phase3SymbolType.switchComponent:
+        // Símbolo de Interruptor SPST aberto
+        final p1 = Offset(cx - 18, cy);
+        final p2 = Offset(cx + 18, cy);
+
+        canvas.drawLine(Offset(0, cy), p1, paint);
+        canvas.drawLine(p2, Offset(w, cy), paint);
+
+        canvas.drawCircle(p1, strokeWidth * 1.5, fillPaint);
+        canvas.drawCircle(p2, strokeWidth * 1.5, fillPaint);
+
+        // Haste inclinada aberta
+        canvas.drawLine(p1, Offset(p1.dx + 22, cy - 16), paint);
+        break;
+
+      case Phase3SymbolType.lamp:
+        // Símbolo de Lâmpada Incandescente (Círculo com X) - Distrator
+        final radius = 16.0;
+        canvas.drawLine(Offset(0, cy), Offset(cx - radius, cy), paint);
+        canvas.drawLine(Offset(cx + radius, cy), Offset(w, cy), paint);
+
+        canvas.drawCircle(Offset(cx, cy), radius, paint);
+
+        final offset = radius * 0.707;
+        canvas.drawLine(Offset(cx - offset, cy - offset), Offset(cx + offset, cy + offset), paint);
+        canvas.drawLine(Offset(cx - offset, cy + offset), Offset(cx + offset, cy - offset), paint);
+        break;
+
+      case Phase3SymbolType.diode:
+        // Símbolo de Diodo Retificador (sem setas) - Distrator
+        _drawDiodeBase(canvas, size, cx, cy, paint, fillPaint);
+        break;
+    }
+  }
+
+  void _drawDiodeBase(Canvas canvas, Size size, double cx, double cy, Paint paint, Paint fillPaint) {
+    final w = size.width;
+    final triW = 24.0;
+    final triH = 22.0;
+
+    final pLeft = cx - triW / 2;
+    final pRight = cx + triW / 2;
+
+    canvas.drawLine(Offset(0, cy), Offset(pLeft, cy), paint);
+    canvas.drawLine(Offset(pRight, cy), Offset(w, cy), paint);
+
+    final path = Path()
+      ..moveTo(pLeft, cy - triH / 2)
+      ..lineTo(pRight, cy)
+      ..lineTo(pLeft, cy + triH / 2)
+      ..close();
+
+    canvas.drawPath(path, paint);
+    canvas.drawLine(Offset(pRight, cy - triH / 2), Offset(pRight, cy + triH / 2), paint..strokeWidth = strokeWidth * 1.4);
+  }
+
+  @override
+  bool shouldRepaint(covariant _Phase3SymbolPainter oldDelegate) {
+    return oldDelegate.symbolType != symbolType ||
+        oldDelegate.color != color ||
+        oldDelegate.strokeWidth != strokeWidth ||
+        oldDelegate.isVertical != isVertical;
   }
 }

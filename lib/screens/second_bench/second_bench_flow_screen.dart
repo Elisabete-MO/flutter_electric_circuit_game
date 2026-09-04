@@ -5,13 +5,12 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../models/second_bench_flow.dart';
 import '../../state/progress_controller.dart';
-import '../../widgets/eletrolab_header_brand.dart';
 import '../../widgets/glass_container.dart';
-import '../../widgets/tech_grid_background.dart';
 import 'second_bench_phase1.dart';
 import 'second_bench_phase2.dart';
 import 'second_bench_phase3.dart';
 import 'second_bench_phase4.dart';
+import 'widgets/second_bench_header.dart';
 
 /// Coordenador principal do fluxo do Segundo Estande - Acende Aí (4 Fases).
 class SecondBenchFlowScreen extends ConsumerStatefulWidget {
@@ -175,144 +174,27 @@ class _SecondBenchFlowScreenState extends ConsumerState<SecondBenchFlowScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFF021712),
-      body: TechGridBackground(
-        child: SafeArea(
-          child: Column(
-            children: [
-              // Barra Superior de Controle e Progresso das Fases
-              _buildHeaderBar(context),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Cabeçalho único padronizado no topo do Estande 2
+            SecondBenchHeader(
+              currentPhaseId: _flowState.currentPhaseId,
+              completedPhaseIds: _flowState.completedPhaseIds,
+              unlockedPhaseIds: _flowState.unlockedPhaseIds,
+              onSelectPhase: _navigateToPhase,
+              onBack: () => Navigator.of(context).maybePop(),
+            ),
 
-              // Conteúdo da Fase Ativa
-              Expanded(
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  child: _buildCurrentPhaseWidget(),
-                ),
+            // Conteúdo Ativo da Fase com Scaffold Compartilhado
+            Expanded(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                child: _buildCurrentPhaseWidget(),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildHeaderBar(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F172A).withValues(alpha: 0.85),
-        border: const Border(
-          bottom: BorderSide(color: Color(0xFF1E293B), width: 1.5),
-        ),
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final isCompact = constraints.maxWidth < 600;
-
-          return Row(
-            children: [
-              // Botão de Voltar ao Mapa
-              IconButton(
-                icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-                tooltip: 'Voltar ao Mapa',
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-
-              if (!isCompact) ...[
-                const EletroLabHeaderBrand(compact: true),
-                const SizedBox(width: 16),
-              ],
-
-              // Indicadores de Progresso das 4 Fases
-              Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(4, (index) {
-                    final phaseId = index + 1;
-                    final isCurrent = _flowState.currentPhaseId == phaseId;
-                    final isCompleted = _flowState.completedPhaseIds.contains(phaseId);
-                    final isUnlocked = _flowState.isUnlocked(phaseId);
-
-                    Color stepColor;
-                    if (isCurrent) {
-                      stepColor = const Color(0xFF00FF9D);
-                    } else if (isCompleted) {
-                      stepColor = const Color(0xFF10B981);
-                    } else if (isUnlocked) {
-                      stepColor = Colors.white54;
-                    } else {
-                      stepColor = const Color(0xFF334155);
-                    }
-
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: InkWell(
-                        onTap: isUnlocked ? () => _navigateToPhase(phaseId) : null,
-                        borderRadius: BorderRadius.circular(20),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: EdgeInsets.symmetric(
-                            horizontal: isCompact ? 8 : 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: stepColor.withValues(alpha: isCurrent ? 0.2 : 0.1),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: stepColor,
-                              width: isCurrent ? 2 : 1,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (isCompleted)
-                                Icon(Icons.check_circle_rounded, size: 16, color: stepColor)
-                              else if (!isUnlocked)
-                                const Icon(Icons.lock_rounded, size: 14, color: Color(0xFF64748B))
-                              else
-                                Text(
-                                  '$phaseId',
-                                  style: TextStyle(
-                                    fontFamily: GoogleFonts.rajdhani().fontFamily,
-                                    fontWeight: FontWeight.bold,
-                                    color: stepColor,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              if (!isCompact) ...[
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Fase $phaseId',
-                                  style: TextStyle(
-                                    fontFamily: GoogleFonts.rajdhani().fontFamily,
-                                    fontWeight: isCurrent ? FontWeight.bold : FontWeight.w500,
-                                    color: stepColor,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-              ),
-
-              // Botão Repetir Fase Atual (se concluída)
-              if (_flowState.completedPhaseIds.contains(_flowState.currentPhaseId))
-                IconButton(
-                  icon: const Icon(Icons.refresh_rounded, color: Color(0xFF10B981)),
-                  tooltip: 'Repetir esta fase',
-                  onPressed: () {
-                    setState(() {});
-                  },
-                ),
-            ],
-          );
-        },
       ),
     );
   }
@@ -320,18 +202,23 @@ class _SecondBenchFlowScreenState extends ConsumerState<SecondBenchFlowScreen> {
   Widget _buildCurrentPhaseWidget() {
     return switch (_flowState.currentPhaseId) {
       1 => SecondBenchPhase1(
+          key: const ValueKey(1),
           onPhaseComplete: () => _onPhaseCompleted(1),
         ),
       2 => SecondBenchPhase2(
+          key: const ValueKey(2),
           onPhaseComplete: () => _onPhaseCompleted(2),
         ),
       3 => SecondBenchPhase3(
+          key: const ValueKey(3),
           onPhaseComplete: () => _onPhaseCompleted(3),
         ),
       4 => SecondBenchPhase4(
+          key: const ValueKey(4),
           onPhaseComplete: () => _onPhaseCompleted(4),
         ),
       _ => SecondBenchPhase1(
+          key: const ValueKey(1),
           onPhaseComplete: () => _onPhaseCompleted(1),
         ),
     };

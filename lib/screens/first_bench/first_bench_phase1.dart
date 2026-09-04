@@ -61,10 +61,15 @@ class _FirstBenchPhase1State extends State<FirstBenchPhase1> {
     }
   }
 
+  bool _isLearnMoreExpanded = false;
+  bool _isCheckAnswerRevealed = false;
+
   void _selectComponent(int index) {
     setState(() {
       _selectedIndex = index;
       _exploredIds.add(_components[index].id);
+      _isLearnMoreExpanded = false;
+      _isCheckAnswerRevealed = false;
     });
   }
 
@@ -944,103 +949,199 @@ class _FirstBenchPhase1State extends State<FirstBenchPhase1> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  item.name,
-                  style: TextStyle(
-                    fontFamily: GoogleFonts.rajdhani().fontFamily,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF03241B),
+                Expanded(
+                  child: Text(
+                    item.name,
+                    style: TextStyle(
+                      fontFamily: GoogleFonts.rajdhani().fontFamily,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF03241B),
+                    ),
                   ),
                 ),
-                Icon(item.icon, color: const Color(0xFF04382B), size: 26),
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF04382B),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(item.icon, color: const Color(0xFF10B981), size: 22),
+                ),
               ],
             ),
-            const Divider(color: Color(0xFFCBD5E1), height: 20),
+            const Divider(color: Color(0xFFCBD5E1), height: 18),
 
-            // Função
+            // Resumo didático curto
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE2E8F0),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                item.shortDescription,
+                style: TextStyle(
+                  fontFamily: GoogleFonts.outfit().fontFamily,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF1E293B),
+                  height: 1.35,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Função Principal
             _buildInfoSection(
               icon: Icons.bolt_rounded,
-              title: 'Função',
-              description: item.functionText,
+              title: 'Função Principal',
+              description: item.function,
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
 
             // Terminais
             _buildInfoSection(
               icon: Icons.alt_route_rounded,
               title: 'Terminais',
-              description: item.terminalsText,
+              description: item.terminals,
             ),
 
-            // Ilustração Didática para LED vermelho
-            if (item.type == ComponentType.led) ...[
+            // Polaridade (quando aplicável)
+            if (item.polarity != null) ...[
+              const SizedBox(height: 12),
+              _buildInfoSection(
+                icon: Icons.compare_arrows_rounded,
+                title: 'Polaridade',
+                description: item.polarity!,
+              ),
+            ],
+            const SizedBox(height: 12),
+
+            // Como Reconhecer
+            _buildInfoSection(
+              icon: Icons.visibility_rounded,
+              title: 'Como Reconhecer',
+              description: item.identification,
+            ),
+            const SizedBox(height: 12),
+
+            // Comportamento no Circuito
+            _buildInfoSection(
+              icon: Icons.settings_input_component_rounded,
+              title: 'Comportamento no Circuito',
+              description: item.behavior,
+            ),
+            const SizedBox(height: 14),
+
+            // Cuidado de Segurança (Destaque visual discreto de segurança)
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF7ED),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFFDBA74), width: 1.5),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.warning_amber_rounded,
+                        color: Color(0xFFEA580C),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Cuidado de Segurança',
+                        style: TextStyle(
+                          fontFamily: GoogleFonts.rajdhani().fontFamily,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFFC2410C),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    item.safety,
+                    style: TextStyle(
+                      fontFamily: GoogleFonts.outfit().fontFamily,
+                      fontSize: 12.5,
+                      color: const Color(0xFF7C2D12),
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 14),
+
+            // Seção Expansível "Saiba mais"
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _isLearnMoreExpanded = !_isLearnMoreExpanded;
+                  });
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF04382B),
+                  side: const BorderSide(color: Color(0xFF04382B), width: 1.2),
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  minimumSize: const Size(44, 44),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                icon: Icon(
+                  _isLearnMoreExpanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+                  size: 20,
+                ),
+                label: Text(
+                  _isLearnMoreExpanded ? 'Ocultar detalhes' : 'Saiba mais',
+                  style: TextStyle(
+                    fontFamily: GoogleFonts.rajdhani().fontFamily,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+
+            if (_isLearnMoreExpanded) ...[
               const SizedBox(height: 10),
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: const Color(0xFFCBD5E1)),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Column(
-                      children: [
-                        Text(
-                          '+',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.red[700],
-                          ),
-                        ),
-                        Text(
-                          'ÂNODO',
-                          style: TextStyle(
-                            fontFamily: GoogleFonts.rajdhani().fontFamily,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF03241B),
-                          ),
-                        ),
-                        const Text(
-                          '(perna longa)',
-                          style: TextStyle(fontSize: 9, color: Colors.black54),
-                        ),
-                      ],
+                    Text(
+                      item.learnMore,
+                      style: TextStyle(
+                        fontFamily: GoogleFonts.outfit().fontFamily,
+                        fontSize: 12.5,
+                        color: const Color(0xFF334155),
+                        height: 1.35,
+                      ),
                     ),
-                    Image.asset(
-                      'assets/components/led_off.png',
-                      height: 48,
-                      errorBuilder: (_, _, _) => const Icon(Icons.lightbulb, size: 36, color: Colors.red),
-                    ),
-                    Column(
-                      children: [
-                        const Text(
-                          '−',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        Text(
-                          'CÁTODO',
-                          style: TextStyle(
-                            fontFamily: GoogleFonts.rajdhani().fontFamily,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF03241B),
-                          ),
-                        ),
-                        const Text(
-                          '(perna curta)',
-                          style: TextStyle(fontSize: 9, color: Colors.black54),
-                        ),
-                      ],
-                    ),
+                    if (item.type == ComponentType.resistor) ...[
+                      const SizedBox(height: 10),
+                      _buildResistorColorCodeTable(),
+                    ],
+                    if (item.type == ComponentType.led) ...[
+                      const SizedBox(height: 10),
+                      _buildLedDiagram(),
+                    ],
                   ],
                 ),
               ),
@@ -1048,11 +1149,106 @@ class _FirstBenchPhase1State extends State<FirstBenchPhase1> {
 
             const SizedBox(height: 14),
 
-            // Cuidado
-            _buildInfoSection(
-              icon: Icons.warning_amber_rounded,
-              title: 'Cuidado',
-              description: item.cautionText,
+            // Pergunta curta de checagem
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.quiz_rounded,
+                        color: Color(0xFF04382B),
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Checagem rápida',
+                        style: TextStyle(
+                          fontFamily: GoogleFonts.rajdhani().fontFamily,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF03241B),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    item.checkQuestion,
+                    style: TextStyle(
+                      fontFamily: GoogleFonts.outfit().fontFamily,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF1E293B),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        _isCheckAnswerRevealed = !_isCheckAnswerRevealed;
+                      });
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFF04382B),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      minimumSize: const Size(44, 44),
+                    ),
+                    icon: Icon(
+                      _isCheckAnswerRevealed ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                      size: 16,
+                    ),
+                    label: Text(
+                      _isCheckAnswerRevealed ? 'Ocultar resposta' : 'Ver resposta',
+                      style: TextStyle(
+                        fontFamily: GoogleFonts.rajdhani().fontFamily,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  if (_isCheckAnswerRevealed) ...[
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFECFDF5),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFF059669).withValues(alpha: 0.5)),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.check_circle_rounded,
+                            color: Color(0xFF059669),
+                            size: 16,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              item.checkAnswer,
+                              style: TextStyle(
+                                fontFamily: GoogleFonts.outfit().fontFamily,
+                                fontSize: 12,
+                                color: const Color(0xFF065F46),
+                                height: 1.3,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
 
             const SizedBox(height: 16),
@@ -1116,6 +1312,202 @@ class _FirstBenchPhase1State extends State<FirstBenchPhase1> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildLedDiagram() {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          Column(
+            children: [
+              Text(
+                '+',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red[700],
+                ),
+              ),
+              Text(
+                'ÂNODO',
+                style: TextStyle(
+                  fontFamily: GoogleFonts.rajdhani().fontFamily,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF03241B),
+                ),
+              ),
+              const Text(
+                '(perna longa)',
+                style: TextStyle(fontSize: 9, color: Colors.black54),
+              ),
+            ],
+          ),
+          Image.asset(
+            'assets/components/led_off.png',
+            height: 48,
+            errorBuilder: (_, _, _) => const Icon(Icons.lightbulb, size: 36, color: Colors.red),
+          ),
+          Column(
+            children: [
+              const Text(
+                '−',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              Text(
+                'CÁTODO',
+                style: TextStyle(
+                  fontFamily: GoogleFonts.rajdhani().fontFamily,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF03241B),
+                ),
+              ),
+              const Text(
+                '(perna curta)',
+                style: TextStyle(fontSize: 9, color: Colors.black54),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildResistorColorCodeTable() {
+    const tableData = [
+      {'color': 'Preto', 'dot': Colors.black, 'val': '0', 'mult': '×1', 'tol': '—'},
+      {'color': 'Marrom', 'dot': Color(0xFF795548), 'val': '1', 'mult': '×10', 'tol': '±1%'},
+      {'color': 'Vermelho', 'dot': Colors.red, 'val': '2', 'mult': '×100', 'tol': '±2%'},
+      {'color': 'Laranja', 'dot': Colors.orange, 'val': '3', 'mult': '×1.000', 'tol': '—'},
+      {'color': 'Amarelo', 'dot': Colors.yellow, 'val': '4', 'mult': '×10.000', 'tol': '—'},
+      {'color': 'Verde', 'dot': Colors.green, 'val': '5', 'mult': '×100.000', 'tol': '±0,5%'},
+      {'color': 'Azul', 'dot': Colors.blue, 'val': '6', 'mult': '×1.000.000', 'tol': '±0,25%'},
+      {'color': 'Violeta', 'dot': Colors.purple, 'val': '7', 'mult': '×10.000.000', 'tol': '±0,1%'},
+      {'color': 'Cinza', 'dot': Colors.grey, 'val': '8', 'mult': '×100.000.000', 'tol': '±0,05%'},
+      {'color': 'Branco', 'dot': Colors.white, 'val': '9', 'mult': '×1.000.000.000', 'tol': '—'},
+      {'color': 'Dourado', 'dot': Color(0xFFFFD700), 'val': '—', 'mult': '×0,1', 'tol': '±5%'},
+      {'color': 'Prateado', 'dot': Color(0xFFC0C0C0), 'val': '—', 'mult': '×0,01', 'tol': '±10%'},
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Tabela de Código de Cores (4 Faixas):',
+          style: TextStyle(
+            fontFamily: GoogleFonts.rajdhani().fontFamily,
+            fontSize: 13.5,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF03241B),
+          ),
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            color: Colors.white,
+            child: Table(
+              columnWidths: const {
+                0: FlexColumnWidth(2.2),
+                1: FlexColumnWidth(1.0),
+                2: FlexColumnWidth(1.8),
+                3: FlexColumnWidth(1.2),
+              },
+              border: TableBorder.all(color: const Color(0xFFCBD5E1), width: 0.5),
+              children: [
+                TableRow(
+                  decoration: const BoxDecoration(color: Color(0xFFE2E8F0)),
+                  children: [
+                    _buildTableCell('Cor', isHeader: true),
+                    _buildTableCell('Alg.', isHeader: true),
+                    _buildTableCell('Mult.', isHeader: true),
+                    _buildTableCell('Tol.', isHeader: true),
+                  ],
+                ),
+                ...tableData.map((row) {
+                  final colorName = row['color'] as String;
+                  final dotColor = row['dot'] as Color;
+                  final val = row['val'] as String;
+                  final mult = row['mult'] as String;
+                  final tol = row['tol'] as String;
+                  final is680Band = colorName == 'Azul' ||
+                      colorName == 'Cinza' ||
+                      colorName == 'Marrom' ||
+                      colorName == 'Dourado';
+
+                  return TableRow(
+                    decoration: BoxDecoration(
+                      color: is680Band ? const Color(0xFFECFDF5) : Colors.white,
+                    ),
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 10,
+                              height: 10,
+                              decoration: BoxDecoration(
+                                color: dotColor,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.black26),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                colorName,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: is680Band ? FontWeight.bold : FontWeight.normal,
+                                  color: Colors.black87,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      _buildTableCell(val, isBold: is680Band),
+                      _buildTableCell(mult, isBold: is680Band),
+                      _buildTableCell(tol, isBold: is680Band),
+                    ],
+                  );
+                }),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTableCell(String text, {bool isHeader = false, bool isBold = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 4),
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontFamily: isHeader ? GoogleFonts.rajdhani().fontFamily : null,
+          fontSize: isHeader ? 11 : 10.5,
+          fontWeight: (isHeader || isBold) ? FontWeight.bold : FontWeight.normal,
+          color: isHeader ? const Color(0xFF03241B) : Colors.black87,
+        ),
+      ),
     );
   }
 

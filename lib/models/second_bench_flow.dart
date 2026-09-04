@@ -33,6 +33,10 @@ class SecondBenchFlowState {
   /// Indica se a maquete está iluminada (derivado de `secondBenchCompleted`).
   bool get maquetteLit => secondBenchCompleted;
 
+  /// Retorna o conjunto de IDs de fases que estão desbloqueadas.
+  Set<int> get unlockedPhaseIds =>
+      {1, 2, 3, 4}.where((id) => isUnlocked(id)).toSet();
+
   /// Verifica se uma fase específica está desbloqueada.
   /// A Fase N exige que a Fase N-1 esteja concluída.
   bool isUnlocked(int phaseId) {

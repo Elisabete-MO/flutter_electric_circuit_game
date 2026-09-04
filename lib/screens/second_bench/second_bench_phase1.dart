@@ -2,22 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../models/first_step_component.dart';
 import '../../models/phase1_component_data.dart';
 import '../../widgets/component_physical_painter.dart';
-import '../../widgets/eletrolab_header_brand.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
 import '../../widgets/prof_volts_full_body.dart';
+import 'second_bench_tokens.dart';
+import 'widgets/second_bench_action_bar.dart';
+import 'widgets/second_bench_phase_scaffold.dart';
+import 'widgets/second_bench_side_panel.dart';
 
 /// Fase 1 do Segundo Estande (Acende Aí): Conheça os componentes.
 class SecondBenchPhase1 extends StatefulWidget {
   final VoidCallback? onPhaseComplete;
-  final bool showHeader;
 
   const SecondBenchPhase1({
     super.key,
     this.onPhaseComplete,
-    this.showHeader = false,
   });
 
   @override
@@ -35,10 +35,12 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
   late List<Phase1ComponentData> _quizQuestions;
   late List<String> _currentOptions;
 
+  bool _isLearnMoreExpanded = false;
+  bool _isCheckAnswerRevealed = false;
+
   @override
   void initState() {
     super.initState();
-    // Selecionar por padrão o primeiro componente (Bateria) para dar feedback imediato
     _selectedIndex = 0;
     _exploredIds.add(_components[0].id);
     _initQuizQuestions();
@@ -63,6 +65,8 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
     setState(() {
       _selectedIndex = index;
       _exploredIds.add(_components[index].id);
+      _isLearnMoreExpanded = false;
+      _isCheckAnswerRevealed = false;
     });
   }
 
@@ -116,7 +120,7 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
           decoration: BoxDecoration(
             color: const Color(0xFF0F172A),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: const Color(0xFF10B981), width: 2),
+            border: Border.all(color: SecondBenchLayoutTokens.primaryGreen, width: 2),
             boxShadow: const [
               BoxShadow(
                 color: Color(0x6610B981),
@@ -138,7 +142,7 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
                   fontFamily: GoogleFonts.rajdhani().fontFamily,
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: const Color(0xFF10B981),
+                  color: SecondBenchLayoutTokens.primaryGreen,
                   letterSpacing: 1.2,
                 ),
               ),
@@ -173,7 +177,7 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
                     ),
                   ),
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF10B981),
+                    backgroundColor: SecondBenchLayoutTokens.primaryGreen,
                     foregroundColor: Colors.black,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
@@ -208,12 +212,9 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
               decoration: BoxDecoration(
                 color: const Color(0xFF0F172A),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFF10B981), width: 1.5),
+                border: Border.all(color: SecondBenchLayoutTokens.primaryGreen, width: 1.5),
                 boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black54,
-                    blurRadius: 16,
-                  ),
+                  BoxShadow(color: Colors.black54, blurRadius: 16),
                 ],
               ),
               child: Column(
@@ -230,7 +231,7 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
                         ),
                         child: const Icon(
                           Icons.help_outline_rounded,
-                          color: Color(0xFF10B981),
+                          color: SecondBenchLayoutTokens.primaryGreen,
                           size: 24,
                         ),
                       ),
@@ -263,8 +264,8 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
                     child: OutlinedButton(
                       onPressed: () => Navigator.of(context).pop(),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF10B981),
-                        side: const BorderSide(color: Color(0xFF10B981)),
+                        foregroundColor: SecondBenchLayoutTokens.primaryGreen,
+                        side: const BorderSide(color: SecondBenchLayoutTokens.primaryGreen),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -289,7 +290,11 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
         children: [
           const Text(
             '• ',
-            style: TextStyle(color: Color(0xFF10B981), fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: SecondBenchLayoutTokens.primaryGreen,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           Expanded(
             child: Text(
@@ -309,140 +314,40 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF071410),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Cabeçalho opcional (somente se showHeader = true)
-            if (widget.showHeader) _buildHeader(),
+    if (_isQuizMode) {
+      return _buildQuizScaffold();
+    }
 
-            // Conteúdo Principal (Exploração vs Quiz)
-            Expanded(
-              child: _isQuizMode ? _buildQuizView() : _buildExplorationView(),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ==========================================
-  // CABEÇALHO COMPACTO
-  // ==========================================
-  Widget _buildHeader() {
-    return Container(
-      height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: const BoxDecoration(
-        color: Color(0xFF03241B),
-        border: Border(
-          bottom: BorderSide(color: Color(0xFF0F3D30), width: 1),
-        ),
-      ),
-      child: Row(
-        children: [
-          // Botão Voltar
-          IconButton(
-            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-            tooltip: 'Voltar ao Mapa',
-            onPressed: () => Navigator.of(context).maybePop(),
-          ),
-          const SizedBox(width: 4),
-
-          // Marca EletroLab
-          const EletroLabHeaderBrand(compact: true),
-
-          const Spacer(),
-
-          // Indicadores de Fase (Fase 1 Ativa, 2, 3 e 4 Bloqueadas)
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Row(
-              children: [
-                _buildPhasePill(1, 'Fase 1', isActive: true),
-                const SizedBox(width: 6),
-                _buildPhasePill(2, 'Fase 2', isLocked: true),
-                const SizedBox(width: 6),
-                _buildPhasePill(3, 'Fase 3', isLocked: true),
-                const SizedBox(width: 6),
-                _buildPhasePill(4, 'Fase 4', isLocked: true),
-              ],
-            ),
-          ),
-
-          const Spacer(),
-
-          // Botão Dúvidas
-          IconButton(
-            icon: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: const Color(0xFF04382B),
-                shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.5)),
-              ),
-              child: const Icon(
-                Icons.help_outline_rounded,
-                color: Color(0xFF10B981),
-                size: 20,
+    return SecondBenchPhaseScaffold(
+      phase: 1,
+      title: 'Conheça os componentes',
+      instruction: 'Explore os cinco componentes usados no desafio para liberar o quiz.',
+      introIcon: Icons.search_rounded,
+      onHelpTap: _showHelpModal,
+      workspace: _buildBenchWorkspace(),
+      sidePanel: _buildSidePanel(),
+      actionBar: SecondBenchActionBar(
+        statusText: _isAllExplored
+            ? 'Todos os 5 componentes explorados! Pronto para o quiz.'
+            : 'Explore os cinco componentes da bancada.',
+        progressText: '${_exploredIds.length} de ${_components.length} explorados',
+        actions: [
+          FilledButton.icon(
+            onPressed: _isAllExplored ? _startQuiz : null,
+            icon: const Icon(Icons.quiz_rounded),
+            label: Text(
+              'INICIAR QUIZ',
+              style: TextStyle(
+                fontFamily: GoogleFonts.rajdhani().fontFamily,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.1,
               ),
             ),
-            tooltip: 'Como funciona esta fase?',
-            onPressed: _showHelpModal,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPhasePill(int phaseNum, String label, {bool isActive = false, bool isLocked = false}) {
-    final color = isActive ? const Color(0xFF10B981) : Colors.white38;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: isActive
-            ? const Color(0xFF04382B)
-            : (isLocked ? const Color(0xFF0C1814) : const Color(0xFF1A2E26)),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isActive ? const Color(0xFF10B981) : Colors.white12,
-          width: isActive ? 1.5 : 1.0,
-        ),
-        boxShadow: isActive
-            ? [
-                BoxShadow(
-                  color: const Color(0xFF10B981).withValues(alpha: 0.3),
-                  blurRadius: 8,
-                ),
-              ]
-            : null,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (isLocked)
-            const Padding(
-              padding: EdgeInsets.only(right: 4),
-              child: Icon(Icons.lock_rounded, size: 12, color: Colors.white38),
-            )
-          else
-            Container(
-              width: 8,
-              height: 8,
-              margin: const EdgeInsets.only(right: 6),
-              decoration: BoxDecoration(
-                color: color,
-                shape: BoxShape.circle,
-              ),
-            ),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: GoogleFonts.rajdhani().fontFamily,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-              color: isActive ? Colors.white : Colors.white54,
+            style: FilledButton.styleFrom(
+              backgroundColor: SecondBenchLayoutTokens.primaryGreen,
+              foregroundColor: Colors.black,
+              disabledBackgroundColor: Colors.white12,
+              disabledForegroundColor: Colors.white38,
             ),
           ),
         ],
@@ -451,875 +356,469 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
   }
 
   // ==========================================
-  // VISTA DE EXPLORAÇÃO (STACK + SCENARIO ASSET)
+  // AMBIENTE DA BANCADA DE MADEIRA (73-75% de largura no Desktop)
   // ==========================================
-  Widget _buildExplorationView() {
+  Widget _buildBenchWorkspace() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isDesktop = constraints.maxWidth >= 850;
+        final w = constraints.maxWidth;
+        final h = constraints.maxHeight;
 
-        if (isDesktop) {
-          return _buildDesktopStackView(constraints);
-        } else {
-          return _buildMobileResponsiveView(constraints);
-        }
-      },
-    );
-  }
+        // Proporções relativas horizontais dos 5 componentes sobre a bancada
+        final relativeXs = [0.12, 0.28, 0.46, 0.65, 0.82];
+        final relativeYs = [0.42, 0.44, 0.46, 0.42, 0.44];
+        final widths = [130.0, 140.0, 135.0, 90.0, 140.0];
+        final heights = [135.0, 120.0, 90.0, 130.0, 110.0];
 
-  // Composição Visual Principal Desktop/Tablet (Stack sobre o cenário)
-  Widget _buildDesktopStackView(BoxConstraints constraints) {
-    return Center(
-      child: FittedBox(
-        fit: BoxFit.cover,
-        clipBehavior: Clip.hardEdge,
-        child: SizedBox(
-          width: 1600,
-          height: 900,
-          child: Stack(
-            children: [
-              // 1. Cenário background_fase_02_bancada.png
-              Positioned.fill(
-                child: Image.asset(
-                  'assets/images/backgrounds/background_fase_02_bancada.png',
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Image.asset(
-                    'assets/backgrounds/background_fase_02_bancada.png',
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-
-              // 2. Título e instrução (sobre a região superior esquerda)
-              Positioned(
-                top: 32,
-                left: 44,
-                width: 680,
-                child: _buildTitleSectionStack(),
-              ),
-
-              // 3, 4, 5. Cinco componentes transparentes, placas e halos sobre a bancada
-              ...List.generate(_components.length, (index) {
-                return _buildBenchComponentItemPositioned(index);
-              }),
-
-              // 6 & 7. Painel informativo, progresso e botão do quiz (lado direito)
-              Positioned(
-                top: 28,
-                right: 36,
-                width: 370,
-                bottom: 28,
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: _buildInfoPanel(),
-                    ),
-                    const SizedBox(height: 12),
-                    _buildFooterProgressQuiz(),
-                  ],
-                ),
-              ),
-
-              // 11. Botão de dúvidas (no topo direito da área principal)
-              if (!widget.showHeader)
-                Positioned(
-                  top: 32,
-                  right: 424,
-                  child: _buildHelpButton(),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // Título e instrução com gradiente suave localizado para legibilidade perfeita
-  Widget _buildTitleSectionStack() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [
-            Colors.black.withValues(alpha: 0.65),
-            Colors.black.withValues(alpha: 0.3),
-            Colors.transparent,
-          ],
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.menu_book_rounded,
-                color: Color(0xFF34D399),
-                size: 24,
-              ),
-              const SizedBox(width: 10),
-              Text(
-                'Fase 1 — Conheça os componentes',
-                style: TextStyle(
-                  fontFamily: GoogleFonts.rajdhani().fontFamily,
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  letterSpacing: 0.5,
-                  shadows: const [
-                    Shadow(color: Colors.black87, blurRadius: 6, offset: Offset(0, 2)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Explore os cinco componentes usados para acender a primeira luz da maquete.',
-            style: TextStyle(
-              fontFamily: GoogleFonts.outfit().fontFamily,
-              fontSize: 15,
-              color: Colors.white.withValues(alpha: 0.9),
-              shadows: const [
-                Shadow(color: Colors.black87, blurRadius: 4, offset: Offset(0, 1)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Botão de dúvidas estilizado
-  Widget _buildHelpButton() {
-    return IconButton(
-      icon: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: const Color(0xFF04382B),
-          shape: BoxShape.circle,
-          border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.7), width: 1.5),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black45,
-              blurRadius: 8,
-            ),
-          ],
-        ),
-        child: const Icon(
-          Icons.help_outline_rounded,
-          color: Color(0xFF10B981),
-          size: 22,
-        ),
-      ),
-      tooltip: 'Como funciona esta fase?',
-      onPressed: _showHelpModal,
-    );
-  }
-
-  // Componente individual posicionado exatamente sobre a bancada no Stack Desktop
-  Widget _buildBenchComponentItemPositioned(int index) {
-    final item = _components[index];
-    final isSelected = _selectedIndex == index;
-    final isExplored = _exploredIds.contains(item.id);
-
-    // Posições relativas horizontais exatas especificadas (12%, 27%, 40%, 52%, 65% de 1600px)
-    final centerXList = [192.0, 432.0, 640.0, 832.0, 1040.0];
-    final widthList = [135.0, 155.0, 145.0, 95.0, 170.0];
-    final heightList = [145.0, 130.0, 95.0, 140.0, 120.0];
-    final topList = [385.0, 400.0, 435.0, 390.0, 410.0];
-
-    final centerX = centerXList[index];
-    final width = widthList[index];
-    final height = heightList[index];
-    final top = topList[index];
-    final left = centerX - (width / 2);
-
-    // Largura das placas
-    final plaqueWidthList = [135.0, 140.0, 145.0, 135.0, 140.0];
-    final plaqueWidth = plaqueWidthList[index];
-    final plaqueLeft = centerX - (plaqueWidth / 2);
-
-    Widget imageWidget = Image.asset(
-      item.assetPath,
-      width: width,
-      height: height,
-      fit: BoxFit.contain,
-      errorBuilder: (context, error, stackTrace) => CustomPaint(
-        painter: ComponentPhysicalPainter(
-          type: item.type,
-          isActive: true,
-          isDarkMode: true,
-        ),
-        child: SizedBox(width: width, height: height),
-      ),
-    );
-
-    // Halo suave ao redor do objeto PNG quando selecionado
-    if (isSelected) {
-      imageWidget = Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF10B981).withValues(alpha: 0.65),
-              blurRadius: 16,
-              spreadRadius: 2,
-            ),
-          ],
-        ),
-        child: imageWidget,
-      );
-    } else {
-      // Sombra natural de contato suave abaixo do objeto não selecionado
-      imageWidget = Container(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.35),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: imageWidget,
-      );
-    }
-
-    return Stack(
-      children: [
-        // Imagem do Componente PNG
-        Positioned(
-          left: left,
-          top: top,
-          width: width,
-          height: height,
-          child: GestureDetector(
-            onTap: () => _selectComponent(index),
-            behavior: HitTestBehavior.opaque,
-            child: AnimatedScale(
-              scale: isSelected ? 1.04 : 1.0,
-              duration: const Duration(milliseconds: 200),
-              child: imageWidget,
-            ),
-          ),
-        ),
-
-        // Placa com o nome diretamente abaixo do componente
-        Positioned(
-          left: plaqueLeft,
-          top: 540,
-          width: plaqueWidth,
-          height: 38,
-          child: GestureDetector(
-            onTap: () => _selectComponent(index),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFF0F6B45) : const Color(0xFF133824),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                  color: isSelected
-                      ? const Color(0xFF10B981)
-                      : (isExplored
-                          ? const Color(0xFF10B981).withValues(alpha: 0.6)
-                          : const Color(0xFF2E6B49)),
-                  width: isSelected ? 1.5 : 1.0,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: isSelected
-                        ? const Color(0xFF10B981).withValues(alpha: 0.3)
-                        : Colors.black.withValues(alpha: 0.4),
-                    blurRadius: isSelected ? 8 : 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (isExplored && !isSelected)
-                    const Padding(
-                      padding: EdgeInsets.only(right: 4),
-                      child: Icon(
-                        Icons.check_circle_rounded,
-                        size: 12,
-                        color: Color(0xFF34D399),
-                      ),
-                    ),
-                  Flexible(
-                    child: Text(
-                      item.plaqueName,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: GoogleFonts.rajdhani().fontFamily,
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        letterSpacing: 0.3,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // Vista responsiva para telas menores (< 850px / Mobile)
-  Widget _buildMobileResponsiveView(BoxConstraints constraints) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildTitleSectionStack(),
-          const SizedBox(height: 12),
-          // Cenário da Bancada em formato compacto responsivo
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: SizedBox(
-              height: 280,
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: Image.asset(
-                      'assets/images/backgrounds/background_fase_02_bancada.png',
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Image.asset(
-                        'assets/backgrounds/background_fase_02_bancada.png',
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  Positioned.fill(
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                      itemCount: _components.length,
-                      separatorBuilder: (_, _) => const SizedBox(width: 12),
-                      itemBuilder: (context, index) => _buildMobileBenchItem(index),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildInfoPanel(),
-          const SizedBox(height: 16),
-          _buildFooterProgressQuiz(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMobileBenchItem(int index) {
-    final item = _components[index];
-    final isSelected = _selectedIndex == index;
-
-    Widget imgWidget = Image.asset(
-      item.assetPath,
-      height: 110,
-      width: 110,
-      fit: BoxFit.contain,
-      errorBuilder: (context, error, stackTrace) => CustomPaint(
-        painter: ComponentPhysicalPainter(
-          type: item.type,
-          isActive: true,
-          isDarkMode: true,
-        ),
-        child: const SizedBox(width: 90, height: 110),
-      ),
-    );
-
-    if (isSelected) {
-      imgWidget = Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF10B981).withValues(alpha: 0.65),
-              blurRadius: 14,
-              spreadRadius: 2,
-            ),
-          ],
-        ),
-        child: imgWidget,
-      );
-    }
-
-    return GestureDetector(
-      onTap: () => _selectComponent(index),
-      child: SizedBox(
-        width: 125,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
+        return Stack(
+          clipBehavior: Clip.none,
           children: [
-            AnimatedScale(
-              scale: isSelected ? 1.04 : 1.0,
-              duration: const Duration(milliseconds: 200),
-              child: imgWidget,
-            ),
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-              decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFF0F6B45) : const Color(0xFF133824),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                  color: isSelected ? const Color(0xFF10B981) : const Color(0xFF2E6B49),
-                ),
-              ),
-              child: Text(
-                item.plaqueName,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: GoogleFonts.rajdhani().fontFamily,
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ==========================================
-  // PAINEL INFORMATIVO LATERAL (CREME / CLASSIC)
-  // ==========================================
-  Widget _buildInfoPanel() {
-    if (_selectedIndex == null) {
-      return Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF7F4EC),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: const Center(
-          child: Text('Selecione um componente para explorar.'),
-        ),
-      );
-    }
-
-    final item = _components[_selectedIndex!];
-
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7F4EC),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 12,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Título + Ícone
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  item.name,
-                  style: TextStyle(
-                    fontFamily: GoogleFonts.rajdhani().fontFamily,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF03241B),
-                  ),
-                ),
-                Icon(item.icon, color: const Color(0xFF04382B), size: 26),
-              ],
-            ),
-            const Divider(color: Color(0xFFCBD5E1), height: 20),
-
-            // Função
-            _buildInfoSection(
-              icon: Icons.bolt_rounded,
-              title: 'Função',
-              description: item.functionText,
-            ),
-            const SizedBox(height: 14),
-
-            // Terminais
-            _buildInfoSection(
-              icon: Icons.alt_route_rounded,
-              title: 'Terminais',
-              description: item.terminalsText,
-            ),
-
-            // Ilustração Didática para LED vermelho
-            if (item.type == ComponentType.led) ...[
-              const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.all(10),
+            // Superfície 2.5D da bancada de madeira
+            Positioned.fill(
+              child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    Column(
-                      children: [
-                        Text(
-                          '+',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.red[700],
-                          ),
-                        ),
-                        Text(
-                          'ÂNODO',
-                          style: TextStyle(
-                            fontFamily: GoogleFonts.rajdhani().fontFamily,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF03241B),
-                          ),
-                        ),
-                        const Text(
-                          '(perna longa)',
-                          style: TextStyle(fontSize: 9, color: Colors.black54),
-                        ),
-                      ],
-                    ),
-                    Image.asset(
-                      'assets/components/led_off.png',
-                      height: 48,
-                      errorBuilder: (_, _, _) => const Icon(Icons.lightbulb, size: 36, color: Colors.red),
-                    ),
-                    Column(
-                      children: [
-                        const Text(
-                          '−',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        Text(
-                          'CÁTODO',
-                          style: TextStyle(
-                            fontFamily: GoogleFonts.rajdhani().fontFamily,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF03241B),
-                          ),
-                        ),
-                        const Text(
-                          '(perna curta)',
-                          style: TextStyle(fontSize: 9, color: Colors.black54),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-
-            const SizedBox(height: 14),
-
-            // Cuidado
-            _buildInfoSection(
-              icon: Icons.warning_amber_rounded,
-              title: 'Cuidado',
-              description: item.cautionText,
-            ),
-
-            const SizedBox(height: 16),
-
-            // Contador de Exploração no rodapé do painel
-            Align(
-              alignment: Alignment.centerRight,
-              child: Text(
-                'Explorados: ${_exploredIds.length} de ${_components.length}',
-                style: TextStyle(
-                  fontFamily: GoogleFonts.rajdhani().fontFamily,
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF04382B),
+                  borderRadius: BorderRadius.circular(16),
+                  color: Colors.black.withValues(alpha: 0.1),
                 ),
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  Widget _buildInfoSection({required IconData icon, required String title, required String description}) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(6),
-          decoration: const BoxDecoration(
-            color: Color(0xFF04382B),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: const Color(0xFF10B981), size: 16),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontFamily: GoogleFonts.rajdhani().fontFamily,
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF03241B),
+            // Os 5 Componentes Interativos com Placa de Identificação
+            ...List.generate(_components.length, (index) {
+              final comp = _components[index];
+              final isSelected = _selectedIndex == index;
+              final isExplored = _exploredIds.contains(comp.id);
+
+              final posX = (w * relativeXs[index]) - (widths[index] / 2);
+              final posY = (h * relativeYs[index]) - (heights[index] / 2);
+
+              Widget compImage = Image.asset(
+                comp.assetPath,
+                width: widths[index],
+                height: heights[index],
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => CustomPaint(
+                  painter: ComponentPhysicalPainter(
+                    type: comp.type,
+                    isActive: true,
+                    isDarkMode: true,
+                  ),
+                  child: SizedBox(width: widths[index], height: heights[index]),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                description,
-                style: TextStyle(
-                  fontFamily: GoogleFonts.outfit().fontFamily,
-                  fontSize: 12.5,
-                  color: const Color(0xFF334155),
-                  height: 1.3,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
+              );
 
-  // ==========================================
-  // RODAPÉ: PROGRESSO + BOTÃO QUIZ
-  // ==========================================
-  Widget _buildFooterProgressQuiz() {
-    return Column(
-      children: [
-        // 5 Círculos Conectados de Progresso
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(_components.length, (i) {
-            final isDone = _exploredIds.contains(_components[i].id);
-            final isCurrent = _selectedIndex == i;
-
-            return Row(
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: 22,
-                  height: 22,
+              if (isSelected) {
+                compImage = Container(
                   decoration: BoxDecoration(
-                    color: isDone ? const Color(0xFF10B981) : Colors.black45,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isCurrent ? const Color(0xFF00FF9D) : (isDone ? const Color(0xFF10B981) : Colors.white38),
-                      width: isCurrent ? 2.0 : 1.0,
-                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: SecondBenchLayoutTokens.primaryGreen.withValues(alpha: 0.7),
+                        blurRadius: 18,
+                        spreadRadius: 3,
+                      ),
+                    ],
                   ),
-                  child: isDone
-                      ? const Icon(Icons.check_rounded, size: 14, color: Colors.black)
-                      : null,
-                ),
-                if (i < _components.length - 1)
-                  Container(
-                    width: 16,
-                    height: 2,
-                    color: isDone ? const Color(0xFF10B981) : Colors.white24,
-                  ),
-              ],
-            );
-          }),
-        ),
+                  child: compImage,
+                );
+              }
 
-        const SizedBox(height: 12),
-
-        // Botão de Iniciar Quiz (Bloqueado vs Liberado)
-        SizedBox(
-          width: double.infinity,
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            child: _isAllExplored
-                ? FilledButton.icon(
-                    key: const ValueKey('quiz_unlocked'),
-                    onPressed: _startQuiz,
-                    icon: const Icon(Icons.play_arrow_rounded),
-                    label: Text(
-                      'Iniciar quiz',
-                      style: TextStyle(
-                        fontFamily: GoogleFonts.rajdhani().fontFamily,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.0,
-                      ),
-                    ),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF10B981),
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  )
-                : OutlinedButton.icon(
-                    key: const ValueKey('quiz_locked'),
-                    onPressed: null,
-                    icon: const Icon(Icons.lock_rounded, size: 16),
-                    label: Text(
-                      'Explorar todos para liberar o quiz',
-                      style: TextStyle(
-                        fontFamily: GoogleFonts.rajdhani().fontFamily,
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white38,
-                      side: const BorderSide(color: Colors.white24),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  // Imagem do Componente
+                  Positioned(
+                    left: posX.clamp(10.0, w - widths[index] - 10.0),
+                    top: posY.clamp(10.0, h - heights[index] - 50.0),
+                    width: widths[index],
+                    height: heights[index],
+                    child: GestureDetector(
+                      onTap: () => _selectComponent(index),
+                      behavior: HitTestBehavior.opaque,
+                      child: AnimatedScale(
+                        scale: isSelected ? 1.05 : 1.0,
+                        duration: const Duration(milliseconds: 200),
+                        child: compImage,
                       ),
                     ),
                   ),
-          ),
-        ),
-      ],
-    );
-  }
 
-  // ==========================================
-  // VISTA DO QUIZ
-  // ==========================================
-  Widget _buildQuizView() {
-    final currentQ = _quizQuestions[_quizCurrentIndex];
-
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 600),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: const Color(0xFF0F172A),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0xFF10B981), width: 1.5),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black54,
-                  blurRadius: 16,
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Progresso do Quiz
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Pergunta ${_quizCurrentIndex + 1} de ${_quizQuestions.length}',
-                      style: TextStyle(
-                        fontFamily: GoogleFonts.rajdhani().fontFamily,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF10B981),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded, color: Colors.white54),
-                      tooltip: 'Sair do Quiz',
-                      onPressed: () {
-                        setState(() {
-                          _isQuizMode = false;
-                        });
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                // Pergunta
-                Text(
-                  currentQ.quizQuestion,
-                  style: TextStyle(
-                    fontFamily: GoogleFonts.rajdhani().fontFamily,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // 3 Alternativas
-                ..._currentOptions.map((option) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: InkWell(
-                      onTap: () => _answerQuiz(option),
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  // Placa com Nome abaixo do Componente
+                  Positioned(
+                    left: (posX - 10).clamp(5.0, w - widths[index] - 5.0),
+                    top: posY + heights[index] + 8,
+                    width: widths[index] + 20,
+                    child: GestureDetector(
+                      onTap: () => _selectComponent(index),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1E293B),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFF334155)),
+                          color: isSelected
+                              ? const Color(0xFF0F6B45)
+                              : const Color(0xFF133824),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isSelected
+                                ? SecondBenchLayoutTokens.primaryGreen
+                                : (isExplored
+                                    ? SecondBenchLayoutTokens.primaryGreen.withValues(alpha: 0.6)
+                                    : const Color(0xFF2E6B49)),
+                            width: isSelected ? 1.8 : 1.0,
+                          ),
+                          boxShadow: const [
+                            BoxShadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2)),
+                          ],
                         ),
                         child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(
-                              Icons.radio_button_unchecked_rounded,
-                              color: Color(0xFF10B981),
-                              size: 20,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
+                            if (isExplored && !isSelected)
+                              const Padding(
+                                padding: EdgeInsets.only(right: 4),
+                                child: Icon(
+                                  Icons.check_circle_rounded,
+                                  size: 13,
+                                  color: SecondBenchLayoutTokens.accentGreen,
+                                ),
+                              ),
+                            Flexible(
                               child: Text(
-                                option,
+                                comp.plaqueName,
+                                textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  fontFamily: GoogleFonts.outfit().fontFamily,
-                                  fontSize: 15,
+                                  fontFamily: GoogleFonts.rajdhani().fontFamily,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
                                   color: Colors.white,
                                 ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
                         ),
                       ),
                     ),
-                  );
-                }),
-              ],
+                  ),
+                ],
+              );
+            }),
+          ],
+        );
+      },
+    );
+  }
+
+  // ==========================================
+  // PAINEL LATERAL PADRONIZADO (Cor Creme)
+  // ==========================================
+  Widget _buildSidePanel() {
+    if (_selectedIndex == null) {
+      return SecondBenchSidePanel(
+        title: 'Selecione um componente',
+        subtitle: 'Toque em qualquer peca na bancada para ver seus detalhes didaticos.',
+        icon: Icons.touch_app_rounded,
+        child: const Center(
+          child: Text(
+            'Nenhum componente selecionado.',
+            style: TextStyle(color: Colors.black54),
+          ),
+        ),
+      );
+    }
+
+    final item = _components[_selectedIndex!];
+
+    return SecondBenchSidePanel(
+      title: item.name,
+      subtitle: item.shortDescription,
+      icon: item.icon,
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildDetailSection('Função Didática', item.function, Icons.settings_power_rounded),
+            _buildDetailSection('Terminais de Conexão', item.terminals, Icons.electrical_services_rounded),
+            if (item.polarity != null)
+              _buildDetailSection('Polaridade', item.polarity!, Icons.swap_horiz_rounded),
+            _buildDetailSection('Cuidados & Segurança', item.safety, Icons.warning_amber_rounded, isCaution: true),
+
+            const SizedBox(height: 12),
+
+            // Painel Expansível "Saiba Mais"
+            Theme(
+              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+              child: ExpansionTile(
+                initiallyExpanded: _isLearnMoreExpanded,
+                onExpansionChanged: (exp) => setState(() => _isLearnMoreExpanded = exp),
+                tilePadding: EdgeInsets.zero,
+                iconColor: SecondBenchLayoutTokens.darkGreen,
+                title: Text(
+                  'Saiba mais sobre o componente',
+                  style: TextStyle(
+                    fontFamily: GoogleFonts.rajdhani().fontFamily,
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: SecondBenchLayoutTokens.darkGreen,
+                  ),
+                ),
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF2EAD9),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFE2D7C3)),
+                    ),
+                    child: Text(
+                      item.learnMore,
+                      style: TextStyle(
+                        fontFamily: GoogleFonts.outfit().fontFamily,
+                        fontSize: 13,
+                        color: SecondBenchLayoutTokens.textDark,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Questão de Checagem
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8F4EE),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: SecondBenchLayoutTokens.primaryGreen.withValues(alpha: 0.5)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.help_outline_rounded, size: 18, color: SecondBenchLayoutTokens.darkGreen),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Teste Rápido',
+                        style: TextStyle(
+                          fontFamily: GoogleFonts.rajdhani().fontFamily,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: SecondBenchLayoutTokens.darkGreen,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    item.checkQuestion,
+                    style: TextStyle(
+                      fontFamily: GoogleFonts.outfit().fontFamily,
+                      fontSize: 13,
+                      color: SecondBenchLayoutTokens.textDark,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (!_isCheckAnswerRevealed)
+                    OutlinedButton(
+                      onPressed: () => setState(() => _isCheckAnswerRevealed = true),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: SecondBenchLayoutTokens.darkGreen,
+                        side: const BorderSide(color: SecondBenchLayoutTokens.darkGreen),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      ),
+                      child: const Text('Revelar Resposta'),
+                    )
+                  else
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: SecondBenchLayoutTokens.primaryGreen),
+                      ),
+                      child: Text(
+                        item.checkAnswer,
+                        style: TextStyle(
+                          fontFamily: GoogleFonts.outfit().fontFamily,
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: SecondBenchLayoutTokens.darkGreen,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailSection(String label, String content, IconData icon, {bool isCaution = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                icon,
+                size: 16,
+                color: isCaution ? const Color(0xFFD97706) : SecondBenchLayoutTokens.darkGreen,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontFamily: GoogleFonts.rajdhani().fontFamily,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: isCaution ? const Color(0xFFD97706) : SecondBenchLayoutTokens.darkGreen,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 2),
+          Text(
+            content,
+            style: TextStyle(
+              fontFamily: GoogleFonts.outfit().fontFamily,
+              fontSize: 13,
+              color: SecondBenchLayoutTokens.textDark,
+              height: 1.3,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================
+  // VISTA DO QUIZ DE FIXAÇÃO
+  // ==========================================
+  Widget _buildQuizScaffold() {
+    final q = _quizQuestions[_quizCurrentIndex];
+
+    return Scaffold(
+      backgroundColor: SecondBenchLayoutTokens.bgDark,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 680),
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0F172A),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: SecondBenchLayoutTokens.primaryGreen, width: 1.5),
+                  boxShadow: const [
+                    BoxShadow(color: Colors.black54, blurRadius: 16, offset: Offset(0, 4)),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF04382B),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.quiz_rounded,
+                            color: SecondBenchLayoutTokens.primaryGreen,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Quiz de Fixação — Fase 1',
+                                style: TextStyle(
+                                  fontFamily: GoogleFonts.rajdhani().fontFamily,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              Text(
+                                'Pergunta ${_quizCurrentIndex + 1} de ${_quizQuestions.length}',
+                                style: TextStyle(
+                                  fontFamily: GoogleFonts.outfit().fontFamily,
+                                  fontSize: 13,
+                                  color: SecondBenchLayoutTokens.primaryGreen,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                          onPressed: () => setState(() => _isQuizMode = false),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      q.quizQuestion,
+                      style: TextStyle(
+                        fontFamily: GoogleFonts.outfit().fontFamily,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Opções de Resposta
+                    ..._currentOptions.map((option) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: OutlinedButton(
+                          onPressed: () => _answerQuiz(option),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            side: const BorderSide(color: Color(0xFF1E3A2F)),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            backgroundColor: const Color(0xFF081C15),
+                          ),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              option,
+                              style: TextStyle(
+                                fontFamily: GoogleFonts.outfit().fontFamily,
+                                fontSize: 14,
+                                color: Colors.white70,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
