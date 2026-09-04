@@ -2012,9 +2012,9 @@ class _RuasMaquetePainter extends CustomPainter {
         _drawElectronsOnPath(canvas, path3, electronPaint);
       }
     } else if (missionIndex == 1) {
-      // M2 (Comparação de Brilho 1 vs 2 Lâmpadas): Fios conectados passando pelo Poste Secundário
+      // M2 (Comparação de Brilho 1 vs 2 Lâmpadas): Fio de retorno inferior contínuo, passando pelo Poste Secundário
       final path1 = Path()
-        ..moveTo(socketX - socketTermOffset, socketY)
+        ..moveTo(socketX, socketY)
         ..lineTo(lamp1X - termOffset, socketY)
         ..lineTo(lamp1X - termOffset, lampY);
 
@@ -2025,18 +2025,16 @@ class _RuasMaquetePainter extends CustomPainter {
       final path3 = Path()
         ..moveTo(lamp2X + termOffset, lampY)
         ..lineTo(lamp2X + termOffset, socketY)
-        ..lineTo(socketX + socketTermOffset, socketY);
+        ..lineTo(socketX, socketY);
 
       drawStyledPath(path1, activeWirePaint, isPositive: true);
       drawStyledPath(path2, activeWirePaint, customColor: const Color(0xFFD97706));
       drawStyledPath(path3, m2Series ? activeWirePaint : wirePaint, isPositive: false);
 
-      drawTerminalDot(Offset(socketX - socketTermOffset, socketY));
       drawTerminalDot(Offset(lamp1X - termOffset, lampY));
       drawTerminalDot(Offset(lamp1X + termOffset, lampY));
       drawTerminalDot(Offset(lamp2X - termOffset, lampY));
       drawTerminalDot(Offset(lamp2X + termOffset, lampY));
-      drawTerminalDot(Offset(socketX + socketTermOffset, socketY));
 
       _drawElectronsOnPath(canvas, path1, electronPaint);
       _drawElectronsOnPath(canvas, path2, electronPaint);
