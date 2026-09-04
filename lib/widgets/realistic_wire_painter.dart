@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../models/component_terminals.dart';
 import '../models/first_step_component.dart';
@@ -24,7 +25,7 @@ class RealisticWirePainter extends CustomPainter {
   }
 
   void _drawWire(Canvas canvas, Size size, WirePath wire) {
-    final path = _buildRectilinearPath(wire.points);
+    final path = _buildFlexibleWirePath(wire.points);
     final isActive = wire.isActive;
     final color = wire.color;
 
@@ -100,14 +101,62 @@ class RealisticWirePainter extends CustomPainter {
     }
   }
 
-  Path _buildRectilinearPath(List<Offset> points) {
+  /// Constrói caminhos de fios orgânicos e flexíveis com curvas arredondadas (fillets Bezier)
+  /// e curva S direta entre terminais.
+  Path _buildFlexibleWirePath(List<Offset> points) {
     if (points.isEmpty) return Path();
     if (points.length == 1) return Path()..addOval(Rect.fromCircle(center: points.first, radius: 1));
 
     final path = Path()..moveTo(points.first.dx, points.first.dy);
-    for (int i = 1; i < points.length; i++) {
-      path.lineTo(points[i].dx, points[i].dy);
+
+    if (points.length == 2) {
+      final p0 = points[0];
+      final p1 = points[1];
+      final dx = (p1.dx - p0.dx).abs();
+      final dy = (p1.dy - p0.dy).abs();
+
+      // Curva S orgânica e suave entre dois terminais desacoplados em Y e X
+      if (dx > 12.0 && dy > 3.0) {
+        final midX = (p0.dx + p1.dx) / 2;
+        path.cubicTo(
+          midX, p0.dy,
+          midX, p1.dy,
+          p1.dx, p1.dy,
+        );
+        return path;
+      }
+
+      path.lineTo(p1.dx, p1.dy);
+      return path;
     }
+
+    const double maxRadius = 22.0; // Curvatura flexível orgânica e arredondada nos cantos
+
+    for (int i = 1; i < points.length - 1; i++) {
+      final pPrev = points[i - 1];
+      final pCurr = points[i];
+      final pNext = points[i + 1];
+
+      final v1 = pPrev - pCurr;
+      final v2 = pNext - pCurr;
+      final d1 = v1.distance;
+      final d2 = v2.distance;
+
+      if (d1 == 0 || d2 == 0) {
+        path.lineTo(pCurr.dx, pCurr.dy);
+        continue;
+      }
+
+      final radius = math.min(maxRadius, math.min(d1 / 2, d2 / 2));
+
+      final startArc = pCurr + (v1 / d1) * radius;
+      final endArc = pCurr + (v2 / d2) * radius;
+
+      path.lineTo(startArc.dx, startArc.dy);
+      path.quadraticBezierTo(pCurr.dx, pCurr.dy, endArc.dx, endArc.dy);
+    }
+
+    path.lineTo(points.last.dx, points.last.dy);
     return path;
   }
 
