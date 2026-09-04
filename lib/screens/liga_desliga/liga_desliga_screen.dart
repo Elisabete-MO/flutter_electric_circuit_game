@@ -1422,8 +1422,8 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         if (_m1BatteryInserted && _m1SwitchInserted) {
           final batTermA = ComponentPlacement(position: batteryPos, rotation: _m1BatteryRotation, type: ComponentType.battery).getTerminalPosition(0);
           final switchTermA = ComponentPlacement(position: switchPos, rotation: _m1SwitchRotation, type: ComponentType.switchComponent).getTerminalPosition(0);
-          final leftX = batteryPos.dx - 65.0;
-          final leftOfSwitch = switchPos.dx - 55.0;
+          final leftX = batteryPos.dx - 70.0;
+          final leftOfSwitch = switchPos.dx - 65.0;
           final bottomY = centerY + 65.0;
 
           // VCC: Bateria(+) -> Switch(A) (subindo verticalmente antes da chave e entrando em linha reta na haste)
@@ -1450,7 +1450,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         if (_m1SwitchInserted && _m1BulbInserted) {
           final switchTermB = ComponentPlacement(position: switchPos, rotation: _m1SwitchRotation, type: ComponentType.switchComponent).getTerminalPosition(1);
           final lampTermA = ComponentPlacement(position: lampPos, rotation: _m1BulbRotation, type: ComponentType.bulb).getTerminalPosition(0);
-          final rightOfSwitch = switchPos.dx + 55.0;
+          final rightOfSwitch = switchPos.dx + 65.0;
           final bottomYBulb = centerY + 60.0;
 
           // Switch(B) -> Bulb(A) (saindo da chave, descendo pelo corredor inferior da lâmpada e subindo no pino)
@@ -1474,8 +1474,8 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         if (_m1BulbInserted && _m1BatteryInserted) {
           final bulbTermB = ComponentPlacement(position: lampPos, rotation: _m1BulbRotation, type: ComponentType.bulb).getTerminalPosition(1);
           final batTermB = ComponentPlacement(position: batteryPos, rotation: _m1BatteryRotation, type: ComponentType.battery).getTerminalPosition(1);
-          final rightX = lampPos.dx + 65.0;
-          final leftX = batteryPos.dx - 65.0;
+          final rightX = lampPos.dx + 70.0;
+          final leftX = batteryPos.dx - 70.0;
           final topY = centerY - 65.0;
           final bottomYBulb = centerY + 60.0;
           final bottomY = centerY + 65.0;
