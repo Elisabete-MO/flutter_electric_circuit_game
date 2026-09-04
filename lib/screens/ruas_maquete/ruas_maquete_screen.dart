@@ -715,9 +715,9 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
       case 2:
         return _buildM3OverlayElements(lamp1X, lamp2X, socketX, lampY, socketY);
       case 3:
-        return _buildM4OverlayElements(lamp1X, lamp2X, socketX, lampY, socketY);
+        return _buildM4OverlayElements(socketX, lampY, socketY);
       case 4:
-        return _buildM5OverlayElements(lamp1X, lamp2X, socketX, lampY, socketY);
+        return _buildM5OverlayElements(socketX, lampY, socketY);
       default:
         return [];
     }
@@ -1123,171 +1123,266 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
     ];
   }
 
-  /// Overlay da Missão 4: Casas Independentes (Paralelo)
-  List<Widget> _buildM4OverlayElements(double l1X, double l2X, double sX, double lY, double sY) {
+  /// Overlay da Missão 4: Bairro em Funcionamento (4 Ramos: Poste 1, Casa 1, Casa 2, Poste 2)
+  List<Widget> _buildM4OverlayElements(double sX, double lY, double sY) {
     return [
-      // Casa 01
-      Positioned(
-        left: l1X - 40,
-        top: lY - 30,
-        child: _buildHouseSymbol(
-          name: 'Casa 01 (Alameda)',
-          isLit: _m4ParallelWireConnected,
-          brightness: 1.0,
-        ),
-      ),
-      Positioned(
-        left: l1X - 75,
-        top: lY + 34,
-        width: 150,
-        child: Center(child: _buildLabelBadge('Casa 01 (Alameda)')),
-      ),
+      // 1. Poste 1 (Alameda)
+      LayoutBuilder(
+        builder: (context, constraints) {
+          final w = constraints.maxWidth;
+          final x1 = w * 0.18;
+          final x2 = w * 0.38;
+          final x3 = w * 0.62;
+          final x4 = w * 0.82;
 
-      // Casa 02
-      Positioned(
-        left: l2X - 40,
-        top: lY - 30,
-        child: _buildHouseSymbol(
-          name: 'Casa 02 (Praça)',
-          isLit: _m4ParallelWireConnected,
-          brightness: 1.0,
-        ),
-      ),
-      Positioned(
-        left: l2X - 75,
-        top: lY + 34,
-        width: 150,
-        child: Center(child: _buildLabelBadge('Casa 02 (Praça)')),
-      ),
+          return Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // Poste 1 (Alameda)
+              Positioned(
+                left: x1 - 40,
+                top: lY - 30,
+                child: _buildLampSymbol(
+                  isLit: _m4ParallelWireConnected,
+                  brightnessRatio: 1.0,
+                ),
+              ),
+              Positioned(
+                left: x1 - 65,
+                top: lY + 34,
+                width: 130,
+                child: Center(child: _buildLabelBadge('Poste 1')),
+              ),
 
-      // Soquete da Fiação em Paralelo
-      Positioned(
-        left: sX - 40,
-        top: sY - 32,
-        child: _buildSocketTile(
-          width: 80,
-          height: 60,
-          expectedData: 'fio_paralelo',
-          isFilled: _m4ParallelWireConnected,
-          symbolType: ComponentType.connectingWire,
-          label: 'Fiação Paralela',
-          rotation: _m4ParallelRotation,
-          onRotate: () => _rotateComponent(
-            name: 'Fiação em Paralelo',
-            getRotation: () => _m4ParallelRotation,
-            setRotation: (v) => _m4ParallelRotation = v,
-          ),
-          onAccept: () => _insertComponent(
-            name: 'Fiação em Paralelo',
-            getInserted: () => _m4ParallelWireConnected,
-            setInserted: (v) => _m4ParallelWireConnected = v,
-            getRotation: () => _m4ParallelRotation,
-            setRotation: (v) => _m4ParallelRotation = v,
-          ),
-          onTap: () => _insertComponent(
-            name: 'Fiação em Paralelo',
-            getInserted: () => _m4ParallelWireConnected,
-            setInserted: (v) => _m4ParallelWireConnected = v,
-            getRotation: () => _m4ParallelRotation,
-            setRotation: (v) => _m4ParallelRotation = v,
-          ),
-        ),
+              // Casa 01 (Alameda)
+              Positioned(
+                left: x2 - 40,
+                top: lY - 30,
+                child: _buildHouseSymbol(
+                  name: 'Casa 01 (Alameda)',
+                  isLit: _m4ParallelWireConnected,
+                  brightness: 1.0,
+                ),
+              ),
+              Positioned(
+                left: x2 - 65,
+                top: lY + 34,
+                width: 130,
+                child: Center(child: _buildLabelBadge('Casa 01')),
+              ),
+
+              // Casa 02 (Praça)
+              Positioned(
+                left: x3 - 40,
+                top: lY - 30,
+                child: _buildHouseSymbol(
+                  name: 'Casa 02 (Praça)',
+                  isLit: _m4ParallelWireConnected,
+                  brightness: 1.0,
+                ),
+              ),
+              Positioned(
+                left: x3 - 65,
+                top: lY + 34,
+                width: 130,
+                child: Center(child: _buildLabelBadge('Casa 02')),
+              ),
+
+              // Poste 2 (Avenida)
+              Positioned(
+                left: x4 - 40,
+                top: lY - 30,
+                child: _buildLampSymbol(
+                  isLit: _m4ParallelWireConnected,
+                  brightnessRatio: 1.0,
+                ),
+              ),
+              Positioned(
+                left: x4 - 65,
+                top: lY + 34,
+                width: 130,
+                child: Center(child: _buildLabelBadge('Poste 2')),
+              ),
+
+              // Soquete do Barramento Paralelo
+              Positioned(
+                left: sX - 40,
+                top: sY - 32,
+                child: _buildSocketTile(
+                  width: 80,
+                  height: 60,
+                  expectedData: 'fio_paralelo',
+                  isFilled: _m4ParallelWireConnected,
+                  symbolType: ComponentType.connectingWire,
+                  label: 'Fiação Paralela',
+                  rotation: _m4ParallelRotation,
+                  onRotate: () => _rotateComponent(
+                    name: 'Fiação em Paralelo',
+                    getRotation: () => _m4ParallelRotation,
+                    setRotation: (v) => _m4ParallelRotation = v,
+                  ),
+                  onAccept: () => _insertComponent(
+                    name: 'Fiação em Paralelo',
+                    getInserted: () => _m4ParallelWireConnected,
+                    setInserted: (v) => _m4ParallelWireConnected = v,
+                    getRotation: () => _m4ParallelRotation,
+                    setRotation: (v) => _m4ParallelRotation = v,
+                  ),
+                  onTap: () => _insertComponent(
+                    name: 'Fiação em Paralelo',
+                    getInserted: () => _m4ParallelWireConnected,
+                    setInserted: (v) => _m4ParallelWireConnected = v,
+                    getRotation: () => _m4ParallelRotation,
+                    setRotation: (v) => _m4ParallelRotation = v,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     ];
   }
 
-  /// Overlay da Missão 5: Teste de Manutenção do Bairro
-  List<Widget> _buildM5OverlayElements(double l1X, double l2X, double sX, double lY, double sY) {
+  /// Overlay da Missão 5: Manutenção durante a Visita (4 Ramos: Casa 1 em Manutenção, Outros 3 Acesos)
+  List<Widget> _buildM5OverlayElements(double sX, double lY, double sY) {
     return [
-      // Soquete da Lâmpada A (Casa 01)
-      Positioned(
-        left: l1X - 40,
-        top: lY - 32,
-        child: _buildSocketTile(
-          width: 80,
-          height: 60,
-          expectedData: 'bulb',
-          isFilled: !_m5House1Broken,
-          symbolType: ComponentType.bulb,
-          label: 'Lâmpada A',
-          rotation: _m5House1Rotation,
-          onRotate: () => _rotateComponent(
-            name: 'Lâmpada A',
-            getRotation: () => _m5House1Rotation,
-            setRotation: (v) => _m5House1Rotation = v,
-          ),
-          onAccept: () => _insertComponent(
-            name: 'Lâmpada A',
-            getInserted: () => !_m5House1Broken,
-            setInserted: (v) => _m5House1Broken = !v,
-            getRotation: () => _m5House1Rotation,
-            setRotation: (v) => _m5House1Rotation = v,
-          ),
-          onTap: () => _insertComponent(
-            name: 'Lâmpada A',
-            getInserted: () => !_m5House1Broken,
-            setInserted: (v) => _m5House1Broken = !v,
-            getRotation: () => _m5House1Rotation,
-            setRotation: (v) => _m5House1Rotation = v,
-          ),
-        ),
-      ),
-      Positioned(
-        left: l1X - 75,
-        top: lY + 38,
-        width: 150,
-        child: Center(child: _buildLabelBadge('Lâmpada A (Simulada)', isBroken: _m5House1Broken)),
-      ),
+      LayoutBuilder(
+        builder: (context, constraints) {
+          final w = constraints.maxWidth;
+          final x1 = w * 0.18;
+          final x2 = w * 0.38;
+          final x3 = w * 0.62;
+          final x4 = w * 0.82;
 
-      // Lâmpada B (Casa 02 - Sempre Funcional)
-      Positioned(
-        left: l2X - 40,
-        top: lY - 30,
-        child: _buildHouseSymbol(
-          name: 'Lâmpada B (Testada)',
-          isLit: true,
-          brightness: 1.0,
-        ),
-      ),
-      Positioned(
-        left: l2X - 75,
-        top: lY + 34,
-        width: 150,
-        child: Center(child: _buildLabelBadge('Lâmpada B (Testada)')),
-      ),
+          return Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // Poste 1 (Permanecendo Aceso)
+              Positioned(
+                left: x1 - 40,
+                top: lY - 30,
+                child: _buildLampSymbol(
+                  isLit: true,
+                  brightnessRatio: 1.0,
+                ),
+              ),
+              Positioned(
+                left: x1 - 65,
+                top: lY + 34,
+                width: 130,
+                child: Center(child: _buildLabelBadge('Poste 1')),
+              ),
 
-      // Soquete do Conector de Manutenção
-      Positioned(
-        left: sX - 40,
-        top: sY - 32,
-        child: _buildSocketTile(
-          width: 80,
-          height: 60,
-          expectedData: 'fio_serie',
-          isFilled: _m5MaintenanceConfirmed,
-          symbolType: ComponentType.connectingWire,
-          label: 'Manutenção',
-          rotation: _m5MaintenanceRotation,
-          onRotate: () => _rotateComponent(
-            name: 'Conector de Manutenção',
-            getRotation: () => _m5MaintenanceRotation,
-            setRotation: (v) => _m5MaintenanceRotation = v,
-          ),
-          onAccept: () => _insertComponent(
-            name: 'Conector de Manutenção',
-            getInserted: () => _m5MaintenanceConfirmed,
-            setInserted: (v) => _m5MaintenanceConfirmed = v,
-            getRotation: () => _m5MaintenanceRotation,
-            setRotation: (v) => _m5MaintenanceRotation = v,
-          ),
-          onTap: () => _insertComponent(
-            name: 'Conector de Manutenção',
-            getInserted: () => _m5MaintenanceConfirmed,
-            setInserted: (v) => _m5MaintenanceConfirmed = v,
-            getRotation: () => _m5MaintenanceRotation,
-            setRotation: (v) => _m5MaintenanceRotation = v,
-          ),
-        ),
+              // Soquete / Casa 01 (Em Manutenção / Simulada)
+              Positioned(
+                left: x2 - 40,
+                top: lY - 32,
+                child: _buildSocketTile(
+                  width: 80,
+                  height: 60,
+                  expectedData: 'bulb',
+                  isFilled: !_m5House1Broken,
+                  symbolType: ComponentType.bulb,
+                  label: 'Casa 01',
+                  rotation: _m5House1Rotation,
+                  onRotate: () => _rotateComponent(
+                    name: 'Casa 01',
+                    getRotation: () => _m5House1Rotation,
+                    setRotation: (v) => _m5House1Rotation = v,
+                  ),
+                  onAccept: () => _insertComponent(
+                    name: 'Casa 01',
+                    getInserted: () => !_m5House1Broken,
+                    setInserted: (v) => _m5House1Broken = !v,
+                    getRotation: () => _m5House1Rotation,
+                    setRotation: (v) => _m5House1Rotation = v,
+                  ),
+                  onTap: () => _insertComponent(
+                    name: 'Casa 01',
+                    getInserted: () => !_m5House1Broken,
+                    setInserted: (v) => _m5House1Broken = !v,
+                    getRotation: () => _m5House1Rotation,
+                    setRotation: (v) => _m5House1Rotation = v,
+                  ),
+                ),
+              ),
+              Positioned(
+                left: x2 - 65,
+                top: lY + 38,
+                width: 130,
+                child: Center(child: _buildLabelBadge('Casa 01', isBroken: _m5House1Broken)),
+              ),
+
+              // Casa 02 (Permanecendo Acesa)
+              Positioned(
+                left: x3 - 40,
+                top: lY - 30,
+                child: _buildHouseSymbol(
+                  name: 'Casa 02 (Praça)',
+                  isLit: true,
+                  brightness: 1.0,
+                ),
+              ),
+              Positioned(
+                left: x3 - 65,
+                top: lY + 34,
+                width: 130,
+                child: Center(child: _buildLabelBadge('Casa 02')),
+              ),
+
+              // Poste 2 (Permanecendo Aceso)
+              Positioned(
+                left: x4 - 40,
+                top: lY - 30,
+                child: _buildLampSymbol(
+                  isLit: true,
+                  brightnessRatio: 1.0,
+                ),
+              ),
+              Positioned(
+                left: x4 - 65,
+                top: lY + 34,
+                width: 130,
+                child: Center(child: _buildLabelBadge('Poste 2')),
+              ),
+
+              // Soquete do Conector de Manutenção
+              Positioned(
+                left: sX - 40,
+                top: sY - 32,
+                child: _buildSocketTile(
+                  width: 80,
+                  height: 60,
+                  expectedData: 'fio_serie',
+                  isFilled: _m5MaintenanceConfirmed,
+                  symbolType: ComponentType.connectingWire,
+                  label: 'Manutenção',
+                  rotation: _m5MaintenanceRotation,
+                  onRotate: () => _rotateComponent(
+                    name: 'Conector de Manutenção',
+                    getRotation: () => _m5MaintenanceRotation,
+                    setRotation: (v) => _m5MaintenanceRotation = v,
+                  ),
+                  onAccept: () => _insertComponent(
+                    name: 'Conector de Manutenção',
+                    getInserted: () => _m5MaintenanceConfirmed,
+                    setInserted: (v) => _m5MaintenanceConfirmed = v,
+                    getRotation: () => _m5MaintenanceRotation,
+                    setRotation: (v) => _m5MaintenanceRotation = v,
+                  ),
+                  onTap: () => _insertComponent(
+                    name: 'Conector de Manutenção',
+                    getInserted: () => _m5MaintenanceConfirmed,
+                    setInserted: (v) => _m5MaintenanceConfirmed = v,
+                    getRotation: () => _m5MaintenanceRotation,
+                    setRotation: (v) => _m5MaintenanceRotation = v,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     ];
   }
@@ -2267,7 +2362,7 @@ class _RuasMaquetePainter extends CustomPainter {
         _drawElectronsOnPath(canvas, pathReturnB, electronPaint);
       }
     } else if (missionIndex == 3 || missionIndex == 4) {
-      // M4 e M5: Circuito em Paralelo (Barramento Positivo Superior + Barramento Negativo Inferior Sem Cruzamentos)
+      // M4 e M5: Circuito em Paralelo de 4 Ramos (Poste 1, Casa 1, Casa 2, Poste 2)
       final isActive = m4Parallel || missionIndex == 4;
       final currentPaint = isActive ? activeWirePaint : wirePaint;
       final topVccY = lampY - 50.0;
@@ -2275,71 +2370,121 @@ class _RuasMaquetePainter extends CustomPainter {
       final vccGutterY = socketY - 50.0;
       final gndGutterY = socketY - 40.0;
 
-      // 1. Barramento Positivo VCC (Red): Bateria (+) -> Subida e Desvio para Esquerda -> Margem Esquerda -> Trilho Superior
+      final x1 = size.width * 0.18; // Poste 1
+      final x2 = size.width * 0.38; // Casa 1
+      final x3 = size.width * 0.62; // Casa 2
+      final x4 = size.width * 0.82; // Poste 2
+
+      final busOuterLeftX = x1 - 40.0;
+      final busOuterRightX = x4 + 40.0;
+
+      // 1. Barramento Positivo VCC (Red): Bateria (+) -> Subida/Desvio -> Margem Esquerda -> Trilho Superior -> 4 Ramos
       final pathVccMain = makeFlexiblePath([
         batPosTerminal,
         Offset(batPosTerminal.dx, vccGutterY),
-        Offset(outerLeftX, vccGutterY),
-        Offset(outerLeftX, topVccY),
-        Offset(lamp2X - termOffset, topVccY),
+        Offset(busOuterLeftX, vccGutterY),
+        Offset(busOuterLeftX, topVccY),
+        Offset(x4 - termOffset, topVccY),
       ]);
 
-      // Descida VCC para Casa 01 (Alameda / Lâmpada A)
+      // Ramo 1 VCC (Poste 1)
       final pathVccBranch1 = makeFlexiblePath([
-        Offset(lamp1X - termOffset, topVccY),
-        Offset(lamp1X - termOffset, lampY),
+        Offset(x1 - termOffset, topVccY),
+        Offset(x1 - termOffset, lampY),
       ]);
 
-      // Descida VCC para Casa 02 (Praça / Lâmpada B)
+      // Ramo 2 VCC (Casa 1 / Lâmpada A)
       final pathVccBranch2 = makeFlexiblePath([
-        Offset(lamp2X - termOffset, topVccY),
-        Offset(lamp2X - termOffset, lampY),
+        Offset(x2 - termOffset, topVccY),
+        Offset(x2 - termOffset, lampY),
       ]);
 
-      // 2. Barramento Negativo GND (Blue): Saídas das Casas -> Descida -> Trilho Inferior -> Margem Direita -> Bateria (-)
-      // Saída GND Casa 01 (Alameda / Lâmpada A)
+      // Ramo 3 VCC (Casa 2)
+      final pathVccBranch3 = makeFlexiblePath([
+        Offset(x3 - termOffset, topVccY),
+        Offset(x3 - termOffset, lampY),
+      ]);
+
+      // Ramo 4 VCC (Poste 2)
+      final pathVccBranch4 = makeFlexiblePath([
+        Offset(x4 - termOffset, topVccY),
+        Offset(x4 - termOffset, lampY),
+      ]);
+
+      // 2. Barramento Negativo GND (Blue): Saídas dos 4 Ramos -> Descida -> Trilho Inferior -> Margem Direita -> Bateria (-)
+      // Saída Ramo 1 GND (Poste 1)
       final pathGndBranch1 = makeFlexiblePath([
-        Offset(lamp1X + termOffset, lampY),
-        Offset(lamp1X + termOffset + 20.0, lampY),
-        Offset(lamp1X + termOffset + 20.0, botGndY),
-        Offset(outerRightX, botGndY),
+        Offset(x1 + termOffset, lampY),
+        Offset(x1 + termOffset + 15.0, lampY),
+        Offset(x1 + termOffset + 15.0, botGndY),
+        Offset(busOuterRightX, botGndY),
       ]);
 
-      // Saída GND Casa 02 (Praça / Lâmpada B)
+      // Saída Ramo 2 GND (Casa 1)
       final pathGndBranch2 = makeFlexiblePath([
-        Offset(lamp2X + termOffset, lampY),
-        Offset(outerRightX, lampY),
-        Offset(outerRightX, botGndY),
+        Offset(x2 + termOffset, lampY),
+        Offset(x2 + termOffset + 15.0, lampY),
+        Offset(x2 + termOffset + 15.0, botGndY),
+        Offset(busOuterRightX, botGndY),
       ]);
 
-      // Retorno GND Principal: Margem Direita -> Calha Inferior -> Bateria (-)
+      // Saída Ramo 3 GND (Casa 2)
+      final pathGndBranch3 = makeFlexiblePath([
+        Offset(x3 + termOffset, lampY),
+        Offset(x3 + termOffset + 15.0, lampY),
+        Offset(x3 + termOffset + 15.0, botGndY),
+        Offset(busOuterRightX, botGndY),
+      ]);
+
+      // Saída Ramo 4 GND (Poste 2)
+      final pathGndBranch4 = makeFlexiblePath([
+        Offset(x4 + termOffset, lampY),
+        Offset(busOuterRightX, lampY),
+        Offset(busOuterRightX, botGndY),
+      ]);
+
+      // Retorno GND Principal
       final pathGndMain = makeFlexiblePath([
-        Offset(outerRightX, botGndY),
-        Offset(outerRightX, gndGutterY),
+        Offset(busOuterRightX, botGndY),
+        Offset(busOuterRightX, gndGutterY),
         Offset(batNegTerminal.dx, gndGutterY),
         batNegTerminal,
       ]);
 
       // Desenhar Fios Positivos (Red)
       drawStyledPath(pathVccMain, currentPaint, isPositive: true);
-      drawStyledPath(pathVccBranch1, (isActive && (!m5House1Broken || missionIndex != 4)) ? activeWirePaint : wirePaint, isPositive: true);
-      drawStyledPath(pathVccBranch2, currentPaint, isPositive: true);
+      drawStyledPath(pathVccBranch1, isActive ? activeWirePaint : wirePaint, isPositive: true);
+      drawStyledPath(pathVccBranch2, (isActive && (!m5House1Broken || missionIndex != 4)) ? activeWirePaint : wirePaint, isPositive: true);
+      drawStyledPath(pathVccBranch3, isActive ? activeWirePaint : wirePaint, isPositive: true);
+      drawStyledPath(pathVccBranch4, isActive ? activeWirePaint : wirePaint, isPositive: true);
 
       // Desenhar Fios Negativos (Blue)
-      drawStyledPath(pathGndBranch1, (isActive && (!m5House1Broken || missionIndex != 4)) ? activeWirePaint : wirePaint, isPositive: false);
-      drawStyledPath(pathGndBranch2, isActive ? activeWirePaint : wirePaint, isPositive: false);
+      drawStyledPath(pathGndBranch1, isActive ? activeWirePaint : wirePaint, isPositive: false);
+      drawStyledPath(pathGndBranch2, (isActive && (!m5House1Broken || missionIndex != 4)) ? activeWirePaint : wirePaint, isPositive: false);
+      drawStyledPath(pathGndBranch3, isActive ? activeWirePaint : wirePaint, isPositive: false);
+      drawStyledPath(pathGndBranch4, isActive ? activeWirePaint : wirePaint, isPositive: false);
       drawStyledPath(pathGndMain, isActive ? activeWirePaint : wirePaint, isPositive: false);
 
-      // Desenhar nós de conexão nos terminais
+      // Nós de Conexão nos Barramentos e Terminais
       drawTerminalDot(batPosTerminal);
-      drawTerminalDot(Offset(lamp1X - termOffset, topVccY));
-      drawTerminalDot(Offset(lamp2X - termOffset, topVccY));
-      drawTerminalDot(Offset(lamp1X - termOffset, lampY));
-      drawTerminalDot(Offset(lamp1X + termOffset, lampY));
-      drawTerminalDot(Offset(lamp2X - termOffset, lampY));
-      drawTerminalDot(Offset(lamp2X + termOffset, lampY));
-      drawTerminalDot(Offset(lamp1X + termOffset + 20.0, botGndY));
-      drawTerminalDot(Offset(outerRightX, botGndY));
+      drawTerminalDot(Offset(x1 - termOffset, topVccY));
+      drawTerminalDot(Offset(x2 - termOffset, topVccY));
+      drawTerminalDot(Offset(x3 - termOffset, topVccY));
+      drawTerminalDot(Offset(x4 - termOffset, topVccY));
+
+      drawTerminalDot(Offset(x1 - termOffset, lampY));
+      drawTerminalDot(Offset(x1 + termOffset, lampY));
+      drawTerminalDot(Offset(x2 - termOffset, lampY));
+      drawTerminalDot(Offset(x2 + termOffset, lampY));
+      drawTerminalDot(Offset(x3 - termOffset, lampY));
+      drawTerminalDot(Offset(x3 + termOffset, lampY));
+      drawTerminalDot(Offset(x4 - termOffset, lampY));
+      drawTerminalDot(Offset(x4 + termOffset, lampY));
+
+      drawTerminalDot(Offset(x1 + termOffset + 15.0, botGndY));
+      drawTerminalDot(Offset(x2 + termOffset + 15.0, botGndY));
+      drawTerminalDot(Offset(x3 + termOffset + 15.0, botGndY));
+      drawTerminalDot(Offset(busOuterRightX, botGndY));
       drawTerminalDot(batNegTerminal);
 
       // Animação de Elétrons por Ramo
@@ -2347,15 +2492,19 @@ class _RuasMaquetePainter extends CustomPainter {
         _drawElectronsOnPath(canvas, pathVccMain, electronPaint);
         _drawElectronsOnPath(canvas, pathGndMain, electronPaint);
 
-        // Ramo 1 (Casa 01 / Lâmpada A) só anima se estiver funcional
+        _drawElectronsOnPath(canvas, pathVccBranch1, electronPaint);
+        _drawElectronsOnPath(canvas, pathGndBranch1, electronPaint);
+
         if (!m5House1Broken || missionIndex != 4) {
-          _drawElectronsOnPath(canvas, pathVccBranch1, electronPaint);
-          _drawElectronsOnPath(canvas, pathGndBranch1, electronPaint);
+          _drawElectronsOnPath(canvas, pathVccBranch2, electronPaint);
+          _drawElectronsOnPath(canvas, pathGndBranch2, electronPaint);
         }
 
-        // Ramo 2 (Casa 02 / Lâmpada B) sempre ativo no circuito paralelo
-        _drawElectronsOnPath(canvas, pathVccBranch2, electronPaint);
-        _drawElectronsOnPath(canvas, pathGndBranch2, electronPaint);
+        _drawElectronsOnPath(canvas, pathVccBranch3, electronPaint);
+        _drawElectronsOnPath(canvas, pathGndBranch3, electronPaint);
+
+        _drawElectronsOnPath(canvas, pathVccBranch4, electronPaint);
+        _drawElectronsOnPath(canvas, pathGndBranch4, electronPaint);
       }
     }
   }
