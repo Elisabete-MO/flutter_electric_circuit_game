@@ -601,10 +601,10 @@ class SchematicCircuitWirePainter extends CustomPainter {
     // Elétrons em movimento se o circuito estiver fechado
     if (isClosed) {
       final electronGlow = Paint()
-        ..color = const Color(0xFFFDE047)
+        ..color = const Color(0xFFFEF08A)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
       final electronPaint = Paint()
-        ..color = const Color(0xFFFEF08A)
+        ..color = Colors.white
         ..style = PaintingStyle.fill;
 
       final fullPath = Path()
@@ -620,8 +620,8 @@ class SchematicCircuitWirePainter extends CustomPainter {
           final distance = ((animationValue + (i / totalDots)) % 1.0) * length;
           final tangent = metric.getTangentForOffset(distance);
           if (tangent != null) {
-            canvas.drawCircle(tangent.position, 5.0, electronGlow);
-            canvas.drawCircle(tangent.position, 3.5, electronPaint);
+            canvas.drawCircle(tangent.position, 4.5, electronGlow);
+            canvas.drawCircle(tangent.position, 2.0, electronPaint);
           }
         }
       }
@@ -721,10 +721,10 @@ class SchematicCircuitWirePainterM3 extends CustomPainter {
 
     // Eletrons animados nos ramos ativos
     final electronGlow = Paint()
-      ..color = const Color(0xFFFDE047)
+      ..color = const Color(0xFFFEF08A)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
     final electronPaint = Paint()
-      ..color = const Color(0xFFFEF08A)
+      ..color = Colors.white
       ..style = PaintingStyle.fill;
 
     if (branch1Closed) {
@@ -735,8 +735,8 @@ class SchematicCircuitWirePainterM3 extends CustomPainter {
           final distance = ((animationValue + (i / 10)) % 1.0) * length;
           final tangent = metric.getTangentForOffset(distance);
           if (tangent != null) {
-            canvas.drawCircle(tangent.position, 5.0, electronGlow);
-            canvas.drawCircle(tangent.position, 3.5, electronPaint);
+            canvas.drawCircle(tangent.position, 4.5, electronGlow);
+            canvas.drawCircle(tangent.position, 2.0, electronPaint);
           }
         }
       }
@@ -750,8 +750,8 @@ class SchematicCircuitWirePainterM3 extends CustomPainter {
           final distance = ((animationValue + (i / 10)) % 1.0) * length;
           final tangent = metric.getTangentForOffset(distance);
           if (tangent != null) {
-            canvas.drawCircle(tangent.position, 5.0, electronGlow);
-            canvas.drawCircle(tangent.position, 3.5, electronPaint);
+            canvas.drawCircle(tangent.position, 4.5, electronGlow);
+            canvas.drawCircle(tangent.position, 2.0, electronPaint);
           }
         }
       }
@@ -845,10 +845,10 @@ class SchematicCircuitWirePainterM4 extends CustomPainter {
 
     if (isClosed) {
       final electronGlow = Paint()
-        ..color = const Color(0xFFFDE047)
+        ..color = const Color(0xFFFEF08A)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
       final electronPaint = Paint()
-        ..color = const Color(0xFFFEF08A)
+        ..color = Colors.white
         ..style = PaintingStyle.fill;
 
       final fullPath = Path()
@@ -862,8 +862,8 @@ class SchematicCircuitWirePainterM4 extends CustomPainter {
           final distance = ((animationValue + (i / 12)) % 1.0) * length;
           final tangent = metric.getTangentForOffset(distance);
           if (tangent != null) {
-            canvas.drawCircle(tangent.position, 5.0, electronGlow);
-            canvas.drawCircle(tangent.position, 3.5, electronPaint);
+            canvas.drawCircle(tangent.position, 4.5, electronGlow);
+            canvas.drawCircle(tangent.position, 2.0, electronPaint);
           }
         }
       }
@@ -939,10 +939,10 @@ class SchematicCircuitWirePainterMotor extends CustomPainter {
 
     if (isClosed) {
       final electronGlow = Paint()
-        ..color = const Color(0xFFFDE047)
+        ..color = const Color(0xFFFEF08A)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
       final electronPaint = Paint()
-        ..color = const Color(0xFFFEF08A)
+        ..color = Colors.white
         ..style = PaintingStyle.fill;
 
       final fullPath = Path()
@@ -957,8 +957,8 @@ class SchematicCircuitWirePainterMotor extends CustomPainter {
           final distance = ((animationValue + (i / totalDots)) % 1.0) * length;
           final tangent = metric.getTangentForOffset(distance);
           if (tangent != null) {
-            canvas.drawCircle(tangent.position, 5.0, electronGlow);
-            canvas.drawCircle(tangent.position, 3.5, electronPaint);
+            canvas.drawCircle(tangent.position, 4.5, electronGlow);
+            canvas.drawCircle(tangent.position, 2.0, electronPaint);
           }
         }
       }

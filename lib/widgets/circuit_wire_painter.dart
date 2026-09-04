@@ -101,13 +101,16 @@ class _CircuitWirePainter extends CustomPainter {
             final distance = ((i / particleCount + animationValue) % 1.0) * totalLength;
             final tangent = metric.getTangentForOffset(distance);
             if (tangent != null) {
-              // Partícula de Elétron
-              final particlePaint = Paint()
-                ..color = Colors.white
-                ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
-              canvas.drawCircle(tangent.position, 3.5, particlePaint);
+              // Partícula de Elétron (Padronizada com Estande 4: Aura amarela + Núcleo branco)
+              final glowPaint = Paint()
+                ..color = const Color(0xFFFEF08A)
+                ..style = PaintingStyle.fill
+                ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
+              canvas.drawCircle(tangent.position, 4.5, glowPaint);
 
-              final coreDotPaint = Paint()..color = const Color(0xFF6EE7B7);
+              final coreDotPaint = Paint()
+                ..color = Colors.white
+                ..style = PaintingStyle.fill;
               canvas.drawCircle(tangent.position, 2.0, coreDotPaint);
             }
           }
