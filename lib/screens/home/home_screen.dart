@@ -48,8 +48,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void _onStartMission(StandData stand) {
     if (stand.isBancadaLivre) {
       Navigator.of(context).pushNamed(Routes.sandbox);
-    } else if (stand.number == 1) {
-      Navigator.of(context).pushNamed(Routes.firstBench);
+    } else if (stand.number == 1 || stand.id == 'primeiros_passos') {
+      Navigator.of(context).pushNamed(Routes.firstSteps);
+    } else if (stand.number == 2 || stand.id == 'acende_ai') {
+      Navigator.of(context).pushNamed(Routes.secondBench);
     } else if (stand.number == 3 || stand.id == 'liga_desliga') {
       Navigator.of(context).pushNamed(Routes.ligaDesliga);
     } else if (stand.number == 4 || stand.id == 'ruas_maquete') {
