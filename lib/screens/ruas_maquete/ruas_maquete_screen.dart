@@ -856,25 +856,25 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
         child: Center(child: _buildLabelBadge('Poste 2 (Avenida)')),
       ),
 
-      // Socket do Fio em Série
+      // Socket da Bateria 4.5V / Fonte de Alimentação
       Positioned(
         left: sX - 40,
         top: sY - 32,
         child: _buildSocketTile(
           width: 80,
           height: 60,
-          expectedData: 'fio_serie',
+          expectedData: 'battery',
           isFilled: isLit,
-          symbolType: ComponentType.connectingWire,
-          label: 'Fio em Série',
+          symbolType: ComponentType.battery,
+          label: 'Bateria 4.5V',
           rotation: _m1WireRotation,
           onRotate: () => _rotateComponent(
-            name: 'Fio em Série',
+            name: 'Bateria 4.5V',
             getRotation: () => _m1WireRotation,
             setRotation: (v) => _m1WireRotation = v,
           ),
           onAccept: () => _insertComponent(
-            name: 'Fio em Série',
+            name: 'Bateria 4.5V',
             getInserted: () => _m1WireInserted,
             setInserted: (v) {
               _m1WireInserted = v;
@@ -884,7 +884,7 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
             setRotation: (v) => _m1WireRotation = v,
           ),
           onTap: () => _insertComponent(
-            name: 'Fio em Série',
+            name: 'Bateria 4.5V',
             getInserted: () => _m1WireInserted,
             setInserted: (v) {
               _m1WireInserted = v;
