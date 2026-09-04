@@ -24,67 +24,67 @@ class RealisticWirePainter extends CustomPainter {
   }
 
   void _drawWire(Canvas canvas, Size size, WirePath wire) {
-    final path = _buildCatenaryPath(wire.points);
+    final path = _buildRectilinearPath(wire.points);
     final isActive = wire.isActive;
     final color = wire.color;
 
-    // Sombra projetada
+    // 1. Sombra projetada do fio (idêntica ao Estande 4)
     final shadowPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.2)
-      ..strokeWidth = wire.thickness + 2
+      ..color = Colors.black.withValues(alpha: 0.22)
+      ..strokeWidth = 6.5
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
-    canvas.drawPath(path.shift(const Offset(1, 2)), shadowPaint);
+      ..strokeJoin = StrokeJoin.round;
+    canvas.drawPath(path.shift(const Offset(1.5, 2.5)), shadowPaint);
 
-    // Isolamento externo (camada grossa)
+    // 2. Isolamento do fio (Vermelho / Laranja / Azul)
     final insulationPaint = Paint()
       ..color = isActive ? color : color.withValues(alpha: 0.5)
-      ..strokeWidth = wire.thickness
+      ..strokeWidth = 4.8
       ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
     canvas.drawPath(path, insulationPaint);
 
-    // Brilho especular (reflexo de luz no isolamento)
+    // 3. Brilho especular no topo do fio (reflexo de luz idêntico ao Estande 4)
     final specularPaint = Paint()
-      ..color = Colors.white.withValues(alpha: isActive ? 0.35 : 0.15)
-      ..strokeWidth = wire.thickness * 0.3
+      ..color = Colors.white.withValues(alpha: isActive ? 0.40 : 0.20)
+      ..strokeWidth = 1.6
       ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-    canvas.drawPath(path.shift(Offset(0, -wire.thickness * 0.15)), specularPaint);
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    canvas.drawPath(path.shift(const Offset(0, -1.2)), specularPaint);
 
-    // Condutores nas pontas (暴露 o cobre)
+    // 4. Bornes/pontos de solda em cobre metálico
     _drawTerminalSpots(canvas, wire);
 
-    // Elétrons animados quando ativo
+    // 5. Elétrons animados amarelos com brilho (glow)
     if (isActive && showElectrons) {
       _drawElectrons(canvas, path, wire);
     }
   }
 
   void _drawTerminalSpots(Canvas canvas, WirePath wire) {
-    if (wire.points.length < 2) return;
-    final spotPaint = Paint()..style = PaintingStyle.fill;
+    if (wire.points.isEmpty) return;
+    final copperPaint = Paint()
+      ..color = const Color(0xFFB87333)
+      ..style = PaintingStyle.fill;
 
-    // Ponto de solda na ponta inicial
-    spotPaint.color = const Color(0xFFB87333); // Cobre
-    canvas.drawCircle(wire.points.first, wire.thickness * 0.4, spotPaint);
-
-    // Ponto de solda na ponta final
-    canvas.drawCircle(wire.points.last, wire.thickness * 0.4, spotPaint);
+    canvas.drawCircle(wire.points.first, 4.5, copperPaint);
+    canvas.drawCircle(wire.points.last, 4.5, copperPaint);
   }
 
   void _drawElectrons(Canvas canvas, Path path, WirePath wire) {
+    final electronGlow = Paint()
+      ..color = const Color(0xFFFDE047)
+      ..style = PaintingStyle.fill
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
+
     final electronPaint = Paint()
-      ..color = const Color(0xFFFFD54F)
+      ..color = const Color(0xFFFEF08A)
       ..style = PaintingStyle.fill;
 
-    final electronGlow = Paint()
-      ..color = const Color(0xFFFFD54F).withValues(alpha: 0.3)
-      ..style = PaintingStyle.fill
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
-
-    const totalElectrons = 8;
+    const totalElectrons = 10;
     final metrics = path.computeMetrics();
     for (final metric in metrics) {
       final length = metric.length;
@@ -93,43 +93,21 @@ class RealisticWirePainter extends CustomPainter {
         final tangent = metric.getTangentForOffset(distance);
         if (tangent != null) {
           final pos = tangent.position;
-          canvas.drawCircle(pos, 5, electronGlow);
-          canvas.drawCircle(pos, 2.5, electronPaint);
+          canvas.drawCircle(pos, 5.0, electronGlow);
+          canvas.drawCircle(pos, 3.5, electronPaint);
         }
       }
     }
   }
 
-  Path _buildCatenaryPath(List<Offset> points) {
+  Path _buildRectilinearPath(List<Offset> points) {
     if (points.isEmpty) return Path();
     if (points.length == 1) return Path()..addOval(Rect.fromCircle(center: points.first, radius: 1));
 
     final path = Path()..moveTo(points.first.dx, points.first.dy);
-
-    if (points.length == 2) {
-      // Curva suave entre dois pontos (catenária simples)
-      final start = points[0];
-      final end = points[1];
-      final mid = Offset((start.dx + end.dx) / 2, (start.dy + end.dy) / 2);
-
-      // Adiciona uma leve curvatura baseada na distância
-      final dist = (end - start).distance;
-      final sag = dist * 0.08; // Queda natural do fio
-      final controlPoint = Offset(mid.dx, mid.dy + sag);
-
-      path.quadraticBezierTo(controlPoint.dx, controlPoint.dy, end.dx, end.dy);
-    } else {
-      // Múltiplos pontos: conecta com curvas suaves
-      for (int i = 1; i < points.length; i++) {
-        final prev = points[i - 1];
-        final curr = points[i];
-        final mid = Offset((prev.dx + curr.dx) / 2, (prev.dy + curr.dy) / 2);
-
-        path.quadraticBezierTo(prev.dx, prev.dy, mid.dx, mid.dy);
-      }
-      path.lineTo(points.last.dx, points.last.dy);
+    for (int i = 1; i < points.length; i++) {
+      path.lineTo(points[i].dx, points[i].dy);
     }
-
     return path;
   }
 

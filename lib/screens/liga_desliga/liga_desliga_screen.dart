@@ -1446,7 +1446,11 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         }
 
         if (_m1BulbInserted && _m1BatteryInserted) {
-          // Bulb(B) -> Bateria(-) ( retorno por baixo )
+          final bulbTermB = ComponentPlacement(position: lampPos, rotation: _m1BulbRotation, type: ComponentType.bulb).getTerminalPosition(1);
+          final batTermB = ComponentPlacement(position: batteryPos, rotation: _m1BatteryRotation, type: ComponentType.battery).getTerminalPosition(0);
+          final bottomY = centerY + 65.0;
+
+          // Bulb(B) -> Bateria(-) ( retorno retangular por baixo )
           wires.add(DynamicWirePath.fromComponents(
             compA: ComponentPlacement(position: lampPos, rotation: _m1BulbRotation, type: ComponentType.bulb),
             terminalIndexA: 1,
@@ -1456,7 +1460,8 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
             isActive: isClosed,
             thickness: 4.5,
           ).toWirePath(intermediatePoints: [
-            Offset(width * 0.50, centerY + 65.0),
+            Offset(bulbTermB.dx, bottomY),
+            Offset(batTermB.dx, bottomY),
           ]));
         }
 
@@ -1652,6 +1657,8 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
           thickness: 4.0,
         ).toWirePath());
 
+        final termABulb = ComponentPlacement(position: posABulb, rotation: 0, type: ComponentType.bulb).getTerminalPosition(1);
+        final termABat = ComponentPlacement(position: posABat, rotation: 0, type: ComponentType.battery).getTerminalPosition(0);
         wires.add(DynamicWirePath.fromComponents(
           compA: ComponentPlacement(position: posABulb, rotation: 0, type: ComponentType.bulb),
           terminalIndexA: 1,
@@ -1660,7 +1667,10 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
           color: const Color(0xFF2563EB),
           isActive: _m2SwitchAClosed,
           thickness: 4.0,
-        ).toWirePath(intermediatePoints: [Offset(width * 0.27, 100.0)]));
+        ).toWirePath(intermediatePoints: [
+          Offset(termABulb.dx, 100.0),
+          Offset(termABat.dx, 100.0),
+        ]));
 
         // Fios Cenário B
         wires.add(DynamicWirePath.fromComponents(
@@ -1683,6 +1693,8 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
           thickness: 4.0,
         ).toWirePath());
 
+        final termBBulb = ComponentPlacement(position: posBBulb, rotation: 0, type: ComponentType.bulb).getTerminalPosition(1);
+        final termBBat = ComponentPlacement(position: posBBat, rotation: 0, type: ComponentType.battery).getTerminalPosition(0);
         wires.add(DynamicWirePath.fromComponents(
           compA: ComponentPlacement(position: posBBulb, rotation: 0, type: ComponentType.bulb),
           terminalIndexA: 1,
@@ -1691,7 +1703,10 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
           color: const Color(0xFF2563EB),
           isActive: _m2SwitchBClosed,
           thickness: 4.0,
-        ).toWirePath(intermediatePoints: [Offset(width * 0.73, 100.0)]));
+        ).toWirePath(intermediatePoints: [
+          Offset(termBBulb.dx, 100.0),
+          Offset(termBBat.dx, 100.0),
+        ]));
 
         return SizedBox(
           height: height,
@@ -1848,6 +1863,10 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         }
 
         if (_m3LampAInserted && _m3LampBInserted && _m3BatteryInserted) {
+          final bulb2Term = ComponentPlacement(position: lamp2Pos, rotation: _m3LampBRotation, type: ComponentType.bulb).getTerminalPosition(1);
+          final batTerm = ComponentPlacement(position: batteryPos, rotation: _m3BatteryRotation, type: ComponentType.battery).getTerminalPosition(0);
+          final bottomY = 165.0;
+
           wires.add(DynamicWirePath.fromComponents(
             compA: ComponentPlacement(position: lamp1Pos, rotation: _m3LampARotation, type: ComponentType.bulb),
             terminalIndexA: 1,
@@ -1857,7 +1876,8 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
             isActive: _m3Switch1Closed || _m3Switch2Closed,
             thickness: 4.0,
           ).toWirePath(intermediatePoints: [
-            Offset(lamp2Pos.dx, 165.0),
+            Offset(bulb2Term.dx, bottomY),
+            Offset(batTerm.dx, bottomY),
           ]));
         }
 
@@ -2181,6 +2201,10 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
             }
           }
 
+          final lampTerm = ComponentPlacement(position: lampPos, rotation: _m4LampRotation, type: ComponentType.bulb).getTerminalPosition(1);
+          final batTerm = ComponentPlacement(position: batteryPos, rotation: _m4BatteryRotation, type: ComponentType.battery).getTerminalPosition(0);
+          final bottomY = centerY + 65.0;
+
           wires.add(DynamicWirePath.fromComponents(
             compA: ComponentPlacement(position: lampPos, rotation: _m4LampRotation, type: ComponentType.bulb),
             terminalIndexA: 1,
@@ -2190,7 +2214,8 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
             isActive: isLampLit,
             thickness: 4.0,
           ).toWirePath(intermediatePoints: [
-            Offset(width * 0.50, centerY + 65.0),
+            Offset(lampTerm.dx, bottomY),
+            Offset(batTerm.dx, bottomY),
           ]));
         }
 
@@ -2465,6 +2490,10 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         }
 
         if (_m5LampInserted && _m5BatteryInserted) {
+          final lampTerm = ComponentPlacement(position: lampPos, rotation: _m5LampRotation, type: ComponentType.bulb).getTerminalPosition(1);
+          final batTerm = ComponentPlacement(position: batteryPos, rotation: _m5BatteryRotation, type: ComponentType.battery).getTerminalPosition(0);
+          final bottomY = centerY + 65.0;
+
           wires.add(DynamicWirePath.fromComponents(
             compA: ComponentPlacement(position: lampPos, rotation: _m5LampRotation, type: ComponentType.bulb),
             terminalIndexA: 1,
@@ -2474,7 +2503,8 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
             isActive: isLit,
             thickness: 4.5,
           ).toWirePath(intermediatePoints: [
-            Offset(width * 0.50, centerY + 65.0),
+            Offset(lampTerm.dx, bottomY),
+            Offset(batTerm.dx, bottomY),
           ]));
         }
 
