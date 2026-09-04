@@ -640,8 +640,8 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
 
         final lampY = h * 0.28;
         final socketY = h * 0.80;
-        final lamp1X = w * 0.28;
-        final lamp2X = w * 0.72;
+        final lamp1X = w * 0.34;
+        final lamp2X = w * 0.66;
         final socketX = w * 0.50;
 
         return Stack(
@@ -2077,6 +2077,8 @@ class _RuasMaquetePainter extends CustomPainter {
     final batPosTerminal = Offset(socketX - 7.5, socketY - 25.0);
     final batNegTerminal = Offset(socketX + 7.5, socketY - 25.0);
     final topLoopY = socketY - 48.0;
+    final outerLeftX = lamp1X - 45.0;
+    final outerRightX = lamp2X + 45.0;
 
     // Desenhar caminhos de fios conforme a missão
     if (missionIndex == 0) {
@@ -2087,7 +2089,8 @@ class _RuasMaquetePainter extends CustomPainter {
       final path1 = makeFlexiblePath([
         batPosTerminal,
         Offset(batPosTerminal.dx, topLoopY),
-        Offset(lamp1X - termOffset, topLoopY),
+        Offset(outerLeftX, topLoopY),
+        Offset(outerLeftX, lampY),
         Offset(lamp1X - termOffset, lampY),
       ]);
 
@@ -2098,7 +2101,8 @@ class _RuasMaquetePainter extends CustomPainter {
 
       final path3 = makeFlexiblePath([
         Offset(lamp2X + termOffset, lampY),
-        Offset(lamp2X + termOffset, topLoopY),
+        Offset(outerRightX, lampY),
+        Offset(outerRightX, topLoopY),
         Offset(batNegTerminal.dx, topLoopY),
         batNegTerminal,
       ]);
@@ -2124,7 +2128,8 @@ class _RuasMaquetePainter extends CustomPainter {
       final path1 = makeFlexiblePath([
         batPosTerminal,
         Offset(batPosTerminal.dx, topLoopY),
-        Offset(lamp1X - termOffset, topLoopY),
+        Offset(outerLeftX, topLoopY),
+        Offset(outerLeftX, lampY),
         Offset(lamp1X - termOffset, lampY),
       ]);
 
@@ -2135,7 +2140,8 @@ class _RuasMaquetePainter extends CustomPainter {
 
       final path3 = makeFlexiblePath([
         Offset(lamp2X + termOffset, lampY),
-        Offset(lamp2X + termOffset, topLoopY),
+        Offset(outerRightX, lampY),
+        Offset(outerRightX, topLoopY),
         Offset(batNegTerminal.dx, topLoopY),
         batNegTerminal,
       ]);
@@ -2180,7 +2186,8 @@ class _RuasMaquetePainter extends CustomPainter {
       // Retorno Rua A (da Rua A para o Retorno (-))
       final pathReturnA = makeFlexiblePath([
         Offset(lamp1X - termOffset, lampY),
-        Offset(lamp1X - termOffset, topLoopY),
+        Offset(outerLeftX, lampY),
+        Offset(outerLeftX, topLoopY),
         Offset(batNegTerminal.dx, topLoopY),
         batNegTerminal,
       ]);
@@ -2188,7 +2195,8 @@ class _RuasMaquetePainter extends CustomPainter {
       // Retorno Rua B (da Rua B para o Retorno (-))
       final pathReturnB = makeFlexiblePath([
         Offset(lamp2X + termOffset, lampY),
-        Offset(lamp2X + termOffset, topLoopY),
+        Offset(outerRightX, lampY),
+        Offset(outerRightX, topLoopY),
         Offset(batNegTerminal.dx, topLoopY),
         batNegTerminal,
       ]);
@@ -2221,8 +2229,8 @@ class _RuasMaquetePainter extends CustomPainter {
       final pathBusLeft = makeFlexiblePath([
         batPosTerminal,
         Offset(batPosTerminal.dx, topLoopY),
-        Offset(lamp1X - busOffset, topLoopY),
-        Offset(lamp1X - busOffset, lampY),
+        Offset(outerLeftX, topLoopY),
+        Offset(outerLeftX, lampY),
         Offset(lamp2X - busOffset, lampY),
       ]);
 
@@ -2240,8 +2248,8 @@ class _RuasMaquetePainter extends CustomPainter {
       final pathBusRight = makeFlexiblePath([
         batNegTerminal,
         Offset(batNegTerminal.dx, topLoopY),
-        Offset(lamp2X + busOffset, topLoopY),
-        Offset(lamp2X + busOffset, lampY),
+        Offset(outerRightX, topLoopY),
+        Offset(outerRightX, lampY),
         Offset(lamp1X + busOffset, lampY),
       ]);
 
