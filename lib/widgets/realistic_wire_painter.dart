@@ -101,36 +101,43 @@ class RealisticWirePainter extends CustomPainter {
     }
   }
 
-  /// Constrói caminhos de fios orgânicos e flexíveis com curvas arredondadas (fillets Bezier)
-  /// e curva S direta entre terminais.
-  Path _buildFlexibleWirePath(List<Offset> points) {
-    if (points.isEmpty) return Path();
-    if (points.length == 1) return Path()..addOval(Rect.fromCircle(center: points.first, radius: 1));
+  /// Constrói caminhos de fios ortogonais com linhas retas e cantos arredondados (fillets Bezier de 90°).
+  Path _buildFlexibleWirePath(List<Offset> rawPoints) {
+    if (rawPoints.isEmpty) return Path();
+    if (rawPoints.length == 1) return Path()..addOval(Rect.fromCircle(center: rawPoints.first, radius: 1));
+
+    // Converter conexões diretas de 2 pontos em segmentos ortogonais (retas com cantos arredondados)
+    final List<Offset> points = [];
+    if (rawPoints.length == 2) {
+      final p0 = rawPoints[0];
+      final p1 = rawPoints[1];
+      final dx = (p1.dx - p0.dx).abs();
+      final dy = (p1.dy - p0.dy).abs();
+
+      if (dx > 4.0 && dy > 4.0) {
+        // Linhas retas (ortogonais) e cantos arredondados (fillets de 90°):
+        // Se p0 é o topo da bateria (p0.dy acima de p1.dy), sai verticalmente para alinhar a altura Y;
+        // caso contrário, navega horizontalmente na altura Y do componente de origem e vira 90° em L.
+        final isBatteryTopPin = (p0.dy < p1.dy - 15.0) && (dx > dy);
+        final pCorner = isBatteryTopPin
+            ? Offset(p0.dx, p1.dy)
+            : Offset(p1.dx, p0.dy);
+        points.addAll([p0, pCorner, p1]);
+      } else {
+        points.addAll(rawPoints);
+      }
+    } else {
+      points.addAll(rawPoints);
+    }
 
     final path = Path()..moveTo(points.first.dx, points.first.dy);
 
     if (points.length == 2) {
-      final p0 = points[0];
-      final p1 = points[1];
-      final dx = (p1.dx - p0.dx).abs();
-      final dy = (p1.dy - p0.dy).abs();
-
-      // Curva S orgânica e suave entre dois terminais desacoplados em Y e X
-      if (dx > 12.0 && dy > 3.0) {
-        final midX = (p0.dx + p1.dx) / 2;
-        path.cubicTo(
-          midX, p0.dy,
-          midX, p1.dy,
-          p1.dx, p1.dy,
-        );
-        return path;
-      }
-
-      path.lineTo(p1.dx, p1.dy);
+      path.lineTo(points.last.dx, points.last.dy);
       return path;
     }
 
-    const double maxRadius = 22.0; // Curvatura flexível orgânica e arredondada nos cantos
+    const double maxRadius = 18.0; // Curvatura suave e limpa nos cantos arredondados
 
     for (int i = 1; i < points.length - 1; i++) {
       final pPrev = points[i - 1];
