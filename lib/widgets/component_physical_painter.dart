@@ -311,9 +311,6 @@ class ComponentPhysicalPainter extends CustomPainter {
     // Pino Preto (-)
     canvas.drawCircle(Offset(wireEndX, bottomWireY), 2.5, Paint()..color = const Color(0xFF09090B));
     canvas.drawCircle(Offset(wireEndX, bottomWireY), 1.0, Paint()..color = const Color(0xFFA1A1AA));
-
-    // Hastes metálicas para conexão
-    _drawCleanLeads(canvas, size, cx, cy, bodyLeft, wireEndX);
   }
 
 
