@@ -2267,69 +2267,89 @@ class _RuasMaquetePainter extends CustomPainter {
         _drawElectronsOnPath(canvas, pathReturnB, electronPaint);
       }
     } else if (missionIndex == 3 || missionIndex == 4) {
-      // M4 e M5: Circuito em Paralelo
+      // M4 e M5: Circuito em Paralelo (Barramento Positivo Superior + Barramento Negativo Inferior)
       final isActive = m4Parallel || missionIndex == 4;
       final currentPaint = isActive ? activeWirePaint : wirePaint;
-      const busOffset = 48.0;
+      final topVccY = lampY - 50.0;
+      final botGndY = lampY + 70.0;
 
-      // Barramento Positivo Left (Saindo do terminal + no topo da bateria)
-      final pathBusLeft = makeFlexiblePath([
+      // 1. Barramento Positivo VCC (Red): Bateria (+) -> Subida Esquerda -> Trilho Superior -> Entradas das Casas
+      final pathVccMain = makeFlexiblePath([
         ...posExitWaypoints,
-        Offset(outerLeftX, topLoopY),
-        Offset(outerLeftX, lampY),
-        Offset(lamp2X - busOffset, lampY),
+        Offset(outerLeftX, topVccY),
+        Offset(lamp2X - termOffset, topVccY),
       ]);
 
-      final branch1Pos = makeFlexiblePath([
-        Offset(lamp1X - busOffset, lampY),
+      // Descida VCC para Casa 01 (Alameda / Lâmpada A)
+      final pathVccBranch1 = makeFlexiblePath([
+        Offset(lamp1X - termOffset, topVccY),
         Offset(lamp1X - termOffset, lampY),
       ]);
 
-      final branch2Pos = makeFlexiblePath([
-        Offset(lamp2X - busOffset, lampY),
+      // Descida VCC para Casa 02 (Praça / Lâmpada B)
+      final pathVccBranch2 = makeFlexiblePath([
+        Offset(lamp2X - termOffset, topVccY),
         Offset(lamp2X - termOffset, lampY),
       ]);
 
-      // Barramento Negativo Right (Saindo do terminal - no topo da bateria)
-      final pathBusRight = makeFlexiblePath([
-        Offset(outerRightX, lampY),
+      // 2. Barramento Negativo GND (Blue): Saídas das Casas -> Descida -> Trilho Inferior -> Bateria (-)
+      // Saída GND Casa 01 (Alameda / Lâmpada A)
+      final pathGndBranch1 = makeFlexiblePath([
+        Offset(lamp1X + termOffset, lampY),
+        Offset(lamp1X + termOffset, botGndY),
+        Offset(lamp2X + termOffset, botGndY),
+      ]);
+
+      // Saída GND Casa 02 (Praça / Lâmpada B)
+      final pathGndBranch2 = makeFlexiblePath([
+        Offset(lamp2X + termOffset, lampY),
+        Offset(lamp2X + termOffset, botGndY),
+      ]);
+
+      // Retorno GND Principal: Trilho Inferior -> Descida Direita -> Bateria (-)
+      final pathGndMain = makeFlexiblePath([
+        Offset(lamp1X + termOffset, botGndY),
+        Offset(outerRightX, botGndY),
         Offset(outerRightX, topLoopY),
         ...negExitWaypoints,
       ]);
 
-      final branch1Neg = makeFlexiblePath([
-        Offset(lamp1X + busOffset, lampY),
-        Offset(lamp1X + termOffset, lampY),
-      ]);
+      // Desenhar Fios Positivos (Red)
+      drawStyledPath(pathVccMain, currentPaint, isPositive: true);
+      drawStyledPath(pathVccBranch1, (isActive && (!m5House1Broken || missionIndex != 4)) ? activeWirePaint : wirePaint, isPositive: true);
+      drawStyledPath(pathVccBranch2, currentPaint, isPositive: true);
 
-      final branch2Neg = makeFlexiblePath([
-        Offset(lamp2X + busOffset, lampY),
-        Offset(lamp2X + termOffset, lampY),
-      ]);
+      // Desenhar Fios Negativos (Blue)
+      drawStyledPath(pathGndBranch1, (isActive && (!m5House1Broken || missionIndex != 4)) ? activeWirePaint : wirePaint, isPositive: false);
+      drawStyledPath(pathGndBranch2, isActive ? activeWirePaint : wirePaint, isPositive: false);
+      drawStyledPath(pathGndMain, isActive ? activeWirePaint : wirePaint, isPositive: false);
 
-      drawStyledPath(pathBusLeft, currentPaint, isPositive: true);
-      drawStyledPath(branch1Pos, currentPaint, isPositive: true);
-      drawStyledPath(branch2Pos, currentPaint, isPositive: true);
-      drawStyledPath(pathBusRight, currentPaint, isPositive: false);
-      drawStyledPath(branch1Neg, currentPaint, isPositive: false);
-      drawStyledPath(branch2Neg, currentPaint, isPositive: false);
-
+      // Desenhar nós de conexão nos terminais
       drawTerminalDot(batPosTerminal);
+      drawTerminalDot(Offset(lamp1X - termOffset, topVccY));
+      drawTerminalDot(Offset(lamp2X - termOffset, topVccY));
       drawTerminalDot(Offset(lamp1X - termOffset, lampY));
       drawTerminalDot(Offset(lamp1X + termOffset, lampY));
       drawTerminalDot(Offset(lamp2X - termOffset, lampY));
       drawTerminalDot(Offset(lamp2X + termOffset, lampY));
+      drawTerminalDot(Offset(lamp1X + termOffset, botGndY));
+      drawTerminalDot(Offset(lamp2X + termOffset, botGndY));
       drawTerminalDot(batNegTerminal);
 
+      // Animação de Elétrons por Ramo
       if (isActive) {
+        _drawElectronsOnPath(canvas, pathVccMain, electronPaint);
+        _drawElectronsOnPath(canvas, pathGndMain, electronPaint);
+
+        // Ramo 1 (Casa 01 / Lâmpada A) só anima se estiver funcional
         if (!m5House1Broken || missionIndex != 4) {
-          _drawElectronsOnPath(canvas, branch1Pos, electronPaint);
-          _drawElectronsOnPath(canvas, branch1Neg, electronPaint);
+          _drawElectronsOnPath(canvas, pathVccBranch1, electronPaint);
+          _drawElectronsOnPath(canvas, pathGndBranch1, electronPaint);
         }
-        _drawElectronsOnPath(canvas, pathBusLeft, electronPaint);
-        _drawElectronsOnPath(canvas, branch2Pos, electronPaint);
-        _drawElectronsOnPath(canvas, pathBusRight, electronPaint);
-        _drawElectronsOnPath(canvas, branch2Neg, electronPaint);
+
+        // Ramo 2 (Casa 02 / Lâmpada B) sempre ativo no circuito paralelo
+        _drawElectronsOnPath(canvas, pathVccBranch2, electronPaint);
+        _drawElectronsOnPath(canvas, pathGndBranch2, electronPaint);
       }
     }
   }
