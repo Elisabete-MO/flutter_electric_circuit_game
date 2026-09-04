@@ -154,11 +154,11 @@ class ComponentPhysicalPainter extends CustomPainter {
   /// BATERIA DE 9V (Horizontal de Bancada com Tarja de Cobre e Snap 9V)
   /// --------------------------------------------------------------------------
   void _drawPhysicalBattery(Canvas canvas, Size size, double cx, double cy) {
-    // Corpo principal da Bateria de 9V (Orientação Horizontal)
-    const double bodyWidth = 50.0;
-    const double bodyHeight = 36.0;
-    final double bodyLeft = cx - 28.0;
-    final double bodyTop = cy - bodyHeight / 2;
+    // Corpo da Bateria de 9V (Vertical de Bancada)
+    const double bodyWidth = 32.0;
+    const double bodyHeight = 42.0;
+    final double bodyLeft = cx - bodyWidth / 2;
+    final double bodyTop = cy - bodyHeight / 2 + 5.0; // Deslocada ligeiramente para baixo para dar espaço aos terminais no topo
 
     final batRect = Rect.fromLTWH(bodyLeft, bodyTop, bodyWidth, bodyHeight);
     final batRRect = RRect.fromRectAndRadius(batRect, const Radius.circular(5.0));
@@ -167,7 +167,7 @@ class ComponentPhysicalPainter extends CustomPainter {
     canvas.drawRRect(
       RRect.fromRectAndRadius(batRect.translate(2.5, 4.0), const Radius.circular(5.0)),
       Paint()
-        ..color = Colors.black.withValues(alpha: 0.40)
+        ..color = Colors.black.withValues(alpha: 0.35)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0),
     );
 
@@ -179,9 +179,8 @@ class ComponentPhysicalPainter extends CustomPainter {
     ).createShader(batRect);
     canvas.drawRRect(batRRect, Paint()..shader = bodyShader);
 
-    // 2. Tarja metálica de Cobre/Dourado estilo Duracell/Industrial na extremidade esquerda
-    const double copperWidth = 14.0;
-    final copperRect = Rect.fromLTWH(bodyLeft, bodyTop, copperWidth, bodyHeight);
+    // 2. Tarja metálica de Cobre/Dourado no setor inferior
+    final copperRect = Rect.fromLTWH(bodyLeft, bodyTop + bodyHeight - 12.0, bodyWidth, 12.0);
     final copperShader = const LinearGradient(
       colors: [Color(0xFFFFB74D), Color(0xFFF57C00), Color(0xFFE65100), Color(0xFFBF360C)],
       begin: Alignment.topCenter,
@@ -192,18 +191,11 @@ class ComponentPhysicalPainter extends CustomPainter {
     canvas.clipRRect(batRRect);
     canvas.drawRect(copperRect, Paint()..shader = copperShader);
 
-    // Destaque de brilho metálico no topo da faixa de cobre
+    // Destaque de brilho na faixa de cobre
     canvas.drawLine(
-      Offset(copperRect.left, copperRect.top + 1.2),
-      Offset(copperRect.right, copperRect.top + 1.2),
-      Paint()..color = Colors.white.withValues(alpha: 0.5)..strokeWidth = 1.2,
-    );
-
-    // Linha de vinco de transição entre a faixa de cobre e o corpo preto
-    canvas.drawLine(
-      Offset(copperRect.right, bodyTop),
-      Offset(copperRect.right, bodyTop + bodyHeight),
-      Paint()..color = const Color(0xFF18181B)..strokeWidth = 1.2,
+      Offset(copperRect.left, copperRect.top),
+      Offset(copperRect.right, copperRect.top),
+      Paint()..color = const Color(0xFFFFE0B2)..strokeWidth = 1.0,
     );
     canvas.restore();
 
@@ -211,19 +203,19 @@ class ComponentPhysicalPainter extends CustomPainter {
     canvas.drawRRect(
       batRRect,
       Paint()
-        ..color = Colors.white.withValues(alpha: 0.12)
+        ..color = Colors.white.withValues(alpha: 0.15)
         ..strokeWidth = 1.0
         ..style = PaintingStyle.stroke,
     );
 
-    // 3. Tipografia de Tensão "9V" gravada na seção preta
+    // 3. Tipografia "9V" gravada no corpo da bateria
     final voltStr = value > 0 ? '${value.toStringAsFixed(value % 1 == 0 ? 0 : 1)}V' : '9V';
     final textPainter = TextPainter(
       text: TextSpan(
         text: voltStr,
         style: const TextStyle(
           color: Colors.white,
-          fontSize: 13.0,
+          fontSize: 12.0,
           fontWeight: FontWeight.w900,
           letterSpacing: 1.0,
           fontFamily: 'sans-serif',
@@ -233,84 +225,40 @@ class ComponentPhysicalPainter extends CustomPainter {
     )..layout();
     textPainter.paint(
       canvas,
-      Offset(bodyLeft + copperWidth + (bodyWidth - copperWidth - textPainter.width) / 2, cy - textPainter.height / 2),
+      Offset(cx - textPainter.width / 2, bodyTop + 8.0),
     );
 
-    // 4. Terminais Metálicos Cilíndricos (Postes Prata projetados para a direita)
-    const double postWidth = 6.5;
-    const double postHeight = 9.5;
-    final double topPostY = cy - 7.5 - postHeight / 2;
-    final double bottomPostY = cy + 7.5 - postHeight / 2;
-    final double postX = bodyLeft + bodyWidth;
+    // 4. Tampa isolante do Conector Snap 9V no topo
+    const double capWidth = 26.0;
+    const double capHeight = 4.0;
+    final double capLeft = cx - capWidth / 2;
+    final double capTop = bodyTop - capHeight;
 
-    final postPaint = Paint()
-      ..shader = const LinearGradient(
-        colors: [Color(0xFFE2E8F0), Color(0xFF94A3B8), Color(0xFF64748B)],
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-      ).createShader(Rect.fromLTWH(postX, topPostY, postWidth, bodyHeight));
-
-    // Terminal Superior (+)
     canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromLTWH(postX, topPostY, postWidth, postHeight), const Radius.circular(2.0)),
-      postPaint,
-    );
-    // Terminal Inferior (-)
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromLTWH(postX, bottomPostY, postWidth, postHeight), const Radius.circular(2.0)),
-      postPaint,
+      RRect.fromRectAndRadius(Rect.fromLTWH(capLeft, capTop, capWidth, capHeight), const Radius.circular(1.5)),
+      Paint()..color = const Color(0xFF1E293B),
     );
 
-    // 5. Placa Plástica Preta do Conector Snap 9V (Barra Vertical à direita dos postes)
-    const double clipWidth = 3.5;
-    const double clipHeight = 28.0;
-    final double clipX = postX + postWidth;
-    final double clipY = cy - clipHeight / 2;
+    // 5. Terminais Elétricos Superiores (+ Vermelho na esquerda, - Preto na direita)
+    final double termY = cy - 25.0;
+    final double termLeftX = cx - 7.5;
+    final double termRightX = cx + 7.5;
 
-    final clipPaint = Paint()..color = const Color(0xFF18181B);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromLTWH(clipX, clipY, clipWidth, clipHeight), const Radius.circular(1.5)),
-      clipPaint,
+    // Terminal Positivo Vermelho (+) — Offset (-7.5, -25.0)
+    canvas.drawRect(
+      Rect.fromLTWH(termLeftX - 2.5, capTop - 4.0, 5.0, 4.0),
+      Paint()..color = const Color(0xFF94A3B8),
     );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromLTWH(clipX, clipY, clipWidth, clipHeight), const Radius.circular(1.5)),
-      Paint()
-        ..color = const Color(0xFF52525B)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 0.8,
-    );
+    canvas.drawCircle(Offset(termLeftX, termY), 3.5, Paint()..color = const Color(0xFFDC2626));
+    canvas.drawCircle(Offset(termLeftX, termY), 1.5, Paint()..color = Colors.white);
 
-    // 6. Fios e Pontas de Terminais (+ Vermelho e - Preto) estendidos para a direita até cx + 35.0
-    final double wireStartX = clipX + clipWidth;
-    final double topWireY = cy - 7.5;
-    final double bottomWireY = cy + 7.5;
-    final double wireEndX = cx + 35.0;
-
-    // Fio Superior (Vermelho +) -> Terminal 1 (Offset: 35, -7.5)
-    canvas.drawLine(
-      Offset(wireStartX, topWireY),
-      Offset(wireEndX, topWireY),
-      Paint()
-        ..color = const Color(0xFFEF4444)
-        ..strokeWidth = 2.2
-        ..strokeCap = StrokeCap.round,
+    // Terminal Negativo Preto (-) — Offset (7.5, -25.0)
+    canvas.drawRect(
+      Rect.fromLTWH(termRightX - 3.0, capTop - 4.0, 6.0, 4.0),
+      Paint()..color = const Color(0xFF64748B),
     );
-    // Pino Vermelho (+)
-    canvas.drawCircle(Offset(wireEndX, topWireY), 2.5, Paint()..color = const Color(0xFFDC2626));
-    canvas.drawCircle(Offset(wireEndX, topWireY), 1.0, Paint()..color = Colors.white);
-
-    // Fio Inferior (Preto -) -> Terminal 0 (Offset: 35, 7.5)
-    canvas.drawLine(
-      Offset(wireStartX, bottomWireY),
-      Offset(wireEndX, bottomWireY),
-      Paint()
-        ..color = const Color(0xFF18181B)
-        ..strokeWidth = 2.2
-        ..strokeCap = StrokeCap.round,
-    );
-    // Pino Preto (-)
-    canvas.drawCircle(Offset(wireEndX, bottomWireY), 2.5, Paint()..color = const Color(0xFF09090B));
-    canvas.drawCircle(Offset(wireEndX, bottomWireY), 1.0, Paint()..color = const Color(0xFFA1A1AA));
+    canvas.drawCircle(Offset(termRightX, termY), 3.5, Paint()..color = const Color(0xFF09090B));
+    canvas.drawCircle(Offset(termRightX, termY), 1.5, Paint()..color = const Color(0xFFA1A1AA));
   }
 
 

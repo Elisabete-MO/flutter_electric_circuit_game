@@ -14,8 +14,8 @@ class ComponentTerminal {
 /// Coordenadas relativas ao centro do componente no canvas físico.
 final Map<ComponentType, List<ComponentTerminal>> componentTerminals = {
   ComponentType.battery: [
-    ComponentTerminal(offset: Offset(35, 7.5), label: '-'),
-    ComponentTerminal(offset: Offset(35, -7.5), label: '+'),
+    ComponentTerminal(offset: Offset(-7.5, -25.0), label: '+'),
+    ComponentTerminal(offset: Offset(7.5, -25.0), label: '-'),
   ],
   ComponentType.switchComponent: [
     ComponentTerminal(offset: Offset(-32, 0), label: 'A'),

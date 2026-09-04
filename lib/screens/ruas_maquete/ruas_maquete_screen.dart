@@ -1970,7 +1970,6 @@ class _RuasMaquetePainter extends CustomPainter {
 
     // Terminais dos componentes (esquerda / direita)
     const termOffset = 32.0;
-    const socketTermOffset = 30.0;
 
     void drawStyledPath(Path path, Paint paint, {Color? customColor, bool isPositive = true}) {
       if (usePhysicalStyle) {
@@ -2074,6 +2073,11 @@ class _RuasMaquetePainter extends CustomPainter {
       return path;
     }
 
+    // Coordenadas dos terminais superiores no topo da bateria
+    final batPosTerminal = Offset(socketX - 7.5, socketY - 25.0);
+    final batNegTerminal = Offset(socketX + 7.5, socketY - 25.0);
+    final topLoopY = socketY - 48.0;
+
     // Desenhar caminhos de fios conforme a missão
     if (missionIndex == 0) {
       // M1 (2 Lâmpadas em Série com Soquete de Fio): Socket (+) -> Lamp1 -> Lamp2 -> Socket (-)
@@ -2081,8 +2085,9 @@ class _RuasMaquetePainter extends CustomPainter {
       final currentPaint = isConnected ? activeWirePaint : wirePaint;
 
       final path1 = makeFlexiblePath([
-        Offset(socketX - socketTermOffset, socketY),
-        Offset(lamp1X - termOffset, socketY),
+        batPosTerminal,
+        Offset(batPosTerminal.dx, topLoopY),
+        Offset(lamp1X - termOffset, topLoopY),
         Offset(lamp1X - termOffset, lampY),
       ]);
 
@@ -2093,20 +2098,21 @@ class _RuasMaquetePainter extends CustomPainter {
 
       final path3 = makeFlexiblePath([
         Offset(lamp2X + termOffset, lampY),
-        Offset(lamp2X + termOffset, socketY),
-        Offset(socketX + socketTermOffset, socketY),
+        Offset(lamp2X + termOffset, topLoopY),
+        Offset(batNegTerminal.dx, topLoopY),
+        batNegTerminal,
       ]);
 
       drawStyledPath(path1, currentPaint, isPositive: true);
       drawStyledPath(path2, currentPaint, customColor: const Color(0xFFD97706));
       drawStyledPath(path3, currentPaint, isPositive: false);
 
-      drawTerminalDot(Offset(socketX - socketTermOffset, socketY));
+      drawTerminalDot(batPosTerminal);
       drawTerminalDot(Offset(lamp1X - termOffset, lampY));
       drawTerminalDot(Offset(lamp1X + termOffset, lampY));
       drawTerminalDot(Offset(lamp2X - termOffset, lampY));
       drawTerminalDot(Offset(lamp2X + termOffset, lampY));
-      drawTerminalDot(Offset(socketX + socketTermOffset, socketY));
+      drawTerminalDot(batNegTerminal);
 
       if (isConnected) {
         _drawElectronsOnPath(canvas, path1, electronPaint);
@@ -2116,8 +2122,9 @@ class _RuasMaquetePainter extends CustomPainter {
     } else if (missionIndex == 1) {
       // M2 (Comparação de Brilho 1 vs 2 Lâmpadas): Fio de retorno inferior contínuo, passando pelo Poste Secundário
       final path1 = makeFlexiblePath([
-        Offset(socketX, socketY),
-        Offset(lamp1X - termOffset, socketY),
+        batPosTerminal,
+        Offset(batPosTerminal.dx, topLoopY),
+        Offset(lamp1X - termOffset, topLoopY),
         Offset(lamp1X - termOffset, lampY),
       ]);
 
@@ -2128,18 +2135,21 @@ class _RuasMaquetePainter extends CustomPainter {
 
       final path3 = makeFlexiblePath([
         Offset(lamp2X + termOffset, lampY),
-        Offset(lamp2X + termOffset, socketY),
-        Offset(socketX, socketY),
+        Offset(lamp2X + termOffset, topLoopY),
+        Offset(batNegTerminal.dx, topLoopY),
+        batNegTerminal,
       ]);
 
       drawStyledPath(path1, activeWirePaint, isPositive: true);
       drawStyledPath(path2, activeWirePaint, customColor: const Color(0xFFD97706));
       drawStyledPath(path3, m2Series ? activeWirePaint : wirePaint, isPositive: false);
 
+      drawTerminalDot(batPosTerminal);
       drawTerminalDot(Offset(lamp1X - termOffset, lampY));
       drawTerminalDot(Offset(lamp1X + termOffset, lampY));
       drawTerminalDot(Offset(lamp2X - termOffset, lampY));
       drawTerminalDot(Offset(lamp2X + termOffset, lampY));
+      drawTerminalDot(batNegTerminal);
 
       _drawElectronsOnPath(canvas, path1, electronPaint);
       _drawElectronsOnPath(canvas, path2, electronPaint);
@@ -2153,14 +2163,16 @@ class _RuasMaquetePainter extends CustomPainter {
 
       // Ramo Lâmpada A (do Nó (+) para Rua A)
       final pathBranchA = makeFlexiblePath([
-        Offset(socketX - socketTermOffset, nodeY),
+        batPosTerminal,
+        Offset(batPosTerminal.dx, nodeY),
         Offset(lamp1X + termOffset, nodeY),
         Offset(lamp1X + termOffset, lampY),
       ]);
 
       // Ramo Lâmpada B (do Nó (+) para Rua B)
       final pathBranchB = makeFlexiblePath([
-        Offset(socketX + socketTermOffset, nodeY),
+        batPosTerminal,
+        Offset(batPosTerminal.dx, nodeY),
         Offset(lamp2X - termOffset, nodeY),
         Offset(lamp2X - termOffset, lampY),
       ]);
@@ -2168,15 +2180,17 @@ class _RuasMaquetePainter extends CustomPainter {
       // Retorno Rua A (da Rua A para o Retorno (-))
       final pathReturnA = makeFlexiblePath([
         Offset(lamp1X - termOffset, lampY),
-        Offset(lamp1X - termOffset, socketY),
-        Offset(socketX - socketTermOffset, socketY),
+        Offset(lamp1X - termOffset, topLoopY),
+        Offset(batNegTerminal.dx, topLoopY),
+        batNegTerminal,
       ]);
 
       // Retorno Rua B (da Rua B para o Retorno (-))
       final pathReturnB = makeFlexiblePath([
         Offset(lamp2X + termOffset, lampY),
-        Offset(lamp2X + termOffset, socketY),
-        Offset(socketX + socketTermOffset, socketY),
+        Offset(lamp2X + termOffset, topLoopY),
+        Offset(batNegTerminal.dx, topLoopY),
+        batNegTerminal,
       ]);
 
       drawStyledPath(pathBranchA, m3Junction ? activeWirePaint : wirePaint, isPositive: true);
@@ -2184,14 +2198,12 @@ class _RuasMaquetePainter extends CustomPainter {
       drawStyledPath(pathReturnA, m3Return ? activeWirePaint : wirePaint, isPositive: false);
       drawStyledPath(pathReturnB, m3Return ? activeWirePaint : wirePaint, isPositive: false);
 
-      drawTerminalDot(Offset(socketX - socketTermOffset, nodeY));
-      drawTerminalDot(Offset(socketX + socketTermOffset, nodeY));
+      drawTerminalDot(batPosTerminal);
       drawTerminalDot(Offset(lamp1X + termOffset, lampY));
       drawTerminalDot(Offset(lamp1X - termOffset, lampY));
       drawTerminalDot(Offset(lamp2X - termOffset, lampY));
       drawTerminalDot(Offset(lamp2X + termOffset, lampY));
-      drawTerminalDot(Offset(socketX - socketTermOffset, socketY));
-      drawTerminalDot(Offset(socketX + socketTermOffset, socketY));
+      drawTerminalDot(batNegTerminal);
 
       if (isBothActive) {
         _drawElectronsOnPath(canvas, pathBranchA, electronPaint);
@@ -2205,10 +2217,11 @@ class _RuasMaquetePainter extends CustomPainter {
       final currentPaint = isActive ? activeWirePaint : wirePaint;
       const busOffset = 48.0;
 
-      // Barramento Positivo Left
+      // Barramento Positivo Left (Saindo do terminal + no topo da bateria)
       final pathBusLeft = makeFlexiblePath([
-        Offset(socketX - socketTermOffset, socketY),
-        Offset(lamp1X - busOffset, socketY),
+        batPosTerminal,
+        Offset(batPosTerminal.dx, topLoopY),
+        Offset(lamp1X - busOffset, topLoopY),
         Offset(lamp1X - busOffset, lampY),
         Offset(lamp2X - busOffset, lampY),
       ]);
@@ -2223,10 +2236,11 @@ class _RuasMaquetePainter extends CustomPainter {
         Offset(lamp2X - termOffset, lampY),
       ]);
 
-      // Barramento Negativo Right
+      // Barramento Negativo Right (Saindo do terminal - no topo da bateria)
       final pathBusRight = makeFlexiblePath([
-        Offset(socketX + socketTermOffset, socketY),
-        Offset(lamp2X + busOffset, socketY),
+        batNegTerminal,
+        Offset(batNegTerminal.dx, topLoopY),
+        Offset(lamp2X + busOffset, topLoopY),
         Offset(lamp2X + busOffset, lampY),
         Offset(lamp1X + busOffset, lampY),
       ]);
@@ -2248,12 +2262,12 @@ class _RuasMaquetePainter extends CustomPainter {
       drawStyledPath(branch1Neg, currentPaint, isPositive: false);
       drawStyledPath(branch2Neg, currentPaint, isPositive: false);
 
+      drawTerminalDot(batPosTerminal);
       drawTerminalDot(Offset(lamp1X - termOffset, lampY));
       drawTerminalDot(Offset(lamp1X + termOffset, lampY));
       drawTerminalDot(Offset(lamp2X - termOffset, lampY));
       drawTerminalDot(Offset(lamp2X + termOffset, lampY));
-      drawTerminalDot(Offset(socketX - socketTermOffset, socketY));
-      drawTerminalDot(Offset(socketX + socketTermOffset, socketY));
+      drawTerminalDot(batNegTerminal);
 
       if (isActive) {
         if (!m5House1Broken || missionIndex != 4) {
