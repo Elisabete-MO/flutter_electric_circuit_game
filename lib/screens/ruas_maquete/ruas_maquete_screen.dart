@@ -1757,23 +1757,20 @@ class _RuasMaquetePainter extends CustomPainter {
     }
 
     // Desenhar caminhos de fios conforme a missão
-    if (missionIndex == 0 || (missionIndex == 1 && m2Series)) {
-      // M1 e M2 (2 Lâmpadas em Série): Socket (+) -> Lamp1 -> Lamp2 -> Socket (-)
-      final isConnected = missionIndex == 0 ? m1Connected : true;
+    if (missionIndex == 0) {
+      // M1 (2 Lâmpadas em Série com Soquete de Fio): Socket (+) -> Lamp1 -> Lamp2 -> Socket (-)
+      final isConnected = m1Connected;
       final currentPaint = isConnected ? activeWirePaint : wirePaint;
 
-      // Haste 1: Do Socket (+ esquerda) subindo até a esquerda da Lâmpada 1
       final path1 = Path()
         ..moveTo(socketX - socketTermOffset, socketY)
         ..lineTo(lamp1X - termOffset, socketY)
         ..lineTo(lamp1X - termOffset, lampY);
 
-      // Haste 2 (Série): Da direita da Lâmpada 1 até a esquerda da Lâmpada 2
       final path2 = Path()
         ..moveTo(lamp1X + termOffset, lampY)
         ..lineTo(lamp2X - termOffset, lampY);
 
-      // Haste 3: Da direita da Lâmpada 2 descendo até o Socket (- direita)
       final path3 = Path()
         ..moveTo(lamp2X + termOffset, lampY)
         ..lineTo(lamp2X + termOffset, socketY)
@@ -1783,7 +1780,6 @@ class _RuasMaquetePainter extends CustomPainter {
       canvas.drawPath(path2, currentPaint);
       canvas.drawPath(path3, currentPaint);
 
-      // Nós de conexão visual nos terminais
       drawTerminalDot(Offset(socketX - socketTermOffset, socketY));
       drawTerminalDot(Offset(lamp1X - termOffset, lampY));
       drawTerminalDot(Offset(lamp1X + termOffset, lampY));
@@ -1796,77 +1792,85 @@ class _RuasMaquetePainter extends CustomPainter {
         _drawElectronsOnPath(canvas, path2, electronPaint);
         _drawElectronsOnPath(canvas, path3, electronPaint);
       }
-    } else if (missionIndex == 1 && !m2Series) {
-      // M2 (1 Lâmpada Apenas): Socket (+) -> Lamp1 -> Socket (-)
+    } else if (missionIndex == 1) {
+      // M2 (Comparação de Brilho 1 vs 2 Lâmpadas): Fios conectados passando pelo Poste Secundário
       final path1 = Path()
         ..moveTo(socketX - socketTermOffset, socketY)
         ..lineTo(lamp1X - termOffset, socketY)
         ..lineTo(lamp1X - termOffset, lampY);
 
-      final pathReturn = Path()
+      final path2 = Path()
         ..moveTo(lamp1X + termOffset, lampY)
-        ..lineTo(lamp1X + termOffset, socketY)
+        ..lineTo(lamp2X - termOffset, lampY);
+
+      final path3 = Path()
+        ..moveTo(lamp2X + termOffset, lampY)
+        ..lineTo(lamp2X + termOffset, socketY)
         ..lineTo(socketX + socketTermOffset, socketY);
 
       canvas.drawPath(path1, activeWirePaint);
-      canvas.drawPath(pathReturn, activeWirePaint);
+      canvas.drawPath(path2, activeWirePaint);
+      canvas.drawPath(path3, m2Series ? activeWirePaint : wirePaint);
 
       drawTerminalDot(Offset(socketX - socketTermOffset, socketY));
       drawTerminalDot(Offset(lamp1X - termOffset, lampY));
       drawTerminalDot(Offset(lamp1X + termOffset, lampY));
+      drawTerminalDot(Offset(lamp2X - termOffset, lampY));
+      drawTerminalDot(Offset(lamp2X + termOffset, lampY));
       drawTerminalDot(Offset(socketX + socketTermOffset, socketY));
 
       _drawElectronsOnPath(canvas, path1, electronPaint);
-      _drawElectronsOnPath(canvas, pathReturn, electronPaint);
+      _drawElectronsOnPath(canvas, path2, electronPaint);
+      if (m2Series) {
+        _drawElectronsOnPath(canvas, path3, electronPaint);
+      }
     } else if (missionIndex == 2) {
-      // M3: Bifurcação de Fios (Nó de Junção)
+      // M3: Bifurcação de Fios (Nó de Junção -> Ramos A e B -> Retorno)
       final isBothActive = m3Junction && m3Return;
       final nodeY = lampY + 45.0;
 
-      // Alimentação Principal (+)
-      final pathFeed = Path()
-        ..moveTo(socketX - socketTermOffset, socketY)
-        ..lineTo(socketX - socketTermOffset, nodeY)
-        ..lineTo(socketX, nodeY);
-
-      // Ramo Lâmpada A
+      // Ramo Lâmpada A (do Nó (+) para Rua A)
       final pathBranchA = Path()
-        ..moveTo(socketX, nodeY)
+        ..moveTo(socketX - socketTermOffset, nodeY)
         ..lineTo(lamp1X + termOffset, nodeY)
         ..lineTo(lamp1X + termOffset, lampY);
 
-      // Ramo Lâmpada B
+      // Ramo Lâmpada B (do Nó (+) para Rua B)
       final pathBranchB = Path()
-        ..moveTo(socketX, nodeY)
+        ..moveTo(socketX + socketTermOffset, nodeY)
         ..lineTo(lamp2X - termOffset, nodeY)
         ..lineTo(lamp2X - termOffset, lampY);
 
-      // Retorno do Nó
-      final pathReturn = Path()
+      // Retorno Rua A (da Rua A para o Retorno (-))
+      final pathReturnA = Path()
         ..moveTo(lamp1X - termOffset, lampY)
         ..lineTo(lamp1X - termOffset, socketY)
-        ..lineTo(socketX + socketTermOffset, socketY);
+        ..lineTo(socketX - socketTermOffset, socketY);
 
+      // Retorno Rua B (da Rua B para o Retorno (-))
       final pathReturnB = Path()
         ..moveTo(lamp2X + termOffset, lampY)
         ..lineTo(lamp2X + termOffset, socketY)
         ..lineTo(socketX + socketTermOffset, socketY);
 
-      canvas.drawPath(pathFeed, m3Junction ? activeWirePaint : wirePaint);
       canvas.drawPath(pathBranchA, m3Junction ? activeWirePaint : wirePaint);
       canvas.drawPath(pathBranchB, m3Junction ? activeWirePaint : wirePaint);
-      canvas.drawPath(pathReturn, m3Return ? activeWirePaint : wirePaint);
+      canvas.drawPath(pathReturnA, m3Return ? activeWirePaint : wirePaint);
       canvas.drawPath(pathReturnB, m3Return ? activeWirePaint : wirePaint);
 
-      drawTerminalDot(Offset(socketX, nodeY));
+      drawTerminalDot(Offset(socketX - socketTermOffset, nodeY));
+      drawTerminalDot(Offset(socketX + socketTermOffset, nodeY));
+      drawTerminalDot(Offset(lamp1X + termOffset, lampY));
+      drawTerminalDot(Offset(lamp1X - termOffset, lampY));
+      drawTerminalDot(Offset(lamp2X - termOffset, lampY));
+      drawTerminalDot(Offset(lamp2X + termOffset, lampY));
       drawTerminalDot(Offset(socketX - socketTermOffset, socketY));
       drawTerminalDot(Offset(socketX + socketTermOffset, socketY));
 
       if (isBothActive) {
-        _drawElectronsOnPath(canvas, pathFeed, electronPaint);
         _drawElectronsOnPath(canvas, pathBranchA, electronPaint);
         _drawElectronsOnPath(canvas, pathBranchB, electronPaint);
-        _drawElectronsOnPath(canvas, pathReturn, electronPaint);
+        _drawElectronsOnPath(canvas, pathReturnA, electronPaint);
         _drawElectronsOnPath(canvas, pathReturnB, electronPaint);
       }
     } else if (missionIndex == 3 || missionIndex == 4) {
