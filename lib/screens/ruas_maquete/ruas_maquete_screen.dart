@@ -2267,15 +2267,19 @@ class _RuasMaquetePainter extends CustomPainter {
         _drawElectronsOnPath(canvas, pathReturnB, electronPaint);
       }
     } else if (missionIndex == 3 || missionIndex == 4) {
-      // M4 e M5: Circuito em Paralelo (Barramento Positivo Superior + Barramento Negativo Inferior)
+      // M4 e M5: Circuito em Paralelo (Barramento Positivo Superior + Barramento Negativo Inferior Sem Cruzamentos)
       final isActive = m4Parallel || missionIndex == 4;
       final currentPaint = isActive ? activeWirePaint : wirePaint;
       final topVccY = lampY - 50.0;
       final botGndY = lampY + 70.0;
+      final vccGutterY = socketY - 50.0;
+      final gndGutterY = socketY - 40.0;
 
-      // 1. Barramento Positivo VCC (Red): Bateria (+) -> Subida Esquerda -> Trilho Superior -> Entradas das Casas
+      // 1. Barramento Positivo VCC (Red): Bateria (+) -> Subida e Desvio para Esquerda -> Margem Esquerda -> Trilho Superior
       final pathVccMain = makeFlexiblePath([
-        ...posExitWaypoints,
+        batPosTerminal,
+        Offset(batPosTerminal.dx, vccGutterY),
+        Offset(outerLeftX, vccGutterY),
         Offset(outerLeftX, topVccY),
         Offset(lamp2X - termOffset, topVccY),
       ]);
@@ -2292,26 +2296,28 @@ class _RuasMaquetePainter extends CustomPainter {
         Offset(lamp2X - termOffset, lampY),
       ]);
 
-      // 2. Barramento Negativo GND (Blue): Saídas das Casas -> Descida -> Trilho Inferior -> Bateria (-)
+      // 2. Barramento Negativo GND (Blue): Saídas das Casas -> Descida -> Trilho Inferior -> Margem Direita -> Bateria (-)
       // Saída GND Casa 01 (Alameda / Lâmpada A)
       final pathGndBranch1 = makeFlexiblePath([
         Offset(lamp1X + termOffset, lampY),
-        Offset(lamp1X + termOffset, botGndY),
-        Offset(lamp2X + termOffset, botGndY),
+        Offset(lamp1X + termOffset + 20.0, lampY),
+        Offset(lamp1X + termOffset + 20.0, botGndY),
+        Offset(outerRightX, botGndY),
       ]);
 
       // Saída GND Casa 02 (Praça / Lâmpada B)
       final pathGndBranch2 = makeFlexiblePath([
         Offset(lamp2X + termOffset, lampY),
-        Offset(lamp2X + termOffset, botGndY),
+        Offset(outerRightX, lampY),
+        Offset(outerRightX, botGndY),
       ]);
 
-      // Retorno GND Principal: Trilho Inferior -> Descida Direita -> Bateria (-)
+      // Retorno GND Principal: Margem Direita -> Calha Inferior -> Bateria (-)
       final pathGndMain = makeFlexiblePath([
-        Offset(lamp1X + termOffset, botGndY),
         Offset(outerRightX, botGndY),
-        Offset(outerRightX, topLoopY),
-        ...negExitWaypoints,
+        Offset(outerRightX, gndGutterY),
+        Offset(batNegTerminal.dx, gndGutterY),
+        batNegTerminal,
       ]);
 
       // Desenhar Fios Positivos (Red)
@@ -2332,8 +2338,8 @@ class _RuasMaquetePainter extends CustomPainter {
       drawTerminalDot(Offset(lamp1X + termOffset, lampY));
       drawTerminalDot(Offset(lamp2X - termOffset, lampY));
       drawTerminalDot(Offset(lamp2X + termOffset, lampY));
-      drawTerminalDot(Offset(lamp1X + termOffset, botGndY));
-      drawTerminalDot(Offset(lamp2X + termOffset, botGndY));
+      drawTerminalDot(Offset(lamp1X + termOffset + 20.0, botGndY));
+      drawTerminalDot(Offset(outerRightX, botGndY));
       drawTerminalDot(batNegTerminal);
 
       // Animação de Elétrons por Ramo
