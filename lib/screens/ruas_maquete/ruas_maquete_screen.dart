@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -2017,25 +2018,84 @@ class _RuasMaquetePainter extends CustomPainter {
       }
     }
 
+    Path makeFlexiblePath(List<Offset> points) {
+      if (points.isEmpty) return Path();
+      if (points.length == 1) return Path()..addOval(Rect.fromCircle(center: points.first, radius: 1));
+
+      final path = Path()..moveTo(points.first.dx, points.first.dy);
+
+      if (points.length == 2) {
+        final p0 = points[0];
+        final p1 = points[1];
+        final dx = (p1.dx - p0.dx).abs();
+        final dy = (p1.dy - p0.dy).abs();
+
+        if (dx > 12.0 && dy > 3.0) {
+          final midX = (p0.dx + p1.dx) / 2;
+          path.cubicTo(
+            midX, p0.dy,
+            midX, p1.dy,
+            p1.dx, p1.dy,
+          );
+          return path;
+        }
+
+        path.lineTo(p1.dx, p1.dy);
+        return path;
+      }
+
+      const double maxRadius = 22.0;
+
+      for (int i = 1; i < points.length - 1; i++) {
+        final pPrev = points[i - 1];
+        final pCurr = points[i];
+        final pNext = points[i + 1];
+
+        final v1 = pPrev - pCurr;
+        final v2 = pNext - pCurr;
+        final d1 = v1.distance;
+        final d2 = v2.distance;
+
+        if (d1 == 0 || d2 == 0) {
+          path.lineTo(pCurr.dx, pCurr.dy);
+          continue;
+        }
+
+        final radius = math.min(maxRadius, math.min(d1 / 2, d2 / 2));
+
+        final startArc = pCurr + (v1 / d1) * radius;
+        final endArc = pCurr + (v2 / d2) * radius;
+
+        path.lineTo(startArc.dx, startArc.dy);
+        path.quadraticBezierTo(pCurr.dx, pCurr.dy, endArc.dx, endArc.dy);
+      }
+
+      path.lineTo(points.last.dx, points.last.dy);
+      return path;
+    }
+
     // Desenhar caminhos de fios conforme a missão
     if (missionIndex == 0) {
       // M1 (2 Lâmpadas em Série com Soquete de Fio): Socket (+) -> Lamp1 -> Lamp2 -> Socket (-)
       final isConnected = m1Connected;
       final currentPaint = isConnected ? activeWirePaint : wirePaint;
 
-      final path1 = Path()
-        ..moveTo(socketX - socketTermOffset, socketY)
-        ..lineTo(lamp1X - termOffset, socketY)
-        ..lineTo(lamp1X - termOffset, lampY);
+      final path1 = makeFlexiblePath([
+        Offset(socketX - socketTermOffset, socketY),
+        Offset(lamp1X - termOffset, socketY),
+        Offset(lamp1X - termOffset, lampY),
+      ]);
 
-      final path2 = Path()
-        ..moveTo(lamp1X + termOffset, lampY)
-        ..lineTo(lamp2X - termOffset, lampY);
+      final path2 = makeFlexiblePath([
+        Offset(lamp1X + termOffset, lampY),
+        Offset(lamp2X - termOffset, lampY),
+      ]);
 
-      final path3 = Path()
-        ..moveTo(lamp2X + termOffset, lampY)
-        ..lineTo(lamp2X + termOffset, socketY)
-        ..lineTo(socketX + socketTermOffset, socketY);
+      final path3 = makeFlexiblePath([
+        Offset(lamp2X + termOffset, lampY),
+        Offset(lamp2X + termOffset, socketY),
+        Offset(socketX + socketTermOffset, socketY),
+      ]);
 
       drawStyledPath(path1, currentPaint, isPositive: true);
       drawStyledPath(path2, currentPaint, customColor: const Color(0xFFD97706));
@@ -2055,19 +2115,22 @@ class _RuasMaquetePainter extends CustomPainter {
       }
     } else if (missionIndex == 1) {
       // M2 (Comparação de Brilho 1 vs 2 Lâmpadas): Fio de retorno inferior contínuo, passando pelo Poste Secundário
-      final path1 = Path()
-        ..moveTo(socketX, socketY)
-        ..lineTo(lamp1X - termOffset, socketY)
-        ..lineTo(lamp1X - termOffset, lampY);
+      final path1 = makeFlexiblePath([
+        Offset(socketX, socketY),
+        Offset(lamp1X - termOffset, socketY),
+        Offset(lamp1X - termOffset, lampY),
+      ]);
 
-      final path2 = Path()
-        ..moveTo(lamp1X + termOffset, lampY)
-        ..lineTo(lamp2X - termOffset, lampY);
+      final path2 = makeFlexiblePath([
+        Offset(lamp1X + termOffset, lampY),
+        Offset(lamp2X - termOffset, lampY),
+      ]);
 
-      final path3 = Path()
-        ..moveTo(lamp2X + termOffset, lampY)
-        ..lineTo(lamp2X + termOffset, socketY)
-        ..lineTo(socketX, socketY);
+      final path3 = makeFlexiblePath([
+        Offset(lamp2X + termOffset, lampY),
+        Offset(lamp2X + termOffset, socketY),
+        Offset(socketX, socketY),
+      ]);
 
       drawStyledPath(path1, activeWirePaint, isPositive: true);
       drawStyledPath(path2, activeWirePaint, customColor: const Color(0xFFD97706));
@@ -2089,28 +2152,32 @@ class _RuasMaquetePainter extends CustomPainter {
       final nodeY = lampY + 45.0;
 
       // Ramo Lâmpada A (do Nó (+) para Rua A)
-      final pathBranchA = Path()
-        ..moveTo(socketX - socketTermOffset, nodeY)
-        ..lineTo(lamp1X + termOffset, nodeY)
-        ..lineTo(lamp1X + termOffset, lampY);
+      final pathBranchA = makeFlexiblePath([
+        Offset(socketX - socketTermOffset, nodeY),
+        Offset(lamp1X + termOffset, nodeY),
+        Offset(lamp1X + termOffset, lampY),
+      ]);
 
       // Ramo Lâmpada B (do Nó (+) para Rua B)
-      final pathBranchB = Path()
-        ..moveTo(socketX + socketTermOffset, nodeY)
-        ..lineTo(lamp2X - termOffset, nodeY)
-        ..lineTo(lamp2X - termOffset, lampY);
+      final pathBranchB = makeFlexiblePath([
+        Offset(socketX + socketTermOffset, nodeY),
+        Offset(lamp2X - termOffset, nodeY),
+        Offset(lamp2X - termOffset, lampY),
+      ]);
 
       // Retorno Rua A (da Rua A para o Retorno (-))
-      final pathReturnA = Path()
-        ..moveTo(lamp1X - termOffset, lampY)
-        ..lineTo(lamp1X - termOffset, socketY)
-        ..lineTo(socketX - socketTermOffset, socketY);
+      final pathReturnA = makeFlexiblePath([
+        Offset(lamp1X - termOffset, lampY),
+        Offset(lamp1X - termOffset, socketY),
+        Offset(socketX - socketTermOffset, socketY),
+      ]);
 
       // Retorno Rua B (da Rua B para o Retorno (-))
-      final pathReturnB = Path()
-        ..moveTo(lamp2X + termOffset, lampY)
-        ..lineTo(lamp2X + termOffset, socketY)
-        ..lineTo(socketX + socketTermOffset, socketY);
+      final pathReturnB = makeFlexiblePath([
+        Offset(lamp2X + termOffset, lampY),
+        Offset(lamp2X + termOffset, socketY),
+        Offset(socketX + socketTermOffset, socketY),
+      ]);
 
       drawStyledPath(pathBranchA, m3Junction ? activeWirePaint : wirePaint, isPositive: true);
       drawStyledPath(pathBranchB, m3Junction ? activeWirePaint : wirePaint, isPositive: true);
@@ -2139,34 +2206,40 @@ class _RuasMaquetePainter extends CustomPainter {
       const busOffset = 48.0;
 
       // Barramento Positivo Left
-      final pathBusLeft = Path()
-        ..moveTo(socketX - socketTermOffset, socketY)
-        ..lineTo(lamp1X - busOffset, socketY)
-        ..lineTo(lamp1X - busOffset, lampY)
-        ..lineTo(lamp2X - busOffset, lampY);
+      final pathBusLeft = makeFlexiblePath([
+        Offset(socketX - socketTermOffset, socketY),
+        Offset(lamp1X - busOffset, socketY),
+        Offset(lamp1X - busOffset, lampY),
+        Offset(lamp2X - busOffset, lampY),
+      ]);
 
-      final branch1Pos = Path()
-        ..moveTo(lamp1X - busOffset, lampY)
-        ..lineTo(lamp1X - termOffset, lampY);
+      final branch1Pos = makeFlexiblePath([
+        Offset(lamp1X - busOffset, lampY),
+        Offset(lamp1X - termOffset, lampY),
+      ]);
 
-      final branch2Pos = Path()
-        ..moveTo(lamp2X - busOffset, lampY)
-        ..lineTo(lamp2X - termOffset, lampY);
+      final branch2Pos = makeFlexiblePath([
+        Offset(lamp2X - busOffset, lampY),
+        Offset(lamp2X - termOffset, lampY),
+      ]);
 
       // Barramento Negativo Right
-      final pathBusRight = Path()
-        ..moveTo(socketX + socketTermOffset, socketY)
-        ..lineTo(lamp2X + busOffset, socketY)
-        ..lineTo(lamp2X + busOffset, lampY)
-        ..lineTo(lamp1X + busOffset, lampY);
+      final pathBusRight = makeFlexiblePath([
+        Offset(socketX + socketTermOffset, socketY),
+        Offset(lamp2X + busOffset, socketY),
+        Offset(lamp2X + busOffset, lampY),
+        Offset(lamp1X + busOffset, lampY),
+      ]);
 
-      final branch1Neg = Path()
-        ..moveTo(lamp1X + busOffset, lampY)
-        ..lineTo(lamp1X + termOffset, lampY);
+      final branch1Neg = makeFlexiblePath([
+        Offset(lamp1X + busOffset, lampY),
+        Offset(lamp1X + termOffset, lampY),
+      ]);
 
-      final branch2Neg = Path()
-        ..moveTo(lamp2X + busOffset, lampY)
-        ..lineTo(lamp2X + termOffset, lampY);
+      final branch2Neg = makeFlexiblePath([
+        Offset(lamp2X + busOffset, lampY),
+        Offset(lamp2X + termOffset, lampY),
+      ]);
 
       drawStyledPath(pathBusLeft, currentPaint, isPositive: true);
       drawStyledPath(branch1Pos, currentPaint, isPositive: true);
