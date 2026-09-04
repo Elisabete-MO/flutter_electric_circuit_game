@@ -61,22 +61,24 @@ class SchematicBlueprintSocket<T extends Object> extends StatelessWidget {
                 height: height ?? 75,
                 decoration: BoxDecoration(
                   color: isFilled
-                      ? const Color(0xFFF0FDF4)
+                      ? Colors.transparent
                       : isHovering
                           ? const Color(0xFFFEF3C7)
                           : const Color(0xFFFFFFFF),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: currentBorderColor,
-                    width: isFilled || isHovering ? 2.5 : 1.8,
+                    width: isFilled ? 2.0 : (isHovering ? 2.5 : 1.8),
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: currentBorderColor.withValues(alpha: isHovering ? 0.25 : 0.10),
-                      blurRadius: isHovering ? 12 : 6,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
+                  boxShadow: isFilled
+                      ? []
+                      : [
+                          BoxShadow(
+                            color: currentBorderColor.withValues(alpha: isHovering ? 0.25 : 0.10),
+                            blurRadius: isHovering ? 12 : 6,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
                 ),
                 child: Center(
                   child: AnimatedSwitcher(

@@ -60,22 +60,24 @@ class PhysicalBlueprintSocket<T extends Object> extends StatelessWidget {
                 height: height,
                 decoration: BoxDecoration(
                   color: isFilled
-                      ? const Color(0xFFF1F5F9)
+                      ? Colors.transparent
                       : isHovering
                           ? const Color(0xFFFEF3C7)
                           : const Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: currentBorderColor,
-                    width: isFilled || isHovering ? 2.5 : 1.5,
+                    width: isFilled ? 2.0 : (isHovering ? 2.5 : 1.5),
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: isHovering ? 0.15 : 0.08),
-                      blurRadius: isHovering ? 10 : 5,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
+                  boxShadow: isFilled
+                      ? []
+                      : [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: isHovering ? 0.15 : 0.08),
+                            blurRadius: isHovering ? 10 : 5,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
                 ),
                 child: Center(
                   child: AnimatedSwitcher(

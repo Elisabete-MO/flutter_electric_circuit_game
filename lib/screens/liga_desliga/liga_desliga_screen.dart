@@ -1423,14 +1423,16 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
           final batTermA = ComponentPlacement(position: batteryPos, rotation: _m1BatteryRotation, type: ComponentType.battery).getTerminalPosition(0);
           final switchTermA = ComponentPlacement(position: switchPos, rotation: _m1SwitchRotation, type: ComponentType.switchComponent).getTerminalPosition(0);
           final leftX = batteryPos.dx - 55.0;
+          final leftOfSwitch = switchPos.dx - 55.0;
           final bottomY = centerY + 65.0;
 
-          // VCC: Bateria(+) -> Switch(A)
+          // VCC: Bateria(+) -> Switch(A) (contornando por fora pela esquerda do soquete da chave)
           final intermediate = (_m1BatteryRotation % 360 == 270.0)
               ? [
                   Offset(leftX, batTermA.dy),
                   Offset(leftX, bottomY),
-                  Offset(switchTermA.dx, bottomY),
+                  Offset(leftOfSwitch, bottomY),
+                  Offset(leftOfSwitch, switchTermA.dy),
                 ]
               : null;
 
@@ -1446,7 +1448,16 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         }
 
         if (_m1SwitchInserted && _m1BulbInserted) {
-          // Switch(B) -> Bulb(A)
+          final switchTermB = ComponentPlacement(position: switchPos, rotation: _m1SwitchRotation, type: ComponentType.switchComponent).getTerminalPosition(1);
+          final lampTermA = ComponentPlacement(position: lampPos, rotation: _m1BulbRotation, type: ComponentType.bulb).getTerminalPosition(0);
+          final rightOfSwitch = switchPos.dx + 55.0;
+
+          // Switch(B) -> Bulb(A) (contornando a direita da chave e entrando horizontalmente no pino da lâmpada)
+          final intermediateOrange = [
+            Offset(rightOfSwitch, switchTermB.dy),
+            Offset(rightOfSwitch, lampTermA.dy),
+          ];
+
           wires.add(DynamicWirePath.fromComponents(
             compA: ComponentPlacement(position: switchPos, rotation: _m1SwitchRotation, type: ComponentType.switchComponent),
             terminalIndexA: 1,
@@ -1455,7 +1466,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
             color: const Color(0xFFF97316),
             isActive: isClosed,
             thickness: 4.5,
-          ).toWirePath());
+          ).toWirePath(intermediatePoints: intermediateOrange));
         }
 
         if (_m1BulbInserted && _m1BatteryInserted) {
