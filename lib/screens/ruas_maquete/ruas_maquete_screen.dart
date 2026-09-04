@@ -1975,6 +1975,74 @@ class _RuasMaquetePainter extends CustomPainter {
       }
     }
 
+    void drawPowerSourceBadge() {
+      // Posiciona o módulo da Fonte de Alimentação / Bateria 4.5V na entrada do barramento elétrico (canto inferior esquerdo)
+      final powerX = lamp1X - (missionIndex >= 3 ? 48.0 : 32.0);
+      final powerY = socketY;
+
+      final badgeRect = Rect.fromCenter(center: Offset(powerX, powerY), width: 62, height: 26);
+      final badgeRRect = RRect.fromRectAndRadius(badgeRect, const Radius.circular(6));
+
+      if (usePhysicalStyle) {
+        final shadowPaint = Paint()
+          ..color = Colors.black.withValues(alpha: 0.25)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
+        canvas.drawRRect(badgeRRect.shift(const Offset(1.5, 2.5)), shadowPaint);
+
+        final batteryPaint = Paint()
+          ..shader = const LinearGradient(
+            colors: [Color(0xFF334155), Color(0xFF1E293B), Color(0xFF0F172A)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ).createShader(badgeRect);
+        canvas.drawRRect(badgeRRect, batteryPaint);
+
+        canvas.drawRRect(
+          badgeRRect,
+          Paint()
+            ..color = const Color(0xFFF59E0B)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.2,
+        );
+
+        final tp = TextPainter(
+          text: TextSpan(
+            text: '⚡ 4.5V',
+            style: GoogleFonts.rajdhani(
+              color: const Color(0xFFFBBF24),
+              fontWeight: FontWeight.bold,
+              fontSize: 11,
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        tp.paint(canvas, Offset(powerX - tp.width / 2, powerY - tp.height / 2));
+      } else {
+        final bgPaint = Paint()..color = const Color(0xFF0F172A);
+        canvas.drawRRect(badgeRRect, bgPaint);
+        canvas.drawRRect(
+          badgeRRect,
+          Paint()
+            ..color = const Color(0xFF0284C7)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.5,
+        );
+
+        final tp = TextPainter(
+          text: TextSpan(
+            text: '+ 4.5V -',
+            style: GoogleFonts.rajdhani(
+              color: const Color(0xFF38BDF8),
+              fontWeight: FontWeight.bold,
+              fontSize: 11,
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        tp.paint(canvas, Offset(powerX - tp.width / 2, powerY - tp.height / 2));
+      }
+    }
+
     // Desenhar caminhos de fios conforme a missão
     if (missionIndex == 0) {
       // M1 (2 Lâmpadas em Série com Soquete de Fio): Socket (+) -> Lamp1 -> Lamp2 -> Socket (-)
@@ -2151,6 +2219,8 @@ class _RuasMaquetePainter extends CustomPainter {
         _drawElectronsOnPath(canvas, branch2Neg, electronPaint);
       }
     }
+
+    drawPowerSourceBadge();
   }
 
   void _drawElectronsOnPath(Canvas canvas, Path path, Paint paint) {
