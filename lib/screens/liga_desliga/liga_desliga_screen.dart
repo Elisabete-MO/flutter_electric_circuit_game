@@ -2209,11 +2209,11 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
     return LayoutBuilder(
       builder: (context, constraints) {
         final double width = constraints.maxWidth;
-        const double height = 210.0;
+        const double height = 250.0;
 
-        final double centerY = height * 0.50;
+        final double centerY = 135.0;
         final batteryPos = Offset(width * 0.18, centerY);
-        final switchInutilityPos = Offset(width * 0.50, centerY - 55.0);
+        final switchInutilityPos = Offset(width * 0.50, 65.0);
         final switchSeriesPos = Offset(width * 0.50, centerY);
         final lampPos = Offset(width * 0.82, centerY);
 
@@ -2228,9 +2228,9 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
 
           final rightX = lampPos.dx + 70.0;
           final leftX = batteryPos.dx - 70.0;
-          final topY = centerY - 65.0;
-          final bottomYBulb = centerY + 60.0;
-          final bottomY = centerY + 65.0;
+          const topY = 10.0;
+          const bottomYBulb = 195.0;
+          const bottomY = 195.0;
 
           if (_m4SwitchInMainBranch) {
             // Switch no Ramo Principal (Centro)
@@ -2240,14 +2240,12 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
               final leftOfSwitch = switchSeriesPos.dx - 65.0;
               final rightOfSwitch = switchSeriesPos.dx + 65.0;
 
-              final intermediateRed = (_m4BatteryRotation % 360 == 270.0)
-                  ? [
-                      Offset(leftX, batTermA.dy),
-                      Offset(leftX, bottomY),
-                      Offset(leftOfSwitch, bottomY),
-                      Offset(leftOfSwitch, switchSeriesTermA.dy),
-                    ]
-                  : null;
+              final intermediateRed = [
+                Offset(leftX, batTermA.dy),
+                Offset(leftX, bottomY),
+                Offset(leftOfSwitch, bottomY),
+                Offset(leftOfSwitch, switchSeriesTermA.dy),
+              ];
 
               wires.add(DynamicWirePath.fromComponents(
                 compA: ComponentPlacement(position: batteryPos, rotation: _m4BatteryRotation, type: ComponentType.battery),
@@ -2276,7 +2274,13 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
               ).toWirePath(intermediatePoints: intermediateGreen));
             }
           } else {
-            // Switch no Ramo Inútil (Topo)
+            // Switch no Ramo Inútil (Topo) - Fio VCC Direto Desvia Por Baixo dos Slots
+            final intermediateRedDirect = [
+              Offset(leftX, batTermA.dy),
+              Offset(leftX, bottomY),
+              Offset(lampTermA.dx, bottomY),
+            ];
+
             wires.add(DynamicWirePath.fromComponents(
               compA: ComponentPlacement(position: batteryPos, rotation: _m4BatteryRotation, type: ComponentType.battery),
               terminalIndexA: 0,
@@ -2285,9 +2289,21 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
               color: const Color(0xFFEF4444),
               isActive: isLampLit,
               thickness: 4.0,
-            ).toWirePath());
+            ).toWirePath(intermediatePoints: intermediateRedDirect));
 
             if (_m4SwitchSeriesInserted) {
+              final switchInutilityTermA = ComponentPlacement(position: switchInutilityPos, rotation: _m4SwitchSeriesRotation, type: ComponentType.switchComponent).getTerminalPosition(0);
+              final switchInutilityTermB = ComponentPlacement(position: switchInutilityPos, rotation: _m4SwitchSeriesRotation, type: ComponentType.switchComponent).getTerminalPosition(1);
+              final leftOfTopSwitch = switchInutilityPos.dx - 65.0;
+              final rightOfTopSwitch = switchInutilityPos.dx + 65.0;
+
+              final intermediateYellowA = [
+                Offset(leftX, batTermA.dy),
+                Offset(leftX, 65.0),
+                Offset(leftOfTopSwitch, 65.0),
+                Offset(leftOfTopSwitch, switchInutilityTermA.dy),
+              ];
+
               wires.add(DynamicWirePath.fromComponents(
                 compA: ComponentPlacement(position: batteryPos, rotation: _m4BatteryRotation, type: ComponentType.battery),
                 terminalIndexA: 0,
@@ -2296,7 +2312,13 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                 color: const Color(0xFFEAB308),
                 isActive: _m4SwitchClosed,
                 thickness: 3.5,
-              ).toWirePath());
+              ).toWirePath(intermediatePoints: intermediateYellowA));
+
+              final intermediateYellowB = [
+                Offset(rightOfTopSwitch, switchInutilityTermB.dy),
+                Offset(rightOfTopSwitch, 65.0),
+                Offset(lampTermA.dx, 65.0),
+              ];
 
               wires.add(DynamicWirePath.fromComponents(
                 compA: ComponentPlacement(position: switchInutilityPos, rotation: _m4SwitchSeriesRotation, type: ComponentType.switchComponent),
@@ -2306,21 +2328,24 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
                 color: const Color(0xFFEAB308),
                 isActive: _m4SwitchClosed,
                 thickness: 3.5,
-              ).toWirePath());
+              ).toWirePath(intermediatePoints: intermediateYellowB));
             }
           }
 
           final intermediateReturn = (_m4BatteryRotation % 360 == 270.0)
               ? [
-                  Offset(lampTermB.dx, bottomYBulb),
-                  Offset(rightX, bottomYBulb),
+                  Offset(lampTermB.dx, topY + 15.0),
+                  Offset(rightX, topY + 15.0),
                   Offset(rightX, topY),
                   Offset(leftX, topY),
                   Offset(leftX, batTermB.dy),
                 ]
               : [
-                  Offset(lampTermB.dx, bottomY),
-                  Offset(batTermB.dx, bottomY),
+                  Offset(lampTermB.dx, topY + 15.0),
+                  Offset(rightX, topY + 15.0),
+                  Offset(rightX, topY),
+                  Offset(leftX, topY),
+                  Offset(leftX, batTermB.dy),
                 ];
 
           wires.add(DynamicWirePath.fromComponents(
