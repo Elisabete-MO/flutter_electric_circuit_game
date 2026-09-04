@@ -958,7 +958,49 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
           width: 150,
           child: Center(child: _buildLabelBadge('Poste 2 em Série (50%)')),
         ),
+
+      // Bateria 4.5V (Alimentação da Rede) no centro inferior
+      Positioned(
+        left: sX - 40,
+        top: sY - 32,
+        child: _buildBatteryWidget(isLit: true),
+      ),
     ];
+  }
+
+  /// Constrói o Card/Widget da Bateria 4.5V (Fonte de Alimentação) em 3D ou Esquemático
+  Widget _buildBatteryWidget({bool isLit = true}) {
+    final symbolWidget = _usePhysicalStyle
+        ? CustomPaint(
+            size: const Size(60, 40),
+            painter: ComponentPhysicalPainter(
+              type: ComponentType.battery,
+              isDarkMode: false,
+            ),
+          )
+        : CustomPaint(
+            size: const Size(60, 40),
+            painter: CircuitSymbolPainter(
+              type: ComponentType.battery,
+              isActive: isLit,
+              color: const Color(0xFF0F172A),
+              strokeWidth: 2.5,
+            ),
+          );
+
+    return _usePhysicalStyle
+        ? PhysicalComponentCard(
+            width: 80,
+            height: 60,
+            symbolWidget: symbolWidget,
+            label: 'Bateria 4.5V',
+            isActive: isLit,
+          )
+        : SchematicComponentCard(
+            symbolWidget: symbolWidget,
+            label: 'Bateria 4.5V',
+            isActive: isLit,
+          );
   }
 
   /// Overlay da Missão 3: Bifurcação de Fios (Nó)
