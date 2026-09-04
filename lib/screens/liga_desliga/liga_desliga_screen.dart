@@ -1422,11 +1422,11 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         if (_m1BatteryInserted && _m1SwitchInserted) {
           final batTermA = ComponentPlacement(position: batteryPos, rotation: _m1BatteryRotation, type: ComponentType.battery).getTerminalPosition(0);
           final switchTermA = ComponentPlacement(position: switchPos, rotation: _m1SwitchRotation, type: ComponentType.switchComponent).getTerminalPosition(0);
-          final leftX = batteryPos.dx - 70.0;
-          final leftOfSwitch = switchPos.dx - 70.0;
-          final bottomY = centerY + 70.0;
+          final leftX = batteryPos.dx - 65.0;
+          final leftOfSwitch = switchPos.dx - 55.0;
+          final bottomY = centerY + 65.0;
 
-          // VCC: Bateria(+) -> Switch(A) (contornando bem por fora dos soquetes)
+          // VCC: Bateria(+) -> Switch(A) (subindo verticalmente antes da chave e entrando em linha reta na haste)
           final intermediate = (_m1BatteryRotation % 360 == 270.0)
               ? [
                   Offset(leftX, batTermA.dy),
@@ -1450,10 +1450,14 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         if (_m1SwitchInserted && _m1BulbInserted) {
           final switchTermB = ComponentPlacement(position: switchPos, rotation: _m1SwitchRotation, type: ComponentType.switchComponent).getTerminalPosition(1);
           final lampTermA = ComponentPlacement(position: lampPos, rotation: _m1BulbRotation, type: ComponentType.bulb).getTerminalPosition(0);
+          final rightOfSwitch = switchPos.dx + 55.0;
+          final bottomYBulb = centerY + 60.0;
 
-          // Switch(B) -> Bulb(A) (linha reta horizontal contínua até a lâmpada, descendo direto no pino)
+          // Switch(B) -> Bulb(A) (saindo da chave, descendo pelo corredor inferior da lâmpada e subindo no pino)
           final intermediateOrange = [
-            Offset(lampTermA.dx, switchTermB.dy),
+            Offset(rightOfSwitch, switchTermB.dy),
+            Offset(rightOfSwitch, bottomYBulb),
+            Offset(lampTermA.dx, bottomYBulb),
           ];
 
           wires.add(DynamicWirePath.fromComponents(
@@ -1470,15 +1474,17 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         if (_m1BulbInserted && _m1BatteryInserted) {
           final bulbTermB = ComponentPlacement(position: lampPos, rotation: _m1BulbRotation, type: ComponentType.bulb).getTerminalPosition(1);
           final batTermB = ComponentPlacement(position: batteryPos, rotation: _m1BatteryRotation, type: ComponentType.battery).getTerminalPosition(1);
-          final rightX = lampPos.dx + 70.0;
-          final leftX = batteryPos.dx - 70.0;
-          final topY = centerY - 70.0;
-          final bottomY = centerY + 70.0;
+          final rightX = lampPos.dx + 65.0;
+          final leftX = batteryPos.dx - 65.0;
+          final topY = centerY - 65.0;
+          final bottomYBulb = centerY + 60.0;
+          final bottomY = centerY + 65.0;
 
-          // Bulb(B) -> Bateria(-) (retorno contornando a lâmpada e bateria bem por fora)
+          // Bulb(B) -> Bateria(-) (retorno contornando por baixo da lâmpada, subindo pela direita e retornando pelo topo)
           final intermediate = (_m1BatteryRotation % 360 == 270.0)
               ? [
-                  Offset(rightX, bulbTermB.dy),
+                  Offset(bulbTermB.dx, bottomYBulb),
+                  Offset(rightX, bottomYBulb),
                   Offset(rightX, topY),
                   Offset(leftX, topY),
                   Offset(leftX, batTermB.dy),
