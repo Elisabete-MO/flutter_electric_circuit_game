@@ -676,19 +676,30 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
     required double rotation,
     required ComponentType symbolType,
     required String label,
+    double brightnessRatio = 1.0,
   }) {
     final symbolWidget = _usePhysicalStyle
-        ? CustomPaint(
-            size: Size(width - 20, height - 20),
-            painter: ComponentPhysicalPainter(
-              type: symbolType,
-              isDarkMode: false,
-            ),
-          )
+        ? (symbolType == ComponentType.bulb
+            ? CustomPaint(
+                size: Size(width - 20, height - 20),
+                painter: StreetLampPainter(
+                  isActive: isFilled,
+                  brightnessRatio: brightnessRatio,
+                  isDarkMode: false,
+                ),
+              )
+            : CustomPaint(
+                size: Size(width - 20, height - 20),
+                painter: ComponentPhysicalPainter(
+                  type: symbolType,
+                  isDarkMode: false,
+                ),
+              ))
         : CustomPaint(
             size: Size(width - 20, height - 20),
             painter: CircuitSymbolPainter(
               type: symbolType,
+              isActive: isFilled,
               color: const Color(0xFF0F172A),
               strokeWidth: 2.5,
             ),
@@ -851,6 +862,7 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
           isFilled: _m2IsSeriesTwoBulbs,
           symbolType: ComponentType.bulb,
           label: 'Poste Secundário',
+          brightnessRatio: 0.5,
           rotation: _m2SecondaryBulbRotation,
           onRotate: () => _rotateComponent(
             name: 'Poste Secundário',
