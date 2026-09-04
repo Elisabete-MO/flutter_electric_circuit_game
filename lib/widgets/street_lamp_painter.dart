@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 /// Renderizador CustomPainter do Poste de Iluminação Pública (Poste LED)
-/// inspirada em luminárias urbanas modernas de LED.
-/// Suporta os estados LIGADO (com iluminação em cone e brilho radial) e DESLIGADO.
+/// com perspectiva Top-Down (vista superior de maquete/planta baixa).
+/// Suporta os estados LIGADO (com iluminação radial em leque e brilho) e DESLIGADO.
 class StreetLampPainter extends CustomPainter {
   StreetLampPainter({
     this.isActive = false,
@@ -16,250 +16,140 @@ class StreetLampPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-
-    // Eixo X central do poste vertical
-    final poleX = w * 0.32;
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    final radius = size.width * 0.38;
 
     // -------------------------------------------------------------
-    // 0. Projeção Cone de Luz (quando LIGADO)
+    // 0. Brilho Radial Top-Down na Rua (quando LIGADO)
     // -------------------------------------------------------------
     if (isActive) {
-      final headX = w * 0.72;
-      final headY = h * 0.14;
+      // 0.1 Halo externo suave em leque/radial
+      final outerGlowPaint = Paint()
+        ..color = const Color(0xFFFACC15).withValues(alpha: 0.35 * brightnessRatio)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 16);
+      canvas.drawCircle(Offset(cx, cy), radius * 1.3, outerGlowPaint);
 
-      // Facho de luz cônico em leque projetado para baixo
-      final lightPath = Path()
-        ..moveTo(headX - w * 0.08, headY)
-        ..lineTo(headX + w * 0.12, headY + h * 0.02)
-        ..lineTo(headX + w * 0.28, h * 0.98)
-        ..lineTo(headX - w * 0.35, h * 0.98)
-        ..close();
+      // 0.2 Halo intermediario mais forte
+      final innerGlowPaint = Paint()
+        ..color = const Color(0xFFF59E0B).withValues(alpha: 0.50 * brightnessRatio)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+      canvas.drawCircle(Offset(cx, cy), radius * 0.85, innerGlowPaint);
 
-      final lightGradient = LinearGradient(
-        colors: [
-          const Color(0xFFFACC15).withValues(alpha: 0.55 * brightnessRatio),
-          const Color(0xFFF59E0B).withValues(alpha: 0.25 * brightnessRatio),
-          const Color(0xFFF59E0B).withValues(alpha: 0.0),
-        ],
-        stops: const [0.0, 0.4, 1.0],
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-      );
-
-      final lightPaint = Paint()
-        ..shader = lightGradient.createShader(Rect.fromLTWH(0, headY, w, h - headY));
-
-      canvas.drawPath(lightPath, lightPaint);
-
-      // Brilho Halo Radial em volta da luminária
-      final auraPaint = Paint()
-        ..color = const Color(0xFFFACC15).withValues(alpha: 0.6 * brightnessRatio)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
-      canvas.drawCircle(Offset(headX, headY + 2), w * 0.12, auraPaint);
+      // 0.3 Faceta de iluminação incandescente central
+      final coreGlowPaint = Paint()
+        ..color = const Color(0xFFFEF08A).withValues(alpha: 0.70 * brightnessRatio)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+      canvas.drawCircle(Offset(cx, cy), radius * 0.5, coreGlowPaint);
     }
 
     // -------------------------------------------------------------
-    // 1. Sombra Projetada no Chão (Base)
+    // 1. Sombra da Luminária e Poste no Chão
     // -------------------------------------------------------------
     final shadowPaint = Paint()
       ..color = Colors.black.withValues(alpha: 0.25)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(poleX, h * 0.97),
-        width: w * 0.35,
-        height: h * 0.05,
-      ),
-      shadowPaint,
-    );
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+    canvas.drawCircle(Offset(cx + 2, cy + 3), radius * 0.65, shadowPaint);
 
     // -------------------------------------------------------------
-    // 2. Base Cônica / Pedestal Metálico
+    // 2. Base do Poste de Maquete (Vista Superior - Flange Circular)
     // -------------------------------------------------------------
-    final baseBottomY = h * 0.96;
-    final baseTopY = h * 0.82;
-    final baseWidthBottom = w * 0.24;
-    final baseWidthTop = w * 0.14;
+    final basePaint = Paint()
+      ..shader = const LinearGradient(
+        colors: [Color(0xFF64748B), Color(0xFF334155), Color(0xFF1E293B)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: 18));
 
-    final basePath = Path()
-      ..moveTo(poleX - baseWidthBottom / 2, baseBottomY)
-      ..lineTo(poleX - baseWidthTop / 2, baseTopY)
-      ..lineTo(poleX + baseWidthTop / 2, baseTopY)
-      ..lineTo(poleX + baseWidthBottom / 2, baseBottomY)
-      ..close();
+    canvas.drawCircle(Offset(cx, cy), 18, basePaint);
 
-    final baseGradient = const LinearGradient(
-      colors: [
-        Color(0xFF94A3B8),
-        Color(0xFF64748B),
-        Color(0xFF334155),
-      ],
-      begin: Alignment.centerLeft,
-      end: Alignment.centerRight,
-    );
-
-    canvas.drawPath(
-      basePath,
-      Paint()..shader = baseGradient.createShader(Rect.fromLTWH(poleX - baseWidthBottom / 2, baseTopY, baseWidthBottom, baseBottomY - baseTopY)),
-    );
-
-    // Borda/Rodapé da Base
-    final footRect = RRect.fromRectAndRadius(
-      Rect.fromCenter(center: Offset(poleX, baseBottomY), width: baseWidthBottom + 4, height: h * 0.03),
-      const Radius.circular(2),
-    );
-    canvas.drawRRect(footRect, Paint()..color = const Color(0xFF475569));
-
-    // -------------------------------------------------------------
-    // 3. Haste Vertical Principal (Poste)
-    // -------------------------------------------------------------
-    final poleTopY = h * 0.10;
-    final poleWidth = w * 0.065;
-
-    final poleRect = Rect.fromLTWH(
-      poleX - poleWidth / 2,
-      poleTopY,
-      poleWidth,
-      baseTopY - poleTopY,
-    );
-
-    final poleGradient = const LinearGradient(
-      colors: [
-        Color(0xFFCBD5E1),
-        Color(0xFF94A3B8),
-        Color(0xFF475569),
-      ],
-      begin: Alignment.centerLeft,
-      end: Alignment.centerRight,
-    );
-
-    canvas.drawRect(poleRect, Paint()..shader = poleGradient.createShader(poleRect));
-
-    // Anéis / Juntas Metálicas (Collars) ao longo do poste
-    final collarY1 = h * 0.58;
-    final collarY2 = h * 0.35;
-    for (final collarY in [collarY1, collarY2]) {
-      final collarRect = RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset(poleX, collarY), width: poleWidth + 5, height: h * 0.022),
-        const Radius.circular(3),
-      );
-      canvas.drawRRect(collarRect, Paint()..color = const Color(0xFF64748B));
-    }
-
-    // Tampa do topo do poste
-    final capRect = RRect.fromRectAndRadius(
-      Rect.fromCenter(center: Offset(poleX, poleTopY - h * 0.015), width: poleWidth + 4, height: h * 0.03),
-      const Radius.circular(3),
-    );
-    canvas.drawRRect(capRect, Paint()..color = const Color(0xFF475569));
-
-    // -------------------------------------------------------------
-    // 4. Braço Curvado da Luminária (Arc)
-    // -------------------------------------------------------------
-    final armStartX = poleX;
-    final armStartY = h * 0.14;
-    final armEndX = w * 0.65;
-    final armEndY = h * 0.08;
-
-    final armPath = Path()
-      ..moveTo(armStartX, armStartY)
-      ..cubicTo(
-        armStartX + w * 0.15, armStartY - h * 0.06,
-        armEndX - w * 0.10, armEndY - h * 0.02,
-        armEndX, armEndY,
-      );
-
-    final armPaint = Paint()
-      ..color = const Color(0xFF64748B)
+    // Anel externo da base metallic
+    final ringPaint = Paint()
+      ..color = const Color(0xFF94A3B8)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = w * 0.055
-      ..strokeCap = StrokeCap.round;
+      ..strokeWidth = 2.0;
+    canvas.drawCircle(Offset(cx, cy), 18, ringPaint);
 
-    canvas.drawPath(armPath, armPaint);
-
-    // Highlights no braço curvado
-    final armHighlightPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.4)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = w * 0.015
-      ..strokeCap = StrokeCap.round;
-    canvas.drawPath(armPath, armHighlightPaint);
+    // Parafusos de fixação na base da maquete (4 pontos)
+    final boltPaint = Paint()
+      ..color = const Color(0xFFCBD5E1)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(Offset(cx - 12, cy - 12), 1.8, boltPaint);
+    canvas.drawCircle(Offset(cx + 12, cy - 12), 1.8, boltPaint);
+    canvas.drawCircle(Offset(cx - 12, cy + 12), 1.8, boltPaint);
+    canvas.drawCircle(Offset(cx + 12, cy + 12), 1.8, boltPaint);
 
     // -------------------------------------------------------------
-    // 5. Cabeça da Luminária LED (Street Light Housing)
+    // 3. Cabeça do Cúpula da Luminária LED (Formato Aerodinâmico Top-Down)
     // -------------------------------------------------------------
-    final headX = w * 0.72;
-    final headY = h * 0.09;
-    final headW = w * 0.28;
-    final headH = h * 0.07;
+    final hoodRect = RRect.fromRectAndRadius(
+      Rect.fromCenter(center: Offset(cx, cy), width: 28, height: 28),
+      const Radius.circular(8),
+    );
 
-    // Carcaça metálica (Trapezoidal suavemente inclinada)
-    final headPath = Path()
-      ..moveTo(headX - headW / 2, headY)
-      ..lineTo(headX + headW / 2, headY + h * 0.02)
-      ..lineTo(headX + headW * 0.4, headY + headH + h * 0.01)
-      ..lineTo(headX - headW * 0.45, headY + headH)
-      ..close();
-
-    final headGradient = const LinearGradient(
-      colors: [
-        Color(0xFF475569),
-        Color(0xFF334155),
-        Color(0xFF1E293B),
-      ],
+    final hoodGradient = const LinearGradient(
+      colors: [Color(0xFF475569), Color(0xFF334155), Color(0xFF0F172A)],
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
     );
 
-    canvas.drawPath(
-      headPath,
-      Paint()..shader = headGradient.createShader(Rect.fromLTWH(headX - headW / 2, headY, headW, headH)),
+    canvas.drawRRect(hoodRect, Paint()..shader = hoodGradient.createShader(hoodRect.outerRect));
+
+    // Borda metálica da cúpula
+    canvas.drawRRect(
+      hoodRect,
+      Paint()
+        ..color = const Color(0xFF64748B)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5,
     );
 
     // -------------------------------------------------------------
-    // 6. Painel de Lentes LED (Parte inferior da luminária)
+    // 4. Lente Central de LED (Difusor Luminoso)
     // -------------------------------------------------------------
-    final lensY = headY + headH * 0.7;
-    final lensPath = Path()
-      ..moveTo(headX - headW * 0.42, lensY)
-      ..lineTo(headX + headW * 0.38, lensY + h * 0.015)
-      ..lineTo(headX + headW * 0.35, lensY + h * 0.035)
-      ..lineTo(headX - headW * 0.40, lensY + h * 0.025)
-      ..close();
+    final lensRect = RRect.fromRectAndRadius(
+      Rect.fromCenter(center: Offset(cx, cy), width: 18, height: 18),
+      const Radius.circular(5),
+    );
 
     if (isActive) {
-      // Estado LIGADO: Amarelo radiante brilhante
+      // Estado LIGADO: LED amarelo/branco radiante
       final lensPaint = Paint()
         ..color = const Color(0xFFFACC15)
         ..style = PaintingStyle.fill;
-      canvas.drawPath(lensPath, lensPaint);
+      canvas.drawRRect(lensRect, lensPaint);
 
-      // Núcleo branco incandescente
-      final corePath = Path()
-        ..moveTo(headX - headW * 0.30, lensY + 2)
-        ..lineTo(headX + headW * 0.25, lensY + h * 0.012 + 2)
-        ..lineTo(headX + headW * 0.22, lensY + h * 0.025)
-        ..lineTo(headX - headW * 0.28, lensY + h * 0.020)
-        ..close();
-      canvas.drawPath(corePath, Paint()..color = const Color(0xFFFFFBEB));
+      // Centro incandescente
+      final coreLens = RRect.fromRectAndRadius(
+        Rect.fromCenter(center: Offset(cx, cy), width: 10, height: 10),
+        const Radius.circular(3),
+      );
+      canvas.drawRRect(coreLens, Paint()..color = const Color(0xFFFFFBEB));
     } else {
-      // Estado DESLIGADO: Painel cinza fosco / leitoso
+      // Estado DESLIGADO: Vidro cinza leitoso fosco
       final lensPaint = Paint()
-        ..color = const Color(0xFFE2E8F0)
+        ..color = const Color(0xFF94A3B8)
         ..style = PaintingStyle.fill;
-      canvas.drawPath(lensPath, lensPaint);
+      canvas.drawRRect(lensRect, lensPaint);
 
-      // Borda sutil do painel leitoso
-      canvas.drawPath(
-        lensPath,
+      canvas.drawRRect(
+        lensRect,
         Paint()
-          ..color = const Color(0xFF94A3B8)
+          ..color = const Color(0xFF64748B)
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.2,
+          ..strokeWidth = 1.0,
       );
     }
+
+    // -------------------------------------------------------------
+    // 5. Anéis dos Terminais de Conexão de Fio (Esquerda / Direita)
+    // -------------------------------------------------------------
+    final termPaint = Paint()
+      ..color = const Color(0xFFB87333)
+      ..style = PaintingStyle.fill;
+
+    canvas.drawCircle(Offset(cx - 24, cy), 3.5, termPaint);
+    canvas.drawCircle(Offset(cx + 24, cy), 3.5, termPaint);
   }
 
   @override

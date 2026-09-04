@@ -1774,10 +1774,10 @@ class _RuasMaquetePainter extends CustomPainter {
     const termOffset = 32.0;
     const socketTermOffset = 30.0;
 
-    void drawStyledPath(Path path, Paint paint, {bool isPositive = true}) {
+    void drawStyledPath(Path path, Paint paint, {Color? customColor, bool isPositive = true}) {
       if (usePhysicalStyle) {
         final isActive = paint == activeWirePaint;
-        final baseColor = isPositive ? const Color(0xFFDC2626) : const Color(0xFF2563EB);
+        final baseColor = customColor ?? (isPositive ? const Color(0xFFDC2626) : const Color(0xFF2563EB));
 
         // 1. Sombra projetada do fio
         final shadowPaint = Paint()
@@ -1788,7 +1788,7 @@ class _RuasMaquetePainter extends CustomPainter {
           ..strokeJoin = StrokeJoin.round;
         canvas.drawPath(path.shift(const Offset(1.5, 2.5)), shadowPaint);
 
-        // 2. Isolamento do fio (Vermelho positivo / Azul negativo)
+        // 2. Isolamento do fio (Vermelho positivo / Azul negativo / Ambar jumper)
         final wireInsulationPaint = Paint()
           ..color = isActive ? baseColor : baseColor.withValues(alpha: 0.5)
           ..strokeWidth = 4.8
@@ -1841,7 +1841,7 @@ class _RuasMaquetePainter extends CustomPainter {
         ..lineTo(socketX + socketTermOffset, socketY);
 
       drawStyledPath(path1, currentPaint, isPositive: true);
-      drawStyledPath(path2, currentPaint, isPositive: true);
+      drawStyledPath(path2, currentPaint, customColor: const Color(0xFFD97706));
       drawStyledPath(path3, currentPaint, isPositive: false);
 
       drawTerminalDot(Offset(socketX - socketTermOffset, socketY));
@@ -1873,7 +1873,7 @@ class _RuasMaquetePainter extends CustomPainter {
         ..lineTo(socketX + socketTermOffset, socketY);
 
       drawStyledPath(path1, activeWirePaint, isPositive: true);
-      drawStyledPath(path2, activeWirePaint, isPositive: true);
+      drawStyledPath(path2, activeWirePaint, customColor: const Color(0xFFD97706));
       drawStyledPath(path3, m2Series ? activeWirePaint : wirePaint, isPositive: false);
 
       drawTerminalDot(Offset(socketX - socketTermOffset, socketY));
@@ -2002,14 +2002,33 @@ class _RuasMaquetePainter extends CustomPainter {
 
   void _drawElectronsOnPath(Canvas canvas, Path path, Paint paint) {
     final metrics = path.computeMetrics().toList();
-    for (final metric in metrics) {
-      final length = metric.length;
-      const count = 6;
-      for (int i = 0; i < count; i++) {
-        final distance = (length * ((animValue + i / count) % 1.0));
-        final tangent = metric.getTangentForOffset(distance);
-        if (tangent != null) {
-          canvas.drawCircle(tangent.position, 4, paint);
+    if (usePhysicalStyle) {
+      final glowPaint = Paint()
+        ..color = const Color(0xFFFEF08A)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
+
+      for (final metric in metrics) {
+        final length = metric.length;
+        const count = 3;
+        for (int i = 0; i < count; i++) {
+          final distance = (length * ((animValue + i / count) % 1.0));
+          final tangent = metric.getTangentForOffset(distance);
+          if (tangent != null) {
+            canvas.drawCircle(tangent.position, 2.5, glowPaint);
+            canvas.drawCircle(tangent.position, 1.2, Paint()..color = Colors.white);
+          }
+        }
+      }
+    } else {
+      for (final metric in metrics) {
+        final length = metric.length;
+        const count = 4;
+        for (int i = 0; i < count; i++) {
+          final distance = (length * ((animValue + i / count) % 1.0));
+          final tangent = metric.getTangentForOffset(distance);
+          if (tangent != null) {
+            canvas.drawCircle(tangent.position, 3.5, paint);
+          }
         }
       }
     }
