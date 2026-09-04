@@ -2207,23 +2207,29 @@ class _RuasMaquetePainter extends CustomPainter {
       final isBothActive = m3Junction && m3Return;
       final nodeY = lampY + 45.0;
 
-      // Ramo Lâmpada A (do Nó (+) para Rua A)
+      // 1. Tronco Positivo VCC (Saindo da Bateria e subindo alinhado no eixo central até o pino inferior do Nó de Junção)
+      final pathTrunkVcc = makeFlexiblePath([
+        batPosTerminal,
+        Offset(batPosTerminal.dx, socketY - 45.0),
+        Offset(socketX, socketY - 60.0),
+        Offset(socketX, nodeY + 18.0),
+      ]);
+
+      // 2. Ramo Lâmpada A (Saindo do centro exato do Nó de Junção (socketX, nodeY) para a esquerda -> Rua A)
       final pathBranchA = makeFlexiblePath([
-        ...posExitWaypoints,
-        Offset(batPosTerminal.dx, nodeY),
+        Offset(socketX, nodeY),
         Offset(lamp1X + termOffset, nodeY),
         Offset(lamp1X + termOffset, lampY),
       ]);
 
-      // Ramo Lâmpada B (do Nó (+) para Rua B)
+      // 3. Ramo Lâmpada B (Saindo do centro exato do Nó de Junção (socketX, nodeY) para a direita -> Rua B)
       final pathBranchB = makeFlexiblePath([
-        ...posExitWaypoints,
-        Offset(batPosTerminal.dx, nodeY),
+        Offset(socketX, nodeY),
         Offset(lamp2X - termOffset, nodeY),
         Offset(lamp2X - termOffset, lampY),
       ]);
 
-      // Retorno Rua A (da Rua A para o Retorno (-))
+      // 4. Retorno Rua A (da Rua A para o Retorno (-))
       final pathReturnA = makeFlexiblePath([
         Offset(lamp1X - termOffset, lampY),
         Offset(outerLeftX, lampY),
@@ -2231,7 +2237,7 @@ class _RuasMaquetePainter extends CustomPainter {
         ...negExitWaypoints,
       ]);
 
-      // Retorno Rua B (da Rua B para o Retorno (-))
+      // 5. Retorno Rua B (da Rua B para o Retorno (-))
       final pathReturnB = makeFlexiblePath([
         Offset(lamp2X + termOffset, lampY),
         Offset(outerRightX, lampY),
@@ -2239,12 +2245,14 @@ class _RuasMaquetePainter extends CustomPainter {
         ...negExitWaypoints,
       ]);
 
+      drawStyledPath(pathTrunkVcc, m3Junction ? activeWirePaint : wirePaint, isPositive: true);
       drawStyledPath(pathBranchA, m3Junction ? activeWirePaint : wirePaint, isPositive: true);
       drawStyledPath(pathBranchB, m3Junction ? activeWirePaint : wirePaint, isPositive: true);
       drawStyledPath(pathReturnA, m3Return ? activeWirePaint : wirePaint, isPositive: false);
       drawStyledPath(pathReturnB, m3Return ? activeWirePaint : wirePaint, isPositive: false);
 
       drawTerminalDot(batPosTerminal);
+      drawTerminalDot(Offset(socketX, nodeY + 18.0));
       drawTerminalDot(Offset(lamp1X + termOffset, lampY));
       drawTerminalDot(Offset(lamp1X - termOffset, lampY));
       drawTerminalDot(Offset(lamp2X - termOffset, lampY));
@@ -2252,6 +2260,7 @@ class _RuasMaquetePainter extends CustomPainter {
       drawTerminalDot(batNegTerminal);
 
       if (isBothActive) {
+        _drawElectronsOnPath(canvas, pathTrunkVcc, electronPaint);
         _drawElectronsOnPath(canvas, pathBranchA, electronPaint);
         _drawElectronsOnPath(canvas, pathBranchB, electronPaint);
         _drawElectronsOnPath(canvas, pathReturnA, electronPaint);
