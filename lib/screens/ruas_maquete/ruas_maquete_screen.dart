@@ -1841,7 +1841,7 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
             ? Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: isLit ? const Color(0xFFFEF3C7) : Colors.white,
+                  color: Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: isBroken
@@ -2021,10 +2021,7 @@ class _RuasMaquetePainter extends CustomPainter {
 
     void drawTerminalDot(Offset pos) {
       if (usePhysicalStyle) {
-        final copperPaint = Paint()
-          ..color = const Color(0xFFB87333)
-          ..style = PaintingStyle.fill;
-        canvas.drawCircle(pos, 4.5, copperPaint);
+        return;
       } else {
         canvas.drawCircle(pos, 3.5, nodePaint);
       }
@@ -2100,9 +2097,9 @@ class _RuasMaquetePainter extends CustomPainter {
       rotationDegrees: socketRotation,
     );
 
-    final topLoopY = socketY - 48.0;
-    final outerLeftX = lamp1X - 45.0;
-    final outerRightX = lamp2X + 45.0;
+    final topLoopY = socketY - 70.0;
+    final outerLeftX = lamp1X - 70.0;
+    final outerRightX = lamp2X + 70.0;
 
     // Determinar waypoints de saída de fiação baseados na rotação do soquete
     final List<Offset> posExitWaypoints;
@@ -2111,16 +2108,16 @@ class _RuasMaquetePainter extends CustomPainter {
     final normRotation = (socketRotation % 360 + 360) % 360;
     if (normRotation >= 45 && normRotation < 135) {
       // 90° (Terminais virados para a DIREITA)
-      posExitWaypoints = [batPosTerminal, Offset(socketX + 45.0, batPosTerminal.dy), Offset(socketX + 45.0, topLoopY)];
-      negExitWaypoints = [Offset(socketX + 45.0, topLoopY), Offset(socketX + 45.0, batNegTerminal.dy), batNegTerminal];
+      posExitWaypoints = [batPosTerminal, Offset(socketX + 70.0, batPosTerminal.dy), Offset(socketX + 70.0, topLoopY)];
+      negExitWaypoints = [Offset(socketX + 70.0, topLoopY), Offset(socketX + 70.0, batNegTerminal.dy), batNegTerminal];
     } else if (normRotation >= 135 && normRotation < 225) {
       // 180° (Terminais virados para BAIXO)
-      posExitWaypoints = [batPosTerminal, Offset(batPosTerminal.dx, socketY + 48.0), Offset(outerLeftX, socketY + 48.0)];
-      negExitWaypoints = [Offset(outerRightX, socketY + 48.0), Offset(batNegTerminal.dx, socketY + 48.0), batNegTerminal];
+      posExitWaypoints = [batPosTerminal, Offset(batPosTerminal.dx, socketY + 70.0), Offset(outerLeftX, socketY + 70.0)];
+      negExitWaypoints = [Offset(outerRightX, socketY + 70.0), Offset(batNegTerminal.dx, socketY + 70.0), batNegTerminal];
     } else if (normRotation >= 225 && normRotation < 315) {
       // 270° (Terminais virados para a ESQUERDA)
-      posExitWaypoints = [batPosTerminal, Offset(socketX - 45.0, batPosTerminal.dy), Offset(socketX - 45.0, topLoopY)];
-      negExitWaypoints = [Offset(socketX - 45.0, topLoopY), Offset(socketX - 45.0, batNegTerminal.dy), batNegTerminal];
+      posExitWaypoints = [batPosTerminal, Offset(socketX - 70.0, batPosTerminal.dy), Offset(socketX - 70.0, topLoopY)];
+      negExitWaypoints = [Offset(socketX - 70.0, topLoopY), Offset(socketX - 70.0, batNegTerminal.dy), batNegTerminal];
     } else {
       // 0° (Terminais virados para CIMA - Topo)
       posExitWaypoints = [batPosTerminal, Offset(batPosTerminal.dx, topLoopY)];
