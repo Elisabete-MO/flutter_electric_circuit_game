@@ -152,12 +152,12 @@ class ComponentPhysicalPainter extends CustomPainter {
   }
 
   /// --------------------------------------------------------------------------
-  /// SUPORTE DE PILHAS AA / BATERIA 4.5V (Hiper-realista 3D - Conforme referência)
+  /// SUPORTE DE PILHAS AA / BATERIA 4.5V (Horizontal - Conforme referência)
   /// --------------------------------------------------------------------------
   void _drawPhysicalBattery(Canvas canvas, Size size, double cx, double cy) {
-    // Dimensões do Suporte Plastico Preto de Pilhas AA
-    const double holderWidth = 44.0;
-    const double holderHeight = 32.0;
+    // Dimensões do Suporte Plastico Preto de Pilhas AA (Orientação Horizontal)
+    const double holderWidth = 52.0;
+    const double holderHeight = 34.0;
     final double holderLeft = cx - holderWidth / 2;
     final double holderTop = cy - holderHeight / 2;
 
@@ -176,8 +176,8 @@ class ComponentPhysicalPainter extends CustomPainter {
     final housingPaint = Paint()
       ..shader = const LinearGradient(
         colors: [Color(0xFF334155), Color(0xFF1E293B), Color(0xFF0F172A)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
       ).createShader(holderRect);
     canvas.drawRRect(holderRRect, housingPaint);
 
@@ -190,39 +190,38 @@ class ComponentPhysicalPainter extends CustomPainter {
         ..strokeWidth = 1.0,
     );
 
-    // Divisória Central de Plástico do Suporte
+    // Divisória Horizontal de Plástico do Suporte
     canvas.drawLine(
-      Offset(cx, holderTop + 2),
-      Offset(cx, holderTop + holderHeight - 2),
+      Offset(holderLeft + 2, cy),
+      Offset(holderLeft + holderWidth - 2, cy),
       Paint()
         ..color = const Color(0xFF020617)
         ..strokeWidth = 1.6,
     );
 
-    // 3. Pilhas AA Turquesa / Teal (2 compartimentos pareados conforme a imagem de referência)
-    const double cellW = 18.0;
-    const double cellH = 26.0;
-    final double cellY = cy - cellH / 2;
+    // 3. Pilhas AA Turquesa / Teal Horizontais
+    const double cellW = 46.0;
+    const double cellH = 13.0;
 
-    // A) Pilha AA Esquerda (Invertida: Polo Positivo + embaixo)
-    final leftCellRect = Rect.fromLTWH(cx - cellW - 1.5, cellY, cellW, cellH);
-    _drawAABatteryCell(
+    // A) Pilha AA Superior (Polo Positivo + na esquerda)
+    final topCellRect = Rect.fromLTWH(cx - cellW / 2, cy - cellH - 1.5, cellW, cellH);
+    _drawAABatteryCellHorizontal(
       canvas,
-      leftCellRect,
-      isPositiveTop: false,
+      topCellRect,
+      isPositiveLeft: true,
       label: 'AA 1.5V',
     );
 
-    // B) Pilha AA Direita (Polo Positivo + em cima)
-    final rightCellRect = Rect.fromLTWH(cx + 1.5, cellY, cellW, cellH);
-    _drawAABatteryCell(
+    // B) Pilha AA Inferior (Polo Positivo + na direita - invertida para circuito em série)
+    final bottomCellRect = Rect.fromLTWH(cx - cellW / 2, cy + 1.5, cellW, cellH);
+    _drawAABatteryCellHorizontal(
       canvas,
-      rightCellRect,
-      isPositiveTop: true,
+      bottomCellRect,
+      isPositiveLeft: false,
       label: 'AA 1.5V',
     );
 
-    // 4. Molas e Contatos Metálicos Prateados no Topo e Fundo do Holder
+    // 4. Molas e Contatos Metálicos Prateados nas Extremidades Esquerda e Direita
     final metallicPaint = Paint()
       ..shader = const LinearGradient(
         colors: [Color(0xFFF1F5F9), Color(0xFF94A3B8), Color(0xFF475569)],
@@ -230,15 +229,15 @@ class ComponentPhysicalPainter extends CustomPainter {
         end: Alignment.bottomCenter,
       ).createShader(holderRect);
 
-    // Contatos Metálicos Superiores (Pino Prata / Mola)
-    canvas.drawRect(Rect.fromLTWH(cx - 15, holderTop, 6, 2), metallicPaint);
-    canvas.drawRect(Rect.fromLTWH(cx + 9, holderTop, 6, 2), metallicPaint);
+    // Contatos Prata Esquerda
+    canvas.drawRect(Rect.fromLTWH(holderLeft, cy - 10, 2, 5), metallicPaint);
+    canvas.drawRect(Rect.fromLTWH(holderLeft, cy + 5, 2, 5), metallicPaint);
 
-    // Contatos Metálicos Inferiores
-    canvas.drawRect(Rect.fromLTWH(cx - 15, holderTop + holderHeight - 2, 6, 2), metallicPaint);
-    canvas.drawRect(Rect.fromLTWH(cx + 9, holderTop + holderHeight - 2, 6, 2), metallicPaint);
+    // Contatos Prata Direita
+    canvas.drawRect(Rect.fromLTWH(holderLeft + holderWidth - 2, cy - 10, 2, 5), metallicPaint);
+    canvas.drawRect(Rect.fromLTWH(holderLeft + holderWidth - 2, cy + 5, 2, 5), metallicPaint);
 
-    // 5. Cabos Elétricos de Saída (Vermelho + para a esquerda, Azul - para a direita)
+    // 5. Cabos Elétricos de Saída (Vermelho + na esquerda, Azul - na direita)
     canvas.drawLine(
       Offset(holderLeft, cy),
       Offset(0, cy),
@@ -260,37 +259,37 @@ class ComponentPhysicalPainter extends CustomPainter {
     _drawCleanLeads(canvas, size, cx, cy, holderLeft, holderLeft + holderWidth);
   }
 
-  /// Desenha uma pilha individual AA turquesa (Teal) fotorrealista com polos + e -
-  void _drawAABatteryCell(Canvas canvas, Rect rect, {required bool isPositiveTop, required String label}) {
-    final cellRRect = RRect.fromRectAndRadius(rect, const Radius.circular(3.0));
+  /// Desenha uma pilha individual AA turquesa (Teal) horizontal fotorrealista
+  void _drawAABatteryCellHorizontal(Canvas canvas, Rect rect, {required bool isPositiveLeft, required String label}) {
+    final cellRRect = RRect.fromRectAndRadius(rect, const Radius.circular(2.5));
 
-    // Corpo Turquesa/Teal Principal da Pilha AA (Conforme a imagem de referência do usuário)
+    // Corpo Turquesa/Teal Principal da Pilha AA
     final bodyPaint = Paint()
       ..shader = const LinearGradient(
         colors: [Color(0xFF0D9488), Color(0xFF0F766E), Color(0xFF115E59)],
-        begin: Alignment.centerLeft,
-        end: Alignment.centerRight,
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
       ).createShader(rect);
     canvas.drawRRect(cellRRect, bodyPaint);
 
     // Bloco/Faixa de Destaque Turquesa Claro do Polo Positivo (+)
-    final posHeight = rect.height * 0.35;
-    final posRect = isPositiveTop
-        ? Rect.fromLTWH(rect.left, rect.top, rect.width, posHeight)
-        : Rect.fromLTWH(rect.left, rect.bottom - posHeight, rect.width, posHeight);
+    final posWidth = rect.width * 0.32;
+    final posRect = isPositiveLeft
+        ? Rect.fromLTWH(rect.left, rect.top, posWidth, rect.height)
+        : Rect.fromLTWH(rect.right - posWidth, rect.top, posWidth, rect.height);
 
     final posPaint = Paint()
       ..shader = const LinearGradient(
         colors: [Color(0xFF2DD4BF), Color(0xFF14B8A6), Color(0xFF0D9488)],
-        begin: Alignment.centerLeft,
-        end: Alignment.centerRight,
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
       ).createShader(posRect);
 
     canvas.save();
     canvas.clipRRect(cellRRect);
     canvas.drawRect(posRect, posPaint);
 
-    // Brilho Especular no Topo/Corpo da Pilha
+    // Brilho Especular no Topo do Cilindro da Pilha
     canvas.drawLine(
       Offset(rect.left + 2, rect.top + 1),
       Offset(rect.right - 2, rect.top + 1),
@@ -299,7 +298,7 @@ class ComponentPhysicalPainter extends CustomPainter {
     canvas.restore();
 
     // Marcador de Polo Positivo '+'
-    final posCenterY = isPositiveTop ? rect.top + posHeight / 2 : rect.bottom - posHeight / 2;
+    final posCenterX = isPositiveLeft ? rect.left + posWidth / 2 : rect.right - posWidth / 2;
     final posText = TextPainter(
       text: TextSpan(
         text: '+',
@@ -311,28 +310,27 @@ class ComponentPhysicalPainter extends CustomPainter {
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    posText.paint(canvas, Offset(rect.center.dx - posText.width / 2, posCenterY - posText.height / 2));
+    posText.paint(canvas, Offset(posCenterX - posText.width / 2, rect.center.dy - posText.height / 2));
 
-    // Marcador de Polo Negativo '-'
-    final negCenterY = isPositiveTop ? rect.bottom - (rect.height - posHeight) / 2 : rect.top + (rect.height - posHeight) / 2;
+    // Marcador de Polo Negativo 'I' (Conforme a imagem de referência)
+    final negCenterX = isPositiveLeft ? rect.right - (rect.width - posWidth) / 4 : rect.left + (rect.width - posWidth) / 4;
     final negText = TextPainter(
       text: TextSpan(
-        text: '—',
+        text: 'I',
         style: GoogleFonts.rajdhani(
-          color: Colors.white.withValues(alpha: 0.85),
+          color: Colors.white.withValues(alpha: 0.9),
           fontWeight: FontWeight.bold,
           fontSize: 10,
         ),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    negText.paint(canvas, Offset(rect.center.dx - negText.width / 2, negCenterY - negText.height / 2));
+    negText.paint(canvas, Offset(negCenterX - negText.width / 2, rect.center.dy - negText.height / 2));
 
-    // Inscrição 'AA 1.5V' na lateral do corpo da pilha
-    canvas.save();
-    final textCenterY = isPositiveTop ? rect.top + rect.height * 0.65 : rect.top + rect.height * 0.35;
-    canvas.translate(rect.center.dx, textCenterY);
-    canvas.rotate(-math.pi / 2);
+    // Inscrição 'AA 1.5V' horizontal legível no corpo da pilha
+    final labelCenterX = isPositiveLeft
+        ? rect.left + posWidth + (rect.width - posWidth) * 0.45
+        : rect.left + (rect.width - posWidth) * 0.55;
 
     final labelPainter = TextPainter(
       text: TextSpan(
@@ -346,8 +344,7 @@ class ComponentPhysicalPainter extends CustomPainter {
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    labelPainter.paint(canvas, Offset(-labelPainter.width / 2, -labelPainter.height / 2));
-    canvas.restore();
+    labelPainter.paint(canvas, Offset(labelCenterX - labelPainter.width / 2, rect.center.dy - labelPainter.height / 2));
   }
 
   void _drawPhysicalWire(Canvas canvas, Size size, double cx, double cy) {
