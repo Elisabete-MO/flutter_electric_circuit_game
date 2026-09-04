@@ -10,6 +10,7 @@ import '../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../state/circuit_undo_redo_controller.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
 import '../../widgets/schematic_blueprint_socket.dart';
+import '../../widgets/physical_blueprint_socket.dart';
 import '../../widgets/component_physical_painter.dart';
 import '../../widgets/circuit_symbol_painter.dart';
 import '../../widgets/tech_grid_background.dart';
@@ -629,41 +630,75 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
           isLit: isLit,
         ),
 
-        // Socket Esquemático do LED Semicondutor
-        SchematicBlueprintSocket<String>(
-          expectedData: 'led_red',
-          isFilled: _m1LedInserted,
-          showLabel: false,
-          rotation: _m1LedRotation,
-          onAccept: (_) => _insertComponent(
-            name: 'LED Vermelho',
-            getInserted: () => _m1LedInserted,
-            setInserted: (v) => _m1LedInserted = v,
-            getRotation: () => _m1LedRotation,
-            setRotation: (v) => _m1LedRotation = v,
-          ),
-          onRotate: () => _rotateComponent(
-            name: 'LED Vermelho',
-            getRotation: () => _m1LedRotation,
-            setRotation: (v) => _m1LedRotation = v,
-          ),
-          onTap: () => _insertComponent(
-            name: 'LED Vermelho',
-            getInserted: () => _m1LedInserted,
-            setInserted: (v) => _m1LedInserted = v,
-            getRotation: () => _m1LedRotation,
-            setRotation: (v) => _m1LedRotation = v,
-          ),
-          symbolWidget: _usePhysicalStyle
-              ? CustomPaint(
+        // Socket Interativo do LED (Alterna entre Físico 3D e Esquemático)
+        _usePhysicalStyle
+            ? PhysicalBlueprintSocket<String>(
+                expectedData: 'led_red',
+                isFilled: _m1LedInserted,
+                showLabel: false,
+                rotation: _m1LedRotation,
+                onAccept: (_) => _insertComponent(
+                  name: 'LED Vermelho',
+                  getInserted: () => _m1LedInserted,
+                  setInserted: (v) => _m1LedInserted = v,
+                  getRotation: () => _m1LedRotation,
+                  setRotation: (v) => _m1LedRotation = v,
+                ),
+                onRotate: () => _rotateComponent(
+                  name: 'LED Vermelho',
+                  getRotation: () => _m1LedRotation,
+                  setRotation: (v) => _m1LedRotation = v,
+                ),
+                onTap: () => _insertComponent(
+                  name: 'LED Vermelho',
+                  getInserted: () => _m1LedInserted,
+                  setInserted: (v) => _m1LedInserted = v,
+                  getRotation: () => _m1LedRotation,
+                  setRotation: (v) => _m1LedRotation = v,
+                ),
+                symbolWidget: CustomPaint(
                   size: const Size(60, 60),
                   painter: ComponentPhysicalPainter(
                     type: ComponentType.led,
                     isActive: isLit,
                     isDarkMode: false,
                   ),
-                )
-              : CustomPaint(
+                ),
+                placeholderWidget: CustomPaint(
+                  size: const Size(45, 45),
+                  painter: ComponentPhysicalPainter(
+                    type: ComponentType.led,
+                    isActive: false,
+                    isDarkMode: false,
+                  ),
+                ),
+                label: '',
+              )
+            : SchematicBlueprintSocket<String>(
+                expectedData: 'led_red',
+                isFilled: _m1LedInserted,
+                showLabel: false,
+                rotation: _m1LedRotation,
+                onAccept: (_) => _insertComponent(
+                  name: 'LED Vermelho',
+                  getInserted: () => _m1LedInserted,
+                  setInserted: (v) => _m1LedInserted = v,
+                  getRotation: () => _m1LedRotation,
+                  setRotation: (v) => _m1LedRotation = v,
+                ),
+                onRotate: () => _rotateComponent(
+                  name: 'LED Vermelho',
+                  getRotation: () => _m1LedRotation,
+                  setRotation: (v) => _m1LedRotation = v,
+                ),
+                onTap: () => _insertComponent(
+                  name: 'LED Vermelho',
+                  getInserted: () => _m1LedInserted,
+                  setInserted: (v) => _m1LedInserted = v,
+                  getRotation: () => _m1LedRotation,
+                  setRotation: (v) => _m1LedRotation = v,
+                ),
+                symbolWidget: CustomPaint(
                   size: const Size(55, 55),
                   painter: CircuitSymbolPainter(
                     type: ComponentType.led,
@@ -672,16 +707,7 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
                     strokeWidth: 2.5,
                   ),
                 ),
-          placeholderWidget: _usePhysicalStyle
-              ? CustomPaint(
-                  size: const Size(45, 45),
-                  painter: ComponentPhysicalPainter(
-                    type: ComponentType.led,
-                    isActive: false,
-                    isDarkMode: false,
-                  ),
-                )
-              : CustomPaint(
+                placeholderWidget: CustomPaint(
                   size: const Size(45, 45),
                   painter: CircuitSymbolPainter(
                     type: ComponentType.led,
@@ -690,8 +716,8 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
                     strokeWidth: 2.0,
                   ),
                 ),
-          label: '',
-        ),
+                label: '',
+              ),
 
         // Controle Clean de Polaridade (Ânodo / Cátodo)
         OutlinedButton.icon(

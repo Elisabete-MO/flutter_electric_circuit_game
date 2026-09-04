@@ -706,13 +706,22 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
           );
 
     final placeholderWidget = _usePhysicalStyle
-        ? CustomPaint(
-            size: Size(width - 25, height - 25),
-            painter: ComponentPhysicalPainter(
-              type: symbolType,
-              isDarkMode: false,
-            ),
-          )
+        ? (symbolType == ComponentType.bulb
+            ? CustomPaint(
+                size: Size(width - 20, height - 20),
+                painter: StreetLampPainter(
+                  isActive: false,
+                  brightnessRatio: 0.0,
+                  isDarkMode: false,
+                ),
+              )
+            : CustomPaint(
+                size: Size(width - 25, height - 25),
+                painter: ComponentPhysicalPainter(
+                  type: symbolType,
+                  isDarkMode: false,
+                ),
+              ))
         : CustomPaint(
             size: Size(width - 25, height - 25),
             painter: CircuitSymbolPainter(
@@ -733,6 +742,7 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
         onRotate: onRotate,
         rotation: rotation,
         symbolWidget: symbolWidget,
+        placeholderWidget: placeholderWidget,
         showLabel: label.isNotEmpty,
         label: label,
       );

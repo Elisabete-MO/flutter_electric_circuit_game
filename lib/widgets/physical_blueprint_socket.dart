@@ -17,6 +17,7 @@ class PhysicalBlueprintSocket<T extends Object> extends StatelessWidget {
   final double rotation;
   final double width;
   final double height;
+  final Widget? placeholderWidget;
 
   const PhysicalBlueprintSocket({
     super.key,
@@ -25,6 +26,7 @@ class PhysicalBlueprintSocket<T extends Object> extends StatelessWidget {
     required this.onAccept,
     required this.onTap,
     required this.symbolWidget,
+    this.placeholderWidget,
     this.label = '',
     this.accentColor = const Color(0xFF00E5FF),
     this.showLabel = true,
@@ -126,21 +128,32 @@ class PhysicalBlueprintSocket<T extends Object> extends StatelessWidget {
                                   ),
                                 ],
                               )
-                            : Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.add_rounded, color: const Color(0xFF94A3B8), size: 26),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    label.isNotEmpty ? label : '',
-                                    style: GoogleFonts.rajdhani(
-                                      color: const Color(0xFF94A3B8),
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              )),
+                            : (placeholderWidget != null
+                                ? Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      Opacity(
+                                        opacity: 0.5,
+                                        child: placeholderWidget!,
+                                      ),
+                                      const Icon(Icons.add_rounded, color: Color(0xFFD97706), size: 24),
+                                    ],
+                                  )
+                                : Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.add_rounded, color: const Color(0xFF94A3B8), size: 26),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        label.isNotEmpty ? label : '',
+                                        style: GoogleFonts.rajdhani(
+                                          color: const Color(0xFF94A3B8),
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ))),
                   ),
                 ),
               ),
