@@ -1423,7 +1423,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
           // VCC: Bateria(+) -> Switch(A)
           wires.add(DynamicWirePath.fromComponents(
             compA: ComponentPlacement(position: batteryPos, rotation: _m1BatteryRotation, type: ComponentType.battery),
-            terminalIndexA: 1,
+            terminalIndexA: 0,
             compB: ComponentPlacement(position: switchPos, rotation: _m1SwitchRotation, type: ComponentType.switchComponent),
             terminalIndexB: 0,
             color: const Color(0xFFEF4444),
@@ -1447,7 +1447,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
 
         if (_m1BulbInserted && _m1BatteryInserted) {
           final bulbTermB = ComponentPlacement(position: lampPos, rotation: _m1BulbRotation, type: ComponentType.bulb).getTerminalPosition(1);
-          final batTermB = ComponentPlacement(position: batteryPos, rotation: _m1BatteryRotation, type: ComponentType.battery).getTerminalPosition(0);
+          final batTermB = ComponentPlacement(position: batteryPos, rotation: _m1BatteryRotation, type: ComponentType.battery).getTerminalPosition(1);
           final bottomY = centerY + 65.0;
 
           // Bulb(B) -> Bateria(-) ( retorno retangular por baixo )
@@ -1455,7 +1455,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
             compA: ComponentPlacement(position: lampPos, rotation: _m1BulbRotation, type: ComponentType.bulb),
             terminalIndexA: 1,
             compB: ComponentPlacement(position: batteryPos, rotation: _m1BatteryRotation, type: ComponentType.battery),
-            terminalIndexB: 0,
+            terminalIndexB: 1,
             color: const Color(0xFF2563EB),
             isActive: isClosed,
             thickness: 4.5,
@@ -1658,12 +1658,12 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         ).toWirePath());
 
         final termABulb = ComponentPlacement(position: posABulb, rotation: 0, type: ComponentType.bulb).getTerminalPosition(1);
-        final termABat = ComponentPlacement(position: posABat, rotation: 0, type: ComponentType.battery).getTerminalPosition(0);
+        final termABat = ComponentPlacement(position: posABat, rotation: 0, type: ComponentType.battery).getTerminalPosition(1);
         wires.add(DynamicWirePath.fromComponents(
           compA: ComponentPlacement(position: posABulb, rotation: 0, type: ComponentType.bulb),
           terminalIndexA: 1,
           compB: ComponentPlacement(position: posABat, rotation: 0, type: ComponentType.battery),
-          terminalIndexB: 0,
+          terminalIndexB: 1,
           color: const Color(0xFF2563EB),
           isActive: _m2SwitchAClosed,
           thickness: 4.0,
@@ -1675,7 +1675,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         // Fios Cenário B
         wires.add(DynamicWirePath.fromComponents(
           compA: ComponentPlacement(position: posBBat, rotation: 0, type: ComponentType.battery),
-          terminalIndexA: 1,
+          terminalIndexA: 0,
           compB: ComponentPlacement(position: posBSw, rotation: 0, type: ComponentType.switchComponent),
           terminalIndexB: 0,
           color: const Color(0xFFEF4444),
@@ -1694,12 +1694,12 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         ).toWirePath());
 
         final termBBulb = ComponentPlacement(position: posBBulb, rotation: 0, type: ComponentType.bulb).getTerminalPosition(1);
-        final termBBat = ComponentPlacement(position: posBBat, rotation: 0, type: ComponentType.battery).getTerminalPosition(0);
+        final termBBat = ComponentPlacement(position: posBBat, rotation: 0, type: ComponentType.battery).getTerminalPosition(1);
         wires.add(DynamicWirePath.fromComponents(
           compA: ComponentPlacement(position: posBBulb, rotation: 0, type: ComponentType.bulb),
           terminalIndexA: 1,
           compB: ComponentPlacement(position: posBBat, rotation: 0, type: ComponentType.battery),
-          terminalIndexB: 0,
+          terminalIndexB: 1,
           color: const Color(0xFF2563EB),
           isActive: _m2SwitchBClosed,
           thickness: 4.0,
@@ -1817,7 +1817,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         if (_m3BatteryInserted && _m3Switch1Inserted) {
           wires.add(DynamicWirePath.fromComponents(
             compA: ComponentPlacement(position: batteryPos, rotation: _m3BatteryRotation, type: ComponentType.battery),
-            terminalIndexA: 1,
+            terminalIndexA: 0,
             compB: ComponentPlacement(position: switch1Pos, rotation: _m3Switch1Rotation, type: ComponentType.switchComponent),
             terminalIndexB: 0,
             color: const Color(0xFFEF4444),
@@ -1829,7 +1829,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         if (_m3BatteryInserted && _m3Switch2Inserted) {
           wires.add(DynamicWirePath.fromComponents(
             compA: ComponentPlacement(position: batteryPos, rotation: _m3BatteryRotation, type: ComponentType.battery),
-            terminalIndexA: 1,
+            terminalIndexA: 0,
             compB: ComponentPlacement(position: switch2Pos, rotation: _m3Switch2Rotation, type: ComponentType.switchComponent),
             terminalIndexB: 0,
             color: const Color(0xFFEAB308),
@@ -1864,14 +1864,14 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
 
         if (_m3LampAInserted && _m3LampBInserted && _m3BatteryInserted) {
           final bulb2Term = ComponentPlacement(position: lamp2Pos, rotation: _m3LampBRotation, type: ComponentType.bulb).getTerminalPosition(1);
-          final batTerm = ComponentPlacement(position: batteryPos, rotation: _m3BatteryRotation, type: ComponentType.battery).getTerminalPosition(0);
+          final batTerm = ComponentPlacement(position: batteryPos, rotation: _m3BatteryRotation, type: ComponentType.battery).getTerminalPosition(1);
           final bottomY = 165.0;
 
           wires.add(DynamicWirePath.fromComponents(
             compA: ComponentPlacement(position: lamp1Pos, rotation: _m3LampARotation, type: ComponentType.bulb),
             terminalIndexA: 1,
             compB: ComponentPlacement(position: batteryPos, rotation: _m3BatteryRotation, type: ComponentType.battery),
-            terminalIndexB: 0,
+            terminalIndexB: 1,
             color: const Color(0xFF2563EB),
             isActive: _m3Switch1Closed || _m3Switch2Closed,
             thickness: 4.0,
@@ -2148,7 +2148,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
             if (_m4SwitchSeriesInserted) {
               wires.add(DynamicWirePath.fromComponents(
                 compA: ComponentPlacement(position: batteryPos, rotation: _m4BatteryRotation, type: ComponentType.battery),
-                terminalIndexA: 1,
+                terminalIndexA: 0,
                 compB: ComponentPlacement(position: switchSeriesPos, rotation: _m4SwitchSeriesRotation, type: ComponentType.switchComponent),
                 terminalIndexB: 0,
                 color: const Color(0xFFEF4444),
@@ -2170,7 +2170,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
             // Switch no Ramo Inútil (Topo)
             wires.add(DynamicWirePath.fromComponents(
               compA: ComponentPlacement(position: batteryPos, rotation: _m4BatteryRotation, type: ComponentType.battery),
-              terminalIndexA: 1,
+              terminalIndexA: 0,
               compB: ComponentPlacement(position: lampPos, rotation: _m4LampRotation, type: ComponentType.bulb),
               terminalIndexB: 0,
               color: const Color(0xFFEF4444),
@@ -2181,7 +2181,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
             if (_m4SwitchSeriesInserted) {
               wires.add(DynamicWirePath.fromComponents(
                 compA: ComponentPlacement(position: batteryPos, rotation: _m4BatteryRotation, type: ComponentType.battery),
-                terminalIndexA: 1,
+                terminalIndexA: 0,
                 compB: ComponentPlacement(position: switchInutilityPos, rotation: _m4SwitchSeriesRotation, type: ComponentType.switchComponent),
                 terminalIndexB: 0,
                 color: const Color(0xFFEAB308),
@@ -2202,14 +2202,14 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
           }
 
           final lampTerm = ComponentPlacement(position: lampPos, rotation: _m4LampRotation, type: ComponentType.bulb).getTerminalPosition(1);
-          final batTerm = ComponentPlacement(position: batteryPos, rotation: _m4BatteryRotation, type: ComponentType.battery).getTerminalPosition(0);
+          final batTerm = ComponentPlacement(position: batteryPos, rotation: _m4BatteryRotation, type: ComponentType.battery).getTerminalPosition(1);
           final bottomY = centerY + 65.0;
 
           wires.add(DynamicWirePath.fromComponents(
             compA: ComponentPlacement(position: lampPos, rotation: _m4LampRotation, type: ComponentType.bulb),
             terminalIndexA: 1,
             compB: ComponentPlacement(position: batteryPos, rotation: _m4BatteryRotation, type: ComponentType.battery),
-            terminalIndexB: 0,
+            terminalIndexB: 1,
             color: const Color(0xFF2563EB),
             isActive: isLampLit,
             thickness: 4.0,
@@ -2468,7 +2468,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         if (_m5BatteryInserted && _m5PushButtonInserted) {
           wires.add(DynamicWirePath.fromComponents(
             compA: ComponentPlacement(position: batteryPos, rotation: _m5BatteryRotation, type: ComponentType.battery),
-            terminalIndexA: 1,
+            terminalIndexA: 0,
             compB: ComponentPlacement(position: pushButtonPos, rotation: _m5PushButtonRotation, type: ComponentType.switchComponent),
             terminalIndexB: 0,
             color: const Color(0xFFEF4444),
@@ -2491,14 +2491,14 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
 
         if (_m5LampInserted && _m5BatteryInserted) {
           final lampTerm = ComponentPlacement(position: lampPos, rotation: _m5LampRotation, type: ComponentType.bulb).getTerminalPosition(1);
-          final batTerm = ComponentPlacement(position: batteryPos, rotation: _m5BatteryRotation, type: ComponentType.battery).getTerminalPosition(0);
+          final batTerm = ComponentPlacement(position: batteryPos, rotation: _m5BatteryRotation, type: ComponentType.battery).getTerminalPosition(1);
           final bottomY = centerY + 65.0;
 
           wires.add(DynamicWirePath.fromComponents(
             compA: ComponentPlacement(position: lampPos, rotation: _m5LampRotation, type: ComponentType.bulb),
             terminalIndexA: 1,
             compB: ComponentPlacement(position: batteryPos, rotation: _m5BatteryRotation, type: ComponentType.battery),
-            terminalIndexB: 0,
+            terminalIndexB: 1,
             color: const Color(0xFF2563EB),
             isActive: isLit,
             thickness: 4.5,
