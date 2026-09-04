@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../models/stand_mission.dart';
 import '../../models/first_step_component.dart';
+import '../../models/component_terminals.dart';
 import '../../models/circuit_action.dart';
 import '../../state/progress_controller.dart';
 import '../../state/circuit_undo_redo_controller.dart';
@@ -652,6 +653,15 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
               child: AnimatedBuilder(
                 animation: _electronAnimController,
                 builder: (context, child) {
+                  final double socketRotation = switch (_currentMissionIndex) {
+                    0 => _m1WireRotation,
+                    1 => 0.0,
+                    2 => _m3ReturnRotation,
+                    3 => _m4ParallelRotation,
+                    4 => _m5House1Rotation,
+                    _ => 0.0,
+                  };
+
                   return CustomPaint(
                     painter: _RuasMaquetePainter(
                       missionIndex: _currentMissionIndex,
@@ -668,6 +678,7 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
                       lamp1X: lamp1X,
                       lamp2X: lamp2X,
                       socketX: socketX,
+                      socketRotation: socketRotation,
                     ),
                   );
                 },
@@ -1926,6 +1937,7 @@ class _RuasMaquetePainter extends CustomPainter {
   final double lamp1X;
   final double lamp2X;
   final double socketX;
+  final double socketRotation;
 
   _RuasMaquetePainter({
     required this.missionIndex,
@@ -1942,6 +1954,7 @@ class _RuasMaquetePainter extends CustomPainter {
     required this.lamp1X,
     required this.lamp2X,
     required this.socketX,
+    required this.socketRotation,
   });
 
   @override
@@ -2073,12 +2086,46 @@ class _RuasMaquetePainter extends CustomPainter {
       return path;
     }
 
-    // Coordenadas dos terminais superiores no topo da bateria
-    final batPosTerminal = Offset(socketX - 7.5, socketY - 25.0);
-    final batNegTerminal = Offset(socketX + 7.5, socketY - 25.0);
+    // Terminais dinâmicos da bateria baseados no ângulo de rotação do soquete
+    final batPosTerminal = getTerminalPosition(
+      componentCenter: Offset(socketX, socketY),
+      componentType: ComponentType.battery,
+      terminalIndex: 0,
+      rotationDegrees: socketRotation,
+    );
+    final batNegTerminal = getTerminalPosition(
+      componentCenter: Offset(socketX, socketY),
+      componentType: ComponentType.battery,
+      terminalIndex: 1,
+      rotationDegrees: socketRotation,
+    );
+
     final topLoopY = socketY - 48.0;
     final outerLeftX = lamp1X - 45.0;
     final outerRightX = lamp2X + 45.0;
+
+    // Determinar waypoints de saída de fiação baseados na rotação do soquete
+    final List<Offset> posExitWaypoints;
+    final List<Offset> negExitWaypoints;
+
+    final normRotation = (socketRotation % 360 + 360) % 360;
+    if (normRotation >= 45 && normRotation < 135) {
+      // 90° (Terminais virados para a DIREITA)
+      posExitWaypoints = [batPosTerminal, Offset(socketX + 45.0, batPosTerminal.dy), Offset(socketX + 45.0, topLoopY)];
+      negExitWaypoints = [Offset(socketX + 45.0, topLoopY), Offset(socketX + 45.0, batNegTerminal.dy), batNegTerminal];
+    } else if (normRotation >= 135 && normRotation < 225) {
+      // 180° (Terminais virados para BAIXO)
+      posExitWaypoints = [batPosTerminal, Offset(batPosTerminal.dx, socketY + 48.0), Offset(outerLeftX, socketY + 48.0)];
+      negExitWaypoints = [Offset(outerRightX, socketY + 48.0), Offset(batNegTerminal.dx, socketY + 48.0), batNegTerminal];
+    } else if (normRotation >= 225 && normRotation < 315) {
+      // 270° (Terminais virados para a ESQUERDA)
+      posExitWaypoints = [batPosTerminal, Offset(socketX - 45.0, batPosTerminal.dy), Offset(socketX - 45.0, topLoopY)];
+      negExitWaypoints = [Offset(socketX - 45.0, topLoopY), Offset(socketX - 45.0, batNegTerminal.dy), batNegTerminal];
+    } else {
+      // 0° (Terminais virados para CIMA - Topo)
+      posExitWaypoints = [batPosTerminal, Offset(batPosTerminal.dx, topLoopY)];
+      negExitWaypoints = [Offset(batNegTerminal.dx, topLoopY), batNegTerminal];
+    }
 
     // Desenhar caminhos de fios conforme a missão
     if (missionIndex == 0) {
@@ -2087,8 +2134,7 @@ class _RuasMaquetePainter extends CustomPainter {
       final currentPaint = isConnected ? activeWirePaint : wirePaint;
 
       final path1 = makeFlexiblePath([
-        batPosTerminal,
-        Offset(batPosTerminal.dx, topLoopY),
+        ...posExitWaypoints,
         Offset(outerLeftX, topLoopY),
         Offset(outerLeftX, lampY),
         Offset(lamp1X - termOffset, lampY),
@@ -2103,8 +2149,7 @@ class _RuasMaquetePainter extends CustomPainter {
         Offset(lamp2X + termOffset, lampY),
         Offset(outerRightX, lampY),
         Offset(outerRightX, topLoopY),
-        Offset(batNegTerminal.dx, topLoopY),
-        batNegTerminal,
+        ...negExitWaypoints,
       ]);
 
       drawStyledPath(path1, currentPaint, isPositive: true);
@@ -2126,8 +2171,7 @@ class _RuasMaquetePainter extends CustomPainter {
     } else if (missionIndex == 1) {
       // M2 (Comparação de Brilho 1 vs 2 Lâmpadas): Fio de retorno inferior contínuo, passando pelo Poste Secundário
       final path1 = makeFlexiblePath([
-        batPosTerminal,
-        Offset(batPosTerminal.dx, topLoopY),
+        ...posExitWaypoints,
         Offset(outerLeftX, topLoopY),
         Offset(outerLeftX, lampY),
         Offset(lamp1X - termOffset, lampY),
@@ -2142,8 +2186,7 @@ class _RuasMaquetePainter extends CustomPainter {
         Offset(lamp2X + termOffset, lampY),
         Offset(outerRightX, lampY),
         Offset(outerRightX, topLoopY),
-        Offset(batNegTerminal.dx, topLoopY),
-        batNegTerminal,
+        ...negExitWaypoints,
       ]);
 
       drawStyledPath(path1, activeWirePaint, isPositive: true);
@@ -2169,7 +2212,7 @@ class _RuasMaquetePainter extends CustomPainter {
 
       // Ramo Lâmpada A (do Nó (+) para Rua A)
       final pathBranchA = makeFlexiblePath([
-        batPosTerminal,
+        ...posExitWaypoints,
         Offset(batPosTerminal.dx, nodeY),
         Offset(lamp1X + termOffset, nodeY),
         Offset(lamp1X + termOffset, lampY),
@@ -2177,7 +2220,7 @@ class _RuasMaquetePainter extends CustomPainter {
 
       // Ramo Lâmpada B (do Nó (+) para Rua B)
       final pathBranchB = makeFlexiblePath([
-        batPosTerminal,
+        ...posExitWaypoints,
         Offset(batPosTerminal.dx, nodeY),
         Offset(lamp2X - termOffset, nodeY),
         Offset(lamp2X - termOffset, lampY),
@@ -2188,8 +2231,7 @@ class _RuasMaquetePainter extends CustomPainter {
         Offset(lamp1X - termOffset, lampY),
         Offset(outerLeftX, lampY),
         Offset(outerLeftX, topLoopY),
-        Offset(batNegTerminal.dx, topLoopY),
-        batNegTerminal,
+        ...negExitWaypoints,
       ]);
 
       // Retorno Rua B (da Rua B para o Retorno (-))
@@ -2197,8 +2239,7 @@ class _RuasMaquetePainter extends CustomPainter {
         Offset(lamp2X + termOffset, lampY),
         Offset(outerRightX, lampY),
         Offset(outerRightX, topLoopY),
-        Offset(batNegTerminal.dx, topLoopY),
-        batNegTerminal,
+        ...negExitWaypoints,
       ]);
 
       drawStyledPath(pathBranchA, m3Junction ? activeWirePaint : wirePaint, isPositive: true);
@@ -2227,8 +2268,7 @@ class _RuasMaquetePainter extends CustomPainter {
 
       // Barramento Positivo Left (Saindo do terminal + no topo da bateria)
       final pathBusLeft = makeFlexiblePath([
-        batPosTerminal,
-        Offset(batPosTerminal.dx, topLoopY),
+        ...posExitWaypoints,
         Offset(outerLeftX, topLoopY),
         Offset(outerLeftX, lampY),
         Offset(lamp2X - busOffset, lampY),
@@ -2246,11 +2286,9 @@ class _RuasMaquetePainter extends CustomPainter {
 
       // Barramento Negativo Right (Saindo do terminal - no topo da bateria)
       final pathBusRight = makeFlexiblePath([
-        batNegTerminal,
-        Offset(batNegTerminal.dx, topLoopY),
-        Offset(outerRightX, topLoopY),
         Offset(outerRightX, lampY),
-        Offset(lamp1X + busOffset, lampY),
+        Offset(outerRightX, topLoopY),
+        ...negExitWaypoints,
       ]);
 
       final branch1Neg = makeFlexiblePath([
