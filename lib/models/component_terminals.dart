@@ -14,24 +14,24 @@ class ComponentTerminal {
 /// Coordenadas relativas ao centro do componente no canvas físico.
 final Map<ComponentType, List<ComponentTerminal>> componentTerminals = {
   ComponentType.battery: [
-    ComponentTerminal(offset: Offset(-14, -42), label: '-'),
-    ComponentTerminal(offset: Offset(14, -42), label: '+'),
+    ComponentTerminal(offset: Offset(35, 7.5), label: '-'),
+    ComponentTerminal(offset: Offset(35, -7.5), label: '+'),
   ],
   ComponentType.switchComponent: [
-    ComponentTerminal(offset: Offset(-38, 0), label: 'A'),
-    ComponentTerminal(offset: Offset(38, 0), label: 'B'),
+    ComponentTerminal(offset: Offset(-32, 0), label: 'A'),
+    ComponentTerminal(offset: Offset(32, 0), label: 'B'),
   ],
   ComponentType.bulb: [
-    ComponentTerminal(offset: Offset(-7, 28), label: 'A'),
-    ComponentTerminal(offset: Offset(7, 28), label: 'B'),
+    ComponentTerminal(offset: Offset(-7, 24), label: 'A'),
+    ComponentTerminal(offset: Offset(7, 24), label: 'B'),
   ],
   ComponentType.motor: [
-    ComponentTerminal(offset: Offset(-38, 0), label: '+'),
-    ComponentTerminal(offset: Offset(38, 0), label: '-'),
+    ComponentTerminal(offset: Offset(-32, 0), label: '+'),
+    ComponentTerminal(offset: Offset(32, 0), label: '-'),
   ],
   ComponentType.led: [
-    ComponentTerminal(offset: Offset(-6, 26), label: 'A'),
-    ComponentTerminal(offset: Offset(6, 26), label: 'K'),
+    ComponentTerminal(offset: Offset(-6, 24), label: 'A'),
+    ComponentTerminal(offset: Offset(6, 24), label: 'K'),
   ],
   ComponentType.resistor: [
     ComponentTerminal(offset: Offset(-34, 0), label: 'A'),
@@ -59,8 +59,8 @@ final Map<ComponentType, List<ComponentTerminal>> componentTerminals = {
     ComponentTerminal(offset: Offset(0, -28), label: 'W'),
   ],
   ComponentType.powerSupply: [
-    ComponentTerminal(offset: Offset(-38, 0), label: '-'),
-    ComponentTerminal(offset: Offset(38, 0), label: '+'),
+    ComponentTerminal(offset: Offset(-35, 0), label: '-'),
+    ComponentTerminal(offset: Offset(35, 0), label: '+'),
   ],
 };
 

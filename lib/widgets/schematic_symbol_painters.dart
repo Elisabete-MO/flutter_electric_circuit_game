@@ -549,40 +549,40 @@ class SchematicCircuitWirePainter extends CustomPainter {
       ..strokeWidth = 8.0
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
 
-    final batteryX = 60.0;
-    final lampX = size.width - 60.0;
-    final switchCenterX = size.width / 2;
-    final topWireY = 47.5;
-    final bottomWireY = 210.0;
+    final batteryX = size.width * 0.18;
+    final lampX = size.width * 0.82;
+    final switchCenterX = size.width * 0.50;
+
+    final centerY = size.height * 0.50;
+    final topWireY = centerY;
+    final bottomWireY = centerY + 65.0;
 
     final path = Path();
-    // 1. Do topo do card da Bateria até o fio superior, depois DIREITA até a borda esquerda do Switch
-    path.moveTo(batteryX, 70.0);
-    path.lineTo(batteryX, topWireY);
+    // 1. Do topo/lado do card da Bateria até o Switch, depois DIREITA até a borda esquerda do Switch
+    path.moveTo(batteryX, centerY);
     path.lineTo(switchCenterX - 47.5, topWireY);
 
-    // 2. Da borda direita do Switch até a lâmpada, depois ABAIXO até o topo do card da Lâmpada
+    // 2. Da borda direita do Switch até a lâmpada
     path.moveTo(switchCenterX + 47.5, topWireY);
-    path.lineTo(lampX, topWireY);
-    path.lineTo(lampX, 70.0);
+    path.lineTo(lampX, centerY);
 
     // 3. Retorno da base do card da Lâmpada até a base do card da Bateria (parte inferior)
-    path.moveTo(lampX, 145.0);
+    path.moveTo(lampX, centerY + 47.5);
     path.lineTo(lampX, bottomWireY);
     path.lineTo(batteryX, bottomWireY);
-    path.lineTo(batteryX, 145.0);
+    path.lineTo(batteryX, centerY + 47.5);
 
     canvas.drawPath(path, glowPaint);
     canvas.drawPath(path, wirePaint);
 
     // Bornes de conexão nos pontos exatos de entrada e saída dos 3 cards
     final pinPaint = Paint()..color = isClosed ? const Color(0xFF0284C7) : const Color(0xFF64748B);
-    canvas.drawCircle(Offset(batteryX, 70.0), 4.5, pinPaint);
+    canvas.drawCircle(Offset(batteryX, centerY), 4.5, pinPaint);
     canvas.drawCircle(Offset(switchCenterX - 47.5, topWireY), 4.5, pinPaint);
     canvas.drawCircle(Offset(switchCenterX + 47.5, topWireY), 4.5, pinPaint);
-    canvas.drawCircle(Offset(lampX, 70.0), 4.5, pinPaint);
-    canvas.drawCircle(Offset(lampX, 145.0), 4.5, pinPaint);
-    canvas.drawCircle(Offset(batteryX, 145.0), 4.5, pinPaint);
+    canvas.drawCircle(Offset(lampX, centerY), 4.5, pinPaint);
+    canvas.drawCircle(Offset(lampX, centerY + 47.5), 4.5, pinPaint);
+    canvas.drawCircle(Offset(batteryX, centerY + 47.5), 4.5, pinPaint);
 
     // Eletrons em movimento se o circuito estiver fechado
     if (isClosed) {
@@ -623,13 +623,14 @@ class SchematicCircuitWirePainterM3 extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final batteryX = 60.0;
-    final lampX = size.width - 60.0;
-    final switchCenterX = size.width / 2;
+    final batteryX = size.width * 0.18;
+    final lampX = size.width * 0.82;
+    final switchCenterX = size.width * 0.50;
 
-    final yRamo1 = 47.5;
-    final yRamo2 = 165.0;
-    final yBottom = 235.0;
+    final centerY = 90.0;
+    final yRamo1 = 40.0;
+    final yRamo2 = 140.0;
+    final yBottom = 165.0;
 
     // Ramo 1 (Superior)
     final color1 = branch1Closed ? const Color(0xFF0284C7) : const Color(0xFF94A3B8);
@@ -645,12 +646,12 @@ class SchematicCircuitWirePainterM3 extends CustomPainter {
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
 
     final path1 = Path();
-    path1.moveTo(batteryX, 97.5);
+    path1.moveTo(batteryX, centerY - 20.0);
     path1.lineTo(batteryX, yRamo1);
     path1.lineTo(switchCenterX - 47.5, yRamo1);
     path1.moveTo(switchCenterX + 47.5, yRamo1);
     path1.lineTo(lampX, yRamo1);
-    path1.lineTo(lampX, 97.5);
+    path1.lineTo(lampX, centerY - 20.0);
 
     canvas.drawPath(path1, glow1);
     canvas.drawPath(path1, paint1);
@@ -669,22 +670,22 @@ class SchematicCircuitWirePainterM3 extends CustomPainter {
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
 
     final path2 = Path();
-    path2.moveTo(batteryX, 97.5);
+    path2.moveTo(batteryX, centerY + 20.0);
     path2.lineTo(batteryX, yRamo2);
     path2.lineTo(switchCenterX - 47.5, yRamo2);
     path2.moveTo(switchCenterX + 47.5, yRamo2);
     path2.lineTo(lampX, yRamo2);
-    path2.lineTo(lampX, 175.0);
+    path2.lineTo(lampX, yRamo2);
 
     canvas.drawPath(path2, glow2);
     canvas.drawPath(path2, paint2);
 
     // Linha de retorno comum
     final returnPath = Path();
-    returnPath.moveTo(lampX, 175.0);
+    returnPath.moveTo(lampX, yRamo2 + 20.0);
     returnPath.lineTo(lampX, yBottom);
     returnPath.lineTo(batteryX, yBottom);
-    returnPath.lineTo(batteryX, 175.0);
+    returnPath.lineTo(batteryX, centerY + 40.0);
     canvas.drawPath(returnPath, paint1);
 
     // Bornes
@@ -739,13 +740,14 @@ class SchematicCircuitWirePainterM4 extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final batteryX = 60.0;
-    final lampX = size.width - 60.0;
-    final switchCenterX = size.width / 2;
+    final batteryX = size.width * 0.18;
+    final lampX = size.width * 0.82;
+    final switchCenterX = size.width * 0.50;
 
-    final topParallelY = 47.5;
-    final mainBranchY = 107.5;
-    final bottomWireY = 210.0;
+    final centerY = size.height * 0.50;
+    final topParallelY = centerY - 55.0;
+    final mainBranchY = centerY;
+    final bottomWireY = centerY + 65.0;
 
     final wireColor = isClosed ? const Color(0xFF0284C7) : const Color(0xFF94A3B8);
     final wirePaint = Paint()
@@ -762,12 +764,10 @@ class SchematicCircuitWirePainterM4 extends CustomPainter {
 
     final path = Path();
     // Ramo Principal
-    path.moveTo(batteryX, 70.0);
-    path.lineTo(batteryX, mainBranchY);
+    path.moveTo(batteryX, centerY);
     path.lineTo(switchCenterX - 47.5, mainBranchY);
     path.moveTo(switchCenterX + 47.5, mainBranchY);
     path.lineTo(lampX, mainBranchY);
-    path.lineTo(lampX, 70.0);
 
     // Ramo Paralelo (Inútil no topo)
     final parallelPath = Path();
@@ -779,10 +779,10 @@ class SchematicCircuitWirePainterM4 extends CustomPainter {
     parallelPath.lineTo(lampX - 15, mainBranchY);
 
     // Retorno do fundo
-    path.moveTo(lampX, 145.0);
+    path.moveTo(lampX, centerY + 47.5);
     path.lineTo(lampX, bottomWireY);
     path.lineTo(batteryX, bottomWireY);
-    path.lineTo(batteryX, 145.0);
+    path.lineTo(batteryX, centerY + 47.5);
 
     canvas.drawPath(path, glowPaint);
     canvas.drawPath(path, wirePaint);
@@ -839,28 +839,29 @@ class SchematicCircuitWirePainterMotor extends CustomPainter {
       ..strokeWidth = 8.0
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
 
-    final batteryX = 60.0;
-    final motorX = size.width - 60.0;
-    final topWireY = 47.5;
-    final bottomWireY = 210.0;
+    final batteryX = size.width * 0.18;
+    final motorX = size.width * 0.82;
+    final centerY = size.height * 0.48;
+    final topWireY = 35.0;
+    final bottomWireY = centerY + 75.0;
 
     final path = Path();
-    path.moveTo(batteryX, 70.0);
+    path.moveTo(batteryX, centerY - 47.5);
     path.lineTo(batteryX, topWireY);
     path.lineTo(motorX, topWireY);
-    path.lineTo(motorX, 70.0);
+    path.lineTo(motorX, centerY - 47.5);
 
-    path.moveTo(motorX, 145.0);
+    path.moveTo(motorX, centerY + 47.5);
     path.lineTo(motorX, bottomWireY);
     path.lineTo(batteryX, bottomWireY);
-    path.lineTo(batteryX, 145.0);
+    path.lineTo(batteryX, centerY + 47.5);
 
     canvas.drawPath(path, glowPaint);
     canvas.drawPath(path, wirePaint);
 
     final pinPaint = Paint()..color = isClosed ? const Color(0xFF0284C7) : const Color(0xFF64748B);
-    canvas.drawCircle(Offset(batteryX, 70.0), 4.5, pinPaint);
-    canvas.drawCircle(Offset(batteryX, 145.0), 4.5, pinPaint);
+    canvas.drawCircle(Offset(batteryX, centerY - 47.5), 4.5, pinPaint);
+    canvas.drawCircle(Offset(batteryX, centerY + 47.5), 4.5, pinPaint);
     canvas.drawCircle(Offset(motorX, 70.0), 4.5, pinPaint);
     canvas.drawCircle(Offset(motorX, 145.0), 4.5, pinPaint);
 

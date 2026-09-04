@@ -16,6 +16,7 @@ import '../../widgets/circuit_symbol_painter.dart';
 import '../../widgets/street_lamp_painter.dart';
 import '../../widgets/tech_grid_background.dart';
 import '../../widgets/workbench_components.dart';
+import '../../widgets/workbench_table_frame.dart';
 import '../../widgets/success_confetti_overlay.dart';
 
 /// Tela Interativa do Estande 04 / Estande "Ruas da Maquete" (Equipe Bairro).
@@ -431,9 +432,9 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
             padding: const EdgeInsets.all(16.0),
             child: Row(
               children: [
-                // Coluna Principal da Bancada (60%)
+                // Coluna Principal da Bancada (70%)
                 Expanded(
-                  flex: 3,
+                  flex: 7,
                   child: Column(
                     children: [
                       WorkbenchHeaderStepper(
@@ -448,22 +449,32 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
                             ? () => setState(() => _currentMissionIndex++)
                             : null,
                       ),
-                      const SizedBox(height: 8),
-                      _buildVisualModeSelector(),
                       const SizedBox(height: 12),
                       Expanded(
-                        child: _buildMaqueteWorkbench(),
+                        child: WorkbenchTableFrame(
+                          usePhysicalStyle: _usePhysicalStyle,
+                          onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
+                          leftHeaderWidget: _buildStatusCard(_isCurrentCircuitClosed),
+                          rightHeaderWidget: _buildTelemetryCard(
+                            _currentCircuitVoltage,
+                            _currentCircuitCurrentMa,
+                            _isCurrentCircuitClosed,
+                          ),
+                          bottomWidget: _buildUndoRedoButtons(),
+                          child: _buildMaqueteWorkbench(),
+                        ),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(width: 16),
-                // Painel Lateral (40%)
+                // Painel Lateral (30%)
                 Expanded(
-                  flex: 2,
+                  flex: 3,
                   child: WorkbenchSidePanel(
                     teamTitle: 'Gaveta de Símbolos — Maquete',
                     toolboxItems: [
+                      _buildMissionBriefingCard(),
                       _buildSideToolboxDrawer(),
                     ],
                     onEnergizePressed: _validateCurrentMission,
@@ -478,111 +489,146 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
     );
   }
 
-  Widget _buildVisualModeSelector() {
+  bool get _isCurrentCircuitClosed {
+    switch (_currentMissionIndex) {
+      case 0:
+        return _m1WireInserted || _m1WireConnected;
+      case 1:
+        return _m2IsSeriesTwoBulbs;
+      case 2:
+        return _m3JunctionInserted && _m3ReturnConnected;
+      case 3:
+        return _m4ParallelWireConnected;
+      case 4:
+        return !_m5House1Broken;
+      default:
+        return false;
+    }
+  }
+
+  double get _currentCircuitVoltage {
+    switch (_currentMissionIndex) {
+      case 0:
+      case 1:
+        return 4.5;
+      default:
+        return 9.0;
+    }
+  }
+
+  double get _currentCircuitCurrentMa {
+    return _isCurrentCircuitClosed ? 80.0 : 0.0;
+  }
+
+  Widget _buildStatusCard(bool isClosed) {
+    final statusColor = isClosed ? const Color(0xFF10B981) : const Color(0xFF64748B);
+    final statusText = isClosed ? 'CIRCUITO FECHADO (ON)' : 'CIRCUITO ABERTO (OFF)';
+
     return Container(
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFE2E8F0),
-        borderRadius: BorderRadius.circular(20),
+        color: Colors.white.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFCBD5E1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Opção 1: Esquemático
-          GestureDetector(
-            onTap: () => setState(() => _usePhysicalStyle = false),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-              decoration: BoxDecoration(
-                color: !_usePhysicalStyle
-                    ? const Color(0xFF0284C7)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: !_usePhysicalStyle
-                    ? [
-                        BoxShadow(
-                          color: const Color(0xFF0284C7).withValues(alpha: 0.3),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.architecture_rounded,
-                    size: 16,
-                    color: !_usePhysicalStyle
-                        ? Colors.white
-                        : const Color(0xFF64748B),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: statusColor,
+              shape: BoxShape.circle,
+              boxShadow: [
+                if (isClosed)
+                  BoxShadow(
+                    color: statusColor.withValues(alpha: 0.6),
+                    blurRadius: 6,
+                    spreadRadius: 1.5,
                   ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Esquemático',
-                    style: GoogleFonts.rajdhani(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      color: !_usePhysicalStyle
-                          ? Colors.white
-                          : const Color(0xFF64748B),
-                    ),
-                  ),
-                ],
-              ),
+              ],
             ),
           ),
-          const SizedBox(width: 4),
-          // Opção 2: Físico 3D
-          GestureDetector(
-            onTap: () => setState(() => _usePhysicalStyle = true),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-              decoration: BoxDecoration(
-                color: _usePhysicalStyle
-                    ? const Color(0xFF0284C7)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: _usePhysicalStyle
-                    ? [
-                        BoxShadow(
-                          color: const Color(0xFF0284C7).withValues(alpha: 0.3),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.electrical_services_rounded,
-                    size: 16,
-                    color: _usePhysicalStyle
-                        ? Colors.white
-                        : const Color(0xFF64748B),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Físico 3D',
-                    style: GoogleFonts.rajdhani(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      color: _usePhysicalStyle
-                          ? Colors.white
-                          : const Color(0xFF64748B),
-                    ),
-                  ),
-                ],
-              ),
+          const SizedBox(width: 6),
+          Text(
+            statusText,
+            style: GoogleFonts.rajdhani(
+              color: statusColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
             ),
           ),
         ],
       ),
     );
   }
+
+  Widget _buildTelemetryCard(double voltage, double currentMa, bool isClosed) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFCBD5E1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'TENSÃO: ',
+            style: GoogleFonts.rajdhani(
+              color: const Color(0xFF64748B),
+              fontWeight: FontWeight.bold,
+              fontSize: 11,
+            ),
+          ),
+          Text(
+            '${voltage.toStringAsFixed(1)}V',
+            style: GoogleFonts.rajdhani(
+              color: const Color(0xFF0284C7),
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '| CORRENTE: ',
+            style: GoogleFonts.rajdhani(
+              color: const Color(0xFF64748B),
+              fontWeight: FontWeight.bold,
+              fontSize: 11,
+            ),
+          ),
+          Text(
+            '${currentMa.toStringAsFixed(0)}mA',
+            style: GoogleFonts.rajdhani(
+              color: isClosed ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+
 
   /// Desenho interativo da bancada simulando as Ruas da Maquete com alinhamento preciso
   Widget _buildMaqueteWorkbench() {
@@ -1227,6 +1273,99 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
     );
   }
 
+  Widget _buildMissionBriefingCard() {
+    final mission = _missions[_currentMissionIndex];
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFF0284C7).withValues(alpha: 0.3),
+        ),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0284C7),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'MISSÃO 0${_currentMissionIndex + 1}',
+                  style: GoogleFonts.rajdhani(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  mission.title,
+                  style: GoogleFonts.rajdhani(
+                    color: const Color(0xFF0F172A),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            mission.objective,
+            style: GoogleFonts.outfit(
+              color: const Color(0xFF334155),
+              fontSize: 12.5,
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.psychology_rounded,
+                  color: Color(0xFF0284C7),
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    mission.voltsMediation,
+                    style: GoogleFonts.outfit(
+                      color: const Color(0xFF475569),
+                      fontSize: 11.5,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSideToolboxDrawer() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1365,7 +1504,6 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
           ],
         ),
         const SizedBox(height: 16),
-        _buildUndoRedoButtons(),
         _buildSidePanelMissionContent(),
       ],
     );
@@ -1373,15 +1511,21 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
 
   Widget _buildUndoRedoButtons() {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        color: Colors.white.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFCBD5E1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.10),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Tooltip(
             message: _undoRedoController.canUndo
@@ -1393,26 +1537,22 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
                 color: _undoRedoController.canUndo
                     ? const Color(0xFF0284C7)
                     : const Color(0xFFCBD5E1),
-                size: 22,
+                size: 18,
               ),
               onPressed: _undoRedoController.canUndo
                   ? () => setState(() => _undoRedoController.undo())
                   : null,
-              style: IconButton.styleFrom(
-                backgroundColor: _undoRedoController.canUndo
-                    ? const Color(0xFF0284C7).withValues(alpha: 0.1)
-                    : Colors.transparent,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
+              padding: const EdgeInsets.all(4),
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
             child: Text(
               '${_undoRedoController.undoCount}',
               style: GoogleFonts.rajdhani(
-                color: const Color(0xFF64748B),
-                fontSize: 12,
+                color: const Color(0xFF475569),
+                fontSize: 13,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -1427,17 +1567,13 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
                 color: _undoRedoController.canRedo
                     ? const Color(0xFF0284C7)
                     : const Color(0xFFCBD5E1),
-                size: 22,
+                size: 18,
               ),
               onPressed: _undoRedoController.canRedo
                   ? () => setState(() => _undoRedoController.redo())
                   : null,
-              style: IconButton.styleFrom(
-                backgroundColor: _undoRedoController.canRedo
-                    ? const Color(0xFF0284C7).withValues(alpha: 0.1)
-                    : Colors.transparent,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
+              padding: const EdgeInsets.all(4),
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
             ),
           ),
         ],
@@ -1679,28 +1815,28 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
     );
   }
 
-  /// Badge de Rótulo posicionado abaixo do componente
+  /// Badge de Rótulo posicionado abaixo do componente com texto branco sobre a mesa verde
   Widget _buildLabelBadge(String text, {bool isBroken = false}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.92),
+        color: const Color(0xFF0F172A).withValues(alpha: 0.80),
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: isBroken ? const Color(0xFFDC2626) : const Color(0xFFCBD5E1),
+          color: isBroken ? const Color(0xFFEF4444) : const Color(0xFF38BDF8),
         ),
         boxShadow: const [
           BoxShadow(
-            color: Colors.black12,
-            blurRadius: 3,
-            offset: Offset(0, 1),
+            color: Colors.black26,
+            blurRadius: 4,
+            offset: Offset(0, 2),
           ),
         ],
       ),
       child: Text(
         text,
         style: GoogleFonts.rajdhani(
-          color: isBroken ? const Color(0xFFDC2626) : const Color(0xFF0F172A),
+          color: isBroken ? const Color(0xFFFCA5A5) : Colors.white,
           fontWeight: FontWeight.bold,
           fontSize: 12,
         ),

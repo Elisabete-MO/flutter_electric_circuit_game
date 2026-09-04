@@ -462,16 +462,6 @@ class WorkbenchSidePanel extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          Text(
-            'Componentes Básicos:',
-            style: GoogleFonts.rajdhani(
-              color: const Color(0xFF64748B),
-              fontWeight: FontWeight.bold,
-              fontSize: 13,
-              letterSpacing: 0.5,
-            ),
-          ),
-          const SizedBox(height: 8),
           Expanded(
             child: SingleChildScrollView(
               child: Column(

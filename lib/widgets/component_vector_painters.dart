@@ -425,39 +425,53 @@ class _BatteryPainter extends CustomPainter {
     final w = size.width;
     final h = size.height;
 
-    // Corpo da Bateria
+    // Corpo da Bateria (Horizontal 9V)
     final bodyRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(w * 0.2, h * 0.25, w * 0.6, h * 0.65),
-      const Radius.circular(6),
+      Rect.fromLTWH(w * 0.24, h * 0.25, w * 0.66, h * 0.50),
+      const Radius.circular(4),
     );
 
     final bodyPaint = Paint()
       ..shader = const LinearGradient(
-        colors: [Color(0xFF0F766E), Color(0xFF064E3B), Color(0xFF022C22)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
+        colors: [Color(0xFF3F3F46), Color(0xFF18181B)],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
       ).createShader(bodyRect.outerRect);
 
     canvas.drawRRect(bodyRect, bodyPaint);
-    canvas.drawRRect(bodyRect, Paint()..color = const Color(0xFF10B981)..style = PaintingStyle.stroke..strokeWidth = 1.5);
 
-    // Pólos / Terminais da Bateria (+ e -)
-    final posTerm = Paint()..color = const Color(0xFFEF4444);
-    final negTerm = Paint()..color = const Color(0xFF3B82F6);
+    // Faixa Cobre Alcalina (Esquerda)
+    final copperRect = Rect.fromLTWH(w * 0.24, h * 0.25, w * 0.20, h * 0.50);
+    canvas.save();
+    canvas.clipRRect(bodyRect);
+    canvas.drawRect(
+      copperRect,
+      Paint()
+        ..shader = const LinearGradient(
+          colors: [Color(0xFFEA9E54), Color(0xFFB85F18)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ).createShader(copperRect),
+    );
+    canvas.restore();
 
-    canvas.drawRect(Rect.fromLTWH(w * 0.3, h * 0.12, w * 0.14, h * 0.13), posTerm);
-    canvas.drawRect(Rect.fromLTWH(w * 0.56, h * 0.12, w * 0.14, h * 0.13), negTerm);
+    canvas.drawRRect(bodyRect, Paint()..color = Colors.white24..style = PaintingStyle.stroke..strokeWidth = 1.0);
 
-    // Rótulo 9V / 4.5V
+    // Terminais Prata + Conector Snap na Esquerda
+    canvas.drawRect(Rect.fromLTWH(w * 0.16, h * 0.32, w * 0.08, h * 0.12), Paint()..color = const Color(0xFFCBD5E1));
+    canvas.drawRect(Rect.fromLTWH(w * 0.16, h * 0.56, w * 0.08, h * 0.12), Paint()..color = const Color(0xFFCBD5E1));
+    canvas.drawRect(Rect.fromLTWH(w * 0.12, h * 0.28, w * 0.04, h * 0.44), Paint()..color = const Color(0xFF18181B));
+
+    // Rótulo 9V
     final textPainter = TextPainter(
       text: const TextSpan(
-        text: '4.5V',
-        style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+        text: '9V',
+        style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900),
       ),
       textDirection: TextDirection.ltr,
     );
     textPainter.layout();
-    textPainter.paint(canvas, Offset(w * 0.32, h * 0.48));
+    textPainter.paint(canvas, Offset(w * 0.54, h * 0.38));
   }
 
   @override

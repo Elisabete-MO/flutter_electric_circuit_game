@@ -18,6 +18,7 @@ import '../../widgets/component_vector_painters.dart';
 import '../../widgets/circuit_symbol_painter.dart';
 import '../../widgets/tech_grid_background.dart';
 import '../../widgets/workbench_components.dart';
+import '../../widgets/workbench_table_frame.dart';
 import '../../widgets/success_confetti_overlay.dart';
 
 /// Estande 06 — "Movimento em Miniatura" (Equipe Mecânica)
@@ -373,25 +374,34 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
             padding: const EdgeInsets.all(16.0),
             child: Row(
               children: [
-                // Área Principal do Laboratório / Bancada
+                // Área Principal do Laboratório / Bancada (70%)
                 Expanded(
-                  flex: 3,
+                  flex: 7,
                   child: Column(
                     children: [
                       _buildStepperHeader(),
-                      const SizedBox(height: 8),
-                      _buildVisualModeSelector(),
                       const SizedBox(height: 12),
                       Expanded(
-                        child: _buildCurrentMissionUI(),
+                        child: WorkbenchTableFrame(
+                          usePhysicalStyle: _usePhysicalStyle,
+                          onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
+                          leftHeaderWidget: _buildStatusCard(_isCurrentCircuitClosed),
+                          rightHeaderWidget: _buildTelemetryCard(
+                            _currentCircuitVoltage,
+                            _currentCircuitCurrentMa,
+                            _isCurrentCircuitClosed,
+                          ),
+                          bottomWidget: _buildUndoRedoButtons(),
+                          child: _buildCurrentMissionUI(),
+                        ),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(width: 16),
-                // Painel Lateral (Gaveta de Componentes & Instruções)
+                // Painel Lateral (30%)
                 Expanded(
-                  flex: 2,
+                  flex: 3,
                   child: _buildSideControlPanel(),
                 ),
               ],
@@ -402,111 +412,147 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
     );
   }
 
-  Widget _buildVisualModeSelector() {
+  bool get _isCurrentCircuitClosed {
+    switch (_currentMissionIndex) {
+      case 0:
+        return _m1MotorInserted && _m1BatteryInserted;
+      case 1:
+        return _m2MotorInserted && _m2BatteryInserted;
+      case 2:
+        return _m3PushButtonInserted && _m3PushButtonPressed && _m3BatteryInserted && _m3MotorInserted;
+      case 3:
+        return _m4LedInserted && _m4ResistorInserted && _m4BatteryInserted && _m4MotorInserted;
+      case 4:
+        return _m5WireRepaired && _m5BatteryInserted && _m5MotorInserted;
+      default:
+        return false;
+    }
+  }
+
+  double get _currentCircuitVoltage {
+    switch (_currentMissionIndex) {
+      case 0:
+      case 1:
+      case 2:
+        return 4.5;
+      default:
+        return 9.0;
+    }
+  }
+
+  double get _currentCircuitCurrentMa {
+    return _isCurrentCircuitClosed ? 120.0 : 0.0;
+  }
+
+  Widget _buildStatusCard(bool isClosed) {
+    final statusColor = isClosed ? const Color(0xFF10B981) : const Color(0xFF64748B);
+    final statusText = isClosed ? 'CIRCUITO FECHADO (ON)' : 'CIRCUITO ABERTO (OFF)';
+
     return Container(
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFE2E8F0),
-        borderRadius: BorderRadius.circular(20),
+        color: Colors.white.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFCBD5E1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Opção 1: Esquemático
-          GestureDetector(
-            onTap: () => setState(() => _usePhysicalStyle = false),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-              decoration: BoxDecoration(
-                color: !_usePhysicalStyle
-                    ? const Color(0xFF0284C7)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: !_usePhysicalStyle
-                    ? [
-                        BoxShadow(
-                          color: const Color(0xFF0284C7).withValues(alpha: 0.3),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.architecture_rounded,
-                    size: 16,
-                    color: !_usePhysicalStyle
-                        ? Colors.white
-                        : const Color(0xFF64748B),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: statusColor,
+              shape: BoxShape.circle,
+              boxShadow: [
+                if (isClosed)
+                  BoxShadow(
+                    color: statusColor.withValues(alpha: 0.6),
+                    blurRadius: 6,
+                    spreadRadius: 1.5,
                   ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Esquemático',
-                    style: GoogleFonts.rajdhani(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      color: !_usePhysicalStyle
-                          ? Colors.white
-                          : const Color(0xFF64748B),
-                    ),
-                  ),
-                ],
-              ),
+              ],
             ),
           ),
-          const SizedBox(width: 4),
-          // Opção 2: Físico 3D
-          GestureDetector(
-            onTap: () => setState(() => _usePhysicalStyle = true),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-              decoration: BoxDecoration(
-                color: _usePhysicalStyle
-                    ? const Color(0xFF0284C7)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: _usePhysicalStyle
-                    ? [
-                        BoxShadow(
-                          color: const Color(0xFF0284C7).withValues(alpha: 0.3),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.electrical_services_rounded,
-                    size: 16,
-                    color: _usePhysicalStyle
-                        ? Colors.white
-                        : const Color(0xFF64748B),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Físico 3D',
-                    style: GoogleFonts.rajdhani(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      color: _usePhysicalStyle
-                          ? Colors.white
-                          : const Color(0xFF64748B),
-                    ),
-                  ),
-                ],
-              ),
+          const SizedBox(width: 6),
+          Text(
+            statusText,
+            style: GoogleFonts.rajdhani(
+              color: statusColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
             ),
           ),
         ],
       ),
     );
   }
+
+  Widget _buildTelemetryCard(double voltage, double currentMa, bool isClosed) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFCBD5E1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'TENSÃO: ',
+            style: GoogleFonts.rajdhani(
+              color: const Color(0xFF64748B),
+              fontWeight: FontWeight.bold,
+              fontSize: 11,
+            ),
+          ),
+          Text(
+            '${voltage.toStringAsFixed(1)}V',
+            style: GoogleFonts.rajdhani(
+              color: const Color(0xFF0284C7),
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '| CORRENTE: ',
+            style: GoogleFonts.rajdhani(
+              color: const Color(0xFF64748B),
+              fontWeight: FontWeight.bold,
+              fontSize: 11,
+            ),
+          ),
+          Text(
+            '${currentMa.toStringAsFixed(0)}mA',
+            style: GoogleFonts.rajdhani(
+              color: isClosed ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+
 
   Widget _buildStepperHeader() {
     return WorkbenchHeaderStepper(
@@ -1601,12 +1647,12 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
         final double motorX = width - 60.0;
 
         final batteryPlacement = ComponentPlacement(
-          position: Offset(batteryX, 110),
+          position: Offset(batteryX, 117.5),
           rotation: _m1BatteryRotation,
           type: ComponentType.battery,
         );
         final motorPlacement = ComponentPlacement(
-          position: Offset(motorX, 110),
+          position: Offset(motorX, 117.5),
           rotation: _m1MotorRotation,
           type: ComponentType.motor,
         );
@@ -2841,11 +2887,26 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
   }
 
   Widget _buildSideToolboxDrawer() {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        WorkbenchSymbolToolboxTile<String>(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8.0, top: 4.0),
+          child: Text(
+            'Componentes Básicos:',
+            style: GoogleFonts.rajdhani(
+              color: const Color(0xFF64748B),
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            WorkbenchSymbolToolboxTile<String>(
           data: 'motor_cc',
           label: 'Motor CC',
           tooltip: 'Motor CC',
@@ -2929,6 +2990,8 @@ class _MovimentoMiniaturaScreenState extends ConsumerState<MovimentoMiniaturaScr
           color: const Color(0xFFD97706),
         ),
       ],
-    );
+    ),
+  ],
+);
   }
 }

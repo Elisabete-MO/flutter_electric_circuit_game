@@ -16,6 +16,7 @@ import '../../widgets/component_physical_painter.dart';
 import '../../widgets/circuit_symbol_painter.dart';
 import '../../widgets/tech_grid_background.dart';
 import '../../widgets/workbench_components.dart';
+import '../../widgets/workbench_table_frame.dart';
 import '../../widgets/success_confetti_overlay.dart';
 
 /// Estande 07 — "Mede, Testa e Explica" (Equipe Investigação).
@@ -462,111 +463,7 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
     );
   }
 
-  Widget _buildVisualModeSelector() {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE2E8F0),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Opção 1: Esquemático
-          GestureDetector(
-            onTap: () => setState(() => _usePhysicalStyle = false),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-              decoration: BoxDecoration(
-                color: !_usePhysicalStyle
-                    ? const Color(0xFF0284C7)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: !_usePhysicalStyle
-                    ? [
-                        BoxShadow(
-                          color: const Color(0xFF0284C7).withValues(alpha: 0.3),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.architecture_rounded,
-                    size: 16,
-                    color: !_usePhysicalStyle
-                        ? Colors.white
-                        : const Color(0xFF64748B),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Esquemático',
-                    style: GoogleFonts.rajdhani(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      color: !_usePhysicalStyle
-                          ? Colors.white
-                          : const Color(0xFF64748B),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 4),
-          // Opção 2: Físico 3D
-          GestureDetector(
-            onTap: () => setState(() => _usePhysicalStyle = true),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-              decoration: BoxDecoration(
-                color: _usePhysicalStyle
-                    ? const Color(0xFF0284C7)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: _usePhysicalStyle
-                    ? [
-                        BoxShadow(
-                          color: const Color(0xFF0284C7).withValues(alpha: 0.3),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.electrical_services_rounded,
-                    size: 16,
-                    color: _usePhysicalStyle
-                        ? Colors.white
-                        : const Color(0xFF64748B),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Físico 3D',
-                    style: GoogleFonts.rajdhani(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      color: _usePhysicalStyle
-                          ? Colors.white
-                          : const Color(0xFF64748B),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -596,74 +493,199 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
         ),
       ),
       body: TechGridBackground(
-        child: Column(
-          children: [
-            // Top Stepper de Missões
-            WorkbenchHeaderStepper(
-              totalMissions: _missions.length,
-              currentMissionIndex: _currentMissionIndex,
-              missionTitle: _currentMission.title,
-              missionObjective: _currentMission.objective,
-              onPrevious: _currentMissionIndex > 0
-                  ? () => _onSelectMission(_currentMissionIndex - 1)
-                  : null,
-              onNext: _currentMissionIndex < _missions.length - 1
-                  ? () => _onSelectMission(_currentMissionIndex + 1)
-                  : null,
-            ),
-            const SizedBox(height: 6),
-            _buildVisualModeSelector(),
-            const SizedBox(height: 6),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                // Top Stepper de Missões
+                WorkbenchHeaderStepper(
+                  totalMissions: _missions.length,
+                  currentMissionIndex: _currentMissionIndex,
+                  missionTitle: _currentMission.title,
+                  missionObjective: _currentMission.objective,
+                  onPrevious: _currentMissionIndex > 0
+                      ? () => _onSelectMission(_currentMissionIndex - 1)
+                      : null,
+                  onNext: _currentMissionIndex < _missions.length - 1
+                      ? () => _onSelectMission(_currentMissionIndex + 1)
+                      : null,
+                ),
+                const SizedBox(height: 12),
 
+                // Área Principal de Trabalho (Dividida 70/30)
+                Expanded(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Bancada Principal de Simulação (70%)
+                      Expanded(
+                        flex: 7,
+                        child: WorkbenchTableFrame(
+                          usePhysicalStyle: _usePhysicalStyle,
+                          onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
+                          leftHeaderWidget: _buildStatusCard(_isCurrentCircuitClosed),
+                          rightHeaderWidget: _buildTelemetryCard(
+                            _currentCircuitVoltage,
+                            _currentCircuitCurrentMa,
+                            _isCurrentCircuitClosed,
+                          ),
+                          bottomWidget: _buildUndoRedoButtons(),
+                          child: _buildSimulationBench(),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
 
-
-            // Área Principal de Trabalho (Dividida 60/40)
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Bancada Principal de Simulação (60%)
-                    Expanded(
-                      flex: 3,
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
+                      // Painel Lateral da Equipe (30%)
+                      Expanded(
+                        flex: 3,
+                        child: WorkbenchSidePanel(
+                          teamTitle: 'Gaveta de Símbolos — Medição',
+                          onEnergizePressed: _validateCurrentMission,
+                          isLoading: _isSimulating,
+                          toolboxItems: [
+                            _buildSidePanelContent(),
                           ],
                         ),
-                        child: _buildSimulationBench(),
                       ),
-                    ),
-                    const SizedBox(width: 16),
-
-                    // Painel Lateral da Equipe (40%)
-                    Expanded(
-                      flex: 2,
-                      child: WorkbenchSidePanel(
-                        teamTitle: 'Gaveta de Símbolos — Medição',
-                        onEnergizePressed: _validateCurrentMission,
-                        isLoading: _isSimulating,
-                        toolboxItems: [
-                          _buildSidePanelContent(),
-                        ],
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
+      ),
+    );
+  }
+
+  bool get _isCurrentCircuitClosed {
+    switch (_currentMissionIndex) {
+      case 0:
+        return _m1BatteryInserted;
+      case 1:
+        return _m2BatteryInserted && _m2BulbInserted;
+      case 2:
+        return _m3BatteryInserted && _m3ResistorInserted && _m3LedInserted;
+      case 3:
+        return _m4BatteryInserted && _m4ResistorInserted && _m4LedInserted;
+      case 4:
+        return _m5BatteryInserted && _m5ResistorInserted && _m5LedInserted;
+      default:
+        return false;
+    }
+  }
+
+  double get _currentCircuitVoltage => 9.0;
+
+  double get _currentCircuitCurrentMa {
+    return _isCurrentCircuitClosed ? 27.0 : 0.0;
+  }
+
+  Widget _buildStatusCard(bool isClosed) {
+    final statusColor = isClosed ? const Color(0xFF10B981) : const Color(0xFF64748B);
+    final statusText = isClosed ? 'CIRCUITO FECHADO (ON)' : 'CIRCUITO ABERTO (OFF)';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFCBD5E1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: statusColor,
+              shape: BoxShape.circle,
+              boxShadow: [
+                if (isClosed)
+                  BoxShadow(
+                    color: statusColor.withValues(alpha: 0.6),
+                    blurRadius: 6,
+                    spreadRadius: 1.5,
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            statusText,
+            style: GoogleFonts.rajdhani(
+              color: statusColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTelemetryCard(double voltage, double currentMa, bool isClosed) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFCBD5E1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'TENSÃO: ',
+            style: GoogleFonts.rajdhani(
+              color: const Color(0xFF64748B),
+              fontWeight: FontWeight.bold,
+              fontSize: 11,
+            ),
+          ),
+          Text(
+            '${voltage.toStringAsFixed(1)}V',
+            style: GoogleFonts.rajdhani(
+              color: const Color(0xFF0284C7),
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '| CORRENTE: ',
+            style: GoogleFonts.rajdhani(
+              color: const Color(0xFF64748B),
+              fontWeight: FontWeight.bold,
+              fontSize: 11,
+            ),
+          ),
+          Text(
+            '${currentMa.toStringAsFixed(0)}mA',
+            style: GoogleFonts.rajdhani(
+              color: isClosed ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1778,7 +1800,7 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                   children: [
                     Positioned(
                       left: batteryX - 47.5,
-                      top: centerY - 37.5,
+                      top: centerY - 47.5,
                       child: SchematicBlueprintSocket<String>(
                         expectedData: 'battery',
                         isFilled: _m1BatteryInserted,
@@ -1913,7 +1935,7 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                       ),
                     Positioned(
                       left: batteryX - 47.5,
-                      top: centerY - 37.5,
+                      top: centerY - 47.5,
                       child: SchematicBlueprintSocket<String>(
                         expectedData: 'battery',
                         isFilled: _m2BatteryInserted,
@@ -1954,7 +1976,7 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                     ),
                     Positioned(
                       left: bulbX - 47.5,
-                      top: centerY - 37.5,
+                      top: centerY - 47.5,
                       child: SchematicBlueprintSocket<String>(
                         expectedData: 'bulb',
                         isFilled: _m2BulbInserted,
@@ -2109,7 +2131,7 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                       ),
                     Positioned(
                       left: batteryX - 47.5,
-                      top: centerY - 37.5,
+                      top: centerY - 47.5,
                       child: SchematicBlueprintSocket<String>(
                         expectedData: 'battery',
                         isFilled: _m3BatteryInserted,
@@ -2135,7 +2157,7 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                     ),
                     Positioned(
                       left: resistorX - 47.5,
-                      top: centerY - 37.5,
+                      top: centerY - 47.5,
                       child: SchematicBlueprintSocket<String>(
                         expectedData: 'resistor',
                         isFilled: _m3ResistorInserted,
@@ -2161,7 +2183,7 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                     ),
                     Positioned(
                       left: ledX - 47.5,
-                      top: centerY - 37.5,
+                      top: centerY - 47.5,
                       child: SchematicBlueprintSocket<String>(
                         expectedData: 'led',
                         isFilled: _m3LedInserted,
@@ -2305,7 +2327,7 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                       ),
                     Positioned(
                       left: batteryX - 47.5,
-                      top: centerY - 37.5,
+                      top: centerY - 47.5,
                       child: SchematicBlueprintSocket<String>(
                         expectedData: 'battery',
                         isFilled: _m4BatteryInserted,
@@ -2331,7 +2353,7 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                     ),
                     Positioned(
                       left: resistorX - 47.5,
-                      top: centerY - 37.5,
+                      top: centerY - 47.5,
                       child: SchematicBlueprintSocket<String>(
                         expectedData: 'resistor',
                         isFilled: _m4ResistorInserted,
@@ -2357,7 +2379,7 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                     ),
                     Positioned(
                       left: ledX - 47.5,
-                      top: centerY - 37.5,
+                      top: centerY - 47.5,
                       child: SchematicBlueprintSocket<String>(
                         expectedData: 'led',
                         isFilled: _m4LedInserted,
@@ -2473,7 +2495,7 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                       ),
                     Positioned(
                       left: batteryX - 47.5,
-                      top: centerY - 37.5,
+                      top: centerY - 47.5,
                       child: SchematicBlueprintSocket<String>(
                         expectedData: 'battery',
                         isFilled: _m5BatteryInserted,
@@ -2499,7 +2521,7 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                     ),
                     Positioned(
                       left: resistorX - 47.5,
-                      top: centerY - 37.5,
+                      top: centerY - 47.5,
                       child: SchematicBlueprintSocket<String>(
                         expectedData: 'resistor',
                         isFilled: _m5ResistorInserted,
@@ -2525,7 +2547,7 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                     ),
                     Positioned(
                       left: ledX - 47.5,
-                      top: centerY - 37.5,
+                      top: centerY - 47.5,
                       child: SchematicBlueprintSocket<String>(
                         expectedData: 'led',
                         isFilled: _m5LedInserted,
@@ -2601,6 +2623,18 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildUndoRedoButtons(),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8.0, top: 4.0),
+          child: Text(
+            'Componentes Básicos:',
+            style: GoogleFonts.rajdhani(
+              color: const Color(0xFF64748B),
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
         Wrap(
           spacing: 10,
           runSpacing: 10,
