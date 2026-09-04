@@ -1461,14 +1461,16 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         if (_m1BulbInserted && _m1BatteryInserted) {
           final bulbTermB = ComponentPlacement(position: lampPos, rotation: _m1BulbRotation, type: ComponentType.bulb).getTerminalPosition(1);
           final batTermB = ComponentPlacement(position: batteryPos, rotation: _m1BatteryRotation, type: ComponentType.battery).getTerminalPosition(1);
+          final rightX = lampPos.dx + 55.0;
           final leftX = batteryPos.dx - 55.0;
           final topY = centerY - 65.0;
           final bottomY = centerY + 65.0;
 
-          // Bulb(B) -> Bateria(-) (retorno superior quando bateria está em 270°)
+          // Bulb(B) -> Bateria(-) (retorno contornando a lâmpada pela direita e topo)
           final intermediate = (_m1BatteryRotation % 360 == 270.0)
               ? [
-                  Offset(bulbTermB.dx, topY),
+                  Offset(rightX, bulbTermB.dy),
+                  Offset(rightX, topY),
                   Offset(leftX, topY),
                   Offset(leftX, batTermB.dy),
                 ]
@@ -2226,7 +2228,22 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
 
           final lampTerm = ComponentPlacement(position: lampPos, rotation: _m4LampRotation, type: ComponentType.bulb).getTerminalPosition(1);
           final batTerm = ComponentPlacement(position: batteryPos, rotation: _m4BatteryRotation, type: ComponentType.battery).getTerminalPosition(1);
+          final rightX = lampPos.dx + 55.0;
+          final leftX = batteryPos.dx - 55.0;
+          final topY = centerY - 65.0;
           final bottomY = centerY + 65.0;
+
+          final intermediateReturn = (_m4BatteryRotation % 360 == 270.0)
+              ? [
+                  Offset(rightX, lampTerm.dy),
+                  Offset(rightX, topY),
+                  Offset(leftX, topY),
+                  Offset(leftX, batTerm.dy),
+                ]
+              : [
+                  Offset(lampTerm.dx, bottomY),
+                  Offset(batTerm.dx, bottomY),
+                ];
 
           wires.add(DynamicWirePath.fromComponents(
             compA: ComponentPlacement(position: lampPos, rotation: _m4LampRotation, type: ComponentType.bulb),
@@ -2236,10 +2253,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
             color: const Color(0xFF2563EB),
             isActive: isLampLit,
             thickness: 4.0,
-          ).toWirePath(intermediatePoints: [
-            Offset(lampTerm.dx, bottomY),
-            Offset(batTerm.dx, bottomY),
-          ]));
+          ).toWirePath(intermediatePoints: intermediateReturn));
         }
 
         return Container(
@@ -2515,7 +2529,22 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
         if (_m5LampInserted && _m5BatteryInserted) {
           final lampTerm = ComponentPlacement(position: lampPos, rotation: _m5LampRotation, type: ComponentType.bulb).getTerminalPosition(1);
           final batTerm = ComponentPlacement(position: batteryPos, rotation: _m5BatteryRotation, type: ComponentType.battery).getTerminalPosition(1);
+          final rightX = lampPos.dx + 55.0;
+          final leftX = batteryPos.dx - 55.0;
+          final topY = centerY - 65.0;
           final bottomY = centerY + 65.0;
+
+          final intermediateReturn = (_m5BatteryRotation % 360 == 270.0)
+              ? [
+                  Offset(rightX, lampTerm.dy),
+                  Offset(rightX, topY),
+                  Offset(leftX, topY),
+                  Offset(leftX, batTerm.dy),
+                ]
+              : [
+                  Offset(lampTerm.dx, bottomY),
+                  Offset(batTerm.dx, bottomY),
+                ];
 
           wires.add(DynamicWirePath.fromComponents(
             compA: ComponentPlacement(position: lampPos, rotation: _m5LampRotation, type: ComponentType.bulb),
@@ -2525,10 +2554,7 @@ class _LigaDesligaScreenState extends ConsumerState<LigaDesligaScreen>
             color: const Color(0xFF2563EB),
             isActive: isLit,
             thickness: 4.5,
-          ).toWirePath(intermediatePoints: [
-            Offset(lampTerm.dx, bottomY),
-            Offset(batTerm.dx, bottomY),
-          ]));
+          ).toWirePath(intermediatePoints: intermediateReturn));
         }
 
         return Container(
