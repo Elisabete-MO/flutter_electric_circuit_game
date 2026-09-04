@@ -783,42 +783,38 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
       Positioned(
         left: sX - 40,
         top: sY - 32,
-        child: SizedBox(
+        child: _buildSocketTile(
           width: 80,
-          height: 65,
-          child: _buildSocketTile(
-            width: 80,
-            height: 65,
-            expectedData: 'fio_serie',
-            isFilled: isLit,
-            symbolType: ComponentType.connectingWire,
-            label: 'Fio em Série',
-            rotation: _m1WireRotation,
-            onRotate: () => _rotateComponent(
-              name: 'Fio em Série',
-              getRotation: () => _m1WireRotation,
-              setRotation: (v) => _m1WireRotation = v,
-            ),
-            onAccept: () => _insertComponent(
-              name: 'Fio em Série',
-              getInserted: () => _m1WireInserted,
-              setInserted: (v) {
-                _m1WireInserted = v;
-                _m1WireConnected = v;
-              },
-              getRotation: () => _m1WireRotation,
-              setRotation: (v) => _m1WireRotation = v,
-            ),
-            onTap: () => _insertComponent(
-              name: 'Fio em Série',
-              getInserted: () => _m1WireInserted,
-              setInserted: (v) {
-                _m1WireInserted = v;
-                _m1WireConnected = v;
-              },
-              getRotation: () => _m1WireRotation,
-              setRotation: (v) => _m1WireRotation = v,
-            ),
+          height: 60,
+          expectedData: 'fio_serie',
+          isFilled: isLit,
+          symbolType: ComponentType.connectingWire,
+          label: 'Fio em Série',
+          rotation: _m1WireRotation,
+          onRotate: () => _rotateComponent(
+            name: 'Fio em Série',
+            getRotation: () => _m1WireRotation,
+            setRotation: (v) => _m1WireRotation = v,
+          ),
+          onAccept: () => _insertComponent(
+            name: 'Fio em Série',
+            getInserted: () => _m1WireInserted,
+            setInserted: (v) {
+              _m1WireInserted = v;
+              _m1WireConnected = v;
+            },
+            getRotation: () => _m1WireRotation,
+            setRotation: (v) => _m1WireRotation = v,
+          ),
+          onTap: () => _insertComponent(
+            name: 'Fio em Série',
+            getInserted: () => _m1WireInserted,
+            setInserted: (v) {
+              _m1WireInserted = v;
+              _m1WireConnected = v;
+            },
+            getRotation: () => _m1WireRotation,
+            setRotation: (v) => _m1WireRotation = v,
           ),
         ),
       ),
@@ -848,36 +844,32 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
       Positioned(
         left: l2X - 40,
         top: lY - 32,
-        child: SizedBox(
+        child: _buildSocketTile(
           width: 80,
-          height: 65,
-          child: _buildSocketTile(
-            width: 80,
-            height: 65,
-            expectedData: 'bulb',
-            isFilled: _m2IsSeriesTwoBulbs,
-            symbolType: ComponentType.bulb,
-            label: 'Poste Secundário',
-            rotation: _m2SecondaryBulbRotation,
-            onRotate: () => _rotateComponent(
-              name: 'Poste Secundário',
-              getRotation: () => _m2SecondaryBulbRotation,
-              setRotation: (v) => _m2SecondaryBulbRotation = v,
-            ),
-            onAccept: () => _insertComponent(
-              name: 'Poste Secundário',
-              getInserted: () => _m2IsSeriesTwoBulbs,
-              setInserted: (v) => _m2IsSeriesTwoBulbs = v,
-              getRotation: () => _m2SecondaryBulbRotation,
-              setRotation: (v) => _m2SecondaryBulbRotation = v,
-            ),
-            onTap: () => _insertComponent(
-              name: 'Poste Secundário',
-              getInserted: () => _m2IsSeriesTwoBulbs,
-              setInserted: (v) => _m2IsSeriesTwoBulbs = v,
-              getRotation: () => _m2SecondaryBulbRotation,
-              setRotation: (v) => _m2SecondaryBulbRotation = v,
-            ),
+          height: 60,
+          expectedData: 'bulb',
+          isFilled: _m2IsSeriesTwoBulbs,
+          symbolType: ComponentType.bulb,
+          label: 'Poste Secundário',
+          rotation: _m2SecondaryBulbRotation,
+          onRotate: () => _rotateComponent(
+            name: 'Poste Secundário',
+            getRotation: () => _m2SecondaryBulbRotation,
+            setRotation: (v) => _m2SecondaryBulbRotation = v,
+          ),
+          onAccept: () => _insertComponent(
+            name: 'Poste Secundário',
+            getInserted: () => _m2IsSeriesTwoBulbs,
+            setInserted: (v) => _m2IsSeriesTwoBulbs = v,
+            getRotation: () => _m2SecondaryBulbRotation,
+            setRotation: (v) => _m2SecondaryBulbRotation = v,
+          ),
+          onTap: () => _insertComponent(
+            name: 'Poste Secundário',
+            getInserted: () => _m2IsSeriesTwoBulbs,
+            setInserted: (v) => _m2IsSeriesTwoBulbs = v,
+            getRotation: () => _m2SecondaryBulbRotation,
+            setRotation: (v) => _m2SecondaryBulbRotation = v,
           ),
         ),
       ),
@@ -933,36 +925,32 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
       Positioned(
         left: sX - 40,
         top: nodeY - 32,
-        child: SizedBox(
+        child: _buildSocketTile(
           width: 80,
-          height: 65,
-          child: _buildSocketTile(
-            width: 80,
-            height: 65,
-            expectedData: 'junction_node',
-            isFilled: _m3JunctionInserted,
-            symbolType: ComponentType.connectingWire,
-            label: 'Nó (+)',
-            rotation: _m3JunctionRotation,
-            onRotate: () => _rotateComponent(
-              name: 'Nó de Junção',
-              getRotation: () => _m3JunctionRotation,
-              setRotation: (v) => _m3JunctionRotation = v,
-            ),
-            onAccept: () => _insertComponent(
-              name: 'Nó de Junção',
-              getInserted: () => _m3JunctionInserted,
-              setInserted: (v) => _m3JunctionInserted = v,
-              getRotation: () => _m3JunctionRotation,
-              setRotation: (v) => _m3JunctionRotation = v,
-            ),
-            onTap: () => _insertComponent(
-              name: 'Nó de Junção',
-              getInserted: () => _m3JunctionInserted,
-              setInserted: (v) => _m3JunctionInserted = v,
-              getRotation: () => _m3JunctionRotation,
-              setRotation: (v) => _m3JunctionRotation = v,
-            ),
+          height: 60,
+          expectedData: 'junction_node',
+          isFilled: _m3JunctionInserted,
+          symbolType: ComponentType.connectingWire,
+          label: 'Nó (+)',
+          rotation: _m3JunctionRotation,
+          onRotate: () => _rotateComponent(
+            name: 'Nó de Junção',
+            getRotation: () => _m3JunctionRotation,
+            setRotation: (v) => _m3JunctionRotation = v,
+          ),
+          onAccept: () => _insertComponent(
+            name: 'Nó de Junção',
+            getInserted: () => _m3JunctionInserted,
+            setInserted: (v) => _m3JunctionInserted = v,
+            getRotation: () => _m3JunctionRotation,
+            setRotation: (v) => _m3JunctionRotation = v,
+          ),
+          onTap: () => _insertComponent(
+            name: 'Nó de Junção',
+            getInserted: () => _m3JunctionInserted,
+            setInserted: (v) => _m3JunctionInserted = v,
+            getRotation: () => _m3JunctionRotation,
+            setRotation: (v) => _m3JunctionRotation = v,
           ),
         ),
       ),
@@ -971,36 +959,32 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
       Positioned(
         left: sX - 40,
         top: sY - 32,
-        child: SizedBox(
+        child: _buildSocketTile(
           width: 80,
-          height: 65,
-          child: _buildSocketTile(
-            width: 80,
-            height: 65,
-            expectedData: 'fio_serie',
-            isFilled: _m3ReturnConnected,
-            symbolType: ComponentType.connectingWire,
-            label: 'Retorno (-)',
-            rotation: _m3ReturnRotation,
-            onRotate: () => _rotateComponent(
-              name: 'Retorno Reconectado',
-              getRotation: () => _m3ReturnRotation,
-              setRotation: (v) => _m3ReturnRotation = v,
-            ),
-            onAccept: () => _insertComponent(
-              name: 'Retorno Reconectado',
-              getInserted: () => _m3ReturnConnected,
-              setInserted: (v) => _m3ReturnConnected = v,
-              getRotation: () => _m3ReturnRotation,
-              setRotation: (v) => _m3ReturnRotation = v,
-            ),
-            onTap: () => _insertComponent(
-              name: 'Retorno Reconectado',
-              getInserted: () => _m3ReturnConnected,
-              setInserted: (v) => _m3ReturnConnected = v,
-              getRotation: () => _m3ReturnRotation,
-              setRotation: (v) => _m3ReturnRotation = v,
-            ),
+          height: 60,
+          expectedData: 'fio_serie',
+          isFilled: _m3ReturnConnected,
+          symbolType: ComponentType.connectingWire,
+          label: 'Retorno (-)',
+          rotation: _m3ReturnRotation,
+          onRotate: () => _rotateComponent(
+            name: 'Retorno Reconectado',
+            getRotation: () => _m3ReturnRotation,
+            setRotation: (v) => _m3ReturnRotation = v,
+          ),
+          onAccept: () => _insertComponent(
+            name: 'Retorno Reconectado',
+            getInserted: () => _m3ReturnConnected,
+            setInserted: (v) => _m3ReturnConnected = v,
+            getRotation: () => _m3ReturnRotation,
+            setRotation: (v) => _m3ReturnRotation = v,
+          ),
+          onTap: () => _insertComponent(
+            name: 'Retorno Reconectado',
+            getInserted: () => _m3ReturnConnected,
+            setInserted: (v) => _m3ReturnConnected = v,
+            getRotation: () => _m3ReturnRotation,
+            setRotation: (v) => _m3ReturnRotation = v,
           ),
         ),
       ),
@@ -1048,36 +1032,32 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
       Positioned(
         left: sX - 40,
         top: sY - 32,
-        child: SizedBox(
+        child: _buildSocketTile(
           width: 80,
-          height: 65,
-          child: _buildSocketTile(
-            width: 80,
-            height: 65,
-            expectedData: 'fio_paralelo',
-            isFilled: _m4ParallelWireConnected,
-            symbolType: ComponentType.connectingWire,
-            label: 'Fiação Paralela',
-            rotation: _m4ParallelRotation,
-            onRotate: () => _rotateComponent(
-              name: 'Fiação em Paralelo',
-              getRotation: () => _m4ParallelRotation,
-              setRotation: (v) => _m4ParallelRotation = v,
-            ),
-            onAccept: () => _insertComponent(
-              name: 'Fiação em Paralelo',
-              getInserted: () => _m4ParallelWireConnected,
-              setInserted: (v) => _m4ParallelWireConnected = v,
-              getRotation: () => _m4ParallelRotation,
-              setRotation: (v) => _m4ParallelRotation = v,
-            ),
-            onTap: () => _insertComponent(
-              name: 'Fiação em Paralelo',
-              getInserted: () => _m4ParallelWireConnected,
-              setInserted: (v) => _m4ParallelWireConnected = v,
-              getRotation: () => _m4ParallelRotation,
-              setRotation: (v) => _m4ParallelRotation = v,
-            ),
+          height: 60,
+          expectedData: 'fio_paralelo',
+          isFilled: _m4ParallelWireConnected,
+          symbolType: ComponentType.connectingWire,
+          label: 'Fiação Paralela',
+          rotation: _m4ParallelRotation,
+          onRotate: () => _rotateComponent(
+            name: 'Fiação em Paralelo',
+            getRotation: () => _m4ParallelRotation,
+            setRotation: (v) => _m4ParallelRotation = v,
+          ),
+          onAccept: () => _insertComponent(
+            name: 'Fiação em Paralelo',
+            getInserted: () => _m4ParallelWireConnected,
+            setInserted: (v) => _m4ParallelWireConnected = v,
+            getRotation: () => _m4ParallelRotation,
+            setRotation: (v) => _m4ParallelRotation = v,
+          ),
+          onTap: () => _insertComponent(
+            name: 'Fiação em Paralelo',
+            getInserted: () => _m4ParallelWireConnected,
+            setInserted: (v) => _m4ParallelWireConnected = v,
+            getRotation: () => _m4ParallelRotation,
+            setRotation: (v) => _m4ParallelRotation = v,
           ),
         ),
       ),
@@ -1091,36 +1071,32 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
       Positioned(
         left: l1X - 40,
         top: lY - 32,
-        child: SizedBox(
+        child: _buildSocketTile(
           width: 80,
-          height: 65,
-          child: _buildSocketTile(
-            width: 80,
-            height: 65,
-            expectedData: 'bulb',
-            isFilled: !_m5House1Broken,
-            symbolType: ComponentType.bulb,
-            label: 'Lâmpada A',
-            rotation: _m5House1Rotation,
-            onRotate: () => _rotateComponent(
-              name: 'Lâmpada A',
-              getRotation: () => _m5House1Rotation,
-              setRotation: (v) => _m5House1Rotation = v,
-            ),
-            onAccept: () => _insertComponent(
-              name: 'Lâmpada A',
-              getInserted: () => !_m5House1Broken,
-              setInserted: (v) => _m5House1Broken = !v,
-              getRotation: () => _m5House1Rotation,
-              setRotation: (v) => _m5House1Rotation = v,
-            ),
-            onTap: () => _insertComponent(
-              name: 'Lâmpada A',
-              getInserted: () => !_m5House1Broken,
-              setInserted: (v) => _m5House1Broken = !v,
-              getRotation: () => _m5House1Rotation,
-              setRotation: (v) => _m5House1Rotation = v,
-            ),
+          height: 60,
+          expectedData: 'bulb',
+          isFilled: !_m5House1Broken,
+          symbolType: ComponentType.bulb,
+          label: 'Lâmpada A',
+          rotation: _m5House1Rotation,
+          onRotate: () => _rotateComponent(
+            name: 'Lâmpada A',
+            getRotation: () => _m5House1Rotation,
+            setRotation: (v) => _m5House1Rotation = v,
+          ),
+          onAccept: () => _insertComponent(
+            name: 'Lâmpada A',
+            getInserted: () => !_m5House1Broken,
+            setInserted: (v) => _m5House1Broken = !v,
+            getRotation: () => _m5House1Rotation,
+            setRotation: (v) => _m5House1Rotation = v,
+          ),
+          onTap: () => _insertComponent(
+            name: 'Lâmpada A',
+            getInserted: () => !_m5House1Broken,
+            setInserted: (v) => _m5House1Broken = !v,
+            getRotation: () => _m5House1Rotation,
+            setRotation: (v) => _m5House1Rotation = v,
           ),
         ),
       ),
@@ -1152,36 +1128,32 @@ class _RuasMaqueteScreenState extends ConsumerState<RuasMaqueteScreen>
       Positioned(
         left: sX - 40,
         top: sY - 32,
-        child: SizedBox(
+        child: _buildSocketTile(
           width: 80,
-          height: 65,
-          child: _buildSocketTile(
-            width: 80,
-            height: 65,
-            expectedData: 'fio_serie',
-            isFilled: _m5MaintenanceConfirmed,
-            symbolType: ComponentType.connectingWire,
-            label: 'Manutenção',
-            rotation: _m5MaintenanceRotation,
-            onRotate: () => _rotateComponent(
-              name: 'Conector de Manutenção',
-              getRotation: () => _m5MaintenanceRotation,
-              setRotation: (v) => _m5MaintenanceRotation = v,
-            ),
-            onAccept: () => _insertComponent(
-              name: 'Conector de Manutenção',
-              getInserted: () => _m5MaintenanceConfirmed,
-              setInserted: (v) => _m5MaintenanceConfirmed = v,
-              getRotation: () => _m5MaintenanceRotation,
-              setRotation: (v) => _m5MaintenanceRotation = v,
-            ),
-            onTap: () => _insertComponent(
-              name: 'Conector de Manutenção',
-              getInserted: () => _m5MaintenanceConfirmed,
-              setInserted: (v) => _m5MaintenanceConfirmed = v,
-              getRotation: () => _m5MaintenanceRotation,
-              setRotation: (v) => _m5MaintenanceRotation = v,
-            ),
+          height: 60,
+          expectedData: 'fio_serie',
+          isFilled: _m5MaintenanceConfirmed,
+          symbolType: ComponentType.connectingWire,
+          label: 'Manutenção',
+          rotation: _m5MaintenanceRotation,
+          onRotate: () => _rotateComponent(
+            name: 'Conector de Manutenção',
+            getRotation: () => _m5MaintenanceRotation,
+            setRotation: (v) => _m5MaintenanceRotation = v,
+          ),
+          onAccept: () => _insertComponent(
+            name: 'Conector de Manutenção',
+            getInserted: () => _m5MaintenanceConfirmed,
+            setInserted: (v) => _m5MaintenanceConfirmed = v,
+            getRotation: () => _m5MaintenanceRotation,
+            setRotation: (v) => _m5MaintenanceRotation = v,
+          ),
+          onTap: () => _insertComponent(
+            name: 'Conector de Manutenção',
+            getInserted: () => _m5MaintenanceConfirmed,
+            setInserted: (v) => _m5MaintenanceConfirmed = v,
+            getRotation: () => _m5MaintenanceRotation,
+            setRotation: (v) => _m5MaintenanceRotation = v,
           ),
         ),
       ),

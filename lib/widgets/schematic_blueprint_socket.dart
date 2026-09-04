@@ -135,12 +135,14 @@ class SchematicBlueprintSocket<T extends Object> extends StatelessWidget {
                 ),
               ),
               if (showLabel && label.isNotEmpty) ...[
-                const SizedBox(height: 5),
+                const SizedBox(height: 3),
                 Text(
                   label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.rajdhani(
                     color: isFilled ? const Color(0xFF059669) : const Color(0xFF334155),
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
