@@ -354,45 +354,178 @@ class _PushButtonPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
+    final cx = w / 2;
+    final cy = h / 2;
 
-    // Base Quadrada Metálica de Modulo Tactile
-    final baseRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(w * 0.15, h * 0.25, w * 0.7, h * 0.6),
-      const Radius.circular(8),
+    // 1. Sombra projetada do componente no workbench
+    final shadowPath = Path()
+      ..addRRect(RRect.fromRectAndRadius(
+        Rect.fromLTWH(w * 0.12, h * 0.14, w * 0.76, h * 0.76),
+        Radius.circular(w * 0.12),
+      ));
+    canvas.drawPath(
+      shadowPath,
+      Paint()
+        ..color = Colors.black.withValues(alpha: 0.35)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.5),
     );
 
-    final basePaint = Paint()
+    // 2. Terminais metálicos prateados estanhados (4 pinos de bancada)
+    final terminalPaint = Paint()
       ..shader = const LinearGradient(
-        colors: [Color(0xFF475569), Color(0xFF1E293B)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ).createShader(baseRect.outerRect);
+        colors: [Color(0xFFE2E8F0), Color(0xFF94A3B8), Color(0xFF475569)],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ).createShader(Rect.fromLTWH(0, 0, w, h));
 
-    canvas.drawRRect(baseRect, basePaint);
+    // Pinos esquerdas / direitos
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(w * 0.04, h * 0.26, w * 0.14, h * 0.10), const Radius.circular(2)), terminalPaint);
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(w * 0.04, h * 0.64, w * 0.14, h * 0.10), const Radius.circular(2)), terminalPaint);
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(w * 0.82, h * 0.26, w * 0.14, h * 0.10), const Radius.circular(2)), terminalPaint);
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(w * 0.82, h * 0.64, w * 0.14, h * 0.10), const Radius.circular(2)), terminalPaint);
 
-    // 4 Pinos Metálicos nos Cantos
-    final pinPaint = Paint()..color = const Color(0xFFCBD5E1);
-    canvas.drawRect(Rect.fromLTWH(w * 0.05, h * 0.3, w * 0.1, h * 0.1), pinPaint);
-    canvas.drawRect(Rect.fromLTWH(w * 0.05, h * 0.6, w * 0.1, h * 0.1), pinPaint);
-    canvas.drawRect(Rect.fromLTWH(w * 0.85, h * 0.3, w * 0.1, h * 0.1), pinPaint);
-    canvas.drawRect(Rect.fromLTWH(w * 0.85, h * 0.6, w * 0.1, h * 0.1), pinPaint);
+    // 3. Corpo/Placa Metálica Quadrada Tactile Switch (Corpo em Metal Escovado)
+    final baseRect = Rect.fromCenter(center: Offset(cx, cy), width: w * 0.72, height: h * 0.72);
+    final baseRRect = RRect.fromRectAndRadius(baseRect, Radius.circular(w * 0.10));
 
-    // Botão Vermelho de Atuação Central
-    final buttonOffsetY = isPressed ? h * 0.05 : 0.0;
-    final capRadius = w * 0.22;
-    final capCenter = Offset(w * 0.5, (h * 0.55) + buttonOffsetY);
+    final baseShader = const LinearGradient(
+      colors: [Color(0xFF64748B), Color(0xFF334155), Color(0xFF1E293B), Color(0xFF0F172A)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    ).createShader(baseRect);
+    canvas.drawRRect(baseRRect, Paint()..shader = baseShader);
 
-    final capPaint = Paint()
-      ..shader = RadialGradient(
-        colors: [
-          isPressed ? Colors.redAccent : const Color(0xFFEF4444),
-          const Color(0xFFB91C1C),
-        ],
-        center: Alignment.topLeft,
-      ).createShader(Rect.fromCircle(center: capCenter, radius: capRadius));
+    // Moldura metálica e parafusos de cantos
+    canvas.drawRRect(
+      baseRRect,
+      Paint()
+        ..color = const Color(0xFF94A3B8).withValues(alpha: 0.4)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2,
+    );
 
-    canvas.drawCircle(capCenter, capRadius, capPaint);
-    canvas.drawCircle(capCenter, capRadius, Paint()..color = Colors.red.shade900..style = PaintingStyle.stroke..strokeWidth = 1.5);
+    final screwPaint = Paint()..color = const Color(0xFF94A3B8);
+    canvas.drawCircle(Offset(baseRect.left + 4, baseRect.top + 4), 1.5, screwPaint);
+    canvas.drawCircle(Offset(baseRect.right - 4, baseRect.top + 4), 1.5, screwPaint);
+    canvas.drawCircle(Offset(baseRect.left + 4, baseRect.bottom - 4), 1.5, screwPaint);
+    canvas.drawCircle(Offset(baseRect.right - 4, baseRect.bottom - 4), 1.5, screwPaint);
+
+    // 4. Anel Bezel Cilíndrico Metálico (Collar / Soquete do Botão)
+    final collarCenter = Offset(cx, cy);
+    final collarOuterRadius = w * 0.28;
+    final collarInnerRadius = w * 0.24;
+
+    // Glow verde/neon no bezel quando pressionado (Sinal de Contato Ativo)
+    if (isPressed) {
+      canvas.drawCircle(
+        collarCenter,
+        collarOuterRadius + 6,
+        Paint()
+          ..color = const Color(0xFF10B981).withValues(alpha: 0.6)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+      );
+    }
+
+    // Anel externo do bezel em metal cromado
+    final collarShader = const LinearGradient(
+      colors: [Color(0xFFE2E8F0), Color(0xFF94A3B8), Color(0xFF475569)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    ).createShader(Rect.fromCircle(center: collarCenter, radius: collarOuterRadius));
+    canvas.drawCircle(collarCenter, collarOuterRadius, Paint()..shader = collarShader);
+
+    // Cavidade / Poço escuro profundo onde o botão se move
+    final pitShader = const RadialGradient(
+      colors: [Color(0xFF09090B), Color(0xFF18181B), Color(0xFF27272A)],
+      center: Alignment.center,
+    ).createShader(Rect.fromCircle(center: collarCenter, radius: collarInnerRadius));
+    canvas.drawCircle(collarCenter, collarInnerRadius, Paint()..shader = pitShader);
+
+    // 5. Botão Atuador Vermelho 3D (Cilindro Pressionável)
+    final double buttonOffsetY = isPressed ? 4.5 : -3.5;
+    final double capRadius = isPressed ? w * 0.21 : w * 0.23;
+    final capCenter = Offset(cx, cy + buttonOffsetY);
+
+    if (!isPressed) {
+      // Quando DESPRESSIONADO: Desenha o corpo lateral 3D do botão projetado para cima
+      final sidePath = Path();
+      sidePath.addRect(Rect.fromLTRB(
+        cx - capRadius,
+        cy - 3.5,
+        cx + capRadius,
+        cy + 3.0,
+      ));
+      final sidePaint = Paint()
+        ..shader = const LinearGradient(
+          colors: [Color(0xFF991B1B), Color(0xFF7F1D1D), Color(0xFF450A0A)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ).createShader(Rect.fromLTRB(cx - capRadius, cy - 3.5, cx + capRadius, cy + 3.0));
+      canvas.drawPath(sidePath, sidePaint);
+
+      // Sombra projetada do botão elevado no poço do bezel
+      canvas.drawCircle(
+        Offset(cx, cy + 2.0),
+        capRadius,
+        Paint()
+          ..color = Colors.black.withValues(alpha: 0.5)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.0),
+      );
+    }
+
+    // Topo Vermelho do Botão Tactile
+    final capShader = RadialGradient(
+      colors: isPressed
+          ? const [Color(0xFFEF4444), Color(0xFFDC2626), Color(0xFF991B1B)]
+          : const [Color(0xFFF87171), Color(0xFFEF4444), Color(0xFFB91C1C)],
+      center: const Alignment(-0.35, -0.35),
+      radius: 0.85,
+    ).createShader(Rect.fromCircle(center: capCenter, radius: capRadius));
+
+    canvas.drawCircle(capCenter, capRadius, Paint()..shader = capShader);
+
+    // Borda de contorno do botão
+    canvas.drawCircle(
+      capCenter,
+      capRadius,
+      Paint()
+        ..color = isPressed ? const Color(0xFF7F1D1D) : const Color(0xFF991B1B)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0,
+    );
+
+    // Brilho especular curvo no topo do botão
+    if (!isPressed) {
+      final highlightPath = Path()
+        ..addArc(
+          Rect.fromCircle(center: capCenter.translate(-1.0, -1.0), radius: capRadius * 0.7),
+          3.6,
+          1.8,
+        );
+      canvas.drawPath(
+        highlightPath,
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.65)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5
+          ..strokeCap = StrokeCap.round,
+      );
+    } else {
+      // Quando PRESSIONADO: Anel concêntrico de pressão tátil no centro
+      canvas.drawCircle(
+        capCenter,
+        capRadius * 0.45,
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.4)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.2,
+      );
+      canvas.drawCircle(
+        capCenter,
+        capRadius * 0.2,
+        Paint()..color = Colors.white.withValues(alpha: 0.8),
+      );
+    }
   }
 
   @override
