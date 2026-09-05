@@ -67,12 +67,16 @@ Widget buildLigaDesligaStatusCard(bool isClosed) {
           ),
         ),
         const SizedBox(width: 6),
-        Text(
-          statusText,
-          style: GoogleFonts.rajdhani(
-            color: statusColor,
-            fontWeight: FontWeight.bold,
-            fontSize: 12,
+        Flexible(
+          child: Text(
+            statusText,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.rajdhani(
+              color: statusColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
           ),
         ),
       ],
