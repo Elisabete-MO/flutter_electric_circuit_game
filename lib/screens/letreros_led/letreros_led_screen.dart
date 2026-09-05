@@ -9,6 +9,8 @@ import '../../models/circuit_action.dart';
 import '../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../state/circuit_undo_redo_controller.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
+import '../../widgets/prof_volts_prediction_dialog.dart';
+import '../../widgets/prof_volts_explanation_dialog.dart';
 import '../../widgets/schematic_blueprint_socket.dart';
 import '../../widgets/physical_blueprint_socket.dart';
 import '../../widgets/component_physical_painter.dart';
@@ -54,6 +56,13 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
   bool _m5BranchEntradaActive = false;
   bool _m5BranchSaidaActive = false;
   bool _m5OneBranchDisconnected = false;
+
+  // Previsões obrigatórias (antes de energizar)
+  String? _m1Prediction;
+  String? _m2Prediction;
+  String? _m3Prediction;
+  String? _m4Prediction;
+  String? _m5Prediction;
 
   bool _isSimulating = false;
 
@@ -128,25 +137,134 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
         case 0:
           _m1LedDirectPolarity = true;
           _m1LedInserted = false;
+          _m1Prediction = null;
           break;
         case 1:
           _m2LedInvertedFixed = false;
+          _m2Prediction = null;
           break;
         case 2:
           _m3LedRotated = false;
           _m3WireConnected = false;
           _m3ResistorInBranch = false;
+          _m3Prediction = null;
           break;
         case 3:
           _m4SelectedResistor = null;
+          _m4Prediction = null;
           break;
         case 4:
           _m5BranchEntradaActive = false;
           _m5BranchSaidaActive = false;
           _m5OneBranchDisconnected = false;
+          _m5Prediction = null;
           break;
       }
     });
+  }
+
+  // ==========================================
+  // PREVISÃO E EXPLICAÇÃO — DADOS POR MISSÃO
+  // ==========================================
+
+  String? get _currentPrediction => switch (_currentMissionIndex) {
+    0 => _m1Prediction,
+    1 => _m2Prediction,
+    2 => _m3Prediction,
+    3 => _m4Prediction,
+    4 => _m5Prediction,
+    _ => null,
+  };
+
+  void _setPrediction(String value) => setState(() {
+    switch (_currentMissionIndex) {
+      case 0: _m1Prediction = value; break;
+      case 1: _m2Prediction = value; break;
+      case 2: _m3Prediction = value; break;
+      case 3: _m4Prediction = value; break;
+      case 4: _m5Prediction = value; break;
+    }
+  });
+
+  List<String> _getPredictionOptions() => switch (_currentMissionIndex) {
+    0 => ['LED acende normalmente', 'LED não acende', 'LED queima', 'Não sei'],
+    1 => ['LED não acende (bloqueia)', 'LED acende fraco', 'LED queima', 'Não sei'],
+    2 => ['LED invertido', 'Fio aberto', 'Resistor fora', 'Não sei'],
+    3 => ['68Ω (muito baixo)', '680Ω (ideal)', '6,8kΩ (muito alto)', 'Não sei'],
+    4 => ['Continua aceso', 'Apaga junto', 'Fica mais fraco', 'Não sei'],
+    _ => ['Não sei'],
+  };
+
+  String _getPredictionQuestion() => switch (_currentMissionIndex) {
+    0 => 'O que acontecerá ao energizar com R680Ω e LED em polaridade correta?',
+    1 => 'O LED está com K no positivo. O que acontece ao energizar?',
+    2 => 'A placa não acende. Qual a causa mais provável?',
+    3 => 'Qual resistor oferece brilho seguro para o LED?',
+    4 => 'Se remover um ramo, o que acontece com o outro?',
+    _ => 'O que você prevê?',
+  };
+
+  String _getExplanationQuestion() => switch (_currentMissionIndex) {
+    0 => 'Por que o LED precisa de resistor e polaridade correta?',
+    1 => 'Por que o LED não acendia antes da correção?',
+    2 => 'Qual evidência mostrou a falha real?',
+    3 => 'Por que o LED fica inseguro com resistor pequeno e fraco com grande?',
+    4 => 'Por que cada placa precisa de resistor próprio?',
+    _ => 'Explique o resultado observado.',
+  };
+
+  List<String> _getExplanationOptions() => switch (_currentMissionIndex) {
+    0 => ['Resistor limita corrente; LED é polarizado', 'Resistor divide tensão; LED é bidirecional', 'Não sei explicar'],
+    1 => ['Polaridade invertida bloqueia corrente', 'Resistor estava em valor errado', 'Fio estava solto', 'Não sei explicar'],
+    2 => ['Medição de tensão / inspeção visual', 'Teste de continuidade', 'Substituição de componente', 'Não sei explicar'],
+    3 => ['R baixo → corrente alta; R alto → corrente baixa', 'R baixo → pouca queda; R alto → muita queda', 'Não sei explicar'],
+    4 => ['Cada ramo paralelo precisa limitar sua corrente', 'O resistor protege a bateria', 'Não sei explicar'],
+    _ => ['Não sei explicar'],
+  };
+
+  // ==========================================
+  // FLUXO: PREVISÃO → SIMULAÇÃO → EXPLICAÇÃO
+  // ==========================================
+
+  void _onEnergizePressed() {
+    if (_currentPrediction == null) {
+      _showPredictionDialog();
+    } else {
+      _validateCurrentMission();
+    }
+  }
+
+  void _showPredictionDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => ProfVoltsPredictionDialog(
+        question: _getPredictionQuestion(),
+        options: _getPredictionOptions(),
+        onPredict: (prediction) {
+          Navigator.of(context).pop();
+          _setPrediction(prediction);
+          _validateCurrentMission();
+        },
+      ),
+    );
+  }
+
+  void _showExplanationDialog(bool isSuccess) {
+    if (!isSuccess || !mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => ProfVoltsExplanationDialog(
+        question: _getExplanationQuestion(),
+        options: _getExplanationOptions(),
+        onExplain: (_) {
+          Navigator.of(context).pop();
+          showSuccessConfetti(context);
+          _nextMission();
+        },
+      ),
+    );
   }
 
   Future<void> _validateCurrentMission() async {
@@ -285,7 +403,7 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
       }
 
     final fullMessage = isSuccess
-        ? 'Missao "${_currentMission.title}" concluida! ${_currentMission.victoryCriteria}.\n\nProf. Volts: "${_currentMission.voltsMediation}"'
+        ? 'Missão "${_currentMission.title}" concluída! ${_currentMission.victoryCriteria}.\n\nSua previsão: "$_currentPrediction"\n\nProf. Volts: "${_currentMission.voltsMediation}"'
         : '$feedbackMessage\n\nProf. Volts: "${_currentMission.voltsMediation}"';
 
     if (mounted) {
@@ -298,8 +416,7 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
           onAction: () {
             Navigator.of(context).pop();
             if (isSuccess) {
-              showSuccessConfetti(context);
-              _nextMission();
+              _showExplanationDialog(true);
             }
           },
         ),
@@ -482,9 +599,10 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
                     teamTitle: 'Painel da Equipe Sinalização',
                     toolboxItems: [
                       _buildMissionBriefingCard(),
+                      _buildPredictionBadge(),
                       _buildSideToolboxDrawer(),
                     ],
-                    onEnergizePressed: _validateCurrentMission,
+                    onEnergizePressed: _onEnergizePressed,
                     isLoading: _isSimulating,
                   ),
                 ),
@@ -1221,6 +1339,54 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen>
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPredictionBadge() {
+    final prediction = _currentPrediction;
+    final Color bgColor;
+    final Color borderColor;
+    final IconData icon;
+    final String text;
+
+    if (prediction == null) {
+      bgColor = const Color(0xFFFEF3C7);
+      borderColor = const Color(0xFFF59E0B);
+      icon = Icons.psychology_rounded;
+      text = 'Previsão: Pendente';
+    } else {
+      bgColor = const Color(0xFFDBEAFE);
+      borderColor = const Color(0xFF3B82F6);
+      icon = Icons.check_circle_outline_rounded;
+      text = 'Previsão: $prediction';
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: borderColor, width: 1.5),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: borderColor, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: GoogleFonts.rajdhani(
+                color: const Color(0xFF0F172A),
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
