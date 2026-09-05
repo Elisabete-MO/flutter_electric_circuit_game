@@ -14,6 +14,7 @@ class ComponentPhysicalPainter extends CustomPainter {
     this.value = 10.0,
     this.animationValue = 0.0,
     this.wireKind = 'series',
+    this.brightnessRatio = 1.0,
   });
 
   final ComponentType type;
@@ -23,6 +24,7 @@ class ComponentPhysicalPainter extends CustomPainter {
   final double value;
   final double animationValue;
   final String wireKind;
+  final double brightnessRatio;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -965,24 +967,25 @@ class ComponentPhysicalPainter extends CustomPainter {
 
     // 3. Efeito de Fotoluminescência Neon Radial (quando energizado / isActive)
     if (isActive) {
+      final br = brightnessRatio.clamp(0.0, 1.0);
       final glowCenter = Offset(cx, domeStartY);
       canvas.drawCircle(
         glowCenter,
         domeRadius + 28,
         Paint()
-          ..color = const Color(0xFFEF4444).withValues(alpha: 0.35)
+          ..color = const Color(0xFFEF4444).withValues(alpha: 0.35 * br)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18),
       );
       canvas.drawCircle(
         glowCenter,
         domeRadius + 14,
         Paint()
-          ..color = const Color(0xFFF87171).withValues(alpha: 0.65)
+          ..color = const Color(0xFFF87171).withValues(alpha: 0.65 * br)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
       );
 
       final rayPaint = Paint()
-        ..color = const Color(0xFFFECACA).withValues(alpha: 0.95)
+        ..color = const Color(0xFFFECACA).withValues(alpha: 0.95 * br)
         ..strokeWidth = 2.2
         ..strokeCap = StrokeCap.round;
       canvas.drawLine(Offset(cx - 16, ledTopY - 6), Offset(cx - 24, ledTopY - 16), rayPaint);

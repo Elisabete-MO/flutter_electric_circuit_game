@@ -951,22 +951,44 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
               builder: (context, constraints) {
                 final w = constraints.maxWidth;
                 final h = constraints.maxHeight;
-                final batteryX = w * 0.5;
+                final batteryX = w * 0.35;
                 final centerY = h * 0.5;
+                final redProbeX = w * 0.72;
+                final redProbeY = centerY - 30;
+                final blackProbeX = w * 0.72;
+                final blackProbeY = centerY + 30;
+                final sock = 75.0;
+                final comp = 42.0;
 
                 return Stack(
                   children: [
+                    // Probe wires (drawn behind sockets)
+                    if (_m1BatteryInserted) ...[
+                      Positioned(
+                        left: 0,
+                        top: 0,
+                        right: 0,
+                        bottom: 0,
+                        child: CustomPaint(
+                          painter: _ProbeWirePainter(
+                            batteryCenter: Offset(batteryX, centerY),
+                            redProbeCenter: Offset(redProbeX, redProbeY),
+                            blackProbeCenter: Offset(blackProbeX, blackProbeY),
+                          ),
+                        ),
+                      ),
+                    ],
                     // Battery socket
                     Positioned(
-                      left: batteryX - 47.5,
-                      top: centerY - 47.5,
+                      left: batteryX - sock / 2,
+                      top: centerY - sock / 2,
                       child: PhysicalBlueprintSocket<String>(
                         expectedData: 'battery',
                         isFilled: _m1BatteryInserted,
                         rotation: _m1BatteryRotation,
-                        width: 95,
-                        height: 95,
-                        showLabel: false,
+                        width: sock,
+                        height: sock,
+                        showLabel: true,
                         onAccept: (_) => _insertComponent(
                           name: 'Bateria',
                           getInserted: () => _m1BatteryInserted,
@@ -982,27 +1004,20 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                         onTap: () {},
                         symbolWidget: _usePhysicalStyle
                             ? CustomPaint(
-                                size: const Size(55, 55),
-                                painter: ComponentPhysicalPainter(
-                                  type: ComponentType.battery,
-                                  isDarkMode: false,
-                                ),
+                                size: Size(comp, comp),
+                                painter: ComponentPhysicalPainter(type: ComponentType.battery, isDarkMode: false),
                               )
                             : CustomPaint(
-                                size: const Size(55, 55),
-                                painter: CircuitSymbolPainter(
-                                  type: ComponentType.battery,
-                                  color: const Color(0xFF0F172A),
-                                  strokeWidth: 2.5,
-                                ),
+                                size: Size(comp, comp),
+                                painter: CircuitSymbolPainter(type: ComponentType.battery, color: const Color(0xFF0F172A), strokeWidth: 2.5),
                               ),
                       ),
                     ),
-                    // Probe indicators
+                    // Red probe indicator
                     if (_m1BatteryInserted)
                       Positioned(
-                        left: batteryX + 60,
-                        top: centerY - 30,
+                        left: redProbeX - 30,
+                        top: redProbeY - 20,
                         child: _buildProbeSlot(
                           isRed: true,
                           isConnected: _redProbeConnected,
@@ -1010,10 +1025,11 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                           label: 'Polo (+)',
                         ),
                       ),
+                    // Black probe indicator
                     if (_m1BatteryInserted)
                       Positioned(
-                        left: batteryX + 60,
-                        top: centerY + 10,
+                        left: blackProbeX - 30,
+                        top: blackProbeY - 20,
                         child: _buildProbeSlot(
                           isRed: false,
                           isConnected: _blackProbeConnected,
@@ -1051,6 +1067,8 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                 final batteryX = w * 0.2;
                 final bulbX = w * 0.75;
                 final centerY = h * 0.5;
+                final sock = 75.0;
+                final comp = 42.0;
 
                 final batteryPlacement = ComponentPlacement(
                   position: Offset(batteryX, centerY),
@@ -1095,15 +1113,15 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                       ),
                     // Battery socket
                     Positioned(
-                      left: batteryX - 47.5,
-                      top: centerY - 47.5,
+                      left: batteryX - sock / 2,
+                      top: centerY - sock / 2,
                       child: PhysicalBlueprintSocket<String>(
                         expectedData: 'battery',
                         isFilled: _m2BatteryInserted,
                         rotation: _m2BatteryRotation,
-                        width: 95,
-                        height: 95,
-                        showLabel: false,
+                        width: sock,
+                        height: sock,
+                        showLabel: true,
                         onAccept: (_) => _insertComponent(
                           name: 'Bateria',
                           getInserted: () => _m2BatteryInserted,
@@ -1118,34 +1136,21 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                         ),
                         onTap: () {},
                         symbolWidget: _usePhysicalStyle
-                            ? CustomPaint(
-                                size: const Size(55, 55),
-                                painter: ComponentPhysicalPainter(
-                                  type: ComponentType.battery,
-                                  isDarkMode: false,
-                                ),
-                              )
-                            : CustomPaint(
-                                size: const Size(55, 55),
-                                painter: CircuitSymbolPainter(
-                                  type: ComponentType.battery,
-                                  color: const Color(0xFF0F172A),
-                                  strokeWidth: 2.5,
-                                ),
-                              ),
+                            ? CustomPaint(size: Size(comp, comp), painter: ComponentPhysicalPainter(type: ComponentType.battery, isDarkMode: false))
+                            : CustomPaint(size: Size(comp, comp), painter: CircuitSymbolPainter(type: ComponentType.battery, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
                       ),
                     ),
                     // Bulb socket
                     Positioned(
-                      left: bulbX - 47.5,
-                      top: centerY - 47.5,
+                      left: bulbX - sock / 2,
+                      top: centerY - sock / 2,
                       child: PhysicalBlueprintSocket<String>(
                         expectedData: 'bulb',
                         isFilled: _m2BulbInserted,
                         rotation: _m2BulbRotation,
-                        width: 95,
-                        height: 95,
-                        showLabel: false,
+                        width: sock,
+                        height: sock,
+                        showLabel: true,
                         onAccept: (_) => _insertComponent(
                           name: 'Lâmpada',
                           getInserted: () => _m2BulbInserted,
@@ -1160,23 +1165,8 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                         ),
                         onTap: () {},
                         symbolWidget: _usePhysicalStyle
-                            ? CustomPaint(
-                                size: const Size(55, 55),
-                                painter: ComponentPhysicalPainter(
-                                  type: ComponentType.bulb,
-                                  isActive: _m2BatteryInserted && _m2BulbInserted,
-                                  isDarkMode: false,
-                                ),
-                              )
-                            : CustomPaint(
-                                size: const Size(55, 55),
-                                painter: CircuitSymbolPainter(
-                                  type: ComponentType.bulb,
-                                  isActive: _m2BatteryInserted && _m2BulbInserted,
-                                  color: const Color(0xFF0F172A),
-                                  strokeWidth: 2.5,
-                                ),
-                              ),
+                            ? CustomPaint(size: Size(comp, comp), painter: ComponentPhysicalPainter(type: ComponentType.bulb, isActive: _m2BatteryInserted && _m2BulbInserted, isDarkMode: false))
+                            : CustomPaint(size: Size(comp, comp), painter: CircuitSymbolPainter(type: ComponentType.bulb, isActive: _m2BatteryInserted && _m2BulbInserted, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
                       ),
                     ),
                     // Probe indicators
@@ -1212,9 +1202,11 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
     );
   }
 
-  /// M3: Resistência e Corrente (Reostato Didático)
+  /// M3: Resistência e Corrente (Reostato Didático) — Layout em L
   Widget _buildM3Physical() {
     final currentMa = (9.0 / _m3ResistanceValue) * 1000.0;
+    final allInserted = _m3BatteryInserted && _m3ResistorInserted && _m3LedInserted;
+    final ledActive = allInserted && _m3ResistanceValue < 900.0;
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -1230,23 +1222,28 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
               builder: (context, constraints) {
                 final w = constraints.maxWidth;
                 final h = constraints.maxHeight;
-                final batteryX = w * 0.12;
-                final resistorX = w * 0.45;
-                final ledX = w * 0.82;
-                final centerY = h * 0.45;
+                // L-shape: battery bottom-left, resistor top-center, LED top-right
+                final batteryX = w * 0.2;
+                final batteryY = h * 0.72;
+                final resistorX = w * 0.5;
+                final resistorY = h * 0.25;
+                final ledX = w * 0.8;
+                final ledY = h * 0.25;
+                final sock = 75.0;
+                final comp = 42.0;
 
                 final batteryPlacement = ComponentPlacement(
-                  position: Offset(batteryX, centerY),
+                  position: Offset(batteryX, batteryY),
                   rotation: _m3BatteryRotation,
                   type: ComponentType.battery,
                 );
                 final resistorPlacement = ComponentPlacement(
-                  position: Offset(resistorX, centerY),
+                  position: Offset(resistorX, resistorY),
                   rotation: _m3ResistorRotation,
                   type: ComponentType.resistor,
                 );
                 final ledPlacement = ComponentPlacement(
-                  position: Offset(ledX, centerY),
+                  position: Offset(ledX, ledY),
                   rotation: _m3LedRotation,
                   type: ComponentType.led,
                 );
@@ -1293,17 +1290,17 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                           showElectrons: false,
                         ),
                       ),
-                    // Battery socket
+                    // Battery socket (bottom-left)
                     Positioned(
-                      left: batteryX - 47.5,
-                      top: centerY - 47.5,
+                      left: batteryX - sock / 2,
+                      top: batteryY - sock / 2,
                       child: PhysicalBlueprintSocket<String>(
                         expectedData: 'battery',
                         isFilled: _m3BatteryInserted,
                         rotation: _m3BatteryRotation,
-                        width: 95,
-                        height: 95,
-                        showLabel: false,
+                        width: sock,
+                        height: sock,
+                        showLabel: true,
                         onAccept: (_) => _insertComponent(
                           name: 'Bateria',
                           getInserted: () => _m3BatteryInserted,
@@ -1318,21 +1315,21 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                         ),
                         onTap: () {},
                         symbolWidget: _usePhysicalStyle
-                            ? CustomPaint(size: const Size(55, 55), painter: ComponentPhysicalPainter(type: ComponentType.battery, isDarkMode: false))
-                            : CustomPaint(size: const Size(55, 55), painter: CircuitSymbolPainter(type: ComponentType.battery, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
+                            ? CustomPaint(size: Size(comp, comp), painter: ComponentPhysicalPainter(type: ComponentType.battery, isDarkMode: false))
+                            : CustomPaint(size: Size(comp, comp), painter: CircuitSymbolPainter(type: ComponentType.battery, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
                       ),
                     ),
-                    // Resistor socket
+                    // Resistor socket (top-center)
                     Positioned(
-                      left: resistorX - 47.5,
-                      top: centerY - 47.5,
+                      left: resistorX - sock / 2,
+                      top: resistorY - sock / 2,
                       child: PhysicalBlueprintSocket<String>(
                         expectedData: 'resistor',
                         isFilled: _m3ResistorInserted,
                         rotation: _m3ResistorRotation,
-                        width: 95,
-                        height: 95,
-                        showLabel: false,
+                        width: sock,
+                        height: sock,
+                        showLabel: true,
                         onAccept: (_) => _insertComponent(
                           name: 'Resistor',
                           getInserted: () => _m3ResistorInserted,
@@ -1347,21 +1344,21 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                         ),
                         onTap: () {},
                         symbolWidget: _usePhysicalStyle
-                            ? CustomPaint(size: const Size(55, 55), painter: ComponentPhysicalPainter(type: ComponentType.resistor, isDarkMode: false))
-                            : CustomPaint(size: const Size(55, 55), painter: CircuitSymbolPainter(type: ComponentType.resistor, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
+                            ? CustomPaint(size: Size(comp, comp), painter: ComponentPhysicalPainter(type: ComponentType.resistor, isDarkMode: false))
+                            : CustomPaint(size: Size(comp, comp), painter: CircuitSymbolPainter(type: ComponentType.resistor, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
                       ),
                     ),
-                    // LED socket
+                    // LED socket (top-right)
                     Positioned(
-                      left: ledX - 47.5,
-                      top: centerY - 47.5,
+                      left: ledX - sock / 2,
+                      top: ledY - sock / 2,
                       child: PhysicalBlueprintSocket<String>(
                         expectedData: 'led',
                         isFilled: _m3LedInserted,
                         rotation: _m3LedRotation,
-                        width: 95,
-                        height: 95,
-                        showLabel: false,
+                        width: sock,
+                        height: sock,
+                        showLabel: true,
                         onAccept: (_) => _insertComponent(
                           name: 'LED',
                           getInserted: () => _m3LedInserted,
@@ -1376,8 +1373,8 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                         ),
                         onTap: () {},
                         symbolWidget: _usePhysicalStyle
-                            ? CustomPaint(size: const Size(55, 55), painter: ComponentPhysicalPainter(type: ComponentType.led, isActive: true, isDarkMode: false))
-                            : CustomPaint(size: const Size(55, 55), painter: CircuitSymbolPainter(type: ComponentType.led, isActive: true, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
+                            ? CustomPaint(size: Size(comp, comp), painter: ComponentPhysicalPainter(type: ComponentType.led, isActive: ledActive, isDarkMode: false))
+                            : CustomPaint(size: Size(comp, comp), painter: CircuitSymbolPainter(type: ComponentType.led, isActive: ledActive, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
                       ),
                     ),
                   ],
@@ -1408,7 +1405,7 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
     );
   }
 
-  /// M4: Dimensionamento Seguro de Resistor
+  /// M4: Dimensionamento Seguro de Resistor — Layout paralelo visual
   Widget _buildM4Physical() {
     final hasResistor = _m4SelectedResistor != null;
     final isSafe = _m4SelectedResistor == 680;
@@ -1435,23 +1432,30 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
               builder: (context, constraints) {
                 final w = constraints.maxWidth;
                 final h = constraints.maxHeight;
-                final batteryX = w * 0.12;
-                final resistorX = w * 0.45;
-                final ledX = w * 0.82;
-                final centerY = h * 0.45;
+                // Parallel layout: battery left, 3 resistors center (stacked), LED right
+                final batteryX = w * 0.15;
+                final batteryY = h * 0.5;
+                final resistorCenterX = w * 0.5;
+                final r1Y = h * 0.22;
+                final r2Y = h * 0.5;
+                final r3Y = h * 0.78;
+                final ledX = w * 0.85;
+                final ledY = h * 0.5;
+                final sock = 75.0;
+                final comp = 42.0;
 
                 final batteryPlacement = ComponentPlacement(
-                  position: Offset(batteryX, centerY),
+                  position: Offset(batteryX, batteryY),
                   rotation: _m4BatteryRotation,
                   type: ComponentType.battery,
                 );
                 final resistorPlacement = ComponentPlacement(
-                  position: Offset(resistorX, centerY),
+                  position: Offset(resistorCenterX, r2Y),
                   rotation: _m4ResistorRotation,
                   type: ComponentType.resistor,
                 );
                 final ledPlacement = ComponentPlacement(
-                  position: Offset(ledX, centerY),
+                  position: Offset(ledX, ledY),
                   rotation: _m4LedRotation,
                   type: ComponentType.led,
                 );
@@ -1498,17 +1502,17 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                           showElectrons: false,
                         ),
                       ),
-                    // Battery socket
+                    // Battery socket (left)
                     Positioned(
-                      left: batteryX - 47.5,
-                      top: centerY - 47.5,
+                      left: batteryX - sock / 2,
+                      top: batteryY - sock / 2,
                       child: PhysicalBlueprintSocket<String>(
                         expectedData: 'battery',
                         isFilled: _m4BatteryInserted,
                         rotation: _m4BatteryRotation,
-                        width: 95,
-                        height: 95,
-                        showLabel: false,
+                        width: sock,
+                        height: sock,
+                        showLabel: true,
                         onAccept: (_) => _insertComponent(
                           name: 'Bateria',
                           getInserted: () => _m4BatteryInserted,
@@ -1523,50 +1527,55 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                         ),
                         onTap: () {},
                         symbolWidget: _usePhysicalStyle
-                            ? CustomPaint(size: const Size(55, 55), painter: ComponentPhysicalPainter(type: ComponentType.battery, isDarkMode: false))
-                            : CustomPaint(size: const Size(55, 55), painter: CircuitSymbolPainter(type: ComponentType.battery, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
+                            ? CustomPaint(size: Size(comp, comp), painter: ComponentPhysicalPainter(type: ComponentType.battery, isDarkMode: false))
+                            : CustomPaint(size: Size(comp, comp), painter: CircuitSymbolPainter(type: ComponentType.battery, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
                       ),
                     ),
-                    // Resistor socket
-                    Positioned(
-                      left: resistorX - 47.5,
-                      top: centerY - 47.5,
-                      child: PhysicalBlueprintSocket<String>(
-                        expectedData: 'resistor',
-                        isFilled: _m4ResistorInserted,
-                        rotation: _m4ResistorRotation,
-                        width: 95,
-                        height: 95,
-                        showLabel: false,
-                        onAccept: (_) => _insertComponent(
-                          name: 'Resistor',
-                          getInserted: () => _m4ResistorInserted,
-                          setInserted: (v) => _m4ResistorInserted = v,
-                          getRotation: () => _m4ResistorRotation,
-                          setRotation: (v) => _m4ResistorRotation = v,
+                    // 3 Resistor slots stacked vertically (center)
+                    for (final entry in [
+                      MapEntry(0, r1Y),
+                      MapEntry(1, r2Y),
+                      MapEntry(2, r3Y),
+                    ])
+                      Positioned(
+                        left: resistorCenterX - sock / 2,
+                        top: entry.value - sock / 2,
+                        child: PhysicalBlueprintSocket<String>(
+                          expectedData: 'resistor',
+                          isFilled: _m4ResistorInserted,
+                          rotation: _m4ResistorRotation,
+                          width: sock,
+                          height: sock,
+                          showLabel: true,
+                          onAccept: (_) => _insertComponent(
+                            name: 'Resistor',
+                            getInserted: () => _m4ResistorInserted,
+                            setInserted: (v) => _m4ResistorInserted = v,
+                            getRotation: () => _m4ResistorRotation,
+                            setRotation: (v) => _m4ResistorRotation = v,
+                          ),
+                          onRotate: () => _rotateComponent(
+                            name: 'Resistor',
+                            getRotation: () => _m4ResistorRotation,
+                            setRotation: (v) => _m4ResistorRotation = v,
+                          ),
+                          onTap: () {},
+                          symbolWidget: _usePhysicalStyle
+                              ? CustomPaint(size: Size(comp, comp), painter: ComponentPhysicalPainter(type: ComponentType.resistor, isDarkMode: false))
+                              : CustomPaint(size: Size(comp, comp), painter: CircuitSymbolPainter(type: ComponentType.resistor, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
                         ),
-                        onRotate: () => _rotateComponent(
-                          name: 'Resistor',
-                          getRotation: () => _m4ResistorRotation,
-                          setRotation: (v) => _m4ResistorRotation = v,
-                        ),
-                        onTap: () {},
-                        symbolWidget: _usePhysicalStyle
-                            ? CustomPaint(size: const Size(55, 55), painter: ComponentPhysicalPainter(type: ComponentType.resistor, isDarkMode: false))
-                            : CustomPaint(size: const Size(55, 55), painter: CircuitSymbolPainter(type: ComponentType.resistor, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
                       ),
-                    ),
-                    // LED socket
+                    // LED socket (right)
                     Positioned(
-                      left: ledX - 47.5,
-                      top: centerY - 47.5,
+                      left: ledX - sock / 2,
+                      top: ledY - sock / 2,
                       child: PhysicalBlueprintSocket<String>(
                         expectedData: 'led',
                         isFilled: _m4LedInserted,
                         rotation: _m4LedRotation,
-                        width: 95,
-                        height: 95,
-                        showLabel: false,
+                        width: sock,
+                        height: sock,
+                        showLabel: true,
                         onAccept: (_) => _insertComponent(
                           name: 'LED',
                           getInserted: () => _m4LedInserted,
@@ -1581,8 +1590,8 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                         ),
                         onTap: () {},
                         symbolWidget: _usePhysicalStyle
-                            ? CustomPaint(size: const Size(55, 55), painter: ComponentPhysicalPainter(type: ComponentType.led, isActive: hasResistor && !isBurned, isBurned: isBurned, isDarkMode: false))
-                            : CustomPaint(size: const Size(55, 55), painter: CircuitSymbolPainter(type: ComponentType.led, isActive: hasResistor && !isBurned, isBurned: isBurned, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
+                            ? CustomPaint(size: Size(comp, comp), painter: ComponentPhysicalPainter(type: ComponentType.led, isActive: hasResistor && !isBurned, isBurned: isBurned, isDarkMode: false))
+                            : CustomPaint(size: Size(comp, comp), painter: CircuitSymbolPainter(type: ComponentType.led, isActive: hasResistor && !isBurned, isBurned: isBurned, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
                       ),
                     ),
                   ],
@@ -1595,8 +1604,9 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
     );
   }
 
-  /// M5: Diário de Investigação (Diagnóstico de Falha)
+  /// M5: Diário de Investigação (Diagnóstico de Falha) — Layout em cascata vertical
   Widget _buildM5Physical() {
+    final allInserted = _m5BatteryInserted && _m5ResistorInserted && _m5LedInserted;
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -1612,23 +1622,26 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
               builder: (context, constraints) {
                 final w = constraints.maxWidth;
                 final h = constraints.maxHeight;
-                final batteryX = w * 0.12;
-                final resistorX = w * 0.45;
-                final ledX = w * 0.82;
-                final centerY = h * 0.45;
+                // Cascade: battery top, resistor middle, LED bottom (vertical)
+                final centerX = w * 0.5;
+                final batteryY = h * 0.15;
+                final resistorY = h * 0.48;
+                final ledY = h * 0.81;
+                final sock = 75.0;
+                final comp = 42.0;
 
                 final batteryPlacement = ComponentPlacement(
-                  position: Offset(batteryX, centerY),
+                  position: Offset(centerX, batteryY),
                   rotation: _m5BatteryRotation,
                   type: ComponentType.battery,
                 );
                 final resistorPlacement = ComponentPlacement(
-                  position: Offset(resistorX, centerY),
+                  position: Offset(centerX, resistorY),
                   rotation: _m5ResistorRotation,
                   type: ComponentType.resistor,
                 );
                 final ledPlacement = ComponentPlacement(
-                  position: Offset(ledX, centerY),
+                  position: Offset(centerX, ledY),
                   rotation: _m5LedRotation,
                   type: ComponentType.led,
                 );
@@ -1675,17 +1688,17 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                           showElectrons: false,
                         ),
                       ),
-                    // Battery socket
+                    // Battery socket (top)
                     Positioned(
-                      left: batteryX - 47.5,
-                      top: centerY - 47.5,
+                      left: centerX - sock / 2,
+                      top: batteryY - sock / 2,
                       child: PhysicalBlueprintSocket<String>(
                         expectedData: 'battery',
                         isFilled: _m5BatteryInserted,
                         rotation: _m5BatteryRotation,
-                        width: 95,
-                        height: 95,
-                        showLabel: false,
+                        width: sock,
+                        height: sock,
+                        showLabel: true,
                         onAccept: (_) => _insertComponent(
                           name: 'Bateria',
                           getInserted: () => _m5BatteryInserted,
@@ -1700,21 +1713,21 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                         ),
                         onTap: () {},
                         symbolWidget: _usePhysicalStyle
-                            ? CustomPaint(size: const Size(55, 55), painter: ComponentPhysicalPainter(type: ComponentType.battery, isDarkMode: false))
-                            : CustomPaint(size: const Size(55, 55), painter: CircuitSymbolPainter(type: ComponentType.battery, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
+                            ? CustomPaint(size: Size(comp, comp), painter: ComponentPhysicalPainter(type: ComponentType.battery, isDarkMode: false))
+                            : CustomPaint(size: Size(comp, comp), painter: CircuitSymbolPainter(type: ComponentType.battery, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
                       ),
                     ),
-                    // Resistor socket
+                    // Resistor socket (middle)
                     Positioned(
-                      left: resistorX - 47.5,
-                      top: centerY - 47.5,
+                      left: centerX - sock / 2,
+                      top: resistorY - sock / 2,
                       child: PhysicalBlueprintSocket<String>(
                         expectedData: 'resistor',
                         isFilled: _m5ResistorInserted,
                         rotation: _m5ResistorRotation,
-                        width: 95,
-                        height: 95,
-                        showLabel: false,
+                        width: sock,
+                        height: sock,
+                        showLabel: true,
                         onAccept: (_) => _insertComponent(
                           name: 'Resistor',
                           getInserted: () => _m5ResistorInserted,
@@ -1729,21 +1742,21 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                         ),
                         onTap: () {},
                         symbolWidget: _usePhysicalStyle
-                            ? CustomPaint(size: const Size(55, 55), painter: ComponentPhysicalPainter(type: ComponentType.resistor, isDarkMode: false))
-                            : CustomPaint(size: const Size(55, 55), painter: CircuitSymbolPainter(type: ComponentType.resistor, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
+                            ? CustomPaint(size: Size(comp, comp), painter: ComponentPhysicalPainter(type: ComponentType.resistor, isDarkMode: false))
+                            : CustomPaint(size: Size(comp, comp), painter: CircuitSymbolPainter(type: ComponentType.resistor, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
                       ),
                     ),
-                    // LED socket
+                    // LED socket (bottom) — dimmed (brightnessRatio 0.3)
                     Positioned(
-                      left: ledX - 47.5,
-                      top: centerY - 47.5,
+                      left: centerX - sock / 2,
+                      top: ledY - sock / 2,
                       child: PhysicalBlueprintSocket<String>(
                         expectedData: 'led',
                         isFilled: _m5LedInserted,
                         rotation: _m5LedRotation,
-                        width: 95,
-                        height: 95,
-                        showLabel: false,
+                        width: sock,
+                        height: sock,
+                        showLabel: true,
                         onAccept: (_) => _insertComponent(
                           name: 'LED',
                           getInserted: () => _m5LedInserted,
@@ -1758,8 +1771,24 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                         ),
                         onTap: () {},
                         symbolWidget: _usePhysicalStyle
-                            ? CustomPaint(size: const Size(55, 55), painter: ComponentPhysicalPainter(type: ComponentType.led, isActive: true, isDarkMode: false))
-                            : CustomPaint(size: const Size(55, 55), painter: CircuitSymbolPainter(type: ComponentType.led, isActive: true, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
+                            ? CustomPaint(
+                                size: Size(comp, comp),
+                                painter: ComponentPhysicalPainter(
+                                  type: ComponentType.led,
+                                  isActive: allInserted,
+                                  isDarkMode: false,
+                                  brightnessRatio: 0.3,
+                                ),
+                              )
+                            : CustomPaint(
+                                size: Size(comp, comp),
+                                painter: CircuitSymbolPainter(
+                                  type: ComponentType.led,
+                                  isActive: allInserted,
+                                  color: const Color(0xFF0F172A),
+                                  strokeWidth: 2.5,
+                                ),
+                              ),
                       ),
                     ),
                   ],
@@ -2800,4 +2829,57 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
       ),
     );
   }
+}
+
+/// Painter for probe wires connecting battery terminals to probe indicators.
+class _ProbeWirePainter extends CustomPainter {
+  _ProbeWirePainter({
+    required this.batteryCenter,
+    required this.redProbeCenter,
+    required this.blackProbeCenter,
+  });
+
+  final Offset batteryCenter;
+  final Offset redProbeCenter;
+  final Offset blackProbeCenter;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final battRight = batteryCenter + const Offset(30, 0);
+
+    // Red wire: battery positive (+) to red probe
+    final redWirePaint = Paint()
+      ..color = const Color(0xFFEF4444)
+      ..strokeWidth = 3.0
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    final redPath = Path()
+      ..moveTo(battRight.dx, battRight.dy - 10)
+      ..quadraticBezierTo(
+        (battRight.dx + redProbeCenter.dx) / 2,
+        battRight.dy - 10,
+        redProbeCenter.dx,
+        redProbeCenter.dy,
+      );
+    canvas.drawPath(redPath, redWirePaint);
+
+    // Black wire: battery negative (-) to black probe
+    final blackWirePaint = Paint()
+      ..color = const Color(0xFF1E293B)
+      ..strokeWidth = 3.0
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    final blackPath = Path()
+      ..moveTo(battRight.dx, battRight.dy + 10)
+      ..quadraticBezierTo(
+        (battRight.dx + blackProbeCenter.dx) / 2,
+        blackProbeCenter.dy,
+        blackProbeCenter.dx,
+        blackProbeCenter.dy,
+      );
+    canvas.drawPath(blackPath, blackWirePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _ProbeWirePainter oldDelegate) => false;
 }
