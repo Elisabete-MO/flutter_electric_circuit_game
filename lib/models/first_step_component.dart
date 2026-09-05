@@ -13,7 +13,6 @@ enum ComponentType {
   fuse,
   capacitor,
   buzzer,
-  relay,
 }
 
 /// Modelo que define um componente educativo para a seção de Primeiros Passos.
@@ -147,76 +146,5 @@ class FirstStepComponent {
           isActive: false,
           supportsStateToggle: true,
         ),
-        FirstStepComponent(
-          id: 'relay',
-          type: ComponentType.relay,
-          namePt: 'Relê',
-          nameEn: 'Relay',
-          description:
-              'Chave eletromecânica operada por uma bobina. A corrente em um circuito controla a passagem de corrente em outro circuito.',
-          symbolDescription:
-              'Um símbolo de bobina acoplado por uma linha tracejada a uma chave seletora com terminais normalmente aberto (NO) e normalmente fechado (NC).',
-          isActive: false,
-          supportsStateToggle: false,
-        ),
       ];
-}
-
-/// Extensão para resolver os caminhos das imagens PNG realistas dos componentes.
-extension ComponentTypeAssetX on ComponentType {
-  /// Caminhos das imagens da seção "Primeiros Passos" (pasta assets/components/)
-  String? getAssetPath(bool isActive) {
-    switch (this) {
-      case ComponentType.battery:
-        return 'assets/components/battery.png';
-      case ComponentType.bulb:
-        return isActive ? 'assets/components/bulb_on.png' : 'assets/components/bulb_off.png';
-      case ComponentType.switchComponent:
-        return isActive ? 'assets/components/switch_closed.png' : 'assets/components/switch_open.png';
-      case ComponentType.resistor:
-        return 'assets/components/resistor.png';
-      case ComponentType.diode:
-        return 'assets/components/diode.png';
-      case ComponentType.led:
-        return isActive ? 'assets/components/led_on.png' : 'assets/components/led_off.png';
-      case ComponentType.motor:
-        return 'assets/components/motor.png';
-      case ComponentType.capacitor:
-        return 'assets/components/capacitor.png';
-      case ComponentType.potentiometer:
-        return 'assets/components/potentiometer.png';
-      case ComponentType.fuse:
-        return 'assets/components/fuse.png';
-      case ComponentType.buzzer:
-        return 'assets/components/buzzer.png';
-      case ComponentType.relay:
-        return 'assets/components/relay.png';
-      case ComponentType.powerSupply:
-        return 'assets/components/power_supply.png';
-      case ComponentType.connectingWire:
-        return 'assets/components/wires.png';
-    }
-  }
-
-  /// Caminhos das imagens da bancada de desafios (com bornes de laboratório calibrados)
-  String? getChallengeAssetPath(bool isActive) {
-    switch (this) {
-      case ComponentType.battery:
-        return 'assets/images/component_battery_horizontal.png';
-      case ComponentType.bulb:
-        return isActive ? 'assets/images/component_bulb_on.png' : 'assets/images/component_bulb_off.png';
-      case ComponentType.switchComponent:
-        return isActive ? 'assets/images/component_switch_on.png' : 'assets/images/component_switch_off.png';
-      case ComponentType.resistor:
-        return 'assets/images/component_resistor.png';
-      case ComponentType.diode:
-        return 'assets/images/component_diode.png';
-      case ComponentType.led:
-        return isActive ? 'assets/images/component_led_on.png' : 'assets/images/component_led_off.png';
-      case ComponentType.motor:
-        return 'assets/images/component_motor.png';
-      default:
-        return getAssetPath(isActive);
-    }
-  }
 }

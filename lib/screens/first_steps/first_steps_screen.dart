@@ -27,7 +27,6 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
   late List<FirstStepComponent> _quizQuestions;
   bool _showBannerOverlay = true;
   bool _isQuizMode = false;
-  bool _useRealisticAssets = true;
   int _quizScore = 0;
   int _quizCurrentIndex = 0;
   final Set<String> _answeredCorrectlyIds = {};
@@ -49,10 +48,7 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
   void _openDetailModal(FirstStepComponent component) {
     showDialog(
       context: context,
-      builder: (context) => ComponentDetailDialog(
-        initialComponent: component,
-        useRealisticAssets: _useRealisticAssets,
-      ),
+      builder: (context) => ComponentDetailDialog(initialComponent: component),
     );
   }
 
@@ -133,116 +129,114 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
             accentColor: accentColor,
             opacity: isDark ? 0.8 : 0.9,
             padding: const EdgeInsets.all(24),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // 1. Mascote Corpo Inteiro
-                  ProfVoltsFullBody(
-                    emotion: isSuccess ? ProfVoltsEmotion.happy : ProfVoltsEmotion.sad,
-                    size: 150,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 1. Mascote Corpo Inteiro
+                ProfVoltsFullBody(
+                  emotion: isSuccess ? ProfVoltsEmotion.happy : ProfVoltsEmotion.sad,
+                  size: 150,
+                ),
+                const SizedBox(height: 16),
+                
+                // 2. Título HUD Cyber
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: accentColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: accentColor.withValues(alpha: 0.5)),
                   ),
-                  const SizedBox(height: 16),
-                  
-                  // 2. Título HUD Cyber
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: accentColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: accentColor.withValues(alpha: 0.5)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          isSuccess ? Icons.emoji_events_rounded : Icons.info_outline_rounded,
-                          color: accentColor,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          l10n.quizResultTitle,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontFamily: GoogleFonts.rajdhani().fontFamily,
-                            fontWeight: FontWeight.bold,
-                            color: accentColor,
-                            letterSpacing: 1.5,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // 3. Mensagem explicativa
-                  Text(
-                    l10n.quizResultMsg(_quizScore, _quizQuestions.length),
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      height: 1.4,
-                      fontSize: 16,
-                      fontFamily: GoogleFonts.outfit().fontFamily,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-
-                  // 4. Botões de Ação
-                  Row(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                            _resetStudyMode();
-                          },
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: theme.colorScheme.onSurface.withValues(alpha: 0.3)),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                          child: Text(
-                            l10n.quizBackStudy,
-                            style: TextStyle(
-                              fontFamily: GoogleFonts.rajdhani().fontFamily,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.0,
-                            ),
-                          ),
-                        ),
+                      Icon(
+                        isSuccess ? Icons.emoji_events_rounded : Icons.info_outline_rounded,
+                        color: accentColor,
+                        size: 20,
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: FilledButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                            _startQuizMode();
-                          },
-                          style: FilledButton.styleFrom(
-                            backgroundColor: accentColor,
-                            foregroundColor: buttonTextColor,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                          child: Text(
-                            l10n.buttonRetry,
-                            style: TextStyle(
-                              fontFamily: GoogleFonts.rajdhani().fontFamily,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.0,
-                            ),
-                          ),
+                      const SizedBox(width: 8),
+                      Text(
+                        l10n.quizResultTitle,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontFamily: GoogleFonts.rajdhani().fontFamily,
+                          fontWeight: FontWeight.bold,
+                          color: accentColor,
+                          letterSpacing: 1.5,
                         ),
+                        textAlign: TextAlign.center,
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 16),
+
+                // 3. Mensagem explicativa
+                Text(
+                  l10n.quizResultMsg(_quizScore, _quizQuestions.length),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    height: 1.4,
+                    fontSize: 16,
+                    fontFamily: GoogleFonts.outfit().fontFamily,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+
+                // 4. Botões de Ação
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          _resetStudyMode();
+                        },
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: theme.colorScheme.onSurface.withValues(alpha: 0.3)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: Text(
+                          l10n.quizBackStudy,
+                          style: TextStyle(
+                            fontFamily: GoogleFonts.rajdhani().fontFamily,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          _startQuizMode();
+                        },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: accentColor,
+                          foregroundColor: buttonTextColor,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: Text(
+                          l10n.buttonRetry,
+                          style: TextStyle(
+                            fontFamily: GoogleFonts.rajdhani().fontFamily,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ),
@@ -260,124 +254,30 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
       appBar: AppBar(
         title: Text(l10n.firstStepsTitle),
         actions: [
-          // 1. Botão de alternar "Modo realista" / "Modo cartoon" (Padrão: Realista)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(20),
-              onTap: () {
-                setState(() {
-                  _useRealisticAssets = !_useRealisticAssets;
-                });
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: _useRealisticAssets
-                      ? theme.colorScheme.primary.withValues(alpha: 0.18)
-                      : (isDark
-                          ? const Color(0xFF1E293B)
-                          : const Color(0xFFE2E8F0)),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: _useRealisticAssets
-                        ? theme.colorScheme.primary
-                        : (isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1)),
-                    width: 1.2,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      _useRealisticAssets ? Icons.photo_library_rounded : Icons.brush_rounded,
-                      size: 18,
-                      color: _useRealisticAssets ? theme.colorScheme.primary : theme.colorScheme.onSurface,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      _useRealisticAssets ? 'Modo realista' : 'Modo cartoon',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        fontFamily: GoogleFonts.rajdhani().fontFamily,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.8,
-                        color: _useRealisticAssets ? theme.colorScheme.primary : theme.colorScheme.onSurface,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          // 2. Botão "Modo desafio" / "Modo estudo"
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(20),
-              onTap: () {
-                if (_isQuizMode) {
-                  _resetStudyMode();
-                } else {
-                  _startQuizMode();
-                }
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: _isQuizMode
-                      ? (isDark ? const Color(0xFF00FF9D).withValues(alpha: 0.2) : const Color(0xFF00875A).withValues(alpha: 0.15))
-                      : (isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: _isQuizMode
-                        ? (isDark ? const Color(0xFF00FF9D) : const Color(0xFF00875A))
-                        : (isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1)),
-                    width: 1.2,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      _isQuizMode ? Icons.sports_esports_rounded : Icons.school_rounded,
-                      size: 18,
-                      color: _isQuizMode
-                          ? (isDark ? const Color(0xFF00FF9D) : const Color(0xFF00875A))
-                          : theme.colorScheme.onSurface,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      _isQuizMode ? 'Modo desafio' : 'Modo estudo',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        fontFamily: GoogleFonts.rajdhani().fontFamily,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.8,
-                        color: _isQuizMode
-                            ? (isDark ? const Color(0xFF00FF9D) : const Color(0xFF00875A))
-                            : theme.colorScheme.onSurface,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          // 3. Botão de interrogação por último (Help/Instrução)
           IconButton(
             icon: Icon(
               _showBannerOverlay
-                  ? Icons.help_rounded
-                  : Icons.help_outline_rounded,
+                  ? Icons.info_rounded
+                  : Icons.info_outline_rounded,
             ),
             tooltip: 'Alternar instrução',
             onPressed: () {
               setState(() {
                 _showBannerOverlay = !_showBannerOverlay;
               });
+            },
+          ),
+          IconButton(
+            icon: Icon(
+              _isQuizMode ? Icons.school_rounded : Icons.quiz_rounded,
+            ),
+            tooltip: _isQuizMode ? 'Modo Estudo' : l10n.challengeMode,
+            onPressed: () {
+              if (_isQuizMode) {
+                _resetStudyMode();
+              } else {
+                _startQuizMode();
+              }
             },
           ),
           const SizedBox(width: 8),
@@ -548,60 +448,54 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
                 ),
               ),
 
-            // GRID DE 8 COMPONENTES (Ajustado dinamicamente para caber na tela com proporção ideal)
+            // GRID DE 8 COMPONENTES (Ajustado dinamicamente para caber na tela sem scroll)
             Expanded(
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 1400),
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        final crossAxisCount = constraints.maxWidth >= 640 ? 4 : 2;
-                        final rowCount = (_gridComponents.length / crossAxisCount).ceil();
-                        
-                        const spacing = 12.0;
-                        final availableWidth = constraints.maxWidth;
-                        final availableHeight = constraints.maxHeight;
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(10, 4, 10, 10),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final crossAxisCount = constraints.maxWidth >= 640 ? 4 : 2;
+                    final rowCount = (_gridComponents.length / crossAxisCount).ceil();
+                    
+                    const spacing = 10.0;
+                    final availableWidth = constraints.maxWidth;
+                    final availableHeight = constraints.maxHeight;
 
-                        final itemWidth = (availableWidth - (crossAxisCount - 1) * spacing) / crossAxisCount;
-                        final itemHeight = (availableHeight - (rowCount - 1) * spacing) / rowCount;
+                    final itemWidth = (availableWidth - (crossAxisCount - 1) * spacing) / crossAxisCount;
+                    final itemHeight = (availableHeight - (rowCount - 1) * spacing) / rowCount;
 
-                        final childAspectRatio = (itemWidth > 0 && itemHeight > 0)
-                            ? (itemWidth / itemHeight)
-                            : 0.88;
+                    final childAspectRatio = (itemWidth > 0 && itemHeight > 0)
+                        ? (itemWidth / itemHeight)
+                        : 0.88;
 
-                        return GridView.builder(
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: _gridComponents.length,
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: crossAxisCount,
-                            crossAxisSpacing: spacing,
-                            mainAxisSpacing: spacing,
-                            childAspectRatio: childAspectRatio,
-                          ),
-                          itemBuilder: (context, index) {
-                            final comp = _gridComponents[index];
+                    return GridView.builder(
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _gridComponents.length,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        crossAxisSpacing: spacing,
+                        mainAxisSpacing: spacing,
+                        childAspectRatio: childAspectRatio,
+                      ),
+                      itemBuilder: (context, index) {
+                        final comp = _gridComponents[index];
 
-                            return SymbolCard(
-                              component: comp,
-                              showLabels: !_isQuizMode,
-                              isCorrectlyAnswered: _answeredCorrectlyIds.contains(comp.id),
-                              useRealisticAssets: _useRealisticAssets,
-                              onTap: () {
-                                if (_isQuizMode) {
-                                  _answerQuiz(comp);
-                                } else {
-                                  _openDetailModal(comp);
-                                }
-                              },
-                              onToggleState: () => _toggleComponentState(index),
-                            );
+                        return SymbolCard(
+                          component: comp,
+                          showLabels: !_isQuizMode,
+                          isCorrectlyAnswered: _answeredCorrectlyIds.contains(comp.id),
+                          onTap: () {
+                            if (_isQuizMode) {
+                              _answerQuiz(comp);
+                            } else {
+                              _openDetailModal(comp);
+                            }
                           },
+                          onToggleState: () => _toggleComponentState(index),
                         );
                       },
-                    ),
-                  ),
+                    );
+                  },
                 ),
               ),
             ),

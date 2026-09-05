@@ -42,6 +42,7 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
   ComponentType? _slotMotor;
 
   late final AnimationController _currentAnimationController;
+  late final AnimationController _pulseAnimationController;
   late final ConfettiController _confettiController;
   final ScrollController _paletteVerticalScrollController = ScrollController();
   final ScrollController _paletteHorizontalScrollController = ScrollController();
@@ -70,6 +71,11 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat();
+
+    _pulseAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
   }
 
   @override
@@ -77,6 +83,7 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
     _timer?.cancel();
     _audio.stopBgm();
     _currentAnimationController.dispose();
+    _pulseAnimationController.dispose();
     _confettiController.dispose();
     _paletteVerticalScrollController.dispose();
     _paletteHorizontalScrollController.dispose();
@@ -172,97 +179,10 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final isWide = constraints.maxWidth >= 600;
-                  final w = constraints.maxWidth;
-                  final h = constraints.maxHeight;
-                  final cx = w / 2;
-                  final cy = h / 2;
-
-                  final double batX, batY, swX, swY, motorX, motorY;
-                  final double batW, batH, swW, swH, motorW, motorH;
-
-                  if (_showDiagramMode) {
-                    final dx = (w * 0.38).clamp(120.0, 220.0);
-                    final dy = (h * 0.30).clamp(80.0, 140.0);
-                    final sz = (w * 0.14).clamp(70.0, 110.0);
-
-                    batX = cx - dx;
-                    batY = cy;
-                    batW = sz;
-                    batH = sz;
-
-                    swX = cx;
-                    swY = cy - dy;
-                    swW = sz;
-                    swH = sz;
-
-                    motorX = cx;
-                    motorY = cy + dy;
-                    motorW = sz;
-                    motorH = sz;
-                  } else {
-                    batX = w * 0.18;
-                    batY = h * 0.50;
-                    batW = 180.0;
-                    batH = 180.0;
-
-                    swX = w * 0.65;
-                    swY = h * 0.24;
-                    swW = 170.0;
-                    swH = 170.0;
-
-                    motorX = w * 0.65;
-                    motorY = h * 0.76;
-                    motorW = 170.0;
-                    motorH = 170.0;
-                  }
 
                   final circuitBoardArea = Stack(
                     children: [
-                      // 1. Componentes Físicos (PNGs) com Transição Suave de Posição
-                      Positioned.fill(
-                        child: Stack(
-                          children: [
-                            AnimatedPositioned(
-                              duration: const Duration(milliseconds: 350),
-                              curve: Curves.easeInOut,
-                              left: batX - (batW / 2),
-                              top: batY - (batH / 2),
-                              width: batW,
-                              height: batH,
-                              child: Image.asset(
-                                ComponentType.battery.getChallengeAssetPath(false)!,
-                                fit: BoxFit.contain,
-                              ),
-                            ),
-                            AnimatedPositioned(
-                              duration: const Duration(milliseconds: 350),
-                              curve: Curves.easeInOut,
-                              left: swX - (swW / 2),
-                              top: swY - (swH / 2),
-                              width: swW,
-                              height: swH,
-                              child: Image.asset(
-                                ComponentType.switchComponent.getChallengeAssetPath(_isSwitchClosed)!,
-                                fit: BoxFit.contain,
-                              ),
-                            ),
-                            AnimatedPositioned(
-                              duration: const Duration(milliseconds: 350),
-                              curve: Curves.easeInOut,
-                              left: motorX - (motorW / 2),
-                              top: motorY - (motorH / 2),
-                              width: motorW,
-                              height: motorH,
-                              child: Image.asset(
-                                ComponentType.motor.getChallengeAssetPath(_isSwitchClosed)!,
-                                fit: BoxFit.contain,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // Fundo Estático da Bancada & Fios Físicos / Esquema
+                      // Fundo Estático da Bancada do Circuito (Repinta apenas quando o circuito muda de estado)
                       Positioned.fill(
                         child: RepaintBoundary(
                           child: CustomPaint(
@@ -273,17 +193,7 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
                               slotSwitch: _slotSwitch,
                               slotMotor: _slotMotor,
                               isDark: isDark,
-                              useRealisticAssets: true,
                               drawParticlesOnly: false,
-                              batX: batX,
-                              batY: batY,
-                              swX: swX,
-                              swY: swY,
-                              motorX: motorX,
-                              motorY: motorY,
-                              batSize: batW,
-                              swSize: swW,
-                              motorSize: motorW,
                             ),
                           ),
                         ),
@@ -304,18 +214,8 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
                                     slotSwitch: _slotSwitch,
                                     slotMotor: _slotMotor,
                                     isDark: isDark,
-                                    useRealisticAssets: true,
                                     currentProgress: _currentAnimationController.value,
                                     drawParticlesOnly: true,
-                                    batX: batX,
-                                    batY: batY,
-                                    swX: swX,
-                                    swY: swY,
-                                    motorX: motorX,
-                                    motorY: motorY,
-                                    batSize: batW,
-                                    swSize: swW,
-                                    motorSize: motorW,
                                   ),
                                 );
                               },
@@ -380,10 +280,10 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
                       // Clique Direto no Asset do Interruptor Físico na Bancada
                       if (!_showDiagramMode)
                         Positioned(
-                          left: swX - (swW / 2),
-                          top: swY - (swH / 2),
-                          width: swW,
-                          height: swH,
+                          left: constraints.maxWidth * 0.50 - 70,
+                          top: constraints.maxHeight * 0.22 - 45,
+                          width: 140,
+                          height: 90,
                           child: MouseRegion(
                             cursor: SystemMouseCursors.click,
                             child: GestureDetector(
@@ -434,48 +334,63 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
                         ),
                       ),
 
-                      // Slots de Drop no Modo Diagrama (Sobrepostos aos Componentes Físicos)
+                      // Slots de Drop no Modo Diagrama (Bateria, Interruptor, Motor)
                       if (_showDiagramMode)
                         Positioned.fill(
-                          child: Stack(
-                            children: [
-                              // Slot 1: Bateria (Lado Esquerdo)
-                              _buildDropSlot(
-                                left: batX - (batW / 2),
-                                top: batY - (batH / 2),
-                                width: batW,
-                                height: batH,
-                                currentType: _slotBattery,
-                                label: l10n.compBattery,
-                                onAccept: (type) => setState(() => _slotBattery = type),
-                                onClear: () => setState(() => _slotBattery = null),
-                                isVertical: true,
-                              ),
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              final cx = constraints.maxWidth / 2;
+                              final cy = constraints.maxHeight / 2;
 
-                              // Slot 2: Interruptor (Topo do Diagrama)
-                              _buildDropSlot(
-                                left: swX - (swW / 2),
-                                top: swY - (swH / 2),
-                                width: swW,
-                                height: swH,
-                                currentType: _slotSwitch,
-                                label: l10n.compSwitch,
-                                onAccept: (type) => setState(() => _slotSwitch = type),
-                                onClear: () => setState(() => _slotSwitch = null),
-                              ),
+                              // Adapta dinamicamente o tamanho do diagrama Ã s dimensões da tela
+                              final dx = (constraints.maxWidth * 0.26).clamp(80.0, 150.0);
+                              final dy = (constraints.maxHeight * 0.22).clamp(55.0, 100.0);
 
-                              // Slot 3: Motor (Base do Diagrama)
-                              _buildDropSlot(
-                                left: motorX - (motorW / 2),
-                                top: motorY - (motorH / 2),
-                                width: motorW,
-                                height: motorH,
-                                currentType: _slotMotor,
-                                label: l10n.compMotor,
-                                onAccept: (type) => setState(() => _slotMotor = type),
-                                onClear: () => setState(() => _slotMotor = null),
-                              ),
-                            ],
+                              final leftX = cx - dx;
+                              final topY = cy - dy;
+                              final bottomY = cy + dy;
+
+                              return Stack(
+                                children: [
+                                  // Slot 1: Bateria (Lado Esquerdo)
+                                  _buildDropSlot(
+                                    left: leftX - 40,
+                                    top: cy - 30,
+                                    width: 80,
+                                    height: 60,
+                                    currentType: _slotBattery,
+                                    label: l10n.compBattery,
+                                    onAccept: (type) => setState(() => _slotBattery = type),
+                                    onClear: () => setState(() => _slotBattery = null),
+                                    isVertical: true,
+                                  ),
+
+                                  // Slot 2: Interruptor (Topo do Diagrama)
+                                  _buildDropSlot(
+                                    left: cx - 40,
+                                    top: topY - 30,
+                                    width: 80,
+                                    height: 60,
+                                    currentType: _slotSwitch,
+                                    label: l10n.compSwitch,
+                                    onAccept: (type) => setState(() => _slotSwitch = type),
+                                    onClear: () => setState(() => _slotSwitch = null),
+                                  ),
+
+                                  // Slot 3: Motor (Base do Diagrama)
+                                  _buildDropSlot(
+                                    left: cx - 40,
+                                    top: bottomY - 30,
+                                    width: 80,
+                                    height: 60,
+                                    currentType: _slotMotor,
+                                    label: l10n.compMotor,
+                                    onAccept: (type) => setState(() => _slotMotor = type),
+                                    onClear: () => setState(() => _slotMotor = null),
+                                  ),
+                                ],
+                              );
+                            },
                           ),
                         ),
                     ],
@@ -596,10 +511,10 @@ class _Challenge2DetailScreenState extends ConsumerState<Challenge2DetailScreen>
               height: height,
               decoration: BoxDecoration(
                 color: currentType != null
-                    ? (isDark ? const Color(0xFF1E2A3A).withValues(alpha: 0.15) : const Color(0xFFE0F7FA).withValues(alpha: 0.15))
+                    ? (isDark ? const Color(0xFF1E2A3A) : const Color(0xFFE0F7FA))
                     : (isHovered
-                        ? const Color(0xFFFFF9C4).withValues(alpha: 0.4)
-                        : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05))),
+                        ? const Color(0xFFFFF9C4)
+                        : (isDark ? const Color(0xFF263238) : Colors.white)),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: isHovered
@@ -649,18 +564,8 @@ class _Challenge2BoardPainter extends CustomPainter {
     required this.slotSwitch,
     required this.slotMotor,
     required this.isDark,
-    this.useRealisticAssets = true,
     this.currentProgress = 0.0,
     this.drawParticlesOnly = false,
-    this.batX = 0,
-    this.batY = 0,
-    this.swX = 0,
-    this.swY = 0,
-    this.motorX = 0,
-    this.motorY = 0,
-    this.batSize = 180,
-    this.swSize = 170,
-    this.motorSize = 170,
   });
 
   final bool isSwitchClosed;
@@ -669,19 +574,8 @@ class _Challenge2BoardPainter extends CustomPainter {
   final ComponentType? slotSwitch;
   final ComponentType? slotMotor;
   final bool isDark;
-  final bool useRealisticAssets;
   final double currentProgress;
   final bool drawParticlesOnly;
-
-  final double batX;
-  final double batY;
-  final double swX;
-  final double swY;
-  final double motorX;
-  final double motorY;
-  final double batSize;
-  final double swSize;
-  final double motorSize;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -716,63 +610,48 @@ class _Challenge2BoardPainter extends CustomPainter {
   void _drawPhysicalCircuitOverlay(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
-    final scale = showDiagramMode ? 0.65 : 1.0;
 
     final batX = w * 0.18;
-    final batY = h * 0.50;
-    final batW = 180.0;
-    final batH = 180.0;
-    final batLeft = batX - (batW / 2);
-    final batTop = batY - (batH / 2);
+    final batY = h * 0.48;
 
-    final swX = w * 0.65;
-    final swY = h * 0.24;
-    final swW = 170.0;
-    final swH = 170.0;
-    final swLeft = swX - (swW / 2);
-    final swTop = swY - (swH / 2);
+    final swX = w * 0.72;
+    final swY = h * 0.26;
 
-    final motorX = w * 0.65;
-    final motorY = h * 0.76;
-    final motorW = 170.0;
-    final motorH = 170.0;
-    final motorLeft = motorX - (motorW / 2);
-    final motorTop = motorY - (motorH / 2);
+    final motorX = w * 0.72;
+    final motorY = h * 0.72;
 
     // Bornes
-    final batPosTerm = Offset(batLeft + batW * 0.855, batTop + batH * 0.383);
-    final batNegTerm = Offset(batLeft + batW * 0.849, batTop + batH * 0.609);
+    final batPosTerm = Offset(batX + 22, batY - 26);
+    final batNegTerm = Offset(batX - 16, batY - 22);
 
-    final swRedTerm  = Offset(swLeft + swW * 0.138, swTop + swH * 0.310);
-    final swBlackTerm = Offset(swLeft + swW * 0.876, swTop + swH * 0.310);
+    final swRedTerm  = Offset(swX - 25, swY + 6);
+    final swBlackTerm = Offset(swX + 25, swY + 6);
 
-    final motorRedTerm  = Offset(motorLeft + motorW * 0.124, motorTop + motorH * 0.384);
-    final motorBlackTerm = Offset(motorLeft + motorW * 0.880, motorTop + motorH * 0.383);
+    final motorRedTerm  = Offset(motorX - 34, motorY + 4);
+    final motorBlackTerm = Offset(motorX + 34, motorY + 4);
 
-    // 1. Fio Vermelho (Bateria + até Borne Vermelho do Interruptor)
+    // Fios
     final pathRed = Path();
     pathRed.moveTo(batPosTerm.dx, batPosTerm.dy);
     pathRed.cubicTo(
-      batPosTerm.dx, swRedTerm.dy + 35,
-      batPosTerm.dx + (w * 0.08), swRedTerm.dy,
+      batPosTerm.dx + 40, batPosTerm.dy - (h * 0.28),
+      swRedTerm.dx - (w * 0.12), swRedTerm.dy - 40,
       swRedTerm.dx, swRedTerm.dy,
     );
 
-    // 2. Fio de Interconexão (Borne Preto do Interruptor até Borne Vermelho do Motor)
     final pathWireInter = Path();
     pathWireInter.moveTo(swBlackTerm.dx, swBlackTerm.dy);
     pathWireInter.cubicTo(
-      swBlackTerm.dx + (w * 0.16), swBlackTerm.dy - (h * 0.10),
-      motorBlackTerm.dx + (w * 0.16), motorBlackTerm.dy + (h * 0.10),
-      motorBlackTerm.dx, motorBlackTerm.dy,
+      swBlackTerm.dx + (w * 0.10), swBlackTerm.dy + (h * 0.12),
+      motorRedTerm.dx + (w * 0.08), motorRedTerm.dy - (h * 0.12),
+      motorRedTerm.dx, motorRedTerm.dy,
     );
 
-    // 3. Fio Preto de Retorno (Borne Preto do Motor até Polo (-) da Bateria)
     final pathWireRet = Path();
-    pathWireRet.moveTo(motorRedTerm.dx, motorRedTerm.dy);
+    pathWireRet.moveTo(motorBlackTerm.dx, motorBlackTerm.dy);
     pathWireRet.cubicTo(
-      batNegTerm.dx + (w * 0.08), motorRedTerm.dy,
-      batNegTerm.dx, motorRedTerm.dy - 35,
+      motorBlackTerm.dx - (w * 0.10), motorBlackTerm.dy + (h * 0.18),
+      batNegTerm.dx + (w * 0.05), batNegTerm.dy + (h * 0.32),
       batNegTerm.dx, batNegTerm.dy,
     );
 
@@ -854,15 +733,13 @@ class _Challenge2BoardPainter extends CustomPainter {
     canvas.drawPath(pathWireInter.transform(highlightTransform.storage), wireHighlightPaint);
     canvas.drawPath(pathWireRet.transform(highlightTransform.storage), wireHighlightPaint);
 
-    // Conectores redondos (Plugues 3D) colocados diretamente sobre as entradas dos bornes
-    _drawWireTerminalPlug(canvas, batPosTerm, const Color(0xFFEF5350));
-    _drawWireTerminalPlug(canvas, batNegTerm, isDark ? const Color(0xFF9E9E9E) : const Color(0xFF37474F));
-    _drawWireTerminalPlug(canvas, swRedTerm, const Color(0xFFEF5350));
-    _drawWireTerminalPlug(canvas, swBlackTerm, isDark ? const Color(0xFF42A5F5) : const Color(0xFF1E88E5));
-    _drawWireTerminalPlug(canvas, motorRedTerm, isDark ? const Color(0xFF9E9E9E) : const Color(0xFF37474F));
-    _drawWireTerminalPlug(canvas, motorBlackTerm, isDark ? const Color(0xFF42A5F5) : const Color(0xFF1E88E5));
-
-    if (useRealisticAssets) return;
+    final plugPaint = Paint()..color = const Color(0xFF424242);
+    canvas.drawCircle(batPosTerm, 5, plugPaint);
+    canvas.drawCircle(batNegTerm, 5, plugPaint);
+    canvas.drawCircle(swRedTerm, 4, plugPaint);
+    canvas.drawCircle(swBlackTerm, 4, plugPaint);
+    canvas.drawCircle(motorRedTerm, 4, plugPaint);
+    canvas.drawCircle(motorBlackTerm, 4, plugPaint);
 
     final batPainter = ComponentPhysicalPainter(
       type: ComponentType.battery,
@@ -881,18 +758,18 @@ class _Challenge2BoardPainter extends CustomPainter {
     );
 
     canvas.save();
-    canvas.translate(batX - 60 * scale, batY - 50 * scale);
-    batPainter.paint(canvas, Size(120 * scale, 100 * scale));
+    canvas.translate(batX - 60, batY - 50);
+    batPainter.paint(canvas, const Size(120, 100));
     canvas.restore();
 
     canvas.save();
-    canvas.translate(swX - 70 * scale, swY - 45 * scale);
-    swPainter.paint(canvas, Size(140 * scale, 90 * scale));
+    canvas.translate(swX - 70, swY - 45);
+    swPainter.paint(canvas, const Size(140, 90));
     canvas.restore();
 
     canvas.save();
-    canvas.translate(motorX - 70 * scale, motorY - 45 * scale);
-    motorPainter.paint(canvas, Size(140 * scale, 90 * scale));
+    canvas.translate(motorX - 70, motorY - 45);
+    motorPainter.paint(canvas, const Size(140, 90));
     canvas.restore();
   }
 
@@ -919,76 +796,39 @@ class _Challenge2BoardPainter extends CustomPainter {
     }
   }
 
-  void _drawWireTerminalPlug(Canvas canvas, Offset pos, Color color) {
-    // Sombra do conector/plugue
-    final shadowPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.35)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
-    canvas.drawCircle(pos + const Offset(1, 2), 6.5, shadowPaint);
-
-    // Anel metálico (borda prata do borne)
-    final metalPaint = Paint()
-      ..color = const Color(0xFFECEFF1)
-      ..style = PaintingStyle.fill;
-    final metalBorderPaint = Paint()
-      ..color = const Color(0xFF455A64)
-      ..strokeWidth = 1.0
-      ..style = PaintingStyle.stroke;
-
-    canvas.drawCircle(pos, 7.0, metalPaint);
-    canvas.drawCircle(pos, 7.0, metalBorderPaint);
-
-    // Plugue redondo colorido (vermelho ou preto)
-    final plugPaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-    final plugBorderPaint = Paint()
-      ..color = Colors.black45
-      ..strokeWidth = 0.8
-      ..style = PaintingStyle.stroke;
-
-    canvas.drawCircle(pos, 5.2, plugPaint);
-    canvas.drawCircle(pos, 5.2, plugBorderPaint);
-
-    // Brilho especular (Highlight 3D)
-    final highlightPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.7)
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(pos + const Offset(-1.5, -1.5), 1.8, highlightPaint);
-  }
-
   void _drawDiagramWireOverlay(Canvas canvas, Size size) {
     final w = size.width;
+    final h = size.height;
+    final cx = w / 2;
+    final cy = h / 2;
 
     final wirePaint = Paint()
       ..color = isDark ? const Color(0xFF00E5FF) : const Color(0xFF1E293B)
-      ..strokeWidth = 3.5
+      ..strokeWidth = 3
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.square;
 
-    final batHalfH = batSize / 2;
-    final swHalfW = swSize / 2;
-    final motorHalfW = motorSize / 2;
+    // Adapta dinamicamente a largura e a altura do retângulo do diagrama Ã  tela
+    final dx = (w * 0.26).clamp(80.0, 150.0);
+    final dy = (h * 0.22).clamp(55.0, 100.0);
 
-    final rightX = batX + (w - batX * 2);
+    final leftX = cx - dx;
+    final rightX = cx + dx;
+    final topY = cy - dy;
+    final bottomY = cy + dy;
 
     final path = Path();
-
-    // 1. Polo (+) Bateria -> Canto superior esquerdo -> Entrada esquerda Interruptor
-    path.moveTo(batX, batY - batHalfH);
-    path.lineTo(batX, swY);
-    path.lineTo(swX - swHalfW, swY);
-
-    // 2. Saída direita Interruptor -> Canto superior direito -> Canto inferior direito -> Entrada direita Motor
-    path.moveTo(swX + swHalfW, swY);
-    path.lineTo(rightX, swY);
-    path.lineTo(rightX, motorY);
-    path.lineTo(motorX + motorHalfW, motorY);
-
-    // 3. Saída esquerda Motor -> Canto inferior esquerdo -> Polo (-) Bateria
-    path.moveTo(motorX - motorHalfW, motorY);
-    path.lineTo(batX, motorY);
-    path.lineTo(batX, batY + batHalfH);
+    path.moveTo(leftX, topY);
+    path.lineTo(cx - 40, topY);
+    path.moveTo(cx + 40, topY);
+    path.lineTo(rightX, topY);
+    path.lineTo(rightX, bottomY);
+    path.lineTo(cx + 40, bottomY);
+    path.moveTo(cx - 40, bottomY);
+    path.lineTo(leftX, bottomY);
+    path.lineTo(leftX, cy + 30);
+    path.moveTo(leftX, cy - 30);
+    path.lineTo(leftX, topY);
 
     canvas.drawPath(path, wirePaint);
   }
@@ -1002,12 +842,6 @@ class _Challenge2BoardPainter extends CustomPainter {
         oldDelegate.slotMotor != slotMotor ||
         oldDelegate.isDark != isDark ||
         oldDelegate.currentProgress != currentProgress ||
-        oldDelegate.drawParticlesOnly != drawParticlesOnly ||
-        oldDelegate.batX != batX ||
-        oldDelegate.batY != batY ||
-        oldDelegate.swX != swX ||
-        oldDelegate.swY != swY ||
-        oldDelegate.motorX != motorX ||
-        oldDelegate.motorY != motorY;
+        oldDelegate.drawParticlesOnly != drawParticlesOnly;
   }
 }

@@ -11,7 +11,6 @@ class SandboxToolboxWidget extends StatelessWidget {
   final bool isHorizontal;
   final bool isDark;
   final bool isDiagramMode;
-  final bool useRealisticAssets;
   final String Function(ComponentType, AppLocalizations) getComponentName;
 
   const SandboxToolboxWidget({
@@ -19,7 +18,6 @@ class SandboxToolboxWidget extends StatelessWidget {
     this.isHorizontal = false,
     required this.isDark,
     required this.isDiagramMode,
-    this.useRealisticAssets = true,
     required this.getComponentName,
   });
 
@@ -36,7 +34,6 @@ class SandboxToolboxWidget extends StatelessWidget {
         ComponentType.fuse,
         ComponentType.capacitor,
         ComponentType.buzzer,
-        ComponentType.relay,
       ];
 
   @override
@@ -128,65 +125,20 @@ class SandboxToolboxWidget extends StatelessWidget {
           children: [
             AspectRatio(
               aspectRatio: compact ? 2.0 : 1.8,
-              child: Stack(
-                children: [
-                  if (isDiagramMode)
-                    Positioned.fill(
-                      child: Opacity(
-                        opacity: isDark ? 0.25 : 0.30,
-                        child: (useRealisticAssets && type.getAssetPath(false) != null
-                            ? Image.asset(
-                                type.getAssetPath(false)!,
-                                fit: BoxFit.contain,
-                                errorBuilder: (context, error, stackTrace) => CustomPaint(
-                                  painter: ComponentPhysicalPainter(
-                                    type: type,
-                                    isActive: false,
-                                    isDarkMode: isDark,
-                                  ),
-                                ),
-                              )
-                            : CustomPaint(
-                                painter: ComponentPhysicalPainter(
-                                  type: type,
-                                  isActive: false,
-                                  isDarkMode: isDark,
-                                ),
-                              )),
+              child: CustomPaint(
+                painter: isDiagramMode
+                    ? CircuitSymbolPainter(
+                        type: type,
+                        isActive: false,
+                        color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
+                        activeColor: const Color(0xFFFFB300),
+                        strokeWidth: 2.0,
+                      )
+                    : ComponentPhysicalPainter(
+                        type: type,
+                        isActive: false,
+                        isDarkMode: isDark,
                       ),
-                    ),
-                  Positioned.fill(
-                    child: isDiagramMode
-                        ? CustomPaint(
-                            painter: CircuitSymbolPainter(
-                              type: type,
-                              isActive: false,
-                              color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
-                              activeColor: const Color(0xFFFFB300),
-                              strokeWidth: 2.0,
-                            ),
-                          )
-                        : (useRealisticAssets && type.getAssetPath(false) != null
-                            ? Image.asset(
-                                type.getAssetPath(false)!,
-                                fit: BoxFit.contain,
-                                errorBuilder: (context, error, stackTrace) => CustomPaint(
-                                  painter: ComponentPhysicalPainter(
-                                    type: type,
-                                    isActive: false,
-                                    isDarkMode: isDark,
-                                  ),
-                                ),
-                              )
-                            : CustomPaint(
-                                painter: ComponentPhysicalPainter(
-                                  type: type,
-                                  isActive: false,
-                                  isDarkMode: isDark,
-                                ),
-                              )),
-                  ),
-                ],
               ),
             ),
             const SizedBox(height: 3),

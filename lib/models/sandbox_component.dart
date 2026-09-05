@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'first_step_component.dart';
 
@@ -68,77 +67,37 @@ class SandboxComponent {
     );
   }
 
-  /// Retorna os terminais disponíveis baseados no tipo do componente
-  List<String> get availableTerminals {
-    if (type == ComponentType.relay) {
-      return ['C1', 'C2', 'COM', 'NO', 'NC'];
-    }
-    return ['A', 'B'];
-  }
-
-  /// Retorna as conexões internas possíveis para um dado terminal de entrada.
-  List<String> getInternalConnections(String inputTerminal) {
-    if (type == ComponentType.relay) {
-      if (inputTerminal == 'C1') return ['C2'];
-      if (inputTerminal == 'C2') return ['C1'];
-      if (isActive) {
-        if (inputTerminal == 'COM') return ['NO'];
-        if (inputTerminal == 'NO') return ['COM'];
-      } else {
-        if (inputTerminal == 'COM') return ['NC'];
-        if (inputTerminal == 'NC') return ['COM'];
-      }
-      return [];
-    }
-
-    // Padrão 2 terminais
-    if (inputTerminal == 'A') return ['B'];
-    if (inputTerminal == 'B') return ['A'];
-    return [];
-  }
-
-  /// Retorna a posição relativa de um terminal específico com base na rotação.
-  Offset getTerminalPosition(String terminalId) {
-    Offset baseOffset = Offset.zero;
-
-    if (type == ComponentType.relay) {
-      switch (terminalId) {
-        case 'C1': baseOffset = const Offset(-0.5, -0.25); break;
-        case 'C2': baseOffset = const Offset(-0.5, 0.25); break;
-        case 'COM': baseOffset = const Offset(0.5, 0.0); break;
-        case 'NO': baseOffset = const Offset(0.5, -0.35); break;
-        case 'NC': baseOffset = const Offset(0.5, 0.35); break;
-        default: baseOffset = const Offset(0.0, 0.0);
-      }
-    } else {
-      switch (terminalId) {
-        case 'A': baseOffset = const Offset(-0.5, 0.0); break;
-        case 'B': baseOffset = const Offset(0.5, 0.0); break;
-        default: baseOffset = const Offset(0.0, 0.0);
-      }
-    }
-
-    // Rotacionar em torno do centro (0, 0) local
-    final rad = rotation * math.pi / 180.0;
-    final dx = baseOffset.dx;
-    final dy = baseOffset.dy;
-    
-    // Tratando imprecisões de ponto flutuante para ângulos ortogonais perfeitos
-    double rotX = dx * math.cos(rad) - dy * math.sin(rad);
-    double rotY = dx * math.sin(rad) + dy * math.cos(rad);
-    
-    rotX = (rotX * 1000).roundToDouble() / 1000;
-    rotY = (rotY * 1000).roundToDouble() / 1000;
-
+  /// Retorna as coordenadas relativas dos terminais A (Entrada) e B (Saída) com base na rotação.
+  /// A célula do grid tem tamanho unitário (1.0).
+  Offset getTerminalAPosition() {
     final cx = gridX + 0.5;
     final cy = gridY + 0.5;
 
-    return Offset(cx + rotX, cy + rotY);
+    if (rotation == 90.0) {
+      return Offset(cx, cy - 0.5); // Topo
+    } else if (rotation == 180.0) {
+      return Offset(cx + 0.5, cy); // Direita
+    } else if (rotation == 270.0) {
+      return Offset(cx, cy + 0.5); // Base
+    } else {
+      return Offset(cx - 0.5, cy); // Esquerda
+    }
   }
 
-  // Deprecated compatibilidade (serão atualizados logo nas outras classes)
-  Offset getTerminalAPosition() => getTerminalPosition('A');
-  Offset getTerminalBPosition() => getTerminalPosition('B');
+  Offset getTerminalBPosition() {
+    final cx = gridX + 0.5;
+    final cy = gridY + 0.5;
+
+    if (rotation == 90.0) {
+      return Offset(cx, cy + 0.5); // Base
+    } else if (rotation == 180.0) {
+      return Offset(cx - 0.5, cy); // Esquerda
+    } else if (rotation == 270.0) {
+      return Offset(cx, cy - 0.5); // Topo
+    } else {
+      return Offset(cx + 0.5, cy); // Direita
+    }
+  }
 
   Map<String, dynamic> toMap() {
     return {
