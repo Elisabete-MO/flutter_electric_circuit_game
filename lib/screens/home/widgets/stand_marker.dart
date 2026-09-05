@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../app/theme.dart';
 import '../../../models/stand_data.dart';
 
+import '../../../core/ui_scale.dart';
+
 /// Widget que renderiza o estande da Feira de Ciências com perspectiva top-down 3D,
 /// ícones temáticos e badges visuais de status.
 class StandMarker extends StatefulWidget {
@@ -198,7 +200,7 @@ class _StandMarkerState extends State<StandMarker> {
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w900,
-                      fontSize: (widget.width * 0.11).clamp(11.0, 14.0),
+                      fontSize: UiScale.of(context).font(widget.width * 0.11, min: 11.0, max: 20.0),
                       letterSpacing: 0.2,
                     ),
                   ),
@@ -230,7 +232,7 @@ class _StandMarkerState extends State<StandMarker> {
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
-                        fontSize: (widget.width * 0.08).clamp(8.0, 10.0),
+                        fontSize: UiScale.of(context).font(widget.width * 0.08, min: 8.0, max: 15.0),
                         letterSpacing: 0.4,
                       ),
                     ),

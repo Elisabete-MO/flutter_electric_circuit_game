@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/ui_scale.dart';
 import '../../../models/stand_data.dart';
 import 'stand_info_card.dart';
 import 'stand_marker.dart';
@@ -25,13 +26,16 @@ class ScienceFairMap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final uiScale = UiScale.fromSize(MediaQuery.of(context).size.width, MediaQuery.of(context).size.height);
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final double mapW = constraints.maxWidth;
         final double mapH = constraints.maxHeight;
 
-        // 50% larger table base width (was ~0.095, now ~0.14)
-        final double baseMarkerW = (mapW * 0.14).clamp(115.0, 185.0);
+        // 50% larger table base width scaled dynamically for large screens
+        final double maxMarkerWidth = uiScale.isDesktop ? 280.0 : 185.0;
+        final double baseMarkerW = (mapW * 0.14).clamp(115.0, maxMarkerWidth);
 
         final isNarrow = mapW < 700;
 

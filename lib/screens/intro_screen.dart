@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../app/routes.dart';
 import '../app/theme.dart';
+import '../core/ui_scale.dart';
 import '../widgets/eletrolab_header_brand.dart';
 
 /// Posição da cauda/pointer do Balão de Fala.
@@ -285,12 +286,15 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
     DialogueStep step,
     BoxConstraints constraints,
   ) {
-    final bool isWide = constraints.maxWidth >= 640;
+    final double maxW = constraints.maxWidth;
     final double maxH = constraints.maxHeight;
+    final bool isWide = maxW >= 640;
 
     if (isWide) {
-      // LAYOUT COM NURI FIRMEMENTE NO CHÃO (Desktop/Tablet - Tamanho Destaque ~15% Maior)
-      final double spriteHeight = (maxH * 0.78).clamp(310.0, 470.0);
+      final uiScale = UiScale.fromSize(maxW, maxH);
+      // LAYOUT COM NURI FIRMEMENTE NO CHÃO (Desktop/Tablet - Tamanho Destaque proporcional)
+      final double maxSpriteH = uiScale.isDesktop ? 680.0 : 470.0;
+      final double spriteHeight = (maxH * 0.78).clamp(310.0, maxSpriteH);
       final double spriteWidth = spriteHeight * (540.0 / 900.0);
 
       return Align(
@@ -335,10 +339,10 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
               // 2. BALÃO DE FALA (Ao lado da Nuri, suspenso na altura do rosto/boca)
               Padding(
                 padding: EdgeInsets.only(
-                  bottom: (spriteHeight * 0.48).clamp(180.0, 260.0),
+                  bottom: (spriteHeight * 0.48).clamp(180.0, uiScale.isDesktop ? 360.0 : 260.0),
                 ),
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 480),
+                  constraints: BoxConstraints(maxWidth: uiScale.isDesktop ? 680 : 480),
                   child: SpeechBubbleWidget(
                     step: step,
                     displayedText: _displayedText,
