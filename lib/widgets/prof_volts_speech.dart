@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'dart:math' as math;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../state/settings_controller.dart';
@@ -281,7 +283,11 @@ class _ProfVoltsAvatarState extends State<ProfVoltsAvatar>
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 4),
-    )..repeat();
+    );
+    final isTesting = !kIsWeb && Platform.environment.containsKey('FLUTTER_TEST');
+    if (!isTesting) {
+      _animationController.repeat();
+    }
 
     _animationController.addListener(() {
       if (widget.isTalking) {

@@ -225,79 +225,83 @@ class _FirstBenchFlowScreenState extends ConsumerState<FirstBenchFlowScreen> {
 
               // Indicadores de Progresso das 4 Fases
               Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(4, (index) {
-                    final phaseId = index + 1;
-                    final isCurrent = _flowState.currentPhaseId == phaseId;
-                    final isCompleted = _flowState.completedPhaseIds.contains(phaseId);
-                    final isUnlocked = _flowState.isUnlocked(phaseId);
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.center,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(4, (index) {
+                      final phaseId = index + 1;
+                      final isCurrent = _flowState.currentPhaseId == phaseId;
+                      final isCompleted = _flowState.completedPhaseIds.contains(phaseId);
+                      final isUnlocked = _flowState.isUnlocked(phaseId);
 
-                    Color stepColor;
-                    if (isCurrent) {
-                      stepColor = const Color(0xFF00FF9D);
-                    } else if (isCompleted) {
-                      stepColor = const Color(0xFF10B981);
-                    } else if (isUnlocked) {
-                      stepColor = Colors.white54;
-                    } else {
-                      stepColor = const Color(0xFF334155);
-                    }
+                      Color stepColor;
+                      if (isCurrent) {
+                        stepColor = const Color(0xFF00FF9D);
+                      } else if (isCompleted) {
+                        stepColor = const Color(0xFF10B981);
+                      } else if (isUnlocked) {
+                        stepColor = Colors.white54;
+                      } else {
+                        stepColor = const Color(0xFF334155);
+                      }
 
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: InkWell(
-                        onTap: isUnlocked ? () => _navigateToPhase(phaseId) : null,
-                        borderRadius: BorderRadius.circular(20),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: EdgeInsets.symmetric(
-                            horizontal: isCompact ? 8 : 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: stepColor.withValues(alpha: isCurrent ? 0.2 : 0.1),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: stepColor,
-                              width: isCurrent ? 2 : 1,
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: InkWell(
+                          onTap: isUnlocked ? () => _navigateToPhase(phaseId) : null,
+                          borderRadius: BorderRadius.circular(20),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isCompact ? 8 : 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: stepColor.withValues(alpha: isCurrent ? 0.2 : 0.1),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: stepColor,
+                                width: isCurrent ? 2 : 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (isCompleted)
+                                  Icon(Icons.check_circle_rounded, size: 16, color: stepColor)
+                                else if (!isUnlocked)
+                                  const Icon(Icons.lock_rounded, size: 14, color: Color(0xFF64748B))
+                                else
+                                  Text(
+                                    '$phaseId',
+                                    style: TextStyle(
+                                      fontFamily: GoogleFonts.rajdhani().fontFamily,
+                                      fontWeight: FontWeight.bold,
+                                      color: stepColor,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                if (!isCompact) ...[
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Fase $phaseId',
+                                    style: TextStyle(
+                                      fontFamily: GoogleFonts.rajdhani().fontFamily,
+                                      fontWeight: isCurrent ? FontWeight.bold : FontWeight.w500,
+                                      color: stepColor,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (isCompleted)
-                                Icon(Icons.check_circle_rounded, size: 16, color: stepColor)
-                              else if (!isUnlocked)
-                                const Icon(Icons.lock_rounded, size: 14, color: Color(0xFF64748B))
-                              else
-                                Text(
-                                  '$phaseId',
-                                  style: TextStyle(
-                                    fontFamily: GoogleFonts.rajdhani().fontFamily,
-                                    fontWeight: FontWeight.bold,
-                                    color: stepColor,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              if (!isCompact) ...[
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Fase $phaseId',
-                                  style: TextStyle(
-                                    fontFamily: GoogleFonts.rajdhani().fontFamily,
-                                    fontWeight: isCurrent ? FontWeight.bold : FontWeight.w500,
-                                    color: stepColor,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
                         ),
-                      ),
-                    );
-                  }),
+                      );
+                    }),
+                  ),
                 ),
               ),
 

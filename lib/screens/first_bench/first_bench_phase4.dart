@@ -799,7 +799,7 @@ class _FirstBenchPhase4State extends State<FirstBenchPhase4> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isDesktop = constraints.maxWidth >= 900;
+        final isDesktop = constraints.maxWidth >= 750;
 
         return Column(
           children: [
@@ -1450,60 +1450,80 @@ class _FirstBenchPhase4State extends State<FirstBenchPhase4> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFF1A4D3B)),
       ),
-      child: Row(
-        children: [
-          const Icon(Icons.info_outline_rounded, color: Color(0xFF00FF9D), size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Arraste os componentes para a bancada e conecte seus terminais.',
-              style: TextStyle(
-                fontFamily: GoogleFonts.outfit().fontFamily,
-                fontSize: 12,
-                color: Colors.white70,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isCompact = constraints.maxWidth < 750;
+          return Row(
+            children: [
+              const Icon(Icons.info_outline_rounded, color: Color(0xFF00FF9D), size: 20),
+              const SizedBox(width: 10),
+              if (!isCompact)
+                Expanded(
+                  child: Text(
+                    'Arraste os componentes para a bancada e conecte seus terminais.',
+                    style: TextStyle(
+                      fontFamily: GoogleFonts.outfit().fontFamily,
+                      fontSize: 12,
+                      color: Colors.white70,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                )
+              else
+                const Spacer(),
+              const SizedBox(width: 8),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: _undoStack.isNotEmpty ? _undo : null,
+                        icon: const Icon(Icons.undo_rounded, size: 16),
+                        label: Text('Desfazer', style: TextStyle(fontFamily: GoogleFonts.rajdhani().fontFamily, fontWeight: FontWeight.bold)),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: const BorderSide(color: Color(0xFF1E3A2F)),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      OutlinedButton.icon(
+                        onPressed: hasComponents ? _clearBench : null,
+                        icon: const Icon(Icons.cleaning_services_rounded, size: 16),
+                        label: Text('Limpar bancada', style: TextStyle(fontFamily: GoogleFonts.rajdhani().fontFamily, fontWeight: FontWeight.bold)),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: const BorderSide(color: Color(0xFF1E3A2F)),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton.icon(
+                        onPressed: hasComponents ? _startTestAndPrediction : null,
+                        icon: const Icon(Icons.play_arrow_rounded, size: 18),
+                        label: Text('Testar circuito', style: TextStyle(fontFamily: GoogleFonts.rajdhani().fontFamily, fontWeight: FontWeight.bold)),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF00FF9D),
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        onPressed: _showHintDialog,
+                        icon: const Icon(Icons.help_outline_rounded, color: Colors.white70),
+                        tooltip: 'Ajuda',
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          OutlinedButton.icon(
-            onPressed: _undoStack.isNotEmpty ? _undo : null,
-            icon: const Icon(Icons.undo_rounded, size: 16),
-            label: Text('Desfazer', style: TextStyle(fontFamily: GoogleFonts.rajdhani().fontFamily, fontWeight: FontWeight.bold)),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.white,
-              side: const BorderSide(color: Color(0xFF1E3A2F)),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            ),
-          ),
-          const SizedBox(width: 8),
-          OutlinedButton.icon(
-            onPressed: hasComponents ? _clearBench : null,
-            icon: const Icon(Icons.cleaning_services_rounded, size: 16),
-            label: Text('Limpar bancada', style: TextStyle(fontFamily: GoogleFonts.rajdhani().fontFamily, fontWeight: FontWeight.bold)),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.white,
-              side: const BorderSide(color: Color(0xFF1E3A2F)),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            ),
-          ),
-          const SizedBox(width: 8),
-          FilledButton.icon(
-            onPressed: hasComponents ? _startTestAndPrediction : null,
-            icon: const Icon(Icons.play_arrow_rounded, size: 18),
-            label: Text('Testar circuito', style: TextStyle(fontFamily: GoogleFonts.rajdhani().fontFamily, fontWeight: FontWeight.bold)),
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF00FF9D),
-              foregroundColor: Colors.black,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            ),
-          ),
-          const SizedBox(width: 8),
-          IconButton(
-            onPressed: _showHintDialog,
-            icon: const Icon(Icons.help_outline_rounded, color: Colors.white70),
-            tooltip: 'Ajuda',
-          ),
-        ],
+            ],
+          );
+        },
       ),
     );
   }

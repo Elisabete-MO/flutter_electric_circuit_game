@@ -98,7 +98,7 @@ class _FirstBenchPhase2State extends State<FirstBenchPhase2> with SingleTickerPr
     _glowController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
-    )..repeat(reverse: true);
+    );
   }
 
   @override
@@ -318,6 +318,9 @@ class _FirstBenchPhase2State extends State<FirstBenchPhase2> with SingleTickerPr
     setState(() {
       _isSwitchClosed = true;
       _isLedOn = isScenarioCorrect;
+      if (isScenarioCorrect) {
+        _glowController.forward(from: 0.0);
+      }
     });
 
     Future.delayed(const Duration(milliseconds: 600), () {
@@ -370,6 +373,7 @@ class _FirstBenchPhase2State extends State<FirstBenchPhase2> with SingleTickerPr
   }
 
   void _resetInspectionState() {
+    _glowController.reset();
     _activePointIndex = 0;
     _inspectedChecklist.clear();
     _pointAnswers.clear();
@@ -384,7 +388,7 @@ class _FirstBenchPhase2State extends State<FirstBenchPhase2> with SingleTickerPr
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isDesktop = constraints.maxWidth >= 850;
+        final isDesktop = constraints.maxWidth >= 750;
 
         if (isDesktop) {
           return _buildDesktopLayout(constraints);
@@ -566,14 +570,16 @@ class _FirstBenchPhase2State extends State<FirstBenchPhase2> with SingleTickerPr
                 size: 24,
               ),
               const SizedBox(width: 10),
-              Text(
-                'Fase 2 — Inspecione o circuito',
-                style: TextStyle(
-                  fontFamily: GoogleFonts.rajdhani().fontFamily,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  letterSpacing: 0.5,
+              Expanded(
+                child: Text(
+                  'Fase 2 — Inspecione o circuito',
+                  style: TextStyle(
+                    fontFamily: GoogleFonts.rajdhani().fontFamily,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 0.5,
+                  ),
                 ),
               ),
             ],
@@ -866,13 +872,17 @@ class _FirstBenchPhase2State extends State<FirstBenchPhase2> with SingleTickerPr
                 ),
               ),
             ),
-            Text(
-              '${_inspectedChecklist.length} de 5 inspecionados',
-              style: TextStyle(
-                fontFamily: GoogleFonts.outfit().fontFamily,
-                fontSize: 13,
-                color: const Color(0xFF3D5245),
-                fontWeight: FontWeight.w600,
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                '${_inspectedChecklist.length} de 5 inspecionados',
+                textAlign: TextAlign.end,
+                style: TextStyle(
+                  fontFamily: GoogleFonts.outfit().fontFamily,
+                  fontSize: 13,
+                  color: const Color(0xFF3D5245),
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],
@@ -989,7 +999,7 @@ class _FirstBenchPhase2State extends State<FirstBenchPhase2> with SingleTickerPr
             ),
           ),
 
-        const Spacer(),
+        const SizedBox(height: 16),
 
         // Barra de progresso dos 5 pontos
         Column(
@@ -1099,7 +1109,7 @@ class _FirstBenchPhase2State extends State<FirstBenchPhase2> with SingleTickerPr
           _buildProblemDetailOption('Circuito aberto', InspectionScenario.openCircuit),
         ],
 
-        const Spacer(),
+        const SizedBox(height: 16),
       ],
     );
   }
@@ -1202,71 +1212,85 @@ class _FirstBenchPhase2State extends State<FirstBenchPhase2> with SingleTickerPr
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Center(
-        child: switch (pointId) {
-          'battery' => Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.battery_charging_full_rounded, color: Colors.amber, size: 40),
-                const SizedBox(width: 12),
-                Column(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: switch (pointId) {
+              'battery' => Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('+ Polo Positivo (Vermelho)', style: TextStyle(fontFamily: GoogleFonts.rajdhani().fontFamily, fontSize: 13, fontWeight: FontWeight.bold, color: Colors.red)),
-                    Text('- Polo Negativo (Preto)', style: TextStyle(fontFamily: GoogleFonts.rajdhani().fontFamily, fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+                    const Icon(Icons.battery_charging_full_rounded, color: Colors.amber, size: 40),
+                    const SizedBox(width: 12),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('+ Polo Positivo (Vermelho)', style: TextStyle(fontFamily: GoogleFonts.rajdhani().fontFamily, fontSize: 13, fontWeight: FontWeight.bold, color: Colors.red)),
+                        Text('- Polo Negativo (Preto)', style: TextStyle(fontFamily: GoogleFonts.rajdhani().fontFamily, fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black)),
+                      ],
+                    ),
                   ],
                 ),
-              ],
-            ),
-          'resistor' => Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Image.asset('assets/components/resistor.png', height: 40),
-                const SizedBox(width: 12),
-                Text(
-                  _current.scenario == InspectionScenario.incorrectResistor ? '68 Ω (Muito baixo)' : '680 Ω (Valor Didático)',
-                  style: TextStyle(
-                    fontFamily: GoogleFonts.rajdhani().fontFamily,
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: _current.scenario == InspectionScenario.incorrectResistor ? Colors.red : const Color(0xFF0B3C2D),
-                  ),
-                ),
-              ],
-            ),
-          'led' => Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Image.asset('assets/components/led_off.png', height: 50),
-                const SizedBox(width: 12),
-                Column(
+              'resistor' => Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('+ Ânodo (perna longa)', style: TextStyle(fontFamily: GoogleFonts.rajdhani().fontFamily, fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF0B3C2D))),
-                    Text('- Cátodo (lado reto)', style: TextStyle(fontFamily: GoogleFonts.rajdhani().fontFamily, fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey[700])),
+                    Image.asset('assets/components/resistor.png', height: 40),
+                    const SizedBox(width: 12),
+                    Text(
+                      _current.scenario == InspectionScenario.incorrectResistor ? '68 Ω (Muito baixo)' : '680 Ω (Valor Didático)',
+                      style: TextStyle(
+                        fontFamily: GoogleFonts.rajdhani().fontFamily,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: _current.scenario == InspectionScenario.incorrectResistor ? Colors.red : const Color(0xFF0B3C2D),
+                      ),
+                    ),
                   ],
                 ),
-              ],
-            ),
-          'switch' => Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Image.asset('assets/components/switch_open.png', height: 45),
-                const SizedBox(width: 12),
-                Text('OFF — Aberto (Sem corrente)', style: TextStyle(fontFamily: GoogleFonts.rajdhani().fontFamily, fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFF0B3C2D))),
-              ],
-            ),
-          'wires' => Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.alt_route_rounded, color: Color(0xFF0B3C2D), size: 36),
-                const SizedBox(width: 12),
-                Text('Percurso Completo em Série', style: TextStyle(fontFamily: GoogleFonts.rajdhani().fontFamily, fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFF0B3C2D))),
-              ],
-            ),
-          _ => const Icon(Icons.search_rounded, size: 36, color: Color(0xFF0B3C2D)),
-        },
+              'led' => Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset('assets/components/led_off.png', height: 40),
+                    const SizedBox(width: 12),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _current.scenario == InspectionScenario.reversedLed ? 'Ânodo (-) invertido' : 'Ânodo (+) no lado positivo',
+                          style: TextStyle(
+                            fontFamily: GoogleFonts.rajdhani().fontFamily,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: _current.scenario == InspectionScenario.reversedLed ? Colors.red : const Color(0xFF0B3C2D),
+                          ),
+                        ),
+                        Text('Cátodo (-) com perna curta', style: TextStyle(fontFamily: GoogleFonts.rajdhani().fontFamily, fontSize: 12, color: Colors.black54)),
+                      ],
+                    ),
+                  ],
+                ),
+              'switch' => Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.toggle_off_rounded, color: Colors.blueGrey, size: 40),
+                    const SizedBox(width: 12),
+                    Text('Interruptor Aberto (0 V)', style: TextStyle(fontFamily: GoogleFonts.rajdhani().fontFamily, fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFF0B3C2D))),
+                  ],
+                ),
+              'wires' => Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.alt_route_rounded, color: Color(0xFF0B3C2D), size: 36),
+                    const SizedBox(width: 12),
+                    Text('Percurso Completo em Série', style: TextStyle(fontFamily: GoogleFonts.rajdhani().fontFamily, fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFF0B3C2D))),
+                  ],
+                ),
+              _ => const Icon(Icons.search_rounded, size: 36, color: Color(0xFF0B3C2D)),
+            },
+          ),
+        ),
       ),
     );
   }

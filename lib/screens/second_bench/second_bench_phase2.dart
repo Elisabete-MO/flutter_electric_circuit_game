@@ -811,24 +811,28 @@ class _SecondBenchPhase2State extends State<SecondBenchPhase2> {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: const Color(0xFFE2DCC8)),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            Row(
-              children: const [
-                Icon(Icons.add_circle_rounded, color: Colors.redAccent, size: 18),
-                SizedBox(width: 4),
-                Text('Polo Positivo (9V)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-              ],
-            ),
-            Row(
-              children: const [
-                Icon(Icons.remove_circle_rounded, color: Colors.black87, size: 18),
-                SizedBox(width: 4),
-                Text('Polo Negativo (GND)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-              ],
-            ),
-          ],
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: const [
+              Row(
+                children: [
+                  Icon(Icons.add_circle_rounded, color: Colors.redAccent, size: 18),
+                  SizedBox(width: 4),
+                  Text('Polo Positivo (9V)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                ],
+              ),
+              SizedBox(width: 12),
+              Row(
+                children: [
+                  Icon(Icons.remove_circle_rounded, color: Colors.black87, size: 18),
+                  SizedBox(width: 4),
+                  Text('Polo Negativo (GND)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ],
+          ),
         ),
       );
     }

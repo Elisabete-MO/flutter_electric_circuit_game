@@ -60,7 +60,7 @@ class Phase1ComponentData {
         Phase1ComponentData(
           id: 'battery_9v',
           type: ComponentType.battery,
-          name: 'Bateria de 9 V',
+          name: 'Bateria 9 V',
           plaqueName: 'Bateria 9 V',
           assetPath: 'assets/components/battery.png',
           shortDescription:

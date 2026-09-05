@@ -1,4 +1,6 @@
+import 'dart:io' show Platform;
 import 'dart:math' as math;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 enum ProfVoltsEmotion { happy, sad, neutral }
@@ -27,7 +29,11 @@ class _ProfVoltsFullBodyState extends State<ProfVoltsFullBody>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
-    )..repeat();
+    );
+    final isTesting = !kIsWeb && Platform.environment.containsKey('FLUTTER_TEST');
+    if (!isTesting) {
+      _controller.repeat();
+    }
   }
 
   @override

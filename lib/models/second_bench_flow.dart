@@ -13,18 +13,20 @@ class SecondBenchFlowState {
 
   final int currentPhaseId;
   final Set<int> completedPhaseIds;
+  final Set<int>? customUnlockedPhaseIds;
   final int snapshotVersion;
 
   const SecondBenchFlowState({
     this.currentPhaseId = 1,
     this.completedPhaseIds = const {},
+    this.customUnlockedPhaseIds,
     this.snapshotVersion = currentVersion,
   });
 
-  /// Estado inicial padrão (Fases 1, 2 e 3 concluídas, Fase 4 ativa e desbloqueada).
+  /// Estado inicial padrão (Fase 1 ativa, nenhuma concluída).
   factory SecondBenchFlowState.safe() => const SecondBenchFlowState(
-        currentPhaseId: 4,
-        completedPhaseIds: {1, 2, 3},
+        currentPhaseId: 1,
+        completedPhaseIds: {},
       );
 
   /// Indica se o segundo estande foi concluído por completo (Fase 4 concluída).
@@ -35,13 +37,16 @@ class SecondBenchFlowState {
 
   /// Retorna o conjunto de IDs de fases que estão desbloqueadas.
   Set<int> get unlockedPhaseIds =>
-      {1, 2, 3, 4}.where((id) => isUnlocked(id)).toSet();
+      customUnlockedPhaseIds ?? {1, 2, 3, 4}.where((id) => isUnlocked(id)).toSet();
 
   /// Verifica se uma fase específica está desbloqueada.
   /// A Fase N exige que a Fase N-1 esteja concluída.
   bool isUnlocked(int phaseId) {
     if (phaseId < 1 || phaseId > 4) return false;
     if (phaseId == 1) return true;
+    if (customUnlockedPhaseIds != null) {
+      return customUnlockedPhaseIds!.contains(phaseId);
+    }
     return completedPhaseIds.contains(phaseId - 1);
   }
 
@@ -81,22 +86,28 @@ class SecondBenchFlowState {
   SecondBenchFlowState copyWith({
     int? currentPhaseId,
     Set<int>? completedPhaseIds,
+    Set<int>? customUnlockedPhaseIds,
     int? snapshotVersion,
   }) {
     return SecondBenchFlowState(
       currentPhaseId: (currentPhaseId ?? this.currentPhaseId).clamp(1, 4),
       completedPhaseIds: completedPhaseIds ?? this.completedPhaseIds,
+      customUnlockedPhaseIds: customUnlockedPhaseIds ?? this.customUnlockedPhaseIds,
       snapshotVersion: snapshotVersion ?? this.snapshotVersion,
     );
   }
 
   /// Converte o estado para JSON serializável.
   Map<String, dynamic> toJson() {
-    return {
+    final map = <String, dynamic>{
       'currentPhaseId': currentPhaseId,
       'completedPhaseIds': completedPhaseIds.toList()..sort(),
       'snapshotVersion': snapshotVersion,
     };
+    if (customUnlockedPhaseIds != null) {
+      map['unlockedPhaseIds'] = customUnlockedPhaseIds!.toList()..sort();
+    }
+    return map;
   }
 
   /// Desserializa o JSON com recuperação segura em caso de erros ou dados corrompidos.
@@ -120,9 +131,24 @@ class SecondBenchFlowState {
         }
       }
 
+      final rawUnlocked = json['unlockedPhaseIds'];
+      Set<int>? customUnlocked;
+      if (rawUnlocked is List) {
+        customUnlocked = {};
+        for (final item in rawUnlocked) {
+          if (item is num) {
+            final phase = item.toInt();
+            if (phase >= 1 && phase <= 4) {
+              customUnlocked.add(phase);
+            }
+          }
+        }
+      }
+
       return SecondBenchFlowState(
         currentPhaseId: currentPhaseId,
         completedPhaseIds: completedPhaseIds,
+        customUnlockedPhaseIds: customUnlocked,
         snapshotVersion: version,
       );
     } catch (_) {
@@ -136,14 +162,16 @@ class SecondBenchFlowState {
     return other is SecondBenchFlowState &&
         other.currentPhaseId == currentPhaseId &&
         other.snapshotVersion == snapshotVersion &&
-        _setEquals(other.completedPhaseIds, completedPhaseIds);
+        _setEquals(other.completedPhaseIds, completedPhaseIds) &&
+        _setEquals(other.customUnlockedPhaseIds ?? {}, customUnlockedPhaseIds ?? {});
   }
 
   @override
   int get hashCode => Object.hash(
         currentPhaseId,
         snapshotVersion,
-        Object.hashAll(completedPhaseIds.toList()..sort()),
+        Object.hashAll(completedPhaseIds),
+        Object.hashAll(customUnlockedPhaseIds ?? {}),
       );
 
   static bool _setEquals<T>(Set<T>? a, Set<T>? b) {

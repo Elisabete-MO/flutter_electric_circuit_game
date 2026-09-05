@@ -550,39 +550,42 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
             // Painel Expansível "Saiba Mais"
             Theme(
               data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-              child: ExpansionTile(
-                initiallyExpanded: _isLearnMoreExpanded,
-                onExpansionChanged: (exp) => setState(() => _isLearnMoreExpanded = exp),
-                tilePadding: EdgeInsets.zero,
-                iconColor: SecondBenchLayoutTokens.darkGreen,
-                title: Text(
-                  'Saiba mais sobre o componente',
-                  style: TextStyle(
-                    fontFamily: GoogleFonts.rajdhani().fontFamily,
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: SecondBenchLayoutTokens.darkGreen,
-                  ),
-                ),
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF2EAD9),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFE2D7C3)),
+              child: Material(
+                color: Colors.transparent,
+                child: ExpansionTile(
+                  initiallyExpanded: _isLearnMoreExpanded,
+                  onExpansionChanged: (exp) => setState(() => _isLearnMoreExpanded = exp),
+                  tilePadding: EdgeInsets.zero,
+                  iconColor: SecondBenchLayoutTokens.darkGreen,
+                  title: Text(
+                    'Saiba mais sobre o componente',
+                    style: TextStyle(
+                      fontFamily: GoogleFonts.rajdhani().fontFamily,
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: SecondBenchLayoutTokens.darkGreen,
                     ),
-                    child: Text(
-                      item.learnMore,
-                      style: TextStyle(
-                        fontFamily: GoogleFonts.outfit().fontFamily,
-                        fontSize: 13,
-                        color: SecondBenchLayoutTokens.textDark,
-                        height: 1.4,
+                  ),
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF2EAD9),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFE2D7C3)),
+                      ),
+                      child: Text(
+                        item.learnMore,
+                        style: TextStyle(
+                          fontFamily: GoogleFonts.outfit().fontFamily,
+                          fontSize: 13,
+                          color: SecondBenchLayoutTokens.textDark,
+                          height: 1.4,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
 

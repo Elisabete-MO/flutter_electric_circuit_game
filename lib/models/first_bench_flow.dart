@@ -21,11 +21,8 @@ class FirstBenchFlowState {
     this.snapshotVersion = currentVersion,
   });
 
-  /// Estado inicial padrão (Fases 1, 2 e 3 concluídas, Fase 4 ativa e desbloqueada).
-  factory FirstBenchFlowState.safe() => const FirstBenchFlowState(
-        currentPhaseId: 4,
-        completedPhaseIds: {1, 2, 3},
-      );
+  /// Estado inicial padrão (Fase 1 ativa e nenhuma concluída).
+  factory FirstBenchFlowState.safe() => const FirstBenchFlowState();
 
   /// Indica se o primeiro estande foi concluído por completo (Fase 4 concluída).
   bool get firstBenchCompleted => completedPhaseIds.contains(4);

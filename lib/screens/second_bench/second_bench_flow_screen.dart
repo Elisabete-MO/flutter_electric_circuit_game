@@ -45,10 +45,8 @@ class _SecondBenchFlowScreenState extends ConsumerState<SecondBenchFlowScreen> {
     } finally {
       if (mounted) {
         setState(() {
-          _flowState = SecondBenchFlowState.safe();
           _isLoading = false;
         });
-        _saveState();
       }
     }
   }

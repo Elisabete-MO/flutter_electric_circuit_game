@@ -347,58 +347,67 @@ class _FirstBenchPhase1State extends State<FirstBenchPhase1> {
           bottom: BorderSide(color: Color(0xFF0F3D30), width: 1),
         ),
       ),
-      child: Row(
-        children: [
-          // Botão Voltar
-          IconButton(
-            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-            tooltip: 'Voltar ao Mapa',
-            onPressed: () => Navigator.of(context).maybePop(),
-          ),
-          const SizedBox(width: 4),
-
-          // Marca EletroLab
-          const EletroLabHeaderBrand(compact: true),
-
-          const Spacer(),
-
-          // Indicadores de Fase (Fase 1 Ativa, 2, 3 e 4 Bloqueadas)
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Row(
-              children: [
-                _buildPhasePill(1, 'Fase 1', isActive: true),
-                const SizedBox(width: 6),
-                _buildPhasePill(2, 'Fase 2', isLocked: true),
-                const SizedBox(width: 6),
-                _buildPhasePill(3, 'Fase 3', isLocked: true),
-                const SizedBox(width: 6),
-                _buildPhasePill(4, 'Fase 4', isLocked: true),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isCompact = constraints.maxWidth < 650;
+          return Row(
+            children: [
+              // Botão Voltar
+              IconButton(
+                icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                tooltip: 'Voltar ao Mapa',
+                onPressed: () => Navigator.of(context).maybePop(),
+              ),
+              if (!isCompact) ...[
+                const SizedBox(width: 4),
+                const EletroLabHeaderBrand(compact: true),
+                const SizedBox(width: 12),
               ],
-            ),
-          ),
 
-          const Spacer(),
+              // Indicadores de Fase (Fase 1 Ativa, 2, 3 e 4 Bloqueadas)
+              Expanded(
+                child: Center(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildPhasePill(1, 'Fase 1', isActive: true),
+                        const SizedBox(width: 6),
+                        _buildPhasePill(2, 'Fase 2', isLocked: true),
+                        const SizedBox(width: 6),
+                        _buildPhasePill(3, 'Fase 3', isLocked: true),
+                        const SizedBox(width: 6),
+                        _buildPhasePill(4, 'Fase 4', isLocked: true),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
 
-          // Botão Dúvidas
-          IconButton(
-            icon: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: const Color(0xFF04382B),
-                shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.5)),
+              const SizedBox(width: 8),
+
+              // Botão Dúvidas
+              IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF04382B),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.5)),
+                  ),
+                  child: const Icon(
+                    Icons.help_outline_rounded,
+                    color: Color(0xFF10B981),
+                    size: 20,
+                  ),
+                ),
+                tooltip: 'Como funciona esta fase?',
+                onPressed: _showHelpModal,
               ),
-              child: const Icon(
-                Icons.help_outline_rounded,
-                color: Color(0xFF10B981),
-                size: 20,
-              ),
-            ),
-            tooltip: 'Como funciona esta fase?',
-            onPressed: _showHelpModal,
-          ),
-        ],
+            ],
+          );
+        },
       ),
     );
   }
@@ -569,17 +578,20 @@ class _FirstBenchPhase1State extends State<FirstBenchPhase1> {
                 size: 24,
               ),
               const SizedBox(width: 10),
-              Text(
-                'Fase 1 — Conheça os componentes',
-                style: TextStyle(
-                  fontFamily: GoogleFonts.rajdhani().fontFamily,
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  letterSpacing: 0.5,
-                  shadows: const [
-                    Shadow(color: Colors.black87, blurRadius: 6, offset: Offset(0, 2)),
-                  ],
+              Expanded(
+                child: Text(
+                  'Fase 1 — Conheça os componentes',
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: GoogleFonts.rajdhani().fontFamily,
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 0.5,
+                    shadows: const [
+                      Shadow(color: Colors.black87, blurRadius: 6, offset: Offset(0, 2)),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -1015,6 +1027,10 @@ class _FirstBenchPhase1State extends State<FirstBenchPhase1> {
                 title: 'Polaridade',
                 description: item.polarity!,
               ),
+              if (item.type == ComponentType.led) ...[
+                const SizedBox(height: 10),
+                _buildLedDiagram(),
+              ],
             ],
             const SizedBox(height: 12),
 
@@ -1053,13 +1069,15 @@ class _FirstBenchPhase1State extends State<FirstBenchPhase1> {
                         size: 20,
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        'Cuidado de Segurança',
-                        style: TextStyle(
-                          fontFamily: GoogleFonts.rajdhani().fontFamily,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFFC2410C),
+                      Expanded(
+                        child: Text(
+                          'Cuidado de Segurança',
+                          style: TextStyle(
+                            fontFamily: GoogleFonts.rajdhani().fontFamily,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFFC2410C),
+                          ),
                         ),
                       ),
                     ],
@@ -1137,10 +1155,6 @@ class _FirstBenchPhase1State extends State<FirstBenchPhase1> {
                     if (item.type == ComponentType.resistor) ...[
                       const SizedBox(height: 10),
                       _buildResistorColorCodeTable(),
-                    ],
-                    if (item.type == ComponentType.led) ...[
-                      const SizedBox(height: 10),
-                      _buildLedDiagram(),
                     ],
                   ],
                 ),

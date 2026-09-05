@@ -329,22 +329,17 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
         return Stack(
           clipBehavior: Clip.none,
           children: [
-            // 1. Seletor de Modo (Físico | Diagrama) no topo da área livre
-            Positioned(
-              top: 14,
-              left: (w - 200) / 2,
-              child: _buildModeSelector(),
-            ),
-
             if (_isDiagramMode) ...[
-              // 2. Traçado ortogonal do circuito (CustomPainter)
+              // 1. Traçado ortogonal do circuito (CustomPainter)
               Positioned.fill(
-                child: CustomPaint(
-                  painter: _OrthogonalCircuitPainter(
-                    batRect: batRect,
-                    resRect: resRect,
-                    ledRect: ledRect,
-                    swRect: swRect,
+                child: IgnorePointer(
+                  child: CustomPaint(
+                    painter: _OrthogonalCircuitPainter(
+                      batRect: batRect,
+                      resRect: resRect,
+                      ledRect: ledRect,
+                      swRect: swRect,
+                    ),
                   ),
                 ),
               ),
@@ -371,7 +366,7 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
                 child: const Text('−', style: TextStyle(color: Color(0xFFEDE7D7), fontSize: 20, fontWeight: FontWeight.bold)),
               ),
 
-              // 3. Os 4 Encaixes Interativos (Slots)
+              // 2. Os 4 Encaixes Interativos (Slots)
               _buildSlotWidget(Phase3SlotId.battery, batRect, isVertical: true),
               _buildSlotWidget(Phase3SlotId.resistor, resRect, isVertical: false),
               _buildSlotWidget(Phase3SlotId.led, ledRect, isVertical: true),
@@ -423,6 +418,13 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
                 ),
               ),
             ],
+
+            // Seletor de Modo (Físico | Diagrama) no topo da área livre (sempre por cima para receber toques)
+            Positioned(
+              top: 14,
+              left: (w - 200) / 2,
+              child: _buildModeSelector(),
+            ),
           ],
         );
       },
