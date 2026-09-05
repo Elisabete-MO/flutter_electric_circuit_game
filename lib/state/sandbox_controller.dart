@@ -1,59 +1,99 @@
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/first_step_component.dart';
 import '../models/sandbox_component.dart';
 import '../models/sandbox_wire.dart';
 import '../models/sandbox_state.dart';
-import '../services/history_manager.dart';
-import '../services/sandbox_persistence_repository.dart';
-import '../services/circuit_solver/circuit_solver_service.dart';
+import '../services/circuit_solver_service.dart';
 import 'progress_controller.dart';
 
 class SandboxController extends Notifier<SandboxState> {
-  late final SandboxPersistenceRepository _persistence;
-  final HistoryManager<SandboxState> _history = HistoryManager<SandboxState>(maxDepth: 30);
-  final CircuitSolverService _solverService = CircuitSolverService();
-
   @override
   SandboxState build() {
     final prefs = ref.watch(sharedPreferencesProvider);
-    _persistence = SandboxPersistenceRepository(prefs);
 
-    final initialState = _persistence.load();
+    final compString = prefs.getString('sandbox_components');
+    final wireString = prefs.getString('sandbox_wires');
+    final isSimulating = prefs.getBool('sandbox_is_simulating') ?? false;
 
-    // Executa a simulação inicial de forma assíncrona para não travar a build
-    Future.microtask(() => _recalculateCircuit());
+    List<SandboxComponent> components = [];
+    List<SandboxWire> wires = [];
 
-    return initialState;
+    if (compString != null) {
+      try {
+        final List<dynamic> decoded = jsonDecode(compString);
+        components = decoded
+            .map((item) => SandboxComponent.fromMap(item as Map<String, dynamic>))
+            .toList();
+      } catch (_) {}
+    }
+
+    if (wireString != null) {
+      try {
+        final List<dynamic> decoded = jsonDecode(wireString);
+        wires = decoded
+            .map((item) => SandboxWire.fromMap(item as Map<String, dynamic>))
+            .toList();
+      } catch (_) {}
+    }
+
+    final initialState = SandboxState(
+      components: components,
+      wires: wires,
+      isSimulating: isSimulating,
+    );
+
+    return _calculateSimulationForState(initialState);
   }
 
-  bool get canUndo => _history.canUndo;
-  bool get canRedo => _history.canRedo;
+  void _persistState() {
+    final prefs = ref.read(sharedPreferencesProvider);
+
+    final compList = state.components.map((c) => c.toMap()).toList();
+    final wireList = state.wires.map((w) => w.toMap()).toList();
+
+    prefs.setString('sandbox_components', jsonEncode(compList));
+    prefs.setString('sandbox_wires', jsonEncode(wireList));
+    prefs.setBool('sandbox_is_simulating', state.isSimulating);
+  }
+
+  final List<SandboxState> _undoStack = [];
+  final List<SandboxState> _redoStack = [];
+
+  bool get canUndo => _undoStack.isNotEmpty;
+  bool get canRedo => _redoStack.isNotEmpty;
+
+  void _pushSnapshot() {
+    _undoStack.add(state);
+    if (_undoStack.length > 30) {
+      _undoStack.removeAt(0);
+    }
+    _redoStack.clear();
+  }
 
   void undo() {
-    final previous = _history.undo(state);
-    if (previous != null) {
-      state = previous;
-      _recalculateCircuit();
-    }
+    if (_undoStack.isEmpty) return;
+    _redoStack.add(state);
+    state = _undoStack.removeLast();
+    _recalculateCircuit();
   }
 
   void redo() {
-    final nextState = _history.redo(state);
-    if (nextState != null) {
-      state = nextState;
-      _recalculateCircuit();
-    }
+    if (_redoStack.isEmpty) return;
+    _undoStack.add(state);
+    state = _redoStack.removeLast();
+    _recalculateCircuit();
   }
 
   void addComponent(SandboxComponent component) {
-    _history.pushSnapshot(state);
+    _pushSnapshot();
     final updated = [...state.components, component];
     state = state.copyWith(components: updated);
     _recalculateCircuit();
   }
 
   void moveComponent(String componentId, int newX, int newY) {
-    _history.pushSnapshot(state);
+    _pushSnapshot();
     final updated = state.components.map((c) {
       if (c.id == componentId) {
         return c.copyWith(gridX: newX, gridY: newY);
@@ -74,7 +114,7 @@ class SandboxController extends Notifier<SandboxState> {
       if (componentIds.contains(c.id)) {
         final targetX = c.gridX + deltaX;
         final targetY = c.gridY + deltaY;
-        if (targetX < 0 || targetX >= 20 || targetY < 0 || targetY >= 16) {
+        if (targetX < 0 || targetX >= 8 || targetY < 0 || targetY >= 6) {
           valid = false;
           break;
         }
@@ -82,12 +122,12 @@ class SandboxController extends Notifier<SandboxState> {
     }
     if (!valid) return;
 
-    _history.pushSnapshot(state);
+    _pushSnapshot();
     final updated = state.components.map((c) {
       if (componentIds.contains(c.id)) {
         return c.copyWith(
-          gridX: (c.gridX + deltaX).clamp(0, 19),
-          gridY: (c.gridY + deltaY).clamp(0, 15),
+          gridX: (c.gridX + deltaX).clamp(0, 7),
+          gridY: (c.gridY + deltaY).clamp(0, 5),
         );
       }
       return c;
@@ -103,7 +143,7 @@ class SandboxController extends Notifier<SandboxState> {
 
   void removeComponents(Set<String> componentIds) {
     if (componentIds.isEmpty) return;
-    _history.pushSnapshot(state);
+    _pushSnapshot();
     final updatedComponents = state.components.where((c) => !componentIds.contains(c.id)).toList();
     final updatedWires = state.wires.where((w) {
       return !componentIds.contains(w.fromComponentId) && !componentIds.contains(w.toComponentId);
@@ -122,7 +162,7 @@ class SandboxController extends Notifier<SandboxState> {
 
   void rotateComponents(Set<String> componentIds) {
     if (componentIds.isEmpty) return;
-    _history.pushSnapshot(state);
+    _pushSnapshot();
     final updated = state.components.map((c) {
       if (componentIds.contains(c.id)) {
         return c.copyWith(rotation: (c.rotation + 90.0) % 360.0);
@@ -135,7 +175,7 @@ class SandboxController extends Notifier<SandboxState> {
   }
 
   void toggleComponentActive(String componentId) {
-    _history.pushSnapshot(state);
+    _pushSnapshot();
     final updated = state.components.map((c) {
       if (c.id == componentId) {
         return c.copyWith(isActive: !c.isActive);
@@ -148,7 +188,7 @@ class SandboxController extends Notifier<SandboxState> {
   }
 
   void updateComponentValue(String componentId, double newValue) {
-    _history.pushSnapshot(state);
+    _pushSnapshot();
     final updated = state.components.map((c) {
       if (c.id == componentId) {
         return c.copyWith(value: newValue);
@@ -161,10 +201,10 @@ class SandboxController extends Notifier<SandboxState> {
   }
 
   void addWire(String fromId, String fromTerm, String toId, String toTerm) {
-    // Evitar conexões de um terminal consigo mesmo
+    // Avoid connecting a terminal to itself
     if (fromId == toId && fromTerm == toTerm) return;
 
-    // Evitar fios duplicados
+    // Avoid duplicate wires
     final exists = state.wires.any((w) {
       return (w.fromComponentId == fromId &&
               w.fromTerminal == fromTerm &&
@@ -177,7 +217,7 @@ class SandboxController extends Notifier<SandboxState> {
     });
     if (exists) return;
 
-    _history.pushSnapshot(state);
+    _pushSnapshot();
     final wire = SandboxWire(
       id: 'wire_${DateTime.now().millisecondsSinceEpoch}_${state.wires.length}',
       fromComponentId: fromId,
@@ -192,20 +232,20 @@ class SandboxController extends Notifier<SandboxState> {
   }
 
   void removeWire(String wireId) {
-    _history.pushSnapshot(state);
+    _pushSnapshot();
     final updated = state.wires.where((w) => w.id != wireId).toList();
     state = state.copyWith(wires: updated);
     _recalculateCircuit();
   }
 
   void clearCanvas() {
-    _history.pushSnapshot(state);
+    _pushSnapshot();
     state = const SandboxState();
-    _recalculateCircuit();
+    _persistState();
   }
 
   void loadCircuit(List<SandboxComponent> components, List<SandboxWire> wires) {
-    _history.pushSnapshot(state);
+    _pushSnapshot();
     state = SandboxState(
       components: components,
       wires: wires,
@@ -215,7 +255,7 @@ class SandboxController extends Notifier<SandboxState> {
   }
 
   void loadPreset(String presetKey) {
-    _history.pushSnapshot(state);
+    _pushSnapshot();
     final now = DateTime.now().millisecondsSinceEpoch;
 
     List<SandboxComponent> newComponents = [];
@@ -285,21 +325,24 @@ class SandboxController extends Notifier<SandboxState> {
     _recalculateCircuit();
   }
 
-  Future<void> _recalculateCircuit() async {
-    final solved = await _solverService.solve(state);
-    state = solved;
-    await _persistence.save(state);
+  void _recalculateCircuit() {
+    state = CircuitSolverService.calculateSimulation(state);
+    _persistState();
+  }
+
+  SandboxState _calculateSimulationForState(SandboxState targetState) {
+    return CircuitSolverService.calculateSimulation(targetState);
   }
 
   void replaceBurnedComponent(String id) {
-    _history.pushSnapshot(state);
+    _pushSnapshot();
     final updatedBurned = Set<String>.from(state.burnedComponentIds)..remove(id);
     state = state.copyWith(burnedComponentIds: updatedBurned);
     _recalculateCircuit();
   }
 
   void replaceAllBurnedComponents() {
-    _history.pushSnapshot(state);
+    _pushSnapshot();
     state = state.copyWith(burnedComponentIds: {});
     _recalculateCircuit();
   }
