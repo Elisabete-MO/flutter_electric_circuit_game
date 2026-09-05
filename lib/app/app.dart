@@ -7,6 +7,8 @@ import '../state/settings_controller.dart';
 import 'routes.dart';
 import 'theme.dart';
 
+import '../widgets/landscape_guard.dart';
+
 /// Widget raiz do EletroLab.
 class EletroLabApp extends ConsumerWidget {
   const EletroLabApp({super.key});
@@ -35,7 +37,7 @@ class EletroLabApp extends ConsumerWidget {
         data: MediaQuery.of(context).copyWith(
           // Removed textScaler to use exact +2px fonts in theme
         ),
-        child: child!,
+        child: LandscapeGuard(child: child!),
       ),
     );
   }
