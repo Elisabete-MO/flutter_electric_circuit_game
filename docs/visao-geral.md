@@ -1,81 +1,79 @@
-# Visão geral do EletroLab
+# Visão Geral do EletroLab
 
-## O que é
+O **EletroLab** é um laboratório virtual educacional interativo para o aprendizado prático de circuitos elétricos em corrente contínua e baixa tensão. 
 
-**EletroLab** é um laboratório virtual de circuitos elétricos com fins
-educacionais, desenvolvido com a API nativa de desenho **CustomPainter do Flutter**. Inspira-se no *conceito* de
-simuladores educacionais interativos (como o PhET Circuit Construction Kit),
-mas com **implementação, código, textos, assets e identidade visual próprios**.
+Construído em Flutter com renderização vetorial nativa e gerenciamento de estado previsível (Riverpod), o projeto une a experimentação livre de uma bancada de eletrônica a uma campanha pedagógica contextualizada em uma feira de ciências escolar.
 
-> Não há qualquer código, asset ou texto copiado do PhET. A inspiração é
-> apenas conceitual.
+---
 
-## Objetivo
+## 🎯 Proposta e Princípios Pedagógicos
 
-Permitir que estudantes aprendam conceitos de eletricidade de forma visual e
-interativa:
+Diferente de ferramentas profissionais de CAD elétrico ou análise nodal voltadas para a engenharia (como SPICE), o EletroLab é concebido para ser **didático, acessível, visual e seguro**:
 
-- montar circuitos;
-- arrastar componentes e conectá-los por fios;
-- alterar valores e ligar/desligar interruptores;
-- observar a corrente elétrica e visualizar tensão/potência;
-- medir grandezas com o multímetro;
-- resolver desafios e experimentar livremente;
-- receber feedback educacional e explicações.
+1. **Baixa Tensão Didática Simulada**: Todos os circuitos operam sob modelos pedagógicos de corrente contínua (ex.: pilhas de 1,5 V, baterias de 4,5 V e 9 V, LEDs de 2 V, fontes ajustáveis de até 30 V). Não há menção ou incentivo à manipulação de rede elétrica residencial ou alta tensão.
+2. **Contexto Realista de Feira Escolar**: A experiência descarta clichês de magia, vilões ou poderes sobrenaturais. A narrativa se passa na preparação da *Feira de Ciências da Comunidade*, onde equipes de alunos preparam protótipos, cartazes e demonstrações sob a coordenação do **Professor Volts**.
+3. **Ciclo de Investigação Científica**: Em vez de apenas montar circuitos prontos, o aluno é incentivado a seguir o método científico:
+   $$\text{Preparar} \longrightarrow \text{Prever} \longrightarrow \text{Investigar} \longrightarrow \text{Projetar} \longrightarrow \text{Demonstrar}$$
+4. **Tríade Avaliativa Formativa**: O sucesso em cada missão não se resume ao fechamento elétrico do circuito, sendo avaliado em três dimensões:
+   * **Funciona**: A malha atende ao comportamento físico solicitado (ex.: lâmpada acende, motor gira).
+   * **Está seguro**: O circuito previne sobrecorrentes, curtos-circuitos simulados e respeita limites de componentes.
+   * **Consegue explicar**: O aluno sabe justificar o que aconteceu perante os visitantes da feira, utilizando previsões e evidências mensuráveis.
 
-## Público e abordagem
+---
 
-A aplicação deve ser **educacional, acessível e divertida** — não uma
-ferramenta profissional de engenharia.
+## 👥 Público-Alvo
 
-## Funcionalidades principais (v1)
+* **Faixa etária principal**: Estudantes a partir do Ensino Fundamental II (9 a 14 anos) e iniciantes em física/eletrônica.
+* **Pré-requisitos**: Nenhum conhecimento prévio de eletricidade é exigido. A jornada se inicia no reconhecimento tátil e visual dos componentes básicos.
+* **Acessibilidade**: Projetado para interação tátil em smartphones e tablets, além de mouse e atalhos de teclado em computadores.
 
-1. **Menu inicial** com quatro opções:
-   - ⚡ **Primeiros passos** — introdução interativa (tutorial).
-   - 🔬 **Começar** — desafios educacionais progressivos.
-   - 🧪 **Banqueta** — laboratório livre.
-   - ⚙️ **Configurações** — aparência, simulação, acessibilidade e dados.
+---
 
-2. **Motor de simulação** separado da camada visual (CustomPainter):
-   `UI → CustomPainter → Circuit Model → Circuit Solver → SimulationResult`.
+## 🗺️ Escopo do Produto
 
-3. **Componentes** (v1): bateria, resistor, lâmpada, interruptor, fio e
-   multímetro.
+O EletroLab está estruturado em três eixos centrais de experiência:
 
-4. **Grandezas**: `V = R × I`, `I = V / R`, `P = V × I`, com visualização no
-   simulador.
+### 1. Feira de Ciências da Comunidade (Modo Campanha)
+Uma trilha progressiva composta por **10 estandes temáticos** (cada um com 5 missões práticas), cobrindo a evolução do conhecimento elétrico:
+1. **Acende Aí**: Caminho fechado, fonte de alimentação e lâmpada incandescente.
+2. **Liga e Desliga**: Chaves SPST, estados aberto/fechado e botões push-button.
+3. **Ruas da Maquete**: Circuitos em série vs. circuitos em paralelo e manutenção de ramos independentes.
+4. **Letreiros de LED**: Polaridade de semicondutores (ânodo e cátodo) e dimensionamento de resistor protetor.
+5. **Movimento em Miniatura**: Motores CC, sentido de rotação por polaridade e comando mecânico.
+6. **Mede, Testa e Explica**: Medição de grandezas com voltímetro/amperímetro e Lei de Ohm ($V = R \cdot I$).
+7. **Circuito Seguro**: Diagnóstico de falhas, teste de continuidade e proteção com fusível didático.
+8. **Horta Monitorada**: Sensores analógicos (LDR), potenciômetro e capacitores (*no backlog*).
+9. **Portão da Escola**: Separação entre circuito de comando e carga com relé elétrico (*no backlog*).
+10. **Praça da Maquete Coletiva**: Integração dos subsistemas na maquete final da comunidade (*no backlog*).
 
-5. **Corrente animada**: partículas nos fios com velocidade proporcional à
-   corrente (representação didática).
+### 2. Primeiros Passos (Tutorial Essencial)
+Guia inicial com os 8 componentes elementares da eletrônica (Bateria, Fio, Interruptor, Lâmpada, Resistor, Diodo, LED e Motor). Apresenta a dualidade visual entre a ilustração física 3D e o símbolo esquemático técnico (NBR/IEEE), acompanhado de um quiz formativo de fixação.
 
-6. **Persistência local** (sem backend): configurações, progresso e desafios
-   concluídos.
+### 3. Bancada Livre (Modo Sandbox)
+Ambiente de laboratório aberto para experimentação desimpedida:
+* Adição e conexão livre de componentes no grid.
+* Alternância instantânea entre modo Físico Realista e Diagrama Esquemático Técnico.
+* Fiação com **Roteamento Ortogonal Inteligente (Manhattan Wire Routing)**.
+* Instrumentos virtuais de bancada: **Cyber-Multímetro Digital 9000** e **Osciloscópio HUD**.
+* Lógica didática de sobrecarga com queima visual de componentes (LED, lâmpada e motor).
+* Assistente flutuante do Professor Volts com diagnósticos automáticos e botão de reparo instantâneo.
 
-7. **Responsividade**: celular, tablet, desktop e web (quando possível).
+---
 
-## Critérios de sucesso da v1
+## 🏆 Critérios de Sucesso
 
-O usuário deve conseguir:
+A experiência é considerada bem-sucedida quando o aluno:
+* Compreende que a corrente elétrica exige um percurso contínuo entre os polos da fonte.
+* Diferencia montagens em série de montagens em paralelo, justificando a queda de tensão e a independência dos ramos.
+* Reconhece a polaridade de componentes sensíveis e a necessidade de resistores para proteção de LEDs.
+* Lê e correlaciona um esquema elétrico em diagrama técnico com a bancada física correspondente.
+* Formula previsões antes de acionar um circuito e identifica a causa de uma anomalia elétrica através de testes metódicos.
 
-1. Abrir o EletroLab e visualizar o menu inicial.
-2. Completar a introdução em "Primeiros passos".
-3. Selecionar um desafio em "Começar".
-4. Entrar na "Banqueta".
-5. Adicionar e mover bateria, resistor, lâmpada e interruptor.
-6. Conectar os componentes e fechar o circuito.
-7. Iniciar a simulação e calcular a corrente.
-8. Fazer a lâmpada acender.
-9. Visualizar a corrente animada.
-10. Usar o multímetro.
-11. Abrir as configurações, alterar uma preferência e mantê-la após reabrir.
+---
 
-## Fora do escopo da v1
+## 🔗 Próximas Leituras
 
-- Backend ou sincronização em nuvem.
-- Persistência online de progresso.
-- Identidade visual ou assets de terceiros.
-
-## Referências
-
-- [`estrutura.md`](estrutura.md) — arquitetura.
-- [`roadmap.md`](roadmap.md) — planejamento por fases.
+* [Requisitos Funcionais e Não Funcionais](requisitos.md)
+* [Arquitetura Técnica e Módulos de Software](arquitetura.md)
+* [Telas, UX e Fluxos de Navegação](ux-e-fluxos.md)
+* [Conteúdo Detalhado dos Estandes e Missões](conteudo.md)

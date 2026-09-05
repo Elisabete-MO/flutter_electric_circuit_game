@@ -1,24 +1,73 @@
-# Documentação do EletroLab
+# Documentação Oficial — EletroLab
 
-Índice da documentação do projeto.
+Bem-vindo à central de documentação do **EletroLab**, seu laboratório virtual educacional de circuitos elétricos.
 
-| Documento | Conteúdo |
-|---|---|
-| [`visao-geral.md`](visao-geral.md) | O que é o EletroLab, objetivo, público, escopo e critérios de sucesso da v1. |
-| [`estrutura.md`](estrutura.md) | Estrutura de pastas, arquitetura em camadas, gerenciamento de estado e persistência. |
-| [`roadmap.md`](roadmap.md) | Fases de desenvolvimento, status atual e o que ainda precisa ser feito. |
-| [`especificacao-componentes.md`](especificacao-componentes.md) | Spec dos componentes do simulador (bateria, resistor, lâmpada, interruptor, fio, multímetro). |
-| [`especificacao-simulacao.md`](especificacao-simulacao.md) | Motor de simulação: grafo, solver, grandezas e animação de corrente. |
-| [`especificacao-desafios.md`](especificacao-desafios.md) | Sistema de desafios, feedback educacional e os desafios planejados. |
-| [`interface.md`](interface.md) | Telas, interações, atalhos, câmera e responsividade. |
-| [`bancada_livre.md`](bancada_livre.md) | Documentação completa da Bancada Livre / Bancada Online (arquitetura, solver, instrumentos, simulação física e diagnósticos). |
-| [`configuracoes.md`](configuracoes.md) | Preferências, acessibilidade e persistência de configurações. |
-| [`testes.md`](testes.md) | Estratégia de testes, casos do solver e comandos de verificação. |
+Esta base documental é a **fonte única de verdade** sobre requisitos, arquitetura, design de experiência, conteúdo pedagógico e decisões técnicas do projeto.
 
+---
 
-## Estado atual do projeto
+## 🧭 Mapa de Navegação da Documentação
 
-- **Todas as Fases (1 a 10) 100% Concluídas** — App navegável com identidade visual Cyberpunk, menu inicial Bento Grid com CyberHUD adaptado, primeiros passos interativo com quiz de reconhecimento, 3 desafios modulares completos (lâmpada, motor, resistor) com placar de estrelas e áudio, persistência local de tema, configurações e progresso via SharedPreferences.
-- **Renderização Nativa e Partículas (Fase 3 & 6)** — Canvas de simulação customizado via CustomPainter com partículas de elétrons animadas ao longo dos fios energizados, otimizado com RepaintBoundary.
-- **Motor de Simulação & Bancada Livre (Fases 5 & 7 - Sandbox)** — Laboratório livre totalmente funcional com resolvedor de circuitos em grafo, cálculo de grandezas elétricas em tempo real (Lei de Ohm e Kirchoff), lógica de sobrecarga/queima física (LED, Lâmpada, Motor), roteamento ortogonal inteligente de fios (Manhattan Routing), loader de circuitos predefinidos, atalhos de reparo e assistente HUD flutuante do Professor Volts no canto inferior direito.
-- Consulte o [`roadmap.md`](roadmap.md) para o detalhamento completo de todas as fases.
+```text
+docs/
+├── README.md                 # Este índice geral
+├── visao-geral.md            # Proposta, público-alvo, objetivos e princípios pedagógicos
+├── requisitos.md             # Requisitos funcionais (RF) e não-funcionais (RNF)
+├── arquitetura.md            # Arquitetura em camadas, Riverpod, CustomPainter e persistência
+├── ux-e-fluxos.md            # Telas, rotas nomeadas, ciclo da missão e atalhos de teclado
+├── conteudo.md               # Catálogo dos 10 estandes, 50 missões, falas e rubricas
+├── assets.md                 # Paleta de cores, componentes gráficos e efeitos de áudio
+├── backlog.md                # Estandes pendentes (8 a 10), débitos e decisões a confirmar
+└── referencias/              # Especificações aprofundadas e pesquisas científicas preservadas
+    ├── README.md             # Índice das referências
+    ├── bancada_livre.md      # Manual completo e instrumentação da Bancada Livre
+    ├── circuitos_detalhados.md # Esquemas técnicos e passos de montagem de todas as missões
+    ├── estande1_quatro_fases.md# Especificação detalhada da jornada de 4 fases do Estande 1
+    ├── explicacoes_componentes.md # Fundamentação científica e didática dos 5 componentes
+    └── testes.md             # Estratégia de testes e matriz de validação do solver
+```
+
+---
+
+## 📚 Índice dos Documentos Principais
+
+| Documento | Foco | Para quem é útil? |
+|---|---|---|
+| [`visao-geral.md`](visao-geral.md) | **Proposta e Princípios**<br>Objetivos educacionais, público (a partir de 9 anos), baixa tensão e premissa da feira escolar. | Educadores, designers de produto e novos contribuidores. |
+| [`requisitos.md`](requisitos.md) | **Requisitos de Sistema**<br>Requisitos funcionais (RF01–RF20) e não funcionais (60 FPS, acessibilidade, offline-first). | Analistas de requisitos, desenvolvedores e QA. |
+| [`arquitetura.md`](arquitetura.md) | **Arquitetura de Software**<br>Camadas do sistema, modularização dos estandes (`common_stand`), grafo DFS e Riverpod. | Desenvolvedores Flutter e engenheiros de software. |
+| [`ux-e-fluxos.md`](ux-e-fluxos.md) | **UX, Telas e Interações**<br>Tabela oficial de rotas, ciclo de 5 etapas da missão e atalhos de teclado desktop. | Designers de interface, desenvolvedores frontend e QA. |
+| [`conteudo.md`](conteudo.md) | **Conteúdo Pedagógico**<br>Os 10 estandes, matriz das 50 missões reformuladas, falas do Prof. Volts e rubrica de 3 pontos. | Roteiristas, educadores e implementadores de missões. |
+| [`assets.md`](assets.md) | **Identidade Visual e Assets**<br>Tokens de cores, mapeamento de PNGs físicos, símbolos vetoriais e efeitos sonoros. | Designers visuais, ilustradores e integradores de mídia. |
+| [`backlog.md`](backlog.md) | **Backlog e Decisões**<br>Estandes 08 a 10 (Horta, Portão, Maquete), débitos técnicos e itens a confirmar. | Product owners, tech leads e mantenedores. |
+| [`referencias/`](referencias/README.md) | **Referências Aprofundadas**<br>Manuais extensos da Bancada Livre, circuitos detalhados, Estande 1 e pesquisas científicas. | Especialistas técnicos, físicos e desenvolvedores do solver. |
+
+---
+
+## 🔍 Como Consultar por Perfil de Trabalho
+
+* **Vai implementar ou dar manutenção em uma tela de Estande?**
+  1. Leia [`arquitetura.md`](arquitetura.md) para seguir o padrão de coordenador slim e missões modulares.
+  2. Consulte [`conteudo.md`](conteudo.md) e [`referencias/circuitos_detalhados.md`](referencias/circuitos_detalhados.md) para os dados da missão e conexões esperadas.
+  3. Verifique [`ux-e-fluxos.md`](ux-e-fluxos.md) para os contratos de navegação.
+
+* **Vai mexer no motor de simulação ou na Bancada Livre?**
+  1. Consulte [`arquitetura.md`](arquitetura.md) e o manual completo em [`referencias/bancada_livre.md`](referencias/bancada_livre.md).
+  2. Valide as regras de física em [`requisitos.md`](requisitos.md) e os casos de teste em [`referencias/testes.md`](referencias/testes.md).
+
+* **Vai escrever novos diálogos ou criar desafios pedagógicos?**
+  1. Consulte [`visao-geral.md`](visao-geral.md) para alinhar o tom sem linguagem de magia/fantasia.
+  2. Utilize a fundamentação científica de [`referencias/explicacoes_componentes.md`](referencias/explicacoes_componentes.md) para garantir precisão física.
+  3. Siga o ciclo de 5 etapas documentado em [`conteudo.md`](conteudo.md).
+
+---
+
+## ⚡ Comandos Rápidos de Validação
+
+```bash
+# Validar análise estática
+flutter analyze lib/ test/
+
+# Executar a suíte de testes completa
+flutter test
+```

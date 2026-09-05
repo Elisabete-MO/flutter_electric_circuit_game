@@ -1,155 +1,105 @@
 # EletroLab
 
-**EletroLab — seu laboratório virtual de circuitos elétricos.**
+**EletroLab — Laboratório Virtual Educacional de Circuitos Elétricos**
 
-Aplicação educacional de simulação de circuitos elétricos desenvolvida com
-**Flutter + Flame**. O EletroLab permite montar circuitos, arrastar
-componentes, conectar fios, controlar interruptores, observar a corrente
-elétrica, medir grandezas e resolver desafios — com feedback visual e
-explicações educacionais.
+Aplicação educacional interativa de simulação de circuitos elétricos desenvolvida em **Flutter** (Material 3) com renderização gráfica nativa via **CustomPainter** e gerenciamento de estado previsível com **Riverpod**.
 
-> O EletroLab é uma implementação e identidade visual próprias, inspirada
-> apenas no *conceito* de simuladores educacionais interativos de circuitos.
+O EletroLab permite montar circuitos, arrastar componentes, conectar fios magnéticos, controlar chaves e interruptores, observar a corrente elétrica didática animada, medir grandezas com instrumentos virtuais e resolver missões práticas na **Feira de Ciências da Comunidade** ou experimentar livremente na **Bancada Livre**.
 
-## Objetivo
+> O EletroLab possui identidade visual, textos, simulação e código próprios, inspirando-se puramente no *conceito* pedagógico de simuladores de circuitos em baixa tensão.
 
-Oferecer um laboratório virtual acessível e divertido onde estudantes possam
-aprender conceitos de eletricidade (Lei de Ohm, tensão, corrente, potência,
-circuitos em série e paralelo) de forma visual e interativa.
+---
 
-## Funcionalidades
+## 🎯 Proposta Pedagógica
 
-- **Primeiros passos** — guia visual e interativo aos 8 símbolos e componentes elétricos essenciais (Bateria, Fio, Interruptor, Lâmpada, Resistor, Diodo, LED e Motor) com renderizadores vetoriais em tempo real, simulação de estados, banner orientativo e modo Desafio/Quiz sem rótulos.
-- **Começar** — 3 cards de desafios práticos e progressivos (Desafio 1: Acenda a Lâmpada, Desafio 2: Controle com Interruptor, Desafio 3: Proteção com Resistor).
-- **Banqueta** — laboratório livre para experimentar circuitos.
-- **Configurações** — aparência, simulação, acessibilidade e dados.
+O objetivo central é ensinar conceitos fundamentais de eletricidade e circuitos elétricos (Lei de Ohm, percurso fechado, circuitos em série e paralelo, polaridade e proteção) para estudantes e iniciantes a partir de 9 anos.
 
-## Tecnologias
+A experiência é guiada por três princípios avaliativos:
+1. **Funciona**: O circuito fecha a malha e atende ao objetivo prático.
+2. **Está seguro**: Previne danos, sobrecargas e curtos-circuitos antes de energizar.
+3. **Consegue explicar**: O estudante prevê comportamentos, formula hipóteses e justifica suas observações para os visitantes da feira.
 
-- [Flutter](https://flutter.dev) (Material 3, suporte a mobile, desktop e web)
-- [Flame](https://flame-engine.org) — motor do simulador visual
-- [Riverpod](https://riverpod.dev) — gerenciamento de estado
-- [shared_preferences](https://pub.dev/packages/shared_preferences) —
-  persistência local
+---
 
-## Requisitos
+## 🕹️ Modos de Jogo e Funcionalidades
 
-- Flutter SDK 3.44 ou superior (Dart 3.12)
-- Um dispositivo, emulador ou navegador compatível
+- **Feira de Ciências da Comunidade**: Campanha estruturada em 10 estandes temáticos (5 missões práticas por estande), coordenada pelo **Professor Volts**:
+  - **Estande 01 — Acende Aí / Primeiro Estande**: Percurso fechado, lâmpada e jornada em 4 fases.
+  - **Estande 02 — Liga e Desliga**: Chaves SPST, push-buttons e ramos de controle.
+  - **Estande 03 — Ruas da Maquete**: Postes em série vs. paralelo e manutenção isolada.
+  - **Estande 04 — Letreiros de LED**: Polaridade de semicondutores e resistor limitador de 680 Ω.
+  - **Estande 05 — Movimento em Miniatura**: Motores CC, inversão de rotação e comando por botão.
+  - **Estande 06 — Mede, Testa e Explica**: Medição de tensão com voltímetro, queda de tensão e Lei de Ohm.
+  - **Estande 07 — Circuito Seguro**: Inspeção de curto-circuito, teste de continuidade e fusível didático.
+  - **Estandes 08 a 10**: Horta monitorada (LDR/potenciômetro), portão automatizado (relé) e integração na Maquete Coletiva (*planejados no backlog*).
+- **Primeiros Passos**: Guia visual e interativo aos 8 símbolos e componentes elétricos essenciais com visualização física 3D, simbologia esquemática e quiz de reconhecimento.
+- **Bancada Livre (Sandbox)**: Laboratório livre com grade inteligente, bornes magnéticos (snap de 60 px), roteamento ortogonal de fios (Manhattan Routing), medição com o Cyber-Multímetro Digital 9000, Osciloscópio HUD, atalhos de teclado, seleção em lote e sistema de queima física de componentes.
+- **Configurações e Acessibilidade**: Temas Claro / Escuro / Sistema, redutor de animações, escala de interface linear, alto contraste e persistência local 100% offline via `shared_preferences`.
 
-## Instalação
+---
 
+## 🛠️ Tecnologias Utilizadas
+
+- **Framework**: [Flutter](https://flutter.dev) (SDK ^3.12.2 / Flutter 3.44+)
+- **Renderização Gráfica**: `CustomPainter` nativo com otimização por `RepaintBoundary`
+- **Gerenciamento de Estado**: [Riverpod](https://riverpod.dev) (`flutter_riverpod: ^3.4.2`)
+- **Persistência Local**: [shared_preferences](https://pub.dev/packages/shared_preferences)
+- **Internacionalização**: Flutter Localizations (Suporte a Português e Inglês)
+- **Áudio**: [audioplayers](https://pub.dev/packages/audioplayers)
+
+---
+
+## 🚀 Como Executar o Projeto
+
+### Pré-requisitos
+- Flutter SDK instalado e configurado (`flutter doctor`).
+- Navegador Google Chrome, emulador Android/iOS ou ambiente de desktop (Linux/macOS/Windows).
+
+### Instalação
 ```bash
 git clone <url-do-repositorio>
-cd eletrolab
+cd flutter_electric_circuit_game
 flutter pub get
 ```
 
-## Execução
-
+### Execução em Desenvolvimento
 ```bash
-# Desenvolvimento
+# Execução padrão na plataforma conectada
 flutter run
 
-# Plataforma específica
+# No navegador (Web)
 flutter run -d chrome
+
+# No Linux Desktop
 flutter run -d linux
-flutter run -d android
-
-# Build
-flutter build web
 ```
 
-## Arquitetura
-
-O EletroLab mantém as camadas estritamente separadas:
-
-```text
-Flutter UI
-     ↓
-Flame (visual)
-     ↓
-Circuit Model (grafo do circuito)
-     ↓
-Circuit Solver (matemática)
-     ↓
-Simulation Result
-```
-
-> Veja também a [documentação detalhada](docs/README.md) do projeto.
-
-Estrutura principal:
-
-```text
-lib/
-├── main.dart
-├── app/            → MaterialApp, rotas e tema (identidade EletroLab)
-├── screens/        → home, first_steps, challenges, sandbox, settings
-├── game/           → câmera, componentes, fios, partículas, interações (Flame)
-├── simulation/     → circuit, nodes, terminais, conexões e solver
-├── models/         → models de componentes, desafios e configurações
-├── state/          → controladores Riverpod
-├── services/       → persistência (configurações, progresso) e repositórios
-└── widgets/        → widgets reutilizáveis
-```
-
-### Estado
-
-O estado da simulação não depende do estado visual do Flame: o motor
-matemático (solver) é independente e testável isoladamente.
-
-### Persistência
-
-Configurações e progresso são persistidos localmente via
-`shared_preferences`, sem backend.
-
-## Como adicionar componentes
-
-1. Crie a classe do componente em `lib/simulation/` (modelo matemático) e o
-   respectivo componente visual em `lib/game/components/`.
-2. Defina seus terminais e propriedades.
-3. Registre o componente no catálogo/banqueta, associando-o a um ícone e nome.
-4. Adicione testes do solver se o componente alterar o comportamento do
-   circuito.
-
-## Como criar desafios
-
-1. Crie uma entrada no sistema de desafios (id, título, descrição,
-   dificuldade, componentes disponíveis, objetivo, condição de vitória,
-   feedback e progresso).
-2. Implemente a condição de vitória com base no `SimulationResult`.
-3. Registre no catálogo de desafios — o sistema é modular para facilitar a
-   adição de novos desafios.
-
-## Como executar testes
-
+### Testes e Análise de Qualidade
 ```bash
+# Análise estática do código
 flutter analyze
+
+# Execução de toda a suíte de testes automatizados
 flutter test
 ```
 
-Testes existentes:
+---
 
-- Identidade da tela inicial e as quatro opções principais.
-- Navegação entre seções.
-- Tela de configurações e persistência do tema.
-- Testes do solver de circuitos (adição nas próximas fases).
+## 📚 Documentação Completa
 
-## Roadmap
+A documentação detalhada do projeto está organizada no diretório [`docs/`](docs/README.md):
 
-O projeto é desenvolvido incrementalmente:
+* [Visão Geral e Escopo](docs/visao-geral.md)
+* [Requisitos Funcionais e Não Funcionais](docs/requisitos.md)
+* [Arquitetura Técnica e Módulos](docs/arquitetura.md)
+* [UX, Telas e Fluxos](docs/ux-e-fluxos.md)
+* [Conteúdo: Estandes, Missões e Rubricas](docs/conteudo.md)
+* [Guia de Assets e Identidade Visual](docs/assets.md)
+* [Backlog e Próximos Passos](docs/backlog.md)
+* [Documentos Técnicos de Referência](docs/referencias/README.md)
 
-1. **Fundação** — projeto, tema, navegação, menu inicial (*concluído*).
-2. **Primeiros passos** — guia de símbolos esquemáticos e componentes físicos (*concluído*).
-3. **Flame** — canvas, câmera, grade, pan/zoom e interações.
-4. **Componentes** — bateria, resistor, lâmpada, interruptor e fio.
-5. **Circuito** — terminais, nós, conexões, grafo e solver.
-6. **Simulação** — corrente, tensão, potência e animação.
-7. **Banqueta** — laboratório livre.
-8. **Começar** — 3 desafios interativos com bancada e diagramas esquemáticos (*concluído*).
-9. **Configurações** — preferências, acessibilidade e persistência completa.
-10. **Refinamento** — UX, animações, feedback, responsividade e desempenho.
+---
 
-## Licença
+## 📄 Licença
 
-Material educacional próprio do EletroLab. Nenhum asset, texto ou código do PhET foi utilizado.
+Material educacional e de pesquisa do projeto EletroLab.
