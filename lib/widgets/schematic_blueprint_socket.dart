@@ -58,7 +58,7 @@ class SchematicBlueprintSocket<T extends Object> extends StatelessWidget {
               AnimatedContainer(
                 duration: const Duration(milliseconds: 250),
                 width: width ?? 95,
-                height: height ?? 75,
+                height: height ?? 95,
                 decoration: BoxDecoration(
                   color: isFilled
                       ? Colors.transparent

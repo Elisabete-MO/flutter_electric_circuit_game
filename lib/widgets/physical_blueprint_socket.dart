@@ -33,7 +33,7 @@ class PhysicalBlueprintSocket<T extends Object> extends StatelessWidget {
     this.rotation = 0.0,
     this.onRotate,
     this.width = 95,
-    this.height = 80,
+    this.height = 95,
   });
 
   @override
