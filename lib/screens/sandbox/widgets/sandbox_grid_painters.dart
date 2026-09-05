@@ -20,11 +20,18 @@ class GridPainter extends CustomPainter {
     this.hoverCell,
   });
 
+  // Reutilização de objetos Paint para evitar alocações constantes
+  static final Paint _gridLinePaint = Paint()..strokeWidth = 1.2;
+  static final Paint _hoverBgPaint = Paint();
+  static final Paint _bracketPaint = Paint()
+    ..strokeWidth = 1.8
+    ..style = PaintingStyle.stroke;
+
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.05)
-      ..strokeWidth = 1.2;
+    _gridLinePaint.color = isDark 
+        ? Colors.white.withValues(alpha: 0.08) 
+        : Colors.black.withValues(alpha: 0.05);
 
     final cellWidth = size.width / columns;
     final cellHeight = size.height / rows;
@@ -32,13 +39,13 @@ class GridPainter extends CustomPainter {
     // Linhas Verticais
     for (int i = 1; i < columns; i++) {
       final x = i * cellWidth;
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), _gridLinePaint);
     }
 
     // Linhas Horizontais
     for (int i = 1; i < rows; i++) {
       final y = i * cellHeight;
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), _gridLinePaint);
     }
 
     // Destaque de Célula Hover com Cantoneiras HUD (Cyber Reticle)
@@ -50,28 +57,27 @@ class GridPainter extends CustomPainter {
         final rect = Rect.fromLTWH(gx * cellWidth, gy * cellHeight, cellWidth, cellHeight);
         
         // Fundo sutil
+        _hoverBgPaint.color = (isDark ? const Color(0xFF00F5D4) : const Color(0xFF00875A))
+            .withValues(alpha: 0.06);
         canvas.drawRRect(
           RRect.fromRectAndRadius(rect, const Radius.circular(6)),
-          Paint()..color = (isDark ? const Color(0xFF00F5D4) : const Color(0xFF00875A)).withValues(alpha: 0.06),
+          _hoverBgPaint,
         );
 
         // Cantoneiras HUD estilo cibernético
-        final bracketPaint = Paint()
-          ..color = isDark ? const Color(0xFF00F5D4) : const Color(0xFF00875A)
-          ..strokeWidth = 1.8
-          ..style = PaintingStyle.stroke;
+        _bracketPaint.color = isDark ? const Color(0xFF00F5D4) : const Color(0xFF00875A);
 
         const bLen = 8.0;
         final pad = 3.0;
 
         // Top-Left
-        canvas.drawPath(Path()..moveTo(rect.left + pad + bLen, rect.top + pad)..lineTo(rect.left + pad, rect.top + pad)..lineTo(rect.left + pad, rect.top + pad + bLen), bracketPaint);
+        canvas.drawPath(Path()..moveTo(rect.left + pad + bLen, rect.top + pad)..lineTo(rect.left + pad, rect.top + pad)..lineTo(rect.left + pad, rect.top + pad + bLen), _bracketPaint);
         // Top-Right
-        canvas.drawPath(Path()..moveTo(rect.right - pad - bLen, rect.top + pad)..lineTo(rect.right - pad, rect.top + pad)..lineTo(rect.right - pad, rect.top + pad + bLen), bracketPaint);
+        canvas.drawPath(Path()..moveTo(rect.right - pad - bLen, rect.top + pad)..lineTo(rect.right - pad, rect.top + pad)..lineTo(rect.right - pad, rect.top + pad + bLen), _bracketPaint);
         // Bottom-Left
-        canvas.drawPath(Path()..moveTo(rect.left + pad + bLen, rect.bottom - pad)..lineTo(rect.left + pad, rect.bottom - pad)..lineTo(rect.left + pad, rect.bottom - pad - bLen), bracketPaint);
+        canvas.drawPath(Path()..moveTo(rect.left + pad + bLen, rect.bottom - pad)..lineTo(rect.left + pad, rect.bottom - pad)..lineTo(rect.left + pad, rect.bottom - pad - bLen), _bracketPaint);
         // Bottom-Right
-        canvas.drawPath(Path()..moveTo(rect.right - pad - bLen, rect.bottom - pad)..lineTo(rect.right - pad, rect.bottom - pad)..lineTo(rect.right - pad, rect.bottom - pad - bLen), bracketPaint);
+        canvas.drawPath(Path()..moveTo(rect.right - pad - bLen, rect.bottom - pad)..lineTo(rect.right - pad, rect.bottom - pad)..lineTo(rect.right - pad, rect.bottom - pad - bLen), _bracketPaint);
       }
     }
   }
@@ -83,6 +89,30 @@ class GridPainter extends CustomPainter {
         oldDelegate.isDark != isDark ||
         oldDelegate.hoverCell != hoverCell;
   }
+}
+
+// --- CHAVE DE CACHE PARA OS CAMINHOS DE FIO ---
+
+class WirePathCacheKey {
+  final Offset start;
+  final Offset end;
+  final bool isDiagramMode;
+  final String componentHash;
+
+  WirePathCacheKey(this.start, this.end, this.isDiagramMode, this.componentHash);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is WirePathCacheKey &&
+          runtimeType == other.runtimeType &&
+          start == other.start &&
+          end == other.end &&
+          isDiagramMode == other.isDiagramMode &&
+          componentHash == other.componentHash;
+
+  @override
+  int get hashCode => Object.hash(start, end, isDiagramMode, componentHash);
 }
 
 // --- PAINTER DOS FIOS CONECTADOS ---
@@ -114,8 +144,74 @@ class WiresPainter extends CustomPainter {
     this.selectedWireId,
   });
 
+  // Cache estático de caminhos para evitar recriação de Paths durante animação
+  static final Map<WirePathCacheKey, Path> _pathCache = {};
+
+  // Reutilização de objetos Paint para evitar alocações pesadas a cada frame
+  static final Paint _selectPaint = Paint()
+    ..color = const Color(0xFF00F5D4).withValues(alpha: 0.85)
+    ..strokeWidth = 9.0
+    ..style = PaintingStyle.stroke
+    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
+
+  static final Paint _shortGlowPaint = Paint()
+    ..style = PaintingStyle.stroke;
+
+  static final Paint _shortCorePaint = Paint()
+    ..color = const Color(0xFFFF1744)
+    ..strokeWidth = 4.0
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round;
+
+  static final Paint _lightningYellowPaint = Paint()
+    ..color = const Color(0xFFFFD54F).withValues(alpha: 0.9)
+    ..strokeWidth = 2.0
+    ..style = PaintingStyle.stroke;
+
+  static final Paint _lightningWhitePaint = Paint()
+    ..color = Colors.white
+    ..strokeWidth = 1.0
+    ..style = PaintingStyle.stroke;
+
+  static final Paint _shadowPaint = Paint()
+    ..color = Colors.black26
+    ..strokeWidth = 5.5
+    ..style = PaintingStyle.stroke
+    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
+
+  static final Paint _baseWirePaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round;
+
+  static final Paint _specularPaint = Paint()
+    ..strokeWidth = 1.0
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round;
+
+  static final Paint _particlePaint = Paint()
+    ..color = Colors.white
+    ..style = PaintingStyle.fill;
+
+  static final Paint _particleGlowPaint = Paint()
+    ..color = const Color(0xFF00FF9D).withValues(alpha: 0.4)
+    ..style = PaintingStyle.fill
+    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1);
+
+  static final Paint _junctionDotPaint = Paint()
+    ..style = PaintingStyle.fill;
+
+  static final Paint _junctionBorderPaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.5;
+
   @override
   void paint(Canvas canvas, Size size) {
+    if (_pathCache.length > 500) {
+      _pathCache.clear();
+    }
+
+    final componentHash = components.map((c) => '${c.id}_${c.gridX}_${c.gridY}_${c.rotation}').join('|');
+
     for (final wire in wires) {
       final fromCompList = components.where((c) => c.id == wire.fromComponentId).toList();
       final toCompList = components.where((c) => c.id == wire.toComponentId).toList();
@@ -124,9 +220,9 @@ class WiresPainter extends CustomPainter {
       final fromComp = fromCompList.first;
       final toComp = toCompList.first;
 
-      // Obtém as coordenadas relativas dos terminais A ou B
-      final fromRelPos = wire.fromTerminal == 'A' ? fromComp.getTerminalAPosition() : fromComp.getTerminalBPosition();
-      final toRelPos = wire.toTerminal == 'A' ? toComp.getTerminalAPosition() : toComp.getTerminalBPosition();
+      // Obtém as coordenadas relativas dos terminais
+      final fromRelPos = fromComp.getTerminalPosition(wire.fromTerminal);
+      final toRelPos = toComp.getTerminalPosition(wire.toTerminal);
 
       // Transforma para coordenadas absolutas em pixels
       final start = Offset(fromRelPos.dx * cellSize, fromRelPos.dy * cellSize);
@@ -141,25 +237,20 @@ class WiresPainter extends CustomPainter {
           simulationValues['active_${fromComp.id}'] == 1.0 && 
           simulationValues['active_${toComp.id}'] == 1.0;
 
-      // Desenha o cabo elétrico com Roteamento Inteligente (Ortogonal para Diagrama, Curvo para Físico)
-      final path = buildSmartWirePath(
+      // Usa cache para evitar reconstruir o Path do fio a cada frame animado
+      final cacheKey = WirePathCacheKey(start, end, isDiagramMode, componentHash);
+      final path = _pathCache[cacheKey] ??= buildSmartWirePath(
         start: start,
         end: end,
         cellSize: cellSize,
         isDiagramMode: isDiagramMode,
         components: components,
+        fromComponentId: fromComp.id,
+        toComponentId: toComp.id,
       );
 
       if (isSelected) {
-        // --- DESTAQUE DE SELEÇÃO DO FIO ---
-        canvas.drawPath(
-          path,
-          Paint()
-            ..color = const Color(0xFF00F5D4).withValues(alpha: 0.85)
-            ..strokeWidth = 9.0
-            ..style = PaintingStyle.stroke
-            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
-        );
+        canvas.drawPath(path, _selectPaint);
       }
 
       // Cor Didática do Fio por Polaridade de Origem (Vermelho +, Azul -, Amarelo Sinal)
@@ -173,15 +264,12 @@ class WiresPainter extends CustomPainter {
       final Color wireGlowColor;
 
       if (isFromPosPower || isToPosPower) {
-        // Fio Vermelho para Pólo Positivo VCC (+)
         wireBaseColor = const Color(0xFFE53935);
         wireGlowColor = const Color(0xFFFF3B7F);
       } else if (isFromNegPower || isToNegPower) {
-        // Fio Azul para Pólo Negativo GND (-)
         wireBaseColor = isDark ? const Color(0xFF1E88E5) : const Color(0xFF1565C0);
         wireGlowColor = const Color(0xFF00E5FF);
       } else {
-        // Fio Amarelo/Laranja para conexões intermediárias de sinal
         wireBaseColor = isDark ? const Color(0xFFFFB300) : const Color(0xFFFB8C00);
         wireGlowColor = const Color(0xFF00FF9D);
       }
@@ -189,31 +277,20 @@ class WiresPainter extends CustomPainter {
       final wireColor = isWireActive ? wireGlowColor : wireBaseColor;
 
       if (isShortWire) {
-        // --- EFEITO DE ANIMAÇÃO DE CURTO-CIRCUITO ---
         final pulse = 0.5 + 0.5 * math.sin(animationValue * math.pi * 6);
-        final glowColor = const Color(0xFFFF3B7F); // Cyber Neon Red/Pink
+        final glowColor = const Color(0xFFFF3B7F);
 
-        // 1. Aura de sobrecarga piscante em volta do fio
         canvas.drawPath(
           path,
-          Paint()
+          _shortGlowPaint
             ..color = glowColor.withValues(alpha: 0.6 + pulse * 0.4)
             ..strokeWidth = 9.0 + pulse * 5.0
-            ..style = PaintingStyle.stroke
             ..maskFilter = MaskFilter.blur(BlurStyle.normal, 4.0 + pulse * 6.0),
         );
 
-        // 2. Núcleo em chamas / Vermelho de Alerta
-        canvas.drawPath(
-          path,
-          Paint()
-            ..color = const Color(0xFFFF1744)
-            ..strokeWidth = 4.0
-            ..style = PaintingStyle.stroke
-            ..strokeCap = StrokeCap.round,
-        );
+        canvas.drawPath(path, _shortCorePaint);
 
-        // 3. Raios elétricos zangados (Jagged Lightning Bolt Zaps) ao longo do fio
+        // Raios elétricos
         final lightningPath = Path();
         for (final metric in path.computeMetrics()) {
           final length = metric.length;
@@ -222,7 +299,6 @@ class WiresPainter extends CustomPainter {
             final tangent = metric.getTangentForOffset(d);
             if (tangent != null) {
               final normal = Offset(-tangent.vector.dy, tangent.vector.dx);
-              // Oscilação de alta frequência simulando descarga elétrica
               final jitter = math.sin((d * 0.5) + (animationValue * math.pi * 12)) * (4.0 + pulse * 3.0);
               final pt = tangent.position + normal * jitter;
               if (isFirst) {
@@ -235,23 +311,10 @@ class WiresPainter extends CustomPainter {
           }
         }
 
-        canvas.drawPath(
-          lightningPath,
-          Paint()
-            ..color = const Color(0xFFFFD54F).withValues(alpha: 0.9) // Amarelo Faísca
-            ..strokeWidth = 2.0
-            ..style = PaintingStyle.stroke,
-        );
+        canvas.drawPath(lightningPath, _lightningYellowPaint);
+        canvas.drawPath(lightningPath, _lightningWhitePaint);
 
-        canvas.drawPath(
-          lightningPath,
-          Paint()
-            ..color = Colors.white
-            ..strokeWidth = 1.0
-            ..style = PaintingStyle.stroke,
-        );
-
-        // 4. Explosão de faíscas nos terminais de conexão em curto
+        // Explosão de faíscas nos terminais
         for (final terminalPos in [start, end]) {
           const sparkCount = 6;
           for (int i = 0; i < sparkCount; i++) {
@@ -260,16 +323,13 @@ class WiresPainter extends CustomPainter {
             final p1 = terminalPos;
             final p2 = Offset(terminalPos.dx + len * math.cos(angle), terminalPos.dy + len * math.sin(angle));
 
-            canvas.drawLine(
-              p1,
-              p2,
-              Paint()
-                ..color = i % 2 == 0 ? const Color(0xFFFFD54F) : const Color(0xFFFF3B7F)
-                ..strokeWidth = 2.0
-                ..strokeCap = StrokeCap.round,
-            );
+            final sparkPaint = Paint()
+              ..color = i % 2 == 0 ? const Color(0xFFFFD54F) : const Color(0xFFFF3B7F)
+              ..strokeWidth = 2.0
+              ..strokeCap = StrokeCap.round;
+
+            canvas.drawLine(p1, p2, sparkPaint);
           }
-          // Flash luminoso no nó do terminal
           canvas.drawCircle(
             terminalPos,
             5.0 + pulse * 4.0,
@@ -279,54 +339,33 @@ class WiresPainter extends CustomPainter {
           );
         }
       } else if (isDiagramMode) {
-        // Estilo Diagrama Esquemático: Linhas limpas e nítidas
         canvas.drawPath(
           path,
-          Paint()
+          _baseWirePaint
             ..color = wireColor
-            ..strokeWidth = isWireActive ? 3.2 : 2.4
-            ..style = PaintingStyle.stroke
-            ..strokeCap = StrokeCap.round,
+            ..strokeWidth = isWireActive ? 3.2 : 2.4,
         );
       } else {
-        // Estilo Físico Volumétrico 3D com Sombra e Brilho Especular
-        // 1. Sombra do Fio
-        canvas.drawPath(
-          path,
-          Paint()
-            ..color = Colors.black26
-            ..strokeWidth = 5.5
-            ..style = PaintingStyle.stroke
-            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
-        );
+        // Sombra do Fio
+        canvas.drawPath(path, _shadowPaint);
 
-        // 2. Fio de base
+        // Fio de base
         canvas.drawPath(
           path,
-          Paint()
+          _baseWirePaint
             ..color = wireColor
-            ..strokeWidth = isWireActive ? 4.2 : 3.5
-            ..style = PaintingStyle.stroke
-            ..strokeCap = StrokeCap.round,
+            ..strokeWidth = isWireActive ? 4.2 : 3.5,
         );
 
-        // 3. Highlight especular central para efeito 3D metálico
+        // Highlight especular central
         canvas.drawPath(
           path,
-          Paint()
-            ..color = Colors.white.withValues(alpha: isWireActive ? 0.6 : 0.35)
-            ..strokeWidth = 1.0
-            ..style = PaintingStyle.stroke
-            ..strokeCap = StrokeCap.round,
+          _specularPaint..color = Colors.white.withValues(alpha: isWireActive ? 0.6 : 0.35),
         );
       }
 
-      // 4. Animação de fluxo de corrente (partículas de elétrons pulsantes/correndo)
+      // Animação de fluxo de corrente (partículas de elétrons pulsantes/correndo)
       if (isWireActive) {
-        final paintParticle = Paint()
-          ..color = Colors.white
-          ..style = PaintingStyle.fill;
-        
         for (final metric in path.computeMetrics()) {
           final length = metric.length;
           const double spacing = 24.0;
@@ -335,36 +374,25 @@ class WiresPainter extends CustomPainter {
           for (double d = initialOffset; d < length; d += spacing) {
             final tangent = metric.getTangentForOffset(d);
             if (tangent != null) {
-              // Desenha o elétron como um círculo branco brilhante
-              canvas.drawCircle(tangent.position, 2.0, paintParticle);
-              
-              // Efeito de brilho ao redor do elétron
-              canvas.drawCircle(
-                tangent.position, 
-                4.5, 
-                Paint()
-                  ..color = const Color(0xFF00FF9D).withValues(alpha: 0.4)
-                  ..style = PaintingStyle.fill
-                  ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1),
-              );
+              canvas.drawCircle(tangent.position, 2.0, _particlePaint);
+              canvas.drawCircle(tangent.position, 4.5, _particleGlowPaint);
             }
           }
         }
       }
     }
 
-    // 5. Renderiza Nós de Junção Elétrica (T-Junction Dots) em conexões múltiplas
-    final junctionPaint = Paint()
-      ..color = isDark ? const Color(0xFF00FF9D) : const Color(0xFF00875A)
-      ..style = PaintingStyle.fill;
+    // Renderiza Nós de Junção Elétrica
+    _junctionDotPaint.color = isDark ? const Color(0xFF00FF9D) : const Color(0xFF00875A);
+    _junctionBorderPaint.color = (isDark ? const Color(0xFF00FF9D) : Colors.black87).withValues(alpha: 0.3);
 
     final terminalWireCounts = <String, Offset>{};
     for (final wire in wires) {
       final fromComp = components.where((c) => c.id == wire.fromComponentId).firstOrNull;
       final toComp = components.where((c) => c.id == wire.toComponentId).firstOrNull;
       if (fromComp != null && toComp != null) {
-        final fromPos = wire.fromTerminal == 'A' ? fromComp.getTerminalAPosition() : fromComp.getTerminalBPosition();
-        final toPos = wire.toTerminal == 'A' ? toComp.getTerminalAPosition() : toComp.getTerminalBPosition();
+        final fromPos = fromComp.getTerminalPosition(wire.fromTerminal);
+        final toPos = toComp.getTerminalPosition(wire.toTerminal);
 
         final fromKey = '${wire.fromComponentId}_${wire.fromTerminal}';
         final toKey = '${wire.toComponentId}_${wire.toTerminal}';
@@ -381,15 +409,8 @@ class WiresPainter extends CustomPainter {
 
       if (connectedWireCount >= 2) {
         final pos = entry.value;
-        canvas.drawCircle(pos, 4.5, junctionPaint);
-        canvas.drawCircle(
-          pos,
-          6.5,
-          Paint()
-            ..color = (isDark ? const Color(0xFF00FF9D) : Colors.black87).withValues(alpha: 0.3)
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.5,
-        );
+        canvas.drawCircle(pos, 4.5, _junctionDotPaint);
+        canvas.drawCircle(pos, 6.5, _junctionBorderPaint);
       }
     }
   }
@@ -436,7 +457,7 @@ class TemporaryWireLayer extends StatelessWidget {
     if (fromCompList.isEmpty) return const SizedBox.shrink();
     final fromComp = fromCompList.first;
 
-    final fromRel = source.terminal == 'A' ? fromComp.getTerminalAPosition() : fromComp.getTerminalBPosition();
+    final fromRel = fromComp.getTerminalPosition(source.terminal);
     final start = Offset(fromRel.dx * cellSize, fromRel.dy * cellSize);
 
     Offset? end;
@@ -444,7 +465,7 @@ class TemporaryWireLayer extends StatelessWidget {
       final toCompList = components.where((c) => c.id == snappedTarget!.componentId).toList();
       if (toCompList.isNotEmpty) {
         final toComp = toCompList.first;
-        final toRel = snappedTarget!.terminal == 'A' ? toComp.getTerminalAPosition() : toComp.getTerminalBPosition();
+        final toRel = toComp.getTerminalPosition(snappedTarget!.terminal);
         end = Offset(toRel.dx * cellSize, toRel.dy * cellSize);
       }
     }
@@ -477,6 +498,36 @@ class _TempWirePainter extends CustomPainter {
     required this.isDark,
   });
 
+  static final Paint _tempShadowPaint = Paint()
+    ..color = Colors.black38
+    ..style = PaintingStyle.stroke
+    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
+
+  static final Paint _tempBasePaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round;
+
+  static final Paint _tempSpecularPaint = Paint()
+    ..color = Colors.white.withValues(alpha: 0.9)
+    ..strokeWidth = 1.5
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round;
+
+  static final Paint _tempGlowPaint = Paint()
+    ..color = const Color(0xFF00F5D4).withValues(alpha: 0.4)
+    ..style = PaintingStyle.fill
+    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+
+  static final Paint _tempBorderPaint = Paint()
+    ..color = const Color(0xFF00F5D4)
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 2.0;
+
+  static final Paint _tempLockPaint = Paint()
+    ..color = const Color(0xFF00FF9D)
+    ..strokeWidth = 1.5
+    ..style = PaintingStyle.stroke;
+
   @override
   void paint(Canvas canvas, Size size) {
     final end = currentEnd;
@@ -493,65 +544,33 @@ class _TempWirePainter extends CustomPainter {
     // 1. Sombra do Fio Temporário
     canvas.drawPath(
       path,
-      Paint()
-        ..color = Colors.black38
-        ..strokeWidth = isSnapped ? 6.0 : 4.0
-        ..style = PaintingStyle.stroke
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
+      _tempShadowPaint..strokeWidth = isSnapped ? 6.0 : 4.0,
     );
 
-    // 2. Fio Temporário em tom Neon Cyan com espessura maior se magnetizado
+    // 2. Fio Temporário em tom Neon Cyan
     canvas.drawPath(
       path,
-      Paint()
+      _tempBasePaint
         ..color = isSnapped
             ? const Color(0xFF00F5D4)
             : (isDark ? const Color(0xFF00F5D4).withValues(alpha: 0.7) : const Color(0xFF00875A).withValues(alpha: 0.6))
-        ..strokeWidth = isSnapped ? 4.0 : 3.0
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round,
+        ..strokeWidth = isSnapped ? 4.0 : 3.0,
     );
 
     // 3. Brilho Neon Especular se Magnetizado
     if (isSnapped) {
-      canvas.drawPath(
-        path,
-        Paint()
-          ..color = Colors.white.withValues(alpha: 0.9)
-          ..strokeWidth = 1.5
-          ..style = PaintingStyle.stroke
-          ..strokeCap = StrokeCap.round,
-      );
+      canvas.drawPath(path, _tempSpecularPaint);
 
-      // Efeito de pulso e auréola magnética no ponto de conexão alvo
-      canvas.drawCircle(
-        end,
-        18.0,
-        Paint()
-          ..color = const Color(0xFF00F5D4).withValues(alpha: 0.4)
-          ..style = PaintingStyle.fill
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
-      );
+      // Efeito de pulso e auréola magnética
+      canvas.drawCircle(end, 18.0, _tempGlowPaint);
+      canvas.drawCircle(end, 13.0, _tempBorderPaint);
 
-      canvas.drawCircle(
-        end,
-        13.0,
-        Paint()
-          ..color = const Color(0xFF00F5D4)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2.0,
-      );
-
-      // Retículo de Mira Cibernética no Alvo (Target Lock Reticle)
-      final lockPaint = Paint()
-        ..color = const Color(0xFF00FF9D)
-        ..strokeWidth = 1.5
-        ..style = PaintingStyle.stroke;
+      // Retículo de Mira Cibernética no Alvo
       const arm = 6.0;
-      canvas.drawLine(Offset(end.dx - 18, end.dy), Offset(end.dx - 18 + arm, end.dy), lockPaint);
-      canvas.drawLine(Offset(end.dx + 18, end.dy), Offset(end.dx + 18 - arm, end.dy), lockPaint);
-      canvas.drawLine(Offset(end.dx, end.dy - 18), Offset(end.dx, end.dy - 18 + arm), lockPaint);
-      canvas.drawLine(Offset(end.dx, end.dy + 18), Offset(end.dx, end.dy + 18 - arm), lockPaint);
+      canvas.drawLine(Offset(end.dx - 18, end.dy), Offset(end.dx - 18 + arm, end.dy), _tempLockPaint);
+      canvas.drawLine(Offset(end.dx + 18, end.dy), Offset(end.dx + 18 - arm, end.dy), _tempLockPaint);
+      canvas.drawLine(Offset(end.dx, end.dy - 18), Offset(end.dx, end.dy - 18 + arm), _tempLockPaint);
+      canvas.drawLine(Offset(end.dx, end.dy + 18), Offset(end.dx, end.dy + 18 - arm), _tempLockPaint);
     }
   }
 
@@ -572,20 +591,21 @@ class ConnectionSparkPainter extends CustomPainter {
 
   ConnectionSparkPainter({required this.position, required this.progress});
 
+  static final Paint _sparkCyanPaint = Paint()
+    ..strokeWidth = 2.2
+    ..strokeCap = StrokeCap.round;
+
+  static final Paint _sparkGoldPaint = Paint()
+    ..strokeWidth = 1.6
+    ..strokeCap = StrokeCap.round;
+
   @override
   void paint(Canvas canvas, Size size) {
     if (progress >= 1.0) return;
 
     final alpha = (1.0 - progress).clamp(0.0, 1.0);
-    final cyanPaint = Paint()
-      ..color = const Color(0xFF00F5D4).withValues(alpha: alpha)
-      ..strokeWidth = 2.2
-      ..strokeCap = StrokeCap.round;
-
-    final goldPaint = Paint()
-      ..color = const Color(0xFFFFD54F).withValues(alpha: alpha)
-      ..strokeWidth = 1.6
-      ..strokeCap = StrokeCap.round;
+    _sparkCyanPaint.color = const Color(0xFF00F5D4).withValues(alpha: alpha);
+    _sparkGoldPaint.color = const Color(0xFFFFD54F).withValues(alpha: alpha);
 
     const int count = 8;
     for (int i = 0; i < count; i++) {
@@ -596,7 +616,7 @@ class ConnectionSparkPainter extends CustomPainter {
       final p1 = Offset(position.dx + innerDist * math.cos(angle), position.dy + innerDist * math.sin(angle));
       final p2 = Offset(position.dx + outerDist * math.cos(angle), position.dy + outerDist * math.sin(angle));
 
-      canvas.drawLine(p1, p2, i % 2 == 0 ? cyanPaint : goldPaint);
+      canvas.drawLine(p1, p2, i % 2 == 0 ? _sparkCyanPaint : _sparkGoldPaint);
     }
 
     // Flash central de impacto luminoso
@@ -621,6 +641,8 @@ Path buildSmartWirePath({
   required double cellSize,
   required bool isDiagramMode,
   required List<SandboxComponent> components,
+  String? fromComponentId,
+  String? toComponentId,
 }) {
   final path = Path()..moveTo(start.dx, start.dy);
 
@@ -675,6 +697,10 @@ Path buildSmartWirePath({
     bool hasIntermediateObstacle = false;
 
     for (final comp in components) {
+      if (comp.id == fromComponentId || comp.id == toComponentId) {
+        continue; // Não considera o próprio componente de origem ou destino como obstáculo
+      }
+
       final compLeft = comp.gridX * cellSize;
       final compRight = (comp.gridX + 1) * cellSize;
       final compBottom = (comp.gridY + 1) * cellSize;
@@ -723,22 +749,26 @@ Path buildSmartWirePath({
         end.dy,
       );
     } else {
-      // Conexão entre terminais adjacentes ou em diferentes alturas (Catenária física fluida sem rigidez)
-      final dxOut1 = startIsLeft ? -1.0 : 1.0;
-      final dxOut2 = endIsLeft ? -1.0 : 1.0;
+      // Determina a direção de saída do pino (normal) baseado na posição dele na célula
+      Offset getExitVector(Offset pt) {
+        final relX = (pt.dx % cellSize) / cellSize;
+        final relY = (pt.dy % cellSize) / cellSize;
+        if (relY < 0.2) return const Offset(0, -1); // Sai para cima
+        if (relY > 0.8) return const Offset(0, 1);  // Sai para baixo
+        if (relX < 0.5) return const Offset(-1, 0); // Sai para esquerda
+        return const Offset(1, 0);                  // Sai para direita
+      }
 
-      // Limita a projeção horizontal dos pontos de controle para evitar cruzamentos rígidos em S
-      final armX = math.min(32.0, math.max(12.0, absDx * 0.45));
+      final outStart = getExitVector(start);
+      final outEnd = getExitVector(end);
 
-      final cp1X = start.dx + dxOut1 * armX;
-      final cp2X = end.dx + dxOut2 * armX;
+      final armLen = math.min(32.0, math.max(12.0, dist * 0.3));
 
-      // Caimento de gravidade natural de alta fluidez
-      final sagBase = math.max(16.0, dist * 0.22);
-      final maxY = math.max(start.dy, end.dy);
-
-      final cp1Y = math.max(start.dy + sagBase * 0.4, maxY + sagBase * 0.25);
-      final cp2Y = math.max(end.dy + sagBase * 0.4, maxY + sagBase * 0.25);
+      final cp1X = start.dx + outStart.dx * armLen;
+      final cp1Y = start.dy + outStart.dy * armLen + (outStart.dy == 0 ? armLen * 0.5 : 0); // Leve gravidade
+      
+      final cp2X = end.dx + outEnd.dx * armLen;
+      final cp2Y = end.dy + outEnd.dy * armLen + (outEnd.dy == 0 ? armLen * 0.5 : 0);
 
       path.cubicTo(
         cp1X,
@@ -767,46 +797,48 @@ class MarqueeSelectionPainter extends CustomPainter {
     required this.isDark,
   });
 
+  static final Paint _marqueeFillPaint = Paint();
+  static final Paint _marqueeBorderPaint = Paint()
+    ..strokeWidth = 1.6
+    ..style = PaintingStyle.stroke;
+  static final Paint _marqueeBracketPaint = Paint()
+    ..strokeWidth = 2.4
+    ..style = PaintingStyle.stroke;
+
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Rect.fromPoints(start, current);
 
     // 1. Fundo semitransparente estilo HUD néon
-    final fillColor = isDark
+    _marqueeFillPaint.color = isDark
         ? const Color(0xFF00F5D4).withValues(alpha: 0.12)
         : const Color(0xFF00875A).withValues(alpha: 0.10);
     canvas.drawRRect(
       RRect.fromRectAndRadius(rect, const Radius.circular(4)),
-      Paint()..color = fillColor,
+      _marqueeFillPaint,
     );
 
     // 2. Borda externa em tom Cyber Neon
     final borderColor = isDark ? const Color(0xFF00F5D4) : const Color(0xFF00875A);
-    final borderPaint = Paint()
-      ..color = borderColor.withValues(alpha: 0.8)
-      ..strokeWidth = 1.6
-      ..style = PaintingStyle.stroke;
+    _marqueeBorderPaint.color = borderColor.withValues(alpha: 0.8);
     canvas.drawRRect(
       RRect.fromRectAndRadius(rect, const Radius.circular(4)),
-      borderPaint,
+      _marqueeBorderPaint,
     );
 
     // 3. Cantoneiras de mira ciber (Cyber Corner Reticles)
-    final bracketPaint = Paint()
-      ..color = borderColor
-      ..strokeWidth = 2.4
-      ..style = PaintingStyle.stroke;
+    _marqueeBracketPaint.color = borderColor;
 
     final bLen = math.min(12.0, math.min(rect.width.abs(), rect.height.abs()) / 3);
 
     // Top-Left
-    canvas.drawPath(Path()..moveTo(rect.left + bLen, rect.top)..lineTo(rect.left, rect.top)..lineTo(rect.left, rect.top + bLen), bracketPaint);
+    canvas.drawPath(Path()..moveTo(rect.left + bLen, rect.top)..lineTo(rect.left, rect.top)..lineTo(rect.left, rect.top + bLen), _marqueeBracketPaint);
     // Top-Right
-    canvas.drawPath(Path()..moveTo(rect.right - bLen, rect.top)..lineTo(rect.right, rect.top)..lineTo(rect.right, rect.top + bLen), bracketPaint);
+    canvas.drawPath(Path()..moveTo(rect.right - bLen, rect.top)..lineTo(rect.right, rect.top)..lineTo(rect.right, rect.top + bLen), _marqueeBracketPaint);
     // Bottom-Left
-    canvas.drawPath(Path()..moveTo(rect.left + bLen, rect.bottom)..lineTo(rect.left, rect.bottom)..lineTo(rect.left, rect.bottom - bLen), bracketPaint);
+    canvas.drawPath(Path()..moveTo(rect.left + bLen, rect.bottom)..lineTo(rect.left, rect.bottom)..lineTo(rect.left, rect.bottom - bLen), _marqueeBracketPaint);
     // Bottom-Right
-    canvas.drawPath(Path()..moveTo(rect.right - bLen, rect.bottom)..lineTo(rect.right, rect.bottom)..lineTo(rect.right, rect.bottom - bLen), bracketPaint);
+    canvas.drawPath(Path()..moveTo(rect.right - bLen, rect.bottom)..lineTo(rect.right, rect.bottom)..lineTo(rect.right, rect.bottom - bLen), _marqueeBracketPaint);
   }
 
   @override

@@ -47,7 +47,7 @@ class HomeScreen extends ConsumerWidget {
                     const Center(child: EletroLabLogo()),
                     const SizedBox(height: 48),
 
-                    // SAUDAÃ‡ÃƒO DO PROF. VOLTS
+                    // SAUDAÇÃO DO PROF. VOLTS
                     ProfVoltsSpeech(
                       text: completedCount == 0
                           ? 'Bem-vindo ao EletroLab! Comece pelo tutorial de "Primeiros Passos" ou encare o primeiro desafio.'
@@ -57,7 +57,7 @@ class HomeScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 48),
 
-                    // GRID DE OPÃ‡Ã•ES BENTO STYLED
+                    // GRID DE OPÇÕES BENTO STYLED
                     _buildBentoGrid(context, l10n, completedCount),
                   ],
                 ),
@@ -132,7 +132,7 @@ class HomeScreen extends ConsumerWidget {
         _CyberMenuCard cardSandbox(double? h) => buildCard(
           title: l10n.menuSandbox,
           description: l10n.menuSandboxDesc,
-          tag: 'LABORATÃ“RIO LIVRE 3D',
+          tag: 'LABORATÓRIO LIVRE 3D',
           icon: Icons.biotech_rounded,
           accentColor: EletroLabColors.neonCyan,
           onTap: () => Navigator.of(context).pushNamed(Routes.sandbox),

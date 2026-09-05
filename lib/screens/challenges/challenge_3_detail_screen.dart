@@ -43,7 +43,6 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
   ComponentType? _slotBulb;
 
   late final AnimationController _currentAnimationController;
-  late final AnimationController _pulseAnimationController;
   late final ConfettiController _confettiController;
   final ScrollController _paletteVerticalScrollController = ScrollController();
   final ScrollController _paletteHorizontalScrollController = ScrollController();
@@ -72,11 +71,6 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat();
-
-    _pulseAnimationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
   }
 
   @override
@@ -84,7 +78,6 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
     _timer?.cancel();
     _audio.stopBgm();
     _currentAnimationController.dispose();
-    _pulseAnimationController.dispose();
     _confettiController.dispose();
     _paletteVerticalScrollController.dispose();
     _paletteHorizontalScrollController.dispose();
@@ -182,10 +175,119 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final isWide = constraints.maxWidth >= 600;
+                  final w = constraints.maxWidth;
+                  final h = constraints.maxHeight;
+                  final cx = w / 2;
+                  final cy = h / 2;
+
+                  final double batX, batY, bulbX, bulbY, resX, resY, swX, swY;
+                  final double batW, batH, bulbW, bulbH, resW, resH, swW, swH;
+
+                  if (_showDiagramMode) {
+                    final dx = (w * 0.38).clamp(120.0, 220.0);
+                    final dy = (h * 0.30).clamp(80.0, 140.0);
+                    final sz = (w * 0.14).clamp(70.0, 110.0);
+
+                    batX = cx - dx;
+                    batY = cy;
+                    batW = sz;
+                    batH = sz;
+
+                    bulbX = cx;
+                    bulbY = cy - dy;
+                    bulbW = sz;
+                    bulbH = sz;
+
+                    resX = cx + dx;
+                    resY = cy;
+                    resW = sz;
+                    resH = sz;
+
+                    swX = cx;
+                    swY = cy + dy;
+                    swW = sz;
+                    swH = sz;
+                  } else {
+                    batX = w * 0.16;
+                    batY = h * 0.48;
+                    batW = 180.0;
+                    batH = 180.0;
+
+                    bulbX = w * 0.50;
+                    bulbY = h * 0.24;
+                    bulbW = 160.0;
+                    bulbH = 160.0;
+
+                    resX = w * 0.82;
+                    resY = h * 0.48;
+                    resW = 160.0;
+                    resH = 160.0;
+
+                    swX = w * 0.50;
+                    swY = h * 0.74;
+                    swW = 160.0;
+                    swH = 160.0;
+                  }
 
                   final circuitBoardArea = Stack(
                     children: [
-                      // Fundo da Bancada do Circuito
+                      // 1. Componentes Físicos (PNGs) com Transição Suave de Posição
+                      Positioned.fill(
+                        child: Stack(
+                          children: [
+                            AnimatedPositioned(
+                              duration: const Duration(milliseconds: 350),
+                              curve: Curves.easeInOut,
+                              left: batX - (batW / 2),
+                              top: batY - (batH / 2),
+                              width: batW,
+                              height: batH,
+                              child: Image.asset(
+                                ComponentType.battery.getChallengeAssetPath(false)!,
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                            AnimatedPositioned(
+                              duration: const Duration(milliseconds: 350),
+                              curve: Curves.easeInOut,
+                              left: bulbX - (bulbW / 2),
+                              top: bulbY - (bulbH / 2),
+                              width: bulbW,
+                              height: bulbH,
+                              child: Image.asset(
+                                ComponentType.bulb.getChallengeAssetPath(_isSwitchClosed)!,
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                            AnimatedPositioned(
+                              duration: const Duration(milliseconds: 350),
+                              curve: Curves.easeInOut,
+                              left: resX - (resW / 2),
+                              top: resY - (resH / 2),
+                              width: resW,
+                              height: resH,
+                              child: Image.asset(
+                                ComponentType.resistor.getChallengeAssetPath(false)!,
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                            AnimatedPositioned(
+                              duration: const Duration(milliseconds: 350),
+                              curve: Curves.easeInOut,
+                              left: swX - (swW / 2),
+                              top: swY - (swH / 2),
+                              width: swW,
+                              height: swH,
+                              child: Image.asset(
+                                ComponentType.switchComponent.getChallengeAssetPath(_isSwitchClosed)!,
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Fundo Estático da Bancada & Fios Físicos / Esquema
                       Positioned.fill(
                         child: RepaintBoundary(
                           child: CustomPaint(
@@ -197,7 +299,20 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
                               slotResistor: _slotResistor,
                               slotBulb: _slotBulb,
                               isDark: isDark,
+                              useRealisticAssets: true,
                               drawParticlesOnly: false,
+                              batX: batX,
+                              batY: batY,
+                              bulbX: bulbX,
+                              bulbY: bulbY,
+                              resX: resX,
+                              resY: resY,
+                              swX: swX,
+                              swY: swY,
+                              batSize: batW,
+                              bulbSize: bulbW,
+                              resSize: resW,
+                              swSize: swW,
                             ),
                           ),
                         ),
@@ -219,8 +334,21 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
                                     slotResistor: _slotResistor,
                                     slotBulb: _slotBulb,
                                     isDark: isDark,
+                                    useRealisticAssets: true,
                                     currentProgress: _currentAnimationController.value,
                                     drawParticlesOnly: true,
+                                    batX: batX,
+                                    batY: batY,
+                                    bulbX: bulbX,
+                                    bulbY: bulbY,
+                                    resX: resX,
+                                    resY: resY,
+                                    swX: swX,
+                                    swY: swY,
+                                    batSize: batW,
+                                    bulbSize: bulbW,
+                                    resSize: resW,
+                                    swSize: swW,
                                   ),
                                 );
                               },
@@ -285,10 +413,10 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
                       // Clique Direto no Asset do Interruptor Físico na Bancada
                       if (!_showDiagramMode)
                         Positioned(
-                          left: constraints.maxWidth * 0.72 - 65,
-                          top: constraints.maxHeight * 0.74 - 40,
-                          width: 130,
-                          height: 80,
+                          left: swX - (swW / 2),
+                          top: swY - (swH / 2),
+                          width: swW,
+                          height: swH,
                           child: MouseRegion(
                             cursor: SystemMouseCursors.click,
                             child: GestureDetector(
@@ -339,77 +467,61 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
                         ),
                       ),
 
-                      // Slots de Drop no Modo Diagrama (Bateria, Interruptor, Resistor, Lâmpada)
+                      // Slots de Drop no Modo Diagrama (Sobrepostos aos Componentes Físicos)
                       if (_showDiagramMode)
                         Positioned.fill(
-                          child: LayoutBuilder(
-                            builder: (context, constraints) {
-                              final cx = constraints.maxWidth / 2;
-                              final cy = constraints.maxHeight / 2;
+                          child: Stack(
+                            children: [
+                              // Slot 1: Bateria (Lado Esquerdo)
+                              _buildDropSlot(
+                                left: batX - (batW / 2),
+                                top: batY - (batH / 2),
+                                width: batW,
+                                height: batH,
+                                currentType: _slotBattery,
+                                label: l10n.compBattery,
+                                onAccept: (type) => setState(() => _slotBattery = type),
+                                onClear: () => setState(() => _slotBattery = null),
+                                isVertical: true,
+                              ),
 
-                              // Adapta dinamicamente o tamanho do diagrama Ã s dimensões da tela
-                              final dx = (constraints.maxWidth * 0.26).clamp(80.0, 150.0);
-                              final dy = (constraints.maxHeight * 0.22).clamp(55.0, 100.0);
+                              // Slot 2: Lâmpada (Topo do Diagrama)
+                              _buildDropSlot(
+                                left: bulbX - (bulbW / 2),
+                                top: bulbY - (bulbH / 2),
+                                width: bulbW,
+                                height: bulbH,
+                                currentType: _slotBulb,
+                                label: l10n.compBulb,
+                                onAccept: (type) => setState(() => _slotBulb = type),
+                                onClear: () => setState(() => _slotBulb = null),
+                              ),
 
-                              final leftX = cx - dx;
-                              final rightX = cx + dx;
-                              final topY = cy - dy;
-                              final bottomY = cy + dy;
+                              // Slot 3: Resistor (Lado Direito)
+                              _buildDropSlot(
+                                left: resX - (resW / 2),
+                                top: resY - (resH / 2),
+                                width: resW,
+                                height: resH,
+                                currentType: _slotResistor,
+                                label: l10n.compResistor,
+                                onAccept: (type) => setState(() => _slotResistor = type),
+                                onClear: () => setState(() => _slotResistor = null),
+                                isVertical: true,
+                              ),
 
-                              return Stack(
-                                children: [
-                                  // Slot 1: Bateria (Lado Esquerdo)
-                                  _buildDropSlot(
-                                    left: leftX - 40,
-                                    top: cy - 30,
-                                    width: 80,
-                                    height: 60,
-                                    currentType: _slotBattery,
-                                    label: l10n.compBattery,
-                                    onAccept: (type) => setState(() => _slotBattery = type),
-                                    onClear: () => setState(() => _slotBattery = null),
-                                    isVertical: true,
-                                  ),
-
-                                  // Slot 2: Lâmpada (Topo do Diagrama)
-                                  _buildDropSlot(
-                                    left: cx - 40,
-                                    top: topY - 30,
-                                    width: 80,
-                                    height: 60,
-                                    currentType: _slotBulb,
-                                    label: l10n.compBulb,
-                                    onAccept: (type) => setState(() => _slotBulb = type),
-                                    onClear: () => setState(() => _slotBulb = null),
-                                  ),
-
-                                  // Slot 3: Resistor (Lado Direito)
-                                  _buildDropSlot(
-                                    left: rightX - 40,
-                                    top: cy - 30,
-                                    width: 80,
-                                    height: 60,
-                                    currentType: _slotResistor,
-                                    label: l10n.compResistor,
-                                    onAccept: (type) => setState(() => _slotResistor = type),
-                                    onClear: () => setState(() => _slotResistor = null),
-                                    isVertical: true,
-                                  ),
-
-                                  // Slot 4: Interruptor / Chave Alavanca (Base do Diagrama)
-                                  _buildDropSlot(
-                                    left: cx - 40,
-                                    top: bottomY - 30,
-                                    width: 80,
-                                    height: 60,
-                                    currentType: _slotSwitch,
-                                    label: l10n.compSwitch,
-                                    onAccept: (type) => setState(() => _slotSwitch = type),
-                                    onClear: () => setState(() => _slotSwitch = null),
-                                  ),
-                                ],
-                              );
-                            },
+                              // Slot 4: Interruptor (Base do Diagrama)
+                              _buildDropSlot(
+                                left: swX - (swW / 2),
+                                top: swY - (swH / 2),
+                                width: swW,
+                                height: swH,
+                                currentType: _slotSwitch,
+                                label: l10n.compSwitch,
+                                onAccept: (type) => setState(() => _slotSwitch = type),
+                                onClear: () => setState(() => _slotSwitch = null),
+                              ),
+                            ],
                           ),
                         ),
                     ],
@@ -533,10 +645,10 @@ class _Challenge3DetailScreenState extends ConsumerState<Challenge3DetailScreen>
               height: height,
               decoration: BoxDecoration(
                 color: currentType != null
-                    ? (isDark ? const Color(0xFF1E2A3A) : const Color(0xFFE0F7FA))
+                    ? (isDark ? const Color(0xFF1E2A3A).withValues(alpha: 0.15) : const Color(0xFFE0F7FA).withValues(alpha: 0.15))
                     : (isHovered
-                        ? const Color(0xFFFFF9C4)
-                        : (isDark ? const Color(0xFF263238) : Colors.white)),
+                        ? const Color(0xFFFFF9C4).withValues(alpha: 0.4)
+                        : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05))),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: isHovered
@@ -587,8 +699,21 @@ class _Challenge3BoardPainter extends CustomPainter {
     required this.slotResistor,
     required this.slotBulb,
     required this.isDark,
+    this.useRealisticAssets = true,
     this.currentProgress = 0.0,
     this.drawParticlesOnly = false,
+    this.batX = 0,
+    this.batY = 0,
+    this.bulbX = 0,
+    this.bulbY = 0,
+    this.resX = 0,
+    this.resY = 0,
+    this.swX = 0,
+    this.swY = 0,
+    this.batSize = 180,
+    this.bulbSize = 160,
+    this.resSize = 160,
+    this.swSize = 160,
   });
 
   final bool isSwitchClosed;
@@ -598,8 +723,22 @@ class _Challenge3BoardPainter extends CustomPainter {
   final ComponentType? slotResistor;
   final ComponentType? slotBulb;
   final bool isDark;
+  final bool useRealisticAssets;
   final double currentProgress;
   final bool drawParticlesOnly;
+
+  final double batX;
+  final double batY;
+  final double bulbX;
+  final double bulbY;
+  final double resX;
+  final double resY;
+  final double swX;
+  final double swY;
+  final double batSize;
+  final double bulbSize;
+  final double resSize;
+  final double swSize;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -634,62 +773,79 @@ class _Challenge3BoardPainter extends CustomPainter {
   void _drawPhysicalCircuitOverlay(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
+    final scale = showDiagramMode ? 0.65 : 1.0;
 
     final batX = w * 0.16;
     final batY = h * 0.48;
+    final batW = 180.0;
+    final batH = 180.0;
+    final batLeft = batX - (batW / 2);
+    final batTop = batY - (batH / 2);
 
     final bulbX = w * 0.50;
     final bulbY = h * 0.24;
+    final bulbW = 160.0;
+    final bulbH = 160.0;
+    final bulbLeft = bulbX - (bulbW / 2);
+    final bulbTop = bulbY - (bulbH / 2);
 
     final resX = w * 0.82;
     final resY = h * 0.48;
+    final resW = 160.0;
+    final resH = 160.0;
+    final resLeft = resX - (resW / 2);
+    final resTop = resY - (resH / 2);
 
     final swX = w * 0.50;
     final swY = h * 0.74;
+    final swW = 160.0;
+    final swH = 160.0;
+    final swLeft = swX - (swW / 2);
+    final swTop = swY - (swH / 2);
 
     // Bornes
-    final batPosTerm = Offset(batX + 22, batY - 26);
-    final batNegTerm = Offset(batX - 16, batY - 22);
+    final batPosTerm = Offset(batLeft + batW * 0.855, batTop + batH * 0.383);
+    final batNegTerm = Offset(batLeft + batW * 0.849, batTop + batH * 0.609);
 
-    final bulbRedTerm  = Offset(bulbX - 30, bulbY + 4);
-    final bulbBlackTerm = Offset(bulbX + 30, bulbY + 4);
+    final bulbRedTerm  = Offset(bulbLeft + bulbW * 0.120, bulbTop + bulbH * 0.400);
+    final bulbBlackTerm = Offset(bulbLeft + bulbW * 0.881, bulbTop + bulbH * 0.400);
 
-    final resLeftTerm  = Offset(resX - 32, resY + 4);
-    final resRightTerm = Offset(resX + 32, resY + 4);
+    final resLeftTerm  = Offset(resLeft + resW * 0.124, resTop + resH * 0.384);
+    final resRightTerm = Offset(resLeft + resW * 0.880, resTop + resH * 0.383);
 
-    final swRedTerm  = Offset(swX - 25, swY + 6);
-    final swBlackTerm = Offset(swX + 25, swY + 6);
+    final swRedTerm  = Offset(swLeft + swW * 0.138, swTop + swH * 0.310);
+    final swBlackTerm = Offset(swLeft + swW * 0.876, swTop + swH * 0.310);
 
     // Fios
     final pathRed = Path();
     pathRed.moveTo(batPosTerm.dx, batPosTerm.dy);
     pathRed.cubicTo(
-      batPosTerm.dx + 30, batPosTerm.dy - (h * 0.22),
-      bulbRedTerm.dx - (w * 0.08), bulbRedTerm.dy - (h * 0.06),
+      batPosTerm.dx, bulbRedTerm.dy + 35,
+      batPosTerm.dx + (w * 0.08), bulbRedTerm.dy,
       bulbRedTerm.dx, bulbRedTerm.dy,
     );
 
     final pathBlack1 = Path();
     pathBlack1.moveTo(bulbBlackTerm.dx, bulbBlackTerm.dy);
     pathBlack1.cubicTo(
-      bulbBlackTerm.dx + (w * 0.12), bulbBlackTerm.dy - (h * 0.06),
-      resLeftTerm.dx - (w * 0.05), resLeftTerm.dy - (h * 0.18),
+      bulbBlackTerm.dx + (w * 0.12), bulbBlackTerm.dy - (h * 0.12),
+      resLeftTerm.dx - (w * 0.08), resLeftTerm.dy - (h * 0.12),
       resLeftTerm.dx, resLeftTerm.dy,
     );
 
     final pathBlack2 = Path();
     pathBlack2.moveTo(resRightTerm.dx, resRightTerm.dy);
     pathBlack2.cubicTo(
-      resRightTerm.dx + (w * 0.08), resRightTerm.dy + (h * 0.18),
-      swBlackTerm.dx + (w * 0.12), swBlackTerm.dy + (h * 0.06),
+      resRightTerm.dx + (w * 0.14), resRightTerm.dy + (h * 0.10),
+      swBlackTerm.dx + (w * 0.14), swBlackTerm.dy + (h * 0.12),
       swBlackTerm.dx, swBlackTerm.dy,
     );
 
     final pathBlack3 = Path();
     pathBlack3.moveTo(swRedTerm.dx, swRedTerm.dy);
     pathBlack3.cubicTo(
-      swRedTerm.dx - (w * 0.12), swRedTerm.dy + (h * 0.06),
-      batNegTerm.dx + (w * 0.08), batNegTerm.dy + (h * 0.22),
+      batNegTerm.dx + (w * 0.08), swRedTerm.dy,
+      batNegTerm.dx, swRedTerm.dy - 35,
       batNegTerm.dx, batNegTerm.dy,
     );
 
@@ -764,15 +920,17 @@ class _Challenge3BoardPainter extends CustomPainter {
     canvas.drawPath(pathBlack2.transform(highlightTransform.storage), wireHighlightPaint);
     canvas.drawPath(pathBlack3.transform(highlightTransform.storage), wireHighlightPaint);
 
-    final plugPaint = Paint()..color = const Color(0xFF424242);
-    canvas.drawCircle(batPosTerm, 5, plugPaint);
-    canvas.drawCircle(batNegTerm, 5, plugPaint);
-    canvas.drawCircle(bulbRedTerm, 4, plugPaint);
-    canvas.drawCircle(bulbBlackTerm, 4, plugPaint);
-    canvas.drawCircle(resLeftTerm, 4, plugPaint);
-    canvas.drawCircle(resRightTerm, 4, plugPaint);
-    canvas.drawCircle(swRedTerm, 4, plugPaint);
-    canvas.drawCircle(swBlackTerm, 4, plugPaint);
+    // Conectores redondos (Plugues 3D) colocados diretamente sobre as entradas dos bornes
+    _drawWireTerminalPlug(canvas, batPosTerm, const Color(0xFFEF5350));
+    _drawWireTerminalPlug(canvas, batNegTerm, isDark ? const Color(0xFF9E9E9E) : const Color(0xFF37474F));
+    _drawWireTerminalPlug(canvas, bulbRedTerm, const Color(0xFFEF5350));
+    _drawWireTerminalPlug(canvas, bulbBlackTerm, isDark ? const Color(0xFF9E9E9E) : const Color(0xFF37474F));
+    _drawWireTerminalPlug(canvas, resLeftTerm, isDark ? const Color(0xFF9E9E9E) : const Color(0xFF37474F));
+    _drawWireTerminalPlug(canvas, resRightTerm, isDark ? const Color(0xFF9E9E9E) : const Color(0xFF37474F));
+    _drawWireTerminalPlug(canvas, swRedTerm, isDark ? const Color(0xFF9E9E9E) : const Color(0xFF37474F));
+    _drawWireTerminalPlug(canvas, swBlackTerm, isDark ? const Color(0xFF9E9E9E) : const Color(0xFF37474F));
+
+    if (useRealisticAssets) return;
 
     final batPainter = ComponentPhysicalPainter(
       type: ComponentType.battery,
@@ -796,23 +954,23 @@ class _Challenge3BoardPainter extends CustomPainter {
     );
 
     canvas.save();
-    canvas.translate(batX - 60, batY - 50);
-    batPainter.paint(canvas, const Size(120, 100));
+    canvas.translate(batX - 60 * scale, batY - 50 * scale);
+    batPainter.paint(canvas, Size(120 * scale, 100 * scale));
     canvas.restore();
 
     canvas.save();
-    canvas.translate(bulbX - 65, bulbY - 42);
-    bulbPainter.paint(canvas, const Size(130, 85));
+    canvas.translate(bulbX - 65 * scale, bulbY - 42 * scale);
+    bulbPainter.paint(canvas, Size(130 * scale, 85 * scale));
     canvas.restore();
 
     canvas.save();
-    canvas.translate(resX - 50, resY - 35);
-    resPainter.paint(canvas, const Size(100, 70));
+    canvas.translate(resX - 50 * scale, resY - 35 * scale);
+    resPainter.paint(canvas, Size(100 * scale, 70 * scale));
     canvas.restore();
 
     canvas.save();
-    canvas.translate(swX - 65, swY - 40);
-    swPainter.paint(canvas, const Size(130, 80));
+    canvas.translate(swX - 65 * scale, swY - 40 * scale);
+    swPainter.paint(canvas, Size(130 * scale, 80 * scale));
     canvas.restore();
   }
 
@@ -839,41 +997,77 @@ class _Challenge3BoardPainter extends CustomPainter {
     }
   }
 
-  void _drawDiagramWireOverlay(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-    final cx = w / 2;
-    final cy = h / 2;
+  void _drawWireTerminalPlug(Canvas canvas, Offset pos, Color color) {
+    // Sombra do conector/plugue
+    final shadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.35)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
+    canvas.drawCircle(pos + const Offset(1, 2), 6.5, shadowPaint);
 
+    // Anel metálico (borda prata do borne)
+    final metalPaint = Paint()
+      ..color = const Color(0xFFECEFF1)
+      ..style = PaintingStyle.fill;
+    final metalBorderPaint = Paint()
+      ..color = const Color(0xFF455A64)
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke;
+
+    canvas.drawCircle(pos, 7.0, metalPaint);
+    canvas.drawCircle(pos, 7.0, metalBorderPaint);
+
+    // Plugue redondo colorido (vermelho ou preto)
+    final plugPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+    final plugBorderPaint = Paint()
+      ..color = Colors.black45
+      ..strokeWidth = 0.8
+      ..style = PaintingStyle.stroke;
+
+    canvas.drawCircle(pos, 5.2, plugPaint);
+    canvas.drawCircle(pos, 5.2, plugBorderPaint);
+
+    // Brilho especular (Highlight 3D)
+    final highlightPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.7)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(pos + const Offset(-1.5, -1.5), 1.8, highlightPaint);
+  }
+
+  void _drawDiagramWireOverlay(Canvas canvas, Size size) {
     final wirePaint = Paint()
       ..color = isDark ? const Color(0xFF00E5FF) : const Color(0xFF1E293B)
-      ..strokeWidth = 3
+      ..strokeWidth = 3.5
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.square;
 
-    // Adapta dinamicamente a largura e a altura do retângulo do diagrama Ã  tela
-    final dx = (w * 0.26).clamp(80.0, 150.0);
-    final dy = (h * 0.22).clamp(55.0, 100.0);
-
-    final leftX = cx - dx;
-    final rightX = cx + dx;
-    final topY = cy - dy;
-    final bottomY = cy + dy;
+    final batHalfH = batSize / 2;
+    final bulbHalfW = bulbSize / 2;
+    final resHalfH = resSize / 2;
+    final swHalfW = swSize / 2;
 
     final path = Path();
-    path.moveTo(leftX, topY);
-    path.lineTo(cx - 40, topY);
-    path.moveTo(cx + 40, topY);
-    path.lineTo(rightX, topY);
-    path.lineTo(rightX, cy - 30);
-    path.moveTo(rightX, cy + 30);
-    path.lineTo(rightX, bottomY);
-    path.lineTo(cx + 40, bottomY);
-    path.moveTo(cx - 40, bottomY);
-    path.lineTo(leftX, bottomY);
-    path.lineTo(leftX, cy + 30);
-    path.moveTo(leftX, cy - 30);
-    path.lineTo(leftX, topY);
+
+    // 1. Polo (+) Bateria (Left top) -> Canto superior esquerdo -> Entrada esquerda Lâmpada (Top)
+    path.moveTo(batX, batY - batHalfH);
+    path.lineTo(batX, bulbY);
+    path.lineTo(bulbX - bulbHalfW, bulbY);
+
+    // 2. Saída direita Lâmpada (Top) -> Canto superior direito -> Polo 1 Resistor (Right top)
+    path.moveTo(bulbX + bulbHalfW, bulbY);
+    path.lineTo(resX, bulbY);
+    path.lineTo(resX, resY - resHalfH);
+
+    // 3. Polo 2 Resistor (Right bottom) -> Canto inferior direito -> Entrada direita Interruptor (Bottom)
+    path.moveTo(resX, resY + resHalfH);
+    path.lineTo(resX, swY);
+    path.lineTo(swX + swHalfW, swY);
+
+    // 4. Saída esquerda Interruptor (Bottom) -> Canto inferior esquerdo -> Polo (-) Bateria (Left bottom)
+    path.moveTo(swX - swHalfW, swY);
+    path.lineTo(batX, swY);
+    path.lineTo(batX, batY + batHalfH);
 
     canvas.drawPath(path, wirePaint);
   }
@@ -888,6 +1082,14 @@ class _Challenge3BoardPainter extends CustomPainter {
         oldDelegate.slotBulb != slotBulb ||
         oldDelegate.isDark != isDark ||
         oldDelegate.currentProgress != currentProgress ||
-        oldDelegate.drawParticlesOnly != drawParticlesOnly;
+        oldDelegate.drawParticlesOnly != drawParticlesOnly ||
+        oldDelegate.batX != batX ||
+        oldDelegate.batY != batY ||
+        oldDelegate.bulbX != bulbX ||
+        oldDelegate.bulbY != bulbY ||
+        oldDelegate.resX != resX ||
+        oldDelegate.resY != resY ||
+        oldDelegate.swX != swX ||
+        oldDelegate.swY != swY;
   }
 }

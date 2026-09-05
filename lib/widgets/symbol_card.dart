@@ -16,6 +16,7 @@ class SymbolCard extends StatefulWidget {
     this.isSelected = false,
     this.showLabels = true,
     this.isCorrectlyAnswered = false,
+    this.useRealisticAssets = false,
   });
 
   final FirstStepComponent component;
@@ -24,6 +25,7 @@ class SymbolCard extends StatefulWidget {
   final bool isSelected;
   final bool showLabels;
   final bool isCorrectlyAnswered;
+  final bool useRealisticAssets;
 
   @override
   State<SymbolCard> createState() => _SymbolCardState();
@@ -31,6 +33,29 @@ class SymbolCard extends StatefulWidget {
 
 class _SymbolCardState extends State<SymbolCard> {
   bool _isHovered = false;
+
+  double _getComponentScale(ComponentType type) {
+    switch (type) {
+      case ComponentType.resistor:
+        return 1.65;
+      case ComponentType.diode:
+        return 1.55;
+      case ComponentType.motor:
+        return 1.35;
+      case ComponentType.connectingWire:
+        return 1.15;
+      case ComponentType.led:
+        return 1.05;
+      case ComponentType.bulb:
+        return 1.00; // 1.00 para não sobrepor o texto do nome da lâmpada
+      case ComponentType.switchComponent:
+        return 1.15;
+      case ComponentType.battery:
+        return 1.05;
+      default:
+        return 1.10;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +68,12 @@ class _SymbolCardState extends State<SymbolCard> {
             : _isHovered
                 ? theme.colorScheme.primary
                 : (isDark ? EletroLabColors.borderDarkColors[1] : EletroLabColors.borderLightColors[1]);
+
+    final activeGlowColor = widget.component.type == ComponentType.bulb
+        ? const Color(0xFFFFB300)
+        : (widget.component.type == ComponentType.led
+            ? const Color(0xFF00E676)
+            : theme.colorScheme.primary);
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
@@ -68,14 +99,14 @@ class _SymbolCardState extends State<SymbolCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // PARTE SUPERIOR: Objeto físico real + Nome
+                // PARTE SUPERIOR: Objeto físico real + Nome (Flex maior para dar destaque aos objetos 3D)
                 Expanded(
-                  flex: 5,
+                  flex: 70,
                   child: Container(
                     color: isDark
                         ? const Color(0xFF1E2638)
                         : const Color(0xFFF8FAFC),
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                     child: Column(
                       children: [
                         if (widget.showLabels) ...[
@@ -91,7 +122,7 @@ class _SymbolCardState extends State<SymbolCard> {
                               maxLines: 1,
                             ),
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: 4),
                         ] else if (widget.isCorrectlyAnswered)
                           FittedBox(
                             fit: BoxFit.scaleDown,
@@ -129,13 +160,58 @@ class _SymbolCardState extends State<SymbolCard> {
                             ),
                           ),
                         Expanded(
-                          child: CustomPaint(
-                            painter: ComponentPhysicalPainter(
-                              type: widget.component.type,
-                              isActive: widget.component.isActive,
-                              isDarkMode: isDark,
-                            ),
-                            child: const SizedBox.expand(),
+                          child: Center(
+                            child: widget.useRealisticAssets &&
+                                    widget.component.type.getAssetPath(widget.component.isActive) != null
+                                ? Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      // Sombra de pedestal 3D sob o objeto realista
+                                      Positioned(
+                                        bottom: 4,
+                                        child: Container(
+                                          width: 80,
+                                          height: 14,
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(50),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: widget.component.isActive
+                                                    ? activeGlowColor.withValues(alpha: 0.45)
+                                                    : Colors.black.withValues(alpha: isDark ? 0.4 : 0.15),
+                                                blurRadius: widget.component.isActive ? 16 : 8,
+                                                spreadRadius: widget.component.isActive ? 4 : 1,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      // Imagem com Escala Personalizada Inteligente
+                                      Transform.scale(
+                                        scale: _getComponentScale(widget.component.type),
+                                        child: Image.asset(
+                                          widget.component.type.getAssetPath(widget.component.isActive)!,
+                                          fit: BoxFit.contain,
+                                          errorBuilder: (context, error, stackTrace) => CustomPaint(
+                                            painter: ComponentPhysicalPainter(
+                                              type: widget.component.type,
+                                              isActive: widget.component.isActive,
+                                              isDarkMode: isDark,
+                                            ),
+                                            child: const SizedBox.expand(),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : CustomPaint(
+                                    painter: ComponentPhysicalPainter(
+                                      type: widget.component.type,
+                                      isActive: widget.component.isActive,
+                                      isDarkMode: isDark,
+                                    ),
+                                    child: const SizedBox.expand(),
+                                  ),
                           ),
                         ),
                       ],
@@ -157,12 +233,12 @@ class _SymbolCardState extends State<SymbolCard> {
 
                 // PARTE INFERIOR: Símbolo Esquemático Elétrico
                 Expanded(
-                  flex: 4,
+                  flex: 30,
                   child: Container(
                     color: isDark
                         ? const Color(0xFF161C28)
                         : const Color(0xFFFFFFFF),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
