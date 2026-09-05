@@ -37,44 +37,51 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
   StandMission get _currentMission => _missions[_currentMissionIndex];
 
   // Estados do Multímetro Didático e Provas de Medição
-  String _multimeterMode = 'V_DC';
-  bool _redProbeConnected = false;
-  bool _blackProbeConnected = false;
+  bool _redProbeConnected = true;
+  bool _blackProbeConnected = true;
 
-  // M1: Battery socket
-  bool _m1BatteryInserted = false;
+  // M1: Battery socket + Voltímetro + Amperímetro
+  bool _m1BatteryInserted = true;
   double _m1BatteryRotation = 0.0;
+  bool _m1VoltmeterInserted = false;
+  double _m1VoltmeterRotation = 0.0;
+  bool _m1AmperimeterInserted = false;
+  double _m1AmperimeterRotation = 0.0;
 
-  // M2: Battery + Bulb
-  bool _m2BatteryInserted = false;
+  // M2: Battery + Bulb + Voltímetro
+  bool _m2BatteryInserted = true;
   double _m2BatteryRotation = 0.0;
-  bool _m2BulbInserted = false;
+  bool _m2BulbInserted = true;
   double _m2BulbRotation = 0.0;
+  bool _m2VoltmeterInserted = false;
+  double _m2VoltmeterRotation = 0.0;
 
-  // M3: Battery + Resistor + LED
-  bool _m3BatteryInserted = false;
+  // M3: Battery + Resistor + LED + Amperímetro
+  bool _m3BatteryInserted = true;
   double _m3BatteryRotation = 0.0;
-  bool _m3ResistorInserted = false;
+  bool _m3ResistorInserted = true;
   double _m3ResistorRotation = 0.0;
-  bool _m3LedInserted = false;
+  bool _m3LedInserted = true;
   double _m3LedRotation = 0.0;
   double _m3ResistanceValue = 300.0;
+  bool _m3AmperimeterInserted = false;
+  double _m3AmperimeterRotation = 0.0;
 
   // M4: Battery + Resistor + LED
-  bool _m4BatteryInserted = false;
+  bool _m4BatteryInserted = true;
   double _m4BatteryRotation = 0.0;
-  bool _m4ResistorInserted = false;
+  bool _m4ResistorInserted = true;
   double _m4ResistorRotation = 0.0;
-  bool _m4LedInserted = false;
+  bool _m4LedInserted = true;
   double _m4LedRotation = 0.0;
   int? _m4SelectedResistor;
 
   // M5: Battery + Resistor + LED
-  bool _m5BatteryInserted = false;
+  bool _m5BatteryInserted = true;
   double _m5BatteryRotation = 0.0;
-  bool _m5ResistorInserted = false;
+  bool _m5ResistorInserted = true;
   double _m5ResistorRotation = 0.0;
-  bool _m5LedInserted = false;
+  bool _m5LedInserted = true;
   double _m5LedRotation = 0.0;
   int? _m5SelectedReportIndex;
 
@@ -106,25 +113,36 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
 
   void _resetCurrentMission() {
     setState(() {
-      _redProbeConnected = false;
-      _blackProbeConnected = false;
+      _redProbeConnected = true;
+      _blackProbeConnected = true;
       switch (_currentMissionIndex) {
         case 0:
-          _multimeterMode = 'V_DC';
+          _m1BatteryInserted = true;
+          _m1VoltmeterInserted = false;
+          _m1AmperimeterInserted = false;
           break;
         case 1:
-          _multimeterMode = 'V_DC';
+          _m2BatteryInserted = true;
+          _m2BulbInserted = true;
+          _m2VoltmeterInserted = false;
           break;
         case 2:
-          _multimeterMode = 'mA';
+          _m3BatteryInserted = true;
+          _m3ResistorInserted = true;
+          _m3LedInserted = true;
           _m3ResistanceValue = 300.0;
+          _m3AmperimeterInserted = false;
           break;
         case 3:
-          _multimeterMode = 'mA';
+          _m4BatteryInserted = true;
+          _m4ResistorInserted = true;
+          _m4LedInserted = true;
           _m4SelectedResistor = null;
           break;
         case 4:
-          _multimeterMode = 'V_DC';
+          _m5BatteryInserted = true;
+          _m5ResistorInserted = true;
+          _m5LedInserted = true;
           _m5SelectedReportIndex = null;
           break;
       }
@@ -179,15 +197,15 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
     switch (_currentMissionIndex) {
       case 0:
         // M1: Medir tensao da bateria
-        if (_redProbeConnected && _blackProbeConnected && _multimeterMode == 'V_DC') {
+        if (_redProbeConnected && _blackProbeConnected && _m1VoltmeterInserted) {
           await MissionCircuitBuilder()
               .addBattery(id: 'bat1', voltage: 9.0)
               .connect('bat1', 'B', 'bat1', 'A')
               .simulate();
           feedback = 'Tensao da bateria: 9.0V DC. Voltimetro em paralelo com a fonte.';
           isSuccess = true;
-        } else if (_multimeterMode != 'V_DC') {
-          feedback = 'Gire a chave do multimetro para o modo Tensao Continua (V DC).';
+        } else if (!_m1VoltmeterInserted) {
+          feedback = 'Arraste o Voltimetro da gaveta para o circuito.';
         } else {
           feedback = 'Posicione ambas as pontas de prova nos terminais da bateria.';
         }
@@ -195,7 +213,7 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
 
       case 1:
         // M2: Queda de tensao na lampada
-        if (_redProbeConnected && _blackProbeConnected && _multimeterMode == 'V_DC') {
+        if (_redProbeConnected && _blackProbeConnected && _m2VoltmeterInserted) {
           final result = await MissionCircuitBuilder()
               .addBattery(id: 'bat1', voltage: 9.0)
               .addBulb(id: 'bulb1', resistance: 5.0)
@@ -210,8 +228,8 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
           } else {
             feedback = 'Circuito aberto. Verifique as conexoes.';
           }
-        } else if (_multimeterMode != 'V_DC') {
-          feedback = 'Selecione o modo Tensao (V DC) para medir a queda de potencial na lampada.';
+        } else if (!_m2VoltmeterInserted) {
+          feedback = 'Arraste o Voltimetro da gaveta para o circuito.';
         } else {
           feedback = 'Conecte as pontas de prova nos dois lados da lampada.';
         }
@@ -219,7 +237,7 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
 
       case 2:
         // M3: Resistencia e Corrente (Ohm: I = V/R)
-        if (_multimeterMode == 'mA') {
+        if (_m3AmperimeterInserted) {
           final result = await MissionCircuitBuilder()
               .addBattery(id: 'bat1', voltage: 9.0)
               .addResistor(id: 'r1', resistance: _m3ResistanceValue)
@@ -237,7 +255,7 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
             feedback = result.errorMessage ?? 'Ajuste o reostato para variar a corrente.';
           }
         } else {
-          feedback = 'Alterne o multimetro para o modo Amperimetro (mA) para medir o fluxo de corrente!';
+          feedback = 'Arraste o Amperimetro da gaveta para medir a corrente.';
         }
         break;
 
@@ -690,15 +708,11 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
     );
   }
 
-  /// Constrói a bancada didática principal com o Multímetro e o Circuito de Teste (Solto na Malha)
+  /// Constrói a bancada didática principal com o Circuito de Teste
   Widget _buildSimulationBench() {
     return Column(
       children: [
-        // Display LCD do Multímetro Didático
-        _buildDigitalMultimeterWidget(),
-        const SizedBox(height: 16),
-
-        // Área Central do Circuito Sob Medição (Solto na Malha)
+        // Área Central do Circuito Sob Medição
         Expanded(
           child: Padding(
             padding: const EdgeInsets.all(8),
@@ -706,122 +720,6 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
           ),
         ),
       ],
-    );
-  }
-
-  /// Widget Gráfico de Multímetro Digital Didático
-  Widget _buildDigitalMultimeterWidget() {
-    double readingValue = 0.0;
-    String unit = 'V';
-
-    if (_redProbeConnected && _blackProbeConnected) {
-      if (_multimeterMode == 'V_DC') {
-        if (_currentMissionIndex == 0 || _currentMissionIndex == 1) {
-          readingValue = 9.0;
-        } else if (_currentMissionIndex == 4) {
-          readingValue = 4.2; // Queda no resistor incorreto
-        }
-        unit = 'V DC';
-      } else if (_multimeterMode == 'mA') {
-        if (_currentMissionIndex == 2) {
-          readingValue = (9.0 / _m3ResistanceValue) * 1000.0; // I = V / R em mA
-        } else if (_currentMissionIndex == 3) {
-          final r = _m4SelectedResistor ?? 680;
-          readingValue = (9.0 / r) * 1000.0;
-        }
-        unit = 'mA';
-      }
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF10B981), width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF10B981).withValues(alpha: 0.2),
-            blurRadius: 10,
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Display LCD Digital
-          Container(
-            width: 180,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: const Color(0xFF061E14),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.6)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  _multimeterMode == 'V_DC' ? 'VOLTÍMETRO' : 'AMPERÍMETRO',
-                  style: GoogleFonts.rajdhani(color: Colors.amberAccent, fontSize: 10, fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  readingValue.toStringAsFixed(1),
-                  style: GoogleFonts.rajdhani(
-                    color: const Color(0xFF00E676),
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 2,
-                  ),
-                ),
-                Text(
-                  unit,
-                  style: GoogleFonts.rajdhani(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 16),
-
-          // Seletor de Modo (Knob / Botões Didáticos)
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Escala da Chave Seletora:',
-                  style: GoogleFonts.rajdhani(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    ChoiceChip(
-                      label: Text('V DC (Tensão)', style: GoogleFonts.rajdhani(fontSize: 12, fontWeight: FontWeight.bold)),
-                      selected: _multimeterMode == 'V_DC',
-                      selectedColor: const Color(0xFF10B981),
-                      onSelected: (selected) {
-                        if (selected) {
-                          setState(() => _multimeterMode = 'V_DC');
-                        }
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    ChoiceChip(
-                      label: Text('mA (Corrente)', style: GoogleFonts.rajdhani(fontSize: 12, fontWeight: FontWeight.bold)),
-                      selected: _multimeterMode == 'mA',
-                      selectedColor: const Color(0xFF10B981),
-                      onSelected: (selected) {
-                        if (selected) {
-                          setState(() => _multimeterMode = 'mA');
-                        }
-                      },
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -863,15 +761,21 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
   /// M1: Medir Tensão da Bateria 9V
   Widget _buildUndoRedoButtons() {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        color: Colors.white.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFCBD5E1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.10),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Tooltip(
             message: _undoRedoController.canUndo
@@ -883,26 +787,22 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                 color: _undoRedoController.canUndo
                     ? const Color(0xFF0284C7)
                     : const Color(0xFFCBD5E1),
-                size: 22,
+                size: 18,
               ),
               onPressed: _undoRedoController.canUndo
                   ? () => setState(() => _undoRedoController.undo())
                   : null,
-              style: IconButton.styleFrom(
-                backgroundColor: _undoRedoController.canUndo
-                    ? const Color(0xFF0284C7).withValues(alpha: 0.1)
-                    : Colors.transparent,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
+              padding: const EdgeInsets.all(4),
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
             child: Text(
               '${_undoRedoController.undoCount}',
               style: GoogleFonts.rajdhani(
-                color: const Color(0xFF64748B),
-                fontSize: 12,
+                color: const Color(0xFF475569),
+                fontSize: 13,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -917,17 +817,13 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                 color: _undoRedoController.canRedo
                     ? const Color(0xFF0284C7)
                     : const Color(0xFFCBD5E1),
-                size: 22,
+                size: 18,
               ),
               onPressed: _undoRedoController.canRedo
                   ? () => setState(() => _undoRedoController.redo())
                   : null,
-              style: IconButton.styleFrom(
-                backgroundColor: _undoRedoController.canRedo
-                    ? const Color(0xFF0284C7).withValues(alpha: 0.1)
-                    : Colors.transparent,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
+              padding: const EdgeInsets.all(4),
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
             ),
           ),
         ],
@@ -936,6 +832,9 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
   }
 
   Widget _buildM1Physical() {
+    final showReading = _m1BatteryInserted && _redProbeConnected && _blackProbeConnected;
+    final voltageReading = showReading ? 9.0 : 0.0;
+    final currentReading = showReading ? 0.0 : 0.0;
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -953,12 +852,12 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                 final h = constraints.maxHeight;
                 final batteryX = w * 0.35;
                 final centerY = h * 0.5;
-                final redProbeX = w * 0.72;
-                final redProbeY = centerY - 30;
-                final blackProbeX = w * 0.72;
-                final blackProbeY = centerY + 30;
-                final sock = 75.0;
-                final comp = 42.0;
+                final voltmeterX = w * 0.35;
+                final voltmeterY = h * 0.12;
+                final amperimeterX = w * 0.35;
+                final amperimeterY = h * 0.88;
+                final sock = 95.0;
+                final comp = 55.0;
 
                 return Stack(
                   children: [
@@ -972,8 +871,8 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                         child: CustomPaint(
                           painter: _ProbeWirePainter(
                             batteryCenter: Offset(batteryX, centerY),
-                            redProbeCenter: Offset(redProbeX, redProbeY),
-                            blackProbeCenter: Offset(blackProbeX, blackProbeY),
+                            redProbeCenter: Offset(w * 0.72, centerY - 30),
+                            blackProbeCenter: Offset(w * 0.72, centerY + 30),
                           ),
                         ),
                       ),
@@ -1003,21 +902,91 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                         ),
                         onTap: () {},
                         symbolWidget: _usePhysicalStyle
-                            ? CustomPaint(
-                                size: Size(comp, comp),
-                                painter: ComponentPhysicalPainter(type: ComponentType.battery, isDarkMode: false),
-                              )
-                            : CustomPaint(
-                                size: Size(comp, comp),
-                                painter: CircuitSymbolPainter(type: ComponentType.battery, color: const Color(0xFF0F172A), strokeWidth: 2.5),
-                              ),
+                            ? CustomPaint(size: Size(comp, comp), painter: ComponentPhysicalPainter(type: ComponentType.battery, isDarkMode: false))
+                            : CustomPaint(size: Size(comp, comp), painter: CircuitSymbolPainter(type: ComponentType.battery, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
                       ),
                     ),
+                    // Voltmeter socket (top)
+                    Positioned(
+                      left: voltmeterX - sock / 2,
+                      top: voltmeterY - sock / 2,
+                      child: PhysicalBlueprintSocket<String>(
+                        expectedData: 'multimeter_v',
+                        isFilled: _m1VoltmeterInserted,
+                        rotation: _m1VoltmeterRotation,
+                        width: sock,
+                        height: sock,
+                        showLabel: true,
+                        onAccept: (_) => _insertComponent(
+                          name: 'Voltímetro',
+                          getInserted: () => _m1VoltmeterInserted,
+                          setInserted: (v) => _m1VoltmeterInserted = v,
+                          getRotation: () => _m1VoltmeterRotation,
+                          setRotation: (v) => _m1VoltmeterRotation = v,
+                        ),
+                        onRotate: () => _rotateComponent(
+                          name: 'Voltímetro',
+                          getRotation: () => _m1VoltmeterRotation,
+                          setRotation: (v) => _m1VoltmeterRotation = v,
+                        ),
+                        onTap: () {},
+                        symbolWidget: MeterVectorWidget(size: comp, meterType: 'V', accentColor: const Color(0xFF0284C7)),
+                      ),
+                    ),
+                    // Voltmeter reading
+                    if (_m1VoltmeterInserted)
+                      Positioned(
+                        left: voltmeterX - 40,
+                        top: voltmeterY + sock / 2 + 4,
+                        child: _buildMeterReading(
+                          value: voltageReading.toStringAsFixed(1),
+                          unit: 'V DC',
+                          color: const Color(0xFF0284C7),
+                        ),
+                      ),
+                    // Amperimeter socket (bottom)
+                    Positioned(
+                      left: amperimeterX - sock / 2,
+                      top: amperimeterY - sock / 2,
+                      child: PhysicalBlueprintSocket<String>(
+                        expectedData: 'multimeter_a',
+                        isFilled: _m1AmperimeterInserted,
+                        rotation: _m1AmperimeterRotation,
+                        width: sock,
+                        height: sock,
+                        showLabel: true,
+                        onAccept: (_) => _insertComponent(
+                          name: 'Amperímetro',
+                          getInserted: () => _m1AmperimeterInserted,
+                          setInserted: (v) => _m1AmperimeterInserted = v,
+                          getRotation: () => _m1AmperimeterRotation,
+                          setRotation: (v) => _m1AmperimeterRotation = v,
+                        ),
+                        onRotate: () => _rotateComponent(
+                          name: 'Amperímetro',
+                          getRotation: () => _m1AmperimeterRotation,
+                          setRotation: (v) => _m1AmperimeterRotation = v,
+                        ),
+                        onTap: () {},
+                        symbolWidget: MeterVectorWidget(size: comp, meterType: 'A', accentColor: const Color(0xFFD97706)),
+                      ),
+                    ),
+                    // Amperimeter reading
+                    if (_m1AmperimeterInserted)
+                      Positioned(
+                        left: amperimeterX - 40,
+                        top: amperimeterY - sock / 2 - 30,
+                        child: _buildMeterReading(
+                          value: currentReading.toStringAsFixed(1),
+                          unit: 'mA',
+                          color: const Color(0xFFD97706),
+                        ),
+                      ),
                     // Red probe indicator
                     if (_m1BatteryInserted)
                       Positioned(
-                        left: redProbeX - 30,
-                        top: redProbeY - 20,
+                        left: w * 0.72 - 30,
+                        top: centerY - 30 - 20,
                         child: _buildProbeSlot(
                           isRed: true,
                           isConnected: _redProbeConnected,
@@ -1028,8 +997,8 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                     // Black probe indicator
                     if (_m1BatteryInserted)
                       Positioned(
-                        left: blackProbeX - 30,
-                        top: blackProbeY - 20,
+                        left: w * 0.72 - 30,
+                        top: centerY + 30 - 20,
                         child: _buildProbeSlot(
                           isRed: false,
                           isConnected: _blackProbeConnected,
@@ -1049,6 +1018,8 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
 
   /// M2: Queda de Tensão na Lâmpada
   Widget _buildM2Physical() {
+    final showReading = _m2BatteryInserted && _m2BulbInserted && _m2VoltmeterInserted && _redProbeConnected && _blackProbeConnected;
+    final voltageReading = showReading ? 4.2 : 0.0;
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -1067,8 +1038,10 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                 final batteryX = w * 0.2;
                 final bulbX = w * 0.75;
                 final centerY = h * 0.5;
-                final sock = 75.0;
-                final comp = 42.0;
+                final voltmeterX = (batteryX + bulbX) / 2;
+                final voltmeterY = h * 0.12;
+                final sock = 95.0;
+                final comp = 55.0;
 
                 final batteryPlacement = ComponentPlacement(
                   position: Offset(batteryX, centerY),
@@ -1169,6 +1142,44 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                             : CustomPaint(size: Size(comp, comp), painter: CircuitSymbolPainter(type: ComponentType.bulb, isActive: _m2BatteryInserted && _m2BulbInserted, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
                       ),
                     ),
+                    // Voltmeter socket (top center)
+                    Positioned(
+                      left: voltmeterX - sock / 2,
+                      top: voltmeterY - sock / 2,
+                      child: PhysicalBlueprintSocket<String>(
+                        expectedData: 'multimeter_v',
+                        isFilled: _m2VoltmeterInserted,
+                        rotation: _m2VoltmeterRotation,
+                        width: sock,
+                        height: sock,
+                        showLabel: true,
+                        onAccept: (_) => _insertComponent(
+                          name: 'Voltímetro',
+                          getInserted: () => _m2VoltmeterInserted,
+                          setInserted: (v) => _m2VoltmeterInserted = v,
+                          getRotation: () => _m2VoltmeterRotation,
+                          setRotation: (v) => _m2VoltmeterRotation = v,
+                        ),
+                        onRotate: () => _rotateComponent(
+                          name: 'Voltímetro',
+                          getRotation: () => _m2VoltmeterRotation,
+                          setRotation: (v) => _m2VoltmeterRotation = v,
+                        ),
+                        onTap: () {},
+                        symbolWidget: MeterVectorWidget(size: comp, meterType: 'V', accentColor: const Color(0xFF0284C7)),
+                      ),
+                    ),
+                    // Voltmeter reading
+                    if (_m2VoltmeterInserted)
+                      Positioned(
+                        left: voltmeterX - 40,
+                        top: voltmeterY + sock / 2 + 4,
+                        child: _buildMeterReading(
+                          value: voltageReading.toStringAsFixed(1),
+                          unit: 'V DC',
+                          color: const Color(0xFF0284C7),
+                        ),
+                      ),
                     // Probe indicators
                     if (_m2BatteryInserted && _m2BulbInserted)
                       Positioned(
@@ -1207,6 +1218,8 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
     final currentMa = (9.0 / _m3ResistanceValue) * 1000.0;
     final allInserted = _m3BatteryInserted && _m3ResistorInserted && _m3LedInserted;
     final ledActive = allInserted && _m3ResistanceValue < 900.0;
+    final showReading = allInserted && _m3AmperimeterInserted;
+    final ammeterReading = showReading ? currentMa : 0.0;
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -1229,8 +1242,10 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                 final resistorY = h * 0.25;
                 final ledX = w * 0.8;
                 final ledY = h * 0.25;
-                final sock = 75.0;
-                final comp = 42.0;
+                final ammeterX = w * 0.2;
+                final ammeterY = h * 0.12;
+                final sock = 95.0;
+                final comp = 55.0;
 
                 final batteryPlacement = ComponentPlacement(
                   position: Offset(batteryX, batteryY),
@@ -1377,6 +1392,44 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                             : CustomPaint(size: Size(comp, comp), painter: CircuitSymbolPainter(type: ComponentType.led, isActive: ledActive, color: const Color(0xFF0F172A), strokeWidth: 2.5)),
                       ),
                     ),
+                    // Amperimeter socket (top-left)
+                    Positioned(
+                      left: ammeterX - sock / 2,
+                      top: ammeterY - sock / 2,
+                      child: PhysicalBlueprintSocket<String>(
+                        expectedData: 'multimeter_a',
+                        isFilled: _m3AmperimeterInserted,
+                        rotation: _m3AmperimeterRotation,
+                        width: sock,
+                        height: sock,
+                        showLabel: true,
+                        onAccept: (_) => _insertComponent(
+                          name: 'Amperímetro',
+                          getInserted: () => _m3AmperimeterInserted,
+                          setInserted: (v) => _m3AmperimeterInserted = v,
+                          getRotation: () => _m3AmperimeterRotation,
+                          setRotation: (v) => _m3AmperimeterRotation = v,
+                        ),
+                        onRotate: () => _rotateComponent(
+                          name: 'Amperímetro',
+                          getRotation: () => _m3AmperimeterRotation,
+                          setRotation: (v) => _m3AmperimeterRotation = v,
+                        ),
+                        onTap: () {},
+                        symbolWidget: MeterVectorWidget(size: comp, meterType: 'A', accentColor: const Color(0xFFD97706)),
+                      ),
+                    ),
+                    // Amperimeter reading
+                    if (_m3AmperimeterInserted)
+                      Positioned(
+                        left: ammeterX - 40,
+                        top: ammeterY + sock / 2 + 4,
+                        child: _buildMeterReading(
+                          value: ammeterReading.toStringAsFixed(1),
+                          unit: 'mA',
+                          color: const Color(0xFFD97706),
+                        ),
+                      ),
                   ],
                 );
               },
@@ -1441,8 +1494,8 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                 final r3Y = h * 0.78;
                 final ledX = w * 0.85;
                 final ledY = h * 0.5;
-                final sock = 75.0;
-                final comp = 42.0;
+                final sock = 95.0;
+                final comp = 55.0;
 
                 final batteryPlacement = ComponentPlacement(
                   position: Offset(batteryX, batteryY),
@@ -1627,8 +1680,8 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
                 final batteryY = h * 0.15;
                 final resistorY = h * 0.48;
                 final ledY = h * 0.81;
-                final sock = 75.0;
-                final comp = 42.0;
+                final sock = 95.0;
+                final comp = 55.0;
 
                 final batteryPlacement = ComponentPlacement(
                   position: Offset(centerX, batteryY),
@@ -2651,7 +2704,6 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildUndoRedoButtons(),
         Padding(
           padding: const EdgeInsets.only(bottom: 8.0, top: 4.0),
           child: Text(
@@ -2765,6 +2817,48 @@ class _MedeTestaExplicaScreenState extends ConsumerState<MedeTestaExplicaScreen>
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildMeterReading({
+    required String value,
+    required String unit,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.6)),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.3),
+            blurRadius: 6,
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: GoogleFonts.rajdhani(
+              color: const Color(0xFF00E676),
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.5,
+            ),
+          ),
+          Text(
+            unit,
+            style: GoogleFonts.rajdhani(
+              color: Colors.white70,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
