@@ -14,6 +14,7 @@ import '../../../widgets/realistic_wire_painter.dart';
 import '../../../widgets/schematic_blueprint_socket.dart';
 import '../../../widgets/schematic_symbol_painters.dart';
 import '../../../widgets/workbench_components.dart';
+import '../../../widgets/workbench_sidebar_cards.dart';
 import '../../../widgets/workbench_table_frame.dart';
 import '../widgets/liga_desliga_widgets.dart';
 
@@ -262,12 +263,18 @@ class _LigaDesligaM5State extends State<LigaDesligaM5>
         ),
         const SizedBox(width: 16),
         // Painel Lateral (Briefing, Toolbox & Validação)
+        // Painel Lateral (Objetivo, Stepper Dinâmico de Investigação & Validação)
         Expanded(
           flex: 3,
           child: WorkbenchSidePanel(
             teamTitle: 'Painel da Equipe Controle',
+            showTeamHeader: false,
+            buttonColor: const Color(0xFF059669),
             toolboxItems: [
-              _buildMissionBriefingCard(),
+              _buildMissionObjectiveCard(),
+              const SizedBox(height: 12),
+              _buildInvestigationStepperCard(),
+              const SizedBox(height: 12),
               _buildSideToolboxDrawer(),
             ],
             onEnergizePressed: _validate,
@@ -313,84 +320,42 @@ class _LigaDesligaM5State extends State<LigaDesligaM5>
     );
   }
 
-  Widget _buildMissionBriefingCard() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.task_alt_rounded,
-                  color: Color(0xFF0284C7), size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Missão 5: ${_mission.title}',
-                  style: GoogleFonts.rajdhani(
-                    color: const Color(0xFF0F172A),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _mission.objective,
-            style: GoogleFonts.outfit(
-              color: const Color(0xFF334155),
-              fontSize: 12.5,
-              height: 1.3,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFCBD5E1)),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(
-                  Icons.tips_and_updates_rounded,
-                  color: Color(0xFFD97706),
-                  size: 18,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Prof. Volts: "${_mission.voltsMediation}"',
-                    style: GoogleFonts.outfit(
-                      color: const Color(0xFF475569),
-                      fontSize: 11.5,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+  int get _currentStepperIndex {
+    if (!_pushButtonInserted) return 0;
+    if (!_pushButtonPressed && !_testedHoldAndRelease) return 1;
+    return 2;
+  }
+
+  bool _isStepCompleted(int index) {
+    if (index == 0) return _pushButtonInserted;
+    if (index == 1) {
+      return _pushButtonInserted &&
+          (_pushButtonPressed || _testedHoldAndRelease);
+    }
+    if (index == 2) return _testedHoldAndRelease;
+    return false;
+  }
+
+  Widget _buildMissionObjectiveCard() {
+    return WorkbenchMissionObjectiveCard(
+      missionNumber: 5,
+      title: _mission.title,
+      description: _mission.objective,
+      voltsTip: _mission.voltsMediation,
+      accentColor: const Color(0xFF0284C7),
+    );
+  }
+
+  Widget _buildInvestigationStepperCard() {
+    return WorkbenchInvestigationStepperCard(
+      title: 'Progresso da investigação',
+      currentStepIndex: _currentStepperIndex,
+      isStepCompleted: _isStepCompleted,
+      steps: const [
+        'Inserir push-button no circuito',
+        'Pressionar para acender a lâmpada',
+        'Soltar e comprovar retorno automático',
+      ],
     );
   }
 

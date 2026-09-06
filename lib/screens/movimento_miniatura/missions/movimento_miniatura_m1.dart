@@ -15,6 +15,7 @@ import '../../../widgets/schematic_blueprint_socket.dart';
 import '../../../widgets/schematic_symbol_painters.dart';
 import '../../../widgets/success_confetti_overlay.dart';
 import '../../../widgets/workbench_components.dart';
+import '../../../widgets/workbench_sidebar_cards.dart';
 import '../../../widgets/workbench_table_frame.dart';
 import '../widgets/movimento_miniatura_widgets.dart';
 
@@ -243,7 +244,13 @@ class _MovimentoMiniaturaM1State extends State<MovimentoMiniaturaM1>
           flex: 3,
           child: WorkbenchSidePanel(
             teamTitle: 'Painel da Equipe Mecânica',
+            showTeamHeader: false,
+            buttonColor: const Color(0xFF059669),
             toolboxItems: [
+              _buildMissionObjectiveCard(),
+              const SizedBox(height: 12),
+              _buildInvestigationStepperCard(),
+              const SizedBox(height: 12),
               MovimentoPredictionBadge(prediction: _m1Prediction),
               MovimentoUndoRedoButtons(
                 controller: _undoRedoController,
@@ -533,6 +540,42 @@ class _MovimentoMiniaturaM1State extends State<MovimentoMiniaturaM1>
           ),
         );
       },
+    );
+  }
+
+  int get _currentStepperIndex {
+    if (_m1Prediction == null) return 0;
+    if (!_isClosed) return 1;
+    return 2;
+  }
+
+  bool _isStepCompleted(int index) {
+    if (index == 0) return _m1Prediction != null;
+    if (index == 1) return _isClosed;
+    if (index == 2) return _isClosed && _m1Prediction != null;
+    return false;
+  }
+
+  Widget _buildMissionObjectiveCard() {
+    return WorkbenchMissionObjectiveCard(
+      missionNumber: 1,
+      title: _mission.title,
+      description: _mission.objective,
+      voltsTip: _mission.voltsMediation,
+      accentColor: const Color(0xFF0284C7),
+    );
+  }
+
+  Widget _buildInvestigationStepperCard() {
+    return WorkbenchInvestigationStepperCard(
+      title: 'Progresso da montagem',
+      currentStepIndex: _currentStepperIndex,
+      isStepCompleted: _isStepCompleted,
+      steps: const [
+        'Prever sentido de rotação',
+        'Posicionar bateria e motor CC',
+        'Acionar e verificar giro do eixo',
+      ],
     );
   }
 }

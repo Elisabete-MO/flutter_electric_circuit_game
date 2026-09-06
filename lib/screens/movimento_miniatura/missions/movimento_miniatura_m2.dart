@@ -16,6 +16,7 @@ import '../../../widgets/realistic_wire_painter.dart';
 import '../../../widgets/schematic_blueprint_socket.dart';
 import '../../../widgets/success_confetti_overlay.dart';
 import '../../../widgets/workbench_components.dart';
+import '../../../widgets/workbench_sidebar_cards.dart';
 import '../../../widgets/workbench_table_frame.dart';
 import '../widgets/movimento_miniatura_widgets.dart';
 
@@ -244,7 +245,13 @@ class _MovimentoMiniaturaM2State extends State<MovimentoMiniaturaM2>
           flex: 3,
           child: WorkbenchSidePanel(
             teamTitle: 'Painel da Equipe Mecânica',
+            showTeamHeader: false,
+            buttonColor: const Color(0xFF059669),
             toolboxItems: [
+              _buildMissionObjectiveCard(),
+              const SizedBox(height: 12),
+              _buildInvestigationStepperCard(),
+              const SizedBox(height: 12),
               MovimentoPredictionBadge(prediction: _m2Prediction),
               MovimentoUndoRedoButtons(
                 controller: _undoRedoController,
@@ -640,6 +647,42 @@ class _MovimentoMiniaturaM2State extends State<MovimentoMiniaturaM2>
           const SizedBox(height: 16),
         ],
       ),
+    );
+  }
+
+  int get _currentStepperIndex {
+    if (_m2Prediction == null) return 0;
+    if (!_m2BatteryInserted || !_m2MotorInserted) return 1;
+    return 2;
+  }
+
+  bool _isStepCompleted(int index) {
+    if (index == 0) return _m2Prediction != null;
+    if (index == 1) return _m2BatteryInserted && _m2MotorInserted;
+    if (index == 2) return _m2ReversedPolarity;
+    return false;
+  }
+
+  Widget _buildMissionObjectiveCard() {
+    return WorkbenchMissionObjectiveCard(
+      missionNumber: 2,
+      title: _mission.title,
+      description: _mission.objective,
+      voltsTip: _mission.voltsMediation,
+      accentColor: const Color(0xFF0284C7),
+    );
+  }
+
+  Widget _buildInvestigationStepperCard() {
+    return WorkbenchInvestigationStepperCard(
+      title: 'Progresso da reversão',
+      currentStepIndex: _currentStepperIndex,
+      isStepCompleted: _isStepCompleted,
+      steps: const [
+        'Prever efeito da inversão',
+        'Montar circuito inicial do motor',
+        'Inverter polaridade e comprovar reversão',
+      ],
     );
   }
 }

@@ -12,6 +12,7 @@ import '../../../widgets/realistic_wire_painter.dart';
 import '../../../widgets/schematic_symbol_painters.dart';
 import '../../../widgets/workbench_components.dart';
 import '../../../widgets/workbench_table_frame.dart';
+import '../../../widgets/workbench_sidebar_cards.dart';
 import '../widgets/liga_desliga_widgets.dart';
 
 /// Missão 3 do Estande 3 — Quem controla qual luz? (Duas chaves sem etiqueta).
@@ -37,7 +38,7 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
   bool _switch2Closed = false;
   bool _testedSwitch1 = false;
   bool _testedSwitch2 = false;
-  static const double _batteryRotation = 270.0;
+  static const double _batteryRotation = 0.0;
   static const double _lampARotation = 0.0;
   static const double _lampBRotation = 0.0;
   static const double _switch1Rotation = 0.0;
@@ -207,15 +208,17 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
         ),
         const SizedBox(width: 16),
 
-        // Painel Lateral (Briefing, Checklist de Rigor Científico & Validação)
+        // Painel Lateral (Objetivo, Stepper Dinâmico de Investigação & Validação)
         Expanded(
           flex: 3,
           child: WorkbenchSidePanel(
             teamTitle: 'Painel da Equipe Controle',
+            showTeamHeader: false,
+            buttonColor: const Color(0xFF059669),
             toolboxItems: [
-              _buildMissionBriefingCard(),
+              _buildMissionObjectiveCard(),
               const SizedBox(height: 12),
-              _buildInvestigationChecklistCard(),
+              _buildInvestigationStepperCard(),
             ],
             onEnergizePressed: _validate,
           ),
@@ -307,11 +310,23 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
           type: ComponentType.switchComponent,
         ).getTerminalPosition(0);
 
+        final sw1TermB = ComponentPlacement(
+          position: switch1Pos,
+          rotation: _switch1Rotation,
+          type: ComponentType.switchComponent,
+        ).getTerminalPosition(1);
+
         final sw2TermA = ComponentPlacement(
           position: switch2Pos,
           rotation: _switch2Rotation,
           type: ComponentType.switchComponent,
         ).getTerminalPosition(0);
+
+        final sw2TermB = ComponentPlacement(
+          position: switch2Pos,
+          rotation: _switch2Rotation,
+          type: ComponentType.switchComponent,
+        ).getTerminalPosition(1);
 
         final lamp1TermA = ComponentPlacement(
           position: lamp1Pos,
@@ -337,90 +352,79 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
           type: ComponentType.bulb,
         ).getTerminalPosition(1);
 
-        final busX = batteryPos.dx - 45.0;
+        final busX = batteryPos.dx - 56.0;
+        final bus2X = batteryPos.dx - 46.0;
+        final leftReturnX = batteryPos.dx - 66.0;
+        final lamp1BusX = lamp1Pos.dx - 46.0;
+        final lamp2BusX = lamp2Pos.dx - 46.0;
+
+        // Retorno Comum: Luminárias -> Bateria (-) (Azul)
+        final returnX = lamp1Pos.dx + 48.0;
+        final returnRailY = height - 16.0;
 
         // Fio Ramo 1: Bateria (+) -> Chave 1 (Vermelho)
         wires.add(WirePath(
           points: [
             batTermA,
-            Offset(busX, batTermA.dy),
+            Offset(batTermA.dx, batteryPos.dy - 34.0),
+            Offset(busX, batteryPos.dy - 34.0),
             Offset(busX, topY),
             sw1TermA,
           ],
           color: const Color(0xFFEF4444),
           isActive: _switch1Closed,
-          thickness: 4.0,
+          thickness: 4.2,
         ));
 
         // Fio Ramo 1: Chave 1 -> Luminária A (Vermelho)
-        wires.add(DynamicWirePath.fromComponents(
-          compA: ComponentPlacement(
-            position: switch1Pos,
-            rotation: _switch1Rotation,
-            type: ComponentType.switchComponent,
-          ),
-          terminalIndexA: 1,
-          compB: ComponentPlacement(
-            position: lamp1Pos,
-            rotation: _lampARotation,
-            type: ComponentType.bulb,
-          ),
-          terminalIndexB: 0,
+        wires.add(WirePath(
+          points: [
+            sw1TermB,
+            Offset(lamp1BusX, topY),
+            Offset(lamp1BusX, lamp1TermA.dy),
+            lamp1TermA,
+          ],
           color: const Color(0xFFEF4444),
           isActive: _switch1Closed,
-          thickness: 4.0,
-        ).toWirePath(intermediatePoints: [
-          Offset(lamp1Pos.dx - 28.0, topY),
-          Offset(lamp1Pos.dx - 28.0, lamp1TermA.dy),
-        ]));
+          thickness: 4.2,
+        ));
 
         // Fio Ramo 2: Bateria (+) -> Chave 2 (Âmbar)
         wires.add(WirePath(
           points: [
             batTermA,
-            Offset(busX, batTermA.dy),
-            Offset(busX, bottomY),
+            Offset(batTermA.dx, batteryPos.dy - 27.0),
+            Offset(bus2X, batteryPos.dy - 27.0),
+            Offset(bus2X, bottomY),
             sw2TermA,
           ],
           color: const Color(0xFFF59E0B),
           isActive: _switch2Closed,
-          thickness: 4.0,
+          thickness: 4.2,
         ));
 
         // Fio Ramo 2: Chave 2 -> Luminária B (Âmbar)
-        wires.add(DynamicWirePath.fromComponents(
-          compA: ComponentPlacement(
-            position: switch2Pos,
-            rotation: _switch2Rotation,
-            type: ComponentType.switchComponent,
-          ),
-          terminalIndexA: 1,
-          compB: ComponentPlacement(
-            position: lamp2Pos,
-            rotation: _lampBRotation,
-            type: ComponentType.bulb,
-          ),
-          terminalIndexB: 0,
+        wires.add(WirePath(
+          points: [
+            sw2TermB,
+            Offset(lamp2BusX, bottomY),
+            Offset(lamp2BusX, lamp2TermA.dy),
+            lamp2TermA,
+          ],
           color: const Color(0xFFF59E0B),
           isActive: _switch2Closed,
-          thickness: 4.0,
-        ).toWirePath(intermediatePoints: [
-          Offset(lamp2Pos.dx - 28.0, bottomY),
-          Offset(lamp2Pos.dx - 28.0, lamp2TermA.dy),
-        ]));
+          thickness: 4.2,
+        ));
 
-        // Retorno Comum: Luminárias -> Bateria (-) (Azul)
-        final returnX = lamp1Pos.dx + 48.0;
-        final leftReturnX = batteryPos.dx - 55.0;
-        final returnRailY = height - 16.0;
-
+        // Retorno Comum: Luminária 1 -> Bateria (-) (Azul)
         wires.add(WirePath(
           points: [
             lamp1TermB,
             Offset(returnX, lamp1TermB.dy),
             Offset(returnX, returnRailY),
             Offset(leftReturnX, returnRailY),
-            Offset(leftReturnX, batTermB.dy),
+            Offset(leftReturnX, batteryPos.dy - 42.0),
+            Offset(batTermB.dx, batteryPos.dy - 42.0),
             batTermB,
           ],
           color: const Color(0xFF2563EB),
@@ -428,13 +432,15 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
           thickness: 4.0,
         ));
 
+        // Retorno Comum: Luminária 2 -> Bateria (-) (Azul)
         wires.add(WirePath(
           points: [
             lamp2TermB,
             Offset(returnX, lamp2TermB.dy),
             Offset(returnX, returnRailY),
             Offset(leftReturnX, returnRailY),
-            Offset(leftReturnX, batTermB.dy),
+            Offset(leftReturnX, batteryPos.dy - 42.0),
+            Offset(batTermB.dx, batteryPos.dy - 42.0),
             batTermB,
           ],
           color: const Color(0xFF2563EB),
@@ -495,31 +501,40 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
   }
 
   Widget _buildBatteryComponent({required Offset position}) {
-    return Positioned(
-      left: position.dx - 45,
-      top: position.dy - 56,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(
-              color: const Color(0xFF0F172A).withValues(alpha: 0.90),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFF38BDF8), width: 1.2),
-            ),
-            child: Text(
-              'FONTE 9V',
-              style: GoogleFonts.rajdhani(
-                color: const Color(0xFF38BDF8),
-                fontWeight: FontWeight.bold,
-                fontSize: 11,
-                letterSpacing: 0.5,
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        // Badge centralizado acima da bateria
+        Positioned(
+          left: position.dx - 100,
+          width: 200,
+          top: position.dy - 58,
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0F172A).withValues(alpha: 0.90),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFF38BDF8), width: 1.2),
+              ),
+              child: Text(
+                'FONTE 9V',
+                style: GoogleFonts.rajdhani(
+                  color: const Color(0xFF38BDF8),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 11,
+                  letterSpacing: 0.5,
+                ),
               ),
             ),
           ),
-          const SizedBox(height: 4),
-          Container(
+        ),
+
+        // Componente Físico rigorosamente centralizado em `position`
+        Positioned(
+          left: position.dx - 41.5,
+          top: position.dy - 34.0,
+          child: Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
               color: const Color(0xFF1E293B).withValues(alpha: 0.45),
@@ -536,8 +551,8 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -548,74 +563,87 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
     required bool isTested,
     required VoidCallback onToggle,
   }) {
-    return Positioned(
-      left: position.dx - 58,
-      top: position.dy - 60,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Placa de Identificação
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
-            decoration: BoxDecoration(
-              color: const Color(0xFF0F172A).withValues(alpha: 0.92),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: isClosed ? const Color(0xFF10B981) : const Color(0xFF64748B),
-                width: 1.2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: (isClosed ? const Color(0xFF10B981) : Colors.black)
-                      .withValues(alpha: 0.25),
-                  blurRadius: 6,
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        // Badge centralizado acima da chave
+        Positioned(
+          left: position.dx - 100,
+          width: 200,
+          top: position.dy - 58,
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0F172A).withValues(alpha: 0.92),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: isClosed
+                      ? const Color(0xFF10B981)
+                      : const Color(0xFF64748B),
+                  width: 1.2,
                 ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  label,
-                  style: GoogleFonts.rajdhani(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 11.5,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(width: 5),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: isClosed
-                        ? const Color(0xFF059669)
-                        : const Color(0xFF475569),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    isClosed ? 'FECHADA' : 'ABERTA',
-                    style: GoogleFonts.rajdhani(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 9.5,
-                    ),
-                  ),
-                ),
-                if (isTested) ...[
-                  const SizedBox(width: 4),
-                  const Icon(
-                    Icons.check_circle_rounded,
-                    color: Color(0xFF10B981),
-                    size: 12,
+                boxShadow: [
+                  BoxShadow(
+                    color: (isClosed ? const Color(0xFF10B981) : Colors.black)
+                        .withValues(alpha: 0.25),
+                    blurRadius: 6,
                   ),
                 ],
-              ],
+              ),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      label,
+                      style: GoogleFonts.rajdhani(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11.5,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: isClosed
+                            ? const Color(0xFF059669)
+                            : const Color(0xFF475569),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        isClosed ? 'FECHADA' : 'ABERTA',
+                        style: GoogleFonts.rajdhani(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 9.5,
+                        ),
+                      ),
+                    ),
+                    if (isTested) ...[
+                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.check_circle_rounded,
+                        color: Color(0xFF10B981),
+                        size: 12,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
           ),
-          const SizedBox(height: 4),
-          // Componente Físico Interativo
-          MouseRegion(
+        ),
+
+        // Componente Físico rigorosamente centralizado em `position`
+        Positioned(
+          left: position.dx - 41.5,
+          top: position.dy - 34.0,
+          child: MouseRegion(
             cursor: SystemMouseCursors.click,
             child: GestureDetector(
               onTap: onToggle,
@@ -646,8 +674,8 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -656,70 +684,88 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
     required Offset position,
     required bool isLit,
   }) {
-    return Positioned(
-      left: position.dx - 62,
-      top: position.dy - 60,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Placa de Identificação da Luminária
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
-            decoration: BoxDecoration(
-              color: const Color(0xFF0F172A).withValues(alpha: 0.92),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: isLit ? const Color(0xFFFBBF24) : const Color(0xFF64748B),
-                width: 1.2,
-              ),
-              boxShadow: [
-                if (isLit)
-                  BoxShadow(
-                    color: const Color(0xFFFBBF24).withValues(alpha: 0.45),
-                    blurRadius: 8,
-                  ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.lightbulb_rounded,
-                  size: 13,
-                  color: isLit ? const Color(0xFFFBBF24) : const Color(0xFF94A3B8),
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        // Placa de Identificação centralizada acima da luminária
+        Positioned(
+          left: position.dx - 100,
+          width: 200,
+          top: position.dy - 58,
+          child: Center(
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0F172A).withValues(alpha: 0.92),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: isLit
+                      ? const Color(0xFFFBBF24)
+                      : const Color(0xFF64748B),
+                  width: 1.2,
                 ),
-                const SizedBox(width: 4),
-                Text(
-                  label,
-                  style: GoogleFonts.rajdhani(
-                    color: isLit ? const Color(0xFFFDE047) : Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 11.5,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(width: 5),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: isLit ? const Color(0xFFD97706) : const Color(0xFF475569),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    isLit ? 'ILUMINADA' : 'APAGADA',
-                    style: GoogleFonts.rajdhani(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 9.5,
+                boxShadow: [
+                  if (isLit)
+                    BoxShadow(
+                      color: const Color(0xFFFBBF24).withValues(alpha: 0.45),
+                      blurRadius: 8,
                     ),
-                  ),
+                ],
+              ),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.lightbulb_rounded,
+                      size: 13,
+                      color: isLit
+                          ? const Color(0xFFFBBF24)
+                          : const Color(0xFF94A3B8),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      label,
+                      style: GoogleFonts.rajdhani(
+                        color: isLit ? const Color(0xFFFDE047) : Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11.5,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: isLit
+                            ? const Color(0xFFD97706)
+                            : const Color(0xFF475569),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        isLit ? 'ILUMINADA' : 'APAGADA',
+                        style: GoogleFonts.rajdhani(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 9.5,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-          const SizedBox(height: 4),
-          // Componente Físico com Halo Radiante
-          Stack(
+        ),
+
+        // Componente Físico rigorosamente centralizado em `position`
+        Positioned(
+          left: position.dx - 41.5,
+          top: position.dy - 34.0,
+          child: Stack(
             alignment: Alignment.center,
             children: [
               if (isLit)
@@ -760,8 +806,8 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
               ),
             ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -1159,208 +1205,42 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
     );
   }
 
-  Widget _buildInvestigationChecklistCard() {
-    final bothTested = _testedSwitch1 && _testedSwitch2;
-    final bothAssigned = _mapSwitch1 != null && _mapSwitch2 != null;
+  int get _currentStepperIndex {
+    if (!_testedSwitch1) return 0; // 1. Teste a chave 1
+    if (_switch1Closed && !_testedSwitch2) return 1; // 2. Observe a luminária
+    if (!_testedSwitch2) return 2; // 3. Teste a chave 2
+    if (_mapSwitch1 == null || _mapSwitch2 == null) return 3; // 4. Registre as associações
+    return 4; // Tudo pronto para validação!
+  }
 
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.science_rounded, color: Color(0xFF0284C7), size: 18),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'MÉTODO CIENTÍFICO',
-                  style: GoogleFonts.rajdhani(
-                    color: const Color(0xFF0F172A),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          _buildChecklistRow(
-            step: '1. Testar Chave 1 individualmente',
-            isDone: _testedSwitch1,
-          ),
-          const SizedBox(height: 6),
-          _buildChecklistRow(
-            step: '2. Testar Chave 2 individualmente',
-            isDone: _testedSwitch2,
-          ),
-          const SizedBox(height: 6),
-          _buildChecklistRow(
-            step: '3. Atribuir ambas as etiquetas',
-            isDone: bothAssigned,
-          ),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            decoration: BoxDecoration(
-              color: (bothTested && bothAssigned)
-                  ? const Color(0xFFECFDF5)
-                  : const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: (bothTested && bothAssigned)
-                    ? const Color(0xFF10B981)
-                    : const Color(0xFFCBD5E1),
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  (bothTested && bothAssigned)
-                      ? Icons.thumb_up_rounded
-                      : Icons.info_outline_rounded,
-                  size: 14,
-                  color: (bothTested && bothAssigned)
-                      ? const Color(0xFF059669)
-                      : const Color(0xFF64748B),
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    (bothTested && bothAssigned)
-                        ? 'Bancada pronta para validação!'
-                        : 'Complete as etapas para validar com rigor.',
-                    style: GoogleFonts.outfit(
-                      color: (bothTested && bothAssigned)
-                          ? const Color(0xFF047857)
-                          : const Color(0xFF475569),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+  bool _isStepCompleted(int index) {
+    if (index == 0) return _testedSwitch1;
+    if (index == 1) return _testedSwitch1 && (_testedSwitch2 || !_switch1Closed);
+    if (index == 2) return _testedSwitch2;
+    if (index == 3) return _mapSwitch1 != null && _mapSwitch2 != null;
+    return false;
+  }
+
+  Widget _buildMissionObjectiveCard() {
+    return WorkbenchMissionObjectiveCard(
+      missionNumber: 3,
+      title: _mission.title,
+      description: _mission.objective,
+      voltsTip: _mission.voltsMediation,
     );
   }
 
-  Widget _buildChecklistRow({required String step, required bool isDone}) {
-    return Row(
-      children: [
-        Icon(
-          isDone ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
-          size: 15,
-          color: isDone ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
-        ),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Text(
-            step,
-            style: GoogleFonts.outfit(
-              color: isDone ? const Color(0xFF0F172A) : const Color(0xFF64748B),
-              fontSize: 11.5,
-              fontWeight: isDone ? FontWeight.w600 : FontWeight.normal,
-              decoration: isDone ? TextDecoration.lineThrough : null,
-            ),
-          ),
-        ),
+  Widget _buildInvestigationStepperCard() {
+    return WorkbenchInvestigationStepperCard(
+      title: 'Progresso da investigação',
+      currentStepIndex: _currentStepperIndex,
+      isStepCompleted: _isStepCompleted,
+      steps: const [
+        'Teste a chave 1',
+        'Observe a luminária',
+        'Teste a chave 2',
+        'Registre as associações',
       ],
-    );
-  }
-
-  Widget _buildMissionBriefingCard() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.task_alt_rounded, color: Color(0xFF0284C7), size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Missão 3: ${_mission.title}',
-                  style: GoogleFonts.rajdhani(
-                    color: const Color(0xFF0F172A),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _mission.objective,
-            style: GoogleFonts.outfit(
-              color: const Color(0xFF334155),
-              fontSize: 12.5,
-              height: 1.3,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFCBD5E1)),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(
-                  Icons.tips_and_updates_rounded,
-                  color: Color(0xFFD97706),
-                  size: 18,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Prof. Volts: "${_mission.voltsMediation}"',
-                    style: GoogleFonts.outfit(
-                      color: const Color(0xFF475569),
-                      fontSize: 11.5,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

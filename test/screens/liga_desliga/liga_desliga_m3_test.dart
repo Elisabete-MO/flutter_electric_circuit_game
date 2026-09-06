@@ -37,11 +37,15 @@ void main() {
       expect(find.text('Luminária A'), findsNWidgets(2)); // 1 para cada chave
       expect(find.text('Luminária B'), findsNWidgets(2)); // 1 para cada chave
 
-      // Checklist do método científico
-      expect(find.text('MÉTODO CIENTÍFICO'), findsOneWidget);
-      expect(find.text('1. Testar Chave 1 individualmente'), findsOneWidget);
-      expect(find.text('2. Testar Chave 2 individualmente'), findsOneWidget);
-      expect(find.text('3. Atribuir ambas as etiquetas'), findsOneWidget);
+      // Card de Objetivo e Dica do Prof. Volts
+      expect(find.text('Dica do Prof. Volts:'), findsOneWidget);
+
+      // Card de Stepper do Progresso da Investigação
+      expect(find.text('Progresso da investigação'), findsOneWidget);
+      expect(find.text('Teste a chave 1'), findsOneWidget);
+      expect(find.text('Observe a luminária'), findsOneWidget);
+      expect(find.text('Teste a chave 2'), findsOneWidget);
+      expect(find.text('Registre as associações'), findsOneWidget);
 
       expect(completed, isFalse);
     });

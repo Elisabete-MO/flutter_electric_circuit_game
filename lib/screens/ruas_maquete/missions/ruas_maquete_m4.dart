@@ -9,6 +9,7 @@ import '../../../state/circuit_undo_redo_controller.dart';
 import '../../../widgets/prof_volts_feedback_dialog.dart';
 import '../../../widgets/success_confetti_overlay.dart';
 import '../../../widgets/workbench_components.dart';
+import '../../../widgets/workbench_sidebar_cards.dart';
 import '../../../widgets/workbench_table_frame.dart';
 import '../widgets/ruas_maquete_painter.dart';
 import '../widgets/ruas_maquete_widgets.dart';
@@ -218,13 +219,18 @@ class _RuasMaqueteM4State extends State<RuasMaqueteM4>
           ),
         ),
         const SizedBox(width: 16),
-        // Painel Lateral (Briefing & Dica)
+        // Painel Lateral (Objetivo, Stepper & Validação)
         Expanded(
           flex: 3,
           child: WorkbenchSidePanel(
             teamTitle: 'Painel da Equipe Bairro',
+            showTeamHeader: false,
+            buttonColor: const Color(0xFF059669),
             toolboxItems: [
-              _buildMissionBriefingCard(),
+              _buildMissionObjectiveCard(),
+              const SizedBox(height: 12),
+              _buildInvestigationStepperCard(),
+              const SizedBox(height: 12),
               _buildSideTools(),
             ],
             onEnergizePressed: _validate,
@@ -431,84 +437,36 @@ class _RuasMaqueteM4State extends State<RuasMaqueteM4>
     );
   }
 
-  Widget _buildMissionBriefingCard() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.task_alt_rounded,
-                  color: Color(0xFF0284C7), size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Missão 4: ${_mission.title}',
-                  style: GoogleFonts.rajdhani(
-                    color: const Color(0xFF0F172A),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _mission.objective,
-            style: GoogleFonts.outfit(
-              color: const Color(0xFF334155),
-              fontSize: 12.5,
-              height: 1.3,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFCBD5E1)),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(
-                  Icons.tips_and_updates_rounded,
-                  color: Color(0xFFD97706),
-                  size: 18,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Prof. Volts: "${_mission.voltsMediation}"',
-                    style: GoogleFonts.outfit(
-                      color: const Color(0xFF475569),
-                      fontSize: 11.5,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+  int get _currentStepperIndex {
+    if (!_m4ParallelWireConnected) return 0;
+    return 1;
+  }
+
+  bool _isStepCompleted(int index) {
+    if (index == 0) return _m4ParallelWireConnected;
+    if (index == 1) return _m4ParallelWireConnected;
+    return false;
+  }
+
+  Widget _buildMissionObjectiveCard() {
+    return WorkbenchMissionObjectiveCard(
+      missionNumber: 4,
+      title: _mission.title,
+      description: _mission.objective,
+      voltsTip: _mission.voltsMediation,
+      accentColor: const Color(0xFF0284C7),
+    );
+  }
+
+  Widget _buildInvestigationStepperCard() {
+    return WorkbenchInvestigationStepperCard(
+      title: 'Progresso do circuito residencial',
+      currentStepIndex: _currentStepperIndex,
+      isStepCompleted: _isStepCompleted,
+      steps: const [
+        'Conectar ramal paralelo da residência',
+        'Comprovar independência de funcionamento',
+      ],
     );
   }
 }
