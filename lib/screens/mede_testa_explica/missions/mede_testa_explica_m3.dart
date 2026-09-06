@@ -14,6 +14,7 @@ import '../../../widgets/realistic_wire_painter.dart';
 import '../../../widgets/schematic_blueprint_socket.dart';
 import '../../../widgets/success_confetti_overlay.dart';
 import '../../../widgets/workbench_components.dart';
+import '../../../widgets/workbench_sidebar_cards.dart';
 import '../../../widgets/workbench_table_frame.dart';
 import '../widgets/mede_testa_explica_widgets.dart';
 
@@ -50,6 +51,21 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
 
   bool get _isClosed =>
       _m3BatteryInserted && _m3ResistorInserted && _m3LedInserted;
+
+  int get _currentStepperIndex {
+    if (!(_m3BatteryInserted && _m3ResistorInserted && _m3LedInserted)) return 0;
+    if (!_m3AmperimeterInserted) return 1;
+    return 2;
+  }
+
+  bool _isStepCompleted(int index) {
+    if (index == 0) {
+      return _m3BatteryInserted && _m3ResistorInserted && _m3LedInserted;
+    }
+    if (index == 1) return _m3AmperimeterInserted;
+    if (index == 2) return _isClosed && _m3AmperimeterInserted;
+    return false;
+  }
 
   void _insertComponent({
     required String name,
@@ -270,7 +286,27 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
           flex: 3,
           child: WorkbenchSidePanel(
             teamTitle: 'Painel da Investigação',
+            showTeamHeader: false,
+            buttonColor: const Color(0xFF059669),
             toolboxItems: [
+              WorkbenchMissionObjectiveCard(
+                missionNumber: 3,
+                title: _mission.title,
+                description: _mission.objective,
+                voltsTip: _mission.voltsMediation,
+              ),
+              const SizedBox(height: 12),
+              WorkbenchInvestigationStepperCard(
+                title: 'Roteiro de investigação',
+                currentStepIndex: _currentStepperIndex,
+                isStepCompleted: _isStepCompleted,
+                steps: const [
+                  'Montar circuito em série (bateria, resistor, LED)',
+                  'Inserir amperímetro em série no circuito',
+                  'Variar a resistência e observar a corrente',
+                ],
+              ),
+              const SizedBox(height: 12),
               MedeTestaUndoRedoButtons(
                 controller: _undoRedoController,
                 onUndo: () => setState(() => _undoRedoController.undo()),

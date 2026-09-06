@@ -16,6 +16,7 @@ import '../../../widgets/realistic_wire_painter.dart';
 import '../../../widgets/schematic_blueprint_socket.dart';
 import '../../../widgets/success_confetti_overlay.dart';
 import '../../../widgets/workbench_components.dart';
+import '../../../widgets/workbench_sidebar_cards.dart';
 import '../../../widgets/workbench_table_frame.dart';
 import '../widgets/movimento_miniatura_widgets.dart';
 
@@ -71,6 +72,19 @@ class _MovimentoMiniaturaM5State extends State<MovimentoMiniaturaM5>
       _m5CarTested &&
       _m5BatteryInserted &&
       _m5MotorInserted;
+
+  int get _currentStepperIndex {
+    if (!_m5WireRepaired) return 0;
+    if (!(_m5BatteryInserted && _m5MotorInserted)) return 1;
+    return 2;
+  }
+
+  bool _isStepCompleted(int index) {
+    if (index == 0) return _m5WireRepaired;
+    if (index == 1) return _m5BatteryInserted && _m5MotorInserted;
+    if (index == 2) return _m5CarTested;
+    return false;
+  }
 
   void _insertComponent({
     required String name,
@@ -252,7 +266,27 @@ class _MovimentoMiniaturaM5State extends State<MovimentoMiniaturaM5>
           flex: 3,
           child: WorkbenchSidePanel(
             teamTitle: 'Painel da Equipe Mecânica',
+            showTeamHeader: false,
+            buttonColor: const Color(0xFF059669),
             toolboxItems: [
+              WorkbenchMissionObjectiveCard(
+                missionNumber: 5,
+                title: _mission.title,
+                description: _mission.objective,
+                voltsTip: _mission.voltsMediation,
+              ),
+              const SizedBox(height: 12),
+              WorkbenchInvestigationStepperCard(
+                title: 'Roteiro de investigação',
+                currentStepIndex: _currentStepperIndex,
+                isStepCompleted: _isStepCompleted,
+                steps: const [
+                  'Diagnosticar o mau contato do carrinho',
+                  'Reparar o fio e inserir bateria + motor',
+                  'Demonstrar ao visitante (botão + polaridade)',
+                ],
+              ),
+              const SizedBox(height: 12),
               MovimentoPredictionBadge(prediction: _m5Prediction),
               MovimentoUndoRedoButtons(
                 controller: _undoRedoController,

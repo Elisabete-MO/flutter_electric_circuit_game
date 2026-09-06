@@ -13,6 +13,7 @@ import '../../../widgets/realistic_wire_painter.dart';
 import '../../../widgets/schematic_blueprint_socket.dart';
 import '../../../widgets/success_confetti_overlay.dart';
 import '../../../widgets/workbench_components.dart';
+import '../../../widgets/workbench_sidebar_cards.dart';
 import '../../../widgets/workbench_table_frame.dart';
 import '../widgets/mede_testa_explica_widgets.dart';
 
@@ -50,6 +51,21 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
       _m5ResistorInserted &&
       _m5LedInserted &&
       _m5SelectedReportIndex != null;
+
+  int get _currentStepperIndex {
+    if (!(_m5BatteryInserted && _m5ResistorInserted && _m5LedInserted)) return 0;
+    if (_m5SelectedReportIndex == null) return 1;
+    return 2;
+  }
+
+  bool _isStepCompleted(int index) {
+    if (index == 0) {
+      return _m5BatteryInserted && _m5ResistorInserted && _m5LedInserted;
+    }
+    if (index == 1) return _m5SelectedReportIndex != null;
+    if (index == 2) return _isClosed && _m5SelectedReportIndex == 1;
+    return false;
+  }
 
   void _insertComponent({
     required String name,
@@ -272,7 +288,27 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
           flex: 3,
           child: WorkbenchSidePanel(
             teamTitle: 'Painel da Investigação',
+            showTeamHeader: false,
+            buttonColor: const Color(0xFF059669),
             toolboxItems: [
+              WorkbenchMissionObjectiveCard(
+                missionNumber: 5,
+                title: _mission.title,
+                description: _mission.objective,
+                voltsTip: _mission.voltsMediation,
+              ),
+              const SizedBox(height: 12),
+              WorkbenchInvestigationStepperCard(
+                title: 'Roteiro de investigação',
+                currentStepIndex: _currentStepperIndex,
+                isStepCompleted: _isStepCompleted,
+                steps: const [
+                  'Montar e medir o circuito de teste',
+                  'Identificar a causa do LED fraco',
+                  'Registrar a conclusão correta no relatório',
+                ],
+              ),
+              const SizedBox(height: 12),
               MedeTestaUndoRedoButtons(
                 controller: _undoRedoController,
                 onUndo: () => setState(() => _undoRedoController.undo()),

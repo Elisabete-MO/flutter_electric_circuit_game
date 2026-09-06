@@ -13,6 +13,7 @@ import '../../../widgets/realistic_wire_painter.dart';
 import '../../../widgets/schematic_blueprint_socket.dart';
 import '../../../widgets/success_confetti_overlay.dart';
 import '../../../widgets/workbench_components.dart';
+import '../../../widgets/workbench_sidebar_cards.dart';
 import '../../../widgets/workbench_table_frame.dart';
 import '../widgets/mede_testa_explica_widgets.dart';
 
@@ -50,6 +51,21 @@ class _MedeTestaExplicaM4State extends State<MedeTestaExplicaM4> {
       _m4ResistorInserted &&
       _m4LedInserted &&
       _m4SelectedResistor != null;
+
+  int get _currentStepperIndex {
+    if (!(_m4BatteryInserted && _m4ResistorInserted && _m4LedInserted)) return 0;
+    if (_m4SelectedResistor == null) return 1;
+    return 2;
+  }
+
+  bool _isStepCompleted(int index) {
+    if (index == 0) {
+      return _m4BatteryInserted && _m4ResistorInserted && _m4LedInserted;
+    }
+    if (index == 1) return _m4SelectedResistor != null;
+    if (index == 2) return _isClosed && _m4SelectedResistor == 680;
+    return false;
+  }
 
   void _insertComponent({
     required String name,
@@ -280,7 +296,27 @@ class _MedeTestaExplicaM4State extends State<MedeTestaExplicaM4> {
           flex: 3,
           child: WorkbenchSidePanel(
             teamTitle: 'Painel da Investigação',
+            showTeamHeader: false,
+            buttonColor: const Color(0xFF059669),
             toolboxItems: [
+              WorkbenchMissionObjectiveCard(
+                missionNumber: 4,
+                title: _mission.title,
+                description: _mission.objective,
+                voltsTip: _mission.voltsMediation,
+              ),
+              const SizedBox(height: 12),
+              WorkbenchInvestigationStepperCard(
+                title: 'Roteiro de investigação',
+                currentStepIndex: _currentStepperIndex,
+                isStepCompleted: _isStepCompleted,
+                steps: const [
+                  'Posicionar componentes (bateria, LED e resistor)',
+                  'Selecionar o resistor de valor seguro (680 Ω)',
+                  'Energizar o circuito e proteger o LED',
+                ],
+              ),
+              const SizedBox(height: 12),
               MedeTestaUndoRedoButtons(
                 controller: _undoRedoController,
                 onUndo: () => setState(() => _undoRedoController.undo()),
