@@ -407,6 +407,9 @@ class WorkbenchSidePanel extends StatelessWidget {
   final List<Widget> toolboxItems;
   final VoidCallback onEnergizePressed;
   final bool isLoading;
+  final Color? buttonColor;
+  final String? buttonLabel;
+  final bool showTeamHeader;
 
   const WorkbenchSidePanel({
     super.key,
@@ -414,6 +417,9 @@ class WorkbenchSidePanel extends StatelessWidget {
     required this.toolboxItems,
     required this.onEnergizePressed,
     this.isLoading = false,
+    this.buttonColor,
+    this.buttonLabel,
+    this.showTeamHeader = true,
   });
 
   @override
@@ -435,33 +441,35 @@ class WorkbenchSidePanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.widgets_rounded, color: Color(0xFF0284C7), size: 20),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    teamTitle,
-                    style: GoogleFonts.rajdhani(
-                      color: const Color(0xFF0F172A),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
+          if (showTeamHeader) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.widgets_rounded, color: Color(0xFF0284C7), size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      teamTitle,
+                      style: GoogleFonts.rajdhani(
+                        color: const Color(0xFF0F172A),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
+            const SizedBox(height: 12),
+          ],
           Expanded(
             child: SingleChildScrollView(
               child: Column(
@@ -475,7 +483,7 @@ class WorkbenchSidePanel extends StatelessWidget {
             height: 48,
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0284C7),
+                backgroundColor: buttonColor ?? const Color(0xFF059669),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -493,7 +501,9 @@ class WorkbenchSidePanel extends StatelessWidget {
                     )
                   : const Icon(Icons.play_arrow_rounded, color: Colors.white),
               label: Text(
-                isLoading ? 'SIMULANDO...' : 'ENERGIZAR E VALIDAR BANCADA',
+                isLoading
+                    ? 'SIMULANDO...'
+                    : (buttonLabel ?? 'ENERGIZAR E VALIDAR BANCADA'),
                 style: GoogleFonts.rajdhani(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
