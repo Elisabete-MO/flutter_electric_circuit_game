@@ -130,29 +130,37 @@ class _LetrerosLedScreenState extends ConsumerState<LetrerosLedScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0F172A),
-      body: SafeArea(
-        child: Column(
-          children: [
-            StandFlowHeader(
-              standName: 'LETREIROS DE LED',
-              standNumber: 5,
-              currentMissionNumber: _flowState.currentMissionNumber,
-              completedMissionNumbers: _flowState.completedMissionNumbers,
-              unlockedMissionNumbers: _flowState.unlockedMissionNumbers,
-              totalMissions: 5,
-              onSelectMission: _navigateToMission,
-              onBack: () => Navigator.of(context).maybePop(),
-            ),
-            Expanded(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: _buildCurrentMissionWidget(),
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/backgrounds/floor.png'),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              StandFlowHeader(
+                standName: 'LETREIROS DE LED',
+                standNumber: 5,
+                currentMissionNumber: _flowState.currentMissionNumber,
+                completedMissionNumbers: _flowState.completedMissionNumbers,
+                unlockedMissionNumbers: _flowState.unlockedMissionNumbers,
+                totalMissions: 5,
+                onSelectMission: _navigateToMission,
+                onBack: () => Navigator.of(context).maybePop(),
+              ),
+              Expanded(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: _buildCurrentMissionWidget(),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
