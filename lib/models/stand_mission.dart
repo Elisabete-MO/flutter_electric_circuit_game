@@ -25,18 +25,6 @@ class StandMission {
     required this.voltsMediation,
   });
 
-  /// Fala oficial de mediação do Professor Volts para o Estande 3 ("Liga e Desliga")
-  static const String voltsMediationEstande3 =
-      'Um interruptor não cria energia. Ele decide se o caminho está completo ou interrompido.';
-
-  /// Fala oficial de mediação do Professor Volts para o Estande "Ruas da Maquete"
-  static const String voltsMediationEstandeRuasMaquete =
-      'Quando há mais de um destino, a organização dos caminhos altera o comportamento de todo o circuito.';
-
-  /// Fala oficial de mediação do Professor Volts para o Estande "Letreiros de LED"
-  static const String voltsMediationEstandeLetrerosLed =
-      'Componentes semicondutores como LEDs possuem sentido certo para conduzir. E limitar a corrente é fundamental para sua durabilidade.';
-
   static List<StandMission> get estande3Missions => const [
         StandMission(
           id: 'liga_desliga_m1',
@@ -47,7 +35,7 @@ class StandMission {
           componentsInfo: 'Bateria (4.5V), Interruptor SPST, Lâmpada e Fios condutores',
           victoryCriteria: 'Chave aberta apaga; fechada acende.',
           failureFeedback: 'O interruptor SPST precisa estar no caminho da corrente.',
-          voltsMediation: voltsMediationEstande3,
+          voltsMediation: 'Interruptor aberto = caminho interrompido = sem corrente. Fechado = caminho completo = corrente flui.',
         ),
         StandMission(
           id: 'liga_desliga_m2',
@@ -58,7 +46,7 @@ class StandMission {
           componentsInfo: 'Circuito montado com interruptor e lâmpada',
           victoryCriteria: 'Previsões e justificativas corretas.',
           failureFeedback: 'Circuito aberto interrompe a passagem da corrente.',
-          voltsMediation: voltsMediationEstande3,
+          voltsMediation: 'Símbolo com intervalo = chave aberta (sem corrente). Linha contínua = chave fechada (corrente flui).',
         ),
         StandMission(
           id: 'liga_desliga_m3',
@@ -69,7 +57,7 @@ class StandMission {
           componentsInfo: '2 Interruptores sem etiqueta, 2 Lâmpadas e Fonte de energia',
           victoryCriteria: 'Mapa correto com testes controlados.',
           failureFeedback: 'Teste um interruptor por vez e observe qual luz responde.',
-          voltsMediation: voltsMediationEstande3,
+          voltsMediation: 'Teste uma chave por vez. Assim você sabe qual controla qual luz — sem duvidar do resultado.',
         ),
         StandMission(
           id: 'liga_desliga_m4',
@@ -80,7 +68,7 @@ class StandMission {
           componentsInfo: 'Montagem com interruptor em desvio paralelo',
           victoryCriteria: 'SPST reposicionado em série.',
           failureFeedback: 'Essa chave em paralelo não interrompe a corrente da lâmpada.',
-          voltsMediation: voltsMediationEstande3,
+          voltsMediation: 'Chave em série: corta a corrente. Chave em paralelo: a corrente desvia e ignora o comando.',
         ),
         StandMission(
           id: 'liga_desliga_m5',
@@ -91,7 +79,7 @@ class StandMission {
           componentsInfo: 'Bateria, botão de pressão, lâmpada',
           victoryCriteria: 'Estado acompanha o botão.',
           failureFeedback: 'O botão de pressão deve manter a luz acesa apenas durante a pressão contínua.',
-          voltsMediation: voltsMediationEstande3,
+          voltsMediation: 'Push-button: fecha ao pressionar, abre ao soltar. SPST: mantém o estado escolhido até mudar.',
         ),
       ];
 
@@ -105,7 +93,7 @@ class StandMission {
           componentsInfo: 'Bateria 4.5V, 1 lâmpada de poste, fios condutores',
           victoryCriteria: 'Poste iluminado com retorno.',
           failureFeedback: 'Certifique-se de conectar a lâmpada do poste entre os dois polos da fonte.',
-          voltsMediation: voltsMediationEstandeRuasMaquete,
+          voltsMediation: 'Todo circuito precisa de ida e volta. Sem o fio de retorno, a corrente não circula.',
         ),
         StandMission(
           id: 'ruas_maquete_m2',
@@ -116,7 +104,7 @@ class StandMission {
           componentsInfo: 'Circuito comutável com opções em série e em paralelo',
           victoryCriteria: 'Compara topologias observando.',
           failureFeedback: 'Em série o brilho cai e a remoção apaga ambos; em paralelo os ramos são independentes.',
-          voltsMediation: voltsMediationEstandeRuasMaquete,
+          voltsMediation: 'Série: tensão dividida, cargas dependentes. Paralelo: tensão completa em cada carga, independentes.',
         ),
         StandMission(
           id: 'ruas_maquete_m3',
@@ -127,7 +115,7 @@ class StandMission {
           componentsInfo: 'Circuito residencial com ligação inadequada em série',
           victoryCriteria: 'Encontra ligação em série indevida.',
           failureFeedback: 'Cada casa deve estar em seu próprio ramo paralelo para permitir desligamento isolado.',
-          voltsMediation: voltsMediationEstandeRuasMaquete,
+          voltsMediation: 'Cada ponto de carga em ramo paralelo próprio. Assim um pode ser desligado sem apagar os outros.',
         ),
         StandMission(
           id: 'ruas_maquete_m4',
@@ -138,7 +126,7 @@ class StandMission {
           componentsInfo: 'Fonte, 2 lâmpadas de casas, 2 lâmpadas de postes, junções de fios',
           victoryCriteria: 'Quatro cargas independentes.',
           failureFeedback: 'Todos os 4 ramos precisam se conectar de forma independente à linha de retorno.',
-          voltsMediation: voltsMediationEstandeRuasMaquete,
+          voltsMediation: 'Cada ramo precisa de conexão própria à linha de retorno. Sem isso, a corrente não fecha o circuito.',
         ),
         StandMission(
           id: 'ruas_maquete_m5',
@@ -149,7 +137,7 @@ class StandMission {
           componentsInfo: 'Rede do bairro em paralelo com lâmpada removível',
           victoryCriteria: 'Outros ramos permanecem acesos.',
           failureFeedback: 'Em paralelo, remover uma carga interrompe apenas aquele ramo específico.',
-          voltsMediation: voltsMediationEstandeRuasMaquete,
+          voltsMediation: 'Ramos paralelos são independentes: desligar um não afeta os outros.',
         ),
       ];
 
@@ -163,7 +151,7 @@ class StandMission {
           componentsInfo: 'Bateria 9V, LED vermelho, Resistor 680Ω',
           victoryCriteria: 'LED aceso em corrente segura.',
           failureFeedback: 'Verifique a polaridade do LED: o ânodo deve ir no positivo e a corrente precisa do resistor de 680 Ω.',
-          voltsMediation: voltsMediationEstandeLetrerosLed,
+          voltsMediation: 'LED sem resistor queima em segundos. Use 680 Ω com 9 V para limitar a corrente a ~13 mA.',
         ),
         StandMission(
           id: 'letreros_led_m2',
@@ -174,7 +162,7 @@ class StandMission {
           componentsInfo: 'Letreiro apagado com LED em polaridade invertida',
           victoryCriteria: 'Compara polaridade e resultado.',
           failureFeedback: 'O LED no sentido inverso bloqueia a corrente.',
-          voltsMediation: voltsMediationEstandeLetrerosLed,
+          voltsMediation: 'LED é diodo: conduz em um sentido só. Invertido, age como isolante e não acende.',
         ),
         StandMission(
           id: 'letreros_led_m3',
@@ -185,7 +173,7 @@ class StandMission {
           componentsInfo: 'Bateria 9V, LED, resistores (68Ω, 680Ω, 6.8kΩ)',
           victoryCriteria: 'Descarta hipóteses com evidência.',
           failureFeedback: 'Testar e descartar as causas de falha com medições antes de energizar.',
-          voltsMediation: voltsMediationEstandeLetrerosLed,
+          voltsMediation: 'Descarte uma hipótese por vez: polaridade → continuidade → resistor no ramo.',
         ),
         StandMission(
           id: 'letreros_led_m4',
@@ -196,7 +184,7 @@ class StandMission {
           componentsInfo: '2 LEDs (Entrada e Saída), resistores de 68Ω, 680Ω, 6.8kΩ, bateria 9V',
           victoryCriteria: 'Escolhe 680 Ω por proteção e brilho.',
           failureFeedback: '68 Ω causa sobrecorrente e 6.8 kΩ deixa a luz fraca demais.',
-          voltsMediation: voltsMediationEstandeLetrerosLed,
+          voltsMediation: 'I = V ÷ R. Com 9 V e 680 Ω → ~13 mA. Seguro para o LED. Com 68 Ω → ~132 mA. Queima.',
         ),
         StandMission(
           id: 'letreros_led_m5',
@@ -207,11 +195,11 @@ class StandMission {
           componentsInfo: 'Dois ramos de LED com resistores de limitação',
           victoryCriteria: 'Outro letreiro continua funcional.',
           failureFeedback: 'Em paralelo com resistores próprios, remover um ramo mantém o outro operacional.',
-          voltsMediation: voltsMediationEstandeLetrerosLed,
+          voltsMediation: 'Ramos paralelos com resistores próprios são independentes. Remover um não afeta o outro.',
         ),
       ];
 
-  /// Fala oficial de mediação do Professor Volts para o Estande "Movimento em Miniatura"
+  /// Mantida por compatibilidade com código legado.
   static const String voltsMediationEstandeMovimentoMiniatura =
       'Luz e movimento são formas diferentes de energia geradas pela corrente elétrica. Vamos explorar o motor CC.';
 
@@ -225,7 +213,7 @@ class StandMission {
           componentsInfo: 'Bateria, motor CC didático com hélice',
           victoryCriteria: 'Motor gira.',
           failureFeedback: 'Confira se ambos os terminais do motor estão conectados à fonte.',
-          voltsMediation: voltsMediationEstandeMovimentoMiniatura,
+          voltsMediation: 'Corrente elétrica gera campo magnético. Campo magnético faz o eixo do motor girar.',
         ),
         StandMission(
           id: 'movimento_miniatura_m2',
@@ -236,7 +224,7 @@ class StandMission {
           componentsInfo: 'Bateria comutável, motor CC de tração do carrinho',
           victoryCriteria: 'Carrinho chega ao destino.',
           failureFeedback: 'Inverta a polaridade para alterar o sentido do campo magnético e da rotação.',
-          voltsMediation: voltsMediationEstandeMovimentoMiniatura,
+          voltsMediation: 'Inverta os terminais = inverte a corrente = inverte o campo = motor gira no sentido oposto.',
         ),
         StandMission(
           id: 'movimento_miniatura_m3',
@@ -247,7 +235,7 @@ class StandMission {
           componentsInfo: 'Bateria, motor CC, chave e terminais com defeito oculto',
           victoryCriteria: 'Falha achada por testes.',
           failureFeedback: 'Siga a sequência de testes (fonte, chave, terminais) para localizar a abertura.',
-          voltsMediation: voltsMediationEstandeMovimentoMiniatura,
+          voltsMediation: 'Diagnóstico em sequência: fonte → chave → terminais → carga. Nunca pule etapas.',
         ),
         StandMission(
           id: 'movimento_miniatura_m4',
@@ -258,7 +246,7 @@ class StandMission {
           componentsInfo: 'Bateria, motor CC, botão de pressão, LED indicador, resistor 680 Ω',
           victoryCriteria: 'Motor e indicador respondem juntos.',
           failureFeedback: 'O botão controla o conjunto e o LED necessita de resistor de proteção.',
-          voltsMediation: voltsMediationEstandeMovimentoMiniatura,
+          voltsMediation: 'Push-button em série controla o motor. LED em paralelo indica sem interferir na corrente principal.',
         ),
         StandMission(
           id: 'movimento_miniatura_m5',
@@ -269,11 +257,11 @@ class StandMission {
           componentsInfo: 'Montagem completa com botão e reversão de polaridade',
           victoryCriteria: 'Explica comando e reversão.',
           failureFeedback: 'Demonstre a função do botão de acionamento e a rotação por polaridade.',
-          voltsMediation: voltsMediationEstandeMovimentoMiniatura,
+          voltsMediation: 'Botão: aciona ou corta o circuito. Polaridade: determina a direção. Dois controles distintos.',
         ),
       ];
 
-  /// Fala oficial de mediação do Professor Volts para o Estande "Mede, Testa e Explica"
+  /// Mantida por compatibilidade com código legado.
   static const String voltsMediationEstandeMedeTestaExplica =
       'Medir é enxergar o invisível: o multímetro revela quanta tensão e quanta corrente estão presentes no circuito.';
 
@@ -287,7 +275,7 @@ class StandMission {
           componentsInfo: 'Bateria 9V, voltímetro didático',
           victoryCriteria: 'Leitura aproximada de 9 V.',
           failureFeedback: 'O voltímetro deve ser conectado em paralelo com os terminais da fonte.',
-          voltsMediation: voltsMediationEstandeMedeTestaExplica,
+          voltsMediation: 'Voltímetro em paralelo: compara potencial entre dois pontos sem interferir no circuito.',
         ),
         StandMission(
           id: 'mede_testa_m2',
@@ -298,7 +286,7 @@ class StandMission {
           componentsInfo: 'Bateria 9V, lâmpada de carga, voltímetro didático',
           victoryCriteria: 'Mede em paralelo e interpreta.',
           failureFeedback: 'Verifique exatamente entre quais dois pontos sobre a carga as pontas foram colocadas.',
-          voltsMediation: voltsMediationEstandeMedeTestaExplica,
+          voltsMediation: 'Tensão sobre a carga = energia convertida em luz ou calor. Voltímetro em paralelo revela esse valor.',
         ),
         StandMission(
           id: 'mede_testa_m3',
@@ -309,7 +297,7 @@ class StandMission {
           componentsInfo: 'Resistor variável/potenciômetro, LED, amperímetro didático',
           victoryCriteria: 'Registra relação resistência/corrente.',
           failureFeedback: 'Maior resistência elétrica resulta em menor corrente no circuito (I = V / R).',
-          voltsMediation: voltsMediationEstandeMedeTestaExplica,
+          voltsMediation: 'Amperímetro em série conta os elétrons que passam. Mais resistência = menos corrente (I = V ÷ R).',
         ),
         StandMission(
           id: 'mede_testa_m4',
@@ -320,7 +308,7 @@ class StandMission {
           componentsInfo: 'Resistores de 68Ω, 680Ω e 6.8kΩ, LED, bateria 9V, amperímetro',
           victoryCriteria: 'Escolha justificada por valor medido.',
           failureFeedback: 'Selecione uma resistência que proteja a carga (10-15 mA) sem apagar o brilho.',
-          voltsMediation: voltsMediationEstandeMedeTestaExplica,
+          voltsMediation: 'Meça antes de decidir. Entre 10–15 mA: LED seguro e brilhante. Fora dessa faixa: dano ou apagado.',
         ),
         StandMission(
           id: 'mede_testa_m5',
@@ -331,8 +319,7 @@ class StandMission {
           componentsInfo: 'Circuito com LED de brilho fraco, multímetro, painel de hipóteses',
           victoryCriteria: 'Relato à banca usa evidência.',
           failureFeedback: 'Uma conclusão científica deve utilizar dados medidos com precisão para descartar hipóteses.',
-          voltsMediation: voltsMediationEstandeMedeTestaExplica,
+          voltsMediation: 'Uma conclusão científica precisa de evidência medida, não de intuição. Meça a tensão, a resistência e a polaridade para eliminar hipóteses.',
         ),
       ];
 }
-
