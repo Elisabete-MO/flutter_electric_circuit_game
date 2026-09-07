@@ -552,3 +552,78 @@ Nenhum documento foi escolhido como "verdade"; o código prevalece em cada confl
 Proibições respeitadas: sem `flutter pub upgrade`, sem edição de código/testes/assets/docs,
 sem remoção/renomeação, sem migração; mutations de git não executadas.
 Arquivo modificado/criado por esta tarefa: **apenas `CODEBASE_AUDIT.md`** (ver `git status` pós-tarefa).
+
+---
+
+## 24. Pós-auditoria — limpeza estrutural (conservadora)
+
+| Verificação | Antes | Depois |
+| --- | --- | --- |
+| Arquivos `.dart` 0 bytes (`lib/`) | 51 | 0 |
+| Diretórios vazios (`lib/`) | 19 | 0 |
+| Testes placeholder (`expect(true, isTrue)`) | 5 | 0 |
+| Dependências sem import (`flame`, `confetti`) | 2 | 0 (removeu `ordered_set` transitive) |
+| `flutter analyze` | No issues | No issues |
+| `flutter test` | 80 testes | 75 testes |
+
+### 24.1 Arquivos removidos (51 arquivos .dart = 0 bytes, sem referências em lib/ ou test/)
+
+| Diretório | Arquivos |
+| --- | --- |
+| `lib/application/editor/` | `editor_notifier.dart`, `editor_state.dart` |
+| `lib/application/session/` | `activity_session_notifier.dart` |
+| `lib/application/simulation/` | `simulation_notifier.dart` |
+| `lib/application/validation/` | `validation_notifier.dart` |
+| `lib/components/` | `battery_component.dart`, `bench_background.dart`, `glow_component.dart`, `lamp_component.dart`, `live_wire_component.dart`, `moving_dots.dart`, `terminal_component.dart` |
+| `lib/core/` | `app_theme.dart`, `constants.dart`, `eletrolab_colors.dart`, `phase1_navigator.dart` |
+| `lib/domain/activities/` | `pedagogical_task.dart` |
+| `lib/domain/circuit/` | `circuit_document.dart`, `component_model.dart`, `component_type.dart`, `terminal_model.dart`, `wire_model.dart` |
+| `lib/domain/simulation/` | `circuit_solver.dart`, `electrical_netlist.dart`, `simulation_result.dart` |
+| `lib/domain/validation/` | `diagnostic_result.dart`, `equivalence_checker.dart` |
+| `lib/game/` | `electric_circuit_game.dart`, `workbench_game.dart` |
+| `lib/infrastructure/serialization/` | `circuit_serializer.dart` |
+| `lib/models/` | `phase1_circuit.dart`, `terminal.dart`, `terminal_id.dart`, `wire_connection.dart` |
+| `lib/mvp/` | `activity_controller.dart`, `circuit_analysis_panel.dart`, `diagram_game.dart`, `diagram_workspace.dart`, `eletrolab_game.dart`, `mvp_contract.dart` |
+| `lib/presentation/screens/` | `eletrolab_main_screen.dart` |
+| `lib/presentation/theme/` | `eletrolab_theme.dart` |
+| `lib/presentation/widgets/` | `calculation_panel_widget.dart`, `json_dialog_widget.dart`, `schematic_editor_widget.dart`, `status_banner_widget.dart` |
+| `lib/screens/` | `assembly_screen.dart`, `schematic_screen.dart` |
+| `lib/widgets/` | `circular_carousel.dart`, `component_card.dart`, `distractor_symbols.dart`, `result_modal.dart`, `volt_widget.dart` |
+
+**Diretórios removidos:** `application/editor`, `application/session`, `application/simulation`, `application/validation`, `application`, `components`, `domain/activities`, `domain/circuit`, `domain/simulation`, `domain/validation`, `domain`, `game`, `infrastructure/serialization`, `infrastructure`, `mvp`, `presentation/screens`, `presentation/theme`, `presentation/widgets`, `presentation`
+
+### 24.2 Testes placeholder removidos (5 arquivos, `expect(true, isTrue)`)
+
+| Arquivo | Alvo original |
+| --- | --- |
+| `test/domain/circuit_solver_test.dart` | `lib/domain/simulation/circuit_solver.dart` (vazio, removido) |
+| `test/domain/topological_equivalence_test.dart` | `lib/domain/validation/equivalence_checker.dart` (vazio, removido) |
+| `test/infrastructure/circuit_serializer_test.dart` | `lib/infrastructure/serialization/circuit_serializer.dart` (vazio, removido) |
+| `test/models/phase1_circuit_test.dart` | `lib/models/phase1_circuit.dart` (vazio, removido) |
+| `test/widgets/intro_screen_test.dart` | `lib/screens/intro_screen.dart` (código real, mas teste era só placeholder) |
+
+**Diretórios de teste removidos:** `test/domain`, `test/infrastructure`, `test/models`
+
+### 24.3 Dependências removidas do pubspec.yaml
+
+| Pacote | Motivo |
+| --- | --- |
+| `flame: ^1.38.0` | Zero imports em lib/ ou test/ |
+| `confetti: ^0.8.0` | Zero imports; projeto usa `success_confetti_overlay.dart` próprio |
+| `ordered_set` (transitiva) | Removida automaticamente com `flutter pub get` |
+
+### 24.4 Itens preservados (confirmados ativos)
+
+| Item | Razão |
+| --- | --- |
+| `lib/core/ui_scale.dart` | Único não-vazio em `lib/core/`; referenciado em widgets ativos |
+| `audioplayers` | Importado em `lib/services/audio_service.dart` |
+| `cupertino_icons` | Dependência padrão Flutter |
+| `flutter_riverpod` | Provider ativo em múltiplos arquivos |
+| `shared_preferences` | Persistência ativa |
+| `google_fonts` | Tipografia ativa |
+| `flutter_localizations` | Localização ativa |
+
+### 24.5 Bugs/testes quebrados
+
+**Nenhum.** `flutter analyze` e `flutter test` (75 testes) passaram sem falhas. Nenhuma quebra de comportamento observada.
