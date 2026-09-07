@@ -627,3 +627,72 @@ Arquivo modificado/criado por esta tarefa: **apenas `CODEBASE_AUDIT.md`** (ver `
 ### 24.5 Bugs/testes quebrados
 
 **Nenhum.** `flutter analyze` e `flutter test` (75 testes) passaram sem falhas. Nenhuma quebra de comportamento observada.
+
+---
+
+## 25. Snapshot atual após limpeza e remoção da documentação legada
+
+> As seções 1–23 permanecem intencionalmente históricas e descrevem o commit originalmente auditado. Esta seção registra o estado posterior do repositório e não altera retroativamente aquela auditoria.
+
+| Campo | Valor |
+| --- | --- |
+| Branch | `refactor/tests` |
+| HEAD atual | `442136f00f608d478553118a18d4c9b39822b421` |
+| Working tree | limpa (sem alterações unstaged/staged) |
+| Commit originalmente auditado (seção 23) | `0a8885aa84bfa08b07473acf23486c46acc42b0a` — `feat(ui): use floor.png (gym fair background) across stand screens` |
+| Commit de remoção da documentação Markdown legada | `e1f21c20bc832d7dd136adf48302c97efc953b7b` — `refactor: consolidate fragmented documentation into a single CODEBASE_AUDIT.md file by removing legacy files` |
+| Commit de limpeza estrutural (seção 24) | `442136f00f608d478553118a18d4c9b39822b421` — `refactor: remove placeholder tests, unused dependencies, and redundant documentation files` |
+
+### 25.1 Documentos Markdown existentes atualmente
+
+| Caminho | Presença |
+| --- | --- |
+| `docs/CODEBASE_AUDIT.md` | **EXISTE** (este arquivo) |
+| `ios/Runner/Assets.xcassets/LaunchImage.imageset/README.md` | **EXISTE** (asset padrão do Xcode, não do projeto) |
+| `README.md` (raiz) | **REMOVIDO** (era 104 linhas, conforme seção 20) |
+| `docs/README.md` | **REMOVIDO** (era 73 linhas) |
+| `docs/arquitetura.md` | **REMOVIDO** (era 164 linhas) |
+| `docs/assets.md` | **REMOVIDO** |
+| `docs/backlog.md` | **REMOVIDO** |
+| `docs/conteudo.md` | **REMOVIDO** |
+| `docs/requisitos.md` | **REMOVIDO** |
+| `docs/ux-e-fluxos.md` | **REMOVIDO** |
+| `docs/visao-geral.md` | **REMOVIDO** |
+| `docs/referencias/` (5 md + README) | **REMOVIDO** |
+| `docs/arquivo_legado/` (19 md) | **REMOVIDO** |
+
+**Resumo:** Dos ~28 documentos Markdown listados na seção 20, apenas `docs/CODEBASE_AUDIT.md` permanece. Todos os demais (`docs/README.md`, `docs/arquitetura.md`, `docs/assets.md`, `docs/backlog.md`, `docs/conteudo.md`, `docs/requisitos.md`, `docs/ux-e-fluxos.md`, `docs/visao-geral.md`, `docs/referencias/`, `docs/arquivo_legado/`) foram removidos no commit `e1f21c2`.
+
+### 25.2 Inventário de código Dart
+
+| Métrica | Valor |
+| --- | --- |
+| Arquivos `.dart` em `lib/` | 143 |
+| Arquivos `.dart` com 0 bytes em `lib/` | 0 |
+| Arquivos `.dart` em `test/` | 15 (todos com asserções reais) |
+
+### 25.3 Dependências removidas na limpeza (seção 24)
+
+| Pacote | Versão removida | Motivo |
+| --- | --- | --- |
+| `flame` | `^1.38.0` | Zero imports em `lib/` ou `test/` |
+| `confetti` | `^0.8.0` | Zero imports; projeto usa implementação própria |
+| `ordered_set` | (transitiva) | Removida automaticamente via `flutter pub get` |
+
+### 25.4 Validação atual
+
+| Verificação | Resultado |
+| --- | --- |
+| `flutter analyze` | **`No issues found!`** (exit 0) |
+| `flutter test` | **`All tests passed!`** — **75 testes** (exit 0) |
+
+### 25.5 Resumo executivo
+
+| Item | Status |
+| --- | --- |
+| 1. HEAD atual | `442136f00f608d478553118a18d4c9b39822b421` |
+| 2. Commit da remoção documental | `e1f21c20bc832d7dd136adf48302c97efc953b7b` |
+| 3. Documentos Markdown existentes | `docs/CODEBASE_AUDIT.md` (único do projeto) + `ios/.../README.md` (asset Xcode) |
+| 4. `flutter analyze` | No issues found |
+| 5. `flutter test` | 75 testes, todos passando |
+| 6. Somente `CODEBASE_AUDIT.md` foi alterado | **CONFIRMADO** — `git status --porcelain` retornou vazio antes desta edição; nenhum outro arquivo foi modificado nesta sessão |
