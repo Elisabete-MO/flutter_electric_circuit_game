@@ -215,6 +215,8 @@ class _RuasMaqueteM1State extends State<RuasMaqueteM1>
                       socketX: socketX,
                       lampY: lampY,
                       socketY: socketY,
+                      w: w,
+                      h: h,
                     ),
                   ],
                 );
@@ -250,49 +252,58 @@ class _RuasMaqueteM1State extends State<RuasMaqueteM1>
     required double socketX,
     required double lampY,
     required double socketY,
+    required double w,
+    required double h,
   }) {
     final isLit = _isClosed;
+    final compW = (w * 0.14).clamp(95.0, 130.0);
+    final compH = compW * 0.75;
+
     return [
       Positioned(
-        left: lamp1X - 40,
-        top: lampY - 30,
+        left: lamp1X - compW / 2,
+        top: lampY - compH / 2,
         child: buildRuasMaqueteLampSymbol(
           isLit: isLit,
           brightnessRatio: isLit ? 0.5 : 0.0,
           usePhysicalStyle: _usePhysicalStyle,
+          width: compW,
+          height: compH,
         ),
       ),
       Positioned(
-        left: lamp1X - 75,
-        top: lampY + 34,
-        width: 150,
+        left: lamp1X - 85,
+        top: lampY + compH / 2 + 6,
+        width: 170,
         child: Center(
           child: buildRuasMaqueteLabelBadge('Poste 1 (Alameda)'),
         ),
       ),
       Positioned(
-        left: lamp2X - 40,
-        top: lampY - 30,
+        left: lamp2X - compW / 2,
+        top: lampY - compH / 2,
         child: buildRuasMaqueteLampSymbol(
           isLit: isLit,
           brightnessRatio: isLit ? 0.5 : 0.0,
           usePhysicalStyle: _usePhysicalStyle,
+          width: compW,
+          height: compH,
         ),
       ),
       Positioned(
-        left: lamp2X - 75,
-        top: lampY + 34,
-        width: 150,
+        left: lamp2X - 85,
+        top: lampY + compH / 2 + 6,
+        width: 170,
         child: Center(
           child: buildRuasMaqueteLabelBadge('Poste 2 (Avenida)'),
         ),
       ),
       Positioned(
-        left: socketX - 40,
-        top: socketY - 32,
+        left: socketX - compW / 2,
+        top: socketY - compH / 2,
         child: buildRuasMaqueteSocketTile(
-          width: 80,
-          height: 60,
+          width: compW,
+          height: compH,
           expectedData: 'battery',
           isFilled: isLit,
           symbolType: ComponentType.battery,

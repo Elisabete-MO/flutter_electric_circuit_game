@@ -210,6 +210,8 @@ class _RuasMaqueteM5State extends State<RuasMaqueteM5>
                       socketX: socketX,
                       lampY: lampY,
                       socketY: socketY,
+                      w: w,
+                      h: h,
                     ),
                   ],
                 );
@@ -243,154 +245,157 @@ class _RuasMaqueteM5State extends State<RuasMaqueteM5>
     required double socketX,
     required double lampY,
     required double socketY,
+    required double w,
+    required double h,
   }) {
+    final x1 = w * 0.18;
+    final x2 = w * 0.38;
+    final x3 = w * 0.62;
+    final x4 = w * 0.82;
+
+    final compW = (w * 0.13).clamp(80.0, 115.0);
+    final compH = compW * 0.75;
+    final sockW = (w * 0.15).clamp(95.0, 130.0);
+    final sockH = sockW * 0.75;
+
     return [
-      LayoutBuilder(
-        builder: (context, constraints) {
-          final w = constraints.maxWidth;
-          final x1 = w * 0.18;
-          final x2 = w * 0.38;
-          final x3 = w * 0.62;
-          final x4 = w * 0.82;
+      // Poste 1 (Permanecendo Aceso)
+      Positioned(
+        left: x1 - compW / 2,
+        top: lampY - compH / 2,
+        child: buildRuasMaqueteLampSymbol(
+          isLit: true,
+          brightnessRatio: 1.0,
+          usePhysicalStyle: _usePhysicalStyle,
+          width: compW,
+          height: compH,
+        ),
+      ),
+      Positioned(
+        left: x1 - 65,
+        top: lampY + compH / 2 + 6,
+        width: 130,
+        child: Center(child: buildRuasMaqueteLabelBadge('Poste 1')),
+      ),
 
-          return Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // Poste 1 (Permanecendo Aceso)
-              Positioned(
-                left: x1 - 40,
-                top: lampY - 30,
-                child: buildRuasMaqueteLampSymbol(
-                  isLit: true,
-                  brightnessRatio: 1.0,
-                  usePhysicalStyle: _usePhysicalStyle,
-                ),
-              ),
-              Positioned(
-                left: x1 - 65,
-                top: lampY + 34,
-                width: 130,
-                child: Center(child: buildRuasMaqueteLabelBadge('Poste 1')),
-              ),
+      // Soquete / Casa 01 (Em Manutenção / Simulada)
+      Positioned(
+        left: x2 - compW / 2,
+        top: lampY - compH / 2,
+        child: buildRuasMaqueteSocketTile(
+          width: compW,
+          height: compH,
+          expectedData: 'bulb',
+          isFilled: !_m5House1Broken,
+          symbolType: ComponentType.bulb,
+          label: 'Casa 01',
+          usePhysicalStyle: _usePhysicalStyle,
+          rotation: _m5House1Rotation,
+          onRotate: () => _rotateComponent(
+            name: 'Casa 01',
+            getRotation: () => _m5House1Rotation,
+            setRotation: (v) => _m5House1Rotation = v,
+          ),
+          onAccept: () => _insertComponent(
+            name: 'Casa 01',
+            getInserted: () => !_m5House1Broken,
+            setInserted: (v) => _m5House1Broken = !v,
+            getRotation: () => _m5House1Rotation,
+            setRotation: (v) => _m5House1Rotation = v,
+          ),
+          onTap: () => _insertComponent(
+            name: 'Casa 01',
+            getInserted: () => !_m5House1Broken,
+            setInserted: (v) => _m5House1Broken = !v,
+            getRotation: () => _m5House1Rotation,
+            setRotation: (v) => _m5House1Rotation = v,
+          ),
+        ),
+      ),
+      Positioned(
+        left: x2 - 65,
+        top: lampY + compH / 2 + 6,
+        width: 130,
+        child: Center(
+          child: buildRuasMaqueteLabelBadge(
+            'Casa 01',
+            isBroken: _m5House1Broken,
+          ),
+        ),
+      ),
 
-              // Soquete / Casa 01 (Em Manutenção / Simulada)
-              Positioned(
-                left: x2 - 40,
-                top: lampY - 32,
-                child: buildRuasMaqueteSocketTile(
-                  width: 80,
-                  height: 60,
-                  expectedData: 'bulb',
-                  isFilled: !_m5House1Broken,
-                  symbolType: ComponentType.bulb,
-                  label: 'Casa 01',
-                  usePhysicalStyle: _usePhysicalStyle,
-                  rotation: _m5House1Rotation,
-                  onRotate: () => _rotateComponent(
-                    name: 'Casa 01',
-                    getRotation: () => _m5House1Rotation,
-                    setRotation: (v) => _m5House1Rotation = v,
-                  ),
-                  onAccept: () => _insertComponent(
-                    name: 'Casa 01',
-                    getInserted: () => !_m5House1Broken,
-                    setInserted: (v) => _m5House1Broken = !v,
-                    getRotation: () => _m5House1Rotation,
-                    setRotation: (v) => _m5House1Rotation = v,
-                  ),
-                  onTap: () => _insertComponent(
-                    name: 'Casa 01',
-                    getInserted: () => !_m5House1Broken,
-                    setInserted: (v) => _m5House1Broken = !v,
-                    getRotation: () => _m5House1Rotation,
-                    setRotation: (v) => _m5House1Rotation = v,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: x2 - 65,
-                top: lampY + 38,
-                width: 130,
-                child: Center(
-                  child: buildRuasMaqueteLabelBadge(
-                    'Casa 01',
-                    isBroken: _m5House1Broken,
-                  ),
-                ),
-              ),
+      // Casa 02 (Permanecendo Acesa)
+      Positioned(
+        left: x3 - compW / 2,
+        top: lampY - compH / 2,
+        child: buildRuasMaqueteHouseSymbol(
+          name: 'Casa 02 (Praça)',
+          isLit: true,
+          brightness: 1.0,
+          usePhysicalStyle: _usePhysicalStyle,
+          width: compW,
+          height: compH,
+        ),
+      ),
+      Positioned(
+        left: x3 - 65,
+        top: lampY + compH / 2 + 6,
+        width: 130,
+        child: Center(child: buildRuasMaqueteLabelBadge('Casa 02')),
+      ),
 
-              // Casa 02 (Permanecendo Acesa)
-              Positioned(
-                left: x3 - 40,
-                top: lampY - 30,
-                child: buildRuasMaqueteHouseSymbol(
-                  name: 'Casa 02 (Praça)',
-                  isLit: true,
-                  brightness: 1.0,
-                  usePhysicalStyle: _usePhysicalStyle,
-                ),
-              ),
-              Positioned(
-                left: x3 - 65,
-                top: lampY + 34,
-                width: 130,
-                child: Center(child: buildRuasMaqueteLabelBadge('Casa 02')),
-              ),
+      // Poste 2 (Permanecendo Aceso)
+      Positioned(
+        left: x4 - compW / 2,
+        top: lampY - compH / 2,
+        child: buildRuasMaqueteLampSymbol(
+          isLit: true,
+          brightnessRatio: 1.0,
+          usePhysicalStyle: _usePhysicalStyle,
+          width: compW,
+          height: compH,
+        ),
+      ),
+      Positioned(
+        left: x4 - 65,
+        top: lampY + compH / 2 + 6,
+        width: 130,
+        child: Center(child: buildRuasMaqueteLabelBadge('Poste 2')),
+      ),
 
-              // Poste 2 (Permanecendo Aceso)
-              Positioned(
-                left: x4 - 40,
-                top: lampY - 30,
-                child: buildRuasMaqueteLampSymbol(
-                  isLit: true,
-                  brightnessRatio: 1.0,
-                  usePhysicalStyle: _usePhysicalStyle,
-                ),
-              ),
-              Positioned(
-                left: x4 - 65,
-                top: lampY + 34,
-                width: 130,
-                child: Center(child: buildRuasMaqueteLabelBadge('Poste 2')),
-              ),
-
-              // Soquete do Conector de Manutenção
-              Positioned(
-                left: socketX - 40,
-                top: socketY - 32,
-                child: buildRuasMaqueteSocketTile(
-                  width: 80,
-                  height: 60,
-                  expectedData: 'fio_serie',
-                  isFilled: _m5MaintenanceConfirmed,
-                  symbolType: ComponentType.connectingWire,
-                  label: 'Manutenção',
-                  usePhysicalStyle: _usePhysicalStyle,
-                  rotation: _m5MaintenanceRotation,
-                  onRotate: () => _rotateComponent(
-                    name: 'Conector de Manutenção',
-                    getRotation: () => _m5MaintenanceRotation,
-                    setRotation: (v) => _m5MaintenanceRotation = v,
-                  ),
-                  onAccept: () => _insertComponent(
-                    name: 'Conector de Manutenção',
-                    getInserted: () => _m5MaintenanceConfirmed,
-                    setInserted: (v) => _m5MaintenanceConfirmed = v,
-                    getRotation: () => _m5MaintenanceRotation,
-                    setRotation: (v) => _m5MaintenanceRotation = v,
-                  ),
-                  onTap: () => _insertComponent(
-                    name: 'Conector de Manutenção',
-                    getInserted: () => _m5MaintenanceConfirmed,
-                    setInserted: (v) => _m5MaintenanceConfirmed = v,
-                    getRotation: () => _m5MaintenanceRotation,
-                    setRotation: (v) => _m5MaintenanceRotation = v,
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
+      // Soquete do Conector de Manutenção
+      Positioned(
+        left: socketX - sockW / 2,
+        top: socketY - sockH / 2,
+        child: buildRuasMaqueteSocketTile(
+          width: sockW,
+          height: sockH,
+          expectedData: 'fio_serie',
+          isFilled: _m5MaintenanceConfirmed,
+          symbolType: ComponentType.connectingWire,
+          label: 'Manutenção',
+          usePhysicalStyle: _usePhysicalStyle,
+          rotation: _m5MaintenanceRotation,
+          onRotate: () => _rotateComponent(
+            name: 'Conector de Manutenção',
+            getRotation: () => _m5MaintenanceRotation,
+            setRotation: (v) => _m5MaintenanceRotation = v,
+          ),
+          onAccept: () => _insertComponent(
+            name: 'Conector de Manutenção',
+            getInserted: () => _m5MaintenanceConfirmed,
+            setInserted: (v) => _m5MaintenanceConfirmed = v,
+            getRotation: () => _m5MaintenanceRotation,
+            setRotation: (v) => _m5MaintenanceRotation = v,
+          ),
+          onTap: () => _insertComponent(
+            name: 'Conector de Manutenção',
+            getInserted: () => _m5MaintenanceConfirmed,
+            setInserted: (v) => _m5MaintenanceConfirmed = v,
+            getRotation: () => _m5MaintenanceRotation,
+            setRotation: (v) => _m5MaintenanceRotation = v,
+          ),
+        ),
       ),
     ];
   }

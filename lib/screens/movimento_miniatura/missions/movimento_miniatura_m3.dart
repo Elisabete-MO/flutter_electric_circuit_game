@@ -297,6 +297,8 @@ class _MovimentoMiniaturaM3State extends State<MovimentoMiniaturaM3>
                   final switchX = w * 0.42;
                   final motorX = w * 0.78;
                   final centerY = h * 0.5;
+                  final sock = (w * 0.16).clamp(105.0, 135.0);
+                  final comp = sock * 0.62;
 
                   final batteryPlacement = ComponentPlacement(
                     position: Offset(batteryX, centerY),
@@ -362,14 +364,14 @@ class _MovimentoMiniaturaM3State extends State<MovimentoMiniaturaM3>
                           ),
                         ),
                       Positioned(
-                        left: batteryX - 47.5,
-                        top: centerY - 47.5,
+                        left: batteryX - sock / 2,
+                        top: centerY - sock / 2,
                         child: PhysicalBlueprintSocket<String>(
                           expectedData: 'battery',
                           isFilled: _m3BatteryInserted,
                           rotation: _m3BatteryRotation,
-                          width: 95,
-                          height: 95,
+                          width: sock,
+                          height: sock,
                           showLabel: false,
                           onAccept: (_) => _insertComponent(
                             name: 'Bateria',
@@ -385,7 +387,7 @@ class _MovimentoMiniaturaM3State extends State<MovimentoMiniaturaM3>
                           ),
                           onTap: () {},
                           symbolWidget: CustomPaint(
-                            size: const Size(55, 55),
+                            size: Size(comp, comp),
                             painter: ComponentPhysicalPainter(
                               type: ComponentType.battery,
                               isDarkMode: false,
@@ -394,14 +396,14 @@ class _MovimentoMiniaturaM3State extends State<MovimentoMiniaturaM3>
                         ),
                       ),
                       Positioned(
-                        left: switchX - 47.5,
-                        top: centerY - 47.5,
+                        left: switchX - sock / 2,
+                        top: centerY - sock / 2,
                         child: PhysicalBlueprintSocket<String>(
                           expectedData: 'push_button',
                           isFilled: _m3PushButtonInserted,
                           rotation: 0,
-                          width: 95,
-                          height: 95,
+                          width: sock,
+                          height: sock,
                           showLabel: false,
                           onAccept: (_) => _insertComponent(
                             name: 'Botão',
@@ -418,23 +420,23 @@ class _MovimentoMiniaturaM3State extends State<MovimentoMiniaturaM3>
                             }
                           },
                           symbolWidget: _usePhysicalStyle
-                              ? const PushButtonVectorWidget(size: 55)
-                              : const SchematicSwitchWidget(
-                                  size: 55,
+                              ? PushButtonVectorWidget(size: comp)
+                              : SchematicSwitchWidget(
+                                  size: comp,
                                   isPushButton: true,
-                                  color: Color(0xFFEF4444),
+                                  color: const Color(0xFFEF4444),
                                 ),
                         ),
                       ),
                       Positioned(
-                        left: motorX - 47.5,
-                        top: centerY - 47.5,
+                        left: motorX - sock / 2,
+                        top: centerY - sock / 2,
                         child: PhysicalBlueprintSocket<String>(
                           expectedData: 'motor_cc',
                           isFilled: _m3MotorInserted,
                           rotation: _m3MotorRotation,
-                          width: 95,
-                          height: 95,
+                          width: sock,
+                          height: sock,
                           showLabel: false,
                           onAccept: (_) => _insertComponent(
                             name: 'Motor CC',
@@ -450,7 +452,7 @@ class _MovimentoMiniaturaM3State extends State<MovimentoMiniaturaM3>
                           ),
                           onTap: () {},
                           symbolWidget: CustomPaint(
-                            size: const Size(55, 55),
+                            size: Size(comp, comp),
                             painter: ComponentPhysicalPainter(
                               type: ComponentType.motor,
                               isActive: _isMotorSpinning,
@@ -540,6 +542,8 @@ class _MovimentoMiniaturaM3State extends State<MovimentoMiniaturaM3>
                   final switchX = w * 0.42;
                   final motorX = w * 0.78;
                   final centerY = h * 0.5;
+                  final sock = (w * 0.16).clamp(95.0, 125.0);
+                  final comp = sock * 0.65;
 
                   final batteryPlacement = ComponentPlacement(
                     position: Offset(batteryX, centerY),
@@ -605,13 +609,15 @@ class _MovimentoMiniaturaM3State extends State<MovimentoMiniaturaM3>
                           ),
                         ),
                       Positioned(
-                        left: batteryX - 47.5,
-                        top: centerY - 47.5,
+                        left: batteryX - sock / 2,
+                        top: centerY - sock / 2,
                         child: SchematicBlueprintSocket<String>(
                           expectedData: 'battery',
                           isFilled: _m3BatteryInserted,
                           showLabel: false,
                           rotation: _m3BatteryRotation,
+                          width: sock,
+                          height: sock,
                           onAccept: (_) => _insertComponent(
                             name: 'Bateria',
                             getInserted: () => _m3BatteryInserted,
@@ -626,7 +632,7 @@ class _MovimentoMiniaturaM3State extends State<MovimentoMiniaturaM3>
                           ),
                           onTap: () {},
                           symbolWidget: CustomPaint(
-                            size: const Size(55, 55),
+                            size: Size(comp, comp),
                             painter: CircuitSymbolPainter(
                               type: ComponentType.battery,
                               color: const Color(0xFF0F172A),
@@ -634,7 +640,7 @@ class _MovimentoMiniaturaM3State extends State<MovimentoMiniaturaM3>
                             ),
                           ),
                           placeholderWidget: CustomPaint(
-                            size: const Size(48, 38),
+                            size: Size(comp * 0.85, comp * 0.85),
                             painter: CircuitSymbolPainter(
                               type: ComponentType.battery,
                               isActive: false,
@@ -646,13 +652,15 @@ class _MovimentoMiniaturaM3State extends State<MovimentoMiniaturaM3>
                         ),
                       ),
                       Positioned(
-                        left: switchX - 47.5,
-                        top: centerY - 47.5,
+                        left: switchX - sock / 2,
+                        top: centerY - sock / 2,
                         child: SchematicBlueprintSocket<String>(
                           expectedData: 'push_button',
                           isFilled: _m3PushButtonInserted,
                           showLabel: false,
                           rotation: 0,
+                          width: sock,
+                          height: sock,
                           onAccept: (_) => _insertComponent(
                             name: 'Push-Button',
                             getInserted: () => _m3PushButtonInserted,
@@ -663,27 +671,29 @@ class _MovimentoMiniaturaM3State extends State<MovimentoMiniaturaM3>
                           onRotate: () {},
                           onTap: () => setState(() =>
                               _m3PushButtonPressed = !_m3PushButtonPressed),
-                          symbolWidget: const SchematicSwitchWidget(
-                            size: 55,
+                          symbolWidget: SchematicSwitchWidget(
+                            size: comp,
                             isPushButton: true,
-                            color: Color(0xFFEF4444),
+                            color: const Color(0xFFEF4444),
                           ),
-                          placeholderWidget: const SchematicSwitchWidget(
-                            size: 48,
+                          placeholderWidget: SchematicSwitchWidget(
+                            size: comp * 0.85,
                             isPushButton: true,
-                            color: Color(0xFF94A3B8),
+                            color: const Color(0xFF94A3B8),
                           ),
                           label: '',
                         ),
                       ),
                       Positioned(
-                        left: motorX - 47.5,
-                        top: centerY - 47.5,
+                        left: motorX - sock / 2,
+                        top: centerY - sock / 2,
                         child: SchematicBlueprintSocket<String>(
                           expectedData: 'motor_cc',
                           isFilled: _m3MotorInserted,
                           showLabel: false,
                           rotation: _m3MotorRotation,
+                          width: sock,
+                          height: sock,
                           onAccept: (_) => _insertComponent(
                             name: 'Motor CC',
                             getInserted: () => _m3MotorInserted,
@@ -698,7 +708,7 @@ class _MovimentoMiniaturaM3State extends State<MovimentoMiniaturaM3>
                           ),
                           onTap: () {},
                           symbolWidget: CustomPaint(
-                            size: const Size(55, 55),
+                            size: Size(comp, comp),
                             painter: CircuitSymbolPainter(
                               type: ComponentType.motor,
                               isActive: _isMotorSpinning,
@@ -707,7 +717,7 @@ class _MovimentoMiniaturaM3State extends State<MovimentoMiniaturaM3>
                             ),
                           ),
                           placeholderWidget: CustomPaint(
-                            size: const Size(48, 38),
+                            size: Size(comp * 0.85, comp * 0.85),
                             painter: CircuitSymbolPainter(
                               type: ComponentType.motor,
                               isActive: false,

@@ -124,14 +124,19 @@ Widget buildRuasMaqueteLampSymbol({
   required bool isLit,
   required double brightnessRatio,
   required bool usePhysicalStyle,
+  double width = 80,
+  double height = 60,
 }) {
+  final compW = width * 0.75;
+  final compH = height * 0.75;
+
   return SizedBox(
-    width: 80,
-    height: 60,
+    width: width,
+    height: height,
     child: Center(
       child: usePhysicalStyle
           ? CustomPaint(
-              size: const Size(60, 60),
+              size: Size(compW, compH),
               painter: StreetLampPainter(
                 isActive: isLit,
                 brightnessRatio: brightnessRatio,
@@ -139,7 +144,7 @@ Widget buildRuasMaqueteLampSymbol({
               ),
             )
           : CustomPaint(
-              size: const Size(55, 55),
+              size: Size(compW * 0.9, compH * 0.9),
               painter: CircuitSymbolPainter(
                 type: ComponentType.bulb,
                 isActive: isLit,
@@ -157,10 +162,16 @@ Widget buildRuasMaqueteHouseSymbol({
   required double brightness,
   bool isBroken = false,
   required bool usePhysicalStyle,
+  double width = 80,
+  double height = 60,
 }) {
+  final compW = width * 0.75;
+  final compH = height * 0.75;
+  final iconSize = (height * 0.52).clamp(28.0, 42.0);
+
   return SizedBox(
-    width: 80,
-    height: 60,
+    width: width,
+    height: height,
     child: Center(
       child: usePhysicalStyle
           ? Container(
@@ -179,8 +190,8 @@ Widget buildRuasMaqueteHouseSymbol({
                 boxShadow: isLit
                     ? [
                         BoxShadow(
-                          color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
-                          blurRadius: 10,
+                          color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
+                          blurRadius: 14,
                         )
                       ]
                     : [],
@@ -191,7 +202,7 @@ Widget buildRuasMaqueteHouseSymbol({
                     : isLit
                         ? Icons.home_rounded
                         : Icons.home_outlined,
-                size: 32,
+                size: iconSize,
                 color: isBroken
                     ? const Color(0xFFDC2626)
                     : isLit
@@ -200,7 +211,7 @@ Widget buildRuasMaqueteHouseSymbol({
               ),
             )
           : CustomPaint(
-              size: const Size(55, 55),
+              size: Size(compW * 0.9, compH * 0.9),
               painter: CircuitSymbolPainter(
                 type: ComponentType.bulb,
                 isActive: isLit && !isBroken,
@@ -215,17 +226,18 @@ Widget buildRuasMaqueteHouseSymbol({
 
 Widget buildRuasMaqueteLabelBadge(String text, {bool isBroken = false}) {
   return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
     decoration: BoxDecoration(
-      color: const Color(0xFF0F172A).withValues(alpha: 0.80),
-      borderRadius: BorderRadius.circular(6),
+      color: const Color(0xFF0F172A).withValues(alpha: 0.85),
+      borderRadius: BorderRadius.circular(8),
       border: Border.all(
         color: isBroken ? const Color(0xFFEF4444) : const Color(0xFF38BDF8),
+        width: 1.2,
       ),
       boxShadow: const [
         BoxShadow(
-          color: Colors.black26,
-          blurRadius: 4,
+          color: Colors.black38,
+          blurRadius: 6,
           offset: Offset(0, 2),
         ),
       ],
@@ -235,7 +247,7 @@ Widget buildRuasMaqueteLabelBadge(String text, {bool isBroken = false}) {
       style: GoogleFonts.rajdhani(
         color: isBroken ? const Color(0xFFFCA5A5) : Colors.white,
         fontWeight: FontWeight.bold,
-        fontSize: 12,
+        fontSize: 13,
       ),
       textAlign: TextAlign.center,
       maxLines: 1,
@@ -258,10 +270,13 @@ Widget buildRuasMaqueteSocketTile({
   required bool usePhysicalStyle,
   double brightnessRatio = 1.0,
 }) {
+  final symSize = Size(width * 0.72, height * 0.72);
+  final phSize = Size(width * 0.60, height * 0.60);
+
   final symbolWidget = usePhysicalStyle
       ? (symbolType == ComponentType.bulb
           ? CustomPaint(
-              size: Size(width - 20, height - 20),
+              size: symSize,
               painter: StreetLampPainter(
                 isActive: isFilled,
                 brightnessRatio: brightnessRatio,
@@ -269,7 +284,7 @@ Widget buildRuasMaqueteSocketTile({
               ),
             )
           : CustomPaint(
-              size: Size(width - 20, height - 20),
+              size: symSize,
               painter: ComponentPhysicalPainter(
                 type: symbolType,
                 isDarkMode: false,
@@ -279,7 +294,7 @@ Widget buildRuasMaqueteSocketTile({
               ),
             ))
       : CustomPaint(
-          size: Size(width - 20, height - 20),
+          size: symSize,
           painter: CircuitSymbolPainter(
             type: symbolType,
             isActive: isFilled,
@@ -293,7 +308,7 @@ Widget buildRuasMaqueteSocketTile({
   final placeholderWidget = usePhysicalStyle
       ? (symbolType == ComponentType.bulb
           ? CustomPaint(
-              size: Size(width - 20, height - 20),
+              size: phSize,
               painter: StreetLampPainter(
                 isActive: false,
                 brightnessRatio: 0.0,
@@ -301,7 +316,7 @@ Widget buildRuasMaqueteSocketTile({
               ),
             )
           : CustomPaint(
-              size: Size(width - 25, height - 25),
+              size: phSize,
               painter: ComponentPhysicalPainter(
                 type: symbolType,
                 isDarkMode: false,
@@ -311,7 +326,7 @@ Widget buildRuasMaqueteSocketTile({
               ),
             ))
       : CustomPaint(
-          size: Size(width - 25, height - 25),
+          size: phSize,
           painter: CircuitSymbolPainter(
             type: symbolType,
             isJunction: expectedData == 'junction_node',

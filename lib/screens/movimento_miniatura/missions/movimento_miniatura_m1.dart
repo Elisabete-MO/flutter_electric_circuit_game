@@ -7,6 +7,7 @@ import '../../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../../state/circuit_undo_redo_controller.dart';
 import '../../../widgets/circuit_symbol_painter.dart';
 import '../../../widgets/component_physical_painter.dart';
+import '../../../widgets/physical_blueprint_socket.dart';
 import '../../../widgets/prof_volts_explanation_dialog.dart';
 import '../../../widgets/prof_volts_feedback_dialog.dart';
 import '../../../widgets/prof_volts_prediction_dialog.dart';
@@ -271,118 +272,123 @@ class _MovimentoMiniaturaM1State extends State<MovimentoMiniaturaM1>
     return LayoutBuilder(
       builder: (context, constraints) {
         final double width = constraints.maxWidth;
-        final double batteryX = 60.0;
-        final double motorX = width - 60.0;
+        final double height = constraints.maxHeight;
+        final double batteryX = width * 0.15;
+        final double motorX = width * 0.85;
+        final double centerY = height * 0.50;
+        final sock = (width * 0.16).clamp(105.0, 135.0);
+        final comp = sock * 0.62;
 
-        return SizedBox(
-          height: 270,
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: AnimatedBuilder(
-                  animation: _currentFlowController,
-                  builder: (context, _) => CustomPaint(
-                    painter: SchematicCircuitWirePainterMotor(
-                      isClosed: _isClosed,
-                      animationValue: _currentFlowController.value,
-                      wireColor: const Color(0xFF1E293B),
-                    ),
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: AnimatedBuilder(
+                animation: _currentFlowController,
+                builder: (context, _) => CustomPaint(
+                  painter: SchematicCircuitWirePainterMotor(
+                    isClosed: _isClosed,
+                    animationValue: _currentFlowController.value,
+                    wireColor: const Color(0xFF1E293B),
                   ),
                 ),
               ),
-              Positioned(
-                left: batteryX - 47.5,
-                top: 70,
-                child: SchematicBlueprintSocket<String>(
-                  expectedData: 'battery',
-                  isFilled: _m1BatteryInserted,
-                  showLabel: false,
-                  rotation: _m1BatteryRotation,
-                  onAccept: (_) => _insertComponent(
-                    name: 'Bateria',
-                    getInserted: () => _m1BatteryInserted,
-                    setInserted: (v) => _m1BatteryInserted = v,
-                    getRotation: () => _m1BatteryRotation,
-                    setRotation: (v) => _m1BatteryRotation = v,
-                  ),
-                  onRotate: () => _rotateComponent(
-                    name: 'Bateria',
-                    getRotation: () => _m1BatteryRotation,
-                    setRotation: (v) => _m1BatteryRotation = v,
-                  ),
-                  onTap: () {},
-                  symbolWidget: CustomPaint(
-                    size: const Size(54, 38),
-                    painter: ComponentPhysicalPainter(
-                      type: ComponentType.battery,
-                      isDarkMode: false,
-                    ),
-                  ),
-                  placeholderWidget: CustomPaint(
-                    size: const Size(48, 34),
-                    painter: ComponentPhysicalPainter(
-                      type: ComponentType.battery,
-                      isActive: false,
-                      isDarkMode: false,
-                    ),
-                  ),
-                  label: '',
+            ),
+            Positioned(
+              left: batteryX - sock / 2,
+              top: centerY - sock / 2,
+              child: PhysicalBlueprintSocket<String>(
+                expectedData: 'battery',
+                isFilled: _m1BatteryInserted,
+                showLabel: false,
+                rotation: _m1BatteryRotation,
+                width: sock,
+                height: sock,
+                onAccept: (_) => _insertComponent(
+                  name: 'Bateria',
+                  getInserted: () => _m1BatteryInserted,
+                  setInserted: (v) => _m1BatteryInserted = v,
+                  getRotation: () => _m1BatteryRotation,
+                  setRotation: (v) => _m1BatteryRotation = v,
                 ),
-              ),
-              Positioned(
-                left: motorX - 47.5,
-                top: 70,
-                child: SchematicBlueprintSocket<String>(
-                  expectedData: 'motor_cc',
-                  isFilled: _m1MotorInserted,
-                  showLabel: false,
-                  rotation: _m1MotorRotation,
-                  onAccept: (_) => _insertComponent(
-                    name: 'Motor CC',
-                    getInserted: () => _m1MotorInserted,
-                    setInserted: (v) => _m1MotorInserted = v,
-                    getRotation: () => _m1MotorRotation,
-                    setRotation: (v) => _m1MotorRotation = v,
-                  ),
-                  onRotate: () => _rotateComponent(
-                    name: 'Motor CC',
-                    getRotation: () => _m1MotorRotation,
-                    setRotation: (v) => _m1MotorRotation = v,
-                  ),
-                  onTap: () {},
-                  symbolWidget: CustomPaint(
-                    size: const Size(54, 38),
-                    painter: ComponentPhysicalPainter(
-                      type: ComponentType.motor,
-                      isActive: _m1MotorInserted,
-                      isDarkMode: false,
-                    ),
-                  ),
-                  placeholderWidget: CustomPaint(
-                    size: const Size(48, 34),
-                    painter: ComponentPhysicalPainter(
-                      type: ComponentType.motor,
-                      isActive: false,
-                      isDarkMode: false,
-                    ),
-                  ),
-                  label: '',
+                onRotate: () => _rotateComponent(
+                  name: 'Bateria',
+                  getRotation: () => _m1BatteryRotation,
+                  setRotation: (v) => _m1BatteryRotation = v,
                 ),
-              ),
-              Positioned(
-                left: 0,
-                right: 0,
-                top: 5,
-                child: Center(
-                  child: MovimentoAnimatedMotorWidget(
-                    isRunning: _isClosed,
-                    isReversed: false,
-                    usePhysicalStyle: _usePhysicalStyle,
+                onTap: () {},
+                symbolWidget: CustomPaint(
+                  size: Size(comp, comp),
+                  painter: ComponentPhysicalPainter(
+                    type: ComponentType.battery,
+                    isDarkMode: false,
                   ),
                 ),
+                placeholderWidget: CustomPaint(
+                  size: Size(comp * 0.85, comp * 0.85),
+                  painter: ComponentPhysicalPainter(
+                    type: ComponentType.battery,
+                    isActive: false,
+                    isDarkMode: false,
+                  ),
+                ),
+                label: '',
               ),
-            ],
-          ),
+            ),
+            Positioned(
+              left: motorX - sock / 2,
+              top: centerY - sock / 2,
+              child: PhysicalBlueprintSocket<String>(
+                expectedData: 'motor_cc',
+                isFilled: _m1MotorInserted,
+                showLabel: false,
+                rotation: _m1MotorRotation,
+                width: sock,
+                height: sock,
+                onAccept: (_) => _insertComponent(
+                  name: 'Motor CC',
+                  getInserted: () => _m1MotorInserted,
+                  setInserted: (v) => _m1MotorInserted = v,
+                  getRotation: () => _m1MotorRotation,
+                  setRotation: (v) => _m1MotorRotation = v,
+                ),
+                onRotate: () => _rotateComponent(
+                  name: 'Motor CC',
+                  getRotation: () => _m1MotorRotation,
+                  setRotation: (v) => _m1MotorRotation = v,
+                ),
+                onTap: () {},
+                symbolWidget: CustomPaint(
+                  size: Size(comp, comp),
+                  painter: ComponentPhysicalPainter(
+                    type: ComponentType.motor,
+                    isActive: _m1MotorInserted,
+                    isDarkMode: false,
+                  ),
+                ),
+                placeholderWidget: CustomPaint(
+                  size: Size(comp * 0.85, comp * 0.85),
+                  painter: ComponentPhysicalPainter(
+                    type: ComponentType.motor,
+                    isActive: false,
+                    isDarkMode: false,
+                  ),
+                ),
+                label: '',
+              ),
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              top: 8,
+              child: Center(
+                child: MovimentoAnimatedMotorWidget(
+                  isRunning: _isClosed,
+                  isReversed: false,
+                  usePhysicalStyle: _usePhysicalStyle,
+                ),
+              ),
+            ),
+          ],
         );
       },
     );
@@ -392,16 +398,20 @@ class _MovimentoMiniaturaM1State extends State<MovimentoMiniaturaM1>
     return LayoutBuilder(
       builder: (context, constraints) {
         final double width = constraints.maxWidth;
-        final double batteryX = 60.0;
-        final double motorX = width - 60.0;
+        final double height = constraints.maxHeight;
+        final double batteryX = width * 0.15;
+        final double motorX = width * 0.85;
+        final double centerY = height * 0.50;
+        final sock = (width * 0.16).clamp(95.0, 125.0);
+        final comp = sock * 0.65;
 
         final batteryPlacement = ComponentPlacement(
-          position: Offset(batteryX, 117.5),
+          position: Offset(batteryX, centerY),
           rotation: _m1BatteryRotation,
           type: ComponentType.battery,
         );
         final motorPlacement = ComponentPlacement(
-          position: Offset(motorX, 117.5),
+          position: Offset(motorX, centerY),
           rotation: _m1MotorRotation,
           type: ComponentType.motor,
         );
@@ -426,118 +436,119 @@ class _MovimentoMiniaturaM1State extends State<MovimentoMiniaturaM1>
           ).toWirePath());
         }
 
-        return SizedBox(
-          height: 270,
-          child: Stack(
-            children: [
-              if (wires.isNotEmpty)
-                Positioned.fill(
-                  child: AnimatedBuilder(
-                    animation: _currentFlowController,
-                    builder: (context, _) => RealisticWireWidget(
-                      wires: wires,
-                      animationValue: _currentFlowController.value,
-                      showElectrons: true,
-                    ),
-                  ),
-                ),
-              Positioned(
-                left: batteryX - 47.5,
-                top: 70,
-                child: SchematicBlueprintSocket<String>(
-                  expectedData: 'battery',
-                  isFilled: _m1BatteryInserted,
-                  showLabel: false,
-                  rotation: _m1BatteryRotation,
-                  onAccept: (_) => _insertComponent(
-                    name: 'Bateria',
-                    getInserted: () => _m1BatteryInserted,
-                    setInserted: (v) => _m1BatteryInserted = v,
-                    getRotation: () => _m1BatteryRotation,
-                    setRotation: (v) => _m1BatteryRotation = v,
-                  ),
-                  onRotate: () => _rotateComponent(
-                    name: 'Bateria',
-                    getRotation: () => _m1BatteryRotation,
-                    setRotation: (v) => _m1BatteryRotation = v,
-                  ),
-                  onTap: () {},
-                  symbolWidget: CustomPaint(
-                    size: const Size(55, 55),
-                    painter: CircuitSymbolPainter(
-                      type: ComponentType.battery,
-                      color: const Color(0xFF0F172A),
-                      strokeWidth: 2.5,
-                    ),
-                  ),
-                  placeholderWidget: CustomPaint(
-                    size: const Size(48, 38),
-                    painter: CircuitSymbolPainter(
-                      type: ComponentType.battery,
-                      isActive: false,
-                      color: const Color(0xFF94A3B8),
-                      strokeWidth: 2.0,
-                    ),
-                  ),
-                  label: '',
-                ),
-              ),
-              Positioned(
-                left: motorX - 47.5,
-                top: 70,
-                child: SchematicBlueprintSocket<String>(
-                  expectedData: 'motor_cc',
-                  isFilled: _m1MotorInserted,
-                  showLabel: false,
-                  rotation: _m1MotorRotation,
-                  onAccept: (_) => _insertComponent(
-                    name: 'Motor CC',
-                    getInserted: () => _m1MotorInserted,
-                    setInserted: (v) => _m1MotorInserted = v,
-                    getRotation: () => _m1MotorRotation,
-                    setRotation: (v) => _m1MotorRotation = v,
-                  ),
-                  onRotate: () => _rotateComponent(
-                    name: 'Motor CC',
-                    getRotation: () => _m1MotorRotation,
-                    setRotation: (v) => _m1MotorRotation = v,
-                  ),
-                  onTap: () {},
-                  symbolWidget: CustomPaint(
-                    size: const Size(55, 55),
-                    painter: CircuitSymbolPainter(
-                      type: ComponentType.motor,
-                      isActive: _m1MotorInserted,
-                      color: const Color(0xFF0F172A),
-                      strokeWidth: 2.5,
-                    ),
-                  ),
-                  placeholderWidget: CustomPaint(
-                    size: const Size(48, 38),
-                    painter: CircuitSymbolPainter(
-                      type: ComponentType.motor,
-                      isActive: false,
-                      color: const Color(0xFF94A3B8),
-                      strokeWidth: 2.0,
-                    ),
-                  ),
-                  label: '',
-                ),
-              ),
-              Positioned(
-                left: 0,
-                right: 0,
-                top: 5,
-                child: Center(
-                  child: MovimentoAnimatedMotorWidget(
-                    isRunning: _isClosed,
-                    isReversed: false,
-                    usePhysicalStyle: _usePhysicalStyle,
+        return Stack(
+          children: [
+            if (wires.isNotEmpty)
+              Positioned.fill(
+                child: AnimatedBuilder(
+                  animation: _currentFlowController,
+                  builder: (context, _) => RealisticWireWidget(
+                    wires: wires,
+                    animationValue: _currentFlowController.value,
+                    showElectrons: true,
                   ),
                 ),
               ),
-            ],
-          ),
+            Positioned(
+              left: batteryX - sock / 2,
+              top: centerY - sock / 2,
+              child: SchematicBlueprintSocket<String>(
+                expectedData: 'battery',
+                isFilled: _m1BatteryInserted,
+                showLabel: false,
+                rotation: _m1BatteryRotation,
+                width: sock,
+                height: sock,
+                onAccept: (_) => _insertComponent(
+                  name: 'Bateria',
+                  getInserted: () => _m1BatteryInserted,
+                  setInserted: (v) => _m1BatteryInserted = v,
+                  getRotation: () => _m1BatteryRotation,
+                  setRotation: (v) => _m1BatteryRotation = v,
+                ),
+                onRotate: () => _rotateComponent(
+                  name: 'Bateria',
+                  getRotation: () => _m1BatteryRotation,
+                  setRotation: (v) => _m1BatteryRotation = v,
+                ),
+                onTap: () {},
+                symbolWidget: CustomPaint(
+                  size: Size(comp, comp),
+                  painter: CircuitSymbolPainter(
+                    type: ComponentType.battery,
+                    color: const Color(0xFF0F172A),
+                    strokeWidth: 2.5,
+                  ),
+                ),
+                placeholderWidget: CustomPaint(
+                  size: Size(comp * 0.85, comp * 0.85),
+                  painter: CircuitSymbolPainter(
+                    type: ComponentType.battery,
+                    isActive: false,
+                    color: const Color(0xFF94A3B8),
+                    strokeWidth: 2.0,
+                  ),
+                ),
+                label: '',
+              ),
+            ),
+            Positioned(
+              left: motorX - sock / 2,
+              top: centerY - sock / 2,
+              child: SchematicBlueprintSocket<String>(
+                expectedData: 'motor_cc',
+                isFilled: _m1MotorInserted,
+                showLabel: false,
+                rotation: _m1MotorRotation,
+                width: sock,
+                height: sock,
+                onAccept: (_) => _insertComponent(
+                  name: 'Motor CC',
+                  getInserted: () => _m1MotorInserted,
+                  setInserted: (v) => _m1MotorInserted = v,
+                  getRotation: () => _m1MotorRotation,
+                  setRotation: (v) => _m1MotorRotation = v,
+                ),
+                onRotate: () => _rotateComponent(
+                  name: 'Motor CC',
+                  getRotation: () => _m1MotorRotation,
+                  setRotation: (v) => _m1MotorRotation = v,
+                ),
+                onTap: () {},
+                symbolWidget: CustomPaint(
+                  size: Size(comp, comp),
+                  painter: CircuitSymbolPainter(
+                    type: ComponentType.motor,
+                    isActive: _m1MotorInserted,
+                    color: const Color(0xFF0F172A),
+                    strokeWidth: 2.5,
+                  ),
+                ),
+                placeholderWidget: CustomPaint(
+                  size: Size(comp * 0.85, comp * 0.85),
+                  painter: CircuitSymbolPainter(
+                    type: ComponentType.motor,
+                    isActive: false,
+                    color: const Color(0xFF94A3B8),
+                    strokeWidth: 2.0,
+                  ),
+                ),
+                label: '',
+              ),
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              top: 8,
+              child: Center(
+                child: MovimentoAnimatedMotorWidget(
+                  isRunning: _isClosed,
+                  isReversed: false,
+                  usePhysicalStyle: _usePhysicalStyle,
+                ),
+              ),
+            ),
+          ],
         );
       },
     );

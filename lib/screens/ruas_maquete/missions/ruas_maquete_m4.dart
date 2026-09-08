@@ -211,6 +211,8 @@ class _RuasMaqueteM4State extends State<RuasMaqueteM4>
                       socketX: socketX,
                       lampY: lampY,
                       socketY: socketY,
+                      w: w,
+                      h: h,
                     ),
                   ],
                 );
@@ -244,134 +246,139 @@ class _RuasMaqueteM4State extends State<RuasMaqueteM4>
     required double socketX,
     required double lampY,
     required double socketY,
+    required double w,
+    required double h,
   }) {
+    final x1 = w * 0.18;
+    final x2 = w * 0.38;
+    final x3 = w * 0.62;
+    final x4 = w * 0.82;
+
+    final compW = (w * 0.13).clamp(80.0, 115.0);
+    final compH = compW * 0.75;
+    final sockW = (w * 0.15).clamp(95.0, 130.0);
+    final sockH = sockW * 0.75;
+
     return [
-      LayoutBuilder(
-        builder: (context, constraints) {
-          final w = constraints.maxWidth;
-          final x1 = w * 0.18;
-          final x2 = w * 0.38;
-          final x3 = w * 0.62;
-          final x4 = w * 0.82;
+      // Poste 1 (Alameda)
+      Positioned(
+        left: x1 - compW / 2,
+        top: lampY - compH / 2,
+        child: buildRuasMaqueteLampSymbol(
+          isLit: _m4ParallelWireConnected,
+          brightnessRatio: 1.0,
+          usePhysicalStyle: _usePhysicalStyle,
+          width: compW,
+          height: compH,
+        ),
+      ),
+      Positioned(
+        left: x1 - 65,
+        top: lampY + compH / 2 + 6,
+        width: 130,
+        child: Center(
+          child: buildRuasMaqueteLabelBadge('Poste 1'),
+        ),
+      ),
 
-          return Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // Poste 1 (Alameda)
-              Positioned(
-                left: x1 - 40,
-                top: lampY - 30,
-                child: buildRuasMaqueteLampSymbol(
-                  isLit: _m4ParallelWireConnected,
-                  brightnessRatio: 1.0,
-                  usePhysicalStyle: _usePhysicalStyle,
-                ),
-              ),
-              Positioned(
-                left: x1 - 65,
-                top: lampY + 34,
-                width: 130,
-                child: Center(
-                  child: buildRuasMaqueteLabelBadge('Poste 1'),
-                ),
-              ),
+      // Casa 01 (Alameda)
+      Positioned(
+        left: x2 - compW / 2,
+        top: lampY - compH / 2,
+        child: buildRuasMaqueteHouseSymbol(
+          name: 'Casa 01 (Alameda)',
+          isLit: _m4ParallelWireConnected,
+          brightness: 1.0,
+          usePhysicalStyle: _usePhysicalStyle,
+          width: compW,
+          height: compH,
+        ),
+      ),
+      Positioned(
+        left: x2 - 65,
+        top: lampY + compH / 2 + 6,
+        width: 130,
+        child: Center(
+          child: buildRuasMaqueteLabelBadge('Casa 01'),
+        ),
+      ),
 
-              // Casa 01 (Alameda)
-              Positioned(
-                left: x2 - 40,
-                top: lampY - 30,
-                child: buildRuasMaqueteHouseSymbol(
-                  name: 'Casa 01 (Alameda)',
-                  isLit: _m4ParallelWireConnected,
-                  brightness: 1.0,
-                  usePhysicalStyle: _usePhysicalStyle,
-                ),
-              ),
-              Positioned(
-                left: x2 - 65,
-                top: lampY + 34,
-                width: 130,
-                child: Center(
-                  child: buildRuasMaqueteLabelBadge('Casa 01'),
-                ),
-              ),
+      // Casa 02 (Praça)
+      Positioned(
+        left: x3 - compW / 2,
+        top: lampY - compH / 2,
+        child: buildRuasMaqueteHouseSymbol(
+          name: 'Casa 02 (Praça)',
+          isLit: _m4ParallelWireConnected,
+          brightness: 1.0,
+          usePhysicalStyle: _usePhysicalStyle,
+          width: compW,
+          height: compH,
+        ),
+      ),
+      Positioned(
+        left: x3 - 65,
+        top: lampY + compH / 2 + 6,
+        width: 130,
+        child: Center(
+          child: buildRuasMaqueteLabelBadge('Casa 02'),
+        ),
+      ),
 
-              // Casa 02 (Praça)
-              Positioned(
-                left: x3 - 40,
-                top: lampY - 30,
-                child: buildRuasMaqueteHouseSymbol(
-                  name: 'Casa 02 (Praça)',
-                  isLit: _m4ParallelWireConnected,
-                  brightness: 1.0,
-                  usePhysicalStyle: _usePhysicalStyle,
-                ),
-              ),
-              Positioned(
-                left: x3 - 65,
-                top: lampY + 34,
-                width: 130,
-                child: Center(
-                  child: buildRuasMaqueteLabelBadge('Casa 02'),
-                ),
-              ),
+      // Poste 2 (Avenida)
+      Positioned(
+        left: x4 - compW / 2,
+        top: lampY - compH / 2,
+        child: buildRuasMaqueteLampSymbol(
+          isLit: _m4ParallelWireConnected,
+          brightnessRatio: 1.0,
+          usePhysicalStyle: _usePhysicalStyle,
+          width: compW,
+          height: compH,
+        ),
+      ),
+      Positioned(
+        left: x4 - 65,
+        top: lampY + compH / 2 + 6,
+        width: 130,
+        child: Center(
+          child: buildRuasMaqueteLabelBadge('Poste 2'),
+        ),
+      ),
 
-              // Poste 2 (Avenida)
-              Positioned(
-                left: x4 - 40,
-                top: lampY - 30,
-                child: buildRuasMaqueteLampSymbol(
-                  isLit: _m4ParallelWireConnected,
-                  brightnessRatio: 1.0,
-                  usePhysicalStyle: _usePhysicalStyle,
-                ),
-              ),
-              Positioned(
-                left: x4 - 65,
-                top: lampY + 34,
-                width: 130,
-                child: Center(
-                  child: buildRuasMaqueteLabelBadge('Poste 2'),
-                ),
-              ),
-
-              // Soquete do Barramento Paralelo
-              Positioned(
-                left: socketX - 40,
-                top: socketY - 32,
-                child: buildRuasMaqueteSocketTile(
-                  width: 80,
-                  height: 60,
-                  expectedData: 'fio_paralelo',
-                  isFilled: _m4ParallelWireConnected,
-                  symbolType: ComponentType.connectingWire,
-                  label: 'Fiação Paralela',
-                  usePhysicalStyle: _usePhysicalStyle,
-                  rotation: _m4ParallelRotation,
-                  onRotate: () => _rotateComponent(
-                    name: 'Fiação em Paralelo',
-                    getRotation: () => _m4ParallelRotation,
-                    setRotation: (v) => _m4ParallelRotation = v,
-                  ),
-                  onAccept: () => _insertComponent(
-                    name: 'Fiação em Paralelo',
-                    getInserted: () => _m4ParallelWireConnected,
-                    setInserted: (v) => _m4ParallelWireConnected = v,
-                    getRotation: () => _m4ParallelRotation,
-                    setRotation: (v) => _m4ParallelRotation = v,
-                  ),
-                  onTap: () => _insertComponent(
-                    name: 'Fiação em Paralelo',
-                    getInserted: () => _m4ParallelWireConnected,
-                    setInserted: (v) => _m4ParallelWireConnected = v,
-                    getRotation: () => _m4ParallelRotation,
-                    setRotation: (v) => _m4ParallelRotation = v,
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
+      // Soquete do Barramento Paralelo
+      Positioned(
+        left: socketX - sockW / 2,
+        top: socketY - sockH / 2,
+        child: buildRuasMaqueteSocketTile(
+          width: sockW,
+          height: sockH,
+          expectedData: 'fio_paralelo',
+          isFilled: _m4ParallelWireConnected,
+          symbolType: ComponentType.connectingWire,
+          label: 'Fiação Paralela',
+          usePhysicalStyle: _usePhysicalStyle,
+          rotation: _m4ParallelRotation,
+          onRotate: () => _rotateComponent(
+            name: 'Fio Paralelo',
+            getRotation: () => _m4ParallelRotation,
+            setRotation: (v) => _m4ParallelRotation = v,
+          ),
+          onAccept: () => _insertComponent(
+            name: 'Fio Paralelo',
+            getInserted: () => _m4ParallelWireConnected,
+            setInserted: (v) => _m4ParallelWireConnected = v,
+            getRotation: () => _m4ParallelRotation,
+            setRotation: (v) => _m4ParallelRotation = v,
+          ),
+          onTap: () => _insertComponent(
+            name: 'Fio Paralelo',
+            getInserted: () => _m4ParallelWireConnected,
+            setInserted: (v) => _m4ParallelWireConnected = v,
+            getRotation: () => _m4ParallelRotation,
+            setRotation: (v) => _m4ParallelRotation = v,
+          ),
+        ),
       ),
     ];
   }

@@ -344,11 +344,11 @@ class _MedeTestaExplicaM1State extends State<MedeTestaExplicaM1> {
                 final batteryX = w * 0.35;
                 final centerY = h * 0.5;
                 final voltmeterX = w * 0.35;
-                final voltmeterY = h * 0.12;
+                final voltmeterY = h * 0.15;
                 final amperimeterX = w * 0.35;
-                final amperimeterY = h * 0.88;
-                final sock = 95.0;
-                final comp = 55.0;
+                final amperimeterY = h * 0.85;
+                final sock = (w * 0.16).clamp(105.0, 135.0);
+                final comp = sock * 0.62;
 
                 return Stack(
                   children: [
@@ -534,17 +534,21 @@ class _MedeTestaExplicaM1State extends State<MedeTestaExplicaM1> {
                 final h = constraints.maxHeight;
                 final batteryX = w * 0.5;
                 final centerY = h * 0.5;
+                final sock = (w * 0.16).clamp(95.0, 125.0);
+                final comp = sock * 0.65;
 
                 return Stack(
                   children: [
                     Positioned(
-                      left: batteryX - 47.5,
-                      top: centerY - 47.5,
+                      left: batteryX - sock / 2,
+                      top: centerY - sock / 2,
                       child: SchematicBlueprintSocket<String>(
                         expectedData: 'battery',
                         isFilled: _m1BatteryInserted,
                         showLabel: false,
                         rotation: _m1BatteryRotation,
+                        width: sock,
+                        height: sock,
                         onAccept: (_) => _insertComponent(
                           name: 'Bateria',
                           getInserted: () => _m1BatteryInserted,
@@ -559,7 +563,7 @@ class _MedeTestaExplicaM1State extends State<MedeTestaExplicaM1> {
                         ),
                         onTap: () {},
                         symbolWidget: CustomPaint(
-                          size: const Size(55, 55),
+                          size: Size(comp, comp * 0.7),
                           painter: CircuitSymbolPainter(
                             type: ComponentType.battery,
                             color: const Color(0xFF0F172A),
@@ -567,7 +571,7 @@ class _MedeTestaExplicaM1State extends State<MedeTestaExplicaM1> {
                           ),
                         ),
                         placeholderWidget: CustomPaint(
-                          size: const Size(48, 38),
+                          size: Size(comp * 0.85, comp * 0.6),
                           painter: CircuitSymbolPainter(
                             type: ComponentType.battery,
                             isActive: false,
@@ -580,8 +584,8 @@ class _MedeTestaExplicaM1State extends State<MedeTestaExplicaM1> {
                     ),
                     if (_m1BatteryInserted)
                       Positioned(
-                        left: batteryX + 60,
-                        top: centerY - 30,
+                        left: batteryX + sock / 2 + 20,
+                        top: centerY - 35,
                         child: MedeTestaProbeSlot(
                           isRed: true,
                           isConnected: _redProbeConnected,
@@ -592,8 +596,8 @@ class _MedeTestaExplicaM1State extends State<MedeTestaExplicaM1> {
                       ),
                     if (_m1BatteryInserted)
                       Positioned(
-                        left: batteryX + 60,
-                        top: centerY + 10,
+                        left: batteryX + sock / 2 + 20,
+                        top: centerY + 15,
                         child: MedeTestaProbeSlot(
                           isRed: false,
                           isConnected: _blackProbeConnected,

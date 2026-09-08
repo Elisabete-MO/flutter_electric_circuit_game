@@ -218,6 +218,8 @@ class _RuasMaqueteM3State extends State<RuasMaqueteM3>
                       socketX: socketX,
                       lampY: lampY,
                       socketY: socketY,
+                      w: w,
+                      h: h,
                     ),
                   ],
                 );
@@ -253,50 +255,58 @@ class _RuasMaqueteM3State extends State<RuasMaqueteM3>
     required double socketX,
     required double lampY,
     required double socketY,
+    required double w,
+    required double h,
   }) {
-    final nodeY = lampY + 45.0;
+    final compW = (w * 0.14).clamp(95.0, 130.0);
+    final compH = compW * 0.75;
+    final nodeY = lampY + (h * 0.16).clamp(35.0, 60.0);
 
     return [
       Positioned(
-        left: lamp1X - 40,
-        top: lampY - 30,
+        left: lamp1X - compW / 2,
+        top: lampY - compH / 2,
         child: buildRuasMaqueteLampSymbol(
           isLit: _bothLit,
           brightnessRatio: _bothLit ? 1.0 : 0.0,
           usePhysicalStyle: _usePhysicalStyle,
+          width: compW,
+          height: compH,
         ),
       ),
       Positioned(
-        left: lamp1X - 75,
-        top: lampY + 34,
-        width: 150,
+        left: lamp1X - 85,
+        top: lampY + compH / 2 + 6,
+        width: 170,
         child: Center(
           child: buildRuasMaqueteLabelBadge('Rua A (Nó Norte)'),
         ),
       ),
       Positioned(
-        left: lamp2X - 40,
-        top: lampY - 30,
+        left: lamp2X - compW / 2,
+        top: lampY - compH / 2,
         child: buildRuasMaqueteLampSymbol(
           isLit: _bothLit,
           brightnessRatio: _bothLit ? 1.0 : 0.0,
           usePhysicalStyle: _usePhysicalStyle,
+          width: compW,
+          height: compH,
         ),
       ),
       Positioned(
-        left: lamp2X - 75,
-        top: lampY + 34,
-        width: 150,
+        left: lamp2X - 85,
+        top: lampY + compH / 2 + 6,
+        width: 170,
         child: Center(
           child: buildRuasMaqueteLabelBadge('Rua B (Nó Sul)'),
         ),
       ),
       Positioned(
-        left: socketX - 40,
-        top: nodeY - 32,
+        left: socketX - compW / 2,
+        top: nodeY - compH / 2,
         child: buildRuasMaqueteSocketTile(
-          width: 80,
-          height: 60,
+          width: compW,
+          height: compH,
           expectedData: 'junction_node',
           isFilled: _m3JunctionInserted,
           symbolType: ComponentType.connectingWire,
@@ -325,11 +335,11 @@ class _RuasMaqueteM3State extends State<RuasMaqueteM3>
         ),
       ),
       Positioned(
-        left: socketX - 40,
-        top: socketY - 32,
+        left: socketX - compW / 2,
+        top: socketY - compH / 2,
         child: buildRuasMaqueteSocketTile(
-          width: 80,
-          height: 60,
+          width: compW,
+          height: compH,
           expectedData: 'fio_serie',
           isFilled: _m3ReturnConnected,
           symbolType: ComponentType.connectingWire,

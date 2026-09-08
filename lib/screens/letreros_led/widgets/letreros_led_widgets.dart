@@ -7,6 +7,9 @@ Widget buildLetrerosLedSignBoard({
   required bool isLit,
   bool isBurnt = false,
   bool isDim = false,
+  double? fontSize,
+  double? iconSize,
+  EdgeInsetsGeometry? padding,
 }) {
   final activeColor = isBurnt
       ? Colors.grey
@@ -14,24 +17,41 @@ Widget buildLetrerosLedSignBoard({
           ? color
           : Colors.white10;
 
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 20),
+  final effFontSize = fontSize ?? 28.0;
+  final effIconSize = iconSize ?? 36.0;
+  final effPadding = padding ??
+      const EdgeInsets.symmetric(horizontal: 40, vertical: 22);
+
+  return AnimatedContainer(
+    duration: const Duration(milliseconds: 300),
+    padding: effPadding,
     decoration: BoxDecoration(
       color: const Color(0xFF0A0F1D),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(22),
       border: Border.all(
         color: activeColor,
-        width: 3,
+        width: 3.5,
       ),
       boxShadow: isLit && !isBurnt
           ? [
               BoxShadow(
-                color: color.withValues(alpha: isDim ? 0.2 : 0.6),
-                blurRadius: isDim ? 12 : 30,
-                spreadRadius: isDim ? 2 : 6,
+                color: color.withValues(alpha: isDim ? 0.25 : 0.65),
+                blurRadius: isDim ? 16 : 36,
+                spreadRadius: isDim ? 3 : 8,
+              ),
+              BoxShadow(
+                color: color.withValues(alpha: isDim ? 0.15 : 0.35),
+                blurRadius: isDim ? 30 : 60,
+                spreadRadius: isDim ? 6 : 16,
               ),
             ]
-          : [],
+          : [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.35),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
     ),
     child: Row(
       mainAxisSize: MainAxisSize.min,
@@ -43,16 +63,16 @@ Widget buildLetrerosLedSignBoard({
                   ? Icons.lightbulb_rounded
                   : Icons.lightbulb_outline_rounded,
           color: activeColor,
-          size: 32,
+          size: effIconSize,
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 14),
         Text(
           title,
           style: GoogleFonts.rajdhani(
             color: activeColor,
             fontWeight: FontWeight.bold,
-            fontSize: 24,
-            letterSpacing: 3,
+            fontSize: effFontSize,
+            letterSpacing: 3.5,
           ),
         ),
       ],

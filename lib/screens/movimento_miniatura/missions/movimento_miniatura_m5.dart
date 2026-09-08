@@ -318,6 +318,8 @@ class _MovimentoMiniaturaM5State extends State<MovimentoMiniaturaM5>
                   final batteryX = w * 0.2;
                   final motorX = w * 0.75;
                   final centerY = h * 0.5;
+                  final sock = (w * 0.16).clamp(105.0, 135.0);
+                  final comp = sock * 0.62;
 
                   final batteryPlacement = ComponentPlacement(
                     position: Offset(batteryX, centerY),
@@ -368,14 +370,14 @@ class _MovimentoMiniaturaM5State extends State<MovimentoMiniaturaM5>
                           ),
                         ),
                       Positioned(
-                        left: batteryX - 47.5,
-                        top: centerY - 47.5,
+                        left: batteryX - sock / 2,
+                        top: centerY - sock / 2,
                         child: PhysicalBlueprintSocket<String>(
                           expectedData: 'battery',
                           isFilled: _m5BatteryInserted,
                           rotation: _m5BatteryRotation,
-                          width: 95,
-                          height: 95,
+                          width: sock,
+                          height: sock,
                           showLabel: false,
                           onAccept: (_) => _insertComponent(
                             name: 'Bateria',
@@ -391,7 +393,7 @@ class _MovimentoMiniaturaM5State extends State<MovimentoMiniaturaM5>
                           ),
                           onTap: () {},
                           symbolWidget: CustomPaint(
-                            size: const Size(55, 55),
+                            size: Size(comp, comp),
                             painter: ComponentPhysicalPainter(
                               type: ComponentType.battery,
                               isDarkMode: false,
@@ -400,14 +402,14 @@ class _MovimentoMiniaturaM5State extends State<MovimentoMiniaturaM5>
                         ),
                       ),
                       Positioned(
-                        left: motorX - 47.5,
-                        top: centerY - 47.5,
+                        left: motorX - sock / 2,
+                        top: centerY - sock / 2,
                         child: PhysicalBlueprintSocket<String>(
                           expectedData: 'motor_cc',
                           isFilled: _m5MotorInserted,
                           rotation: _m5MotorRotation,
-                          width: 95,
-                          height: 95,
+                          width: sock,
+                          height: sock,
                           showLabel: false,
                           onAccept: (_) => _insertComponent(
                             name: 'Motor CC',
@@ -423,7 +425,7 @@ class _MovimentoMiniaturaM5State extends State<MovimentoMiniaturaM5>
                           ),
                           onTap: () {},
                           symbolWidget: CustomPaint(
-                            size: const Size(55, 55),
+                            size: Size(comp, comp),
                             painter: ComponentPhysicalPainter(
                               type: ComponentType.motor,
                               isActive: _isWorking,
@@ -557,6 +559,8 @@ class _MovimentoMiniaturaM5State extends State<MovimentoMiniaturaM5>
                   final batteryX = w * 0.2;
                   final motorX = w * 0.75;
                   final centerY = h * 0.5;
+                  final sock = (w * 0.16).clamp(95.0, 125.0);
+                  final comp = sock * 0.65;
 
                   final batteryPlacement = ComponentPlacement(
                     position: Offset(batteryX, centerY),
@@ -607,13 +611,15 @@ class _MovimentoMiniaturaM5State extends State<MovimentoMiniaturaM5>
                           ),
                         ),
                       Positioned(
-                        left: batteryX - 47.5,
-                        top: centerY - 47.5,
+                        left: batteryX - sock / 2,
+                        top: centerY - sock / 2,
                         child: SchematicBlueprintSocket<String>(
                           expectedData: 'battery',
                           isFilled: _m5BatteryInserted,
                           showLabel: false,
                           rotation: _m5BatteryRotation,
+                          width: sock,
+                          height: sock,
                           onAccept: (_) => _insertComponent(
                             name: 'Bateria',
                             getInserted: () => _m5BatteryInserted,
@@ -628,7 +634,7 @@ class _MovimentoMiniaturaM5State extends State<MovimentoMiniaturaM5>
                           ),
                           onTap: () {},
                           symbolWidget: CustomPaint(
-                            size: const Size(55, 55),
+                            size: Size(comp, comp),
                             painter: CircuitSymbolPainter(
                               type: ComponentType.battery,
                               color: const Color(0xFF0F172A),
@@ -636,7 +642,7 @@ class _MovimentoMiniaturaM5State extends State<MovimentoMiniaturaM5>
                             ),
                           ),
                           placeholderWidget: CustomPaint(
-                            size: const Size(48, 38),
+                            size: Size(comp * 0.85, comp * 0.85),
                             painter: CircuitSymbolPainter(
                               type: ComponentType.battery,
                               isActive: false,
@@ -648,13 +654,15 @@ class _MovimentoMiniaturaM5State extends State<MovimentoMiniaturaM5>
                         ),
                       ),
                       Positioned(
-                        left: motorX - 47.5,
-                        top: centerY - 47.5,
+                        left: motorX - sock / 2,
+                        top: centerY - sock / 2,
                         child: SchematicBlueprintSocket<String>(
                           expectedData: 'motor_cc',
                           isFilled: _m5MotorInserted,
                           showLabel: false,
                           rotation: _m5MotorRotation,
+                          width: sock,
+                          height: sock,
                           onAccept: (_) => _insertComponent(
                             name: 'Motor CC',
                             getInserted: () => _m5MotorInserted,
@@ -669,7 +677,7 @@ class _MovimentoMiniaturaM5State extends State<MovimentoMiniaturaM5>
                           ),
                           onTap: () {},
                           symbolWidget: CustomPaint(
-                            size: const Size(55, 55),
+                            size: Size(comp, comp),
                             painter: CircuitSymbolPainter(
                               type: ComponentType.motor,
                               isActive: _isWorking,
@@ -678,7 +686,7 @@ class _MovimentoMiniaturaM5State extends State<MovimentoMiniaturaM5>
                             ),
                           ),
                           placeholderWidget: CustomPaint(
-                            size: const Size(48, 38),
+                            size: Size(comp * 0.85, comp * 0.85),
                             painter: CircuitSymbolPainter(
                               type: ComponentType.motor,
                               isActive: false,

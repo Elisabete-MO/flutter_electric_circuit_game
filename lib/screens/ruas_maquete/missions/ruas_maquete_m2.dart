@@ -192,6 +192,8 @@ class _RuasMaqueteM2State extends State<RuasMaqueteM2>
                       socketX: socketX,
                       lampY: lampY,
                       socketY: socketY,
+                      w: w,
+                      h: h,
                     ),
                   ],
                 );
@@ -227,21 +229,28 @@ class _RuasMaqueteM2State extends State<RuasMaqueteM2>
     required double socketX,
     required double lampY,
     required double socketY,
+    required double w,
+    required double h,
   }) {
+    final compW = (w * 0.14).clamp(95.0, 130.0);
+    final compH = compW * 0.75;
+
     return [
       Positioned(
-        left: lamp1X - 40,
-        top: lampY - 30,
+        left: lamp1X - compW / 2,
+        top: lampY - compH / 2,
         child: buildRuasMaqueteLampSymbol(
           isLit: true,
           brightnessRatio: _m2IsSeriesTwoBulbs ? 0.5 : 1.0,
           usePhysicalStyle: _usePhysicalStyle,
+          width: compW,
+          height: compH,
         ),
       ),
       Positioned(
-        left: lamp1X - 75,
-        top: lampY + 34,
-        width: 150,
+        left: lamp1X - 85,
+        top: lampY + compH / 2 + 6,
+        width: 170,
         child: Center(
           child: buildRuasMaqueteLabelBadge(
             'Poste Principal (${_m2IsSeriesTwoBulbs ? "50%" : "100%"})',
@@ -249,11 +258,11 @@ class _RuasMaqueteM2State extends State<RuasMaqueteM2>
         ),
       ),
       Positioned(
-        left: lamp2X - 40,
-        top: lampY - 32,
+        left: lamp2X - compW / 2,
+        top: lampY - compH / 2,
         child: buildRuasMaqueteSocketTile(
-          width: 80,
-          height: 60,
+          width: compW,
+          height: compH,
           expectedData: 'bulb',
           isFilled: _m2IsSeriesTwoBulbs,
           symbolType: ComponentType.bulb,
@@ -284,32 +293,34 @@ class _RuasMaqueteM2State extends State<RuasMaqueteM2>
       ),
       if (_m2IsSeriesTwoBulbs)
         Positioned(
-          left: lamp2X - 75,
-          top: lampY + 38,
-          width: 150,
+          left: lamp2X - 85,
+          top: lampY + compH / 2 + 6,
+          width: 170,
           child: Center(
             child: buildRuasMaqueteLabelBadge('Poste 2 em Série (50%)'),
           ),
         ),
       Positioned(
-        left: socketX - 40,
-        top: socketY - 32,
-        child: _buildBatteryWidget(),
+        left: socketX - compW / 2,
+        top: socketY - compH / 2,
+        child: _buildBatteryWidget(compW, compH),
       ),
     ];
   }
 
-  Widget _buildBatteryWidget() {
+  Widget _buildBatteryWidget(double width, double height) {
+    final symSize = Size(width * 0.72, height * 0.72);
+
     final symbolWidget = _usePhysicalStyle
         ? CustomPaint(
-            size: const Size(60, 40),
+            size: symSize,
             painter: ComponentPhysicalPainter(
               type: ComponentType.battery,
               isDarkMode: false,
             ),
           )
         : CustomPaint(
-            size: const Size(60, 40),
+            size: symSize,
             painter: CircuitSymbolPainter(
               type: ComponentType.battery,
               isActive: true,
@@ -320,8 +331,8 @@ class _RuasMaqueteM2State extends State<RuasMaqueteM2>
 
     return _usePhysicalStyle
         ? PhysicalComponentCard(
-            width: 80,
-            height: 60,
+            width: width,
+            height: height,
             symbolWidget: symbolWidget,
             label: 'Bateria 4.5V',
             isActive: true,

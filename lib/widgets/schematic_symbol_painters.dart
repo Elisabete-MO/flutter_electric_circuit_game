@@ -892,9 +892,10 @@ class SchematicCircuitWirePainterMotor extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final batteryX = size.width * 0.18;
     final motorX = size.width * 0.82;
-    final centerY = size.height * 0.48;
-    final topWireY = 35.0;
-    final bottomWireY = centerY + 75.0;
+    final centerY = size.height * 0.50;
+    final deltaY = (size.height * 0.28).clamp(36.0, 80.0);
+    final topWireY = centerY - deltaY;
+    final bottomWireY = centerY + deltaY;
 
     void drawWireSegment(Path path, Color activeColor, Color inactiveColor) {
       final color = isClosed ? activeColor : inactiveColor;
@@ -936,8 +937,8 @@ class SchematicCircuitWirePainterMotor extends CustomPainter {
 
     drawPin(Offset(batteryX, centerY - 47.5));
     drawPin(Offset(batteryX, centerY + 47.5));
-    drawPin(Offset(motorX, 70.0));
-    drawPin(Offset(motorX, 145.0));
+    drawPin(Offset(motorX, centerY - 47.5));
+    drawPin(Offset(motorX, centerY + 47.5));
 
     if (isClosed) {
       final electronGlow = Paint()

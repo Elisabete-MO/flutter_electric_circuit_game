@@ -221,34 +221,51 @@ class _LetrerosLedM5State extends State<LetrerosLedM5> {
           ],
         ),
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
           decoration: BoxDecoration(
             color: const Color(0xFF0F172A),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: (entradaLit && _m5BranchSaidaActive)
                   ? const Color(0xFF10B981)
                   : Colors.amberAccent,
-              width: 2,
+              width: 2.5,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: ((entradaLit && _m5BranchSaidaActive)
+                        ? const Color(0xFF10B981)
+                        : Colors.amberAccent)
+                    .withValues(alpha: 0.15),
+                blurRadius: 16,
+                spreadRadius: 2,
+              ),
+            ],
           ),
           child: Column(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              Wrap(
+                spacing: 14,
+                runSpacing: 12,
+                alignment: WrapAlignment.center,
                 children: [
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _m5BranchEntradaActive
                           ? const Color(0xFF10B981)
                           : const Color(0xFF1E293B),
-                      side: const BorderSide(color: Color(0xFF10B981)),
+                      side: const BorderSide(color: Color(0xFF10B981), width: 1.5),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 14),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                     icon: Icon(
                       _m5BranchEntradaActive
                           ? Icons.check
                           : Icons.add_circle_outline_rounded,
                       color: Colors.white,
+                      size: 20,
                     ),
                     label: Text(
                       _m5BranchEntradaActive
@@ -257,6 +274,7 @@ class _LetrerosLedM5State extends State<LetrerosLedM5> {
                       style: GoogleFonts.rajdhani(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
+                        fontSize: 15,
                       ),
                     ),
                     onPressed: () {
@@ -270,19 +288,23 @@ class _LetrerosLedM5State extends State<LetrerosLedM5> {
                       ));
                     },
                   ),
-                  const SizedBox(width: 12),
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _m5BranchSaidaActive
                           ? const Color(0xFF10B981)
                           : const Color(0xFF1E293B),
-                      side: const BorderSide(color: Color(0xFF10B981)),
+                      side: const BorderSide(color: Color(0xFF10B981), width: 1.5),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 14),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                     icon: Icon(
                       _m5BranchSaidaActive
                           ? Icons.check
                           : Icons.add_circle_outline_rounded,
                       color: Colors.white,
+                      size: 20,
                     ),
                     label: Text(
                       _m5BranchSaidaActive
@@ -291,6 +313,7 @@ class _LetrerosLedM5State extends State<LetrerosLedM5> {
                       style: GoogleFonts.rajdhani(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
+                        fontSize: 15,
                       ),
                     ),
                     onPressed: () {
@@ -307,11 +330,15 @@ class _LetrerosLedM5State extends State<LetrerosLedM5> {
                 ],
               ),
               if (_m5BranchEntradaActive && _m5BranchSaidaActive) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFF38BDF8)),
+                    side: const BorderSide(color: Color(0xFF38BDF8), width: 1.5),
                     backgroundColor: const Color(0xFF1E293B),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                   icon: Icon(
                     _m5OneBranchDisconnected
@@ -326,6 +353,7 @@ class _LetrerosLedM5State extends State<LetrerosLedM5> {
                     style: GoogleFonts.rajdhani(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
+                      fontSize: 15,
                     ),
                   ),
                   onPressed: () {

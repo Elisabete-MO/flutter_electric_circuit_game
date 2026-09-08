@@ -162,7 +162,7 @@ class ProbeWirePainter extends CustomPainter {
     // Fio vermelho: terminal positivo (+) à ponta vermelha
     final redWirePaint = Paint()
       ..color = const Color(0xFFEF4444)
-      ..strokeWidth = 3.0
+      ..strokeWidth = 4.5
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
     final redPath = Path()
@@ -178,7 +178,7 @@ class ProbeWirePainter extends CustomPainter {
     // Fio preto: terminal negativo (-) à ponta preta
     final blackWirePaint = Paint()
       ..color = const Color(0xFF1E293B)
-      ..strokeWidth = 3.0
+      ..strokeWidth = 4.5
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
     final blackPath = Path()
@@ -218,7 +218,7 @@ class MedeTestaProbeSlot extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: isConnected
               ? color.withValues(alpha: 0.3)
@@ -234,7 +234,7 @@ class MedeTestaProbeSlot extends StatelessWidget {
                   ? Icons.check_circle_rounded
                   : Icons.sensors_rounded,
               color: color,
-              size: 20,
+              size: 22,
             ),
             const SizedBox(width: 6),
             Text(
@@ -242,7 +242,7 @@ class MedeTestaProbeSlot extends StatelessWidget {
               style: GoogleFonts.rajdhani(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
-                fontSize: 12,
+                fontSize: 13,
               ),
             ),
           ],
@@ -268,15 +268,15 @@ class MedeTestaMeterReading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
         color: const Color(0xFF0F172A),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.6)),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.7), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: color.withValues(alpha: 0.3),
-            blurRadius: 6,
+            color: color.withValues(alpha: 0.35),
+            blurRadius: 8,
           ),
         ],
       ),
@@ -287,7 +287,7 @@ class MedeTestaMeterReading extends StatelessWidget {
             value,
             style: GoogleFonts.rajdhani(
               color: const Color(0xFF00E676),
-              fontSize: 20,
+              fontSize: 24,
               fontWeight: FontWeight.bold,
               letterSpacing: 1.5,
             ),
@@ -296,7 +296,7 @@ class MedeTestaMeterReading extends StatelessWidget {
             unit,
             style: GoogleFonts.rajdhani(
               color: Colors.white70,
-              fontSize: 10,
+              fontSize: 12,
               fontWeight: FontWeight.bold,
             ),
           ),

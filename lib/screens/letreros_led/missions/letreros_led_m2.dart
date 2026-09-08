@@ -197,18 +197,29 @@ class _LetrerosLedM2State extends State<LetrerosLedM2> {
           isLit: _m2LedInvertedFixed,
         ),
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
           decoration: BoxDecoration(
             color: const Color(0xFF0F172A),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: _m2LedInvertedFixed
                   ? const Color(0xFF10B981)
                   : Colors.amberAccent,
-              width: 2,
+              width: 2.5,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: (_m2LedInvertedFixed
+                        ? const Color(0xFF10B981)
+                        : Colors.amberAccent)
+                    .withValues(alpha: 0.15),
+                blurRadius: 16,
+                spreadRadius: 2,
+              ),
+            ],
           ),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
@@ -218,18 +229,22 @@ class _LetrerosLedM2State extends State<LetrerosLedM2> {
                 color: _m2LedInvertedFixed
                     ? const Color(0xFF10B981)
                     : Colors.amberAccent,
-                size: 28,
+                size: 32,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _m2LedInvertedFixed
                       ? const Color(0xFF10B981)
                       : const Color(0xFF1E293B),
-                  side: const BorderSide(color: Color(0xFF10B981)),
+                  side: const BorderSide(color: Color(0xFF10B981), width: 1.5),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
                 ),
                 icon:
-                    const Icon(Icons.rotate_right_rounded, color: Colors.white),
+                    const Icon(Icons.rotate_right_rounded, color: Colors.white, size: 22),
                 label: Text(
                   _m2LedInvertedFixed
                       ? 'Terminais Invertidos (Conduzindo!)'
@@ -237,7 +252,7 @@ class _LetrerosLedM2State extends State<LetrerosLedM2> {
                   style: GoogleFonts.rajdhani(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
-                    fontSize: 15,
+                    fontSize: 16,
                   ),
                 ),
                 onPressed: () {

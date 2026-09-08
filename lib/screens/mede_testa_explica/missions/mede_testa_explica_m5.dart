@@ -385,8 +385,8 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
                 final batteryY = h * 0.15;
                 final resistorY = h * 0.5;
                 final ledY = h * 0.85;
-                final sock = 95.0;
-                final comp = 55.0;
+                final sock = (w * 0.16).clamp(105.0, 135.0);
+                final comp = sock * 0.62;
 
                 final batteryPlacement = ComponentPlacement(
                   position: Offset(centerX, batteryY),
@@ -577,6 +577,8 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
                 final batteryY = h * 0.15;
                 final resistorY = h * 0.5;
                 final ledY = h * 0.85;
+                final sock = (w * 0.16).clamp(95.0, 125.0);
+                final comp = sock * 0.65;
 
                 final batteryPlacement = ComponentPlacement(
                   position: Offset(centerX, batteryY),
@@ -637,13 +639,15 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
                         ),
                       ),
                     Positioned(
-                      left: centerX - 47.5,
-                      top: batteryY - 47.5,
+                      left: centerX - sock / 2,
+                      top: batteryY - sock / 2,
                       child: SchematicBlueprintSocket<String>(
                         expectedData: 'battery',
                         isFilled: _m5BatteryInserted,
                         showLabel: false,
                         rotation: _m5BatteryRotation,
+                        width: sock,
+                        height: sock,
                         onAccept: (_) => _insertComponent(
                           name: 'Bateria',
                           getInserted: () => _m5BatteryInserted,
@@ -658,7 +662,7 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
                         ),
                         onTap: () {},
                         symbolWidget: CustomPaint(
-                          size: const Size(55, 55),
+                          size: Size(comp, comp),
                           painter: CircuitSymbolPainter(
                             type: ComponentType.battery,
                             color: const Color(0xFF0F172A),
@@ -666,7 +670,7 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
                           ),
                         ),
                         placeholderWidget: CustomPaint(
-                          size: const Size(48, 38),
+                          size: Size(comp * 0.85, comp * 0.85),
                           painter: CircuitSymbolPainter(
                             type: ComponentType.battery,
                             isActive: false,
@@ -678,13 +682,15 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
                       ),
                     ),
                     Positioned(
-                      left: centerX - 47.5,
-                      top: resistorY - 47.5,
+                      left: centerX - sock / 2,
+                      top: resistorY - sock / 2,
                       child: SchematicBlueprintSocket<String>(
                         expectedData: 'resistor',
                         isFilled: _m5ResistorInserted,
                         showLabel: false,
                         rotation: _m5ResistorRotation,
+                        width: sock,
+                        height: sock,
                         onAccept: (_) => _insertComponent(
                           name: 'Resistor 10k',
                           getInserted: () => _m5ResistorInserted,
@@ -699,7 +705,7 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
                         ),
                         onTap: () {},
                         symbolWidget: CustomPaint(
-                          size: const Size(55, 55),
+                          size: Size(comp, comp),
                           painter: CircuitSymbolPainter(
                             type: ComponentType.resistor,
                             color: const Color(0xFF0F172A),
@@ -707,7 +713,7 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
                           ),
                         ),
                         placeholderWidget: CustomPaint(
-                          size: const Size(48, 38),
+                          size: Size(comp * 0.85, comp * 0.85),
                           painter: CircuitSymbolPainter(
                             type: ComponentType.resistor,
                             isActive: false,
@@ -719,13 +725,15 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
                       ),
                     ),
                     Positioned(
-                      left: centerX - 47.5,
-                      top: ledY - 47.5,
+                      left: centerX - sock / 2,
+                      top: ledY - sock / 2,
                       child: SchematicBlueprintSocket<String>(
                         expectedData: 'led',
                         isFilled: _m5LedInserted,
                         showLabel: false,
                         rotation: _m5LedRotation,
+                        width: sock,
+                        height: sock,
                         onAccept: (_) => _insertComponent(
                           name: 'LED',
                           getInserted: () => _m5LedInserted,
@@ -740,7 +748,7 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
                         ),
                         onTap: () {},
                         symbolWidget: CustomPaint(
-                          size: const Size(55, 55),
+                          size: Size(comp, comp),
                           painter: CircuitSymbolPainter(
                             type: ComponentType.led,
                             isActive: true,
@@ -749,7 +757,7 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
                           ),
                         ),
                         placeholderWidget: CustomPaint(
-                          size: const Size(48, 38),
+                          size: Size(comp * 0.85, comp * 0.85),
                           painter: CircuitSymbolPainter(
                             type: ComponentType.led,
                             isActive: false,

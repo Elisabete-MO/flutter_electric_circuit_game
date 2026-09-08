@@ -305,6 +305,8 @@ class _MovimentoMiniaturaM4State extends State<MovimentoMiniaturaM4>
                   final ledX = w * 0.88;
                   final topY = h * 0.3;
                   final bottomY = h * 0.7;
+                  final sock = (w * 0.16).clamp(105.0, 135.0);
+                  final comp = sock * 0.62;
 
                   final batteryPlacement = ComponentPlacement(
                     position: Offset(batteryX, topY),
@@ -393,14 +395,14 @@ class _MovimentoMiniaturaM4State extends State<MovimentoMiniaturaM4>
                           ),
                         ),
                       Positioned(
-                        left: batteryX - 47.5,
-                        top: topY - 47.5,
+                        left: batteryX - sock / 2,
+                        top: topY - sock / 2,
                         child: PhysicalBlueprintSocket<String>(
                           expectedData: 'battery',
                           isFilled: _m4BatteryInserted,
                           rotation: _m4BatteryRotation,
-                          width: 95,
-                          height: 95,
+                          width: sock,
+                          height: sock,
                           showLabel: false,
                           onAccept: (_) => _insertComponent(
                             name: 'Bateria',
@@ -416,7 +418,7 @@ class _MovimentoMiniaturaM4State extends State<MovimentoMiniaturaM4>
                           ),
                           onTap: () {},
                           symbolWidget: CustomPaint(
-                            size: const Size(55, 55),
+                            size: Size(comp, comp),
                             painter: ComponentPhysicalPainter(
                               type: ComponentType.battery,
                               isDarkMode: false,
@@ -425,14 +427,14 @@ class _MovimentoMiniaturaM4State extends State<MovimentoMiniaturaM4>
                         ),
                       ),
                       Positioned(
-                        left: motorX - 47.5,
-                        top: topY - 47.5,
+                        left: motorX - sock / 2,
+                        top: topY - sock / 2,
                         child: PhysicalBlueprintSocket<String>(
                           expectedData: 'motor_cc',
                           isFilled: _m4MotorInserted,
                           rotation: _m4MotorRotation,
-                          width: 95,
-                          height: 95,
+                          width: sock,
+                          height: sock,
                           showLabel: false,
                           onAccept: (_) => _insertComponent(
                             name: 'Motor CC',
@@ -448,7 +450,7 @@ class _MovimentoMiniaturaM4State extends State<MovimentoMiniaturaM4>
                           ),
                           onTap: () {},
                           symbolWidget: CustomPaint(
-                            size: const Size(55, 55),
+                            size: Size(comp, comp),
                             painter: ComponentPhysicalPainter(
                               type: ComponentType.motor,
                               isActive: isSystemReady,
@@ -458,14 +460,14 @@ class _MovimentoMiniaturaM4State extends State<MovimentoMiniaturaM4>
                         ),
                       ),
                       Positioned(
-                        left: resistorX - 47.5,
-                        top: bottomY - 47.5,
+                        left: resistorX - sock / 2,
+                        top: bottomY - sock / 2,
                         child: PhysicalBlueprintSocket<String>(
                           expectedData: 'resistor_680',
                           isFilled: _m4ResistorInserted,
                           rotation: 0,
-                          width: 95,
-                          height: 95,
+                          width: sock,
+                          height: sock,
                           showLabel: false,
                           onAccept: (_) => _insertComponent(
                             name: 'Resistor',
@@ -478,7 +480,7 @@ class _MovimentoMiniaturaM4State extends State<MovimentoMiniaturaM4>
                           onTap: () => setState(() =>
                               _m4ResistorInserted = !_m4ResistorInserted),
                           symbolWidget: CustomPaint(
-                            size: const Size(55, 55),
+                            size: Size(comp, comp),
                             painter: ComponentPhysicalPainter(
                               type: ComponentType.resistor,
                               isDarkMode: false,
@@ -487,14 +489,14 @@ class _MovimentoMiniaturaM4State extends State<MovimentoMiniaturaM4>
                         ),
                       ),
                       Positioned(
-                        left: ledX - 47.5,
-                        top: bottomY - 47.5,
+                        left: ledX - sock / 2,
+                        top: bottomY - sock / 2,
                         child: PhysicalBlueprintSocket<String>(
                           expectedData: 'led_indicator',
                           isFilled: _m4LedInserted,
                           rotation: 0,
-                          width: 95,
-                          height: 95,
+                          width: sock,
+                          height: sock,
                           showLabel: false,
                           onAccept: (_) => _insertComponent(
                             name: 'LED',
@@ -507,7 +509,7 @@ class _MovimentoMiniaturaM4State extends State<MovimentoMiniaturaM4>
                           onTap: () => setState(
                               () => _m4LedInserted = !_m4LedInserted),
                           symbolWidget: CustomPaint(
-                            size: const Size(55, 55),
+                            size: Size(comp, comp),
                             painter: ComponentPhysicalPainter(
                               type: ComponentType.led,
                               isActive: isSystemReady,
@@ -573,6 +575,8 @@ class _MovimentoMiniaturaM4State extends State<MovimentoMiniaturaM4>
                   final ledX = w * 0.88;
                   final topY = h * 0.3;
                   final bottomY = h * 0.7;
+                  final sock = (w * 0.16).clamp(95.0, 125.0);
+                  final comp = sock * 0.65;
 
                   final batteryPlacement = ComponentPlacement(
                     position: Offset(batteryX, topY),
@@ -661,13 +665,15 @@ class _MovimentoMiniaturaM4State extends State<MovimentoMiniaturaM4>
                           ),
                         ),
                       Positioned(
-                        left: batteryX - 47.5,
-                        top: topY - 47.5,
+                        left: batteryX - sock / 2,
+                        top: topY - sock / 2,
                         child: SchematicBlueprintSocket<String>(
                           expectedData: 'battery',
                           isFilled: _m4BatteryInserted,
                           showLabel: false,
                           rotation: _m4BatteryRotation,
+                          width: sock,
+                          height: sock,
                           onAccept: (_) => _insertComponent(
                             name: 'Bateria',
                             getInserted: () => _m4BatteryInserted,
@@ -682,7 +688,7 @@ class _MovimentoMiniaturaM4State extends State<MovimentoMiniaturaM4>
                           ),
                           onTap: () {},
                           symbolWidget: CustomPaint(
-                            size: const Size(55, 55),
+                            size: Size(comp, comp),
                             painter: CircuitSymbolPainter(
                               type: ComponentType.battery,
                               color: const Color(0xFF0F172A),
@@ -690,7 +696,7 @@ class _MovimentoMiniaturaM4State extends State<MovimentoMiniaturaM4>
                             ),
                           ),
                           placeholderWidget: CustomPaint(
-                            size: const Size(48, 38),
+                            size: Size(comp * 0.85, comp * 0.85),
                             painter: CircuitSymbolPainter(
                               type: ComponentType.battery,
                               isActive: false,
@@ -702,13 +708,15 @@ class _MovimentoMiniaturaM4State extends State<MovimentoMiniaturaM4>
                         ),
                       ),
                       Positioned(
-                        left: motorX - 47.5,
-                        top: topY - 47.5,
+                        left: motorX - sock / 2,
+                        top: topY - sock / 2,
                         child: SchematicBlueprintSocket<String>(
                           expectedData: 'motor_cc',
                           isFilled: _m4MotorInserted,
                           showLabel: false,
                           rotation: _m4MotorRotation,
+                          width: sock,
+                          height: sock,
                           onAccept: (_) => _insertComponent(
                             name: 'Motor CC',
                             getInserted: () => _m4MotorInserted,
@@ -723,7 +731,7 @@ class _MovimentoMiniaturaM4State extends State<MovimentoMiniaturaM4>
                           ),
                           onTap: () {},
                           symbolWidget: CustomPaint(
-                            size: const Size(55, 55),
+                            size: Size(comp, comp),
                             painter: CircuitSymbolPainter(
                               type: ComponentType.motor,
                               isActive: isSystemReady,
@@ -732,7 +740,7 @@ class _MovimentoMiniaturaM4State extends State<MovimentoMiniaturaM4>
                             ),
                           ),
                           placeholderWidget: CustomPaint(
-                            size: const Size(48, 38),
+                            size: Size(comp * 0.85, comp * 0.85),
                             painter: CircuitSymbolPainter(
                               type: ComponentType.motor,
                               isActive: false,
@@ -744,13 +752,15 @@ class _MovimentoMiniaturaM4State extends State<MovimentoMiniaturaM4>
                         ),
                       ),
                       Positioned(
-                        left: resistorX - 47.5,
-                        top: bottomY - 47.5,
+                        left: resistorX - sock / 2,
+                        top: bottomY - sock / 2,
                         child: SchematicBlueprintSocket<String>(
                           expectedData: 'resistor_680',
                           isFilled: _m4ResistorInserted,
                           showLabel: false,
                           rotation: 0,
+                          width: sock,
+                          height: sock,
                           onAccept: (_) => _insertComponent(
                             name: 'Resistor',
                             getInserted: () => _m4ResistorInserted,
@@ -762,7 +772,7 @@ class _MovimentoMiniaturaM4State extends State<MovimentoMiniaturaM4>
                           onTap: () => setState(() =>
                               _m4ResistorInserted = !_m4ResistorInserted),
                           symbolWidget: CustomPaint(
-                            size: const Size(55, 55),
+                            size: Size(comp, comp),
                             painter: CircuitSymbolPainter(
                               type: ComponentType.resistor,
                               color: const Color(0xFF0F172A),
@@ -770,7 +780,7 @@ class _MovimentoMiniaturaM4State extends State<MovimentoMiniaturaM4>
                             ),
                           ),
                           placeholderWidget: CustomPaint(
-                            size: const Size(48, 38),
+                            size: Size(comp * 0.85, comp * 0.85),
                             painter: CircuitSymbolPainter(
                               type: ComponentType.resistor,
                               isActive: false,
@@ -782,13 +792,15 @@ class _MovimentoMiniaturaM4State extends State<MovimentoMiniaturaM4>
                         ),
                       ),
                       Positioned(
-                        left: ledX - 47.5,
-                        top: bottomY - 47.5,
+                        left: ledX - sock / 2,
+                        top: bottomY - sock / 2,
                         child: SchematicBlueprintSocket<String>(
                           expectedData: 'led_indicator',
                           isFilled: _m4LedInserted,
                           showLabel: false,
                           rotation: 0,
+                          width: sock,
+                          height: sock,
                           onAccept: (_) => _insertComponent(
                             name: 'LED',
                             getInserted: () => _m4LedInserted,
@@ -800,7 +812,7 @@ class _MovimentoMiniaturaM4State extends State<MovimentoMiniaturaM4>
                           onTap: () => setState(
                               () => _m4LedInserted = !_m4LedInserted),
                           symbolWidget: CustomPaint(
-                            size: const Size(55, 55),
+                            size: Size(comp, comp),
                             painter: CircuitSymbolPainter(
                               type: ComponentType.led,
                               isActive: isSystemReady,
@@ -809,7 +821,7 @@ class _MovimentoMiniaturaM4State extends State<MovimentoMiniaturaM4>
                             ),
                           ),
                           placeholderWidget: CustomPaint(
-                            size: const Size(48, 38),
+                            size: Size(comp * 0.85, comp * 0.85),
                             painter: CircuitSymbolPainter(
                               type: ComponentType.led,
                               isActive: false,

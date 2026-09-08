@@ -66,8 +66,9 @@ class RuasMaquetePainter extends CustomPainter {
       ..color = activeWirePaint.color
       ..style = PaintingStyle.fill;
 
-    // Terminais dos componentes (esquerda / direita)
-    const termOffset = 32.0;
+    // Terminais dos componentes (esquerda / direita) proporcionais à largura da bancada
+    final termOffset = (size.width * 0.045).clamp(32.0, 48.0);
+    final offsetSpan = (size.width * 0.09).clamp(55.0, 95.0);
 
     void drawStyledPath(Path path, Paint paint,
         {Color? customColor, bool isPositive = true}) {
@@ -189,9 +190,9 @@ class RuasMaquetePainter extends CustomPainter {
       rotationDegrees: socketRotation,
     );
 
-    final topLoopY = socketY - 70.0;
-    final outerLeftX = lamp1X - 70.0;
-    final outerRightX = lamp2X + 70.0;
+    final topLoopY = socketY - (size.height * 0.20).clamp(55.0, 85.0);
+    final outerLeftX = lamp1X - offsetSpan;
+    final outerRightX = lamp2X + offsetSpan;
 
     // Determinar waypoints de saída de fiação baseados na rotação do soquete
     final List<Offset> posExitWaypoints;
@@ -201,34 +202,34 @@ class RuasMaquetePainter extends CustomPainter {
     if (normRotation >= 45 && normRotation < 135) {
       posExitWaypoints = [
         batPosTerminal,
-        Offset(socketX + 70.0, batPosTerminal.dy),
-        Offset(socketX + 70.0, topLoopY)
+        Offset(socketX + offsetSpan, batPosTerminal.dy),
+        Offset(socketX + offsetSpan, topLoopY)
       ];
       negExitWaypoints = [
-        Offset(socketX + 70.0, topLoopY),
-        Offset(socketX + 70.0, batNegTerminal.dy),
+        Offset(socketX + offsetSpan, topLoopY),
+        Offset(socketX + offsetSpan, batNegTerminal.dy),
         batNegTerminal
       ];
     } else if (normRotation >= 135 && normRotation < 225) {
       posExitWaypoints = [
         batPosTerminal,
-        Offset(batPosTerminal.dx, socketY + 70.0),
-        Offset(outerLeftX, socketY + 70.0)
+        Offset(batPosTerminal.dx, socketY + offsetSpan),
+        Offset(outerLeftX, socketY + offsetSpan)
       ];
       negExitWaypoints = [
-        Offset(outerRightX, socketY + 70.0),
-        Offset(batNegTerminal.dx, socketY + 70.0),
+        Offset(outerRightX, socketY + offsetSpan),
+        Offset(batNegTerminal.dx, socketY + offsetSpan),
         batNegTerminal
       ];
     } else if (normRotation >= 225 && normRotation < 315) {
       posExitWaypoints = [
         batPosTerminal,
-        Offset(socketX - 70.0, batPosTerminal.dy),
-        Offset(socketX - 70.0, topLoopY)
+        Offset(socketX - offsetSpan, batPosTerminal.dy),
+        Offset(socketX - offsetSpan, topLoopY)
       ];
       negExitWaypoints = [
-        Offset(socketX - 70.0, topLoopY),
-        Offset(socketX - 70.0, batNegTerminal.dy),
+        Offset(socketX - offsetSpan, topLoopY),
+        Offset(socketX - offsetSpan, batNegTerminal.dy),
         batNegTerminal
       ];
     } else {
@@ -381,18 +382,19 @@ class RuasMaquetePainter extends CustomPainter {
     } else if (missionIndex == 3 || missionIndex == 4) {
       final isActive = m4Parallel || missionIndex == 4;
       final currentPaint = isActive ? activeWirePaint : wirePaint;
-      final topVccY = lampY - 50.0;
-      final botGndY = lampY + 70.0;
-      final vccGutterY = socketY - 50.0;
-      final gndGutterY = socketY - 40.0;
+      final topVccY = lampY - (size.height * 0.16).clamp(45.0, 75.0);
+      final botGndY = lampY + (size.height * 0.22).clamp(55.0, 90.0);
+      final vccGutterY = socketY - (size.height * 0.16).clamp(40.0, 70.0);
+      final gndGutterY = socketY - (size.height * 0.12).clamp(30.0, 55.0);
 
       final x1 = size.width * 0.18; // Poste 1
       final x2 = size.width * 0.38; // Casa 1
       final x3 = size.width * 0.62; // Casa 2
       final x4 = size.width * 0.82; // Poste 2
 
-      final busOuterLeftX = x1 - 40.0;
-      final busOuterRightX = x4 + 40.0;
+      final busOffset = (size.width * 0.05).clamp(35.0, 60.0);
+      final busOuterLeftX = x1 - busOffset;
+      final busOuterRightX = x4 + busOffset;
 
       final pathVccMain = makeFlexiblePath([
         batPosTerminal,

@@ -360,8 +360,8 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
                 final ledY = h * 0.25;
                 final ammeterX = w * 0.2;
                 final ammeterY = h * 0.12;
-                final sock = 95.0;
-                final comp = 55.0;
+                final sock = (w * 0.16).clamp(105.0, 135.0);
+                final comp = sock * 0.62;
 
                 final batteryPlacement = ComponentPlacement(
                   position: Offset(batteryX, batteryY),
@@ -550,8 +550,8 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
                     ),
                     if (_m3AmperimeterInserted)
                       Positioned(
-                        left: ammeterX - 40,
-                        top: ammeterY + sock / 2 + 4,
+                        left: ammeterX - 60,
+                        top: ammeterY + sock / 2 + 6,
                         child: MedeTestaMeterReading(
                           value: ammeterReading.toStringAsFixed(1),
                           unit: 'mA',
@@ -621,6 +621,8 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
                 final ledY = h * 0.25;
                 final ammeterX = w * 0.2;
                 final ammeterY = h * 0.12;
+                final sock = (w * 0.16).clamp(95.0, 125.0);
+                final comp = sock * 0.65;
 
                 final batteryPlacement = ComponentPlacement(
                   position: Offset(batteryX, batteryY),
@@ -681,13 +683,15 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
                         ),
                       ),
                     Positioned(
-                      left: batteryX - 47.5,
-                      top: batteryY - 47.5,
+                      left: batteryX - sock / 2,
+                      top: batteryY - sock / 2,
                       child: SchematicBlueprintSocket<String>(
                         expectedData: 'battery',
                         isFilled: _m3BatteryInserted,
                         showLabel: false,
                         rotation: _m3BatteryRotation,
+                        width: sock,
+                        height: sock,
                         onAccept: (_) => _insertComponent(
                           name: 'Bateria',
                           getInserted: () => _m3BatteryInserted,
@@ -702,7 +706,7 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
                         ),
                         onTap: () {},
                         symbolWidget: CustomPaint(
-                          size: const Size(55, 55),
+                          size: Size(comp, comp),
                           painter: CircuitSymbolPainter(
                             type: ComponentType.battery,
                             color: const Color(0xFF0F172A),
@@ -710,7 +714,7 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
                           ),
                         ),
                         placeholderWidget: CustomPaint(
-                          size: const Size(48, 38),
+                          size: Size(comp * 0.85, comp * 0.85),
                           painter: CircuitSymbolPainter(
                             type: ComponentType.battery,
                             isActive: false,
@@ -722,13 +726,15 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
                       ),
                     ),
                     Positioned(
-                      left: resistorX - 47.5,
-                      top: resistorY - 47.5,
+                      left: resistorX - sock / 2,
+                      top: resistorY - sock / 2,
                       child: SchematicBlueprintSocket<String>(
                         expectedData: 'resistor',
                         isFilled: _m3ResistorInserted,
                         showLabel: false,
                         rotation: _m3ResistorRotation,
+                        width: sock,
+                        height: sock,
                         onAccept: (_) => _insertComponent(
                           name: 'Resistor',
                           getInserted: () => _m3ResistorInserted,
@@ -743,7 +749,7 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
                         ),
                         onTap: () {},
                         symbolWidget: CustomPaint(
-                          size: const Size(55, 55),
+                          size: Size(comp, comp),
                           painter: CircuitSymbolPainter(
                             type: ComponentType.resistor,
                             color: const Color(0xFF0F172A),
@@ -751,7 +757,7 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
                           ),
                         ),
                         placeholderWidget: CustomPaint(
-                          size: const Size(48, 38),
+                          size: Size(comp * 0.85, comp * 0.85),
                           painter: CircuitSymbolPainter(
                             type: ComponentType.resistor,
                             isActive: false,
@@ -763,13 +769,15 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
                       ),
                     ),
                     Positioned(
-                      left: ledX - 47.5,
-                      top: ledY - 47.5,
+                      left: ledX - sock / 2,
+                      top: ledY - sock / 2,
                       child: SchematicBlueprintSocket<String>(
                         expectedData: 'led',
                         isFilled: _m3LedInserted,
                         showLabel: false,
                         rotation: _m3LedRotation,
+                        width: sock,
+                        height: sock,
                         onAccept: (_) => _insertComponent(
                           name: 'LED',
                           getInserted: () => _m3LedInserted,
@@ -784,7 +792,7 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
                         ),
                         onTap: () {},
                         symbolWidget: CustomPaint(
-                          size: const Size(55, 55),
+                          size: Size(comp, comp),
                           painter: CircuitSymbolPainter(
                             type: ComponentType.led,
                             isActive: ledActive,
@@ -793,7 +801,7 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
                           ),
                         ),
                         placeholderWidget: CustomPaint(
-                          size: const Size(48, 38),
+                          size: Size(comp * 0.85, comp * 0.85),
                           painter: CircuitSymbolPainter(
                             type: ComponentType.led,
                             isActive: false,
@@ -805,13 +813,15 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
                       ),
                     ),
                     Positioned(
-                      left: ammeterX - 47.5,
-                      top: ammeterY - 47.5,
+                      left: ammeterX - sock / 2,
+                      top: ammeterY - sock / 2,
                       child: SchematicBlueprintSocket<String>(
                         expectedData: 'multimeter_a',
                         isFilled: _m3AmperimeterInserted,
                         showLabel: false,
                         rotation: _m3AmperimeterRotation,
+                        width: sock,
+                        height: sock,
                         onAccept: (_) => _insertComponent(
                           name: 'Amperímetro',
                           getInserted: () => _m3AmperimeterInserted,
@@ -826,12 +836,12 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
                         ),
                         onTap: () {},
                         symbolWidget: MeterVectorWidget(
-                          size: 55,
+                          size: comp,
                           meterType: 'A',
                           accentColor: const Color(0xFFD97706),
                         ),
                         placeholderWidget: MeterVectorWidget(
-                          size: 48,
+                          size: comp * 0.85,
                           meterType: 'A',
                           accentColor: const Color(0xFF94A3B8),
                         ),
@@ -840,8 +850,8 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
                     ),
                     if (_m3AmperimeterInserted)
                       Positioned(
-                        left: ammeterX - 40,
-                        top: ammeterY + 50,
+                        left: ammeterX - 60,
+                        top: ammeterY + sock / 2 + 6,
                         child: MedeTestaMeterReading(
                           value: ammeterReading.toStringAsFixed(1),
                           unit: 'mA',

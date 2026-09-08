@@ -361,9 +361,9 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
                 final bulbX = w * 0.75;
                 final centerY = h * 0.5;
                 final voltmeterX = (batteryX + bulbX) / 2;
-                final voltmeterY = h * 0.12;
-                final sock = 95.0;
-                final comp = 55.0;
+                final voltmeterY = h * 0.15;
+                final sock = (w * 0.16).clamp(105.0, 135.0);
+                final comp = sock * 0.62;
 
                 final batteryPlacement = ComponentPlacement(
                   position: Offset(batteryX, centerY),
@@ -609,6 +609,9 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
                   ).toWirePath());
                 }
 
+                final sock = (w * 0.16).clamp(95.0, 125.0);
+                final comp = sock * 0.65;
+
                 return Stack(
                   children: [
                     if (wires.isNotEmpty)
@@ -620,13 +623,15 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
                         ),
                       ),
                     Positioned(
-                      left: batteryX - 47.5,
-                      top: centerY - 47.5,
+                      left: batteryX - sock / 2,
+                      top: centerY - sock / 2,
                       child: SchematicBlueprintSocket<String>(
                         expectedData: 'battery',
                         isFilled: _m2BatteryInserted,
                         showLabel: false,
                         rotation: _m2BatteryRotation,
+                        width: sock,
+                        height: sock,
                         onAccept: (_) => _insertComponent(
                           name: 'Bateria',
                           getInserted: () => _m2BatteryInserted,
@@ -641,7 +646,7 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
                         ),
                         onTap: () {},
                         symbolWidget: CustomPaint(
-                          size: const Size(55, 55),
+                          size: Size(comp, comp * 0.7),
                           painter: CircuitSymbolPainter(
                             type: ComponentType.battery,
                             color: const Color(0xFF0F172A),
@@ -649,7 +654,7 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
                           ),
                         ),
                         placeholderWidget: CustomPaint(
-                          size: const Size(48, 38),
+                          size: Size(comp * 0.85, comp * 0.6),
                           painter: CircuitSymbolPainter(
                             type: ComponentType.battery,
                             isActive: false,
@@ -661,13 +666,15 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
                       ),
                     ),
                     Positioned(
-                      left: bulbX - 47.5,
-                      top: centerY - 47.5,
+                      left: bulbX - sock / 2,
+                      top: centerY - sock / 2,
                       child: SchematicBlueprintSocket<String>(
                         expectedData: 'bulb',
                         isFilled: _m2BulbInserted,
                         showLabel: false,
                         rotation: _m2BulbRotation,
+                        width: sock,
+                        height: sock,
                         onAccept: (_) => _insertComponent(
                           name: 'Lâmpada',
                           getInserted: () => _m2BulbInserted,
@@ -682,7 +689,7 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
                         ),
                         onTap: () {},
                         symbolWidget: CustomPaint(
-                          size: const Size(55, 55),
+                          size: Size(comp, comp * 0.7),
                           painter: CircuitSymbolPainter(
                             type: ComponentType.bulb,
                             isActive: _m2BatteryInserted && _m2BulbInserted,
@@ -691,7 +698,7 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
                           ),
                         ),
                         placeholderWidget: CustomPaint(
-                          size: const Size(48, 38),
+                          size: Size(comp * 0.85, comp * 0.6),
                           painter: CircuitSymbolPainter(
                             type: ComponentType.bulb,
                             isActive: false,
@@ -703,13 +710,15 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
                       ),
                     ),
                     Positioned(
-                      left: voltmeterX - 47.5,
-                      top: voltmeterY - 47.5,
+                      left: voltmeterX - sock / 2,
+                      top: voltmeterY - sock / 2,
                       child: SchematicBlueprintSocket<String>(
                         expectedData: 'multimeter_v',
                         isFilled: _m2VoltmeterInserted,
                         showLabel: false,
                         rotation: _m2VoltmeterRotation,
+                        width: sock,
+                        height: sock,
                         onAccept: (_) => _insertComponent(
                           name: 'Voltímetro',
                           getInserted: () => _m2VoltmeterInserted,
@@ -724,12 +733,12 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
                         ),
                         onTap: () {},
                         symbolWidget: MeterVectorWidget(
-                          size: 55,
+                          size: comp,
                           meterType: 'V',
                           accentColor: const Color(0xFF0284C7),
                         ),
                         placeholderWidget: MeterVectorWidget(
-                          size: 48,
+                          size: comp * 0.85,
                           meterType: 'V',
                           accentColor: const Color(0xFF94A3B8),
                         ),
@@ -738,8 +747,8 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
                     ),
                     if (_m2VoltmeterInserted)
                       Positioned(
-                        left: voltmeterX - 40,
-                        top: voltmeterY + 50,
+                        left: voltmeterX - 45,
+                        top: voltmeterY + sock / 2 + 4,
                         child: MedeTestaMeterReading(
                           value: voltageReading.toStringAsFixed(1),
                           unit: 'V DC',
@@ -749,7 +758,7 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
                     if (_m2BatteryInserted && _m2BulbInserted)
                       Positioned(
                         left: (batteryX + bulbX) / 2 - 10,
-                        top: centerY - 50,
+                        top: centerY - 55,
                         child: MedeTestaProbeSlot(
                           isRed: true,
                           isConnected: _redProbeConnected,
