@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../core/ui_scale.dart';
 import '../../../models/circuit_action.dart';
 import '../../../models/first_step_component.dart';
 import '../../../models/stand_mission.dart';
@@ -327,14 +328,25 @@ class _LigaDesligaM1State extends State<LigaDesligaM1>
   }
 
   Widget _buildPhysicalCanvas() {
+    final scale = context.uiScale;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final double width = constraints.maxWidth;
-        const double height = 210.0;
+        final double height = constraints.maxHeight;
         final double centerY = height * 0.50;
+        final double compSize = scale.size(96, min: 80, max: 130);
+        final double halfComp = compSize / 2.0;
+
         final batteryPos = Offset(width * 0.18, centerY);
         final switchPos = Offset(width * 0.50, centerY);
         final lampPos = Offset(width * 0.82, centerY);
+
+        final double railOffset = scale.size(95, min: 70, max: 140);
+        final double bottomY = centerY + railOffset;
+        final double topY = centerY - railOffset;
+        final double leftX = batteryPos.dx - scale.size(65, min: 50, max: 100);
+        final double rightX = lampPos.dx + scale.size(65, min: 50, max: 100);
 
         final wires = <WirePath>[];
 
@@ -349,9 +361,7 @@ class _LigaDesligaM1State extends State<LigaDesligaM1>
                   rotation: _switchRotation,
                   type: ComponentType.switchComponent)
               .getTerminalPosition(0);
-          final leftX = batteryPos.dx - 70.0;
-          final leftOfSwitch = switchPos.dx - 65.0;
-          final bottomY = centerY + 65.0;
+          final leftOfSwitch = switchPos.dx - scale.size(60, min: 45, max: 90);
 
           final intermediate = (_batteryRotation % 360 == 270.0)
               ? [
@@ -375,7 +385,7 @@ class _LigaDesligaM1State extends State<LigaDesligaM1>
             terminalIndexB: 0,
             color: const Color(0xFFEF4444),
             isActive: _isClosed,
-            thickness: 4.5,
+            thickness: scale.size(5.5, min: 4.5, max: 8.0),
           ).toWirePath(intermediatePoints: intermediate));
         }
 
@@ -390,8 +400,8 @@ class _LigaDesligaM1State extends State<LigaDesligaM1>
                   rotation: _bulbRotation,
                   type: ComponentType.bulb)
               .getTerminalPosition(0);
-          final rightOfSwitch = switchPos.dx + 65.0;
-          final bottomYBulb = centerY + 60.0;
+          final rightOfSwitch = switchPos.dx + scale.size(60, min: 45, max: 90);
+          final bottomYBulb = centerY + (railOffset * 0.9);
 
           final intermediateOrange = [
             Offset(rightOfSwitch, switchTermB.dy),
@@ -412,7 +422,7 @@ class _LigaDesligaM1State extends State<LigaDesligaM1>
             terminalIndexB: 0,
             color: const Color(0xFFF97316),
             isActive: _isClosed,
-            thickness: 4.5,
+            thickness: scale.size(5.5, min: 4.5, max: 8.0),
           ).toWirePath(intermediatePoints: intermediateOrange));
         }
 
@@ -427,11 +437,7 @@ class _LigaDesligaM1State extends State<LigaDesligaM1>
                   rotation: _batteryRotation,
                   type: ComponentType.battery)
               .getTerminalPosition(1);
-          final rightX = lampPos.dx + 70.0;
-          final leftX = batteryPos.dx - 70.0;
-          final topY = centerY - 65.0;
-          final bottomYBulb = centerY + 60.0;
-          final bottomY = centerY + 65.0;
+          final bottomYBulb = centerY + (railOffset * 0.9);
 
           final intermediate = (_batteryRotation % 360 == 270.0)
               ? [
@@ -459,7 +465,7 @@ class _LigaDesligaM1State extends State<LigaDesligaM1>
             terminalIndexB: 1,
             color: const Color(0xFF2563EB),
             isActive: _isClosed,
-            thickness: 4.5,
+            thickness: scale.size(5.5, min: 4.5, max: 8.0),
           ).toWirePath(intermediatePoints: intermediate));
         }
 
@@ -477,8 +483,8 @@ class _LigaDesligaM1State extends State<LigaDesligaM1>
 
               // Bateria
               Positioned(
-                left: batteryPos.dx - 47.5,
-                top: batteryPos.dy - 47.5,
+                left: batteryPos.dx - halfComp,
+                top: batteryPos.dy - halfComp,
                 child: PhysicalBlueprintSocket<String>(
                   expectedData: 'battery',
                   isFilled: _batteryInserted,
@@ -504,7 +510,7 @@ class _LigaDesligaM1State extends State<LigaDesligaM1>
                     setRotation: (v) => _batteryRotation = v,
                   ),
                   symbolWidget: CustomPaint(
-                    size: const Size(80, 80),
+                    size: Size(compSize, compSize),
                     painter: ComponentPhysicalPainter(
                       type: ComponentType.battery,
                       isActive: true,
@@ -517,8 +523,8 @@ class _LigaDesligaM1State extends State<LigaDesligaM1>
 
               // Interruptor
               Positioned(
-                left: switchPos.dx - 47.5,
-                top: switchPos.dy - 47.5,
+                left: switchPos.dx - halfComp,
+                top: switchPos.dy - halfComp,
                 child: PhysicalBlueprintSocket<String>(
                   expectedData: 'switch',
                   isFilled: _switchInserted,
@@ -550,7 +556,7 @@ class _LigaDesligaM1State extends State<LigaDesligaM1>
                     }
                   },
                   symbolWidget: CustomPaint(
-                    size: const Size(80, 80),
+                    size: Size(compSize, compSize),
                     painter: ComponentPhysicalPainter(
                       type: ComponentType.switchComponent,
                       isActive: _switchClosed,
@@ -562,8 +568,8 @@ class _LigaDesligaM1State extends State<LigaDesligaM1>
 
               // Lâmpada
               Positioned(
-                left: lampPos.dx - 47.5,
-                top: lampPos.dy - 47.5,
+                left: lampPos.dx - halfComp,
+                top: lampPos.dy - halfComp,
                 child: PhysicalBlueprintSocket<String>(
                   expectedData: 'bulb',
                   isFilled: _bulbInserted,
@@ -589,7 +595,7 @@ class _LigaDesligaM1State extends State<LigaDesligaM1>
                     setRotation: (v) => _bulbRotation = v,
                   ),
                   symbolWidget: CustomPaint(
-                    size: const Size(80, 80),
+                    size: Size(compSize, compSize),
                     painter: ComponentPhysicalPainter(
                       type: ComponentType.bulb,
                       isActive: _isClosed,
@@ -609,7 +615,7 @@ class _LigaDesligaM1State extends State<LigaDesligaM1>
     return LayoutBuilder(
       builder: (context, constraints) {
         final double width = constraints.maxWidth;
-        const double height = 210.0;
+        final double height = constraints.maxHeight;
         final double batteryX = width * 0.18;
         final double lampX = width * 0.82;
         final double switchCenterX = width * 0.50;
@@ -653,7 +659,7 @@ class _LigaDesligaM1State extends State<LigaDesligaM1>
                   ),
                   onTap: () {},
                   symbolWidget: CustomPaint(
-                    size: const Size(54, 38),
+                    size: const Size(60, 44),
                     painter: CircuitSymbolPainter(
                       type: ComponentType.battery,
                       color: const Color(0xFF0F172A),
@@ -663,7 +669,7 @@ class _LigaDesligaM1State extends State<LigaDesligaM1>
                   placeholderWidget: Opacity(
                     opacity: 0.4,
                     child: CustomPaint(
-                      size: const Size(48, 34),
+                      size: const Size(54, 38),
                       painter: CircuitSymbolPainter(
                         type: ComponentType.battery,
                         color: const Color(0xFF94A3B8),
@@ -698,7 +704,7 @@ class _LigaDesligaM1State extends State<LigaDesligaM1>
                   ),
                   onTap: () {},
                   symbolWidget: CustomPaint(
-                    size: const Size(54, 38),
+                    size: const Size(60, 44),
                     painter: CircuitSymbolPainter(
                       type: ComponentType.bulb,
                       isActive: _isClosed,
@@ -710,7 +716,7 @@ class _LigaDesligaM1State extends State<LigaDesligaM1>
                   placeholderWidget: Opacity(
                     opacity: 0.4,
                     child: CustomPaint(
-                      size: const Size(48, 34),
+                      size: const Size(54, 38),
                       painter: CircuitSymbolPainter(
                         type: ComponentType.bulb,
                         color: const Color(0xFF94A3B8),
@@ -749,7 +755,7 @@ class _LigaDesligaM1State extends State<LigaDesligaM1>
                     }
                   },
                   symbolWidget: CustomPaint(
-                    size: const Size(54, 38),
+                    size: const Size(60, 44),
                     painter: CircuitSymbolPainter(
                       type: ComponentType.switchComponent,
                       isActive: _switchClosed,
@@ -760,7 +766,7 @@ class _LigaDesligaM1State extends State<LigaDesligaM1>
                   placeholderWidget: Opacity(
                     opacity: 0.4,
                     child: CustomPaint(
-                      size: const Size(48, 34),
+                      size: const Size(54, 38),
                       painter: CircuitSymbolPainter(
                         type: ComponentType.switchComponent,
                         color: const Color(0xFF94A3B8),

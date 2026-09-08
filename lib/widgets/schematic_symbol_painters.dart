@@ -544,7 +544,7 @@ class SchematicCircuitWirePainter extends CustomPainter {
 
     final centerY = size.height * 0.50;
     final topWireY = centerY;
-    final bottomWireY = centerY + 65.0;
+    final bottomWireY = (centerY + (size.height * 0.28)).clamp(centerY + 45.0, size.height - 10.0);
 
     // Path 1 (Positivo VCC - Vermelho): Bateria(+) -> Switch(A)
     final path1 = Path()
@@ -650,10 +650,11 @@ class SchematicCircuitWirePainterM3 extends CustomPainter {
     final lampX = size.width * 0.82;
     final switchCenterX = size.width * 0.50;
 
-    final centerY = 90.0;
-    final yRamo1 = 40.0;
-    final yRamo2 = 140.0;
-    final yBottom = 165.0;
+    final centerY = size.height * 0.50;
+    final deltaY = (size.height * 0.28).clamp(36.0, 80.0);
+    final yRamo1 = centerY - deltaY;
+    final yRamo2 = centerY + deltaY;
+    final yBottom = (centerY + deltaY * 1.5).clamp(yRamo2 + 25.0, size.height - 10.0);
 
     void drawWireSegment(Path path, Color activeColor, Color inactiveColor, bool isActive) {
       final color = isActive ? activeColor : inactiveColor;
@@ -781,9 +782,10 @@ class SchematicCircuitWirePainterM4 extends CustomPainter {
     final switchCenterX = size.width * 0.50;
 
     final centerY = size.height * 0.50;
-    final topParallelY = centerY - 55.0;
+    final deltaY = (size.height * 0.28).clamp(36.0, 80.0);
+    final topParallelY = centerY - deltaY;
     final mainBranchY = centerY;
-    final bottomWireY = centerY + 65.0;
+    final bottomWireY = (centerY + deltaY * 1.4).clamp(centerY + 50.0, size.height - 10.0);
 
     void drawWireSegment(Path path, Color activeColor, Color inactiveColor) {
       final color = isClosed ? activeColor : inactiveColor;

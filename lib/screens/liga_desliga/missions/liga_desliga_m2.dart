@@ -474,7 +474,7 @@ class _LigaDesligaM2State extends State<LigaDesligaM2>
         borderRadius: BorderRadius.circular(10),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
           decoration: BoxDecoration(
             color: backgroundColor,
             borderRadius: BorderRadius.circular(10),
@@ -486,13 +486,13 @@ class _LigaDesligaM2State extends State<LigaDesligaM2>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 16, color: textColor),
+              Icon(icon, size: 18, color: textColor),
               const SizedBox(width: 6),
               Flexible(
                 child: Text(
                   label,
                   style: GoogleFonts.rajdhani(
-                    fontSize: 11.5,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.bold,
                     color: textColor,
                   ),
@@ -513,10 +513,13 @@ class _LigaDesligaM2State extends State<LigaDesligaM2>
         final double width = constraints.maxWidth;
         final double height = constraints.maxHeight;
 
-        final double centerY = height * 0.44;
+        final double centerY = height * 0.50;
         final posBat = Offset(width * 0.18, centerY);
         final posSw = Offset(width * 0.50, centerY);
         final posBulb = Offset(width * 0.82, centerY);
+
+        final compSize = (width * 0.22).clamp(68.0, 92.0);
+        final halfComp = compSize / 2;
 
         final bool isCircWorking = _isRevealed && switchClosed;
 
@@ -538,7 +541,7 @@ class _LigaDesligaM2State extends State<LigaDesligaM2>
           terminalIndexB: 0,
           color: const Color(0xFFEF4444),
           isActive: isCircWorking,
-          thickness: 4.0,
+          thickness: 4.8,
         ).toWirePath());
 
         // 2. Fio Laranja (Intermediário): Chave (Terminal 1) -> Lâmpada (Terminal 0)
@@ -557,7 +560,7 @@ class _LigaDesligaM2State extends State<LigaDesligaM2>
           terminalIndexB: 0,
           color: const Color(0xFFF97316),
           isActive: isCircWorking,
-          thickness: 4.0,
+          thickness: 4.8,
         ).toWirePath());
 
         // 3. Fio Azul (-) Retorno: Lâmpada (Terminal 1) -> Bateria (-)
@@ -572,9 +575,9 @@ class _LigaDesligaM2State extends State<LigaDesligaM2>
           type: ComponentType.battery,
         ).getTerminalPosition(1);
 
-        final rightX = posBulb.dx + 26.0;
-        final leftX = posBat.dx - 26.0;
-        final bottomY = height * 0.86;
+        final rightX = posBulb.dx + 28.0;
+        final leftX = posBat.dx - 28.0;
+        final bottomY = height * 0.84;
 
         wires.add(DynamicWirePath.fromComponents(
           compA: ComponentPlacement(
@@ -591,7 +594,7 @@ class _LigaDesligaM2State extends State<LigaDesligaM2>
           terminalIndexB: 1,
           color: const Color(0xFF2563EB),
           isActive: isCircWorking,
-          thickness: 4.0,
+          thickness: 4.8,
         ).toWirePath(intermediatePoints: [
           Offset(rightX, termBulb.dy),
           Offset(rightX, bottomY),
@@ -612,10 +615,10 @@ class _LigaDesligaM2State extends State<LigaDesligaM2>
 
             // Bateria
             Positioned(
-              left: posBat.dx - 32,
-              top: posBat.dy - 32,
+              left: posBat.dx - halfComp,
+              top: posBat.dy - halfComp,
               child: CustomPaint(
-                size: const Size(64, 64),
+                size: Size(compSize, compSize),
                 painter: ComponentPhysicalPainter(
                   type: ComponentType.battery,
                   isActive: true,
@@ -627,10 +630,10 @@ class _LigaDesligaM2State extends State<LigaDesligaM2>
 
             // Chave SPST
             Positioned(
-              left: posSw.dx - 32,
-              top: posSw.dy - 32,
+              left: posSw.dx - halfComp,
+              top: posSw.dy - halfComp,
               child: CustomPaint(
-                size: const Size(64, 64),
+                size: Size(compSize, compSize),
                 painter: ComponentPhysicalPainter(
                   type: ComponentType.switchComponent,
                   isActive: switchClosed,
@@ -641,14 +644,14 @@ class _LigaDesligaM2State extends State<LigaDesligaM2>
 
             // Lâmpada
             Positioned(
-              left: posBulb.dx - 32,
-              top: posBulb.dy - 32,
+              left: posBulb.dx - halfComp,
+              top: posBulb.dy - halfComp,
               child: Stack(
                 alignment: Alignment.center,
                 clipBehavior: Clip.none,
                 children: [
                   CustomPaint(
-                    size: const Size(64, 64),
+                    size: Size(compSize, compSize),
                     painter: ComponentPhysicalPainter(
                       type: ComponentType.bulb,
                       isActive: isCircWorking,
@@ -693,10 +696,15 @@ class _LigaDesligaM2State extends State<LigaDesligaM2>
         final double width = constraints.maxWidth;
         final double height = constraints.maxHeight;
 
-        final double centerY = height * 0.44;
+        final double centerY = height * 0.50;
         final posBat = Offset(width * 0.18, centerY);
         final posSw = Offset(width * 0.50, centerY);
         final posBulb = Offset(width * 0.82, centerY);
+
+        final symW = (width * 0.20).clamp(52.0, 72.0);
+        final symH = symW * 0.75;
+        final halfW = symW / 2;
+        final halfH = symH / 2;
 
         final bool isCircWorking = _isRevealed && switchClosed;
 
@@ -717,7 +725,7 @@ class _LigaDesligaM2State extends State<LigaDesligaM2>
           terminalIndexB: 0,
           color: const Color(0xFF0284C7),
           isActive: isCircWorking,
-          thickness: 3.2,
+          thickness: 3.6,
         ).toWirePath());
 
         wires.add(DynamicWirePath.fromComponents(
@@ -735,7 +743,7 @@ class _LigaDesligaM2State extends State<LigaDesligaM2>
           terminalIndexB: 0,
           color: const Color(0xFF0284C7),
           isActive: isCircWorking,
-          thickness: 3.2,
+          thickness: 3.6,
         ).toWirePath());
 
         final termBulb = ComponentPlacement(
@@ -749,9 +757,9 @@ class _LigaDesligaM2State extends State<LigaDesligaM2>
           type: ComponentType.battery,
         ).getTerminalPosition(0);
 
-        final rightX = posBulb.dx + 26.0;
-        final leftX = posBat.dx - 26.0;
-        final bottomY = height * 0.86;
+        final rightX = posBulb.dx + 28.0;
+        final leftX = posBat.dx - 28.0;
+        final bottomY = height * 0.84;
 
         wires.add(DynamicWirePath.fromComponents(
           compA: ComponentPlacement(
@@ -768,7 +776,7 @@ class _LigaDesligaM2State extends State<LigaDesligaM2>
           terminalIndexB: 0,
           color: const Color(0xFF0284C7),
           isActive: isCircWorking,
-          thickness: 3.2,
+          thickness: 3.6,
         ).toWirePath(intermediatePoints: [
           Offset(rightX, termBulb.dy),
           Offset(rightX, bottomY),
@@ -788,49 +796,49 @@ class _LigaDesligaM2State extends State<LigaDesligaM2>
 
             // Símbolo Esquemático Bateria
             Positioned(
-              left: posBat.dx - 24,
-              top: posBat.dy - 18,
+              left: posBat.dx - halfW,
+              top: posBat.dy - halfH,
               child: CustomPaint(
-                size: const Size(48, 36),
+                size: Size(symW, symH),
                 painter: CircuitSymbolPainter(
                   type: ComponentType.battery,
                   color: const Color(0xFFE2E8F0),
-                  strokeWidth: 2.0,
+                  strokeWidth: 2.2,
                 ),
               ),
             ),
 
             // Símbolo Esquemático Chave
             Positioned(
-              left: posSw.dx - 24,
-              top: posSw.dy - 18,
+              left: posSw.dx - halfW,
+              top: posSw.dy - halfH,
               child: CustomPaint(
-                size: const Size(48, 36),
+                size: Size(symW, symH),
                 painter: CircuitSymbolPainter(
                   type: ComponentType.switchComponent,
                   isActive: switchClosed,
                   color: const Color(0xFFE2E8F0),
-                  strokeWidth: 2.0,
+                  strokeWidth: 2.2,
                 ),
               ),
             ),
 
             // Símbolo Esquemático Lâmpada
             Positioned(
-              left: posBulb.dx - 24,
-              top: posBulb.dy - 18,
+              left: posBulb.dx - halfW,
+              top: posBulb.dy - halfH,
               child: Stack(
                 alignment: Alignment.center,
                 clipBehavior: Clip.none,
                 children: [
                   CustomPaint(
-                    size: const Size(48, 36),
+                    size: Size(symW, symH),
                     painter: CircuitSymbolPainter(
                       type: ComponentType.bulb,
                       isActive: isCircWorking,
                       color: const Color(0xFFE2E8F0),
                       activeColor: const Color(0xFFFBBF24),
-                      strokeWidth: 2.0,
+                      strokeWidth: 2.2,
                     ),
                   ),
                   if (!_isRevealed)

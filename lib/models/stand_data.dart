@@ -55,7 +55,7 @@ class StandData {
 
   /// Lista oficial dos 12 estandes da Feira de Ciências.
   static List<StandData> get defaultStands => const [
-        // 01. Primeiros Passos (Tutorial) - Coluna 1 topo
+        // 01. Primeiros Passos (Tutorial) - Coluna 1 Topo
         StandData(
           id: 'primeiros_passos',
           number: 1,
@@ -63,13 +63,13 @@ class StandData {
           team: 'Equipe Tutorial',
           concept: 'Aprenda os conceitos fundamentais de circuitos e navegação',
           asset: 'assets/stands/estande_01.png',
-          relX: 0.15,
-          relY: 0.20,
+          relX: 0.12,
+          relY: 0.28,
           hasMissions: false,
           totalMissions: 0,
         ),
 
-        // 02. Acende Aí (Missão 1) - Coluna 1 meio
+        // 02. Acende Aí (Missão 1) - Coluna 1 Base
         StandData(
           id: 'acende_ai',
           number: 2,
@@ -77,12 +77,12 @@ class StandData {
           team: 'Equipe Luz',
           concept: 'Aprenda a conectar fonte, fios e lâmpada em um circuito fechado',
           asset: 'assets/stands/estande_01.png',
-          relX: 0.15,
-          relY: 0.50,
+          relX: 0.12,
+          relY: 0.72,
           totalMissions: 5,
         ),
 
-        // 03. Liga e Desliga (Missão 2) - Coluna 1 base
+        // 03. Liga e Desliga (Missão 2) - Coluna 2 Topo
         StandData(
           id: 'liga_desliga',
           number: 3,
@@ -90,12 +90,12 @@ class StandData {
           team: 'Equipe Controle',
           concept: 'Interruptor e estados do circuito',
           asset: 'assets/stands/estande_03.png',
-          relX: 0.15,
-          relY: 0.80,
+          relX: 0.26,
+          relY: 0.28,
           totalMissions: 5,
         ),
 
-        // 04. Ruas da Maquete (Missão 3) - Coluna 2 topo
+        // 04. Ruas da Maquete (Missão 3) - Coluna 2 Base
         StandData(
           id: 'ruas_maquete',
           number: 4,
@@ -103,12 +103,12 @@ class StandData {
           team: 'Equipe Bairro',
           concept: 'Série, paralelo e ramificações',
           asset: 'assets/stands/estande_02.png',
-          relX: 0.33,
-          relY: 0.32,
+          relX: 0.26,
+          relY: 0.72,
           totalMissions: 5,
         ),
 
-        // 05. Letreros de LED (Missão 4) - Coluna 2 base
+        // 05. Letreros de LED (Missão 4) - Coluna 3 Topo
         StandData(
           id: 'letreros_led',
           number: 5,
@@ -116,12 +116,12 @@ class StandData {
           team: 'Equipe Sinalização',
           concept: 'Polaridade, LED, diodo e resistor',
           asset: 'assets/stands/estande_05.png',
-          relX: 0.33,
-          relY: 0.68,
+          relX: 0.40,
+          relY: 0.28,
           totalMissions: 5,
         ),
 
-        // 06. Movimento em Miniatura (Missão 5) - Coluna 3 topo
+        // 06. Movimento em Miniatura (Missão 5) - Coluna 3 Base
         StandData(
           id: 'movimento',
           number: 6,
@@ -129,12 +129,12 @@ class StandData {
           team: 'Equipe Mecânica',
           concept: 'Motor CC e inversão de polaridade',
           asset: 'assets/stands/estande_04.png',
-          relX: 0.67,
-          relY: 0.32,
+          relX: 0.40,
+          relY: 0.72,
           totalMissions: 5,
         ),
 
-        // 07. Mede, Testa e Explica (Missão 6) - Coluna 3 base
+        // 07. Mede, Testa e Explica (Missão 6) - Coluna 4 Topo
         StandData(
           id: 'mede_testa',
           number: 7,
@@ -142,12 +142,12 @@ class StandData {
           team: 'Equipe Investigação',
           concept: 'Tensão, corrente e resistência',
           asset: 'assets/stands/estande_06.png',
-          relX: 0.67,
-          relY: 0.68,
+          relX: 0.60,
+          relY: 0.28,
           totalMissions: 5,
         ),
 
-        // 08. Circuito Seguro (Missão 7) - Coluna 4 topo
+        // 08. Circuito Seguro (Missão 7) - Coluna 4 Base
         StandData(
           id: 'circuito_seguro',
           number: 8,
@@ -155,64 +155,64 @@ class StandData {
           team: 'Equipe Segurança',
           concept: 'Curto, circuito aberto e fusível didático',
           asset: 'assets/stands/estande_07.png',
-          relX: 0.85,
-          relY: 0.20,
+          relX: 0.60,
+          relY: 0.72,
           totalMissions: 5,
         ),
 
-        // 09. Horta Monitorada (Missão 8) - Coluna 4 meio
+        // 09. Horta Monitorada (Missão 8) - Coluna 5 Topo
         StandData(
           id: 'horta_monitorada',
           number: 9,
           name: 'Horta Monitorada',
-          team: 'Equipe Ambiente',
-          concept: 'Potenciômetro, sensor e capacitor',
+          team: 'Equipe Bio-Tech',
+          concept: 'Sensores de umidade e LDR',
           asset: 'assets/stands/estande_08.png',
-          relX: 0.85,
-          relY: 0.50,
+          relX: 0.74,
+          relY: 0.28,
           totalMissions: 5,
         ),
 
-        // 10. Portão da Escola (Missão 9) - Coluna 4 base
+        // 10. Portão da Escola (Missão 9) - Coluna 5 Base
         StandData(
           id: 'portao_escola',
           number: 10,
           name: 'Portão da Escola',
           team: 'Equipe Automação',
-          concept: 'Relé, comando e carga',
+          concept: 'Lógica E / OU e relé',
           asset: 'assets/stands/estande_09.png',
-          relX: 0.85,
-          relY: 0.80,
+          relX: 0.74,
+          relY: 0.72,
           totalMissions: 5,
         ),
 
-        // 11. Praça da Maquete Coletiva (Missão 10 - topo centro)
+        // 11. Praça da Maquete Coletiva (Missão 10) - Coluna 6 Topo
         StandData(
           id: 'praca_maquete',
           number: 11,
           name: 'Praça da Maquete Coletiva',
-          team: 'Todas as equipes',
-          concept: 'Integração, diagnóstico e apresentação',
+          team: 'Equipe Urbana',
+          concept: 'Distribuição e consumo de energia',
           asset: 'assets/stands/estande_12.png',
-          relX: 0.50,
-          relY: 0.15,
+          relX: 0.88,
+          relY: 0.28,
           isMaqueteColetiva: true,
           totalMissions: 5,
         ),
 
-        // 12. Bancada Livre - Modo Livre 3D (base centro - Especial)
+        // 12. Bancada Livre (Sandbox) - Coluna 6 Base
         StandData(
           id: 'bancada_livre',
           number: 12,
           name: 'Bancada Livre',
-          team: 'Laboratório 3D',
-          concept: 'Simulação livre de circuitos elétricos',
+          team: 'Laboratório Aberto',
+          concept: 'Espaço livre para montagem e testes de circuitos 3D',
           asset: 'assets/stands/estande_11.png',
-          relX: 0.50,
-          relY: 0.85,
+          relX: 0.88,
+          relY: 0.72,
+          isBancadaLivre: true,
           hasMissions: false,
           totalMissions: 0,
-          isBancadaLivre: true,
         ),
       ];
 }

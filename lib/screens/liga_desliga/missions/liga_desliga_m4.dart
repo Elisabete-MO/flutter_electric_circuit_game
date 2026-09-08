@@ -347,7 +347,7 @@ class _LigaDesligaM4State extends State<LigaDesligaM4>
             ],
             color: const Color(0xFFEF4444),
             isActive: true,
-            thickness: 4.2,
+            thickness: 5.2,
           ));
 
           // Fio Superior do Desvio: Entrada na Chave (Âmbar)
@@ -361,7 +361,7 @@ class _LigaDesligaM4State extends State<LigaDesligaM4>
             ],
             color: const Color(0xFFF59E0B),
             isActive: _switchClosed,
-            thickness: 3.8,
+            thickness: 4.8,
           ));
 
           // Fio Superior do Desvio: Saída da Chave até a Lâmpada (Âmbar)
@@ -374,7 +374,7 @@ class _LigaDesligaM4State extends State<LigaDesligaM4>
             ],
             color: const Color(0xFFF59E0B),
             isActive: _switchClosed,
-            thickness: 3.8,
+            thickness: 4.8,
           ));
 
           // Retorno Comum (Azul)
@@ -390,7 +390,7 @@ class _LigaDesligaM4State extends State<LigaDesligaM4>
             ],
             color: const Color(0xFF2563EB),
             isActive: true,
-            thickness: 4.0,
+            thickness: 5.0,
           ));
         } else {
           // ESTADO 2: Chave em Série (Ramo Principal Corrigido)
@@ -417,7 +417,7 @@ class _LigaDesligaM4State extends State<LigaDesligaM4>
             ],
             color: const Color(0xFFEF4444),
             isActive: _switchClosed,
-            thickness: 4.2,
+            thickness: 5.2,
           ));
 
           // Fio Chave em Série -> Lâmpada (Verde Esmeralda)
@@ -430,7 +430,7 @@ class _LigaDesligaM4State extends State<LigaDesligaM4>
             ],
             color: const Color(0xFF10B981),
             isActive: _switchClosed,
-            thickness: 4.2,
+            thickness: 5.2,
           ));
 
           // Retorno Lâmpada -> Bateria (-) (Azul)
@@ -446,7 +446,7 @@ class _LigaDesligaM4State extends State<LigaDesligaM4>
             ],
             color: const Color(0xFF2563EB),
             isActive: _switchClosed,
-            thickness: 4.0,
+            thickness: 5.0,
           ));
         }
 
@@ -497,7 +497,7 @@ class _LigaDesligaM4State extends State<LigaDesligaM4>
         Positioned(
           left: position.dx - 100,
           width: 200,
-          top: position.dy - 58,
+          top: position.dy - 64,
           child: Center(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -521,8 +521,8 @@ class _LigaDesligaM4State extends State<LigaDesligaM4>
 
         // Componente Físico rigorosamente centralizado em `position`
         Positioned(
-          left: position.dx - 41.5,
-          top: position.dy - 34.0,
+          left: position.dx - 51.5,
+          top: position.dy - 42.0,
           child: Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
@@ -531,7 +531,7 @@ class _LigaDesligaM4State extends State<LigaDesligaM4>
               border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
             ),
             child: CustomPaint(
-              size: const Size(75, 60),
+              size: const Size(95, 76),
               painter: ComponentPhysicalPainter(
                 type: ComponentType.battery,
                 isActive: true,
@@ -557,7 +557,7 @@ class _LigaDesligaM4State extends State<LigaDesligaM4>
         Positioned(
           left: position.dx - 120,
           width: 240,
-          top: position.dy - 58,
+          top: position.dy - 64,
           child: Center(
             child: Container(
               padding:
@@ -626,15 +626,15 @@ class _LigaDesligaM4State extends State<LigaDesligaM4>
 
         // Componente Físico rigorosamente centralizado em `position`
         Positioned(
-          left: position.dx - 41.5,
-          top: position.dy - 34.0,
+          left: position.dx - 51.5,
+          top: position.dy - 42.0,
           child: Stack(
             alignment: Alignment.center,
             children: [
               if (isLit)
                 Container(
-                  width: 75,
-                  height: 60,
+                  width: 95,
+                  height: 76,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     boxShadow: [
@@ -659,7 +659,7 @@ class _LigaDesligaM4State extends State<LigaDesligaM4>
                   ),
                 ),
                 child: CustomPaint(
-                  size: const Size(75, 60),
+                  size: const Size(95, 76),
                   painter: ComponentPhysicalPainter(
                     type: ComponentType.bulb,
                     isActive: isLit,
@@ -676,7 +676,7 @@ class _LigaDesligaM4State extends State<LigaDesligaM4>
           Positioned(
             left: position.dx - 100,
             width: 200,
-            top: position.dy + 38,
+            top: position.dy + 42,
             child: Center(
               child: Container(
                 padding:
@@ -727,7 +727,7 @@ class _LigaDesligaM4State extends State<LigaDesligaM4>
     final badgeWidget = Positioned(
       left: position.dx - 160,
       width: 320,
-      top: position.dy - 58,
+      top: position.dy - 64,
       child: Center(
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
@@ -802,7 +802,7 @@ class _LigaDesligaM4State extends State<LigaDesligaM4>
               ),
             ),
             child: CustomPaint(
-              size: const Size(75, 60),
+              size: const Size(95, 76),
               painter: ComponentPhysicalPainter(
                 type: ComponentType.switchComponent,
                 isActive: _switchClosed,
@@ -815,15 +815,15 @@ class _LigaDesligaM4State extends State<LigaDesligaM4>
     );
 
     final componentWidget = Positioned(
-      left: position.dx - 41.5,
-      top: position.dy - 34.0,
+      left: position.dx - 51.5,
+      top: position.dy - 42.0,
       child: isDraggable
           ? Draggable<String>(
               data: 'switch',
               feedback: Material(
                 color: Colors.transparent,
                 child: CustomPaint(
-                  size: const Size(75, 60),
+                  size: const Size(95, 76),
                   painter: ComponentPhysicalPainter(
                     type: ComponentType.switchComponent,
                     isActive: _switchClosed,
@@ -842,8 +842,8 @@ class _LigaDesligaM4State extends State<LigaDesligaM4>
 
   Widget _buildSeriesTargetSlot({required Offset position}) {
     return Positioned(
-      left: position.dx - 85,
-      top: position.dy - 32,
+      left: position.dx - 95,
+      top: position.dy - 38,
       child: DragTarget<String>(
         onAcceptWithDetails: (_) => _moveToSeries(),
         builder: (context, candidateData, rejectedData) {
@@ -854,7 +854,7 @@ class _LigaDesligaM4State extends State<LigaDesligaM4>
             borderRadius: BorderRadius.circular(12),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              width: 170,
+              width: 190,
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               decoration: BoxDecoration(
                 color: isHovering
@@ -891,7 +891,7 @@ class _LigaDesligaM4State extends State<LigaDesligaM4>
                           style: GoogleFonts.rajdhani(
                             color: const Color(0xFF00E5FF),
                             fontWeight: FontWeight.bold,
-                            fontSize: 10.5,
+                            fontSize: 11,
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -905,7 +905,7 @@ class _LigaDesligaM4State extends State<LigaDesligaM4>
                     style: GoogleFonts.rajdhani(
                       color: Colors.white70,
                       fontWeight: FontWeight.bold,
-                      fontSize: 9.5,
+                      fontSize: 10,
                       height: 1.15,
                     ),
                   ),
@@ -960,11 +960,13 @@ class _LigaDesligaM4State extends State<LigaDesligaM4>
     return LayoutBuilder(
       builder: (context, constraints) {
         final double width = constraints.maxWidth;
-        const double height = 180.0;
+        final double height = constraints.maxHeight;
         final double batteryX = width * 0.18;
         final double lampX = width * 0.82;
         final double switchCenterX = width * 0.50;
-        final double centerY = 90.0;
+        final double centerY = height * 0.50;
+        final double deltaY = (height * 0.28).clamp(36.0, 80.0);
+        final double topParallelY = centerY - deltaY;
 
         return Center(
           child: SizedBox(
@@ -984,10 +986,10 @@ class _LigaDesligaM4State extends State<LigaDesligaM4>
 
                 // Bateria
                 Positioned(
-                  left: batteryX - 27,
-                  top: centerY - 19,
+                  left: batteryX - 32,
+                  top: centerY - 23,
                   child: CustomPaint(
-                    size: const Size(54, 38),
+                    size: const Size(64, 46),
                     painter: CircuitSymbolPainter(
                       type: ComponentType.battery,
                       color: const Color(0xFFE2E8F0),
@@ -996,18 +998,18 @@ class _LigaDesligaM4State extends State<LigaDesligaM4>
                   ),
                 ),
                 Positioned(
-                  left: batteryX - 28,
-                  top: centerY - 42,
+                  left: batteryX - 32,
+                  top: centerY - 46,
                   child:
                       _buildSchematicBadge('FONTE 4.5V', const Color(0xFF38BDF8)),
                 ),
 
                 // Lâmpada
                 Positioned(
-                  left: lampX - 27,
-                  top: centerY - 19,
+                  left: lampX - 32,
+                  top: centerY - 23,
                   child: CustomPaint(
-                    size: const Size(54, 38),
+                    size: const Size(64, 46),
                     painter: CircuitSymbolPainter(
                       type: ComponentType.bulb,
                       isActive: _isLampLit,
@@ -1018,8 +1020,8 @@ class _LigaDesligaM4State extends State<LigaDesligaM4>
                   ),
                 ),
                 Positioned(
-                  left: lampX - 28,
-                  top: centerY - 42,
+                  left: lampX - 32,
+                  top: centerY - 46,
                   child:
                       _buildSchematicBadge('LÂMPADA', const Color(0xFFF59E0B)),
                 ),
@@ -1027,14 +1029,14 @@ class _LigaDesligaM4State extends State<LigaDesligaM4>
                 // Chave no Ramo Inútil (Topo)
                 if (!_switchInMainBranch)
                   Positioned(
-                    left: switchCenterX - 27,
-                    top: 35.0 - 19,
+                    left: switchCenterX - 32,
+                    top: topParallelY - 23,
                     child: MouseRegion(
                       cursor: SystemMouseCursors.click,
                       child: GestureDetector(
                         onTap: _toggleSwitch,
                         child: CustomPaint(
-                          size: const Size(54, 38),
+                          size: const Size(64, 46),
                           painter: CircuitSymbolPainter(
                             type: ComponentType.switchComponent,
                             isActive: _switchClosed,
@@ -1048,7 +1050,7 @@ class _LigaDesligaM4State extends State<LigaDesligaM4>
                 if (!_switchInMainBranch)
                   Positioned(
                     left: switchCenterX - 40,
-                    top: 35.0 - 42,
+                    top: topParallelY - 46,
                     child: _buildSchematicBadge(
                         'DESVIO INÚTIL', const Color(0xFFD97706)),
                   ),
@@ -1056,14 +1058,14 @@ class _LigaDesligaM4State extends State<LigaDesligaM4>
                 // Ponto em Série (Centro)
                 if (_switchInMainBranch)
                   Positioned(
-                    left: switchCenterX - 27,
-                    top: centerY - 19,
+                    left: switchCenterX - 32,
+                    top: centerY - 23,
                     child: MouseRegion(
                       cursor: SystemMouseCursors.click,
                       child: GestureDetector(
                         onTap: _toggleSwitch,
                         child: CustomPaint(
-                          size: const Size(54, 38),
+                          size: const Size(64, 46),
                           painter: CircuitSymbolPainter(
                             type: ComponentType.switchComponent,
                             isActive: _switchClosed,
@@ -1077,7 +1079,7 @@ class _LigaDesligaM4State extends State<LigaDesligaM4>
                 if (_switchInMainBranch)
                   Positioned(
                     left: switchCenterX - 38,
-                    top: centerY - 42,
+                    top: centerY - 46,
                     child: _buildSchematicBadge(
                         'CHAVE EM SÉRIE', const Color(0xFF10B981)),
                   ),

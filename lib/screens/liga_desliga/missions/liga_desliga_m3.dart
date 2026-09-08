@@ -373,7 +373,7 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
           ],
           color: const Color(0xFFEF4444),
           isActive: _switch1Closed,
-          thickness: 4.2,
+          thickness: 5.2,
         ));
 
         // Fio Ramo 1: Chave 1 -> Luminária A (Vermelho)
@@ -386,7 +386,7 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
           ],
           color: const Color(0xFFEF4444),
           isActive: _switch1Closed,
-          thickness: 4.2,
+          thickness: 5.2,
         ));
 
         // Fio Ramo 2: Bateria (+) -> Chave 2 (Âmbar)
@@ -400,7 +400,7 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
           ],
           color: const Color(0xFFF59E0B),
           isActive: _switch2Closed,
-          thickness: 4.2,
+          thickness: 5.2,
         ));
 
         // Fio Ramo 2: Chave 2 -> Luminária B (Âmbar)
@@ -413,7 +413,7 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
           ],
           color: const Color(0xFFF59E0B),
           isActive: _switch2Closed,
-          thickness: 4.2,
+          thickness: 5.2,
         ));
 
         // Retorno Comum: Luminária 1 -> Bateria (-) (Azul)
@@ -429,7 +429,7 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
           ],
           color: const Color(0xFF2563EB),
           isActive: _switch1Closed,
-          thickness: 4.0,
+          thickness: 5.0,
         ));
 
         // Retorno Comum: Luminária 2 -> Bateria (-) (Azul)
@@ -445,7 +445,7 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
           ],
           color: const Color(0xFF2563EB),
           isActive: _switch2Closed,
-          thickness: 4.0,
+          thickness: 5.0,
         ));
 
         return Stack(
@@ -508,7 +508,7 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
         Positioned(
           left: position.dx - 100,
           width: 200,
-          top: position.dy - 58,
+          top: position.dy - 64,
           child: Center(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -532,8 +532,8 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
 
         // Componente Físico rigorosamente centralizado em `position`
         Positioned(
-          left: position.dx - 41.5,
-          top: position.dy - 34.0,
+          left: position.dx - 51.5,
+          top: position.dy - 42.0,
           child: Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
@@ -542,7 +542,7 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
               border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
             ),
             child: CustomPaint(
-              size: const Size(75, 60),
+              size: const Size(95, 76),
               painter: ComponentPhysicalPainter(
                 type: ComponentType.battery,
                 isActive: true,
@@ -570,7 +570,7 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
         Positioned(
           left: position.dx - 100,
           width: 200,
-          top: position.dy - 58,
+          top: position.dy - 64,
           child: Center(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
@@ -641,8 +641,8 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
 
         // Componente Físico rigorosamente centralizado em `position`
         Positioned(
-          left: position.dx - 41.5,
-          top: position.dy - 34.0,
+          left: position.dx - 51.5,
+          top: position.dy - 42.0,
           child: MouseRegion(
             cursor: SystemMouseCursors.click,
             child: GestureDetector(
@@ -663,7 +663,7 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
                     ),
                   ),
                   child: CustomPaint(
-                    size: const Size(75, 60),
+                    size: const Size(95, 76),
                     painter: ComponentPhysicalPainter(
                       type: ComponentType.switchComponent,
                       isActive: isClosed,
@@ -691,7 +691,7 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
         Positioned(
           left: position.dx - 100,
           width: 200,
-          top: position.dy - 58,
+          top: position.dy - 64,
           child: Center(
             child: Container(
               padding:
@@ -763,15 +763,15 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
 
         // Componente Físico rigorosamente centralizado em `position`
         Positioned(
-          left: position.dx - 41.5,
-          top: position.dy - 34.0,
+          left: position.dx - 51.5,
+          top: position.dy - 42.0,
           child: Stack(
             alignment: Alignment.center,
             children: [
               if (isLit)
                 Container(
-                  width: 75,
-                  height: 60,
+                  width: 95,
+                  height: 76,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     boxShadow: [
@@ -796,7 +796,7 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
                   ),
                 ),
                 child: CustomPaint(
-                  size: const Size(75, 60),
+                  size: const Size(95, 76),
                   painter: ComponentPhysicalPainter(
                     type: ComponentType.bulb,
                     isActive: isLit,
@@ -815,11 +815,14 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
     return LayoutBuilder(
       builder: (context, constraints) {
         final double width = constraints.maxWidth;
-        const double height = 180.0;
+        final double height = constraints.maxHeight;
         final double batteryX = width * 0.18;
         final double lampX = width * 0.82;
         final double switchCenterX = width * 0.50;
-        final double centerY = 90.0;
+        final double centerY = height * 0.50;
+        final double deltaY = (height * 0.28).clamp(36.0, 80.0);
+        final double topY = centerY - deltaY;
+        final double bottomY = centerY + deltaY;
 
         return Center(
           child: SizedBox(
@@ -839,10 +842,10 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
 
                 // Bateria
                 Positioned(
-                  left: batteryX - 27,
-                  top: centerY - 19,
+                  left: batteryX - 32,
+                  top: centerY - 23,
                   child: CustomPaint(
-                    size: const Size(54, 38),
+                    size: const Size(64, 46),
                     painter: CircuitSymbolPainter(
                       type: ComponentType.battery,
                       color: const Color(0xFFE2E8F0),
@@ -851,21 +854,21 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
                   ),
                 ),
                 Positioned(
-                  left: batteryX - 28,
-                  top: centerY - 42,
+                  left: batteryX - 32,
+                  top: centerY - 46,
                   child: _buildSchematicBadge('FONTE 9V', const Color(0xFF38BDF8)),
                 ),
 
                 // Chave 1
                 Positioned(
-                  left: switchCenterX - 27,
-                  top: 40.0 - 19,
+                  left: switchCenterX - 32,
+                  top: topY - 23,
                   child: MouseRegion(
                     cursor: SystemMouseCursors.click,
                     child: GestureDetector(
                       onTap: _toggleSwitch1,
                       child: CustomPaint(
-                        size: const Size(54, 38),
+                        size: const Size(64, 46),
                         painter: CircuitSymbolPainter(
                           type: ComponentType.switchComponent,
                           isActive: _switch1Closed,
@@ -877,21 +880,21 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
                   ),
                 ),
                 Positioned(
-                  left: switchCenterX - 26,
-                  top: 40.0 - 42,
+                  left: switchCenterX - 28,
+                  top: topY - 46,
                   child: _buildSchematicBadge('CHAVE 1', const Color(0xFF0284C7)),
                 ),
 
                 // Chave 2
                 Positioned(
-                  left: switchCenterX - 27,
-                  top: 140.0 - 19,
+                  left: switchCenterX - 32,
+                  top: bottomY - 23,
                   child: MouseRegion(
                     cursor: SystemMouseCursors.click,
                     child: GestureDetector(
                       onTap: _toggleSwitch2,
                       child: CustomPaint(
-                        size: const Size(54, 38),
+                        size: const Size(64, 46),
                         painter: CircuitSymbolPainter(
                           type: ComponentType.switchComponent,
                           isActive: _switch2Closed,
@@ -903,17 +906,17 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
                   ),
                 ),
                 Positioned(
-                  left: switchCenterX - 26,
-                  top: 140.0 - 42,
+                  left: switchCenterX - 28,
+                  top: bottomY - 46,
                   child: _buildSchematicBadge('CHAVE 2', const Color(0xFF059669)),
                 ),
 
                 // Lâmpada A
                 Positioned(
-                  left: lampX - 27,
-                  top: 40.0 - 19,
+                  left: lampX - 32,
+                  top: topY - 23,
                   child: CustomPaint(
-                    size: const Size(54, 38),
+                    size: const Size(64, 46),
                     painter: CircuitSymbolPainter(
                       type: ComponentType.bulb,
                       isActive: _switch1Closed,
@@ -924,17 +927,17 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
                   ),
                 ),
                 Positioned(
-                  left: lampX - 36,
-                  top: 40.0 - 42,
+                  left: lampX - 40,
+                  top: topY - 46,
                   child: _buildSchematicBadge('LUMINÁRIA A', const Color(0xFFF59E0B)),
                 ),
 
                 // Lâmpada B
                 Positioned(
-                  left: lampX - 27,
-                  top: 140.0 - 19,
+                  left: lampX - 32,
+                  top: bottomY - 23,
                   child: CustomPaint(
-                    size: const Size(54, 38),
+                    size: const Size(64, 46),
                     painter: CircuitSymbolPainter(
                       type: ComponentType.bulb,
                       isActive: _switch2Closed,
@@ -945,8 +948,8 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
                   ),
                 ),
                 Positioned(
-                  left: lampX - 36,
-                  top: 140.0 - 42,
+                  left: lampX - 40,
+                  top: bottomY - 46,
                   child: _buildSchematicBadge('LUMINÁRIA B', const Color(0xFFF59E0B)),
                 ),
               ],

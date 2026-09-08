@@ -23,22 +23,23 @@ class StandPosition {
 }
 
 /// Mapeamento preciso das posições dos 12 estandes no cenário expandido de 4096 × 1152 px.
+/// Configuração de 2 mesas por coluna (Topo Y: 340, Base Y: 812) para máxima visibilidade e simetria.
 const Map<int, StandPosition> _standCanvasPositions = {
-  // Lado Esquerdo (0 a 2048 px)
-  1: StandPosition(380, 270),   // Primeiros Passos (Tutorial) - Topo esquerdo
-  2: StandPosition(380, 576),   // Acende Aí - Meio esquerdo
-  3: StandPosition(380, 880),   // Liga e Desliga - Base esquerda
-  4: StandPosition(1060, 360),  // Ruas da Maquete - Topo meio-esquerdo
-  5: StandPosition(1060, 792),  // Letreros de LED - Base meio-esquerdo
-  6: StandPosition(1620, 360),  // Movimento em Miniatura - Topo próximo à junção
+  // Lado Esquerdo da Quadra (0 a 2048 px) - 3 Colunas x 2 Linhas
+  1: StandPosition(420, 340),   // Col 1 - Topo: Primeiros Passos (Tutorial)
+  2: StandPosition(420, 812),   // Col 1 - Base: Acende Aí
+  3: StandPosition(980, 340),   // Col 2 - Topo: Liga e Desliga
+  4: StandPosition(980, 812),   // Col 2 - Base: Ruas da Maquete
+  5: StandPosition(1540, 340),  // Col 3 - Topo: Letreros de LED
+  6: StandPosition(1540, 812),  // Col 3 - Base: Movimento em Miniatura
 
-  // Lado Direito (2048 a 4096 px)
-  7: StandPosition(2476, 792),  // Mede, Testa e Explica - Base próximo à junção
-  8: StandPosition(3040, 270),  // Circuito Seguro - Topo meio-direito
-  9: StandPosition(3040, 576),  // Horta Monitorada - Meio meio-direito
-  10: StandPosition(3040, 880), // Portão da Escola - Base meio-direito
-  11: StandPosition(3580, 360), // Praça da Maquete Coletiva - Topo direito
-  12: StandPosition(3780, 780), // Bancada Livre (3D Lab) - Final lado direito
+  // Lado Direito da Quadra (2048 a 4096 px) - 3 Colunas x 2 Linhas
+  7: StandPosition(2556, 340),  // Col 4 - Topo: Mede, Testa e Explica
+  8: StandPosition(2556, 812),  // Col 4 - Base: Circuito Seguro
+  9: StandPosition(3116, 340),  // Col 5 - Topo: Horta Monitorada
+  10: StandPosition(3116, 812), // Col 5 - Base: Portão da Escola
+  11: StandPosition(3676, 340), // Col 6 - Topo: Praça da Maquete Coletiva
+  12: StandPosition(3676, 812), // Col 6 - Base: Bancada Livre (3D Lab)
 };
 
 /// Versão Experimental do Mapa da Feira de Ciências com Navegação Horizontal Contínua.
@@ -113,10 +114,10 @@ class _ExperimentalHorizontalMapState
         final sortedStands = List<StandData>.from(widget.stands)
           ..sort((a, b) => a.number.compareTo(b.number));
 
-        // Tamanhos dos elementos no canvas
-        final double baseTableW = 320.0 * scale;
-        final double bancadaLivreW = 410.0 * scale;
-        final double logoSize = 380.0 * scale;
+        // Tamanhos ampliados dos elementos no canvas
+        final double baseTableW = 440.0 * scale;
+        final double bancadaLivreW = 540.0 * scale;
+        final double logoSize = 420.0 * scale;
 
         return Stack(
           children: [

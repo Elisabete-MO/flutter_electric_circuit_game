@@ -405,12 +405,18 @@ class _LigaDesligaM5State extends State<LigaDesligaM5>
     return LayoutBuilder(
       builder: (context, constraints) {
         final double width = constraints.maxWidth;
-        const double height = 210.0;
+        final double height = constraints.maxHeight;
         final double centerY = height * 0.50;
+        final double deltaY = (height * 0.28).clamp(45.0, 90.0);
+        final double bottomY = centerY + deltaY;
+        final double topY = centerY - deltaY;
 
         final batteryPos = Offset(width * 0.18, centerY);
         final pushButtonPos = Offset(width * 0.50, centerY);
         final lampPos = Offset(width * 0.82, centerY);
+
+        final double socketSize = (width * 0.16).clamp(80.0, 110.0);
+        final double halfSocket = socketSize / 2;
 
         final wires = <WirePath>[];
 
@@ -427,7 +433,6 @@ class _LigaDesligaM5State extends State<LigaDesligaM5>
           ).getTerminalPosition(0);
           final leftX = batteryPos.dx - 70.0;
           final leftOfButton = pushButtonPos.dx - 65.0;
-          final bottomY = centerY + 65.0;
 
           final intermediateRed = [
             Offset(leftX, batTermA.dy),
@@ -451,7 +456,7 @@ class _LigaDesligaM5State extends State<LigaDesligaM5>
             terminalIndexB: 0,
             color: const Color(0xFFEF4444),
             isActive: _isLit,
-            thickness: 4.5,
+            thickness: 5.2,
           ).toWirePath(intermediatePoints: intermediateRed));
         }
 
@@ -467,12 +472,11 @@ class _LigaDesligaM5State extends State<LigaDesligaM5>
             type: ComponentType.bulb,
           ).getTerminalPosition(0);
           final rightOfButton = pushButtonPos.dx + 65.0;
-          final bottomYBulb = centerY + 60.0;
 
           final intermediateOrange = [
             Offset(rightOfButton, pushButtonTermB.dy),
-            Offset(rightOfButton, bottomYBulb),
-            Offset(lampTermA.dx, bottomYBulb),
+            Offset(rightOfButton, bottomY),
+            Offset(lampTermA.dx, bottomY),
           ];
 
           wires.add(DynamicWirePath.fromComponents(
@@ -490,7 +494,7 @@ class _LigaDesligaM5State extends State<LigaDesligaM5>
             terminalIndexB: 0,
             color: const Color(0xFFF97316),
             isActive: _isLit,
-            thickness: 4.5,
+            thickness: 5.2,
           ).toWirePath(intermediatePoints: intermediateOrange));
         }
 
@@ -507,12 +511,10 @@ class _LigaDesligaM5State extends State<LigaDesligaM5>
           ).getTerminalPosition(1);
           final rightX = lampPos.dx + 70.0;
           final leftX = batteryPos.dx - 70.0;
-          final topY = centerY - 65.0;
-          final bottomYBulb = centerY + 60.0;
 
           final intermediateReturn = [
-            Offset(lampTerm.dx, bottomYBulb),
-            Offset(rightX, bottomYBulb),
+            Offset(lampTerm.dx, bottomY),
+            Offset(rightX, bottomY),
             Offset(rightX, topY),
             Offset(leftX, topY),
             Offset(leftX, batTerm.dy),
@@ -533,136 +535,130 @@ class _LigaDesligaM5State extends State<LigaDesligaM5>
             terminalIndexB: 1,
             color: const Color(0xFF2563EB),
             isActive: _isLit,
-            thickness: 4.5,
+            thickness: 5.0,
           ).toWirePath(intermediatePoints: intermediateReturn));
         }
 
-        return Container(
-          height: height,
-          decoration: const BoxDecoration(
-            color: Colors.transparent,
-          ),
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: RealisticWireWidget(
-                  wires: wires,
-                  animationValue: _currentFlowController.value,
-                  showElectrons: _isLit,
-                ),
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: RealisticWireWidget(
+                wires: wires,
+                animationValue: _currentFlowController.value,
+                showElectrons: _isLit,
               ),
+            ),
 
-              // Socket Bateria
-              Positioned(
-                left: batteryPos.dx - 47.5,
-                top: batteryPos.dy - 47.5,
-                child: PhysicalBlueprintSocket<String>(
-                  expectedData: 'battery',
-                  isFilled: _batteryInserted,
-                  showLabel: false,
-                  rotation: _batteryRotation,
-                  onAccept: (_) => _insertComponent(
-                    name: 'Bateria M5',
-                    getInserted: () => _batteryInserted,
-                    setInserted: (v) => _batteryInserted = v,
-                    getRotation: () => _batteryRotation,
-                    setRotation: (v) => _batteryRotation = v,
-                  ),
-                  onRotate: () => _rotateComponent(
-                    name: 'Bateria M5',
-                    getRotation: () => _batteryRotation,
-                    setRotation: (v) => _batteryRotation = v,
-                  ),
-                  onTap: () {},
-                  symbolWidget: CustomPaint(
-                    size: const Size(80, 80),
-                    painter: ComponentPhysicalPainter(
-                      type: ComponentType.battery,
-                      isActive: true,
-                      isDarkMode: false,
-                      value: 4.5,
-                    ),
+            // Socket Bateria
+            Positioned(
+              left: batteryPos.dx - halfSocket,
+              top: batteryPos.dy - halfSocket,
+              child: PhysicalBlueprintSocket<String>(
+                expectedData: 'battery',
+                isFilled: _batteryInserted,
+                showLabel: false,
+                rotation: _batteryRotation,
+                onAccept: (_) => _insertComponent(
+                  name: 'Bateria M5',
+                  getInserted: () => _batteryInserted,
+                  setInserted: (v) => _batteryInserted = v,
+                  getRotation: () => _batteryRotation,
+                  setRotation: (v) => _batteryRotation = v,
+                ),
+                onRotate: () => _rotateComponent(
+                  name: 'Bateria M5',
+                  getRotation: () => _batteryRotation,
+                  setRotation: (v) => _batteryRotation = v,
+                ),
+                onTap: () {},
+                symbolWidget: CustomPaint(
+                  size: Size(socketSize * 0.85, socketSize * 0.85),
+                  painter: ComponentPhysicalPainter(
+                    type: ComponentType.battery,
+                    isActive: true,
+                    isDarkMode: false,
+                    value: 4.5,
                   ),
                 ),
               ),
+            ),
 
-              // Socket Push-Button
-              Positioned(
-                left: pushButtonPos.dx - 47.5,
-                top: pushButtonPos.dy - 47.5,
-                child: PhysicalBlueprintSocket<String>(
-                  expectedData: 'push_button',
-                  isFilled: _pushButtonInserted,
-                  showLabel: false,
-                  rotation: _pushButtonRotation,
-                  onAccept: (_) => _insertComponent(
-                    name: 'Botão M5',
-                    getInserted: () => _pushButtonInserted,
-                    setInserted: (v) => _pushButtonInserted = v,
-                    getRotation: () => _pushButtonRotation,
-                    setRotation: (v) => _pushButtonRotation = v,
-                  ),
-                  onRotate: () => _rotateComponent(
-                    name: 'Botão M5',
-                    getRotation: () => _pushButtonRotation,
-                    setRotation: (v) => _pushButtonRotation = v,
-                  ),
-                  onTap: () {
-                    if (_pushButtonInserted) {
-                      final prev = _pushButtonPressed;
-                      _undoRedoController.execute(ToggleBoolAction(
-                        description: 'Pressionar Botão M5',
-                        onApply: () => setState(() {
-                          _pushButtonPressed = !prev;
-                          _testedHoldAndRelease = true;
-                        }),
-                        onUndo: () => setState(() {
-                          _pushButtonPressed = prev;
-                        }),
-                      ));
-                    }
-                  },
-                  symbolWidget: PushButtonVectorWidget(
-                    size: 65,
-                    isPressed: _pushButtonPressed,
-                  ),
+            // Socket Push-Button
+            Positioned(
+              left: pushButtonPos.dx - halfSocket,
+              top: pushButtonPos.dy - halfSocket,
+              child: PhysicalBlueprintSocket<String>(
+                expectedData: 'push_button',
+                isFilled: _pushButtonInserted,
+                showLabel: false,
+                rotation: _pushButtonRotation,
+                onAccept: (_) => _insertComponent(
+                  name: 'Botão M5',
+                  getInserted: () => _pushButtonInserted,
+                  setInserted: (v) => _pushButtonInserted = v,
+                  getRotation: () => _pushButtonRotation,
+                  setRotation: (v) => _pushButtonRotation = v,
+                ),
+                onRotate: () => _rotateComponent(
+                  name: 'Botão M5',
+                  getRotation: () => _pushButtonRotation,
+                  setRotation: (v) => _pushButtonRotation = v,
+                ),
+                onTap: () {
+                  if (_pushButtonInserted) {
+                    final prev = _pushButtonPressed;
+                    _undoRedoController.execute(ToggleBoolAction(
+                      description: 'Pressionar Botão M5',
+                      onApply: () => setState(() {
+                        _pushButtonPressed = !prev;
+                        _testedHoldAndRelease = true;
+                      }),
+                      onUndo: () => setState(() {
+                        _pushButtonPressed = prev;
+                      }),
+                    ));
+                  }
+                },
+                symbolWidget: PushButtonVectorWidget(
+                  size: socketSize * 0.70,
+                  isPressed: _pushButtonPressed,
                 ),
               ),
+            ),
 
-              // Socket Lâmpada
-              Positioned(
-                left: lampPos.dx - 47.5,
-                top: lampPos.dy - 47.5,
-                child: PhysicalBlueprintSocket<String>(
-                  expectedData: 'bulb',
-                  isFilled: _lampInserted,
-                  showLabel: false,
-                  rotation: _lampRotation,
-                  onAccept: (_) => _insertComponent(
-                    name: 'Lâmpada M5',
-                    getInserted: () => _lampInserted,
-                    setInserted: (v) => _lampInserted = v,
-                    getRotation: () => _lampRotation,
-                    setRotation: (v) => _lampRotation = v,
-                  ),
-                  onRotate: () => _rotateComponent(
-                    name: 'Lâmpada M5',
-                    getRotation: () => _lampRotation,
-                    setRotation: (v) => _lampRotation = v,
-                  ),
-                  onTap: () {},
-                  symbolWidget: CustomPaint(
-                    size: const Size(80, 80),
-                    painter: ComponentPhysicalPainter(
-                      type: ComponentType.bulb,
-                      isActive: _isLit,
-                      isDarkMode: false,
-                    ),
+            // Socket Lâmpada
+            Positioned(
+              left: lampPos.dx - halfSocket,
+              top: lampPos.dy - halfSocket,
+              child: PhysicalBlueprintSocket<String>(
+                expectedData: 'bulb',
+                isFilled: _lampInserted,
+                showLabel: false,
+                rotation: _lampRotation,
+                onAccept: (_) => _insertComponent(
+                  name: 'Lâmpada M5',
+                  getInserted: () => _lampInserted,
+                  setInserted: (v) => _lampInserted = v,
+                  getRotation: () => _lampRotation,
+                  setRotation: (v) => _lampRotation = v,
+                ),
+                onRotate: () => _rotateComponent(
+                  name: 'Lâmpada M5',
+                  getRotation: () => _lampRotation,
+                  setRotation: (v) => _lampRotation = v,
+                ),
+                onTap: () {},
+                symbolWidget: CustomPaint(
+                  size: Size(socketSize * 0.85, socketSize * 0.85),
+                  painter: ComponentPhysicalPainter(
+                    type: ComponentType.bulb,
+                    isActive: _isLit,
+                    isDarkMode: false,
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         );
       },
     );
@@ -672,117 +668,114 @@ class _LigaDesligaM5State extends State<LigaDesligaM5>
     return LayoutBuilder(
       builder: (context, constraints) {
         final double width = constraints.maxWidth;
-        const double height = 270.0;
+        final double height = constraints.maxHeight;
         final double batteryX = width * 0.18;
         final double lampX = width * 0.82;
         final double switchCenterX = width * 0.50;
         final double centerY = height * 0.50;
 
-        return Container(
-          height: height,
-          decoration: const BoxDecoration(
-            color: Colors.transparent,
-          ),
-          child: Stack(
-            children: [
-              CustomPaint(
-                size: Size(width, height),
-                painter: SchematicCircuitWirePainter(
-                  isClosed: _isLit,
-                  animationValue: _currentFlowController.value,
-                  switchInserted: _pushButtonInserted,
-                  wireColor: const Color(0xFF1E293B),
-                ),
-              ),
+        final double cardSize = (width * 0.16).clamp(75.0, 105.0);
+        final double halfCard = cardSize / 2;
 
-              // Bateria em Card
-              Positioned(
-                left: batteryX - 47.5,
-                top: centerY - 47.5,
-                child: SchematicComponentCard(
-                  label: '',
-                  showLabel: false,
-                  symbolWidget: CustomPaint(
-                    size: const Size(54, 38),
-                    painter: CircuitSymbolPainter(
-                      type: ComponentType.battery,
-                      color: const Color(0xFF0F172A),
-                      strokeWidth: 2.2,
-                    ),
-                  ),
-                ),
+        return Stack(
+          children: [
+            CustomPaint(
+              size: Size(width, height),
+              painter: SchematicCircuitWirePainter(
+                isClosed: _isLit,
+                animationValue: _currentFlowController.value,
+                switchInserted: _pushButtonInserted,
+                wireColor: const Color(0xFF1E293B),
               ),
+            ),
 
-              // Lâmpada em Card
-              Positioned(
-                left: lampX - 47.5,
-                top: centerY - 47.5,
-                child: SchematicComponentCard(
-                  label: '',
-                  showLabel: false,
-                  isActive: _isLit,
-                  symbolWidget: CustomPaint(
-                    size: const Size(54, 38),
-                    painter: CircuitSymbolPainter(
-                      type: ComponentType.bulb,
-                      isActive: _isLit,
-                      color: const Color(0xFF0F172A),
-                      activeColor: const Color(0xFFD97706),
-                      strokeWidth: 2.2,
-                    ),
-                  ),
-                ),
-              ),
-
-              // Soquete do Push-Button
-              Positioned(
-                left: switchCenterX - 47.5,
-                top: centerY - 47.5,
-                child: SchematicBlueprintSocket<String>(
-                  expectedData: 'push_button',
-                  isFilled: _pushButtonInserted,
-                  showLabel: false,
-                  onAccept: (_) => _insertComponent(
-                    name: 'Botão M5',
-                    getInserted: () => _pushButtonInserted,
-                    setInserted: (v) => _pushButtonInserted = v,
-                    getRotation: () => _pushButtonRotation,
-                    setRotation: (v) => _pushButtonRotation = v,
-                  ),
-                  onTap: () {
-                    if (_pushButtonInserted) {
-                      final prev = _pushButtonPressed;
-                      _undoRedoController.execute(ToggleBoolAction(
-                        description: 'Pressionar Botão M5',
-                        onApply: () => setState(() {
-                          _pushButtonPressed = !prev;
-                          _testedHoldAndRelease = true;
-                        }),
-                        onUndo: () => setState(() {
-                          _pushButtonPressed = prev;
-                        }),
-                      ));
-                    }
-                  },
-                  symbolWidget: SchematicSwitchWidget(
-                    size: 50,
-                    isPushButton: true,
-                    isClosed: _pushButtonPressed,
+            // Bateria em Card
+            Positioned(
+              left: batteryX - halfCard,
+              top: centerY - halfCard,
+              child: SchematicComponentCard(
+                label: '',
+                showLabel: false,
+                symbolWidget: CustomPaint(
+                  size: Size(cardSize * 0.65, cardSize * 0.48),
+                  painter: CircuitSymbolPainter(
+                    type: ComponentType.battery,
                     color: const Color(0xFF0F172A),
+                    strokeWidth: 2.2,
                   ),
-                  placeholderWidget: const Opacity(
-                    opacity: 0.4,
-                    child: SchematicSwitchWidget(
-                      size: 45,
-                      isPushButton: true,
-                      color: Color(0xFF94A3B8),
-                    ),
-                  ),
-                  label: '',
                 ),
               ),
-            ],
-          ),
+            ),
+
+            // Lâmpada em Card
+            Positioned(
+              left: lampX - halfCard,
+              top: centerY - halfCard,
+              child: SchematicComponentCard(
+                label: '',
+                showLabel: false,
+                isActive: _isLit,
+                symbolWidget: CustomPaint(
+                  size: Size(cardSize * 0.65, cardSize * 0.48),
+                  painter: CircuitSymbolPainter(
+                    type: ComponentType.bulb,
+                    isActive: _isLit,
+                    color: const Color(0xFF0F172A),
+                    activeColor: const Color(0xFFD97706),
+                    strokeWidth: 2.2,
+                  ),
+                ),
+              ),
+            ),
+
+            // Soquete do Push-Button
+            Positioned(
+              left: switchCenterX - halfCard,
+              top: centerY - halfCard,
+              child: SchematicBlueprintSocket<String>(
+                expectedData: 'push_button',
+                isFilled: _pushButtonInserted,
+                showLabel: false,
+                onAccept: (_) => _insertComponent(
+                  name: 'Botão M5',
+                  getInserted: () => _pushButtonInserted,
+                  setInserted: (v) => _pushButtonInserted = v,
+                  getRotation: () => _pushButtonRotation,
+                  setRotation: (v) => _pushButtonRotation = v,
+                ),
+                onTap: () {
+                  if (_pushButtonInserted) {
+                    final prev = _pushButtonPressed;
+                    _undoRedoController.execute(ToggleBoolAction(
+                      description: 'Pressionar Botão M5',
+                      onApply: () => setState(() {
+                        _pushButtonPressed = !prev;
+                        _testedHoldAndRelease = true;
+                      }),
+                      onUndo: () => setState(() {
+                        _pushButtonPressed = prev;
+                      }),
+                    ));
+                  }
+                },
+                symbolWidget: SchematicSwitchWidget(
+                  size: cardSize * 0.55,
+                  isPushButton: true,
+                  isClosed: _pushButtonPressed,
+                  color: const Color(0xFF0F172A),
+                ),
+                placeholderWidget: Opacity(
+                  opacity: 0.4,
+                  child: SchematicSwitchWidget(
+                    size: cardSize * 0.50,
+                    isPushButton: true,
+                    color: const Color(0xFF94A3B8),
+                  ),
+                ),
+                label: '',
+              ),
+            ),
+          ],
         );
       },
     );
