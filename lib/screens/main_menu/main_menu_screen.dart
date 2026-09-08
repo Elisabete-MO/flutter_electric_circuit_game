@@ -63,22 +63,22 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
                         ),
                         child: ConstrainedBox(
                           constraints: BoxConstraints(
-                            maxWidth: scale.size(440, min: 360, max: 780),
+                            maxWidth: scale.size(540, min: 380, max: 860),
                           ),
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(scale.size(20)),
+                            borderRadius: BorderRadius.circular(scale.size(22)),
                             child: BackdropFilter(
                               filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
                               child: Container(
                                 padding: scale.insetsSymmetric(
-                                  horizontal: 20,
-                                  vertical: 18,
+                                  horizontal: 24,
+                                  vertical: 22,
                                 ),
                                 decoration: BoxDecoration(
                                   color: const Color(
                                     0x99021F18,
                                   ), // Glassmorphism escuro elegante
-                                  borderRadius: BorderRadius.circular(scale.size(20)),
+                                  borderRadius: BorderRadius.circular(scale.size(22)),
                                   border: Border.all(
                                     color: const Color(
                                       0xFF10B981,
@@ -111,7 +111,7 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
                                           context,
                                         ).pushNamed(Routes.home),
                                       ),
-                                      SizedBox(height: scale.spacing(10)),
+                                      SizedBox(height: scale.spacing(12)),
                                     ],
 
                                     // Opção 2: ENTRAR NA FEIRA (Professora Nuri)
@@ -127,7 +127,7 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
                                       ).pushNamed(Routes.intro),
                                     ),
 
-                                    SizedBox(height: scale.spacing(14)),
+                                    SizedBox(height: scale.spacing(16)),
 
                                     // Divisor Elegante: MODOS DE JOGO
                                     Row(
@@ -142,16 +142,16 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
                                         ),
                                         Padding(
                                           padding: scale.insetsSymmetric(
-                                            horizontal: 10,
+                                            horizontal: 12,
                                           ),
                                           child: Text(
                                             'MODOS DE JOGO',
                                             style: GoogleFonts.rajdhani(
                                               color: Colors.white.withValues(
-                                                alpha: 0.5,
+                                                alpha: 0.55,
                                               ),
                                               fontWeight: FontWeight.bold,
-                                              fontSize: scale.font(11),
+                                              fontSize: scale.font(12.5),
                                               letterSpacing: 1.4,
                                             ),
                                           ),
@@ -167,7 +167,7 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
                                       ],
                                     ),
 
-                                    SizedBox(height: scale.spacing(12)),
+                                    SizedBox(height: scale.spacing(14)),
 
                                     // Opção 3: BANCADA LIVRE - Borda Ciano
                                     _buildMinimalButton(
@@ -182,7 +182,7 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
                                       ).pushNamed(Routes.sandbox),
                                     ),
 
-                                    SizedBox(height: scale.spacing(10)),
+                                    SizedBox(height: scale.spacing(12)),
 
                                     // Opção 4: MAPA DA FEIRA DE CIÊNCIAS - Borda Esmeralda
                                     if (!hasProgress) ...[
@@ -197,7 +197,7 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
                                           context,
                                         ).pushNamed(Routes.home),
                                       ),
-                                      SizedBox(height: scale.spacing(10)),
+                                      SizedBox(height: scale.spacing(12)),
                                     ],
 
                                     // Opção 5: PRIMEIROS PASSOS & CONCEITOS - Borda Âmbar
@@ -225,12 +225,12 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
 
                 // Rodapé Limpo
                 Padding(
-                  padding: scale.insetsOnly(bottom: 12, top: 4),
+                  padding: scale.insetsOnly(bottom: 14, top: 4),
                   child: Text(
                     'EletroLab v1.2.0 • Laboratório Virtual de Circuitos Elétricos',
                     style: GoogleFonts.outfit(
                       color: const Color(0xFF022C22),
-                      fontSize: scale.font(12),
+                      fontSize: scale.font(13.5),
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.2,
                     ),
@@ -261,7 +261,7 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
           IconButton(
             onPressed: () => Navigator.of(context).pushNamed(Routes.settings),
             icon: Container(
-              padding: scale.insetsAll(8),
+              padding: scale.insetsAll(10),
               decoration: BoxDecoration(
                 color: const Color(0xCC04281E),
                 shape: BoxShape.circle,
@@ -272,7 +272,7 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
               child: Icon(
                 Icons.settings_rounded,
                 color: Colors.white70,
-                size: scale.icon(20),
+                size: scale.icon(22),
               ),
             ),
             tooltip: 'Configurações',
@@ -297,15 +297,15 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(scale.size(14)),
+        borderRadius: BorderRadius.circular(scale.size(16)),
         child: Container(
           width: double.infinity,
-          padding: scale.insetsSymmetric(horizontal: 16, vertical: 11),
+          padding: scale.insetsSymmetric(horizontal: 20, vertical: 15),
           decoration: BoxDecoration(
             color: isHighlighted
                 ? const Color(0xFF059669)
                 : const Color(0x77032E23),
-            borderRadius: BorderRadius.circular(scale.size(14)),
+            borderRadius: BorderRadius.circular(scale.size(16)),
             border: Border.all(
               color: isHighlighted
                   ? const Color(0xFF34D399)
@@ -330,20 +330,20 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
                 style: GoogleFonts.outfit(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
-                  fontSize: scale.font(isHighlighted ? 14.5 : 13.5),
+                  fontSize: scale.font(isHighlighted ? 17.5 : 16.0),
                   letterSpacing: 0.3,
                 ),
               ),
-              SizedBox(height: scale.spacing(2)),
+              SizedBox(height: scale.spacing(4)),
               Text(
                 subtitle,
                 style: GoogleFonts.outfit(
                   color: isHighlighted
                       ? const Color(0xFFD1FAE5)
-                      : Colors.white.withValues(alpha: 0.65),
-                  fontSize: scale.font(11.5),
+                      : Colors.white.withValues(alpha: 0.70),
+                  fontSize: scale.font(13.2),
                   fontWeight: FontWeight.w400,
-                  height: 1.2,
+                  height: 1.25,
                 ),
               ),
             ],

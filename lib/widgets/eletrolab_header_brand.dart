@@ -22,10 +22,10 @@ class EletroLabHeaderBrand extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scale = context.uiScale;
-    final double baseCircle = compact ? 30.0 : 36.0;
-    final double baseIcon = compact ? 18.0 : 22.0;
-    final double baseTitleFont = compact ? 17.0 : 20.0;
-    final double baseSubFont = compact ? 10.0 : 11.5;
+    final double baseCircle = compact ? 34.0 : 44.0;
+    final double baseIcon = compact ? 20.0 : 26.0;
+    final double baseTitleFont = compact ? 18.0 : 23.0;
+    final double baseSubFont = compact ? 11.0 : 13.0;
 
     final double circleSize = scale.size(baseCircle);
     final double iconSize = scale.icon(baseIcon);
@@ -33,17 +33,17 @@ class EletroLabHeaderBrand extends StatelessWidget {
     final double subtitleFontSize = scale.font(baseSubFont);
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(scale.size(24)),
+      borderRadius: BorderRadius.circular(scale.size(28)),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
           padding: scale.insetsSymmetric(
-            horizontal: compact ? 10 : 14,
-            vertical: compact ? 4 : 6,
+            horizontal: compact ? 12 : 18,
+            vertical: compact ? 6 : 8,
           ),
           decoration: BoxDecoration(
             color: const Color(0xAA03241B), // Cápsula glassmorphic verde esmeralda
-            borderRadius: BorderRadius.circular(scale.size(24)),
+            borderRadius: BorderRadius.circular(scale.size(28)),
             border: Border.all(
               color: const Color(0xFF10B981).withValues(alpha: 0.35),
               width: 1.2,

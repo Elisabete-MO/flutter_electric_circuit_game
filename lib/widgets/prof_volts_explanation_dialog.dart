@@ -37,23 +37,23 @@ class _ProfVoltsExplanationDialogState
       elevation: 0,
       insetPadding: scale.insetsSymmetric(horizontal: 24, vertical: 32),
       child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: scale.dialogWidth(480)),
+        constraints: BoxConstraints(maxWidth: scale.dialogWidth(540)),
         child: GlassContainer(
           borderRadius: scale.size(24),
           accentColor: accentColor,
           opacity: 0.92,
-          padding: scale.insetsAll(24),
+          padding: scale.insetsAll(26),
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 ProfVoltsFullBody(
                   emotion: ProfVoltsEmotion.happy,
-                  size: scale.size(130),
+                  size: scale.size(145),
                 ),
                 SizedBox(height: scale.spacing(14)),
                 Container(
-                  padding: scale.insetsSymmetric(horizontal: 12, vertical: 6),
+                  padding: scale.insetsSymmetric(horizontal: 14, vertical: 7),
                   decoration: BoxDecoration(
                     color: accentColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(scale.size(8)),
@@ -65,7 +65,7 @@ class _ProfVoltsExplanationDialogState
                     style: GoogleFonts.rajdhani(
                       fontWeight: FontWeight.bold,
                       color: accentColor,
-                      fontSize: scale.font(14),
+                      fontSize: scale.font(15),
                       letterSpacing: 1.5,
                     ),
                   ),
@@ -75,8 +75,8 @@ class _ProfVoltsExplanationDialogState
                   widget.question,
                   style: GoogleFonts.outfit(
                     color: Colors.white,
-                    fontSize: scale.font(15),
-                    height: 1.4,
+                    fontSize: scale.font(16.5),
+                    height: 1.45,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -84,14 +84,14 @@ class _ProfVoltsExplanationDialogState
                 ...widget.options.map((opt) {
                   final isSelected = _selected == opt;
                   return Padding(
-                    padding: EdgeInsets.only(bottom: scale.spacing(8)),
+                    padding: EdgeInsets.only(bottom: scale.spacing(10)),
                     child: InkWell(
                       borderRadius: BorderRadius.circular(scale.size(12)),
                       onTap: () => setState(() => _selected = opt),
                       child: Container(
                         width: double.infinity,
                         padding: scale.insetsSymmetric(
-                            horizontal: 14, vertical: 12),
+                            horizontal: 16, vertical: 14),
                         decoration: BoxDecoration(
                           color: isSelected
                               ? accentColor.withValues(alpha: 0.15)
@@ -111,7 +111,7 @@ class _ProfVoltsExplanationDialogState
                               color: isSelected
                                   ? accentColor
                                   : Colors.white38,
-                              size: scale.icon(20),
+                              size: scale.icon(22),
                             ),
                             SizedBox(width: scale.spacing(12)),
                             Expanded(
@@ -121,7 +121,7 @@ class _ProfVoltsExplanationDialogState
                                   color: isSelected
                                       ? Colors.white
                                       : Colors.white70,
-                                  fontSize: scale.font(14),
+                                  fontSize: scale.font(15.5),
                                   fontWeight: isSelected
                                       ? FontWeight.w600
                                       : FontWeight.normal,
@@ -134,10 +134,10 @@ class _ProfVoltsExplanationDialogState
                     ),
                   );
                 }),
-                SizedBox(height: scale.spacing(16)),
+                SizedBox(height: scale.spacing(20)),
                 SizedBox(
                   width: double.infinity,
-                  height: scale.size(48),
+                  height: scale.size(52),
                   child: FilledButton.icon(
                     onPressed: _selected == null
                         ? null

@@ -22,7 +22,7 @@ class StandInfoCard extends StatelessWidget {
 
     return Container(
       constraints: BoxConstraints(
-        maxWidth: scale.size(320, min: 280, max: 620),
+        maxWidth: scale.size(410, min: 320, max: 680),
       ),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -30,7 +30,7 @@ class StandInfoCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(scale.size(16)),
+        borderRadius: BorderRadius.circular(scale.size(18)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.65),
@@ -46,7 +46,7 @@ class StandInfoCard extends StatelessWidget {
         ],
         border: Border.all(
           color: const Color(0xFF10B981),
-          width: 1.2,
+          width: 1.4,
         ),
       ),
       child: Column(
@@ -57,9 +57,9 @@ class StandInfoCard extends StatelessWidget {
           Stack(
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(scale.size(15))),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(scale.size(17))),
                 child: SizedBox(
-                  height: scale.size(120, min: 100, max: 240),
+                  height: scale.size(155, min: 120, max: 280),
                   width: double.infinity,
                   child: Stack(
                     fit: StackFit.expand,
@@ -94,11 +94,11 @@ class StandInfoCard extends StatelessWidget {
                 top: scale.spacing(10),
                 left: scale.spacing(10),
                 child: Container(
-                  padding: scale.insetsSymmetric(horizontal: 8, vertical: 4),
+                  padding: scale.insetsSymmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF021612).withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(scale.size(6)),
-                    border: Border.all(color: const Color(0xFF10B981), width: 1.0),
+                    color: const Color(0xFF021612).withValues(alpha: 0.92),
+                    borderRadius: BorderRadius.circular(scale.size(8)),
+                    border: Border.all(color: const Color(0xFF10B981), width: 1.2),
                     boxShadow: const [
                       BoxShadow(color: Colors.black45, blurRadius: 4),
                     ],
@@ -108,8 +108,8 @@ class StandInfoCard extends StatelessWidget {
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w900,
-                      fontSize: scale.font(11),
-                      letterSpacing: 0.5,
+                      fontSize: scale.font(12.5),
+                      letterSpacing: 0.6,
                     ),
                   ),
                 ),
@@ -121,17 +121,17 @@ class StandInfoCard extends StatelessWidget {
                 right: scale.spacing(10),
                 child: InkWell(
                   onTap: onClose,
-                  borderRadius: BorderRadius.circular(scale.size(16)),
+                  borderRadius: BorderRadius.circular(scale.size(18)),
                   child: Container(
-                    padding: scale.insetsAll(5),
+                    padding: scale.insetsAll(6),
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.6),
+                      color: Colors.black.withValues(alpha: 0.65),
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white30, width: 0.8),
+                      border: Border.all(color: Colors.white38, width: 0.9),
                     ),
                     child: Icon(
                       Icons.close_rounded,
-                      size: scale.icon(16),
+                      size: scale.icon(18),
                       color: Colors.white,
                     ),
                   ),
@@ -142,7 +142,7 @@ class StandInfoCard extends StatelessWidget {
 
           // 2. Body Details
           Padding(
-            padding: scale.insetsAll(14.0),
+            padding: scale.insetsAll(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -152,42 +152,42 @@ class StandInfoCard extends StatelessWidget {
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w900,
-                    fontSize: scale.font(17.0),
+                    fontSize: scale.font(20.0),
                     letterSpacing: -0.2,
                   ),
                 ),
-                SizedBox(height: scale.spacing(2)),
+                SizedBox(height: scale.spacing(3)),
                 Text(
                   stand.team,
                   style: TextStyle(
                     color: const Color(0xFF34D399),
                     fontWeight: FontWeight.w700,
-                    fontSize: scale.font(12.0),
+                    fontSize: scale.font(13.5),
                   ),
                 ),
-                SizedBox(height: scale.spacing(10)),
+                SizedBox(height: scale.spacing(12)),
 
                 // Concept Description Box
                 Container(
                   width: double.infinity,
-                  padding: scale.insetsAll(10),
+                  padding: scale.insetsAll(12),
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(scale.size(10)),
+                    color: Colors.black.withValues(alpha: 0.35),
+                    borderRadius: BorderRadius.circular(scale.size(12)),
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.08),
+                      color: Colors.white.withValues(alpha: 0.10),
                     ),
                   ),
                   child: Text(
                     stand.concept,
                     style: TextStyle(
                       color: const Color(0xFFE2E8F0),
-                      fontSize: scale.font(12.0),
-                      height: 1.35,
+                      fontSize: scale.font(14.0),
+                      height: 1.45,
                     ),
                   ),
                 ),
-                SizedBox(height: scale.spacing(12)),
+                SizedBox(height: scale.spacing(14)),
 
                 // Mission Progress Header
                 Row(
@@ -202,7 +202,7 @@ class StandInfoCard extends StatelessWidget {
                       style: TextStyle(
                         color: const Color(0xFF94A3B8),
                         fontWeight: FontWeight.w700,
-                        fontSize: scale.font(11.5),
+                        fontSize: scale.font(13.0),
                       ),
                     ),
                     if (stand.hasMissions)
@@ -211,12 +211,12 @@ class StandInfoCard extends StatelessWidget {
                         style: TextStyle(
                           color: const Color(0xFF34D399),
                           fontWeight: FontWeight.w800,
-                          fontSize: scale.font(11.5),
+                          fontSize: scale.font(13.0),
                         ),
                       ),
                   ],
                 ),
-                SizedBox(height: scale.spacing(6)),
+                SizedBox(height: scale.spacing(8)),
 
                 // 5 Circles Progress Indicator Bar
                 if (stand.hasMissions) ...[
@@ -224,10 +224,10 @@ class StandInfoCard extends StatelessWidget {
                     children: List.generate(stand.totalMissions, (index) {
                       final isFilled = index < stand.completedMissions;
                       return Padding(
-                        padding: EdgeInsets.only(right: scale.spacing(6.0)),
+                        padding: EdgeInsets.only(right: scale.spacing(7.0)),
                         child: Container(
-                          width: scale.size(14),
-                          height: scale.size(14),
+                          width: scale.size(17),
+                          height: scale.size(17),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: isFilled
@@ -243,7 +243,7 @@ class StandInfoCard extends StatelessWidget {
                           child: isFilled
                               ? Icon(
                                   Icons.check_rounded,
-                                  size: scale.icon(9),
+                                  size: scale.icon(11),
                                   color: Colors.white,
                                 )
                               : null,
@@ -251,9 +251,9 @@ class StandInfoCard extends StatelessWidget {
                       );
                     }),
                   ),
-                  SizedBox(height: scale.spacing(14)),
+                  SizedBox(height: scale.spacing(16)),
                 ] else ...[
-                  SizedBox(height: scale.spacing(10)),
+                  SizedBox(height: scale.spacing(12)),
                 ],
 
                 // Action Button
@@ -265,13 +265,13 @@ class StandInfoCard extends StatelessWidget {
                       backgroundColor: const Color(0xFF10B981),
                       foregroundColor: const Color(0xFF022C22),
                       elevation: 4,
-                      padding: scale.insetsSymmetric(vertical: 12),
+                      padding: scale.insetsSymmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(scale.size(10)),
+                        borderRadius: BorderRadius.circular(scale.size(12)),
                       ),
                       textStyle: TextStyle(
                         fontWeight: FontWeight.w900,
-                        fontSize: scale.font(13.5),
+                        fontSize: scale.font(16.0),
                         letterSpacing: 0.3,
                       ),
                     ),
@@ -281,7 +281,7 @@ class StandInfoCard extends StatelessWidget {
                           : (stand.number == 1
                               ? Icons.school_rounded
                               : Icons.play_arrow_rounded),
-                      size: scale.icon(19),
+                      size: scale.icon(22),
                     ),
                     label: Text(
                       stand.isBancadaLivre

@@ -35,12 +35,12 @@ class ProfVoltsFeedbackDialog extends StatelessWidget {
       elevation: 0,
       insetPadding: scale.insetsSymmetric(horizontal: 24, vertical: 32),
       child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: scale.dialogWidth(460)),
+        constraints: BoxConstraints(maxWidth: scale.dialogWidth(520)),
         child: GlassContainer(
           borderRadius: scale.size(24),
           accentColor: accentColor,
           opacity: isDark ? 0.8 : 0.9,
-          padding: scale.insetsAll(24),
+          padding: scale.insetsAll(26),
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -48,13 +48,13 @@ class ProfVoltsFeedbackDialog extends StatelessWidget {
                 // 1. Mascote Corpo Inteiro
                 ProfVoltsFullBody(
                   emotion: isCorrect ? ProfVoltsEmotion.happy : ProfVoltsEmotion.sad,
-                  size: scale.size(150),
+                  size: scale.size(160),
                 ),
                 SizedBox(height: scale.spacing(16)),
                 
                 // 2. Título HUD Cyber
                 Container(
-                  padding: scale.insetsSymmetric(horizontal: 12, vertical: 6),
+                  padding: scale.insetsSymmetric(horizontal: 14, vertical: 7),
                   decoration: BoxDecoration(
                     color: accentColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(scale.size(8)),
@@ -67,7 +67,7 @@ class ProfVoltsFeedbackDialog extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                       color: accentColor,
                       letterSpacing: 1.5,
-                      fontSize: scale.font(16),
+                      fontSize: scale.font(17),
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -78,8 +78,8 @@ class ProfVoltsFeedbackDialog extends StatelessWidget {
                 Text(
                   message,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    height: 1.4,
-                    fontSize: scale.font(15),
+                    height: 1.45,
+                    fontSize: scale.font(16.5),
                     fontFamily: GoogleFonts.outfit().fontFamily,
                   ),
                   textAlign: TextAlign.center,
@@ -89,7 +89,7 @@ class ProfVoltsFeedbackDialog extends StatelessWidget {
                 // 4. Botão de Ação Cyberpunk
                 SizedBox(
                   width: double.infinity,
-                  height: scale.size(48),
+                  height: scale.size(52),
                   child: FilledButton.icon(
                     onPressed: onAction,
                     style: FilledButton.styleFrom(

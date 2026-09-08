@@ -36,23 +36,23 @@ class _ProfVoltsPredictionDialogState extends State<ProfVoltsPredictionDialog> {
       elevation: 0,
       insetPadding: scale.insetsSymmetric(horizontal: 24, vertical: 32),
       child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: scale.dialogWidth(480)),
+        constraints: BoxConstraints(maxWidth: scale.dialogWidth(540)),
         child: GlassContainer(
           borderRadius: scale.size(24),
           accentColor: accentColor,
           opacity: 0.92,
-          padding: scale.insetsAll(24),
+          padding: scale.insetsAll(26),
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 ProfVoltsFullBody(
                   emotion: ProfVoltsEmotion.neutral,
-                  size: scale.size(130),
+                  size: scale.size(145),
                 ),
                 SizedBox(height: scale.spacing(14)),
                 Container(
-                  padding: scale.insetsSymmetric(horizontal: 12, vertical: 6),
+                  padding: scale.insetsSymmetric(horizontal: 14, vertical: 7),
                   decoration: BoxDecoration(
                     color: accentColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(scale.size(8)),
@@ -64,7 +64,7 @@ class _ProfVoltsPredictionDialogState extends State<ProfVoltsPredictionDialog> {
                     style: GoogleFonts.rajdhani(
                       fontWeight: FontWeight.bold,
                       color: accentColor,
-                      fontSize: scale.font(14),
+                      fontSize: scale.font(15),
                       letterSpacing: 1.5,
                     ),
                   ),
@@ -74,25 +74,28 @@ class _ProfVoltsPredictionDialogState extends State<ProfVoltsPredictionDialog> {
                   widget.question,
                   style: GoogleFonts.outfit(
                     color: Colors.white,
-                    fontSize: scale.font(15),
-                    height: 1.4,
+                    fontSize: scale.font(16.5),
+                    height: 1.45,
                   ),
                   textAlign: TextAlign.center,
                 ),
                 SizedBox(height: scale.spacing(20)),
                 Wrap(
-                  spacing: scale.spacing(8),
-                  runSpacing: scale.spacing(8),
+                  spacing: scale.spacing(10),
+                  runSpacing: scale.spacing(10),
                   alignment: WrapAlignment.center,
                   children: widget.options.map((opt) {
                     final isSelected = _selected == opt;
                     return ChoiceChip(
-                      label: Text(
-                        opt,
-                        style: GoogleFonts.rajdhani(
-                          fontWeight: FontWeight.bold,
-                          fontSize: scale.font(13),
-                          color: isSelected ? Colors.black : Colors.white70,
+                      label: Padding(
+                        padding: scale.insetsSymmetric(horizontal: 4, vertical: 4),
+                        child: Text(
+                          opt,
+                          style: GoogleFonts.rajdhani(
+                            fontWeight: FontWeight.bold,
+                            fontSize: scale.font(15),
+                            color: isSelected ? Colors.black : Colors.white70,
+                          ),
                         ),
                       ),
                       selected: isSelected,

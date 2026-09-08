@@ -198,7 +198,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       }
                     },
                   ),
-                  SizedBox(width: scale.spacing(12)),
+                  SizedBox(width: scale.spacing(14)),
                   // Ícone de Configurações
                   _buildFloatingIconButton(
                     context,
@@ -234,7 +234,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           onTap: onTap,
           customBorder: const CircleBorder(),
           child: Container(
-            padding: scale.insetsAll(14),
+            padding: scale.insetsAll(16),
             decoration: BoxDecoration(
               color: const Color(0xEE03281E),
               shape: BoxShape.circle,
@@ -245,19 +245,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.5),
-                  blurRadius: scale.size(14),
+                  blurRadius: scale.size(16),
                   offset: Offset(0, scale.size(4)),
                 ),
                 BoxShadow(
-                  color: const Color(0xFF10B981).withValues(alpha: 0.2),
-                  blurRadius: scale.size(10),
+                  color: const Color(0xFF10B981).withValues(alpha: 0.25),
+                  blurRadius: scale.size(12),
                 ),
               ],
             ),
             child: Icon(
               icon,
               color: accentColor,
-              size: scale.icon(24),
+              size: scale.icon(28),
             ),
           ),
         ),
