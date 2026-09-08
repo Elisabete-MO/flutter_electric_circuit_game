@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../core/ui_scale.dart';
+
 /// Componentes Padronizados da Bancada de Simulação do EletroLab
 
 /// 1. Cabeçalho de Navegação e Stepper das Missões
@@ -24,16 +26,21 @@ class WorkbenchHeaderStepper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scale = context.uiScale;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: EdgeInsets.symmetric(
+        horizontal: scale.spacing(16, min: 10, max: 24),
+        vertical: scale.spacing(8, min: 6, max: 14),
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(scale.size(16, min: 12, max: 24)),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
+            blurRadius: scale.size(8, min: 4, max: 14),
             offset: const Offset(0, 2),
           ),
         ],
@@ -42,7 +49,7 @@ class WorkbenchHeaderStepper extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: const Icon(Icons.chevron_left_rounded, color: Color(0xFF334155)),
+            icon: Icon(Icons.chevron_left_rounded, color: const Color(0xFF334155), size: scale.icon(24, min: 20, max: 32)),
             onPressed: onPrevious,
             tooltip: 'Missão Anterior',
           ),
@@ -52,28 +59,33 @@ class WorkbenchHeaderStepper extends StatelessWidget {
               children: List.generate(totalMissions, (index) {
                 final isCurrent = index == currentMissionIndex;
                 final isCompleted = index < currentMissionIndex;
+                final barWidth = isCurrent
+                    ? scale.size(32, min: 24, max: 48)
+                    : scale.size(12, min: 10, max: 20);
+                final barHeight = scale.size(12, min: 10, max: 20);
+
                 return AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  width: isCurrent ? 32 : 12,
-                  height: 12,
+                  margin: EdgeInsets.symmetric(horizontal: scale.spacing(4, min: 2, max: 8)),
+                  width: barWidth,
+                  height: barHeight,
                   decoration: BoxDecoration(
                     color: isCurrent
                         ? const Color(0xFF0284C7)
                         : isCompleted
                             ? const Color(0xFF10B981)
                             : const Color(0xFFE2E8F0),
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(barHeight / 2),
                   ),
                   child: isCompleted
-                      ? const Icon(Icons.check, size: 10, color: Colors.white)
+                      ? Icon(Icons.check, size: scale.icon(10, min: 8, max: 16), color: Colors.white)
                       : null,
                 );
               }),
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.chevron_right_rounded, color: Color(0xFF334155)),
+            icon: Icon(Icons.chevron_right_rounded, color: const Color(0xFF334155), size: scale.icon(24, min: 20, max: 32)),
             onPressed: onNext,
             tooltip: 'Próxima Missão',
           ),
@@ -96,13 +108,15 @@ class WorkbenchMissionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scale = context.uiScale;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title.toUpperCase(),
           style: GoogleFonts.rajdhani(
-            fontSize: 20,
+            fontSize: scale.font(20, min: 16, max: 30),
             fontWeight: FontWeight.bold,
             color: const Color(0xFF0F172A),
             letterSpacing: 0.8,
@@ -111,7 +125,10 @@ class WorkbenchMissionHeader extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           objective,
-          style: GoogleFonts.outfit(color: const Color(0xFF475569), fontSize: 13.5),
+          style: GoogleFonts.outfit(
+            color: const Color(0xFF475569),
+            fontSize: scale.font(13.5, min: 11.5, max: 20.0),
+          ),
         ),
       ],
     );
@@ -145,6 +162,8 @@ class WorkbenchSlotSocket<T extends Object> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scale = context.uiScale;
+
     return DragTarget<T>(
       onWillAcceptWithDetails: (details) => details.data == expectedData,
       onAcceptWithDetails: (details) => onAccept(details.data),
@@ -152,17 +171,20 @@ class WorkbenchSlotSocket<T extends Object> extends StatelessWidget {
         final isHovering = candidateData.isNotEmpty;
         return InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(scale.size(16, min: 12, max: 24)),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            padding: EdgeInsets.symmetric(
+              horizontal: scale.spacing(20, min: 14, max: 32),
+              vertical: scale.spacing(12, min: 8, max: 20),
+            ),
             decoration: BoxDecoration(
               color: isConnected
                   ? const Color(0xFF064E3B)
                   : isHovering
                       ? activeColor.withValues(alpha: 0.25)
                       : const Color(0xFF1E293B),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(scale.size(16, min: 12, max: 24)),
               border: Border.all(
                 color: isConnected
                     ? activeColor
@@ -174,7 +196,7 @@ class WorkbenchSlotSocket<T extends Object> extends StatelessWidget {
               boxShadow: [
                 BoxShadow(
                   color: (isConnected ? activeColor : Colors.amber).withValues(alpha: 0.3),
-                  blurRadius: 10,
+                  blurRadius: scale.size(10, min: 6, max: 18),
                 ),
               ],
             ),
@@ -188,9 +210,9 @@ class WorkbenchSlotSocket<T extends Object> extends StatelessWidget {
                           ? Icons.move_to_inbox_rounded
                           : idleIcon,
                   color: isConnected ? activeColor : Colors.amber,
-                  size: 22,
+                  size: scale.icon(22, min: 18, max: 32),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: scale.spacing(10, min: 6, max: 16)),
                 Text(
                   isConnected
                       ? connectedText
@@ -200,7 +222,7 @@ class WorkbenchSlotSocket<T extends Object> extends StatelessWidget {
                   style: GoogleFonts.rajdhani(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
-                    fontSize: 15,
+                    fontSize: scale.font(15, min: 13, max: 22),
                   ),
                 ),
               ],
@@ -233,60 +255,76 @@ class WorkbenchToolboxItem<T extends Object> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scale = context.uiScale;
+
     return Draggable<T>(
       data: data,
       feedback: Material(
         color: Colors.transparent,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          padding: EdgeInsets.symmetric(
+            horizontal: scale.spacing(14, min: 10, max: 22),
+            vertical: scale.spacing(10, min: 8, max: 16),
+          ),
           decoration: BoxDecoration(
             color: const Color(0xFF059669),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(scale.size(12, min: 8, max: 18)),
             boxShadow: const [BoxShadow(color: Color(0xFF10B981), blurRadius: 12)],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              customVectorWidget ?? Icon(icon, color: Colors.white),
-              const SizedBox(width: 8),
+              customVectorWidget ?? Icon(icon, color: Colors.white, size: scale.icon(20, min: 16, max: 28)),
+              SizedBox(width: scale.spacing(8, min: 5, max: 14)),
               Text(
                 title,
-                style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                style: GoogleFonts.rajdhani(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: scale.font(13, min: 11, max: 18),
+                ),
               ),
             ],
           ),
         ),
       ),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(10),
+        margin: EdgeInsets.only(bottom: scale.spacing(8, min: 5, max: 14)),
+        padding: EdgeInsets.all(scale.spacing(10, min: 7, max: 16)),
         decoration: BoxDecoration(
           color: const Color(0xFF1E293B),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(scale.size(12, min: 8, max: 18)),
           border: Border.all(color: color.withValues(alpha: 0.5)),
         ),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(6),
+              padding: EdgeInsets.all(scale.spacing(6, min: 4, max: 10)),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: color.withValues(alpha: 0.2),
               ),
-              child: customVectorWidget ?? Icon(icon, color: color, size: 20),
+              child: customVectorWidget ?? Icon(icon, color: color, size: scale.icon(20, min: 16, max: 28)),
             ),
-            const SizedBox(width: 10),
+            SizedBox(width: scale.spacing(10, min: 6, max: 16)),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
-                    style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                    style: GoogleFonts.rajdhani(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: scale.font(13, min: 11, max: 18),
+                    ),
                   ),
                   Text(
                     subtitle,
-                    style: GoogleFonts.outfit(color: Colors.white60, fontSize: 11),
+                    style: GoogleFonts.outfit(
+                      color: Colors.white60,
+                      fontSize: scale.font(11, min: 9.5, max: 16.0),
+                    ),
                   ),
                 ],
               ),
@@ -317,17 +355,20 @@ class WorkbenchSymbolToolboxTile<T extends Object> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scale = context.uiScale;
+    final tileSize = scale.size(84, min: 64, max: 130);
+
     final tileContent = Container(
-      width: 84,
-      height: 84,
+      width: tileSize,
+      height: tileSize,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(scale.size(14, min: 10, max: 22)),
         border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 6,
+            blurRadius: scale.size(6, min: 4, max: 12),
             offset: const Offset(0, 2),
           ),
         ],
@@ -342,8 +383,8 @@ class WorkbenchSymbolToolboxTile<T extends Object> extends StatelessWidget {
                 child: FittedBox(
                   fit: BoxFit.contain,
                   child: SizedBox(
-                    width: 72,
-                    height: 72,
+                    width: tileSize * 0.85,
+                    height: tileSize * 0.85,
                     child: Center(child: symbolWidget),
                   ),
                 ),
@@ -360,7 +401,7 @@ class WorkbenchSymbolToolboxTile<T extends Object> extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: GoogleFonts.outfit(
                   color: const Color(0xFF334155),
-                  fontSize: 10.5,
+                  fontSize: scale.font(10.5, min: 9.0, max: 15.0),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -374,16 +415,16 @@ class WorkbenchSymbolToolboxTile<T extends Object> extends StatelessWidget {
       feedback: Material(
         color: Colors.transparent,
         child: Container(
-          width: 88,
-          height: 88,
+          width: tileSize * 1.05,
+          height: tileSize * 1.05,
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(scale.size(16, min: 12, max: 24)),
             border: Border.all(color: color, width: 2.5),
             boxShadow: [
               BoxShadow(
                 color: color.withValues(alpha: 0.35),
-                blurRadius: 14,
+                blurRadius: scale.size(14, min: 8, max: 22),
                 spreadRadius: 2,
               ),
             ],
@@ -424,16 +465,18 @@ class WorkbenchSidePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scale = context.uiScale;
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(scale.spacing(16, min: 12, max: 28)),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(scale.size(20, min: 14, max: 32)),
         border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
+            blurRadius: scale.size(12, min: 8, max: 20),
             offset: const Offset(0, 4),
           ),
         ],
@@ -443,23 +486,26 @@ class WorkbenchSidePanel extends StatelessWidget {
         children: [
           if (showTeamHeader) ...[
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding: EdgeInsets.symmetric(
+                horizontal: scale.spacing(12, min: 8, max: 20),
+                vertical: scale.spacing(10, min: 6, max: 16),
+              ),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(scale.size(12, min: 8, max: 18)),
                 border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.widgets_rounded, color: Color(0xFF0284C7), size: 20),
-                  const SizedBox(width: 8),
+                  Icon(Icons.widgets_rounded, color: const Color(0xFF0284C7), size: scale.icon(20, min: 16, max: 28)),
+                  SizedBox(width: scale.spacing(8, min: 5, max: 14)),
                   Expanded(
                     child: Text(
                       teamTitle,
                       style: GoogleFonts.rajdhani(
                         color: const Color(0xFF0F172A),
                         fontWeight: FontWeight.bold,
-                        fontSize: 15,
+                        fontSize: scale.font(15, min: 13, max: 22),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -468,7 +514,7 @@ class WorkbenchSidePanel extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: scale.spacing(12, min: 8, max: 18)),
           ],
           Expanded(
             child: SingleChildScrollView(
@@ -477,29 +523,29 @@ class WorkbenchSidePanel extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: scale.spacing(12, min: 8, max: 18)),
           SizedBox(
             width: double.infinity,
-            height: 48,
+            height: scale.size(48, min: 40, max: 68),
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
                 backgroundColor: buttonColor ?? const Color(0xFF059669),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(scale.size(12, min: 8, max: 18)),
                 ),
                 elevation: 3,
               ),
               icon: isLoading
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
+                  ? SizedBox(
+                      width: scale.size(18, min: 14, max: 26),
+                      height: scale.size(18, min: 14, max: 26),
+                      child: const CircularProgressIndicator(
                         strokeWidth: 2,
                         color: Colors.white,
                       ),
                     )
-                  : const Icon(Icons.play_arrow_rounded, color: Colors.white),
+                  : Icon(Icons.play_arrow_rounded, color: Colors.white, size: scale.icon(22, min: 18, max: 32)),
               label: Text(
                 isLoading
                     ? 'SIMULANDO...'
@@ -507,7 +553,7 @@ class WorkbenchSidePanel extends StatelessWidget {
                 style: GoogleFonts.rajdhani(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
-                  fontSize: 14,
+                  fontSize: scale.font(14, min: 12, max: 22),
                 ),
               ),
               onPressed: isLoading ? null : onEnergizePressed,
@@ -518,3 +564,4 @@ class WorkbenchSidePanel extends StatelessWidget {
     );
   }
 }
+

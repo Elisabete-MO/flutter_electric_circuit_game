@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../core/ui_scale.dart';
 import 'prof_volts_full_body.dart';
 import 'glass_container.dart';
 
@@ -19,6 +20,7 @@ class ProfVoltsFeedbackDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final scale = context.uiScale;
 
     final accentColor = isCorrect
         ? (isDark ? const Color(0xFF00FF9D) : const Color(0xFF00875A))
@@ -31,85 +33,86 @@ class ProfVoltsFeedbackDialog extends StatelessWidget {
     return Dialog(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+      insetPadding: scale.insetsSymmetric(horizontal: 24, vertical: 32),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 440),
+        constraints: BoxConstraints(maxWidth: scale.dialogWidth(460)),
         child: GlassContainer(
-          borderRadius: 24,
+          borderRadius: scale.size(24),
           accentColor: accentColor,
           opacity: isDark ? 0.8 : 0.9,
-          padding: const EdgeInsets.all(24),
+          padding: scale.insetsAll(24),
           child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-            // 1. Mascote Corpo Inteiro
-            ProfVoltsFullBody(
-              emotion: isCorrect ? ProfVoltsEmotion.happy : ProfVoltsEmotion.sad,
-              size: 150,
-            ),
-            const SizedBox(height: 16),
-            
-            // 2. Título HUD Cyber
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: accentColor.withValues(alpha: 0.5)),
-              ),
-              child: Text(
-                titleText,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontFamily: GoogleFonts.rajdhani().fontFamily,
-                  fontWeight: FontWeight.bold,
-                  color: accentColor,
-                  letterSpacing: 1.5,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 1. Mascote Corpo Inteiro
+                ProfVoltsFullBody(
+                  emotion: isCorrect ? ProfVoltsEmotion.happy : ProfVoltsEmotion.sad,
+                  size: scale.size(150),
                 ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // 3. Mensagem explicativa
-            Text(
-              message,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                height: 1.4,
-                fontSize: 15,
-                fontFamily: GoogleFonts.outfit().fontFamily,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-
-            // 4. Botão de Ação Cyberpunk
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: FilledButton.icon(
-                onPressed: onAction,
-                style: FilledButton.styleFrom(
-                  backgroundColor: accentColor,
-                  foregroundColor: buttonTextColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                SizedBox(height: scale.spacing(16)),
+                
+                // 2. Título HUD Cyber
+                Container(
+                  padding: scale.insetsSymmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: accentColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(scale.size(8)),
+                    border: Border.all(color: accentColor.withValues(alpha: 0.5)),
                   ),
-                  textStyle: TextStyle(
-                    fontFamily: GoogleFonts.rajdhani().fontFamily,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.5,
-                    fontSize: 16,
+                  child: Text(
+                    titleText,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontFamily: GoogleFonts.rajdhani().fontFamily,
+                      fontWeight: FontWeight.bold,
+                      color: accentColor,
+                      letterSpacing: 1.5,
+                      fontSize: scale.font(16),
+                    ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
-                icon: Icon(buttonIcon, size: 20, color: buttonTextColor),
-                label: Text(buttonText),
-              ),
+                SizedBox(height: scale.spacing(16)),
+
+                // 3. Mensagem explicativa
+                Text(
+                  message,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    height: 1.4,
+                    fontSize: scale.font(15),
+                    fontFamily: GoogleFonts.outfit().fontFamily,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: scale.spacing(24)),
+
+                // 4. Botão de Ação Cyberpunk
+                SizedBox(
+                  width: double.infinity,
+                  height: scale.size(48),
+                  child: FilledButton.icon(
+                    onPressed: onAction,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: accentColor,
+                      foregroundColor: buttonTextColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(scale.size(14)),
+                      ),
+                      textStyle: TextStyle(
+                        fontFamily: GoogleFonts.rajdhani().fontFamily,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.5,
+                        fontSize: scale.font(16),
+                      ),
+                    ),
+                    icon: Icon(buttonIcon, size: scale.icon(20), color: buttonTextColor),
+                    label: Text(buttonText),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-      ),
-      ),
       ),
     );
   }

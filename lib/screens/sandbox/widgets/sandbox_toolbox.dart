@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../core/ui_scale.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../models/first_step_component.dart';
 import '../../../widgets/glass_container.dart';
@@ -41,12 +42,16 @@ class SandboxToolboxWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final scale = context.uiScale;
 
     if (isHorizontal) {
       return GlassContainer(
-        borderRadius: 16,
+        borderRadius: scale.size(16, min: 12, max: 24),
         opacity: isDark ? 0.35 : 0.6,
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+        padding: EdgeInsets.symmetric(
+          vertical: scale.spacing(8, min: 6, max: 14),
+          horizontal: scale.spacing(12, min: 8, max: 20),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -54,20 +59,20 @@ class SandboxToolboxWidget extends StatelessWidget {
               l10n.symbolsPaletteTitle,
               style: GoogleFonts.rajdhani(
                 fontWeight: FontWeight.bold,
-                fontSize: 14,
+                fontSize: scale.font(14, min: 12, max: 20),
                 letterSpacing: 1.0,
               ),
             ),
-            const SizedBox(height: 6),
+            SizedBox(height: scale.spacing(6, min: 4, max: 10)),
             Expanded(
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: _availableTypes.length,
-                separatorBuilder: (context, index) => const SizedBox(width: 10),
+                separatorBuilder: (context, index) => SizedBox(width: scale.spacing(10, min: 6, max: 16)),
                 itemBuilder: (context, index) {
                   return SizedBox(
-                    width: 90,
-                    child: _buildToolboxItem(_availableTypes[index], l10n, compact: true),
+                    width: scale.size(90, min: 72, max: 140),
+                    child: _buildToolboxItem(context, _availableTypes[index], l10n, compact: true),
                   );
                 },
               ),
@@ -78,9 +83,12 @@ class SandboxToolboxWidget extends StatelessWidget {
     }
 
     return GlassContainer(
-      borderRadius: 16,
+      borderRadius: scale.size(16, min: 12, max: 24),
       opacity: isDark ? 0.35 : 0.6,
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+      padding: EdgeInsets.symmetric(
+        vertical: scale.spacing(16, min: 12, max: 24),
+        horizontal: scale.spacing(12, min: 8, max: 20),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -88,18 +96,18 @@ class SandboxToolboxWidget extends StatelessWidget {
             l10n.symbolsPaletteTitle,
             style: GoogleFonts.rajdhani(
               fontWeight: FontWeight.bold,
-              fontSize: 15,
+              fontSize: scale.font(15, min: 13, max: 22),
               letterSpacing: 1.0,
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: scale.spacing(12, min: 8, max: 18)),
           Expanded(
             child: ListView.separated(
               itemCount: _availableTypes.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 10),
+              separatorBuilder: (context, index) => SizedBox(height: scale.spacing(10, min: 6, max: 16)),
               itemBuilder: (context, index) {
-                return _buildToolboxItem(_availableTypes[index], l10n);
+                return _buildToolboxItem(context, _availableTypes[index], l10n);
               },
             ),
           ),
@@ -108,15 +116,19 @@ class SandboxToolboxWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildToolboxItem(ComponentType type, AppLocalizations l10n, {bool compact = false}) {
+  Widget _buildToolboxItem(BuildContext context, ComponentType type, AppLocalizations l10n, {bool compact = false}) {
     final name = getComponentName(type, l10n);
+    final scale = context.uiScale;
 
-    Widget buildCard({Color? bgColor, Color? borderColor, double fontSize = 10}) {
+    Widget buildCard({Color? bgColor, Color? borderColor, double? fontSize}) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+        padding: EdgeInsets.symmetric(
+          horizontal: scale.spacing(6, min: 4, max: 10),
+          vertical: scale.spacing(5, min: 3, max: 8),
+        ),
         decoration: BoxDecoration(
           color: bgColor ?? (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03)),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(scale.size(10, min: 8, max: 16)),
           border: Border.all(
             color: borderColor ?? (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.08)),
           ),
@@ -162,7 +174,7 @@ class SandboxToolboxWidget extends StatelessWidget {
                               isActive: false,
                               color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
                               activeColor: const Color(0xFFFFB300),
-                              strokeWidth: 2.0,
+                              strokeWidth: scale.size(2.0, min: 1.5, max: 3.0),
                             ),
                           )
                         : (useRealisticAssets && type.getAssetPath(false) != null
@@ -188,10 +200,10 @@ class SandboxToolboxWidget extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 3),
+            SizedBox(height: scale.spacing(3, min: 2, max: 6)),
             Text(
               name,
-              style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w600),
+              style: TextStyle(fontSize: fontSize ?? scale.font(10, min: 9, max: 15), fontWeight: FontWeight.w600),
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -202,18 +214,19 @@ class SandboxToolboxWidget extends StatelessWidget {
     }
 
     final itemWidget = buildCard();
+    final feedbackSize = scale.size(88, min: 72, max: 130);
 
     final feedbackWidget = Material(
       color: Colors.transparent,
       child: SizedBox(
-        width: 88,
-        height: 88,
+        width: feedbackSize,
+        height: feedbackSize,
         child: Opacity(
           opacity: 0.85,
           child: buildCard(
             bgColor: isDark ? Colors.white.withValues(alpha: 0.14) : Colors.white.withValues(alpha: 0.9),
             borderColor: const Color(0xFF00F5D4),
-            fontSize: 10,
+            fontSize: scale.font(10, min: 9, max: 15),
           ),
         ),
       ),
@@ -228,3 +241,4 @@ class SandboxToolboxWidget extends StatelessWidget {
     );
   }
 }
+

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:eletrolab/app/theme.dart';
 
+import '../core/ui_scale.dart';
 import '../models/first_step_component.dart';
 import 'circuit_symbol_painter.dart';
 import 'component_physical_painter.dart';
@@ -61,6 +62,8 @@ class _SymbolCardState extends State<SymbolCard> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final scale = context.uiScale;
+
     final borderColor = widget.isCorrectlyAnswered
         ? (isDark ? const Color(0xFF00E676) : const Color(0xFF2E7D32))
         : widget.isSelected
@@ -86,7 +89,7 @@ class _SymbolCardState extends State<SymbolCard> {
           clipBehavior: Clip.antiAlias,
           elevation: _isHovered ? 6 : (widget.isSelected ? 4 : 0),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(scale.size(16, min: 12, max: 24)),
             side: BorderSide(
               color: borderColor,
               width: widget.isSelected || widget.isCorrectlyAnswered
@@ -106,7 +109,10 @@ class _SymbolCardState extends State<SymbolCard> {
                     color: isDark
                         ? const Color(0xFF1E2638)
                         : const Color(0xFFF8FAFC),
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: scale.spacing(8, min: 6, max: 14),
+                      vertical: scale.spacing(6, min: 4, max: 10),
+                    ),
                     child: Column(
                       children: [
                         if (widget.showLabels) ...[
@@ -116,30 +122,30 @@ class _SymbolCardState extends State<SymbolCard> {
                               widget.component.namePt,
                               style: theme.textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w900,
-                                fontSize: 16,
+                                fontSize: scale.font(16, min: 13, max: 24),
                               ),
                               textAlign: TextAlign.center,
                               maxLines: 1,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          SizedBox(height: scale.spacing(4, min: 2, max: 8)),
                         ] else if (widget.isCorrectlyAnswered)
                           FittedBox(
                             fit: BoxFit.scaleDown,
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.check_circle_rounded,
-                                  color: Color(0xFF00E676),
-                                  size: 16,
+                                  color: const Color(0xFF00E676),
+                                  size: scale.icon(16, min: 13, max: 24),
                                 ),
-                                const SizedBox(width: 4),
+                                SizedBox(width: scale.spacing(4, min: 2, max: 8)),
                                 Text(
                                   widget.component.namePt,
                                   style: theme.textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.w900,
-                                    fontSize: 16,
+                                    fontSize: scale.font(16, min: 13, max: 24),
                                     color: const Color(0xFF00E676),
                                   ),
                                   textAlign: TextAlign.center,
@@ -155,6 +161,7 @@ class _SymbolCardState extends State<SymbolCard> {
                               '?',
                               style: theme.textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
+                                fontSize: scale.font(16, min: 13, max: 24),
                                 color: theme.colorScheme.primary,
                               ),
                             ),
@@ -170,8 +177,8 @@ class _SymbolCardState extends State<SymbolCard> {
                                       Positioned(
                                         bottom: 4,
                                         child: Container(
-                                          width: 80,
-                                          height: 14,
+                                          width: scale.size(80, min: 60, max: 130),
+                                          height: scale.size(14, min: 10, max: 22),
                                           decoration: BoxDecoration(
                                             borderRadius: BorderRadius.circular(50),
                                             boxShadow: [
@@ -238,7 +245,10 @@ class _SymbolCardState extends State<SymbolCard> {
                     color: isDark
                         ? const Color(0xFF161C28)
                         : const Color(0xFFFFFFFF),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: scale.spacing(14, min: 10, max: 22),
+                      vertical: scale.spacing(4, min: 2, max: 8),
+                    ),
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
@@ -248,7 +258,7 @@ class _SymbolCardState extends State<SymbolCard> {
                             isActive: widget.component.isActive,
                             color: isDark ? Colors.white.withValues(alpha: 0.87) : Colors.black87,
                             activeColor: const Color(0xFFFFB300),
-                            strokeWidth: 2.2,
+                            strokeWidth: scale.size(2.2, min: 1.6, max: 3.5),
                           ),
                           child: const SizedBox.expand(),
                         ),
@@ -261,18 +271,18 @@ class _SymbolCardState extends State<SymbolCard> {
                             child: Material(
                               color: Colors.transparent,
                               child: InkWell(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(scale.size(12, min: 8, max: 18)),
                                 onTap: widget.onToggleState,
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: scale.spacing(8, min: 6, max: 14),
+                                    vertical: scale.spacing(4, min: 2, max: 8),
                                   ),
                                   decoration: BoxDecoration(
                                     color: widget.component.isActive
                                         ? theme.colorScheme.primaryContainer
                                         : theme.colorScheme.surfaceContainerHighest,
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(scale.size(12, min: 8, max: 18)),
                                     border: Border.all(
                                       color: widget.component.isActive
                                           ? theme.colorScheme.primary
@@ -287,16 +297,16 @@ class _SymbolCardState extends State<SymbolCard> {
                                         widget.component.isActive
                                             ? Icons.power_rounded
                                             : Icons.power_off_rounded,
-                                        size: 14,
+                                        size: scale.icon(14, min: 11, max: 20),
                                         color: widget.component.isActive
                                             ? theme.colorScheme.primary
                                             : theme.colorScheme.onSurfaceVariant,
                                       ),
-                                      const SizedBox(width: 4),
+                                      SizedBox(width: scale.spacing(4, min: 2, max: 8)),
                                       Text(
                                         widget.component.isActive ? 'LIGADO' : 'DESLIGADO',
                                         style: TextStyle(
-                                          fontSize: 9,
+                                          fontSize: scale.font(9, min: 8, max: 14),
                                           fontWeight: FontWeight.bold,
                                           color: widget.component.isActive
                                               ? theme.colorScheme.primary
@@ -321,3 +331,4 @@ class _SymbolCardState extends State<SymbolCard> {
     );
   }
 }
+

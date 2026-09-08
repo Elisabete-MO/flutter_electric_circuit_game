@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../core/ui_scale.dart';
+
 /// Moldura Padronizada da Mesa de Laboratório (EletroLab)
 /// Utiliza o asset `mesa_eletrolab_vista_superior.png` como fundo vetorial/fotográfico
 /// com seletores, cartões de status e controles flutuantes integrados.
@@ -26,19 +28,21 @@ class WorkbenchTableFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scale = context.uiScale;
+
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(scale.size(20, min: 14, max: 32)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.16),
-            blurRadius: 18,
+            blurRadius: scale.size(18, min: 10, max: 28),
             offset: const Offset(0, 8),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(scale.size(20, min: 14, max: 32)),
         child: Stack(
           children: [
             // 1. Imagem de Fundo da Mesa Vista Superior
@@ -52,16 +56,21 @@ class WorkbenchTableFrame extends StatelessWidget {
             // 2. Área Central do Circuito Eletrônico
             Positioned.fill(
               child: Padding(
-                padding: const EdgeInsets.only(top: 54, bottom: 50, left: 16, right: 16),
+                padding: EdgeInsets.only(
+                  top: scale.spacing(54, min: 40, max: 80),
+                  bottom: scale.spacing(50, min: 36, max: 76),
+                  left: scale.spacing(16, min: 10, max: 28),
+                  right: scale.spacing(16, min: 10, max: 28),
+                ),
                 child: child,
               ),
             ),
 
             // 3. Barra Superior Flutuante (Cards de Status, Seletor e Telemetria)
             Positioned(
-              top: 12,
-              left: 16,
-              right: 16,
+              top: scale.spacing(12, min: 8, max: 20),
+              left: scale.spacing(16, min: 10, max: 28),
+              right: scale.spacing(16, min: 10, max: 28),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -75,7 +84,7 @@ class WorkbenchTableFrame extends StatelessWidget {
 
                   // Centro: Seletor de Modo (Esquemático vs Físico 3D)
                   if (showModeSelector)
-                    _buildVisualModeSelector()
+                    _buildVisualModeSelector(context)
                   else
                     const SizedBox.shrink(),
 
@@ -93,7 +102,7 @@ class WorkbenchTableFrame extends StatelessWidget {
             // 4. Rodapé Flutuante (ex: Undo / Redo Pill)
             if (bottomWidget != null)
               Positioned(
-                bottom: 12,
+                bottom: scale.spacing(12, min: 8, max: 20),
                 left: 0,
                 right: 0,
                 child: Center(
@@ -106,18 +115,20 @@ class WorkbenchTableFrame extends StatelessWidget {
     );
   }
 
-  Widget _buildVisualModeSelector() {
+  Widget _buildVisualModeSelector(BuildContext context) {
+    final scale = context.uiScale;
+
     return Container(
-      height: 36,
+      height: scale.size(36, min: 30, max: 54),
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(scale.size(20, min: 16, max: 30)),
         border: Border.all(color: const Color(0xFFCBD5E1)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.10),
-            blurRadius: 8,
+            blurRadius: scale.size(8, min: 4, max: 14),
             offset: const Offset(0, 2),
           ),
         ],
@@ -130,12 +141,15 @@ class WorkbenchTableFrame extends StatelessWidget {
             onTap: () => onStyleChanged(false),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+              padding: EdgeInsets.symmetric(
+                horizontal: scale.spacing(14, min: 10, max: 24),
+                vertical: scale.spacing(4, min: 2, max: 8),
+              ),
               decoration: BoxDecoration(
                 color: !usePhysicalStyle
                     ? const Color(0xFF0284C7)
                     : Colors.transparent,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(scale.size(16, min: 12, max: 24)),
                 boxShadow: !usePhysicalStyle
                     ? [
                         BoxShadow(
@@ -151,17 +165,17 @@ class WorkbenchTableFrame extends StatelessWidget {
                 children: [
                   Icon(
                     Icons.architecture_rounded,
-                    size: 15,
+                    size: scale.icon(15, min: 13, max: 22),
                     color: !usePhysicalStyle
                         ? Colors.white
                         : const Color(0xFF64748B),
                   ),
-                  const SizedBox(width: 5),
+                  SizedBox(width: scale.spacing(5, min: 3, max: 8)),
                   Text(
                     'Esquemático',
                     style: GoogleFonts.rajdhani(
                       fontWeight: FontWeight.bold,
-                      fontSize: 12.5,
+                      fontSize: scale.font(12.5, min: 11, max: 18),
                       color: !usePhysicalStyle
                           ? Colors.white
                           : const Color(0xFF64748B),
@@ -177,12 +191,15 @@ class WorkbenchTableFrame extends StatelessWidget {
             onTap: () => onStyleChanged(true),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+              padding: EdgeInsets.symmetric(
+                horizontal: scale.spacing(14, min: 10, max: 24),
+                vertical: scale.spacing(4, min: 2, max: 8),
+              ),
               decoration: BoxDecoration(
                 color: usePhysicalStyle
                     ? const Color(0xFF0284C7)
                     : Colors.transparent,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(scale.size(16, min: 12, max: 24)),
                 boxShadow: usePhysicalStyle
                     ? [
                         BoxShadow(
@@ -198,17 +215,17 @@ class WorkbenchTableFrame extends StatelessWidget {
                 children: [
                   Icon(
                     Icons.electrical_services_rounded,
-                    size: 15,
+                    size: scale.icon(15, min: 13, max: 22),
                     color: usePhysicalStyle
                         ? Colors.white
                         : const Color(0xFF64748B),
                   ),
-                  const SizedBox(width: 5),
+                  SizedBox(width: scale.spacing(5, min: 3, max: 8)),
                   Text(
                     'Físico 3D',
                     style: GoogleFonts.rajdhani(
                       fontWeight: FontWeight.bold,
-                      fontSize: 12.5,
+                      fontSize: scale.font(12.5, min: 11, max: 18),
                       color: usePhysicalStyle
                           ? Colors.white
                           : const Color(0xFF64748B),
@@ -223,3 +240,4 @@ class WorkbenchTableFrame extends StatelessWidget {
     );
   }
 }
+

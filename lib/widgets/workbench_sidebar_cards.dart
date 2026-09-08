@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../core/ui_scale.dart';
+
 /// ----------------------------------------------------------------------------
 /// AVATAR DO PROF. VOLTS
 /// ----------------------------------------------------------------------------
@@ -291,16 +293,18 @@ class WorkbenchMissionObjectiveCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scale = context.uiScale;
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(scale.spacing(16, min: 12, max: 28)),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(scale.size(18, min: 12, max: 28)),
         border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
+            blurRadius: scale.size(10, min: 6, max: 18),
             offset: const Offset(0, 3),
           ),
         ],
@@ -313,8 +317,8 @@ class WorkbenchMissionObjectiveCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                width: 28,
-                height: 28,
+                width: scale.size(28, min: 22, max: 40),
+                height: scale.size(28, min: 22, max: 40),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: accentColor.withValues(alpha: 0.12),
@@ -322,17 +326,17 @@ class WorkbenchMissionObjectiveCard extends StatelessWidget {
                 child: Icon(
                   Icons.crisis_alert_rounded,
                   color: accentColor,
-                  size: 18,
+                  size: scale.icon(18, min: 14, max: 26),
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: scale.spacing(8, min: 5, max: 14)),
               Expanded(
                 child: Text(
                   'Missão $missionNumber · $title',
                   style: GoogleFonts.outfit(
                     color: const Color(0xFF0F172A),
                     fontWeight: FontWeight.w700,
-                    fontSize: 14.5,
+                    fontSize: scale.font(14.5, min: 12.5, max: 22.0),
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -340,19 +344,19 @@ class WorkbenchMissionObjectiveCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: scale.spacing(10, min: 6, max: 16)),
 
           // Texto Descritivo do Desafio
           Text(
             description,
             style: GoogleFonts.outfit(
               color: const Color(0xFF475569),
-              fontSize: 12.5,
+              fontSize: scale.font(12.5, min: 11.0, max: 18.0),
               height: 1.35,
               fontWeight: FontWeight.w400,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: scale.spacing(12, min: 8, max: 18)),
 
           // Caixa de Dica Acolhedora do Prof. Volts
           ProfVoltsTipBox(voltsTip: voltsTip),
@@ -372,18 +376,23 @@ class ProfVoltsTipBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scale = context.uiScale;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      padding: EdgeInsets.symmetric(
+        horizontal: scale.spacing(10, min: 8, max: 18),
+        vertical: scale.spacing(10, min: 8, max: 18),
+      ),
       decoration: BoxDecoration(
         color: const Color(0xFFFFFBEB),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(scale.size(14, min: 10, max: 22)),
         border: Border.all(color: const Color(0xFFFDE68A), width: 1.0),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const ProfVoltsAvatar(size: 38),
-          const SizedBox(width: 10),
+          ProfVoltsAvatar(size: scale.size(38, min: 30, max: 54)),
+          SizedBox(width: scale.spacing(10, min: 6, max: 16)),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -393,7 +402,7 @@ class ProfVoltsTipBox extends StatelessWidget {
                   style: GoogleFonts.outfit(
                     color: const Color(0xFFD97706),
                     fontWeight: FontWeight.w700,
-                    fontSize: 12,
+                    fontSize: scale.font(12, min: 10.5, max: 18.0),
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -401,7 +410,7 @@ class ProfVoltsTipBox extends StatelessWidget {
                   '“$voltsTip”',
                   style: GoogleFonts.outfit(
                     color: const Color(0xFF78350F),
-                    fontSize: 11.5,
+                    fontSize: scale.font(11.5, min: 10.0, max: 17.0),
                     fontStyle: FontStyle.italic,
                     height: 1.3,
                   ),
@@ -436,16 +445,18 @@ class WorkbenchInvestigationStepperCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scale = context.uiScale;
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(scale.spacing(16, min: 12, max: 28)),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(scale.size(18, min: 12, max: 28)),
         border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
+            blurRadius: scale.size(10, min: 6, max: 18),
             offset: const Offset(0, 3),
           ),
         ],
@@ -457,8 +468,8 @@ class WorkbenchInvestigationStepperCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 28,
-                height: 28,
+                width: scale.size(28, min: 22, max: 40),
+                height: scale.size(28, min: 22, max: 40),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: accentColor.withValues(alpha: 0.12),
@@ -466,17 +477,17 @@ class WorkbenchInvestigationStepperCard extends StatelessWidget {
                 child: Icon(
                   Icons.assignment_turned_in_rounded,
                   color: accentColor,
-                  size: 18,
+                  size: scale.icon(18, min: 14, max: 26),
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: scale.spacing(8, min: 5, max: 14)),
               Expanded(
                 child: Text(
                   title,
                   style: GoogleFonts.outfit(
                     color: const Color(0xFF0F172A),
                     fontWeight: FontWeight.w700,
-                    fontSize: 14.5,
+                    fontSize: scale.font(14.5, min: 12.5, max: 22.0),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -484,17 +495,18 @@ class WorkbenchInvestigationStepperCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: scale.spacing(12, min: 8, max: 18)),
 
           // Lista de Etapas do Stepper
           for (int i = 0; i < steps.length; i++) ...[
             _buildStepRow(
+              context: context,
               index: i,
               label: steps[i],
               isCompleted: isStepCompleted(i),
               isActive: i == currentStepIndex && !isStepCompleted(i),
             ),
-            if (i < steps.length - 1) const SizedBox(height: 6),
+            if (i < steps.length - 1) SizedBox(height: scale.spacing(6, min: 4, max: 10)),
           ],
         ],
       ),
@@ -502,27 +514,32 @@ class WorkbenchInvestigationStepperCard extends StatelessWidget {
   }
 
   Widget _buildStepRow({
+    required BuildContext context,
     required int index,
     required String label,
     required bool isCompleted,
     required bool isActive,
   }) {
     final stepNumber = index + 1;
+    final scale = context.uiScale;
 
     // 1. Etapa Ativa (Destaque em Verde-Menta com Seta)
     if (isActive) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        padding: EdgeInsets.symmetric(
+          horizontal: scale.spacing(10, min: 7, max: 18),
+          vertical: scale.spacing(7, min: 5, max: 13),
+        ),
         decoration: BoxDecoration(
           color: const Color(0xFFECFDF5),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(scale.size(12, min: 8, max: 18)),
           border: Border.all(color: const Color(0xFFA7F3D0), width: 1.2),
         ),
         child: Row(
           children: [
             Container(
-              width: 24,
-              height: 24,
+              width: scale.size(24, min: 20, max: 36),
+              height: scale.size(24, min: 20, max: 36),
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
                 color: Color(0xFF059669),
@@ -533,26 +550,26 @@ class WorkbenchInvestigationStepperCard extends StatelessWidget {
                   style: GoogleFonts.outfit(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
-                    fontSize: 12,
+                    fontSize: scale.font(12, min: 10, max: 18),
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 10),
+            SizedBox(width: scale.spacing(10, min: 6, max: 16)),
             Expanded(
               child: Text(
                 label,
                 style: GoogleFonts.outfit(
                   color: const Color(0xFF065F46),
                   fontWeight: FontWeight.w700,
-                  fontSize: 12.5,
+                  fontSize: scale.font(12.5, min: 11.0, max: 18.0),
                 ),
               ),
             ),
-            const Icon(
+            Icon(
               Icons.arrow_forward_rounded,
-              color: Color(0xFF059669),
-              size: 16,
+              color: const Color(0xFF059669),
+              size: scale.icon(16, min: 13, max: 24),
             ),
           ],
         ),
@@ -562,28 +579,31 @@ class WorkbenchInvestigationStepperCard extends StatelessWidget {
     // 2. Etapa Concluída (Círculo Verde com Check)
     if (isCompleted) {
       return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        padding: EdgeInsets.symmetric(
+          horizontal: scale.spacing(10, min: 7, max: 18),
+          vertical: scale.spacing(5, min: 3, max: 10),
+        ),
         child: Row(
           children: [
             Container(
-              width: 24,
-              height: 24,
+              width: scale.size(24, min: 20, max: 36),
+              height: scale.size(24, min: 20, max: 36),
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
                 color: Color(0xFF10B981),
               ),
-              child: const Center(
-                child: Icon(Icons.check_rounded, color: Colors.white, size: 14),
+              child: Center(
+                child: Icon(Icons.check_rounded, color: Colors.white, size: scale.icon(14, min: 12, max: 22)),
               ),
             ),
-            const SizedBox(width: 10),
+            SizedBox(width: scale.spacing(10, min: 6, max: 16)),
             Expanded(
               child: Text(
                 label,
                 style: GoogleFonts.outfit(
                   color: const Color(0xFF0F172A),
                   fontWeight: FontWeight.w500,
-                  fontSize: 12.5,
+                  fontSize: scale.font(12.5, min: 11.0, max: 18.0),
                 ),
               ),
             ),
@@ -594,12 +614,15 @@ class WorkbenchInvestigationStepperCard extends StatelessWidget {
 
     // 3. Etapa Pendente (Círculo Cinza com Número)
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: EdgeInsets.symmetric(
+        horizontal: scale.spacing(10, min: 7, max: 18),
+        vertical: scale.spacing(5, min: 3, max: 10),
+      ),
       child: Row(
         children: [
           Container(
-            width: 24,
-            height: 24,
+            width: scale.size(24, min: 20, max: 36),
+            height: scale.size(24, min: 20, max: 36),
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
               color: Color(0xFF94A3B8),
@@ -610,19 +633,19 @@ class WorkbenchInvestigationStepperCard extends StatelessWidget {
                 style: GoogleFonts.outfit(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
-                  fontSize: 12,
+                  fontSize: scale.font(12, min: 10, max: 18),
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 10),
+          SizedBox(width: scale.spacing(10, min: 6, max: 16)),
           Expanded(
             child: Text(
               label,
               style: GoogleFonts.outfit(
                 color: const Color(0xFF64748B),
                 fontWeight: FontWeight.w400,
-                fontSize: 12.5,
+                fontSize: scale.font(12.5, min: 11.0, max: 18.0),
               ),
             ),
           ),
@@ -631,3 +654,4 @@ class WorkbenchInvestigationStepperCard extends StatelessWidget {
     );
   }
 }
+

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:google_fonts/google_fonts.dart';
 import '../../app/routes.dart';
+import '../../core/ui_scale.dart';
 import '../../state/progress_controller.dart';
 import '../../widgets/eletrolab_header_brand.dart';
 
@@ -23,6 +24,7 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
     final progressState = ref.watch(progressControllerProvider);
     final completedCount = progressState.completedChallenges.length;
     final bool hasProgress = completedCount > 0;
+    final scale = context.uiScale;
 
     return Scaffold(
       backgroundColor: const Color(0xFF021712),
@@ -46,7 +48,7 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
                 // Topo: Marca EletroLab no canto esquerdo e Configurações no canto direito
                 _buildTopHeader(context),
 
-                const SizedBox(height: 12),
+                SizedBox(height: scale.spacing(12)),
 
                 // Painel Central Glassmorphic
                 Expanded(
@@ -55,18 +57,20 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
                     child: SingleChildScrollView(
                       physics: const BouncingScrollPhysics(),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(
+                        padding: scale.insetsSymmetric(
                           horizontal: 24,
                           vertical: 12,
                         ),
                         child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 420),
+                          constraints: BoxConstraints(
+                            maxWidth: scale.size(440, min: 360, max: 780),
+                          ),
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(scale.size(20)),
                             child: BackdropFilter(
                               filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
                               child: Container(
-                                padding: const EdgeInsets.symmetric(
+                                padding: scale.insetsSymmetric(
                                   horizontal: 20,
                                   vertical: 18,
                                 ),
@@ -74,7 +78,7 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
                                   color: const Color(
                                     0x99021F18,
                                   ), // Glassmorphism escuro elegante
-                                  borderRadius: BorderRadius.circular(20),
+                                  borderRadius: BorderRadius.circular(scale.size(20)),
                                   border: Border.all(
                                     color: const Color(
                                       0xFF10B981,
@@ -86,8 +90,8 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
                                       color: Colors.black.withValues(
                                         alpha: 0.4,
                                       ),
-                                      blurRadius: 24,
-                                      offset: const Offset(0, 6),
+                                      blurRadius: scale.size(24),
+                                      offset: Offset(0, scale.size(6)),
                                     ),
                                   ],
                                 ),
@@ -107,7 +111,7 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
                                           context,
                                         ).pushNamed(Routes.home),
                                       ),
-                                      const SizedBox(height: 10),
+                                      SizedBox(height: scale.spacing(10)),
                                     ],
 
                                     // Opção 2: ENTRAR NA FEIRA (Professora Nuri)
@@ -123,7 +127,7 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
                                       ).pushNamed(Routes.intro),
                                     ),
 
-                                    const SizedBox(height: 14),
+                                    SizedBox(height: scale.spacing(14)),
 
                                     // Divisor Elegante: MODOS DE JOGO
                                     Row(
@@ -137,7 +141,7 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
                                           ),
                                         ),
                                         Padding(
-                                          padding: const EdgeInsets.symmetric(
+                                          padding: scale.insetsSymmetric(
                                             horizontal: 10,
                                           ),
                                           child: Text(
@@ -147,7 +151,7 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
                                                 alpha: 0.5,
                                               ),
                                               fontWeight: FontWeight.bold,
-                                              fontSize: 11,
+                                              fontSize: scale.font(11),
                                               letterSpacing: 1.4,
                                             ),
                                           ),
@@ -163,7 +167,7 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
                                       ],
                                     ),
 
-                                    const SizedBox(height: 12),
+                                    SizedBox(height: scale.spacing(12)),
 
                                     // Opção 3: BANCADA LIVRE - Borda Ciano
                                     _buildMinimalButton(
@@ -178,7 +182,7 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
                                       ).pushNamed(Routes.sandbox),
                                     ),
 
-                                    const SizedBox(height: 10),
+                                    SizedBox(height: scale.spacing(10)),
 
                                     // Opção 4: MAPA DA FEIRA DE CIÊNCIAS - Borda Esmeralda
                                     if (!hasProgress) ...[
@@ -193,7 +197,7 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
                                           context,
                                         ).pushNamed(Routes.home),
                                       ),
-                                      const SizedBox(height: 10),
+                                      SizedBox(height: scale.spacing(10)),
                                     ],
 
                                     // Opção 5: PRIMEIROS PASSOS & CONCEITOS - Borda Âmbar
@@ -221,12 +225,12 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
 
                 // Rodapé Limpo
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 12, top: 4),
+                  padding: scale.insetsOnly(bottom: 12, top: 4),
                   child: Text(
                     'EletroLab v1.2.0 • Laboratório Virtual de Circuitos Elétricos',
                     style: GoogleFonts.outfit(
                       color: const Color(0xFF022C22),
-                      fontSize: 12,
+                      fontSize: scale.font(12),
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.2,
                     ),
@@ -242,8 +246,10 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
 
   /// Topo com Marca no Canto Esquerdo e Botão de Configurações no Canto Direito
   Widget _buildTopHeader(BuildContext context) {
+    final scale = context.uiScale;
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      padding: scale.insetsSymmetric(horizontal: 24, vertical: 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -255,7 +261,7 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
           IconButton(
             onPressed: () => Navigator.of(context).pushNamed(Routes.settings),
             icon: Container(
-              padding: const EdgeInsets.all(8),
+              padding: scale.insetsAll(8),
               decoration: BoxDecoration(
                 color: const Color(0xCC04281E),
                 shape: BoxShape.circle,
@@ -263,10 +269,10 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
                   color: const Color(0xFF10B981).withValues(alpha: 0.4),
                 ),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.settings_rounded,
                 color: Colors.white70,
-                size: 20,
+                size: scale.icon(20),
               ),
             ),
             tooltip: 'Configurações',
@@ -285,19 +291,21 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
     required bool isHighlighted,
     required VoidCallback onTap,
   }) {
+    final scale = context.uiScale;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(scale.size(14)),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+          padding: scale.insetsSymmetric(horizontal: 16, vertical: 11),
           decoration: BoxDecoration(
             color: isHighlighted
                 ? const Color(0xFF059669)
                 : const Color(0x77032E23),
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(scale.size(14)),
             border: Border.all(
               color: isHighlighted
                   ? const Color(0xFF34D399)
@@ -309,8 +317,8 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
                 color: isHighlighted
                     ? const Color(0xFF10B981).withValues(alpha: 0.35)
                     : accentColor.withValues(alpha: 0.12),
-                blurRadius: isHighlighted ? 14 : 8,
-                offset: const Offset(0, 3),
+                blurRadius: scale.size(isHighlighted ? 14 : 8),
+                offset: Offset(0, scale.size(3)),
               ),
             ],
           ),
@@ -322,18 +330,18 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
                 style: GoogleFonts.outfit(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
-                  fontSize: isHighlighted ? 14.5 : 13.5,
+                  fontSize: scale.font(isHighlighted ? 14.5 : 13.5),
                   letterSpacing: 0.3,
                 ),
               ),
-              const SizedBox(height: 2),
+              SizedBox(height: scale.spacing(2)),
               Text(
                 subtitle,
                 style: GoogleFonts.outfit(
                   color: isHighlighted
                       ? const Color(0xFFD1FAE5)
                       : Colors.white.withValues(alpha: 0.65),
-                  fontSize: 11.5,
+                  fontSize: scale.font(11.5),
                   fontWeight: FontWeight.w400,
                   height: 1.2,
                 ),

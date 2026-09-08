@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/ui_scale.dart';
 import '../l10n/app_localizations.dart';
 import '../models/first_step_component.dart';
 import 'circuit_symbol_painter.dart';
@@ -43,88 +44,101 @@ class _ComponentDetailDialogState extends State<ComponentDetailDialog> {
     final isDark = theme.brightness == Brightness.dark;
     final l10n = AppLocalizations.of(context)!;
     final isEn = l10n.localeName == 'en';
+    final scale = context.uiScale;
 
     final displayName = isEn ? _component.nameEn : _component.namePt;
     final subtitleName = isEn ? _component.namePt : _component.nameEn;
 
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(scale.size(24))),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 480),
+        constraints: BoxConstraints(maxWidth: scale.dialogWidth(500)),
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: scale.insetsAll(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-              // Header com título e botão fechar
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          displayName,
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        if (subtitleName.isNotEmpty && subtitleName != displayName)
-                          Text(
-                            subtitleName,
-                            style: theme.textTheme.labelMedium?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close_rounded),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // Visualização comparativa lado a lado (Físico vs. Esquemático)
-              Container(
-                height: 140,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? const Color(0xFF1E2638)
-                      : const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-                  ),
-                ),
-                child: Row(
+                // Header com título e botão fechar
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Lado 1: Físico
                     Expanded(
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            l10n.compPhysical,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: theme.colorScheme.primary,
+                            displayName,
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              fontSize: scale.font(22),
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          SizedBox(
-                            height: 80,
-                            child: widget.useRealisticAssets &&
-                                    _component.type.getAssetPath(_component.isActive) != null
-                                ? Image.asset(
-                                    _component.type.getAssetPath(_component.isActive)!,
-                                    fit: BoxFit.contain,
-                                    errorBuilder: (context, error, stackTrace) => CustomPaint(
+                          if (subtitleName.isNotEmpty && subtitleName != displayName)
+                            Text(
+                              subtitleName,
+                              style: theme.textTheme.labelMedium?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                                fontSize: scale.font(12),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.close_rounded, size: scale.icon(22)),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+                SizedBox(height: scale.spacing(20)),
+
+                // Visualização comparativa lado a lado (Físico vs. Esquemático)
+                Container(
+                  height: scale.size(150),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? const Color(0xFF1E2638)
+                        : const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(scale.size(16)),
+                    border: Border.all(
+                      color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      // Lado 1: Físico
+                      Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              l10n.compPhysical,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: theme.colorScheme.primary,
+                                fontSize: scale.font(11),
+                              ),
+                            ),
+                            SizedBox(height: scale.spacing(8)),
+                            SizedBox(
+                              height: scale.size(80),
+                              child: widget.useRealisticAssets &&
+                                      _component.type.getAssetPath(_component.isActive) != null
+                                  ? Image.asset(
+                                      _component.type.getAssetPath(_component.isActive)!,
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (context, error, stackTrace) => CustomPaint(
+                                        painter: ComponentPhysicalPainter(
+                                          type: _component.type,
+                                          isActive: _component.isActive,
+                                          isDarkMode: isDark,
+                                        ),
+                                        child: const SizedBox.expand(),
+                                      ),
+                                    )
+                                  : CustomPaint(
                                       painter: ComponentPhysicalPainter(
                                         type: _component.type,
                                         isActive: _component.isActive,
@@ -132,116 +146,118 @@ class _ComponentDetailDialogState extends State<ComponentDetailDialog> {
                                       ),
                                       child: const SizedBox.expand(),
                                     ),
-                                  )
-                                : CustomPaint(
-                                    painter: ComponentPhysicalPainter(
-                                      type: _component.type,
-                                      isActive: _component.isActive,
-                                      isDarkMode: isDark,
-                                    ),
-                                    child: const SizedBox.expand(),
-                                  ),
-                          ),
-                        ],
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    VerticalDivider(
-                      width: 1,
-                      color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-                    ),
-                    // Lado 2: Símbolo Esquemático
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            l10n.compSchematic,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: theme.colorScheme.tertiary,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          SizedBox(
-                            height: 80,
-                            child: CustomPaint(
-                              painter: CircuitSymbolPainter(
-                                type: _component.type,
-                                isActive: _component.isActive,
-                                color: isDark ? Colors.white.withValues(alpha: 0.87) : Colors.black87,
-                                activeColor: const Color(0xFFFFB300),
-                                strokeWidth: 2.5,
+                      VerticalDivider(
+                        width: 1,
+                        color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
+                      ),
+                      // Lado 2: Símbolo Esquemático
+                      Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              l10n.compSchematic,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: theme.colorScheme.tertiary,
+                                fontSize: scale.font(11),
                               ),
-                              child: const SizedBox.expand(),
                             ),
-                          ),
-                        ],
+                            SizedBox(height: scale.spacing(8)),
+                            SizedBox(
+                              height: scale.size(80),
+                              child: CustomPaint(
+                                painter: CircuitSymbolPainter(
+                                  type: _component.type,
+                                  isActive: _component.isActive,
+                                  color: isDark ? Colors.white.withValues(alpha: 0.87) : Colors.black87,
+                                  activeColor: const Color(0xFFFFB300),
+                                  strokeWidth: 2.5,
+                                ),
+                                child: const SizedBox.expand(),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: scale.spacing(20)),
+
+                // Descrição pedagógica
+                Text(
+                  l10n.compFunction,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: scale.font(14),
+                  ),
+                ),
+                SizedBox(height: scale.spacing(4)),
+                Text(
+                  _component.description,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontSize: scale.font(13.5),
+                  ),
+                ),
+                SizedBox(height: scale.spacing(16)),
+
+                Text(
+                  l10n.compSymbolMeaning,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: scale.font(14),
+                  ),
+                ),
+                SizedBox(height: scale.spacing(4)),
+                Text(
+                  _component.symbolDescription,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontSize: scale.font(13.5),
+                  ),
+                ),
+                SizedBox(height: scale.spacing(24)),
+
+                // Ação de Testar Estado / Fechar
+                Wrap(
+                  alignment: WrapAlignment.end,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: scale.spacing(12),
+                  runSpacing: scale.spacing(12),
+                  children: [
+                    if (_component.supportsStateToggle)
+                      OutlinedButton.icon(
+                        onPressed: _toggleState,
+                        icon: Icon(
+                          _component.isActive
+                              ? Icons.power_rounded
+                              : Icons.power_off_rounded,
+                          size: scale.icon(18),
+                        ),
+                        label: Text(
+                          _component.isActive
+                              ? l10n.compDeactivateState
+                              : l10n.compActivateState,
+                          style: TextStyle(fontSize: scale.font(13)),
+                        ),
+                      ),
+                    FilledButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text(
+                        l10n.compUnderstood,
+                        style: TextStyle(fontSize: scale.font(13)),
                       ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 20),
-
-              // Descrição pedagógica
-              Text(
-                l10n.compFunction,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                _component.description,
-                style: theme.textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 16),
-
-              Text(
-                l10n.compSymbolMeaning,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                _component.symbolDescription,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Ação de Testar Estado / Fechar
-              Wrap(
-                alignment: WrapAlignment.end,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 12,
-                runSpacing: 12,
-                children: [
-                  if (_component.supportsStateToggle)
-                    OutlinedButton.icon(
-                      onPressed: _toggleState,
-                      icon: Icon(
-                        _component.isActive
-                            ? Icons.power_rounded
-                            : Icons.power_off_rounded,
-                      ),
-                      label: Text(
-                        _component.isActive
-                            ? l10n.compDeactivateState
-                            : l10n.compActivateState,
-                      ),
-                    ),
-                  FilledButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: Text(l10n.compUnderstood),
-                  ),
-                ],
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
         ),
       ),
     );

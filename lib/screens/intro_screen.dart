@@ -235,8 +235,13 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
 
   /// Barra de topo com o título do EletroLab e o botão Pular
   Widget _buildHeader(BuildContext context) {
+    final scale = context.uiScale;
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      padding: EdgeInsets.symmetric(
+        horizontal: scale.spacing(20, min: 14, max: 32),
+        vertical: scale.spacing(12, min: 8, max: 20),
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -244,17 +249,20 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
 
           InkWell(
             onTap: _enterGym,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(scale.size(20, min: 16, max: 28)),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              padding: EdgeInsets.symmetric(
+                horizontal: scale.spacing(14, min: 10, max: 22),
+                vertical: scale.spacing(8, min: 6, max: 14),
+              ),
               decoration: BoxDecoration(
                 color: const Color(0xFF04281E).withValues(alpha: 0.8),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(scale.size(20, min: 16, max: 28)),
                 border: Border.all(
                   color: const Color(0xFF10B981).withValues(alpha: 0.4),
                 ),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
@@ -262,14 +270,14 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
                     style: TextStyle(
                       color: Colors.white70,
                       fontWeight: FontWeight.w600,
-                      fontSize: 13,
+                      fontSize: scale.font(13, min: 11, max: 18),
                     ),
                   ),
-                  SizedBox(width: 4),
+                  SizedBox(width: scale.spacing(4, min: 2, max: 8)),
                   Icon(
                     Icons.fast_forward_rounded,
-                    color: Color(0xFF10B981),
-                    size: 16,
+                    color: const Color(0xFF10B981),
+                    size: scale.icon(16, min: 14, max: 22),
                   ),
                 ],
               ),
@@ -289,18 +297,24 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
     final double maxW = constraints.maxWidth;
     final double maxH = constraints.maxHeight;
     final bool isWide = maxW >= 640;
+    final uiScale = UiScale.fromSize(maxW, maxH);
 
     if (isWide) {
-      final uiScale = UiScale.fromSize(maxW, maxH);
       // LAYOUT COM NURI FIRMEMENTE NO CHÃO (Desktop/Tablet - Tamanho Destaque proporcional)
-      final double maxSpriteH = uiScale.isDesktop ? 680.0 : 470.0;
+      final double maxSpriteH = uiScale.size(uiScale.isDesktop ? 680.0 : 470.0, min: 400.0, max: 960.0);
       final double spriteHeight = (maxH * 0.78).clamp(310.0, maxSpriteH);
       final double spriteWidth = spriteHeight * (540.0 / 900.0);
+      final double bubbleMaxWidth = uiScale.dialogWidth(uiScale.isDesktop ? 680 : 480, min: 460, max: 920);
 
       return Align(
         alignment: Alignment.bottomCenter,
         child: Padding(
-          padding: const EdgeInsets.only(left: 24, right: 24, bottom: 20, top: 8),
+          padding: EdgeInsets.only(
+            left: uiScale.spacing(24, min: 16, max: 40),
+            right: uiScale.spacing(24, min: 16, max: 40),
+            bottom: uiScale.spacing(20, min: 12, max: 32),
+            top: 8,
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -315,7 +329,7 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
                       bottom: 4,
                       child: Container(
                         width: spriteWidth * 0.75,
-                        height: 16,
+                        height: uiScale.size(16, min: 12, max: 24),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(100),
                           boxShadow: [
@@ -334,15 +348,15 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
                 ),
               ),
 
-              const SizedBox(width: 24),
+              SizedBox(width: uiScale.spacing(24, min: 16, max: 40)),
 
               // 2. BALÃO DE FALA (Ao lado da Nuri, suspenso na altura do rosto/boca)
               Padding(
                 padding: EdgeInsets.only(
-                  bottom: (spriteHeight * 0.48).clamp(180.0, uiScale.isDesktop ? 360.0 : 260.0),
+                  bottom: (spriteHeight * 0.48).clamp(180.0, uiScale.isDesktop ? 420.0 : 260.0),
                 ),
                 child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: uiScale.isDesktop ? 680 : 480),
+                  constraints: BoxConstraints(maxWidth: bubbleMaxWidth),
                   child: SpeechBubbleWidget(
                     step: step,
                     displayedText: _displayedText,
@@ -506,6 +520,7 @@ class SpeechBubbleWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isLastStep = currentStepIndex == totalSteps - 1;
     final bool isLeftTail = tailPosition == TailPosition.left;
+    final scale = context.uiScale;
 
     return GestureDetector(
       onTap: onTapCard,
@@ -520,26 +535,26 @@ class SpeechBubbleWidget extends StatelessWidget {
               bottom: isLeftTail ? 0 : 12,
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(scale.size(24, min: 18, max: 36)),
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
                 child: Container(
-                  padding: const EdgeInsets.all(18),
+                  padding: EdgeInsets.all(scale.spacing(18, min: 14, max: 28)),
                   decoration: BoxDecoration(
                     color: const Color(
                       0x9903241B,
                     ), // Glassmorphism verde esmeralda meio transparente
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(scale.size(24, min: 18, max: 36)),
                     border: Border.all(color: const Color(0xFF10B981), width: 1.8),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.45),
-                        blurRadius: 22,
+                        blurRadius: scale.size(22, min: 14, max: 32),
                         offset: const Offset(0, 8),
                       ),
                       BoxShadow(
                         color: const Color(0xFF10B981).withValues(alpha: 0.20),
-                        blurRadius: 18,
+                        blurRadius: scale.size(18, min: 12, max: 28),
                         spreadRadius: 1,
                       ),
                     ],
@@ -556,13 +571,13 @@ class SpeechBubbleWidget extends StatelessWidget {
                       children: [
                         // Badge Orador
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: scale.spacing(10, min: 7, max: 16),
+                            vertical: scale.spacing(4, min: 3, max: 8),
                           ),
                           decoration: BoxDecoration(
                             color: const Color(0xFF059669),
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(scale.size(12, min: 8, max: 18)),
                             boxShadow: [
                               BoxShadow(
                                 color: const Color(
@@ -575,18 +590,18 @@ class SpeechBubbleWidget extends StatelessWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.record_voice_over_rounded,
                                 color: Colors.white,
-                                size: 14,
+                                size: scale.icon(14, min: 12, max: 20),
                               ),
-                              const SizedBox(width: 6),
+                              SizedBox(width: scale.spacing(6, min: 4, max: 10)),
                               Text(
                                 step.speaker,
                                 style: GoogleFonts.rajdhani(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 14,
+                                  fontSize: scale.font(14, min: 12, max: 20),
                                   letterSpacing: 0.5,
                                 ),
                               ),
@@ -595,7 +610,7 @@ class SpeechBubbleWidget extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: scale.spacing(8, min: 4, max: 14)),
 
                     // Indicadores (Passos 1/3, 2/3, 3/3)
                     Row(
@@ -604,9 +619,9 @@ class SpeechBubbleWidget extends StatelessWidget {
                         final bool active = index == currentStepIndex;
                         return AnimatedContainer(
                           duration: const Duration(milliseconds: 300),
-                          margin: const EdgeInsets.only(left: 4),
-                          width: active ? 18 : 8,
-                          height: 8,
+                          margin: EdgeInsets.only(left: scale.spacing(4, min: 2, max: 8)),
+                          width: active ? scale.size(18, min: 14, max: 28) : scale.size(8, min: 6, max: 14),
+                          height: scale.size(8, min: 6, max: 14),
                           decoration: BoxDecoration(
                             color: active
                                 ? EletroLabColors.neonCyan
@@ -619,16 +634,16 @@ class SpeechBubbleWidget extends StatelessWidget {
                   ],
                 ),
 
-                const SizedBox(height: 12),
+                SizedBox(height: scale.spacing(12, min: 8, max: 18)),
 
                 // Texto com Efeito Typewriter
                 ConstrainedBox(
-                  constraints: const BoxConstraints(minHeight: 52),
+                  constraints: BoxConstraints(minHeight: scale.size(52, min: 42, max: 80)),
                   child: Text(
                     displayedText,
                     style: GoogleFonts.outfit(
                       color: Colors.white,
-                      fontSize: 15.5,
+                      fontSize: scale.font(15.5, min: 13.5, max: 22.0),
                       height: 1.42,
                       fontWeight: FontWeight.w400,
                       letterSpacing: 0.2,
@@ -636,7 +651,7 @@ class SpeechBubbleWidget extends StatelessWidget {
                   ),
                 ),
 
-                const SizedBox(height: 14),
+                SizedBox(height: scale.spacing(14, min: 10, max: 20)),
 
                 // Botão Ação (Próximo / Entrar)
                 Align(
@@ -646,24 +661,24 @@ class SpeechBubbleWidget extends StatelessWidget {
                           scale: pulseAnimation,
                           child: ElevatedButton.icon(
                             onPressed: onPressedNext,
-                            icon: const Icon(Icons.bolt_rounded, size: 22),
+                            icon: Icon(Icons.bolt_rounded, size: scale.icon(22, min: 18, max: 32)),
                             label: Text(
                               step.buttonText,
                               style: GoogleFonts.rajdhani(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                                fontSize: scale.font(16, min: 13.5, max: 24.0),
                                 letterSpacing: 0.5,
                               ),
                             ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF10B981),
                               foregroundColor: const Color(0xFF021712),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 22,
-                                vertical: 12,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: scale.spacing(22, min: 16, max: 36),
+                                vertical: scale.spacing(12, min: 8, max: 20),
                               ),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(scale.size(16, min: 12, max: 24)),
                               ),
                               elevation: 8,
                               shadowColor: const Color(
@@ -678,25 +693,25 @@ class SpeechBubbleWidget extends StatelessWidget {
                             isTyping
                                 ? Icons.fast_forward_rounded
                                 : Icons.arrow_forward_rounded,
-                            size: 18,
+                            size: scale.icon(18, min: 14, max: 26),
                           ),
                           label: Text(
                             isTyping ? 'Completo' : step.buttonText,
                             style: GoogleFonts.rajdhani(
                               fontWeight: FontWeight.bold,
-                              fontSize: 15.5,
+                              fontSize: scale.font(15.5, min: 13.0, max: 22.0),
                               letterSpacing: 0.5,
                             ),
                           ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF047857),
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 18,
-                              vertical: 10,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: scale.spacing(18, min: 14, max: 28),
+                              vertical: scale.spacing(10, min: 7, max: 16),
                             ),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
+                              borderRadius: BorderRadius.circular(scale.size(14, min: 10, max: 22)),
                             ),
                           ),
                         ),
@@ -711,10 +726,10 @@ class SpeechBubbleWidget extends StatelessWidget {
           // Cauda / Pointer do Balão de Fala (Alinhado à altura dos ombros da Nuri quando na esquerda)
           Positioned(
             left: isLeftTail ? 0 : null,
-            top: isLeftTail ? 36 : null,
+            top: isLeftTail ? scale.size(36, min: 28, max: 54) : null,
             bottom: isLeftTail ? null : 0,
             child: CustomPaint(
-              size: isLeftTail ? const Size(14, 22) : const Size(22, 14),
+              size: isLeftTail ? Size(scale.size(14, min: 10, max: 22), scale.size(22, min: 16, max: 32)) : Size(scale.size(22, min: 16, max: 32), scale.size(14, min: 10, max: 22)),
               painter: _BubbleTailPainter(
                 color: const Color(0x9903241B),
                 borderColor: const Color(0xFF10B981),
@@ -773,3 +788,4 @@ class _BubbleTailPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+

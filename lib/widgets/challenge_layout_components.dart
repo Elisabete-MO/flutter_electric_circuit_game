@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../core/ui_scale.dart';
 import '../l10n/app_localizations.dart';
 import '../models/first_step_component.dart';
 import 'circuit_symbol_painter.dart';
@@ -44,19 +45,23 @@ class DiagramToggleButton extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accentColor = showDiagramMode ? const Color(0xFFFF5252) : const Color(0xFF00B8D4);
+    final scale = context.uiScale;
 
     return GestureDetector(
       onTap: onTap,
       child: AnimatedBuilder(
         animation: pulseAnimation,
         builder: (context, child) {
-          final scale = 1.0 + (pulseAnimation.value * 0.04);
+          final animScale = 1.0 + (pulseAnimation.value * 0.04);
 
           return Transform.scale(
-            scale: scale,
+            scale: animScale,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              padding: EdgeInsets.symmetric(
+                horizontal: scale.spacing(18, min: 14, max: 32),
+                vertical: scale.spacing(12, min: 8, max: 20),
+              ),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
@@ -65,7 +70,7 @@ class DiagramToggleButton extends StatelessWidget {
                       ? [const Color(0xFFFF5252), const Color(0xFFFF1744)]
                       : [const Color(0xFF3B82F6), const Color(0xFF00B8D4)],
                 ),
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(scale.size(24, min: 18, max: 36)),
                 boxShadow: [
                   BoxShadow(
                     color: accentColor.withValues(
@@ -87,7 +92,7 @@ class DiagramToggleButton extends StatelessWidget {
                   color: Colors.white,
                   fontFamily: GoogleFonts.rajdhani().fontFamily,
                   fontWeight: FontWeight.bold,
-                  fontSize: 15,
+                  fontSize: scale.font(15, min: 13, max: 24),
                   letterSpacing: 1.0,
                 ),
               ),
@@ -122,23 +127,27 @@ class DiagramActionButton extends StatelessWidget {
     final defaultGradient = [const Color(0xFF10B981), const Color(0xFF059669)];
     final colors = gradientColors ?? defaultGradient;
     final shadowColor = accentColor ?? colors.first;
+    final scale = context.uiScale;
 
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        padding: EdgeInsets.symmetric(
+          horizontal: scale.spacing(20, min: 14, max: 36),
+          vertical: scale.spacing(12, min: 8, max: 22),
+        ),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: colors,
           ),
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(scale.size(24, min: 18, max: 36)),
           boxShadow: [
             BoxShadow(
               color: shadowColor.withValues(alpha: 0.35),
-              blurRadius: 12,
+              blurRadius: scale.size(12, min: 8, max: 20),
               spreadRadius: 1,
               offset: const Offset(0, 4),
             ),
@@ -154,7 +163,7 @@ class DiagramActionButton extends StatelessWidget {
             color: Colors.white,
             fontFamily: GoogleFonts.rajdhani().fontFamily,
             fontWeight: FontWeight.bold,
-            fontSize: 15,
+            fontSize: scale.font(15, min: 13, max: 24),
             letterSpacing: 1.0,
           ),
         ),
@@ -174,16 +183,20 @@ class ChallengeTimerBadge extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final m = (elapsedSeconds ~/ 60).toString().padLeft(2, '0');
     final s = (elapsedSeconds % 60).toString().padLeft(2, '0');
+    final scale = context.uiScale;
 
     return Align(
       alignment: Alignment.topRight,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        padding: EdgeInsets.symmetric(
+          horizontal: scale.spacing(14, min: 10, max: 24),
+          vertical: scale.spacing(7, min: 5, max: 14),
+        ),
         decoration: BoxDecoration(
           color: isDark
               ? const Color(0xFF00F0FF).withValues(alpha: 0.15)
               : const Color(0xFF0066FF).withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(scale.size(16, min: 12, max: 24)),
           border: Border.all(
             color: isDark
                 ? const Color(0xFF00F0FF).withValues(alpha: 0.4)
@@ -196,17 +209,17 @@ class ChallengeTimerBadge extends StatelessWidget {
           children: [
             Icon(
               Icons.timer_rounded,
-              size: 16,
+              size: scale.icon(16, min: 14, max: 26),
               color: isDark ? const Color(0xFF00F0FF) : const Color(0xFF0066FF),
             ),
-            const SizedBox(width: 6),
+            SizedBox(width: scale.spacing(6, min: 4, max: 10)),
             Text(
               '$m:$s',
               style: TextStyle(
                 fontFamily: GoogleFonts.rajdhani().fontFamily,
                 color: isDark ? const Color(0xFF00F0FF) : const Color(0xFF0066FF),
                 fontWeight: FontWeight.bold,
-                fontSize: 14,
+                fontSize: scale.font(14, min: 12, max: 22),
                 letterSpacing: 1.0,
               ),
             ),
@@ -235,17 +248,26 @@ class ModeToggleSwitch extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final locale = Localizations.localeOf(context).languageCode;
     final isEn = locale == 'en';
+    final scale = context.uiScale;
 
-    final horizontalPadding = isCompact ? 10.0 : 14.0;
-    final verticalPadding = isCompact ? 6.0 : 9.5;
-    final iconSize = isCompact ? 15.0 : 17.0;
-    final fontSize = isCompact ? 11.0 : 13.0;
+    final horizontalPadding = isCompact
+        ? scale.spacing(10.0, min: 8.0, max: 16.0)
+        : scale.spacing(14.0, min: 10.0, max: 24.0);
+    final verticalPadding = isCompact
+        ? scale.spacing(6.0, min: 4.0, max: 10.0)
+        : scale.spacing(9.5, min: 6.0, max: 15.0);
+    final iconSize = isCompact
+        ? scale.icon(15.0, min: 13.0, max: 22.0)
+        : scale.icon(17.0, min: 14.0, max: 26.0);
+    final fontSize = isCompact
+        ? scale.font(11.0, min: 10.0, max: 16.0)
+        : scale.font(13.0, min: 11.5, max: 20.0);
 
     return Container(
       padding: isCompact ? EdgeInsets.zero : const EdgeInsets.all(2),
       decoration: BoxDecoration(
         color: isDark ? Colors.black54 : const Color(0xFFF1F5F9),
-        borderRadius: BorderRadius.circular(isCompact ? 20 : 24),
+        borderRadius: BorderRadius.circular(scale.size(isCompact ? 20 : 24, min: 16, max: 36)),
         border: Border.all(
           color: isDark
               ? const Color(0xFF00F5D4).withValues(alpha: 0.4)
@@ -257,7 +279,7 @@ class ModeToggleSwitch extends StatelessWidget {
             : [
                 BoxShadow(
                   color: const Color(0xFF00F5D4).withValues(alpha: 0.2),
-                  blurRadius: 8,
+                  blurRadius: scale.size(8, min: 5, max: 14),
                   offset: const Offset(0, 2),
                 ),
               ],
@@ -277,7 +299,7 @@ class ModeToggleSwitch extends StatelessWidget {
                 color: !isDiagramMode
                     ? const Color(0xFF00F5D4)
                     : Colors.transparent,
-                borderRadius: BorderRadius.circular(isCompact ? 16 : 20),
+                borderRadius: BorderRadius.circular(scale.size(isCompact ? 16 : 20, min: 12, max: 28)),
               ),
               child: Row(
                 children: [
@@ -288,7 +310,7 @@ class ModeToggleSwitch extends StatelessWidget {
                         ? Colors.black
                         : (isDark ? Colors.white70 : Colors.black87),
                   ),
-                  const SizedBox(width: 5),
+                  SizedBox(width: scale.spacing(5, min: 3, max: 8)),
                   Text(
                     isEn ? 'Physical' : 'Físico',
                     style: TextStyle(
@@ -317,7 +339,7 @@ class ModeToggleSwitch extends StatelessWidget {
                 color: isDiagramMode
                     ? const Color(0xFF00F5D4)
                     : Colors.transparent,
-                borderRadius: BorderRadius.circular(isCompact ? 16 : 20),
+                borderRadius: BorderRadius.circular(scale.size(isCompact ? 16 : 20, min: 12, max: 28)),
               ),
               child: Row(
                 children: [
@@ -328,7 +350,7 @@ class ModeToggleSwitch extends StatelessWidget {
                         ? Colors.black
                         : (isDark ? Colors.white70 : Colors.black87),
                   ),
-                  const SizedBox(width: 5),
+                  SizedBox(width: scale.spacing(5, min: 3, max: 8)),
                   Text(
                     isEn ? 'Diagram' : 'Diagrama',
                     style: TextStyle(
@@ -363,12 +385,16 @@ class FloatingActionDock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final scale = context.uiScale;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: EdgeInsets.symmetric(
+        horizontal: scale.spacing(16, min: 12, max: 28),
+        vertical: scale.spacing(8, min: 6, max: 16),
+      ),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF0D1424).withValues(alpha: 0.85) : Colors.white.withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(scale.size(30, min: 20, max: 44)),
         border: Border.all(
           color: isDark ? const Color(0xFF00F5D4).withValues(alpha: 0.3) : const Color(0xFF00F5D4).withValues(alpha: 0.6),
           width: 1.5,
@@ -376,15 +402,15 @@ class FloatingActionDock extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: (isDark ? const Color(0xFF00F5D4) : Colors.black).withValues(alpha: 0.15),
-            blurRadius: 16,
+            blurRadius: scale.size(16, min: 10, max: 24),
             spreadRadius: 1,
             offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Wrap(
-        spacing: 12,
-        runSpacing: 8,
+        spacing: scale.spacing(12, min: 8, max: 20),
+        runSpacing: scale.spacing(8, min: 6, max: 14),
         alignment: WrapAlignment.center,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: children,
@@ -409,15 +435,21 @@ class DraggableSymbolCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final scale = context.uiScale;
+
+    final cardWidth = isVerticalList
+        ? scale.size(96, min: 72, max: 140)
+        : scale.size(74, min: 58, max: 110);
+    final cardHeight = scale.size(52, min: 42, max: 80);
 
     final cardContent = Container(
-      width: isVerticalList ? 96 : 74,
-      height: 52,
+      width: cardWidth,
+      height: cardHeight,
       margin: const EdgeInsets.all(4),
-      padding: const EdgeInsets.all(6),
+      padding: EdgeInsets.all(scale.spacing(6, min: 4, max: 10)),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEEF2F6),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(scale.size(12, min: 8, max: 18)),
         border: Border.all(
           color: isDark
               ? Colors.white.withValues(alpha: 0.12)
@@ -434,11 +466,11 @@ class DraggableSymbolCard extends StatelessWidget {
       ),
       child: Center(
         child: CustomPaint(
-          size: const Size(54, 30),
+          size: Size(cardWidth * 0.6, cardHeight * 0.6),
           painter: CircuitSymbolPainter(
             type: type,
             color: isDark ? const Color(0xFF00F5D4) : const Color(0xFF0F172A),
-            strokeWidth: 2,
+            strokeWidth: scale.size(2, min: 1.5, max: 3.5),
           ),
         ),
       ),
@@ -488,6 +520,7 @@ class SymbolsDockPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final scale = context.uiScale;
 
     final symbolCards = symbolTypes.map((type) {
       return DraggableSymbolCard(
@@ -499,13 +532,13 @@ class SymbolsDockPanel extends StatelessWidget {
 
     if (isVertical) {
       return Container(
-        width: 116,
+        width: scale.size(116, min: 90, max: 170),
         margin: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: isDark
               ? const Color(0xFF0F172A).withValues(alpha: 0.92)
               : Colors.white.withValues(alpha: 0.95),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(scale.size(20, min: 14, max: 30)),
           border: Border.all(
             color: isDark
                 ? const Color(0xFF00F5D4).withValues(alpha: 0.3)
@@ -515,7 +548,7 @@ class SymbolsDockPanel extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.15),
-              blurRadius: 14,
+              blurRadius: scale.size(14, min: 8, max: 22),
               offset: const Offset(0, 4),
             ),
           ],
@@ -523,14 +556,17 @@ class SymbolsDockPanel extends StatelessWidget {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.only(top: 10, bottom: 6),
+              padding: EdgeInsets.only(
+                top: scale.spacing(10, min: 6, max: 16),
+                bottom: scale.spacing(6, min: 4, max: 10),
+              ),
               child: Text(
                 l10n.symbolsPaletteTitle,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: GoogleFonts.rajdhani().fontFamily,
                   fontWeight: FontWeight.bold,
-                  fontSize: 13,
+                  fontSize: scale.font(13, min: 11, max: 20),
                   letterSpacing: 1.5,
                   color: isDark ? const Color(0xFF00F5D4) : const Color(0xFF0F172A),
                 ),
@@ -548,13 +584,13 @@ class SymbolsDockPanel extends StatelessWidget {
       );
     } else {
       return Container(
-        height: 88,
+        height: scale.size(88, min: 72, max: 130),
         margin: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: isDark
               ? const Color(0xFF0F172A).withValues(alpha: 0.92)
               : Colors.white.withValues(alpha: 0.95),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(scale.size(20, min: 14, max: 30)),
           border: Border.all(
             color: isDark
                 ? const Color(0xFF00F5D4).withValues(alpha: 0.3)
@@ -564,7 +600,7 @@ class SymbolsDockPanel extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.15),
-              blurRadius: 14,
+              blurRadius: scale.size(14, min: 8, max: 22),
               offset: const Offset(0, 4),
             ),
           ],
@@ -572,14 +608,17 @@ class SymbolsDockPanel extends StatelessWidget {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.only(top: 6, bottom: 2),
+              padding: EdgeInsets.only(
+                top: scale.spacing(6, min: 4, max: 10),
+                bottom: scale.spacing(2, min: 2, max: 6),
+              ),
               child: Text(
                 l10n.symbolsPaletteTitle,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: GoogleFonts.rajdhani().fontFamily,
                   fontWeight: FontWeight.bold,
-                  fontSize: 11,
+                  fontSize: scale.font(11, min: 10, max: 17),
                   letterSpacing: 1.5,
                   color: isDark ? const Color(0xFF00F5D4) : const Color(0xFF0F172A),
                 ),

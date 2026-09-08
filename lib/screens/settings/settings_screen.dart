@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/ui_scale.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/settings_model.dart';
 import '../../state/settings_controller.dart';
@@ -16,121 +17,126 @@ class SettingsScreen extends ConsumerWidget {
     final controller = ref.read(settingsControllerProvider.notifier);
     final settings = ref.watch(settingsControllerProvider);
     final l10n = AppLocalizations.of(context)!;
+    final scale = context.uiScale;
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsTitle)),
       body: TechGridBackground(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-          _SettingsSection(
-            title: l10n.settingsAppearanceLanguage,
-            icon: Icons.palette_outlined,
-            children: [
-              _SectionTitle(l10n.settingsTheme),
-              SegmentedButton<AppThemeMode>(
-                segments: [
-                  for (final mode in AppThemeMode.values)
-                    ButtonSegment(
-                      value: mode,
-                      label: Text(mode.label),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: scale.dialogWidth(680, min: 480, max: 960)),
+            child: ListView(
+              padding: EdgeInsets.all(scale.spacing(16, min: 12, max: 28)),
+              children: [
+                _SettingsSection(
+                  title: l10n.settingsAppearanceLanguage,
+                  icon: Icons.palette_outlined,
+                  children: [
+                    _SectionTitle(l10n.settingsTheme),
+                    SegmentedButton<AppThemeMode>(
+                      segments: [
+                        for (final mode in AppThemeMode.values)
+                          ButtonSegment(
+                            value: mode,
+                            label: Text(mode.label),
+                          ),
+                      ],
+                      selected: {settings.themeMode},
+                      onSelectionChanged: (selection) =>
+                          controller.setThemeMode(selection.first),
                     ),
-                ],
-                selected: {settings.themeMode},
-                onSelectionChanged: (selection) =>
-                    controller.setThemeMode(selection.first),
-              ),
-              const SizedBox(height: 16),
-              _SectionTitle(l10n.settingsLanguage),
-              SegmentedButton<String>(
-                segments: const [
-                  ButtonSegment(
-                    value: 'pt',
-                    label: Text('Português'),
-                    icon: Icon(Icons.language_rounded, size: 18),
-                  ),
-                  ButtonSegment(
-                    value: 'en',
-                    label: Text('English'),
-                    icon: Icon(Icons.language_rounded, size: 18),
-                  ),
-                ],
-                selected: {settings.locale},
-                onSelectionChanged: (selection) =>
-                    controller.setLocale(selection.first),
-              ),
-            ],
+                    SizedBox(height: scale.spacing(16, min: 10, max: 24)),
+                    _SectionTitle(l10n.settingsLanguage),
+                    SegmentedButton<String>(
+                      segments: const [
+                        ButtonSegment(
+                          value: 'pt',
+                          label: Text('Português'),
+                          icon: Icon(Icons.language_rounded, size: 18),
+                        ),
+                        ButtonSegment(
+                          value: 'en',
+                          label: Text('English'),
+                          icon: Icon(Icons.language_rounded, size: 18),
+                        ),
+                      ],
+                      selected: {settings.locale},
+                      onSelectionChanged: (selection) =>
+                          controller.setLocale(selection.first),
+                    ),
+                  ],
+                ),
+                _SettingsSection(
+                  title: l10n.settingsSimulation,
+                  icon: Icons.electric_bolt_outlined,
+                  children: [
+                    _SettingSwitch(
+                      title: l10n.settingsShowCurrent,
+                      value: settings.showCurrent,
+                      onChanged: controller.setShowCurrent,
+                    ),
+                    _SettingSwitch(
+                      title: l10n.settingsShowValues,
+                      value: settings.showValues,
+                      onChanged: controller.setShowValues,
+                    ),
+                    _SettingSwitch(
+                      title: l10n.settingsShowGrid,
+                      value: settings.showGrid,
+                      onChanged: controller.setShowGrid,
+                    ),
+                    _SettingSwitch(
+                      title: l10n.settingsShowTerminals,
+                      value: settings.showTerminals,
+                      onChanged: controller.setShowTerminals,
+                    ),
+                    _SettingSwitch(
+                      title: l10n.settingsAnimateCurrent,
+                      value: settings.showCurrentAnimation,
+                      onChanged: controller.setShowCurrentAnimation,
+                    ),
+                  ],
+                ),
+                _SettingsSection(
+                  title: l10n.settingsAccessibility,
+                  icon: Icons.accessibility_new_outlined,
+                  children: [
+                    _SettingSwitch(
+                      title: l10n.settingsHighContrast,
+                      value: settings.highContrast,
+                      onChanged: controller.setHighContrast,
+                    ),
+                    _SettingSwitch(
+                      title: l10n.settingsReduceAnimations,
+                      value: settings.reduceAnimations,
+                      onChanged: controller.setReduceAnimations,
+                    ),
+                  ],
+                ),
+                _SettingsSection(
+                  title: l10n.settingsData,
+                  icon: Icons.storage_outlined,
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.restart_alt_rounded),
+                      title: Text(l10n.settingsRestoreDefaults),
+                      onTap: () => controller.restoreDefaults(),
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.delete_sweep_outlined),
+                      title: Text(l10n.settingsResetProgress),
+                      subtitle: Text(l10n.settingsResetProgressSubtitle),
+                      enabled: false,
+                    ),
+                  ],
+                ),
+                const _AboutSection(),
+                SizedBox(height: scale.spacing(24, min: 16, max: 36)),
+              ],
+            ),
           ),
-          _SettingsSection(
-            title: l10n.settingsSimulation,
-            icon: Icons.electric_bolt_outlined,
-            children: [
-              _SettingSwitch(
-                title: l10n.settingsShowCurrent,
-                value: settings.showCurrent,
-                onChanged: controller.setShowCurrent,
-              ),
-              _SettingSwitch(
-                title: l10n.settingsShowValues,
-                value: settings.showValues,
-                onChanged: controller.setShowValues,
-              ),
-              _SettingSwitch(
-                title: l10n.settingsShowGrid,
-                value: settings.showGrid,
-                onChanged: controller.setShowGrid,
-              ),
-              _SettingSwitch(
-                title: l10n.settingsShowTerminals,
-                value: settings.showTerminals,
-                onChanged: controller.setShowTerminals,
-              ),
-              _SettingSwitch(
-                title: l10n.settingsAnimateCurrent,
-                value: settings.showCurrentAnimation,
-                onChanged: controller.setShowCurrentAnimation,
-              ),
-            ],
-          ),
-          _SettingsSection(
-            title: l10n.settingsAccessibility,
-            icon: Icons.accessibility_new_outlined,
-            children: [
-
-              _SettingSwitch(
-                title: l10n.settingsHighContrast,
-                value: settings.highContrast,
-                onChanged: controller.setHighContrast,
-              ),
-              _SettingSwitch(
-                title: l10n.settingsReduceAnimations,
-                value: settings.reduceAnimations,
-                onChanged: controller.setReduceAnimations,
-              ),
-            ],
-          ),
-          _SettingsSection(
-            title: l10n.settingsData,
-            icon: Icons.storage_outlined,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.restart_alt_rounded),
-                title: Text(l10n.settingsRestoreDefaults),
-                onTap: () => controller.restoreDefaults(),
-              ),
-              ListTile(
-                leading: const Icon(Icons.delete_sweep_outlined),
-                title: Text(l10n.settingsResetProgress),
-                subtitle: Text(l10n.settingsResetProgressSubtitle),
-                enabled: false,
-              ),
-            ],
-          ),
-          const _AboutSection(),
-          const SizedBox(height: 24),
-        ],
+        ),
       ),
-    ),
     );
   }
 }
@@ -149,26 +155,27 @@ class _SettingsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scale = context.uiScale;
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: EdgeInsets.only(bottom: scale.spacing(16, min: 10, max: 24)),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(scale.spacing(16, min: 12, max: 24)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(icon, color: theme.colorScheme.primary, size: 22),
-                const SizedBox(width: 10),
+                Icon(icon, color: theme.colorScheme.primary, size: scale.icon(22, min: 18, max: 30)),
+                SizedBox(width: scale.spacing(10, min: 6, max: 16)),
                 Text(
                   title,
                   style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w700),
+                      ?.copyWith(fontWeight: FontWeight.w700, fontSize: scale.font(16, min: 14, max: 22)),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: scale.spacing(16, min: 10, max: 24)),
             ...children,
           ],
         ),
@@ -184,14 +191,16 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scale = context.uiScale;
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.only(bottom: scale.spacing(8, min: 4, max: 12)),
       child: Text(
         text,
         style: Theme.of(context)
             .textTheme
             .labelLarge
-            ?.copyWith(fontWeight: FontWeight.bold),
+            ?.copyWith(fontWeight: FontWeight.bold, fontSize: scale.font(14, min: 12, max: 20)),
       ),
     );
   }
@@ -225,20 +234,25 @@ class _AboutSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scale = context.uiScale;
 
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        padding: EdgeInsets.symmetric(
+          horizontal: scale.spacing(16, min: 12, max: 24),
+          vertical: scale.spacing(24, min: 16, max: 36),
+        ),
         child: Column(
           children: [
             const EletroLabLogo(),
-            const SizedBox(height: 16),
+            SizedBox(height: scale.spacing(16, min: 10, max: 24)),
             Text(
               'Laboratório virtual de circuitos elétricos.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
+                fontSize: scale.font(14, min: 12, max: 20),
               ),
             ),
             const SizedBox(height: 4),
@@ -246,6 +260,7 @@ class _AboutSection extends StatelessWidget {
               'Versão 1.0.0',
               style: theme.textTheme.labelMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
+                fontSize: scale.font(12, min: 10, max: 16),
               ),
             ),
           ],

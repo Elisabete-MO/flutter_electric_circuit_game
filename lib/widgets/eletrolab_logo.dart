@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../app/theme.dart';
+import '../core/ui_scale.dart';
 
 /// Identidade visual do EletroLab: ícone de raio azul com pulso neon e o nome do
 /// aplicativo alinhado horizontalmente, além de subtítulo tecnológico opcional.
@@ -37,11 +38,16 @@ class _EletroLabLogoState extends State<EletroLabLogo> with SingleTickerProvider
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final scale = context.uiScale;
 
-    final iconSize = widget.compact ? 36.0 : 64.0;
+    final baseIconSize = widget.compact ? 36.0 : 64.0;
+    final iconSize = scale.icon(baseIconSize);
+
     final titleStyle = widget.compact
         ? theme.textTheme.headlineSmall
         : theme.textTheme.displayMedium;
+
+    final scaledTitleSize = scale.font(widget.compact ? 24.0 : 44.0);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -63,19 +69,20 @@ class _EletroLabLogoState extends State<EletroLabLogo> with SingleTickerProvider
                   shadows: [
                     Shadow(
                       color: const Color(0xFF10B981).withValues(alpha: glowValue * 0.8),
-                      blurRadius: 10 + glowValue * 15,
+                      blurRadius: scale.size(10 + glowValue * 15),
                     ),
                     Shadow(
                       color: const Color(0xFF34D399).withValues(alpha: glowValue * 0.6),
-                      blurRadius: 20 + glowValue * 25,
+                      blurRadius: scale.size(20 + glowValue * 25),
                     ),
                   ],
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: scale.spacing(10)),
                 // Texto EletroLab com Brilho Neon (no modo escuro)
                 Text(
                   'EletroLab',
                   style: titleStyle?.copyWith(
+                    fontSize: scaledTitleSize,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 1.5,
                     color: isDark ? Colors.white : const Color(0xFF0F172A),
@@ -83,16 +90,16 @@ class _EletroLabLogoState extends State<EletroLabLogo> with SingleTickerProvider
                       if (isDark) ...[
                         Shadow(
                           color: EletroLabColors.neonCyan.withValues(alpha: glowValue * 0.4),
-                          blurRadius: 8 + glowValue * 8,
+                          blurRadius: scale.size(8 + glowValue * 8),
                         ),
                         Shadow(
                           color: EletroLabColors.neonPurple.withValues(alpha: glowValue * 0.3),
-                          blurRadius: 16 + glowValue * 12,
+                          blurRadius: scale.size(16 + glowValue * 12),
                         ),
                       ] else ...[
                         Shadow(
                           color: EletroLabColors.electricBlue.withValues(alpha: 0.15),
-                          blurRadius: 6,
+                          blurRadius: scale.size(6),
                         ),
                       ],
                     ],
@@ -103,14 +110,14 @@ class _EletroLabLogoState extends State<EletroLabLogo> with SingleTickerProvider
           },
         ),
         if (!widget.compact) ...[
-          const SizedBox(height: 8),
+          SizedBox(height: scale.spacing(8)),
           Text(
             'Laboratório Virtual de Circuitos',
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
               letterSpacing: 1.2,
               fontWeight: FontWeight.w700,
-              fontSize: 13,
+              fontSize: scale.font(13),
             ),
             textAlign: TextAlign.center,
           ),

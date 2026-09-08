@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../core/ui_scale.dart';
 import 'prof_volts_full_body.dart';
 import 'glass_container.dart';
 
@@ -29,33 +30,33 @@ class _ProfVoltsExplanationDialogState
   @override
   Widget build(BuildContext context) {
     const accentColor = Color(0xFF10B981);
+    final scale = context.uiScale;
 
     return Dialog(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+      insetPadding: scale.insetsSymmetric(horizontal: 24, vertical: 32),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 460),
+        constraints: BoxConstraints(maxWidth: scale.dialogWidth(480)),
         child: GlassContainer(
-          borderRadius: 24,
+          borderRadius: scale.size(24),
           accentColor: accentColor,
           opacity: 0.92,
-          padding: const EdgeInsets.all(24),
+          padding: scale.insetsAll(24),
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const ProfVoltsFullBody(
+                ProfVoltsFullBody(
                   emotion: ProfVoltsEmotion.happy,
-                  size: 130,
+                  size: scale.size(130),
                 ),
-                const SizedBox(height: 14),
+                SizedBox(height: scale.spacing(14)),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: scale.insetsSymmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: accentColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(scale.size(8)),
                     border:
                         Border.all(color: accentColor.withValues(alpha: 0.5)),
                   ),
@@ -64,38 +65,38 @@ class _ProfVoltsExplanationDialogState
                     style: GoogleFonts.rajdhani(
                       fontWeight: FontWeight.bold,
                       color: accentColor,
-                      fontSize: 14,
+                      fontSize: scale.font(14),
                       letterSpacing: 1.5,
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: scale.spacing(16)),
                 Text(
                   widget.question,
                   style: GoogleFonts.outfit(
                     color: Colors.white,
-                    fontSize: 15,
+                    fontSize: scale.font(15),
                     height: 1.4,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: scale.spacing(20)),
                 ...widget.options.map((opt) {
                   final isSelected = _selected == opt;
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
+                    padding: EdgeInsets.only(bottom: scale.spacing(8)),
                     child: InkWell(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(scale.size(12)),
                       onTap: () => setState(() => _selected = opt),
                       child: Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
+                        padding: scale.insetsSymmetric(
                             horizontal: 14, vertical: 12),
                         decoration: BoxDecoration(
                           color: isSelected
                               ? accentColor.withValues(alpha: 0.15)
                               : const Color(0xFF1E293B),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(scale.size(12)),
                           border: Border.all(
                             color: isSelected ? accentColor : Colors.white24,
                             width: isSelected ? 2 : 1,
@@ -110,9 +111,9 @@ class _ProfVoltsExplanationDialogState
                               color: isSelected
                                   ? accentColor
                                   : Colors.white38,
-                              size: 20,
+                              size: scale.icon(20),
                             ),
-                            const SizedBox(width: 12),
+                            SizedBox(width: scale.spacing(12)),
                             Expanded(
                               child: Text(
                                 opt,
@@ -120,7 +121,7 @@ class _ProfVoltsExplanationDialogState
                                   color: isSelected
                                       ? Colors.white
                                       : Colors.white70,
-                                  fontSize: 14,
+                                  fontSize: scale.font(14),
                                   fontWeight: isSelected
                                       ? FontWeight.w600
                                       : FontWeight.normal,
@@ -133,10 +134,10 @@ class _ProfVoltsExplanationDialogState
                     ),
                   );
                 }),
-                const SizedBox(height: 16),
+                SizedBox(height: scale.spacing(16)),
                 SizedBox(
                   width: double.infinity,
-                  height: 48,
+                  height: scale.size(48),
                   child: FilledButton.icon(
                     onPressed: _selected == null
                         ? null
@@ -149,16 +150,16 @@ class _ProfVoltsExplanationDialogState
                       disabledBackgroundColor: const Color(0xFF475569),
                       disabledForegroundColor: Colors.white38,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(scale.size(14)),
                       ),
                       textStyle: TextStyle(
                         fontFamily: GoogleFonts.rajdhani().fontFamily,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1.5,
-                        fontSize: 16,
+                        fontSize: scale.font(16),
                       ),
                     ),
-                    icon: const Icon(Icons.check_circle_outline, size: 20),
+                    icon: Icon(Icons.check_circle_outline, size: scale.icon(20)),
                     label: const Text('CONFIRMAR EXPLICAÇÃO'),
                   ),
                 ),

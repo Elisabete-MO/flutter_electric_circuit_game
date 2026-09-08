@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../core/ui_scale.dart';
 import 'prof_volts_full_body.dart';
 import 'glass_container.dart';
 
 /// Dialog de previsão obrigatória antes de energizar o circuito.
-/// Exibe pergunta contextual + opções deChoiceChip + botão registrar.
+/// Exibe pergunta contextual + opções de ChoiceChip + botão registrar.
 class ProfVoltsPredictionDialog extends StatefulWidget {
   const ProfVoltsPredictionDialog({
     super.key,
@@ -28,33 +29,33 @@ class _ProfVoltsPredictionDialogState extends State<ProfVoltsPredictionDialog> {
   @override
   Widget build(BuildContext context) {
     const accentColor = Color(0xFFD97706);
+    final scale = context.uiScale;
 
     return Dialog(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+      insetPadding: scale.insetsSymmetric(horizontal: 24, vertical: 32),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 460),
+        constraints: BoxConstraints(maxWidth: scale.dialogWidth(480)),
         child: GlassContainer(
-          borderRadius: 24,
+          borderRadius: scale.size(24),
           accentColor: accentColor,
           opacity: 0.92,
-          padding: const EdgeInsets.all(24),
+          padding: scale.insetsAll(24),
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const ProfVoltsFullBody(
+                ProfVoltsFullBody(
                   emotion: ProfVoltsEmotion.neutral,
-                  size: 130,
+                  size: scale.size(130),
                 ),
-                const SizedBox(height: 14),
+                SizedBox(height: scale.spacing(14)),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: scale.insetsSymmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: accentColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(scale.size(8)),
                     border:
                         Border.all(color: accentColor.withValues(alpha: 0.5)),
                   ),
@@ -63,25 +64,25 @@ class _ProfVoltsPredictionDialogState extends State<ProfVoltsPredictionDialog> {
                     style: GoogleFonts.rajdhani(
                       fontWeight: FontWeight.bold,
                       color: accentColor,
-                      fontSize: 14,
+                      fontSize: scale.font(14),
                       letterSpacing: 1.5,
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: scale.spacing(16)),
                 Text(
                   widget.question,
                   style: GoogleFonts.outfit(
                     color: Colors.white,
-                    fontSize: 15,
+                    fontSize: scale.font(15),
                     height: 1.4,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: scale.spacing(20)),
                 Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
+                  spacing: scale.spacing(8),
+                  runSpacing: scale.spacing(8),
                   alignment: WrapAlignment.center,
                   children: widget.options.map((opt) {
                     final isSelected = _selected == opt;
@@ -90,7 +91,7 @@ class _ProfVoltsPredictionDialogState extends State<ProfVoltsPredictionDialog> {
                         opt,
                         style: GoogleFonts.rajdhani(
                           fontWeight: FontWeight.bold,
-                          fontSize: 13,
+                          fontSize: scale.font(13),
                           color: isSelected ? Colors.black : Colors.white70,
                         ),
                       ),
@@ -107,10 +108,10 @@ class _ProfVoltsPredictionDialogState extends State<ProfVoltsPredictionDialog> {
                     );
                   }).toList(),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: scale.spacing(24)),
                 SizedBox(
                   width: double.infinity,
-                  height: 48,
+                  height: scale.size(48),
                   child: FilledButton.icon(
                     onPressed: _selected == null
                         ? null
@@ -123,16 +124,16 @@ class _ProfVoltsPredictionDialogState extends State<ProfVoltsPredictionDialog> {
                       disabledBackgroundColor: const Color(0xFF475569),
                       disabledForegroundColor: Colors.white38,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(scale.size(14)),
                       ),
                       textStyle: TextStyle(
                         fontFamily: GoogleFonts.rajdhani().fontFamily,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1.5,
-                        fontSize: 16,
+                        fontSize: scale.font(16),
                       ),
                     ),
-                    icon: const Icon(Icons.psychology_rounded, size: 20),
+                    icon: Icon(Icons.psychology_rounded, size: scale.icon(20)),
                     label: const Text('REGISTRAR PREVISÃO'),
                   ),
                 ),

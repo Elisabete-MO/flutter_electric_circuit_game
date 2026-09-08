@@ -26,15 +26,15 @@ class ScienceFairMap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final uiScale = UiScale.fromSize(MediaQuery.of(context).size.width, MediaQuery.of(context).size.height);
+    final uiScale = context.uiScale;
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final double mapW = constraints.maxWidth;
         final double mapH = constraints.maxHeight;
 
-        // 50% larger table base width scaled dynamically for large screens
-        final double maxMarkerWidth = uiScale.isDesktop ? 280.0 : 185.0;
+        // Marcadores proporcionais com escala fluida para telas 1080p, 2K e 4K
+        final double maxMarkerWidth = uiScale.size(280.0, min: 200.0, max: 480.0);
         final double baseMarkerW = (mapW * 0.14).clamp(115.0, maxMarkerWidth);
 
         final isNarrow = mapW < 700;

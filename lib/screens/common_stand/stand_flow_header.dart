@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../core/ui_scale.dart';
 import '../../widgets/eletrolab_header_brand.dart';
 import 'stand_flow_tokens.dart';
 
@@ -31,9 +32,14 @@ class StandFlowHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scale = context.uiScale;
+
     return Container(
-      height: StandFlowTokens.headerHeight,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      height: scale.size(StandFlowTokens.headerHeight, min: 58, max: 96),
+      padding: EdgeInsets.symmetric(
+        horizontal: scale.spacing(16, min: 10, max: 28),
+        vertical: scale.spacing(8, min: 4, max: 14),
+      ),
       decoration: BoxDecoration(
         color: const Color(0xFF0F172A).withValues(alpha: 0.92),
         border: const Border(
@@ -48,7 +54,7 @@ class StandFlowHeader extends StatelessWidget {
             children: [
               // 1. Botão de Voltar à esquerda
               IconButton(
-                icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                icon: Icon(Icons.arrow_back_rounded, color: Colors.white, size: scale.icon(22, min: 18, max: 32)),
                 tooltip: 'Voltar ao Mapa',
                 onPressed: onBack ?? () => Navigator.of(context).maybePop(),
               ),
@@ -56,13 +62,16 @@ class StandFlowHeader extends StatelessWidget {
               if (!isCompact) ...[
                 const SizedBox(width: 4),
                 const EletroLabHeaderBrand(compact: true),
-                const SizedBox(width: 12),
+                SizedBox(width: scale.spacing(12, min: 8, max: 20)),
                 // Badge do Estande
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: scale.spacing(10, min: 6, max: 16),
+                    vertical: scale.spacing(4, min: 2, max: 8),
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF042920),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(scale.size(8, min: 6, max: 12)),
                     border: Border.all(
                       color: StandFlowTokens.primaryGreen.withValues(alpha: 0.4),
                     ),
@@ -71,13 +80,13 @@ class StandFlowHeader extends StatelessWidget {
                     'Estande ${standNumber.toString().padLeft(2, '0')}',
                     style: TextStyle(
                       fontFamily: GoogleFonts.rajdhani().fontFamily,
-                      fontSize: 13,
+                      fontSize: scale.font(13, min: 11, max: 18),
                       fontWeight: FontWeight.bold,
                       color: StandFlowTokens.accentGreen,
                     ),
                   ),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: scale.spacing(16, min: 10, max: 24)),
               ],
 
               // 2. Pílulas de Navegação das Missões
@@ -93,8 +102,9 @@ class StandFlowHeader extends StatelessWidget {
                       final isUnlocked = unlockedMissionNumbers.contains(missionNumber);
 
                       return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        padding: EdgeInsets.symmetric(horizontal: scale.spacing(4, min: 2, max: 8)),
                         child: _buildMissionPill(
+                          context: context,
                           missionNumber: missionNumber,
                           isCurrent: isCurrent,
                           isCompleted: isCompleted,
@@ -109,7 +119,7 @@ class StandFlowHeader extends StatelessWidget {
               // 3. Botão de Ajuda
               if (onHelpTap != null)
                 IconButton(
-                  icon: const Icon(Icons.help_outline_rounded, color: Colors.white70),
+                  icon: Icon(Icons.help_outline_rounded, color: Colors.white70, size: scale.icon(22, min: 18, max: 32)),
                   tooltip: 'Ajuda da Missão',
                   onPressed: onHelpTap,
                 ),
@@ -121,11 +131,13 @@ class StandFlowHeader extends StatelessWidget {
   }
 
   Widget _buildMissionPill({
+    required BuildContext context,
     required int missionNumber,
     required bool isCurrent,
     required bool isCompleted,
     required bool isUnlocked,
   }) {
+    final scale = context.uiScale;
     Color bg;
     Color border;
     Color text;
@@ -139,7 +151,7 @@ class StandFlowHeader extends StatelessWidget {
       bg = const Color(0xFF064E3B);
       border = StandFlowTokens.primaryGreen.withValues(alpha: 0.6);
       text = Colors.white;
-      icon = const Icon(Icons.check_circle_rounded, color: StandFlowTokens.accentGreen, size: 14);
+      icon = Icon(Icons.check_circle_rounded, color: StandFlowTokens.accentGreen, size: scale.icon(14, min: 12, max: 20));
     } else if (isUnlocked) {
       bg = const Color(0xFF1E293B);
       border = const Color(0xFF334155);
@@ -148,24 +160,27 @@ class StandFlowHeader extends StatelessWidget {
       bg = const Color(0xFF0F172A);
       border = const Color(0xFF1E293B);
       text = const Color(0xFF475569);
-      icon = const Icon(Icons.lock_rounded, color: Color(0xFF475569), size: 13);
+      icon = Icon(Icons.lock_rounded, color: const Color(0xFF475569), size: scale.icon(13, min: 11, max: 18));
     }
 
     return InkWell(
       onTap: isUnlocked ? () => onSelectMission?.call(missionNumber) : null,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(scale.size(16, min: 12, max: 24)),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: EdgeInsets.symmetric(
+          horizontal: scale.spacing(10, min: 7, max: 18),
+          vertical: scale.spacing(6, min: 4, max: 12),
+        ),
         decoration: BoxDecoration(
           color: bg,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(scale.size(16, min: 12, max: 24)),
           border: Border.all(color: border, width: isCurrent ? 1.8 : 1.0),
           boxShadow: isCurrent
               ? [
                   BoxShadow(
                     color: StandFlowTokens.primaryGreen.withValues(alpha: 0.35),
-                    blurRadius: 8,
+                    blurRadius: scale.size(8, min: 5, max: 14),
                   )
                 ]
               : null,
@@ -175,13 +190,13 @@ class StandFlowHeader extends StatelessWidget {
           children: [
             if (icon != null) ...[
               icon,
-              const SizedBox(width: 4),
+              SizedBox(width: scale.spacing(4, min: 2, max: 8)),
             ],
             Text(
               'Missão $missionNumber',
               style: TextStyle(
                 fontFamily: GoogleFonts.rajdhani().fontFamily,
-                fontSize: 13,
+                fontSize: scale.font(13, min: 11, max: 18),
                 fontWeight: isCurrent ? FontWeight.bold : FontWeight.w600,
                 color: text,
               ),
@@ -192,3 +207,4 @@ class StandFlowHeader extends StatelessWidget {
     );
   }
 }
+
