@@ -63,7 +63,7 @@ class SecondBenchPhaseScaffold extends StatelessWidget {
                   backgroundAsset,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) => Image.asset(
-                    'assets/images/backgrounds/background_fase_02_bancada.png',
+                    'assets/backgrounds/background_fase_02_bancada.png',
                     fit: BoxFit.cover,
                   ),
                 ),
