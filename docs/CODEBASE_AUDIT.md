@@ -696,3 +696,103 @@ Arquivo modificado/criado por esta tarefa: **apenas `CODEBASE_AUDIT.md`** (ver `
 | 4. `flutter analyze` | No issues found |
 | 5. `flutter test` | 75 testes, todos passando |
 | 6. Somente `CODEBASE_AUDIT.md` foi alterado | **CONFIRMADO** — `git status --porcelain` retornou vazio antes desta edição; nenhum outro arquivo foi modificado nesta sessão |
+
+---
+
+### Errata factual de contagem
+
+A seção 18 registra "54 arquivos `.dart` com 0 bytes" e a seção 3 repete esse número. A verificação retrospectiva com `git ls-tree` + `git cat-file -s` no commit original `0a8885aa` encontrou **53** arquivos de 0 bytes sob `lib/`.
+
+| Fonte | Número registrado | Número real verificado |
+| --- | --- | --- |
+| Seção 3 (tabela resumo) | 54 | 53 |
+| Seção 18 (lista nominal) | 54 | 53 |
+| Seção 24 (pós-limpeza 1) | 51 | — (consistente: 53 − 2 preservados = 51) |
+
+A divergência entre 54 e 53 é erro de contagem na auditoria original, não mudança de código. A seção 18 lista nominal correta contém 53 entradas; uma contagem manual incorreta produziu 54. A seção 24 está internamente consistente (51 = 53 − `ui_scale.dart` − `app.dart` que não eram de 0 bytes naquele momento). Esta errata é correção de registro, não alteração de estado.
+
+---
+
+## 26. Snapshot final pós-rebaseline estrutural
+
+> As seções anteriores permanecem como registro dos estados em que foram produzidas. Esta seção registra a baseline final após a remoção do código legado comprovado e encerra a atualização operacional deste audit.
+
+### 26.1 Identificação
+
+| Campo | Valor |
+| --- | --- |
+| Branch | `refactor/tests` |
+| HEAD | `b38f8b3a3decaa2621b8204aabfa7af2bcf305ae` |
+| Commit original auditado | `0a8885aa84bfa08b07473acf23486c46acc42b0a` |
+| Commit da remoção documental | `e1f21c20bc832d7dd136adf48302c97efc953b7b` |
+| Commit da primeira limpeza | `442136f00f608d478553118a18d4c9b39822b421` |
+| Commit da remoção de first_bench | `7842e59` |
+| Working tree antes desta edição | limpa (sem alterações unstaged/staged) |
+
+### 26.2 Estado estrutural final
+
+| Métrica | Valor |
+| --- | --- |
+| Arquivos Dart em `lib/` | 132 |
+| Arquivos Dart de 0 bytes em `lib/` | 0 |
+| Arquivos Dart em `test/` | 9 |
+| Casos de teste reais | 47 |
+| Rotas ativas | 12 (`/`, `/intro`, `/home`, `/first-steps`, `/second-bench`, `/liga-desliga`, `/ruas-maquete`, `/letreros-led`, `/movimento-miniatura`, `/mede-testa-explica`, `/sandbox`, `/settings`) |
+| Fluxo `first_bench` | **Ausente** — rota, screens, model e testes removidos |
+
+### 26.3 Remoções finais confirmadas
+
+Confirmadas por verificação filesystem + grep (todas as ausências verificadas):
+
+| Categoria | Itens removidos |
+| --- | --- |
+| Fluxo `first_bench` | `lib/screens/first_bench/` (5 arquivos), `lib/models/first_bench_flow.dart`, rota `Routes.firstBench` |
+| Testes exclusivos | `test/screens/first_bench/` (5 arquivos), `test/models/first_bench_flow_test.dart` |
+| Widgets órfãos | `lib/widgets/home_option_card.dart`, `lib/widgets/cyber_hud_container.dart` |
+| Services órfãos | `lib/services/audio_service.dart` |
+| Common_stand não utilizado | `lib/screens/common_stand/stand_flow_scaffold.dart`, `lib/screens/common_stand/stand_flow_action_bar.dart` |
+| Dependências | `flame`, `confetti`, `ordered_set` (limpeza 1); `audioplayers` + 7 plataformas, `cupertino_icons`, `synchronized` (limpeza 2) |
+| Assets | `assets/stands/estande_10.png`, `assets/references/` (4 PNGs), `assets/sounds/.gitkeep`, `assets/icons/.gitkeep` |
+
+### 26.4 Qualidade
+
+| Verificação | Resultado |
+| --- | --- |
+| `flutter analyze` | **No issues found!** |
+| `flutter test` | **All tests passed! — 47 testes** |
+
+### 26.5 Pendências técnicas conhecidas
+
+Itens confirmados ainda presentes no código atual:
+
+| Pendência | Status |
+| --- | --- |
+| LED com comportamento/modelagem divergente entre DFS e MNA | PENDENTE |
+| Motor com resistência fixa (`2.0 Ω`) ignorando default da UI (`15.0 Ω`) | PENDENTE |
+| Capacitor aproximado resistivamente (`10.0 Ω` fixo) sem modelo capacitivo | PENDENTE |
+| Potenciômetro com terminal W sem participação elétrica | PENDENTE |
+| Curto-circuito com critérios distintos entre DFS (resistivo) e MNA (por corrente) | PENDENTE |
+| MissionCircuitBuilder com divergências do solver geral | PENDENTE |
+| Referência `background2.png` em `science_fair_map.dart:55` para asset inexistente | PENDENTE |
+| `push-button` mencionado em missões sem subtipo correspondente no modelo `ComponentType` | PENDENTE |
+| Diodo com comportamento simplificado (Vf fixo, sem curva IV) | PENDENTE |
+
+Essas pendências são alvos da **Frente 0** no `ROADMAP.md`.
+
+> A limpeza estrutural não introduziu regressões detectáveis por `flutter analyze` ou `flutter test`. As pendências listadas acima eram previamente conhecidas e já registradas na auditoria original (seções 8, 9, 19, 21).
+
+### 26.6 Documentação atual
+
+| Documento | Tipo | Status |
+| --- | --- | --- |
+| `README.md` | Documentação técnica | PRESENTE |
+| `docs/ARCHITECTURE.md` | Documentação técnica | PRESENTE |
+| `docs/ROADMAP.md` | Trabalho futuro | PRESENTE |
+| `docs/CODEBASE_AUDIT.md` | Registro histórico (este arquivo) | PRESENTE |
+| `ios/.../README.md` | Asset padrão Xcode | PRESENTE (não do projeto) |
+
+**Ausentes (planejados para adição futura):** `PRODUCT.md`, `PEDAGOGY.md`, `CAMPAIGN.md`, `FIRST_STAND.md`, `PORTAO_DA_ESCOLA.md`, `REFERENCES.md`.
+
+### 26.7 Encerramento do audit
+
+> A partir deste snapshot, `CODEBASE_AUDIT.md` passa a ser registro histórico congelado. O estado arquitetural corrente deve ser mantido em `ARCHITECTURE.md`; trabalho futuro em `ROADMAP.md`; decisões de produto e pedagogia em seus documentos canônicos correspondentes. Alterações futuras ao estado do sistema devem ser refletidas em `ARCHITECTURE.md`, não neste arquivo.
