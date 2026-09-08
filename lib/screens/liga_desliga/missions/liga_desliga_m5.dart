@@ -558,6 +558,8 @@ class _LigaDesligaM5State extends State<LigaDesligaM5>
                 isFilled: _batteryInserted,
                 showLabel: false,
                 rotation: _batteryRotation,
+                width: socketSize,
+                height: socketSize,
                 onAccept: (_) => _insertComponent(
                   name: 'Bateria M5',
                   getInserted: () => _batteryInserted,
@@ -572,7 +574,7 @@ class _LigaDesligaM5State extends State<LigaDesligaM5>
                 ),
                 onTap: () {},
                 symbolWidget: CustomPaint(
-                  size: Size(socketSize * 0.85, socketSize * 0.85),
+                  size: Size(socketSize, socketSize),
                   painter: ComponentPhysicalPainter(
                     type: ComponentType.battery,
                     isActive: true,
@@ -592,6 +594,8 @@ class _LigaDesligaM5State extends State<LigaDesligaM5>
                 isFilled: _pushButtonInserted,
                 showLabel: false,
                 rotation: _pushButtonRotation,
+                width: socketSize,
+                height: socketSize,
                 onAccept: (_) => _insertComponent(
                   name: 'Botão M5',
                   getInserted: () => _pushButtonInserted,
@@ -635,6 +639,8 @@ class _LigaDesligaM5State extends State<LigaDesligaM5>
                 isFilled: _lampInserted,
                 showLabel: false,
                 rotation: _lampRotation,
+                width: socketSize,
+                height: socketSize,
                 onAccept: (_) => _insertComponent(
                   name: 'Lâmpada M5',
                   getInserted: () => _lampInserted,
@@ -649,7 +655,7 @@ class _LigaDesligaM5State extends State<LigaDesligaM5>
                 ),
                 onTap: () {},
                 symbolWidget: CustomPaint(
-                  size: Size(socketSize * 0.85, socketSize * 0.85),
+                  size: Size(socketSize, socketSize),
                   painter: ComponentPhysicalPainter(
                     type: ComponentType.bulb,
                     isActive: _isLit,
@@ -696,8 +702,10 @@ class _LigaDesligaM5State extends State<LigaDesligaM5>
               child: SchematicComponentCard(
                 label: '',
                 showLabel: false,
+                width: cardSize,
+                height: cardSize,
                 symbolWidget: CustomPaint(
-                  size: Size(cardSize * 0.65, cardSize * 0.48),
+                  size: Size(cardSize, cardSize),
                   painter: CircuitSymbolPainter(
                     type: ComponentType.battery,
                     color: const Color(0xFF0F172A),
@@ -715,8 +723,10 @@ class _LigaDesligaM5State extends State<LigaDesligaM5>
                 label: '',
                 showLabel: false,
                 isActive: _isLit,
+                width: cardSize,
+                height: cardSize,
                 symbolWidget: CustomPaint(
-                  size: Size(cardSize * 0.65, cardSize * 0.48),
+                  size: Size(cardSize, cardSize),
                   painter: CircuitSymbolPainter(
                     type: ComponentType.bulb,
                     isActive: _isLit,
@@ -736,6 +746,8 @@ class _LigaDesligaM5State extends State<LigaDesligaM5>
                 expectedData: 'push_button',
                 isFilled: _pushButtonInserted,
                 showLabel: false,
+                width: cardSize,
+                height: cardSize,
                 onAccept: (_) => _insertComponent(
                   name: 'Botão M5',
                   getInserted: () => _pushButtonInserted,
@@ -759,7 +771,7 @@ class _LigaDesligaM5State extends State<LigaDesligaM5>
                   }
                 },
                 symbolWidget: SchematicSwitchWidget(
-                  size: cardSize * 0.55,
+                  size: cardSize,
                   isPushButton: true,
                   isClosed: _pushButtonPressed,
                   color: const Color(0xFF0F172A),
@@ -767,7 +779,7 @@ class _LigaDesligaM5State extends State<LigaDesligaM5>
                 placeholderWidget: Opacity(
                   opacity: 0.4,
                   child: SchematicSwitchWidget(
-                    size: cardSize * 0.50,
+                    size: cardSize,
                     isPushButton: true,
                     color: const Color(0xFF94A3B8),
                   ),

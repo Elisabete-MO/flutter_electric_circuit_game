@@ -490,6 +490,8 @@ class _LigaDesligaM1State extends State<LigaDesligaM1>
                   isFilled: _batteryInserted,
                   showLabel: false,
                   rotation: _batteryRotation,
+                  width: compSize,
+                  height: compSize,
                   onAccept: (_) => _insertComponent(
                     name: 'Bateria M1',
                     getInserted: () => _batteryInserted,
@@ -530,6 +532,8 @@ class _LigaDesligaM1State extends State<LigaDesligaM1>
                   isFilled: _switchInserted,
                   showLabel: false,
                   rotation: _switchRotation,
+                  width: compSize,
+                  height: compSize,
                   onAccept: (_) => _insertComponent(
                     name: 'Chave SPST M1',
                     getInserted: () => _switchInserted,
@@ -575,6 +579,8 @@ class _LigaDesligaM1State extends State<LigaDesligaM1>
                   isFilled: _bulbInserted,
                   showLabel: false,
                   rotation: _bulbRotation,
+                  width: compSize,
+                  height: compSize,
                   onAccept: (_) => _insertComponent(
                     name: 'Lâmpada M1',
                     getInserted: () => _bulbInserted,
@@ -645,6 +651,8 @@ class _LigaDesligaM1State extends State<LigaDesligaM1>
                   isFilled: _batteryInserted,
                   showLabel: false,
                   rotation: _batteryRotation,
+                  width: 95,
+                  height: 95,
                   onAccept: (_) => _insertComponent(
                     name: 'Bateria M1',
                     getInserted: () => _batteryInserted,
@@ -659,7 +667,7 @@ class _LigaDesligaM1State extends State<LigaDesligaM1>
                   ),
                   onTap: () {},
                   symbolWidget: CustomPaint(
-                    size: const Size(60, 44),
+                    size: const Size(95, 95),
                     painter: CircuitSymbolPainter(
                       type: ComponentType.battery,
                       color: const Color(0xFF0F172A),
@@ -669,7 +677,7 @@ class _LigaDesligaM1State extends State<LigaDesligaM1>
                   placeholderWidget: Opacity(
                     opacity: 0.4,
                     child: CustomPaint(
-                      size: const Size(54, 38),
+                      size: const Size(95, 95),
                       painter: CircuitSymbolPainter(
                         type: ComponentType.battery,
                         color: const Color(0xFF94A3B8),
@@ -690,6 +698,8 @@ class _LigaDesligaM1State extends State<LigaDesligaM1>
                   isFilled: _bulbInserted,
                   showLabel: false,
                   rotation: _bulbRotation,
+                  width: 95,
+                  height: 95,
                   onAccept: (_) => _insertComponent(
                     name: 'Lâmpada M1',
                     getInserted: () => _bulbInserted,
@@ -704,7 +714,7 @@ class _LigaDesligaM1State extends State<LigaDesligaM1>
                   ),
                   onTap: () {},
                   symbolWidget: CustomPaint(
-                    size: const Size(60, 44),
+                    size: const Size(95, 95),
                     painter: CircuitSymbolPainter(
                       type: ComponentType.bulb,
                       isActive: _isClosed,
@@ -716,7 +726,7 @@ class _LigaDesligaM1State extends State<LigaDesligaM1>
                   placeholderWidget: Opacity(
                     opacity: 0.4,
                     child: CustomPaint(
-                      size: const Size(54, 38),
+                      size: const Size(95, 95),
                       painter: CircuitSymbolPainter(
                         type: ComponentType.bulb,
                         color: const Color(0xFF94A3B8),
@@ -737,6 +747,8 @@ class _LigaDesligaM1State extends State<LigaDesligaM1>
                   isFilled: _switchInserted,
                   showLabel: false,
                   rotation: _switchRotation,
+                  width: 95,
+                  height: 95,
                   onAccept: (_) => _insertComponent(
                     name: 'Chave SPST M1',
                     getInserted: () => _switchInserted,
@@ -755,7 +767,7 @@ class _LigaDesligaM1State extends State<LigaDesligaM1>
                     }
                   },
                   symbolWidget: CustomPaint(
-                    size: const Size(60, 44),
+                    size: const Size(95, 95),
                     painter: CircuitSymbolPainter(
                       type: ComponentType.switchComponent,
                       isActive: _switchClosed,
@@ -766,7 +778,7 @@ class _LigaDesligaM1State extends State<LigaDesligaM1>
                   placeholderWidget: Opacity(
                     opacity: 0.4,
                     child: CustomPaint(
-                      size: const Size(54, 38),
+                      size: const Size(95, 95),
                       painter: CircuitSymbolPainter(
                         type: ComponentType.switchComponent,
                         color: const Color(0xFF94A3B8),

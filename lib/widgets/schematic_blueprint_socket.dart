@@ -171,6 +171,8 @@ class SchematicComponentCard extends StatelessWidget {
   final bool isActive;
   final Color accentColor;
   final bool showLabel;
+  final double? width;
+  final double? height;
 
   const SchematicComponentCard({
     super.key,
@@ -179,6 +181,8 @@ class SchematicComponentCard extends StatelessWidget {
     this.isActive = false,
     this.accentColor = const Color(0xFF0284C7),
     this.showLabel = true,
+    this.width,
+    this.height,
   });
 
   @override
@@ -189,8 +193,8 @@ class SchematicComponentCard extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 95,
-          height: 75,
+          width: width ?? 95,
+          height: height ?? 95,
           decoration: BoxDecoration(
             color: isActive ? const Color(0xFFF0FDF4) : const Color(0xFFFFFFFF),
             borderRadius: BorderRadius.circular(14),
