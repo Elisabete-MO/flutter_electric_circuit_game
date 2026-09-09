@@ -193,19 +193,24 @@ class StandInfoCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      !stand.hasMissions
-                          ? (stand.isBancadaLivre
-                              ? 'Simulador 3D Livre'
-                              : 'Tutorial Introdutório')
-                          : 'Progresso da Equipe',
-                      style: TextStyle(
-                        color: const Color(0xFF94A3B8),
-                        fontWeight: FontWeight.w700,
-                        fontSize: scale.font(13.0),
+                    Expanded(
+                      child: Text(
+                        !stand.hasMissions
+                            ? (stand.isBancadaLivre
+                                ? 'Simulador 3D Livre'
+                                : 'Tutorial Introdutório')
+                            : 'Progresso da Equipe',
+                        style: TextStyle(
+                          color: const Color(0xFF94A3B8),
+                          fontWeight: FontWeight.w700,
+                          fontSize: scale.font(13.0),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    if (stand.hasMissions)
+                    if (stand.hasMissions) ...[
+                      const SizedBox(width: 8),
                       Text(
                         '${stand.completedMissions}/${stand.totalMissions} missões',
                         style: TextStyle(
@@ -214,6 +219,7 @@ class StandInfoCard extends StatelessWidget {
                           fontSize: scale.font(13.0),
                         ),
                       ),
+                    ],
                   ],
                 ),
                 SizedBox(height: scale.spacing(8)),
