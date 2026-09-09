@@ -6,31 +6,63 @@ import '../../../models/first_step_component.dart';
 import '../../../widgets/circuit_symbol_painter.dart';
 import '../../../widgets/component_physical_painter.dart';
 
-/// Widget dedicado para exibição das imagens realistas de assets/components/
+/// Widget dedicado para exibição das imagens realistas de assets/components/ com calibração precisa de enquadramento
 class FirstStepPhysicalView extends StatelessWidget {
   final ComponentType type;
   final bool isActive;
-  final double size;
+  final double? size;
 
   const FirstStepPhysicalView({
     super.key,
     required this.type,
     this.isActive = false,
-    this.size = 72,
+    this.size,
   });
+
+  /// Calibração fina da escala de cada PNG para evitar cortes e manter proporção harmônica
+  double _getScaleMultiplier(ComponentType type) {
+    switch (type) {
+      case ComponentType.battery:
+        return 0.88; // Bateria é alta e preenche o canvas do PNG
+      case ComponentType.bulb:
+        return 0.88; // Lâmpada é alta e preenche o canvas do PNG
+      case ComponentType.connectingWire:
+        return 0.95; // Fios em círculo
+      case ComponentType.switchComponent:
+        return 1.05; // Chave em perspectiva
+      case ComponentType.led:
+        return 1.02; // LED com terminais compridos
+      case ComponentType.motor:
+        return 1.15; // Motor cilíndrico
+      case ComponentType.resistor:
+        return 1.35; // Resistor é fino no centro
+      case ComponentType.diode:
+        return 1.35; // Diodo é fino no centro
+      case ComponentType.fuse:
+        return 1.25;
+      case ComponentType.capacitor:
+      case ComponentType.potentiometer:
+      case ComponentType.buzzer:
+      case ComponentType.powerSupply:
+        return 1.0;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final assetPath = type.getAssetPath(isActive);
+    final scaleMultiplier = _getScaleMultiplier(type);
+
+    Widget imageWidget;
     if (assetPath != null) {
-      return Image.asset(
+      imageWidget = Image.asset(
         assetPath,
         width: size,
         height: size,
         fit: BoxFit.contain,
         errorBuilder: (context, error, stackTrace) {
           return CustomPaint(
-            size: Size(size, size),
+            size: Size(size ?? 80, size ?? 80),
             painter: ComponentPhysicalPainter(
               type: type,
               isActive: isActive,
@@ -39,15 +71,20 @@ class FirstStepPhysicalView extends StatelessWidget {
           );
         },
       );
+    } else {
+      imageWidget = CustomPaint(
+        size: Size(size ?? 80, size ?? 80),
+        painter: ComponentPhysicalPainter(
+          type: type,
+          isActive: isActive,
+          isDarkMode: false,
+        ),
+      );
     }
 
-    return CustomPaint(
-      size: Size(size, size),
-      painter: ComponentPhysicalPainter(
-        type: type,
-        isActive: isActive,
-        isDarkMode: false,
-      ),
+    return Transform.scale(
+      scale: scaleMultiplier,
+      child: imageWidget,
     );
   }
 }
@@ -188,28 +225,30 @@ class FirstStepsComponentTile extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Área de renderização visual (assets/components ou símbolo esquemático)
+            // Área de renderização visual ampla, centrada e sem cortes
             Expanded(
-              child: Center(
-                child: usePhysicalStyle
-                    ? FirstStepPhysicalView(
-                        type: component.type,
-                        isActive: component.isActive,
-                        size: paintSize,
-                      )
-                    : CustomPaint(
-                        size: Size(paintSize, paintSize),
-                        painter: CircuitSymbolPainter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                child: Center(
+                  child: usePhysicalStyle
+                      ? FirstStepPhysicalView(
                           type: component.type,
                           isActive: component.isActive,
-                          color: usePhysicalStyle
-                              ? const Color(0xFF0F172A)
-                              : (isSelected
-                                  ? const Color(0xFF00E5FF)
-                                  : const Color(0xFF38BDF8)),
-                          strokeWidth: 2.4,
+                        )
+                      : CustomPaint(
+                          size: Size(paintSize, paintSize),
+                          painter: CircuitSymbolPainter(
+                            type: component.type,
+                            isActive: component.isActive,
+                            color: usePhysicalStyle
+                                ? const Color(0xFF0F172A)
+                                : (isSelected
+                                    ? const Color(0xFF00E5FF)
+                                    : const Color(0xFF38BDF8)),
+                            strokeWidth: 2.4,
+                          ),
                         ),
-                      ),
+                ),
               ),
             ),
             const SizedBox(height: 6),
@@ -468,10 +507,13 @@ class FirstStepsComponentDetailCard extends StatelessWidget {
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    FirstStepPhysicalView(
-                      type: component.type,
-                      isActive: component.isActive,
-                      size: scale.size(50, min: 40, max: 64),
+                    SizedBox(
+                      width: 54,
+                      height: 48,
+                      child: FirstStepPhysicalView(
+                        type: component.type,
+                        isActive: component.isActive,
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -488,7 +530,7 @@ class FirstStepsComponentDetailCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     CustomPaint(
-                      size: const Size(45, 45),
+                      size: const Size(48, 48),
                       painter: CircuitSymbolPainter(
                         type: component.type,
                         isActive: component.isActive,

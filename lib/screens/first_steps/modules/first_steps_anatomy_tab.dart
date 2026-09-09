@@ -396,7 +396,6 @@ class _FirstStepsAnatomyTabState extends State<FirstStepsAnatomyTab> {
                         ? FirstStepPhysicalView(
                             type: type,
                             isActive: true,
-                            size: 48,
                           )
                         : CustomPaint(
                             size: const Size(48, 48),
