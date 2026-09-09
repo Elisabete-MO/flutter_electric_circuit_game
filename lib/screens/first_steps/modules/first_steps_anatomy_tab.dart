@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../widgets/first_steps_widgets.dart';
+
 import '../../../core/ui_scale.dart';
 import '../../../models/first_step_component.dart';
 import '../../../widgets/circuit_symbol_painter.dart';
-import '../../../widgets/component_physical_painter.dart';
 import '../../../widgets/success_confetti_overlay.dart';
 import '../../../widgets/workbench_components.dart';
 import '../../../widgets/workbench_sidebar_cards.dart';
@@ -392,13 +393,10 @@ class _FirstStepsAnatomyTabState extends State<FirstStepsAnatomyTab> {
                   ),
                   child: Center(
                     child: _usePhysicalStyle
-                        ? CustomPaint(
-                            size: const Size(48, 48),
-                            painter: ComponentPhysicalPainter(
-                              type: type,
-                              isActive: true,
-                              isDarkMode: !_usePhysicalStyle,
-                            ),
+                        ? FirstStepPhysicalView(
+                            type: type,
+                            isActive: true,
+                            size: 48,
                           )
                         : CustomPaint(
                             size: const Size(48, 48),

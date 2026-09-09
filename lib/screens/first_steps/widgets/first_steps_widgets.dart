@@ -6,6 +6,52 @@ import '../../../models/first_step_component.dart';
 import '../../../widgets/circuit_symbol_painter.dart';
 import '../../../widgets/component_physical_painter.dart';
 
+/// Widget dedicado para exibição das imagens realistas de assets/components/
+class FirstStepPhysicalView extends StatelessWidget {
+  final ComponentType type;
+  final bool isActive;
+  final double size;
+
+  const FirstStepPhysicalView({
+    super.key,
+    required this.type,
+    this.isActive = false,
+    this.size = 72,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final assetPath = type.getAssetPath(isActive);
+    if (assetPath != null) {
+      return Image.asset(
+        assetPath,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) {
+          return CustomPaint(
+            size: Size(size, size),
+            painter: ComponentPhysicalPainter(
+              type: type,
+              isActive: isActive,
+              isDarkMode: false,
+            ),
+          );
+        },
+      );
+    }
+
+    return CustomPaint(
+      size: Size(size, size),
+      painter: ComponentPhysicalPainter(
+        type: type,
+        isActive: isActive,
+        isDarkMode: false,
+      ),
+    );
+  }
+}
+
 /// Card de cabeçalho da bancada com contadores e status de exploração.
 class FirstStepsStatusCard extends StatelessWidget {
   final int totalCount;
@@ -89,7 +135,6 @@ class FirstStepsComponentTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scale = context.uiScale;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final bgColor = isSelected
         ? (usePhysicalStyle
@@ -109,7 +154,7 @@ class FirstStepsComponentTile extends StatelessWidget {
         ? const Color(0xFF0F172A)
         : Colors.white;
 
-    final paintSize = scale.size(72, min: 52, max: 105);
+    final paintSize = scale.size(76, min: 54, max: 110);
 
     return InkWell(
       onTap: onTap,
@@ -143,17 +188,14 @@ class FirstStepsComponentTile extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Área de renderização visual ampliada
+            // Área de renderização visual (assets/components ou símbolo esquemático)
             Expanded(
               child: Center(
                 child: usePhysicalStyle
-                    ? CustomPaint(
-                        size: Size(paintSize, paintSize),
-                        painter: ComponentPhysicalPainter(
-                          type: component.type,
-                          isActive: component.isActive,
-                          isDarkMode: !usePhysicalStyle && isDark,
-                        ),
+                    ? FirstStepPhysicalView(
+                        type: component.type,
+                        isActive: component.isActive,
+                        size: paintSize,
                       )
                     : CustomPaint(
                         size: Size(paintSize, paintSize),
@@ -411,7 +453,7 @@ class FirstStepsComponentDetailCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
 
-          // Preview Ampliado do Componente
+          // Preview Ampliado do Componente (com imagem de assets/components)
           Container(
             width: double.infinity,
             height: scale.size(90, min: 70, max: 120),
@@ -426,13 +468,10 @@ class FirstStepsComponentDetailCard extends StatelessWidget {
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    CustomPaint(
-                      size: const Size(45, 45),
-                      painter: ComponentPhysicalPainter(
-                        type: component.type,
-                        isActive: component.isActive,
-                        isDarkMode: true,
-                      ),
+                    FirstStepPhysicalView(
+                      type: component.type,
+                      isActive: component.isActive,
+                      size: scale.size(50, min: 40, max: 64),
                     ),
                     const SizedBox(height: 2),
                     Text(
