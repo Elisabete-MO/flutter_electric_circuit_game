@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../../core/ui_scale.dart';
 import '../../../models/first_step_component.dart';
 import '../../../models/sandbox_component.dart';
 import '../../../models/sandbox_wire.dart';
@@ -34,14 +35,16 @@ class SandboxMetricsPanelWidget extends ConsumerWidget {
     final sandboxState = ref.watch(sandboxControllerProvider);
     final controller = ref.read(sandboxControllerProvider.notifier);
     final isSwitch = component.type == ComponentType.switchComponent;
-    final hasValueSlider = component.type == ComponentType.battery ||
+    final hasValueSlider =
+        component.type == ComponentType.battery ||
         component.type == ComponentType.powerSupply ||
         component.type == ComponentType.resistor ||
         component.type == ComponentType.potentiometer ||
         component.type == ComponentType.fuse;
 
     final connectedWires = wires.where((w) {
-      return w.fromComponentId == component.id || w.toComponentId == component.id;
+      return w.fromComponentId == component.id ||
+          w.toComponentId == component.id;
     }).toList();
 
     String getWireDescription(SandboxWire wire) {
@@ -50,11 +53,16 @@ class SandboxMetricsPanelWidget extends ConsumerWidget {
       final otherId = isFromMe ? wire.toComponentId : wire.fromComponentId;
       final otherTerm = isFromMe ? wire.toTerminal : wire.fromTerminal;
 
-      final otherCompList = allComponents.where((c) => c.id == otherId).toList();
+      final otherCompList = allComponents
+          .where((c) => c.id == otherId)
+          .toList();
       if (otherCompList.isEmpty) return 'Terminal $myTerm';
       final otherComp = otherCompList.first;
 
-      String compName = getComponentName(otherComp.type, AppLocalizations.of(context)!);
+      String compName = getComponentName(
+        otherComp.type,
+        AppLocalizations.of(context)!,
+      );
       return 'Term. $myTerm ↔ $compName ($otherTerm)';
     }
 
@@ -99,10 +107,13 @@ class SandboxMetricsPanelWidget extends ConsumerWidget {
           children: [
             // Título do Componente
             Text(
-              getComponentName(component.type, AppLocalizations.of(context)!).toUpperCase(),
+              getComponentName(
+                component.type,
+                AppLocalizations.of(context)!,
+              ).toUpperCase(),
               style: GoogleFonts.rajdhani(
                 fontWeight: FontWeight.bold,
-                fontSize: 16,
+                fontSize: UiTypography.panelTitle,
                 color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
               ),
               textAlign: TextAlign.center,
@@ -113,20 +124,34 @@ class SandboxMetricsPanelWidget extends ConsumerWidget {
             if (isSwitch) ...[
               Text(
                 isEn ? 'Switch State:' : 'Estado do interruptor:',
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: UiTypography.hud,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 6),
               ElevatedButton.icon(
                 onPressed: () {
                   controller.toggleComponentActive(component.id);
                 },
-                icon: Icon(component.isActive ? Icons.power_rounded : Icons.power_off_rounded, size: 16),
-                label: Text(component.isActive ? (isEn ? 'CLOSED' : 'FECHADO') : (isEn ? 'OPENED' : 'ABERTO')),
+                icon: Icon(
+                  component.isActive
+                      ? Icons.power_rounded
+                      : Icons.power_off_rounded,
+                  size: 16,
+                ),
+                label: Text(
+                  component.isActive
+                      ? (isEn ? 'CLOSED' : 'FECHADO')
+                      : (isEn ? 'OPENED' : 'ABERTO'),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: component.isActive
                       ? const Color(0xFF00FF9D).withValues(alpha: 0.15)
                       : Colors.grey.withValues(alpha: 0.15),
-                  foregroundColor: component.isActive ? const Color(0xFF00FF9D) : Colors.grey,
+                  foregroundColor: component.isActive
+                      ? const Color(0xFF00FF9D)
+                      : Colors.grey,
                 ),
               ),
               const SizedBox(height: 16),
@@ -139,12 +164,15 @@ class SandboxMetricsPanelWidget extends ConsumerWidget {
                 children: [
                   Text(
                     valueLabel,
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: UiTypography.hud,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   Text(
                     '${component.value.toStringAsFixed(1)}$unit',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: UiTypography.hud,
                       fontWeight: FontWeight.bold,
                       color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
                     ),
@@ -171,7 +199,11 @@ class SandboxMetricsPanelWidget extends ConsumerWidget {
               const SizedBox(height: 16),
               Text(
                 isEn ? 'Connected Wires:' : 'Fios Conectados:',
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey),
+                style: const TextStyle(
+                  fontSize: UiTypography.hud,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey,
+                ),
               ),
               const SizedBox(height: 6),
               Container(
@@ -181,9 +213,14 @@ class SandboxMetricsPanelWidget extends ConsumerWidget {
                     children: connectedWires.map((wire) {
                       return Container(
                         margin: const EdgeInsets.only(bottom: 4),
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
-                          color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+                          color: isDark
+                              ? Colors.white10
+                              : Colors.black.withValues(alpha: 0.05),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Row(
@@ -192,14 +229,20 @@ class SandboxMetricsPanelWidget extends ConsumerWidget {
                             Expanded(
                               child: Text(
                                 getWireDescription(wire),
-                                style: const TextStyle(fontSize: 10),
+                                style: const TextStyle(
+                                  fontSize: UiTypography.caption,
+                                ),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             IconButton(
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(),
-                              icon: const Icon(Icons.close_rounded, size: 14, color: Color(0xFFFF3B7F)),
+                              icon: const Icon(
+                                Icons.close_rounded,
+                                size: 14,
+                                color: Color(0xFFFF3B7F),
+                              ),
                               onPressed: () {
                                 controller.removeWire(wire.id);
                               },
@@ -221,7 +264,9 @@ class SandboxMetricsPanelWidget extends ConsumerWidget {
                   controller.replaceBurnedComponent(component.id);
                 },
                 icon: const Icon(Icons.build_rounded, size: 16),
-                label: Text(isEn ? 'Replace Component' : 'Substituir Componente'),
+                label: Text(
+                  isEn ? 'Replace Component' : 'Substituir Componente',
+                ),
                 style: FilledButton.styleFrom(
                   backgroundColor: const Color(0xFF00FF9D),
                   foregroundColor: Colors.black87,
@@ -260,7 +305,13 @@ class SandboxMetricsPanelWidget extends ConsumerWidget {
     );
   }
 
-  Widget _buildElectricityDetails(BuildContext context, WidgetRef ref, SandboxComponent component, bool isEn, bool isDark) {
+  Widget _buildElectricityDetails(
+    BuildContext context,
+    WidgetRef ref,
+    SandboxComponent component,
+    bool isEn,
+    bool isDark,
+  ) {
     final state = ref.watch(sandboxControllerProvider);
     if (!state.isSimulating) return Container();
 
@@ -268,7 +319,11 @@ class SandboxMetricsPanelWidget extends ConsumerWidget {
     if (!active) {
       return Text(
         isEn ? 'No current flow.' : 'Sem passagem de corrente.',
-        style: const TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: Colors.grey),
+        style: const TextStyle(
+          fontSize: UiTypography.hud,
+          fontStyle: FontStyle.italic,
+          color: Colors.grey,
+        ),
       );
     }
 
@@ -280,26 +335,34 @@ class SandboxMetricsPanelWidget extends ConsumerWidget {
       decoration: BoxDecoration(
         color: isDark ? Colors.black26 : Colors.white60,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: isDark ? Colors.white10 : Colors.black12,
-        ),
+        border: Border.all(color: isDark ? Colors.white10 : Colors.black12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             isEn ? 'Live Metrics:' : 'Métricas Elétricas:',
-            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey),
+            style: const TextStyle(
+              fontSize: UiTypography.caption,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             '${isEn ? 'Current:' : 'Corrente:'} ${current.toStringAsFixed(2)} A',
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              fontSize: UiTypography.hud,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           if (component.type != ComponentType.battery)
             Text(
               '${isEn ? 'V Drop:' : 'Queda V:'} ${vDrop.toStringAsFixed(2)} V',
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontSize: UiTypography.hud,
+                fontWeight: FontWeight.bold,
+              ),
             ),
         ],
       ),

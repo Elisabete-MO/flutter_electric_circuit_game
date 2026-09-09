@@ -336,7 +336,7 @@ class WorkbenchMissionObjectiveCard extends StatelessWidget {
                   style: GoogleFonts.outfit(
                     color: const Color(0xFF0F172A),
                     fontWeight: FontWeight.w700,
-                    fontSize: scale.font(14.5, min: 12.5, max: 22.0),
+                    fontSize: scale.font(UiTypography.panelTitle),
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -351,7 +351,7 @@ class WorkbenchMissionObjectiveCard extends StatelessWidget {
             description,
             style: GoogleFonts.outfit(
               color: const Color(0xFF475569),
-              fontSize: scale.font(12.5, min: 11.0, max: 18.0),
+              fontSize: scale.font(UiTypography.body),
               height: 1.35,
               fontWeight: FontWeight.w400,
             ),
@@ -404,7 +404,7 @@ class ProfVoltsTipBox extends StatelessWidget {
                 style: GoogleFonts.outfit(
                   color: const Color(0xFFD97706),
                   fontWeight: FontWeight.w700,
-                  fontSize: scale.font(12, min: 10.0, max: 18.0),
+                  fontSize: scale.font(UiTypography.label),
                 ),
               ),
               const SizedBox(height: 2),
@@ -412,7 +412,7 @@ class ProfVoltsTipBox extends StatelessWidget {
                 '“$voltsTip”',
                 style: GoogleFonts.outfit(
                   color: const Color(0xFF78350F),
-                  fontSize: scale.font(11.5, min: 9.5, max: 17.0),
+                  fontSize: scale.font(UiTypography.body),
                   fontStyle: FontStyle.italic,
                   height: 1.3,
                 ),
@@ -509,7 +509,7 @@ class WorkbenchInvestigationStepperCard extends StatelessWidget {
                   style: GoogleFonts.outfit(
                     color: const Color(0xFF0F172A),
                     fontWeight: FontWeight.w700,
-                    fontSize: scale.font(14.5, min: 12.5, max: 22.0),
+                    fontSize: scale.font(UiTypography.panelTitle),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -528,7 +528,8 @@ class WorkbenchInvestigationStepperCard extends StatelessWidget {
               isCompleted: isStepCompleted(i),
               isActive: i == currentStepIndex && !isStepCompleted(i),
             ),
-            if (i < steps.length - 1) SizedBox(height: scale.spacing(6, min: 4, max: 10)),
+            if (i < steps.length - 1)
+              SizedBox(height: scale.spacing(6, min: 4, max: 10)),
           ],
         ],
       ),
@@ -572,7 +573,7 @@ class WorkbenchInvestigationStepperCard extends StatelessWidget {
                   style: GoogleFonts.outfit(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
-                    fontSize: scale.font(12, min: 10, max: 18),
+                    fontSize: scale.font(UiTypography.label),
                   ),
                 ),
               ),
@@ -584,7 +585,7 @@ class WorkbenchInvestigationStepperCard extends StatelessWidget {
                 style: GoogleFonts.outfit(
                   color: const Color(0xFF065F46),
                   fontWeight: FontWeight.w700,
-                  fontSize: scale.font(12.5, min: 11.0, max: 18.0),
+                  fontSize: scale.font(UiTypography.label),
                 ),
               ),
             ),
@@ -615,7 +616,11 @@ class WorkbenchInvestigationStepperCard extends StatelessWidget {
                 color: Color(0xFF10B981),
               ),
               child: Center(
-                child: Icon(Icons.check_rounded, color: Colors.white, size: scale.icon(14, min: 12, max: 22)),
+                child: Icon(
+                  Icons.check_rounded,
+                  color: Colors.white,
+                  size: scale.icon(14, min: 12, max: 22),
+                ),
               ),
             ),
             SizedBox(width: scale.spacing(10, min: 6, max: 16)),
@@ -625,7 +630,7 @@ class WorkbenchInvestigationStepperCard extends StatelessWidget {
                 style: GoogleFonts.outfit(
                   color: const Color(0xFF0F172A),
                   fontWeight: FontWeight.w500,
-                  fontSize: scale.font(12.5, min: 11.0, max: 18.0),
+                  fontSize: scale.font(UiTypography.label),
                 ),
               ),
             ),
@@ -655,7 +660,7 @@ class WorkbenchInvestigationStepperCard extends StatelessWidget {
                 style: GoogleFonts.outfit(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
-                  fontSize: scale.font(12, min: 10, max: 18),
+                  fontSize: scale.font(UiTypography.label),
                 ),
               ),
             ),
@@ -667,7 +672,7 @@ class WorkbenchInvestigationStepperCard extends StatelessWidget {
               style: GoogleFonts.outfit(
                 color: const Color(0xFF64748B),
                 fontWeight: FontWeight.w400,
-                fontSize: scale.font(12.5, min: 11.0, max: 18.0),
+                fontSize: scale.font(UiTypography.label),
               ),
             ),
           ),
@@ -676,4 +681,3 @@ class WorkbenchInvestigationStepperCard extends StatelessWidget {
     );
   }
 }
-

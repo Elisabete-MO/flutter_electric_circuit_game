@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+import '../../../core/ui_scale.dart';
 import '../../../widgets/glass_container.dart';
 import '../../../widgets/prof_volts_full_body.dart';
 
@@ -22,10 +24,12 @@ class SandboxMascotPanelWidget extends StatefulWidget {
   });
 
   @override
-  State<SandboxMascotPanelWidget> createState() => _SandboxMascotPanelWidgetState();
+  State<SandboxMascotPanelWidget> createState() =>
+      _SandboxMascotPanelWidgetState();
 }
 
-class _SandboxMascotPanelWidgetState extends State<SandboxMascotPanelWidget> with SingleTickerProviderStateMixin {
+class _SandboxMascotPanelWidgetState extends State<SandboxMascotPanelWidget>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _pulseController;
 
   @override
@@ -99,10 +103,7 @@ class _SandboxMascotPanelWidgetState extends State<SandboxMascotPanelWidget> wit
                     padding: const EdgeInsets.all(3),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(
-                        color: themeColor,
-                        width: 2.0,
-                      ),
+                      border: Border.all(color: themeColor, width: 2.0),
                       boxShadow: [
                         BoxShadow(
                           color: themeColor.withValues(alpha: 0.5),
@@ -136,7 +137,7 @@ class _SandboxMascotPanelWidgetState extends State<SandboxMascotPanelWidget> wit
                                 badgeTitle,
                                 overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.rajdhani(
-                                  fontSize: 11,
+                                  fontSize: UiTypography.hud,
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 1.2,
                                   color: themeColor,
@@ -151,16 +152,19 @@ class _SandboxMascotPanelWidgetState extends State<SandboxMascotPanelWidget> wit
                         Text(
                           widget.message,
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: UiTypography.body,
                             height: 1.35,
                             fontWeight: FontWeight.w500,
-                            color: widget.isDark ? Colors.white.withValues(alpha: 0.9) : Colors.black.withValues(alpha: 0.9),
+                            color: widget.isDark
+                                ? Colors.white.withValues(alpha: 0.9)
+                                : Colors.black.withValues(alpha: 0.9),
                             fontFamily: GoogleFonts.outfit().fontFamily,
                           ),
                         ),
 
                         // Botão de Ação Rápida (ex: Substituir Componentes)
-                        if (widget.onQuickAction != null && widget.quickActionLabel != null) ...[
+                        if (widget.onQuickAction != null &&
+                            widget.quickActionLabel != null) ...[
                           const SizedBox(height: 8),
                           Align(
                             alignment: Alignment.centerLeft,
@@ -168,23 +172,37 @@ class _SandboxMascotPanelWidgetState extends State<SandboxMascotPanelWidget> wit
                               onTap: widget.onQuickAction,
                               borderRadius: BorderRadius.circular(8),
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   color: themeColor.withValues(alpha: 0.18),
                                   borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: themeColor, width: 1.2),
+                                  border: Border.all(
+                                    color: themeColor,
+                                    width: 1.2,
+                                  ),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.build_circle_rounded, size: 14, color: themeColor),
+                                    Icon(
+                                      Icons.build_circle_rounded,
+                                      size: 14,
+                                      color: themeColor,
+                                    ),
                                     const SizedBox(width: 5),
                                     Text(
                                       widget.quickActionLabel!,
                                       style: TextStyle(
-                                        fontSize: 11,
+                                        fontSize: UiTypography.button,
                                         fontWeight: FontWeight.bold,
-                                        color: widget.isDark ? Colors.white : Colors.black.withValues(alpha: 0.9),
+                                        color: widget.isDark
+                                            ? Colors.white
+                                            : Colors.black.withValues(
+                                                alpha: 0.9,
+                                              ),
                                       ),
                                     ),
                                   ],

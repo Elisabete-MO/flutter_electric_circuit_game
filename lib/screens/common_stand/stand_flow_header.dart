@@ -35,7 +35,9 @@ class StandFlowHeader extends StatelessWidget {
     final scale = context.uiScale;
 
     return Container(
-      height: scale.size(StandFlowTokens.headerHeight, min: 58, max: 96),
+      constraints: BoxConstraints(
+        minHeight: scale.size(StandFlowTokens.headerHeight, min: 58, max: 96),
+      ),
       padding: EdgeInsets.symmetric(
         horizontal: scale.spacing(16, min: 10, max: 28),
         vertical: scale.spacing(8, min: 4, max: 14),
@@ -54,7 +56,11 @@ class StandFlowHeader extends StatelessWidget {
             children: [
               // 1. Botão de Voltar à esquerda
               IconButton(
-                icon: Icon(Icons.arrow_back_rounded, color: Colors.white, size: scale.icon(22, min: 18, max: 32)),
+                icon: Icon(
+                  Icons.arrow_back_rounded,
+                  color: Colors.white,
+                  size: scale.icon(22, min: 18, max: 32),
+                ),
                 tooltip: 'Voltar ao Mapa',
                 onPressed: onBack ?? () => Navigator.of(context).maybePop(),
               ),
@@ -71,9 +77,13 @@ class StandFlowHeader extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF042920),
-                    borderRadius: BorderRadius.circular(scale.size(8, min: 6, max: 12)),
+                    borderRadius: BorderRadius.circular(
+                      scale.size(8, min: 6, max: 12),
+                    ),
                     border: Border.all(
-                      color: StandFlowTokens.primaryGreen.withValues(alpha: 0.4),
+                      color: StandFlowTokens.primaryGreen.withValues(
+                        alpha: 0.4,
+                      ),
                     ),
                   ),
                   child: Text(
@@ -91,18 +101,24 @@ class StandFlowHeader extends StatelessWidget {
 
               // 2. Pílulas de Navegação das Missões
               Expanded(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(totalMissions, (index) {
                       final missionNumber = index + 1;
                       final isCurrent = currentMissionNumber == missionNumber;
-                      final isCompleted = completedMissionNumbers.contains(missionNumber);
-                      final isUnlocked = unlockedMissionNumbers.contains(missionNumber);
+                      final isCompleted = completedMissionNumbers.contains(
+                        missionNumber,
+                      );
+                      final isUnlocked = unlockedMissionNumbers.contains(
+                        missionNumber,
+                      );
 
                       return Padding(
-                        padding: EdgeInsets.symmetric(horizontal: scale.spacing(4, min: 2, max: 8)),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: scale.spacing(4, min: 2, max: 8),
+                        ),
                         child: _buildMissionPill(
                           context: context,
                           missionNumber: missionNumber,
@@ -119,7 +135,11 @@ class StandFlowHeader extends StatelessWidget {
               // 3. Botão de Ajuda
               if (onHelpTap != null)
                 IconButton(
-                  icon: Icon(Icons.help_outline_rounded, color: Colors.white70, size: scale.icon(22, min: 18, max: 32)),
+                  icon: Icon(
+                    Icons.help_outline_rounded,
+                    color: Colors.white70,
+                    size: scale.icon(22, min: 18, max: 32),
+                  ),
                   tooltip: 'Ajuda da Missão',
                   onPressed: onHelpTap,
                 ),
@@ -151,7 +171,11 @@ class StandFlowHeader extends StatelessWidget {
       bg = const Color(0xFF064E3B);
       border = StandFlowTokens.primaryGreen.withValues(alpha: 0.6);
       text = Colors.white;
-      icon = Icon(Icons.check_circle_rounded, color: StandFlowTokens.accentGreen, size: scale.icon(14, min: 12, max: 20));
+      icon = Icon(
+        Icons.check_circle_rounded,
+        color: StandFlowTokens.accentGreen,
+        size: scale.icon(14, min: 12, max: 20),
+      );
     } else if (isUnlocked) {
       bg = const Color(0xFF1E293B);
       border = const Color(0xFF334155);
@@ -160,7 +184,11 @@ class StandFlowHeader extends StatelessWidget {
       bg = const Color(0xFF0F172A);
       border = const Color(0xFF1E293B);
       text = const Color(0xFF475569);
-      icon = Icon(Icons.lock_rounded, color: const Color(0xFF475569), size: scale.icon(13, min: 11, max: 18));
+      icon = Icon(
+        Icons.lock_rounded,
+        color: const Color(0xFF475569),
+        size: scale.icon(13, min: 11, max: 18),
+      );
     }
 
     return InkWell(
@@ -181,7 +209,7 @@ class StandFlowHeader extends StatelessWidget {
                   BoxShadow(
                     color: StandFlowTokens.primaryGreen.withValues(alpha: 0.35),
                     blurRadius: scale.size(8, min: 5, max: 14),
-                  )
+                  ),
                 ]
               : null,
         ),
@@ -207,4 +235,3 @@ class StandFlowHeader extends StatelessWidget {
     );
   }
 }
-

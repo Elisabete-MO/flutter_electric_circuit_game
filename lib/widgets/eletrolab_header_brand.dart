@@ -25,7 +25,7 @@ class EletroLabHeaderBrand extends StatelessWidget {
     final double baseCircle = compact ? 34.0 : 44.0;
     final double baseIcon = compact ? 20.0 : 26.0;
     final double baseTitleFont = compact ? 18.0 : 23.0;
-    final double baseSubFont = compact ? 11.0 : 13.0;
+    final double baseSubFont = UiTypography.label;
 
     final double circleSize = scale.size(baseCircle);
     final double iconSize = scale.icon(baseIcon);
@@ -42,7 +42,9 @@ class EletroLabHeaderBrand extends StatelessWidget {
             vertical: compact ? 6 : 8,
           ),
           decoration: BoxDecoration(
-            color: const Color(0xAA03241B), // Cápsula glassmorphic verde esmeralda
+            color: const Color(
+              0xAA03241B,
+            ), // Cápsula glassmorphic verde esmeralda
             borderRadius: BorderRadius.circular(scale.size(28)),
             border: Border.all(
               color: const Color(0xFF10B981).withValues(alpha: 0.35),

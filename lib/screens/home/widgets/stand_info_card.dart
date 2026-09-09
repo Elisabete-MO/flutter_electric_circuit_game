@@ -17,7 +17,9 @@ class StandInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final numberFormatted = stand.number < 10 ? '0${stand.number}' : '${stand.number}';
+    final numberFormatted = stand.number < 10
+        ? '0${stand.number}'
+        : '${stand.number}';
     final scale = context.uiScale;
 
     return Container(
@@ -44,10 +46,7 @@ class StandInfoCard extends StatelessWidget {
             spreadRadius: 0,
           ),
         ],
-        border: Border.all(
-          color: const Color(0xFF10B981),
-          width: 1.4,
-        ),
+        border: Border.all(color: const Color(0xFF10B981), width: 1.4),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -57,7 +56,9 @@ class StandInfoCard extends StatelessWidget {
           Stack(
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(scale.size(17))),
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(scale.size(17)),
+                ),
                 child: SizedBox(
                   height: scale.size(155, min: 120, max: 280),
                   width: double.infinity,
@@ -69,7 +70,11 @@ class StandInfoCard extends StatelessWidget {
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) => Container(
                           color: const Color(0xFF0F172A),
-                          child: Icon(Icons.science_rounded, color: Colors.white38, size: scale.icon(40)),
+                          child: Icon(
+                            Icons.science_rounded,
+                            color: Colors.white38,
+                            size: scale.icon(40),
+                          ),
                         ),
                       ),
                       Container(
@@ -98,7 +103,10 @@ class StandInfoCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: const Color(0xFF021612).withValues(alpha: 0.92),
                     borderRadius: BorderRadius.circular(scale.size(8)),
-                    border: Border.all(color: const Color(0xFF10B981), width: 1.2),
+                    border: Border.all(
+                      color: const Color(0xFF10B981),
+                      width: 1.2,
+                    ),
                     boxShadow: const [
                       BoxShadow(color: Colors.black45, blurRadius: 4),
                     ],
@@ -197,8 +205,8 @@ class StandInfoCard extends StatelessWidget {
                       child: Text(
                         !stand.hasMissions
                             ? (stand.isBancadaLivre
-                                ? 'Simulador 3D Livre'
-                                : 'Tutorial Introdutório')
+                                  ? 'Simulador 3D Livre'
+                                  : 'Tutorial Introdutório')
                             : 'Progresso da Equipe',
                         style: TextStyle(
                           color: const Color(0xFF94A3B8),
@@ -285,16 +293,16 @@ class StandInfoCard extends StatelessWidget {
                       stand.isBancadaLivre
                           ? Icons.biotech_rounded
                           : (stand.number == 1
-                              ? Icons.school_rounded
-                              : Icons.play_arrow_rounded),
+                                ? Icons.school_rounded
+                                : Icons.play_arrow_rounded),
                       size: scale.icon(22),
                     ),
                     label: Text(
                       stand.isBancadaLivre
                           ? 'Abrir Simulador 3D'
                           : (stand.number == 1
-                              ? 'Iniciar Tutorial'
-                              : 'Começar missão'),
+                                ? 'Iniciar Tutorial'
+                                : 'Começar missão'),
                     ),
                   ),
                 ),

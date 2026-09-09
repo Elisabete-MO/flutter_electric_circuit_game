@@ -82,10 +82,7 @@ class FirstStepPhysicalView extends StatelessWidget {
       );
     }
 
-    return Transform.scale(
-      scale: scaleMultiplier,
-      child: imageWidget,
-    );
+    return Transform.scale(scale: scaleMultiplier, child: imageWidget);
   }
 }
 
@@ -125,7 +122,9 @@ class FirstStepsStatusCard extends StatelessWidget {
         children: [
           Icon(
             isComplete ? Icons.check_circle_rounded : Icons.explore_rounded,
-            color: isComplete ? const Color(0xFF10B981) : const Color(0xFF00E5FF),
+            color: isComplete
+                ? const Color(0xFF10B981)
+                : const Color(0xFF00E5FF),
             size: scale.icon(16, min: 14, max: 22),
           ),
           SizedBox(width: scale.spacing(6, min: 4, max: 10)),
@@ -134,7 +133,7 @@ class FirstStepsStatusCard extends StatelessWidget {
               '$inspectedCount / $totalCount explorados',
               style: GoogleFonts.rajdhani(
                 color: Colors.white,
-                fontSize: scale.font(12, min: 10.5, max: 16),
+                fontSize: scale.font(UiTypography.label),
                 fontWeight: FontWeight.bold,
                 letterSpacing: 0.5,
               ),
@@ -175,21 +174,19 @@ class FirstStepsComponentTile extends StatelessWidget {
 
     final bgColor = isSelected
         ? (usePhysicalStyle
-            ? const Color(0xFFE0F2FE)
-            : const Color(0xFF0C4A6E).withValues(alpha: 0.85))
+              ? const Color(0xFFE0F2FE)
+              : const Color(0xFF0C4A6E).withValues(alpha: 0.85))
         : (usePhysicalStyle
-            ? Colors.white.withValues(alpha: 0.96)
-            : const Color(0xFF1E293B).withValues(alpha: 0.92));
+              ? Colors.white.withValues(alpha: 0.96)
+              : const Color(0xFF1E293B).withValues(alpha: 0.92));
 
     final borderColor = isSelected
         ? const Color(0xFF0284C7)
         : (usePhysicalStyle
-            ? const Color(0xFFCBD5E1)
-            : const Color(0xFF334155));
+              ? const Color(0xFFCBD5E1)
+              : const Color(0xFF334155));
 
-    final textColor = usePhysicalStyle
-        ? const Color(0xFF0F172A)
-        : Colors.white;
+    final textColor = usePhysicalStyle ? const Color(0xFF0F172A) : Colors.white;
 
     final paintSize = scale.size(76, min: 54, max: 110);
 
@@ -243,8 +240,8 @@ class FirstStepsComponentTile extends StatelessWidget {
                             color: usePhysicalStyle
                                 ? const Color(0xFF0F172A)
                                 : (isSelected
-                                    ? const Color(0xFF00E5FF)
-                                    : const Color(0xFF38BDF8)),
+                                      ? const Color(0xFF00E5FF)
+                                      : const Color(0xFF38BDF8)),
                             strokeWidth: 2.4,
                           ),
                         ),
@@ -272,7 +269,10 @@ class FirstStepsComponentTile extends StatelessWidget {
                   onTap: onToggleActive,
                   borderRadius: BorderRadius.circular(8),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: component.isActive
                           ? const Color(0xFF10B981).withValues(alpha: 0.2)
@@ -290,8 +290,10 @@ class FirstStepsComponentTile extends StatelessWidget {
                       style: GoogleFonts.rajdhani(
                         color: component.isActive
                             ? const Color(0xFF10B981)
-                            : (usePhysicalStyle ? Colors.black54 : Colors.white60),
-                        fontSize: scale.font(10.5, min: 9.5, max: 14),
+                            : (usePhysicalStyle
+                                  ? Colors.black54
+                                  : Colors.white60),
+                        fontSize: scale.font(UiTypography.caption),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -302,34 +304,41 @@ class FirstStepsComponentTile extends StatelessWidget {
                   usePhysicalStyle ? 'Físico' : 'Esquemático',
                   style: GoogleFonts.outfit(
                     color: usePhysicalStyle ? Colors.black45 : Colors.white38,
-                    fontSize: scale.font(10.5, min: 9, max: 14),
+                    fontSize: scale.font(UiTypography.caption),
                   ),
                 ),
             ] else ...[
               // No modo quiz, exibe apenas a identificação da opção para não entregar o nome
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 3,
+                ),
                 decoration: BoxDecoration(
                   color: isSelected
                       ? const Color(0xFF00E5FF).withValues(alpha: 0.25)
                       : (usePhysicalStyle
-                          ? const Color(0xFFF1F5F9)
-                          : const Color(0xFF0F172A)),
+                            ? const Color(0xFFF1F5F9)
+                            : const Color(0xFF0F172A)),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: isSelected
                         ? const Color(0xFF00E5FF)
                         : (usePhysicalStyle
-                            ? const Color(0xFFCBD5E1)
-                            : const Color(0xFF334155)),
+                              ? const Color(0xFFCBD5E1)
+                              : const Color(0xFF334155)),
                   ),
                 ),
                 child: Text(
                   badgeText ?? '?',
                   style: GoogleFonts.rajdhani(
                     color: isSelected
-                        ? (usePhysicalStyle ? const Color(0xFF0284C7) : const Color(0xFF00E5FF))
-                        : (usePhysicalStyle ? const Color(0xFF475569) : Colors.white70),
+                        ? (usePhysicalStyle
+                              ? const Color(0xFF0284C7)
+                              : const Color(0xFF00E5FF))
+                        : (usePhysicalStyle
+                              ? const Color(0xFF475569)
+                              : Colors.white70),
                     fontSize: scale.font(13, min: 11, max: 17),
                     fontWeight: FontWeight.bold,
                   ),
@@ -466,7 +475,7 @@ class FirstStepsComponentDetailCard extends StatelessWidget {
                       '(${component.nameEn})',
                       style: GoogleFonts.outfit(
                         color: Colors.white60,
-                        fontSize: scale.font(12, min: 10, max: 16),
+                        fontSize: scale.font(UiTypography.label),
                         fontStyle: FontStyle.italic,
                       ),
                       maxLines: 1,
@@ -491,7 +500,7 @@ class FirstStepsComponentDetailCard extends StatelessWidget {
               category,
               style: GoogleFonts.rajdhani(
                 color: const Color(0xFF00E5FF),
-                fontSize: scale.font(10, min: 8.5, max: 13),
+                fontSize: scale.font(UiTypography.label),
                 fontWeight: FontWeight.bold,
               ),
               maxLines: 1,
@@ -503,7 +512,7 @@ class FirstStepsComponentDetailCard extends StatelessWidget {
           // Preview Ampliado do Componente (com imagem de assets/components)
           Container(
             width: double.infinity,
-            height: scale.size(90, min: 70, max: 120),
+            height: scale.size(120, min: 100, max: 150),
             decoration: BoxDecoration(
               color: const Color(0xFF0F172A),
               borderRadius: BorderRadius.circular(12),
@@ -528,7 +537,7 @@ class FirstStepsComponentDetailCard extends StatelessWidget {
                         'Visual Físico',
                         style: GoogleFonts.outfit(
                           color: Colors.white54,
-                          fontSize: scale.font(10, min: 8.5, max: 13),
+                          fontSize: scale.font(UiTypography.caption),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -555,7 +564,7 @@ class FirstStepsComponentDetailCard extends StatelessWidget {
                         'Símbolo IEC',
                         style: GoogleFonts.outfit(
                           color: const Color(0xFF00E5FF),
-                          fontSize: scale.font(10, min: 8.5, max: 13),
+                          fontSize: scale.font(UiTypography.caption),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -573,7 +582,7 @@ class FirstStepsComponentDetailCard extends StatelessWidget {
             'Função no Circuito:',
             style: GoogleFonts.rajdhani(
               color: const Color(0xFF00E5FF),
-              fontSize: scale.font(14, min: 12, max: 18),
+              fontSize: scale.font(UiTypography.subtitle),
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -582,7 +591,7 @@ class FirstStepsComponentDetailCard extends StatelessWidget {
             component.description,
             style: GoogleFonts.outfit(
               color: Colors.white70,
-              fontSize: scale.font(12.5, min: 11, max: 17),
+              fontSize: scale.font(UiTypography.body),
               height: 1.35,
             ),
           ),
@@ -593,7 +602,7 @@ class FirstStepsComponentDetailCard extends StatelessWidget {
             'Terminais e Conexão:',
             style: GoogleFonts.rajdhani(
               color: const Color(0xFF10B981),
-              fontSize: scale.font(14, min: 12, max: 18),
+              fontSize: scale.font(UiTypography.subtitle),
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -606,7 +615,9 @@ class FirstStepsComponentDetailCard extends StatelessWidget {
               final isNegative = t.contains('-');
               final chipColor = isPositive
                   ? const Color(0xFFEF4444)
-                  : (isNegative ? const Color(0xFF0284C7) : const Color(0xFF10B981));
+                  : (isNegative
+                        ? const Color(0xFF0284C7)
+                        : const Color(0xFF10B981));
 
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -619,7 +630,7 @@ class FirstStepsComponentDetailCard extends StatelessWidget {
                   t,
                   style: GoogleFonts.rajdhani(
                     color: Colors.white,
-                    fontSize: scale.font(11, min: 9.5, max: 14),
+                    fontSize: scale.font(UiTypography.label),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -633,7 +644,7 @@ class FirstStepsComponentDetailCard extends StatelessWidget {
             'Representação no Diagrama:',
             style: GoogleFonts.rajdhani(
               color: const Color(0xFFF59E0B),
-              fontSize: scale.font(14, min: 12, max: 18),
+              fontSize: scale.font(UiTypography.subtitle),
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -642,7 +653,7 @@ class FirstStepsComponentDetailCard extends StatelessWidget {
             component.symbolDescription,
             style: GoogleFonts.outfit(
               color: Colors.white70,
-              fontSize: scale.font(12, min: 10.5, max: 16),
+              fontSize: scale.font(UiTypography.body),
               height: 1.35,
             ),
           ),
@@ -665,7 +676,9 @@ class FirstStepsComponentDetailCard extends StatelessWidget {
                 ),
                 onPressed: onToggleState,
                 icon: Icon(
-                  component.isActive ? Icons.power_rounded : Icons.power_off_rounded,
+                  component.isActive
+                      ? Icons.power_rounded
+                      : Icons.power_off_rounded,
                   color: Colors.white,
                   size: scale.icon(18, min: 14, max: 24),
                 ),

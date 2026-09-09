@@ -19,10 +19,7 @@ import '../widgets/liga_desliga_widgets.dart';
 class LigaDesligaM3 extends StatefulWidget {
   final VoidCallback onMissionComplete;
 
-  const LigaDesligaM3({
-    super.key,
-    required this.onMissionComplete,
-  });
+  const LigaDesligaM3({super.key, required this.onMissionComplete});
 
   @override
   State<LigaDesligaM3> createState() => _LigaDesligaM3State();
@@ -31,7 +28,8 @@ class LigaDesligaM3 extends StatefulWidget {
 class _LigaDesligaM3State extends State<LigaDesligaM3>
     with SingleTickerProviderStateMixin {
   final StandMission _mission = StandMission.estande3Missions[2];
-  final CircuitUndoRedoController _undoRedoController = CircuitUndoRedoController();
+  final CircuitUndoRedoController _undoRedoController =
+      CircuitUndoRedoController();
 
   bool _usePhysicalStyle = true;
   bool _switch1Closed = false;
@@ -74,30 +72,34 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
 
   void _toggleSwitch1() {
     final prev = _switch1Closed;
-    _undoRedoController.execute(ToggleBoolAction(
-      description: 'Alternar Chave 1',
-      onApply: () => setState(() {
-        _switch1Closed = !prev;
-        _testedSwitch1 = true;
-      }),
-      onUndo: () => setState(() {
-        _switch1Closed = prev;
-      }),
-    ));
+    _undoRedoController.execute(
+      ToggleBoolAction(
+        description: 'Alternar Chave 1',
+        onApply: () => setState(() {
+          _switch1Closed = !prev;
+          _testedSwitch1 = true;
+        }),
+        onUndo: () => setState(() {
+          _switch1Closed = prev;
+        }),
+      ),
+    );
   }
 
   void _toggleSwitch2() {
     final prev = _switch2Closed;
-    _undoRedoController.execute(ToggleBoolAction(
-      description: 'Alternar Chave 2',
-      onApply: () => setState(() {
-        _switch2Closed = !prev;
-        _testedSwitch2 = true;
-      }),
-      onUndo: () => setState(() {
-        _switch2Closed = prev;
-      }),
-    ));
+    _undoRedoController.execute(
+      ToggleBoolAction(
+        description: 'Alternar Chave 2',
+        onApply: () => setState(() {
+          _switch2Closed = !prev;
+          _testedSwitch2 = true;
+        }),
+        onUndo: () => setState(() {
+          _switch2Closed = prev;
+        }),
+      ),
+    );
   }
 
   void _validate() {
@@ -363,90 +365,102 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
         final returnRailY = height - 16.0;
 
         // Fio Ramo 1: Bateria (+) -> Chave 1 (Vermelho)
-        wires.add(WirePath(
-          points: [
-            batTermA,
-            Offset(batTermA.dx, batteryPos.dy - 34.0),
-            Offset(busX, batteryPos.dy - 34.0),
-            Offset(busX, topY),
-            sw1TermA,
-          ],
-          color: const Color(0xFFEF4444),
-          isActive: _switch1Closed,
-          thickness: 5.2,
-        ));
+        wires.add(
+          WirePath(
+            points: [
+              batTermA,
+              Offset(batTermA.dx, batteryPos.dy - 34.0),
+              Offset(busX, batteryPos.dy - 34.0),
+              Offset(busX, topY),
+              sw1TermA,
+            ],
+            color: const Color(0xFFEF4444),
+            isActive: _switch1Closed,
+            thickness: 5.2,
+          ),
+        );
 
         // Fio Ramo 1: Chave 1 -> Luminária A (Vermelho)
-        wires.add(WirePath(
-          points: [
-            sw1TermB,
-            Offset(lamp1BusX, topY),
-            Offset(lamp1BusX, lamp1TermA.dy),
-            lamp1TermA,
-          ],
-          color: const Color(0xFFEF4444),
-          isActive: _switch1Closed,
-          thickness: 5.2,
-        ));
+        wires.add(
+          WirePath(
+            points: [
+              sw1TermB,
+              Offset(lamp1BusX, topY),
+              Offset(lamp1BusX, lamp1TermA.dy),
+              lamp1TermA,
+            ],
+            color: const Color(0xFFEF4444),
+            isActive: _switch1Closed,
+            thickness: 5.2,
+          ),
+        );
 
         // Fio Ramo 2: Bateria (+) -> Chave 2 (Âmbar)
-        wires.add(WirePath(
-          points: [
-            batTermA,
-            Offset(batTermA.dx, batteryPos.dy - 27.0),
-            Offset(bus2X, batteryPos.dy - 27.0),
-            Offset(bus2X, bottomY),
-            sw2TermA,
-          ],
-          color: const Color(0xFFF59E0B),
-          isActive: _switch2Closed,
-          thickness: 5.2,
-        ));
+        wires.add(
+          WirePath(
+            points: [
+              batTermA,
+              Offset(batTermA.dx, batteryPos.dy - 27.0),
+              Offset(bus2X, batteryPos.dy - 27.0),
+              Offset(bus2X, bottomY),
+              sw2TermA,
+            ],
+            color: const Color(0xFFF59E0B),
+            isActive: _switch2Closed,
+            thickness: 5.2,
+          ),
+        );
 
         // Fio Ramo 2: Chave 2 -> Luminária B (Âmbar)
-        wires.add(WirePath(
-          points: [
-            sw2TermB,
-            Offset(lamp2BusX, bottomY),
-            Offset(lamp2BusX, lamp2TermA.dy),
-            lamp2TermA,
-          ],
-          color: const Color(0xFFF59E0B),
-          isActive: _switch2Closed,
-          thickness: 5.2,
-        ));
+        wires.add(
+          WirePath(
+            points: [
+              sw2TermB,
+              Offset(lamp2BusX, bottomY),
+              Offset(lamp2BusX, lamp2TermA.dy),
+              lamp2TermA,
+            ],
+            color: const Color(0xFFF59E0B),
+            isActive: _switch2Closed,
+            thickness: 5.2,
+          ),
+        );
 
         // Retorno Comum: Luminária 1 -> Bateria (-) (Azul)
-        wires.add(WirePath(
-          points: [
-            lamp1TermB,
-            Offset(returnX, lamp1TermB.dy),
-            Offset(returnX, returnRailY),
-            Offset(leftReturnX, returnRailY),
-            Offset(leftReturnX, batteryPos.dy - 42.0),
-            Offset(batTermB.dx, batteryPos.dy - 42.0),
-            batTermB,
-          ],
-          color: const Color(0xFF2563EB),
-          isActive: _switch1Closed,
-          thickness: 5.0,
-        ));
+        wires.add(
+          WirePath(
+            points: [
+              lamp1TermB,
+              Offset(returnX, lamp1TermB.dy),
+              Offset(returnX, returnRailY),
+              Offset(leftReturnX, returnRailY),
+              Offset(leftReturnX, batteryPos.dy - 42.0),
+              Offset(batTermB.dx, batteryPos.dy - 42.0),
+              batTermB,
+            ],
+            color: const Color(0xFF2563EB),
+            isActive: _switch1Closed,
+            thickness: 5.0,
+          ),
+        );
 
         // Retorno Comum: Luminária 2 -> Bateria (-) (Azul)
-        wires.add(WirePath(
-          points: [
-            lamp2TermB,
-            Offset(returnX, lamp2TermB.dy),
-            Offset(returnX, returnRailY),
-            Offset(leftReturnX, returnRailY),
-            Offset(leftReturnX, batteryPos.dy - 42.0),
-            Offset(batTermB.dx, batteryPos.dy - 42.0),
-            batTermB,
-          ],
-          color: const Color(0xFF2563EB),
-          isActive: _switch2Closed,
-          thickness: 5.0,
-        ));
+        wires.add(
+          WirePath(
+            points: [
+              lamp2TermB,
+              Offset(returnX, lamp2TermB.dy),
+              Offset(returnX, returnRailY),
+              Offset(leftReturnX, returnRailY),
+              Offset(leftReturnX, batteryPos.dy - 42.0),
+              Offset(batTermB.dx, batteryPos.dy - 42.0),
+              batTermB,
+            ],
+            color: const Color(0xFF2563EB),
+            isActive: _switch2Closed,
+            thickness: 5.0,
+          ),
+        );
 
         return Stack(
           clipBehavior: Clip.none,
@@ -591,49 +605,49 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
                   ),
                 ],
               ),
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      label,
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text(
+                    label,
+                    style: GoogleFonts.rajdhani(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11.5,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 1,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isClosed
+                          ? const Color(0xFF059669)
+                          : const Color(0xFF475569),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      isClosed ? 'FECHADA' : 'ABERTA',
                       style: GoogleFonts.rajdhani(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: 11.5,
-                        letterSpacing: 0.5,
+                        fontSize: 9.5,
                       ),
                     ),
-                    const SizedBox(width: 5),
-                    Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                      decoration: BoxDecoration(
-                        color: isClosed
-                            ? const Color(0xFF059669)
-                            : const Color(0xFF475569),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        isClosed ? 'FECHADA' : 'ABERTA',
-                        style: GoogleFonts.rajdhani(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 9.5,
-                        ),
-                      ),
+                  ),
+                  if (isTested) ...[
+                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.check_circle_rounded,
+                      color: Color(0xFF10B981),
+                      size: 12,
                     ),
-                    if (isTested) ...[
-                      const SizedBox(width: 4),
-                      const Icon(
-                        Icons.check_circle_rounded,
-                        color: Color(0xFF10B981),
-                        size: 12,
-                      ),
-                    ],
                   ],
-                ),
+                ],
               ),
             ),
           ),
@@ -694,8 +708,7 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
           top: position.dy - 64,
           child: Center(
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
               decoration: BoxDecoration(
                 color: const Color(0xFF0F172A).withValues(alpha: 0.92),
                 borderRadius: BorderRadius.circular(8),
@@ -713,49 +726,49 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
                     ),
                 ],
               ),
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.lightbulb_rounded,
-                      size: 13,
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Icon(
+                    Icons.lightbulb_rounded,
+                    size: 13,
+                    color: isLit
+                        ? const Color(0xFFFBBF24)
+                        : const Color(0xFF94A3B8),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    label,
+                    style: GoogleFonts.rajdhani(
+                      color: isLit ? const Color(0xFFFDE047) : Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11.5,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 1,
+                    ),
+                    decoration: BoxDecoration(
                       color: isLit
-                          ? const Color(0xFFFBBF24)
-                          : const Color(0xFF94A3B8),
+                          ? const Color(0xFFD97706)
+                          : const Color(0xFF475569),
+                      borderRadius: BorderRadius.circular(4),
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      label,
+                    child: Text(
+                      isLit ? 'ILUMINADA' : 'APAGADA',
                       style: GoogleFonts.rajdhani(
-                        color: isLit ? const Color(0xFFFDE047) : Colors.white,
+                        color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: 11.5,
-                        letterSpacing: 0.5,
+                        fontSize: 9.5,
                       ),
                     ),
-                    const SizedBox(width: 5),
-                    Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                      decoration: BoxDecoration(
-                        color: isLit
-                            ? const Color(0xFFD97706)
-                            : const Color(0xFF475569),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        isLit ? 'ILUMINADA' : 'APAGADA',
-                        style: GoogleFonts.rajdhani(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 9.5,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -856,7 +869,10 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
                 Positioned(
                   left: batteryX - 32,
                   top: centerY - 46,
-                  child: _buildSchematicBadge('FONTE 9V', const Color(0xFF38BDF8)),
+                  child: _buildSchematicBadge(
+                    'FONTE 9V',
+                    const Color(0xFF38BDF8),
+                  ),
                 ),
 
                 // Chave 1
@@ -882,7 +898,10 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
                 Positioned(
                   left: switchCenterX - 28,
                   top: topY - 46,
-                  child: _buildSchematicBadge('CHAVE 1', const Color(0xFF0284C7)),
+                  child: _buildSchematicBadge(
+                    'CHAVE 1',
+                    const Color(0xFF0284C7),
+                  ),
                 ),
 
                 // Chave 2
@@ -908,7 +927,10 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
                 Positioned(
                   left: switchCenterX - 28,
                   top: bottomY - 46,
-                  child: _buildSchematicBadge('CHAVE 2', const Color(0xFF059669)),
+                  child: _buildSchematicBadge(
+                    'CHAVE 2',
+                    const Color(0xFF059669),
+                  ),
                 ),
 
                 // Lâmpada A
@@ -929,7 +951,10 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
                 Positioned(
                   left: lampX - 40,
                   top: topY - 46,
-                  child: _buildSchematicBadge('LUMINÁRIA A', const Color(0xFFF59E0B)),
+                  child: _buildSchematicBadge(
+                    'LUMINÁRIA A',
+                    const Color(0xFFF59E0B),
+                  ),
                 ),
 
                 // Lâmpada B
@@ -950,7 +975,10 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
                 Positioned(
                   left: lampX - 40,
                   top: bottomY - 46,
-                  child: _buildSchematicBadge('LUMINÁRIA B', const Color(0xFFF59E0B)),
+                  child: _buildSchematicBadge(
+                    'LUMINÁRIA B',
+                    const Color(0xFFF59E0B),
+                  ),
                 ),
               ],
             ),
@@ -1011,11 +1039,7 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
           ),
           const SizedBox(width: 14),
           // Divisor vertical
-          Container(
-            width: 1,
-            height: 50,
-            color: const Color(0xFFE2E8F0),
-          ),
+          Container(width: 1, height: 50, color: const Color(0xFFE2E8F0)),
           const SizedBox(width: 14),
           // Cartão Chave 2
           Expanded(
@@ -1057,7 +1081,9 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
                   : const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: isClosed ? const Color(0xFF10B981) : const Color(0xFFCBD5E1),
+                color: isClosed
+                    ? const Color(0xFF10B981)
+                    : const Color(0xFFCBD5E1),
                 width: 1.2,
               ),
             ),
@@ -1212,13 +1238,17 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
     if (!_testedSwitch1) return 0; // 1. Teste a chave 1
     if (_switch1Closed && !_testedSwitch2) return 1; // 2. Observe a luminária
     if (!_testedSwitch2) return 2; // 3. Teste a chave 2
-    if (_mapSwitch1 == null || _mapSwitch2 == null) return 3; // 4. Registre as associações
+    if (_mapSwitch1 == null || _mapSwitch2 == null) {
+      return 3; // 4. Registre as associações
+    }
     return 4; // Tudo pronto para validação!
   }
 
   bool _isStepCompleted(int index) {
     if (index == 0) return _testedSwitch1;
-    if (index == 1) return _testedSwitch1 && (_testedSwitch2 || !_switch1Closed);
+    if (index == 1) {
+      return _testedSwitch1 && (_testedSwitch2 || !_switch1Closed);
+    }
     if (index == 2) return _testedSwitch2;
     if (index == 3) return _mapSwitch1 != null && _mapSwitch2 != null;
     return false;

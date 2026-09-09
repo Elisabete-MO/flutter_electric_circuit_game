@@ -42,7 +42,8 @@ class _StandMarkerState extends State<StandMarker> {
 
     final bool isTutorial = widget.stand.number == 1;
     final bool isBancadaLivre = widget.stand.isBancadaLivre;
-    final bool isCompleted = widget.stand.hasMissions &&
+    final bool isCompleted =
+        widget.stand.hasMissions &&
         widget.stand.completedMissions >= widget.stand.totalMissions &&
         widget.stand.totalMissions > 0;
 
@@ -50,17 +51,21 @@ class _StandMarkerState extends State<StandMarker> {
     final Color borderColor = widget.isSelected
         ? EletroLabColors.amber
         : (_isHovered
-            ? EletroLabColors.neonCyan
-            : (isBancadaLivre
-                ? const Color(0xFF00E5FF)
-                : (isTutorial
-                    ? const Color(0xFFF59E0B)
-                    : (isCompleted
-                        ? const Color(0xFF10B981)
-                        : const Color(0xFF059669).withValues(alpha: 0.5)))));
+              ? EletroLabColors.neonCyan
+              : (isBancadaLivre
+                    ? const Color(0xFF00E5FF)
+                    : (isTutorial
+                          ? const Color(0xFFF59E0B)
+                          : (isCompleted
+                                ? const Color(0xFF10B981)
+                                : const Color(
+                                    0xFF059669,
+                                  ).withValues(alpha: 0.5)))));
 
     // Thinner border width specification (1.0 normal, 2.0 selected/hovered)
-    final double borderWidth = widget.isSelected ? 2.0 : (_isHovered ? 1.5 : 1.0);
+    final double borderWidth = widget.isSelected
+        ? 2.0
+        : (_isHovered ? 1.5 : 1.0);
 
     // Dynamic glow shadow for consistent lighting & 3D floor projection
     final List<BoxShadow> shadows = [
@@ -79,7 +84,9 @@ class _StandMarkerState extends State<StandMarker> {
         )
       else if (isBancadaLivre)
         BoxShadow(
-          color: const Color(0xFF00E5FF).withValues(alpha: _isHovered ? 0.6 : 0.35),
+          color: const Color(
+            0xFF00E5FF,
+          ).withValues(alpha: _isHovered ? 0.6 : 0.35),
           blurRadius: _isHovered ? 16 : 10,
           spreadRadius: _isHovered ? 2 : 1,
         )
@@ -112,10 +119,7 @@ class _StandMarkerState extends State<StandMarker> {
                 height: height,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: borderColor,
-                    width: borderWidth,
-                  ),
+                  border: Border.all(color: borderColor, width: borderWidth),
                   boxShadow: shadows,
                 ),
                 child: ClipRRect(
@@ -149,9 +153,13 @@ class _StandMarkerState extends State<StandMarker> {
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [
-                                  const Color(0xFF00E5FF).withValues(alpha: 0.15),
+                                  const Color(
+                                    0xFF00E5FF,
+                                  ).withValues(alpha: 0.15),
                                   Colors.transparent,
-                                  const Color(0xFF7C4DFF).withValues(alpha: 0.20),
+                                  const Color(
+                                    0xFF7C4DFF,
+                                  ).withValues(alpha: 0.20),
                                 ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
@@ -169,22 +177,29 @@ class _StandMarkerState extends State<StandMarker> {
                 top: 4,
                 left: 4,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: widget.isSelected
                         ? const Color(0xFFF59E0B)
                         : (isBancadaLivre
-                            ? const Color(0xFF0EA5E9)
-                            : (isTutorial
-                                ? const Color(0xFFD97706)
-                                : const Color(0xFF021B15).withValues(alpha: 0.88))),
+                              ? const Color(0xFF0EA5E9)
+                              : (isTutorial
+                                    ? const Color(0xFFD97706)
+                                    : const Color(
+                                        0xFF021B15,
+                                      ).withValues(alpha: 0.88))),
                     borderRadius: BorderRadius.circular(6),
                     border: Border.all(
                       color: widget.isSelected
                           ? Colors.white
                           : (isBancadaLivre
-                              ? const Color(0xFF38BDF8)
-                              : const Color(0xFF10B981).withValues(alpha: 0.8)),
+                                ? const Color(0xFF38BDF8)
+                                : const Color(
+                                    0xFF10B981,
+                                  ).withValues(alpha: 0.8)),
                       width: 1.0,
                     ),
                     boxShadow: const [
@@ -200,7 +215,9 @@ class _StandMarkerState extends State<StandMarker> {
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w900,
-                      fontSize: UiScale.of(context).font(widget.width * 0.11, min: 11.0, max: 20.0),
+                      fontSize: UiScale.of(
+                        context,
+                      ).font(widget.width * 0.11, min: 11.0, max: 20.0),
                       letterSpacing: 0.2,
                     ),
                   ),
@@ -213,7 +230,10 @@ class _StandMarkerState extends State<StandMarker> {
                   bottom: 4,
                   right: 4,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: isBancadaLivre
                           ? const Color(0xFF7C4DFF)
@@ -221,10 +241,7 @@ class _StandMarkerState extends State<StandMarker> {
                       borderRadius: BorderRadius.circular(4),
                       border: Border.all(color: Colors.white70, width: 0.8),
                       boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black38,
-                          blurRadius: 3,
-                        ),
+                        BoxShadow(color: Colors.black38, blurRadius: 3),
                       ],
                     ),
                     child: Text(
@@ -232,7 +249,9 @@ class _StandMarkerState extends State<StandMarker> {
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
-                        fontSize: UiScale.of(context).font(widget.width * 0.08, min: 8.0, max: 15.0),
+                        fontSize: UiScale.of(
+                          context,
+                        ).font(widget.width * 0.08, min: 8.0, max: 15.0),
                         letterSpacing: 0.4,
                       ),
                     ),

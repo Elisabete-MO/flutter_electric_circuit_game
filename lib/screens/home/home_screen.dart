@@ -59,7 +59,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       Navigator.of(context).pushNamed(Routes.ruasMaquete);
     } else if (stand.number == 5 || stand.id == 'letreros_led') {
       Navigator.of(context).pushNamed(Routes.letrerosLed);
-    } else if (stand.number == 6 || stand.id == 'movimento' || stand.id == 'movimento_miniatura') {
+    } else if (stand.number == 6 ||
+        stand.id == 'movimento' ||
+        stand.id == 'movimento_miniatura') {
       Navigator.of(context).pushNamed(Routes.movimentoMiniatura);
     } else if (stand.number == 7 || stand.id == 'mede_testa') {
       Navigator.of(context).pushNamed(Routes.medeTestaExplica);
@@ -72,7 +74,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           backgroundColor: const Color(0xFF1E293B),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
     }
@@ -92,7 +96,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           title: Row(
             children: [
-              Icon(Icons.location_city_rounded, color: const Color(0xFF10B981), size: scale.icon(28)),
+              Icon(
+                Icons.location_city_rounded,
+                color: const Color(0xFF10B981),
+                size: scale.icon(28),
+              ),
               SizedBox(width: scale.spacing(12)),
               Expanded(
                 child: Text(
@@ -205,7 +213,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     icon: Icons.settings_rounded,
                     tooltip: 'Configurações',
                     accentColor: Colors.white,
-                    onTap: () => Navigator.of(context).pushNamed(Routes.settings),
+                    onTap: () =>
+                        Navigator.of(context).pushNamed(Routes.settings),
                   ),
                 ],
               ),
@@ -254,11 +263,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ],
             ),
-            child: Icon(
-              icon,
-              color: accentColor,
-              size: scale.icon(28),
-            ),
+            child: Icon(icon, color: accentColor, size: scale.icon(28)),
           ),
         ),
       ),

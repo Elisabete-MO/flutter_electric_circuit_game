@@ -1,6 +1,19 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
+/// Tamanhos-base semânticos. O [MediaQuery.textScaler] do app os amplia por viewport.
+abstract final class UiTypography {
+  static const double display = 22.0;
+  static const double title = 21.0;
+  static const double panelTitle = 18.0;
+  static const double subtitle = 15.0;
+  static const double body = 14.0;
+  static const double button = 14.0;
+  static const double label = 12.0;
+  static const double caption = 11.0;
+  static const double hud = 12.0;
+}
+
 /// Utilitário central de responsividade e escala proporcional do EletroLab.
 ///
 /// Adota como resolução de referência de design 1920 × 1080 px (onde scale = 1.0).
@@ -11,15 +24,13 @@ class UiScale {
   /// Resolução de referência (Design Space padrão)
   static const double designWidth = 1920.0;
   static const double designHeight = 1080.0;
-  static const double designAspectRatio = designWidth / designHeight; // ~1.777 (16:9)
+  static const double designAspectRatio =
+      designWidth / designHeight; // ~1.777 (16:9)
 
   final double screenWidth;
   final double screenHeight;
 
-  UiScale._({
-    required this.screenWidth,
-    required this.screenHeight,
-  });
+  UiScale._({required this.screenWidth, required this.screenHeight});
 
   /// Factory a partir de BuildContext
   factory UiScale.of(BuildContext context) {
@@ -36,7 +47,8 @@ class UiScale {
   }
 
   /// Aspect Ratio atual da tela
-  double get aspectRatio => screenHeight > 0 ? screenWidth / screenHeight : designAspectRatio;
+  double get aspectRatio =>
+      screenHeight > 0 ? screenWidth / screenHeight : designAspectRatio;
 
   /// Fator de escala horizontal puro em relação à largura de referência (1920px)
   double get scaleX => screenWidth / designWidth;
@@ -47,13 +59,19 @@ class UiScale {
   /// Escala uniforme pura baseada na menor dimensão (evita corte em qualquer aspect ratio)
   double get rawUniformScale => math.min(scaleX, scaleY);
 
-  /// Escala geral da interface (HUD, botões, cards, textos) com limites de proteção
-  /// - Em 1920x1080: 1.0
-  /// - Em 2560x1440 (2K): ~1.33
-  /// - Em 3840x2160 (4K): ~2.0
-  /// - Em 1366x768: ~0.72 (limitado a 0.72 para manter legibilidade)
-  /// - Em 1280x720: ~0.72
-  double get scale => rawUniformScale.clamp(0.72, 2.20);
+  /// Escala reservada à geometria proporcional de canvas e ilustrações.
+  double get canvasScale => rawUniformScale.clamp(0.72, 2.20);
+
+  /// Escala de interface para dimensões, espaçamentos e controles.
+  ///
+  /// Desktop e tablet não encolhem a interface para caber na referência
+  /// 1920×1080. Layouts devem responder por constraints e reflow; apenas
+  /// mobile compacto conserva a redução existente para não regredir o mapa.
+  double get scale {
+    if (isMobile) return canvasScale.clamp(0.72, 1.0);
+    if (isTablet) return 1.0;
+    return rawUniformScale.clamp(1.0, 1.25);
+  }
 
   /// Mantido para compatibilidade com usos legados
   double get scaleFactor => scale;
@@ -75,7 +93,9 @@ class UiScale {
   bool get is4K => screenWidth >= 3200 || screenHeight >= 1800;
 
   /// Identifica monitores 2K / QHD (>= 2200px e < 3200px)
-  bool get is2K => (screenWidth >= 2200 && screenWidth < 3200) || (screenHeight >= 1300 && screenHeight < 1800);
+  bool get is2K =>
+      (screenWidth >= 2200 && screenWidth < 3200) ||
+      (screenHeight >= 1300 && screenHeight < 1800);
 
   /// Identifica telas ultrawide (21:9 ou maior)
   bool get isUltrawide => aspectRatio >= 2.0;
@@ -86,7 +106,12 @@ class UiScale {
 
   /// Escala uma dimensão genérica (largura, altura, tamanho de card, raio de borda)
   /// com limites opcionais.
-  double size(double baseSize, {double? min, double? max, double weight = 1.0}) {
+  double size(
+    double baseSize, {
+    double? min,
+    double? max,
+    double weight = 1.0,
+  }) {
     final effectiveScale = 1.0 + (scale - 1.0) * weight;
     final val = baseSize * effectiveScale;
     final lower = min ?? (baseSize * 0.65);
@@ -94,19 +119,31 @@ class UiScale {
     return val.clamp(lower, upper);
   }
 
-  /// Escala de tipografia protegida contra corte em telas pequenas e gigantismo em 4K.
+  /// Fator global de legibilidade aplicado pelo [MediaQuery.textScaler].
+  ///
+  /// A escala do canvas não deve reduzir texto. O fator começa acima de 1 em
+  /// mobile landscape e cresce suavemente pela largura útil, com teto seguro.
+  double get textScale {
+    if (isMobile) return 1.08;
+    if (isTablet) {
+      return (1.10 + ((screenWidth - 640) / 384) * 0.04).clamp(1.10, 1.14);
+    }
+    return (1.14 + ((screenWidth - 1024) / 1792) * 0.10).clamp(1.14, 1.24);
+  }
+
+  /// Alias mantido para os testes e consumidores existentes.
+  double get typographyScale => textScale;
+
+  /// Limita a fonte-base; a escala visual é aplicada globalmente pelo MediaQuery.
   double font(
     double baseFont, {
     double? min,
     double? max,
     double maxFactor = 1.9,
   }) {
-    // Escala suave para tipografia (suaviza ligeiramente o crescimento extremo)
-    final effectiveScale = 1.0 + (scale - 1.0) * 0.95;
-    final scaled = baseFont * effectiveScale;
-    final lower = min ?? (baseFont * 0.75).clamp(8.0, baseFont);
+    final lower = min ?? baseFont;
     final upper = max ?? (baseFont * maxFactor);
-    return scaled.clamp(lower, upper);
+    return baseFont.clamp(lower, upper);
   }
 
   /// Escala de espaçamentos, gaps e paddings

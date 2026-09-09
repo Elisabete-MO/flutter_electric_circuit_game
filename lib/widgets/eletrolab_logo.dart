@@ -14,7 +14,8 @@ class EletroLabLogo extends StatefulWidget {
   State<EletroLabLogo> createState() => _EletroLabLogoState();
 }
 
-class _EletroLabLogoState extends State<EletroLabLogo> with SingleTickerProviderStateMixin {
+class _EletroLabLogoState extends State<EletroLabLogo>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _glowController;
 
   @override
@@ -47,7 +48,7 @@ class _EletroLabLogoState extends State<EletroLabLogo> with SingleTickerProvider
         ? theme.textTheme.headlineSmall
         : theme.textTheme.displayMedium;
 
-    final scaledTitleSize = scale.font(widget.compact ? 24.0 : 44.0);
+    final scaledTitleSize = scale.font(24.0);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -68,11 +69,15 @@ class _EletroLabLogoState extends State<EletroLabLogo> with SingleTickerProvider
                   size: iconSize,
                   shadows: [
                     Shadow(
-                      color: const Color(0xFF10B981).withValues(alpha: glowValue * 0.8),
+                      color: const Color(
+                        0xFF10B981,
+                      ).withValues(alpha: glowValue * 0.8),
                       blurRadius: scale.size(10 + glowValue * 15),
                     ),
                     Shadow(
-                      color: const Color(0xFF34D399).withValues(alpha: glowValue * 0.6),
+                      color: const Color(
+                        0xFF34D399,
+                      ).withValues(alpha: glowValue * 0.6),
                       blurRadius: scale.size(20 + glowValue * 25),
                     ),
                   ],
@@ -89,16 +94,22 @@ class _EletroLabLogoState extends State<EletroLabLogo> with SingleTickerProvider
                     shadows: [
                       if (isDark) ...[
                         Shadow(
-                          color: EletroLabColors.neonCyan.withValues(alpha: glowValue * 0.4),
+                          color: EletroLabColors.neonCyan.withValues(
+                            alpha: glowValue * 0.4,
+                          ),
                           blurRadius: scale.size(8 + glowValue * 8),
                         ),
                         Shadow(
-                          color: EletroLabColors.neonPurple.withValues(alpha: glowValue * 0.3),
+                          color: EletroLabColors.neonPurple.withValues(
+                            alpha: glowValue * 0.3,
+                          ),
                           blurRadius: scale.size(16 + glowValue * 12),
                         ),
                       ] else ...[
                         Shadow(
-                          color: EletroLabColors.electricBlue.withValues(alpha: 0.15),
+                          color: EletroLabColors.electricBlue.withValues(
+                            alpha: 0.15,
+                          ),
                           blurRadius: scale.size(6),
                         ),
                       ],

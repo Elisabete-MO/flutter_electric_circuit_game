@@ -50,7 +50,9 @@ class _ComponentDetailDialogState extends State<ComponentDetailDialog> {
     final subtitleName = isEn ? _component.namePt : _component.nameEn;
 
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(scale.size(24))),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(scale.size(24)),
+      ),
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: scale.dialogWidth(500)),
         child: SingleChildScrollView(
@@ -72,15 +74,16 @@ class _ComponentDetailDialogState extends State<ComponentDetailDialog> {
                             displayName,
                             style: theme.textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.bold,
-                              fontSize: scale.font(22),
+                              fontSize: scale.font(UiTypography.title),
                             ),
                           ),
-                          if (subtitleName.isNotEmpty && subtitleName != displayName)
+                          if (subtitleName.isNotEmpty &&
+                              subtitleName != displayName)
                             Text(
                               subtitleName,
                               style: theme.textTheme.labelMedium?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
-                                fontSize: scale.font(12),
+                                fontSize: scale.font(UiTypography.label),
                               ),
                             ),
                         ],
@@ -118,25 +121,36 @@ class _ComponentDetailDialogState extends State<ComponentDetailDialog> {
                               style: theme.textTheme.labelSmall?.copyWith(
                                 fontWeight: FontWeight.w600,
                                 color: theme.colorScheme.primary,
-                                fontSize: scale.font(11),
+                                fontSize: scale.font(UiTypography.caption),
                               ),
                             ),
                             SizedBox(height: scale.spacing(8)),
                             SizedBox(
                               height: scale.size(80),
-                              child: widget.useRealisticAssets &&
-                                      _component.type.getAssetPath(_component.isActive) != null
+                              child:
+                                  widget.useRealisticAssets &&
+                                      _component.type.getAssetPath(
+                                            _component.isActive,
+                                          ) !=
+                                          null
                                   ? Image.asset(
-                                      _component.type.getAssetPath(_component.isActive)!,
+                                      _component.type.getAssetPath(
+                                        _component.isActive,
+                                      )!,
                                       fit: BoxFit.contain,
-                                      errorBuilder: (context, error, stackTrace) => CustomPaint(
-                                        painter: ComponentPhysicalPainter(
-                                          type: _component.type,
-                                          isActive: _component.isActive,
-                                          isDarkMode: isDark,
-                                        ),
-                                        child: const SizedBox.expand(),
-                                      ),
+                                      errorBuilder:
+                                          (
+                                            context,
+                                            error,
+                                            stackTrace,
+                                          ) => CustomPaint(
+                                            painter: ComponentPhysicalPainter(
+                                              type: _component.type,
+                                              isActive: _component.isActive,
+                                              isDarkMode: isDark,
+                                            ),
+                                            child: const SizedBox.expand(),
+                                          ),
                                     )
                                   : CustomPaint(
                                       painter: ComponentPhysicalPainter(
@@ -164,7 +178,7 @@ class _ComponentDetailDialogState extends State<ComponentDetailDialog> {
                               style: theme.textTheme.labelSmall?.copyWith(
                                 fontWeight: FontWeight.w600,
                                 color: theme.colorScheme.tertiary,
-                                fontSize: scale.font(11),
+                                fontSize: scale.font(UiTypography.caption),
                               ),
                             ),
                             SizedBox(height: scale.spacing(8)),
@@ -174,7 +188,9 @@ class _ComponentDetailDialogState extends State<ComponentDetailDialog> {
                                 painter: CircuitSymbolPainter(
                                   type: _component.type,
                                   isActive: _component.isActive,
-                                  color: isDark ? Colors.white.withValues(alpha: 0.87) : Colors.black87,
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.87)
+                                      : Colors.black87,
                                   activeColor: const Color(0xFFFFB300),
                                   strokeWidth: 2.5,
                                 ),
@@ -194,14 +210,14 @@ class _ComponentDetailDialogState extends State<ComponentDetailDialog> {
                   l10n.compFunction,
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    fontSize: scale.font(14),
+                    fontSize: scale.font(UiTypography.subtitle),
                   ),
                 ),
                 SizedBox(height: scale.spacing(4)),
                 Text(
                   _component.description,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    fontSize: scale.font(13.5),
+                    fontSize: scale.font(UiTypography.body),
                   ),
                 ),
                 SizedBox(height: scale.spacing(16)),
@@ -210,7 +226,7 @@ class _ComponentDetailDialogState extends State<ComponentDetailDialog> {
                   l10n.compSymbolMeaning,
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    fontSize: scale.font(14),
+                    fontSize: scale.font(UiTypography.subtitle),
                   ),
                 ),
                 SizedBox(height: scale.spacing(4)),
@@ -218,7 +234,7 @@ class _ComponentDetailDialogState extends State<ComponentDetailDialog> {
                   _component.symbolDescription,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
-                    fontSize: scale.font(13.5),
+                    fontSize: scale.font(UiTypography.body),
                   ),
                 ),
                 SizedBox(height: scale.spacing(24)),
@@ -243,14 +259,18 @@ class _ComponentDetailDialogState extends State<ComponentDetailDialog> {
                           _component.isActive
                               ? l10n.compDeactivateState
                               : l10n.compActivateState,
-                          style: TextStyle(fontSize: scale.font(13)),
+                          style: TextStyle(
+                            fontSize: scale.font(UiTypography.button),
+                          ),
                         ),
                       ),
                     FilledButton(
                       onPressed: () => Navigator.of(context).pop(),
                       child: Text(
                         l10n.compUnderstood,
-                        style: TextStyle(fontSize: scale.font(13)),
+                        style: TextStyle(
+                          fontSize: scale.font(UiTypography.button),
+                        ),
                       ),
                     ),
                   ],

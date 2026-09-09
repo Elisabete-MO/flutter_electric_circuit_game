@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../l10n/app_localizations.dart';
+import '../core/ui_scale.dart';
 import '../state/settings_controller.dart';
 import 'routes.dart';
 import 'theme.dart';
@@ -33,12 +34,15 @@ class EletroLabApp extends ConsumerWidget {
       supportedLocales: AppLocalizations.supportedLocales,
       initialRoute: Routes.menu,
       routes: Routes.all,
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(
-          // Removed textScaler to use exact +2px fonts in theme
-        ),
-        child: LandscapeGuard(child: child!),
-      ),
+      builder: (context, child) {
+        final mediaQuery = MediaQuery.of(context);
+        return MediaQuery(
+          data: mediaQuery.copyWith(
+            textScaler: TextScaler.linear(context.uiScale.textScale),
+          ),
+          child: LandscapeGuard(child: child!),
+        );
+      },
     );
   }
 }

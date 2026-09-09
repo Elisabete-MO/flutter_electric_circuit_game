@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../core/ui_scale.dart';
+
 Widget buildScoreRow(String label, String value) {
   return Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -9,7 +11,7 @@ Widget buildScoreRow(String label, String value) {
         label,
         style: GoogleFonts.outfit(
           color: Colors.white70,
-          fontSize: 14,
+          fontSize: UiTypography.body,
         ),
       ),
       Text(
@@ -17,7 +19,7 @@ Widget buildScoreRow(String label, String value) {
         style: GoogleFonts.rajdhani(
           color: const Color(0xFF10B981),
           fontWeight: FontWeight.bold,
-          fontSize: 15,
+          fontSize: UiTypography.subtitle,
         ),
       ),
     ],
@@ -75,7 +77,7 @@ Widget buildLigaDesligaStatusCard(bool isClosed) {
             style: GoogleFonts.rajdhani(
               color: statusColor,
               fontWeight: FontWeight.bold,
-              fontSize: 12,
+              fontSize: UiTypography.hud,
             ),
           ),
         ),
@@ -85,15 +87,16 @@ Widget buildLigaDesligaStatusCard(bool isClosed) {
 }
 
 Widget buildLigaDesligaTelemetryCard(
-    double voltage, double currentMa, bool isClosed) {
+  double voltage,
+  double currentMa,
+  bool isClosed,
+) {
   return Container(
     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
     decoration: BoxDecoration(
       color: const Color(0xFF0F172A).withValues(alpha: 0.90),
       borderRadius: BorderRadius.circular(16),
-      border: Border.all(
-        color: const Color(0xFF10B981).withValues(alpha: 0.4),
-      ),
+      border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4)),
       boxShadow: [
         BoxShadow(
           color: Colors.black.withValues(alpha: 0.15),
@@ -112,7 +115,7 @@ Widget buildLigaDesligaTelemetryCard(
           style: GoogleFonts.rajdhani(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontSize: 12,
+            fontSize: UiTypography.hud,
           ),
         ),
         const SizedBox(width: 10),
@@ -127,7 +130,7 @@ Widget buildLigaDesligaTelemetryCard(
           style: GoogleFonts.rajdhani(
             color: isClosed ? const Color(0xFF00FF9D) : Colors.white38,
             fontWeight: FontWeight.bold,
-            fontSize: 12,
+            fontSize: UiTypography.hud,
           ),
         ),
       ],

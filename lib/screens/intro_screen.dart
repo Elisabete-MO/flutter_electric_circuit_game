@@ -249,7 +249,9 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
 
           InkWell(
             onTap: _enterGym,
-            borderRadius: BorderRadius.circular(scale.size(22, min: 16, max: 30)),
+            borderRadius: BorderRadius.circular(
+              scale.size(22, min: 16, max: 30),
+            ),
             child: Container(
               padding: EdgeInsets.symmetric(
                 horizontal: scale.spacing(16, min: 12, max: 24),
@@ -257,7 +259,9 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
               ),
               decoration: BoxDecoration(
                 color: const Color(0xFF04281E).withValues(alpha: 0.85),
-                borderRadius: BorderRadius.circular(scale.size(22, min: 16, max: 30)),
+                borderRadius: BorderRadius.circular(
+                  scale.size(22, min: 16, max: 30),
+                ),
                 border: Border.all(
                   color: const Color(0xFF10B981).withValues(alpha: 0.45),
                 ),
@@ -296,15 +300,24 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
   ) {
     final double maxW = constraints.maxWidth;
     final double maxH = constraints.maxHeight;
-    final bool isWide = maxW >= 640;
+    // Tablets use the stacked scene instead of shrinking the character and dialogue.
+    final bool isWide = maxW >= 1100;
     final uiScale = UiScale.fromSize(maxW, maxH);
 
     if (isWide) {
       // LAYOUT COM NURI FIRMEMENTE NO CHÃO (Desktop/Tablet - Tamanho Destaque proporcional)
-      final double maxSpriteH = uiScale.size(uiScale.isDesktop ? 680.0 : 470.0, min: 400.0, max: 960.0);
+      final double maxSpriteH = uiScale.size(
+        uiScale.isDesktop ? 680.0 : 470.0,
+        min: 400.0,
+        max: 960.0,
+      );
       final double spriteHeight = (maxH * 0.78).clamp(310.0, maxSpriteH);
       final double spriteWidth = spriteHeight * (540.0 / 900.0);
-      final double bubbleMaxWidth = uiScale.dialogWidth(uiScale.isDesktop ? 760 : 540, min: 500, max: 980);
+      final double bubbleMaxWidth = uiScale.dialogWidth(
+        uiScale.isDesktop ? 760 : 540,
+        min: 500,
+        max: 980,
+      );
 
       return Align(
         alignment: Alignment.bottomCenter,
@@ -353,7 +366,10 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
               // 2. BALÃO DE FALA (Ao lado da Nuri, suspenso na altura do rosto/boca)
               Padding(
                 padding: EdgeInsets.only(
-                  bottom: (spriteHeight * 0.48).clamp(180.0, uiScale.isDesktop ? 420.0 : 260.0),
+                  bottom: (spriteHeight * 0.48).clamp(
+                    180.0,
+                    uiScale.isDesktop ? 420.0 : 260.0,
+                  ),
                 ),
                 child: ConstrainedBox(
                   constraints: BoxConstraints(maxWidth: bubbleMaxWidth),
@@ -384,7 +400,12 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
       return Align(
         alignment: Alignment.bottomCenter,
         child: Padding(
-          padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16, top: 8),
+          padding: const EdgeInsets.only(
+            left: 16,
+            right: 16,
+            bottom: 16,
+            top: 8,
+          ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -535,7 +556,9 @@ class SpeechBubbleWidget extends StatelessWidget {
               bottom: isLeftTail ? 0 : 12,
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(scale.size(24, min: 18, max: 36)),
+              borderRadius: BorderRadius.circular(
+                scale.size(24, min: 18, max: 36),
+              ),
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
                 child: Container(
@@ -544,8 +567,13 @@ class SpeechBubbleWidget extends StatelessWidget {
                     color: const Color(
                       0x9903241B,
                     ), // Glassmorphism verde esmeralda meio transparente
-                    borderRadius: BorderRadius.circular(scale.size(24, min: 18, max: 36)),
-                    border: Border.all(color: const Color(0xFF10B981), width: 1.8),
+                    borderRadius: BorderRadius.circular(
+                      scale.size(24, min: 18, max: 36),
+                    ),
+                    border: Border.all(
+                      color: const Color(0xFF10B981),
+                      width: 1.8,
+                    ),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.45),
@@ -560,168 +588,217 @@ class SpeechBubbleWidget extends StatelessWidget {
                     ],
                   ),
                   child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Orador e Progresso
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        // Badge Orador
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: scale.spacing(12, min: 8, max: 18),
-                            vertical: scale.spacing(6, min: 4, max: 10),
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF059669),
-                            borderRadius: BorderRadius.circular(scale.size(12, min: 8, max: 18)),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(
-                                  0xFF10B981,
-                                ).withValues(alpha: 0.4),
-                                blurRadius: 8,
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Orador e Progresso
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
                             children: [
-                              Icon(
-                                Icons.record_voice_over_rounded,
-                                color: Colors.white,
-                                size: scale.icon(16, min: 14, max: 22),
-                              ),
-                              SizedBox(width: scale.spacing(6, min: 4, max: 10)),
-                              Text(
-                                step.speaker,
-                                style: GoogleFonts.rajdhani(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: scale.font(16, min: 13.5, max: 22),
-                                  letterSpacing: 0.5,
+                              // Badge Orador
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: scale.spacing(
+                                    12,
+                                    min: 8,
+                                    max: 18,
+                                  ),
+                                  vertical: scale.spacing(6, min: 4, max: 10),
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF059669),
+                                  borderRadius: BorderRadius.circular(
+                                    scale.size(12, min: 8, max: 18),
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(
+                                        0xFF10B981,
+                                      ).withValues(alpha: 0.4),
+                                      blurRadius: 8,
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.record_voice_over_rounded,
+                                      color: Colors.white,
+                                      size: scale.icon(16, min: 14, max: 22),
+                                    ),
+                                    SizedBox(
+                                      width: scale.spacing(6, min: 4, max: 10),
+                                    ),
+                                    Text(
+                                      step.speaker,
+                                      style: GoogleFonts.rajdhani(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: scale.font(
+                                          16,
+                                          min: 13.5,
+                                          max: 22,
+                                        ),
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(width: scale.spacing(8, min: 4, max: 14)),
+                          SizedBox(width: scale.spacing(8, min: 4, max: 14)),
 
-                    // Indicadores (Passos 1/3, 2/3, 3/3)
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: List.generate(totalSteps, (index) {
-                        final bool active = index == currentStepIndex;
-                        return AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          margin: EdgeInsets.only(left: scale.spacing(5, min: 3, max: 9)),
-                          width: active ? scale.size(22, min: 16, max: 32) : scale.size(10, min: 7, max: 16),
-                          height: scale.size(10, min: 7, max: 16),
-                          decoration: BoxDecoration(
-                            color: active
-                                ? EletroLabColors.neonCyan
-                                : const Color(0xFF065F46),
-                            borderRadius: BorderRadius.circular(5),
+                          // Indicadores (Passos 1/3, 2/3, 3/3)
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: List.generate(totalSteps, (index) {
+                              final bool active = index == currentStepIndex;
+                              return AnimatedContainer(
+                                duration: const Duration(milliseconds: 300),
+                                margin: EdgeInsets.only(
+                                  left: scale.spacing(5, min: 3, max: 9),
+                                ),
+                                width: active
+                                    ? scale.size(22, min: 16, max: 32)
+                                    : scale.size(10, min: 7, max: 16),
+                                height: scale.size(10, min: 7, max: 16),
+                                decoration: BoxDecoration(
+                                  color: active
+                                      ? EletroLabColors.neonCyan
+                                      : const Color(0xFF065F46),
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                              );
+                            }),
                           ),
-                        );
-                      }),
-                    ),
-                  ],
-                ),
+                        ],
+                      ),
 
-                SizedBox(height: scale.spacing(14, min: 10, max: 20)),
+                      SizedBox(height: scale.spacing(14, min: 10, max: 20)),
 
-                // Texto com Efeito Typewriter
-                ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: scale.size(64, min: 48, max: 96)),
-                  child: Text(
-                    displayedText,
-                    style: GoogleFonts.outfit(
-                      color: Colors.white,
-                      fontSize: scale.font(17.5, min: 14.5, max: 24.0),
-                      height: 1.48,
-                      fontWeight: FontWeight.w400,
-                      letterSpacing: 0.25,
-                    ),
+                      // Texto com Efeito Typewriter
+                      ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: scale.size(64, min: 48, max: 96),
+                        ),
+                        child: Text(
+                          displayedText,
+                          style: GoogleFonts.outfit(
+                            color: Colors.white,
+                            fontSize: scale.font(17.5, min: 14.5, max: 24.0),
+                            height: 1.48,
+                            fontWeight: FontWeight.w400,
+                            letterSpacing: 0.25,
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(height: scale.spacing(16, min: 12, max: 22)),
+
+                      // Botão Ação (Próximo / Entrar)
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: isLastStep
+                            ? ScaleTransition(
+                                scale: pulseAnimation,
+                                child: ElevatedButton.icon(
+                                  onPressed: onPressedNext,
+                                  icon: Icon(
+                                    Icons.bolt_rounded,
+                                    size: scale.icon(24, min: 20, max: 34),
+                                  ),
+                                  label: Text(
+                                    step.buttonText,
+                                    style: GoogleFonts.rajdhani(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: scale.font(
+                                        18,
+                                        min: 15.0,
+                                        max: 25.0,
+                                      ),
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF10B981),
+                                    foregroundColor: const Color(0xFF021712),
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: scale.spacing(
+                                        26,
+                                        min: 18,
+                                        max: 38,
+                                      ),
+                                      vertical: scale.spacing(
+                                        14,
+                                        min: 10,
+                                        max: 22,
+                                      ),
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        scale.size(16, min: 12, max: 24),
+                                      ),
+                                    ),
+                                    elevation: 8,
+                                    shadowColor: const Color(
+                                      0xFF10B981,
+                                    ).withValues(alpha: 0.6),
+                                  ),
+                                ),
+                              )
+                            : ElevatedButton.icon(
+                                onPressed: onPressedNext,
+                                icon: Icon(
+                                  isTyping
+                                      ? Icons.fast_forward_rounded
+                                      : Icons.arrow_forward_rounded,
+                                  size: scale.icon(20, min: 16, max: 28),
+                                ),
+                                label: Text(
+                                  isTyping ? 'Completo' : step.buttonText,
+                                  style: GoogleFonts.rajdhani(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: scale.font(
+                                      17,
+                                      min: 14.0,
+                                      max: 24.0,
+                                    ),
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF047857),
+                                  foregroundColor: Colors.white,
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: scale.spacing(
+                                      22,
+                                      min: 16,
+                                      max: 32,
+                                    ),
+                                    vertical: scale.spacing(
+                                      12,
+                                      min: 8,
+                                      max: 18,
+                                    ),
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      scale.size(14, min: 10, max: 22),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                      ),
+                    ],
                   ),
                 ),
-
-                SizedBox(height: scale.spacing(16, min: 12, max: 22)),
-
-                // Botão Ação (Próximo / Entrar)
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: isLastStep
-                      ? ScaleTransition(
-                          scale: pulseAnimation,
-                          child: ElevatedButton.icon(
-                            onPressed: onPressedNext,
-                            icon: Icon(Icons.bolt_rounded, size: scale.icon(24, min: 20, max: 34)),
-                            label: Text(
-                              step.buttonText,
-                              style: GoogleFonts.rajdhani(
-                                fontWeight: FontWeight.bold,
-                                fontSize: scale.font(18, min: 15.0, max: 25.0),
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF10B981),
-                              foregroundColor: const Color(0xFF021712),
-                              padding: EdgeInsets.symmetric(
-                                horizontal: scale.spacing(26, min: 18, max: 38),
-                                vertical: scale.spacing(14, min: 10, max: 22),
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(scale.size(16, min: 12, max: 24)),
-                              ),
-                              elevation: 8,
-                              shadowColor: const Color(
-                                0xFF10B981,
-                              ).withValues(alpha: 0.6),
-                            ),
-                          ),
-                        )
-                      : ElevatedButton.icon(
-                          onPressed: onPressedNext,
-                          icon: Icon(
-                            isTyping
-                                ? Icons.fast_forward_rounded
-                                : Icons.arrow_forward_rounded,
-                            size: scale.icon(20, min: 16, max: 28),
-                          ),
-                          label: Text(
-                            isTyping ? 'Completo' : step.buttonText,
-                            style: GoogleFonts.rajdhani(
-                              fontWeight: FontWeight.bold,
-                              fontSize: scale.font(17, min: 14.0, max: 24.0),
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF047857),
-                            foregroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(
-                              horizontal: scale.spacing(22, min: 16, max: 32),
-                              vertical: scale.spacing(12, min: 8, max: 18),
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(scale.size(14, min: 10, max: 22)),
-                            ),
-                          ),
-                        ),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
-    ),
 
           // Cauda / Pointer do Balão de Fala (Alinhado à altura dos ombros da Nuri quando na esquerda)
           Positioned(
@@ -729,7 +806,15 @@ class SpeechBubbleWidget extends StatelessWidget {
             top: isLeftTail ? scale.size(36, min: 28, max: 54) : null,
             bottom: isLeftTail ? null : 0,
             child: CustomPaint(
-              size: isLeftTail ? Size(scale.size(14, min: 10, max: 22), scale.size(22, min: 16, max: 32)) : Size(scale.size(22, min: 16, max: 32), scale.size(14, min: 10, max: 22)),
+              size: isLeftTail
+                  ? Size(
+                      scale.size(14, min: 10, max: 22),
+                      scale.size(22, min: 16, max: 32),
+                    )
+                  : Size(
+                      scale.size(22, min: 16, max: 32),
+                      scale.size(14, min: 10, max: 22),
+                    ),
               painter: _BubbleTailPainter(
                 color: const Color(0x9903241B),
                 borderColor: const Color(0xFF10B981),
@@ -788,4 +873,3 @@ class _BubbleTailPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
-
