@@ -431,7 +431,7 @@ class FirstStepsComponentDetailCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Cabeçalho com Ícone e Categoria
+          // Cabeçalho com Ícone e Título
           Row(
             children: [
               Container(
@@ -459,6 +459,8 @@ class FirstStepsComponentDetailCard extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1.0,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     Text(
                       '(${component.nameEn})',
@@ -467,28 +469,34 @@ class FirstStepsComponentDetailCard extends StatelessWidget {
                         fontSize: scale.font(12, min: 10, max: 16),
                         fontStyle: FontStyle.italic,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
-              // Badge de Categoria
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFF0284C7), width: 1),
-                ),
-                child: Text(
-                  category,
-                  style: GoogleFonts.rajdhani(
-                    color: const Color(0xFF00E5FF),
-                    fontSize: scale.font(10, min: 8.5, max: 13),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
             ],
+          ),
+          const SizedBox(height: 8),
+
+          // Badge de Categoria
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F172A),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFF0284C7), width: 1),
+            ),
+            child: Text(
+              category,
+              style: GoogleFonts.rajdhani(
+                color: const Color(0xFF00E5FF),
+                fontSize: scale.font(10, min: 8.5, max: 13),
+                fontWeight: FontWeight.bold,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
           const SizedBox(height: 12),
 
@@ -502,51 +510,58 @@ class FirstStepsComponentDetailCard extends StatelessWidget {
               border: Border.all(color: const Color(0xFF334155)),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(
-                      width: 54,
-                      height: 48,
-                      child: FirstStepPhysicalView(
-                        type: component.type,
-                        isActive: component.isActive,
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 54,
+                        height: 48,
+                        child: FirstStepPhysicalView(
+                          type: component.type,
+                          isActive: component.isActive,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Visual Físico',
-                      style: GoogleFonts.outfit(
-                        color: Colors.white54,
-                        fontSize: scale.font(10, min: 8.5, max: 13),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Visual Físico',
+                        style: GoogleFonts.outfit(
+                          color: Colors.white54,
+                          fontSize: scale.font(10, min: 8.5, max: 13),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 Container(width: 1, height: 50, color: const Color(0xFF334155)),
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CustomPaint(
-                      size: const Size(48, 48),
-                      painter: CircuitSymbolPainter(
-                        type: component.type,
-                        isActive: component.isActive,
-                        color: const Color(0xFF00E5FF),
-                        strokeWidth: 2.2,
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CustomPaint(
+                        size: const Size(48, 48),
+                        painter: CircuitSymbolPainter(
+                          type: component.type,
+                          isActive: component.isActive,
+                          color: const Color(0xFF00E5FF),
+                          strokeWidth: 2.2,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Símbolo IEC',
-                      style: GoogleFonts.outfit(
-                        color: const Color(0xFF00E5FF),
-                        fontSize: scale.font(10, min: 8.5, max: 13),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Símbolo IEC',
+                        style: GoogleFonts.outfit(
+                          color: const Color(0xFF00E5FF),
+                          fontSize: scale.font(10, min: 8.5, max: 13),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),

@@ -380,45 +380,67 @@ class ProfVoltsTipBox extends StatelessWidget {
 
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: scale.spacing(10, min: 8, max: 18),
-        vertical: scale.spacing(10, min: 8, max: 18),
+        horizontal: scale.spacing(10, min: 6, max: 18),
+        vertical: scale.spacing(10, min: 6, max: 18),
       ),
       decoration: BoxDecoration(
         color: const Color(0xFFFFFBEB),
         borderRadius: BorderRadius.circular(scale.size(14, min: 10, max: 22)),
         border: Border.all(color: const Color(0xFFFDE68A), width: 1.0),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ProfVoltsAvatar(size: scale.size(38, min: 30, max: 54)),
-          SizedBox(width: scale.spacing(10, min: 6, max: 16)),
-          Expanded(
-            child: Column(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isNarrow = constraints.maxWidth < 140;
+          final avatarSize = isNarrow
+              ? (constraints.maxWidth * 0.35).clamp(18.0, 32.0)
+              : scale.size(38, min: 28, max: 54);
+
+          final tipContent = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Dica do Prof. Volts:',
+                style: GoogleFonts.outfit(
+                  color: const Color(0xFFD97706),
+                  fontWeight: FontWeight.w700,
+                  fontSize: scale.font(12, min: 10.0, max: 18.0),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '“$voltsTip”',
+                style: GoogleFonts.outfit(
+                  color: const Color(0xFF78350F),
+                  fontSize: scale.font(11.5, min: 9.5, max: 17.0),
+                  fontStyle: FontStyle.italic,
+                  height: 1.3,
+                ),
+              ),
+            ],
+          );
+
+          if (isNarrow) {
+            return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  'Dica do Prof. Volts:',
-                  style: GoogleFonts.outfit(
-                    color: const Color(0xFFD97706),
-                    fontWeight: FontWeight.w700,
-                    fontSize: scale.font(12, min: 10.5, max: 18.0),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '“$voltsTip”',
-                  style: GoogleFonts.outfit(
-                    color: const Color(0xFF78350F),
-                    fontSize: scale.font(11.5, min: 10.0, max: 17.0),
-                    fontStyle: FontStyle.italic,
-                    height: 1.3,
-                  ),
-                ),
+                ProfVoltsAvatar(size: avatarSize),
+                const SizedBox(height: 6),
+                tipContent,
               ],
-            ),
-          ),
-        ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ProfVoltsAvatar(size: avatarSize),
+              SizedBox(width: scale.spacing(10, min: 6, max: 16)),
+              Expanded(child: tipContent),
+            ],
+          );
+        },
       ),
     );
   }
