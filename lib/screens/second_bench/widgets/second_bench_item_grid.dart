@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../second_bench_tokens.dart';
+import '../../common_stand/stand_flow_tokens.dart';
 
 /// Item genérico da biblioteca para exibição na grade do painel lateral.
 class SecondBenchGridItemData<T extends Object> {
@@ -34,6 +34,8 @@ class SecondBenchItemGrid<T extends Object> extends StatelessWidget {
   final ValueChanged<SecondBenchGridItemData<T>>? onItemTap;
   final double assetHeight;
   final bool enableDrag;
+  final bool shrinkWrap;
+  final ScrollPhysics? physics;
 
   const SecondBenchItemGrid({
     super.key,
@@ -41,12 +43,15 @@ class SecondBenchItemGrid<T extends Object> extends StatelessWidget {
     this.onItemTap,
     this.assetHeight = 58.0, // Escala perceptual aumentada para legibilidade
     this.enableDrag = true,
+    this.shrinkWrap = false,
+    this.physics,
   });
 
   @override
   Widget build(BuildContext context) {
     return GridView.builder(
-      physics: const BouncingScrollPhysics(),
+      shrinkWrap: shrinkWrap,
+      physics: physics ?? const BouncingScrollPhysics(),
       itemCount: items.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
@@ -66,7 +71,7 @@ class SecondBenchItemGrid<T extends Object> extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: item.isDisabled ? null : () => onItemTap?.call(item),
-        borderRadius: BorderRadius.circular(SecondBenchLayoutTokens.itemCardRadius),
+        borderRadius: BorderRadius.circular(StandFlowTokens.itemCardRadius),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
@@ -76,10 +81,10 @@ class SecondBenchItemGrid<T extends Object> extends StatelessWidget {
                 : (item.isDisabled
                     ? const Color(0xFFEFEBE1)
                     : const Color(0xFFFFFDF7)),
-            borderRadius: BorderRadius.circular(SecondBenchLayoutTokens.itemCardRadius),
+            borderRadius: BorderRadius.circular(StandFlowTokens.itemCardRadius),
             border: Border.all(
               color: item.isSelected
-                  ? SecondBenchLayoutTokens.primaryGreen
+                  ? StandFlowTokens.primaryGreen
                   : (item.isDisabled
                       ? const Color(0xFFD6CFC0)
                       : const Color(0xFFC8BFA8)),
@@ -88,7 +93,7 @@ class SecondBenchItemGrid<T extends Object> extends StatelessWidget {
             boxShadow: item.isSelected
                 ? [
                     BoxShadow(
-                      color: SecondBenchLayoutTokens.primaryGreen.withValues(alpha: 0.3),
+                      color: StandFlowTokens.primaryGreen.withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -121,14 +126,14 @@ class SecondBenchItemGrid<T extends Object> extends StatelessWidget {
                                     const Icon(
                                       Icons.electrical_services_rounded,
                                       size: 36,
-                                      color: SecondBenchLayoutTokens.darkGreen,
+                                      color: StandFlowTokens.darkGreen,
                                     ),
                               )
                             : (item.customPainterWidget ??
                                 const Icon(
                                   Icons.electrical_services_rounded,
                                   size: 36,
-                                  color: SecondBenchLayoutTokens.darkGreen,
+                                  color: StandFlowTokens.darkGreen,
                                 )),
                       ),
                     ),
@@ -139,7 +144,7 @@ class SecondBenchItemGrid<T extends Object> extends StatelessWidget {
                   // 2. Nome claro e legível abaixo da imagem
                   ConstrainedBox(
                     constraints: const BoxConstraints(
-                      minHeight: SecondBenchLayoutTokens.touchTargetMinSize - 20,
+                      minHeight: StandFlowTokens.touchTargetMinSize - 20,
                     ),
                     child: Text(
                       item.label,
@@ -150,7 +155,7 @@ class SecondBenchItemGrid<T extends Object> extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                         color: item.isDisabled
                             ? Colors.black38
-                            : SecondBenchLayoutTokens.textDark,
+                            : StandFlowTokens.textDark,
                         height: 1.1,
                       ),
                       maxLines: 2,
@@ -168,7 +173,7 @@ class SecondBenchItemGrid<T extends Object> extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                     decoration: BoxDecoration(
-                      color: item.badgeColor ?? SecondBenchLayoutTokens.primaryGreen,
+                      color: item.badgeColor ?? StandFlowTokens.primaryGreen,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -200,7 +205,7 @@ class SecondBenchItemGrid<T extends Object> extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.9),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: SecondBenchLayoutTokens.accentGreen, width: 2),
+              border: Border.all(color: StandFlowTokens.accentGreen, width: 2),
               boxShadow: const [
                 BoxShadow(color: Colors.black45, blurRadius: 12, offset: Offset(0, 4)),
               ],

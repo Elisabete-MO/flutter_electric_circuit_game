@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../models/first_step_component.dart';
 import '../../services/circuit_validator.dart';
+import '../../widgets/component_physical_painter.dart';
 import '../../widgets/glass_container.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
-import 'second_bench_tokens.dart';
-import 'widgets/second_bench_action_bar.dart';
+import '../../widgets/realistic_wire_painter.dart';
+import '../common_stand/stand_flow_tokens.dart';
+import '../../widgets/workbench_components.dart';
+import '../../widgets/workbench_sidebar_cards.dart';
+import '../../widgets/workbench_table_frame.dart';
 import 'widgets/second_bench_item_grid.dart';
-import 'widgets/second_bench_phase_scaffold.dart';
-import 'widgets/second_bench_side_panel.dart';
 
 /// Itens disponíveis na biblioteca controlada da Fase 4.
 enum Phase4LibraryItem {
@@ -83,6 +86,19 @@ class PlacedComponent {
     };
   }
 
+  ComponentType get componentType {
+    return switch (item) {
+      Phase4LibraryItem.battery9V => ComponentType.battery,
+      Phase4LibraryItem.switchSPST => ComponentType.switchComponent,
+      Phase4LibraryItem.ledRed => ComponentType.led,
+      Phase4LibraryItem.resistor68 ||
+      Phase4LibraryItem.resistor680 ||
+      Phase4LibraryItem.resistor6800 =>
+        ComponentType.resistor,
+      _ => ComponentType.resistor,
+    };
+  }
+
   double get resistanceOhms {
     return switch (item) {
       Phase4LibraryItem.resistor68 => 68.0,
@@ -144,7 +160,9 @@ class SecondBenchPhase4 extends StatefulWidget {
   State<SecondBenchPhase4> createState() => _SecondBenchPhase4State();
 }
 
-class _SecondBenchPhase4State extends State<SecondBenchPhase4> {
+class _SecondBenchPhase4State extends State<SecondBenchPhase4>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _flowController;
   final List<PlacedComponent> _placed = [];
   final List<CircuitConnection> _connections = [];
   final List<_Phase4Snapshot> _undoStack = [];
@@ -154,6 +172,22 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4> {
 
   StudentPrediction? _studentPrediction;
   int _hintLevel = 0;
+  bool _isCircuitLit = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _flowController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+  }
+
+  @override
+  void dispose() {
+    _flowController.dispose();
+    super.dispose();
+  }
 
   void _saveSnapshot() {
     _undoStack.add(_Phase4Snapshot(
@@ -169,6 +203,8 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4> {
     if (_undoStack.isEmpty) return;
     final last = _undoStack.removeLast();
     setState(() {
+      _isCircuitLit = false;
+      _flowController.stop();
       _placed.clear();
       _placed.addAll(last.placed.map((c) => c.copyWith()));
       _connections.clear();
@@ -180,6 +216,8 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4> {
   void _clearBench() {
     _saveSnapshot();
     setState(() {
+      _isCircuitLit = false;
+      _flowController.stop();
       _placed.clear();
       _connections.clear();
       _wireStartTerminal = null;
@@ -556,6 +594,15 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4> {
 
     final isSuccess = result.status == CircuitStatus.safeAndLit;
 
+    setState(() {
+      _isCircuitLit = isSuccess;
+      if (isSuccess) {
+        _flowController.repeat();
+      } else {
+        _flowController.stop();
+      }
+    });
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -566,6 +613,11 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4> {
           Navigator.of(context).pop();
           if (isSuccess) {
             _showFinalQuestionDialog();
+          } else {
+            setState(() {
+              _isCircuitLit = false;
+              _flowController.stop();
+            });
           }
         },
       ),
@@ -731,57 +783,170 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4> {
 
   @override
   Widget build(BuildContext context) {
-    return SecondBenchPhaseScaffold(
-      phase: 4,
-      title: 'Bancada livre',
-      instruction: 'Monte o circuito livremente, conecte os fios e teste seu funcionamento.',
-      introIcon: Icons.handyman_rounded,
-      backgroundAsset: 'assets/backgrounds/background_fase_03_prancheta_tecnica.png',
-      onHelpTap: _showHelpModal,
-      workspace: _buildBenchWorkspace(),
-      sidePanel: _buildSidePanel(),
-      actionBar: SecondBenchActionBar(
-        statusText: _placed.isEmpty
-            ? 'Arraste componentes da biblioteca para começar.'
-            : 'Modo ativo: ${_activeToolMode == ActiveToolMode.wire ? "Conectar fios" : (_activeToolMode == ActiveToolMode.removeWire ? "Remover conexões" : "Posicionamento")}',
-        progressText: '${_placed.length} componentes, ${_connections.length} fios',
-        actions: [
+    return Row(
+      children: [
+        // Área Principal da Bancada
+        Expanded(
+          flex: 7,
+          child: WorkbenchTableFrame(
+            usePhysicalStyle: true,
+            onStyleChanged: (_) {},
+            showModeSelector: false,
+            leftHeaderWidget: _buildBenchStatusBadge(),
+            rightHeaderWidget: _buildBenchTelemetryBadge(),
+            bottomWidget: _buildBottomControls(),
+            child: _buildBenchWorkspace(),
+          ),
+        ),
+        const SizedBox(width: 16),
+        // Painel Lateral (Objetivo + Biblioteca de Peças + Ação)
+        Expanded(
+          flex: 3,
+          child: WorkbenchSidePanel(
+            teamTitle: 'Painel da Equipe Iluminação',
+            showTeamHeader: false,
+            buttonColor: const Color(0xFF10B981),
+            buttonLabel: 'TESTAR CIRCUITO E PREVER',
+            toolboxItems: [
+              const WorkbenchMissionObjectiveCard(
+                missionNumber: 4,
+                title: 'Bancada livre',
+                description: 'Monte o circuito livremente, conecte os fios e teste seu funcionamento.',
+                voltsTip: 'Conecte Bateria 9V, Interruptor, Resistor (680 Ω) e LED em série. Preveja o resultado antes de energizar!',
+                accentColor: Color(0xFF0284C7),
+              ),
+              const SizedBox(height: 12),
+              _buildSidePanelContent(),
+            ],
+            onEnergizePressed: () {
+              if (_placed.length >= 3) {
+                _startTestAndPrediction();
+              } else {
+                _showHelpModal();
+              }
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBottomControls() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A).withValues(alpha: 0.90),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
           OutlinedButton.icon(
             onPressed: _undoStack.isNotEmpty ? _undo : null,
-            icon: const Icon(Icons.undo_rounded, size: 18),
-            label: const Text('Desfazer'),
+            icon: const Icon(Icons.undo_rounded, size: 16),
+            label: const Text('Desfazer', style: TextStyle(fontSize: 12)),
             style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.white70,
-              side: const BorderSide(color: Colors.white30),
+              foregroundColor: Colors.white,
+              side: BorderSide.none,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             ),
           ),
-          const SizedBox(width: 6),
+          Container(width: 1, height: 16, color: Colors.white24),
           OutlinedButton.icon(
             onPressed: _placed.isNotEmpty ? _clearBench : null,
-            icon: const Icon(Icons.delete_outline_rounded, size: 18),
-            label: const Text('Limpar'),
+            icon: const Icon(Icons.delete_outline_rounded, size: 16),
+            label: const Text('Limpar', style: TextStyle(fontSize: 12)),
             style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.white70,
-              side: const BorderSide(color: Colors.white30),
+              foregroundColor: Colors.white,
+              side: BorderSide.none,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             ),
           ),
-          const SizedBox(width: 8),
-          FilledButton.icon(
-            onPressed: _placed.length >= 3 ? _startTestAndPrediction : null,
-            icon: const Icon(Icons.bolt_rounded),
-            label: Text(
-              'TESTAR CIRCUITO',
-              style: TextStyle(
-                fontFamily: GoogleFonts.rajdhani().fontFamily,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBenchStatusBadge() {
+    final statusText = _placed.isEmpty
+        ? 'ARRASTE PEÇAS PARA A BANCADA'
+        : (_activeToolMode == ActiveToolMode.wire
+            ? 'FERRAMENTA FIO ATIVA'
+            : (_activeToolMode == ActiveToolMode.removeWire
+                ? 'REMOVER CONEXÕES'
+                : 'POSICIONAMENTO DE PEÇAS'));
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFCBD5E1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            _activeToolMode == ActiveToolMode.wire
+                ? Icons.cable_rounded
+                : (_activeToolMode == ActiveToolMode.removeWire
+                    ? Icons.content_cut_rounded
+                    : Icons.handyman_rounded),
+            color: const Color(0xFF0284C7),
+            size: 16,
+          ),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              statusText,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.rajdhani(
+                color: const Color(0xFF0284C7),
                 fontWeight: FontWeight.bold,
-                letterSpacing: 1.1,
+                fontSize: 12,
               ),
             ),
-            style: FilledButton.styleFrom(
-              backgroundColor: SecondBenchLayoutTokens.primaryGreen,
-              foregroundColor: Colors.black,
-              disabledBackgroundColor: Colors.white12,
-              disabledForegroundColor: Colors.white38,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBenchTelemetryBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A).withValues(alpha: 0.90),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.hub_rounded, color: Color(0xFF00FF9D), size: 16),
+          const SizedBox(width: 6),
+          Text(
+            '${_placed.length} componentes · ${_connections.length} fios',
+            style: GoogleFonts.rajdhani(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
             ),
           ),
         ],
@@ -812,15 +977,17 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4> {
           builder: (context, candidateData, rejectedData) {
             return Stack(
               children: [
-                // Renderização de Fios Desenhados
-                CustomPaint(
-                  size: benchSize,
-                  painter: _Phase4WirePainter(
-                    connections: _connections,
-                    calculateTerminalPos: (term) => _calculateTerminalPos(term, benchSize),
-                    activeWireStartPos: _wireStartTerminal != null
-                        ? _calculateTerminalPos(_wireStartTerminal!, benchSize)
-                        : null,
+                // Renderização de Fios Desenhados (RealisticWireWidget com elétrons animados)
+                Positioned.fill(
+                  child: AnimatedBuilder(
+                    animation: _flowController,
+                    builder: (context, child) {
+                      return RealisticWireWidget(
+                        wires: _buildWirePaths(benchSize),
+                        animationValue: _flowController.value,
+                        showElectrons: _isCircuitLit,
+                      );
+                    },
                   ),
                 ),
 
@@ -845,19 +1012,31 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(6),
+                            width: 64,
+                            height: 64,
+                            padding: const EdgeInsets.all(4),
                             decoration: BoxDecoration(
                               color: Colors.black.withValues(alpha: 0.4),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: SecondBenchLayoutTokens.primaryGreen.withValues(alpha: 0.6),
+                                color: StandFlowTokens.primaryGreen.withValues(alpha: 0.6),
                               ),
                             ),
-                            child: Image.asset(
-                              comp.assetPath,
-                              width: 64,
-                              height: 64,
-                              fit: BoxFit.contain,
+                            child: Transform.scale(
+                              scaleX: comp.isLedReversed ? -1.0 : 1.0,
+                              child: CustomPaint(
+                                painter: ComponentPhysicalPainter(
+                                  type: comp.componentType,
+                                  isActive: comp.kind == CircuitComponentKind.switchComponent
+                                      ? comp.isSwitchClosed
+                                      : (comp.kind == CircuitComponentKind.led ? (_isCircuitLit && !comp.isLedReversed) : true),
+                                  isDarkMode: false,
+                                  value: comp.kind == CircuitComponentKind.resistor
+                                      ? comp.resistanceOhms
+                                      : 9.0,
+                                  brightnessRatio: (_isCircuitLit && !comp.isLedReversed) ? 1.0 : 0.0,
+                                ),
+                              ),
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -916,7 +1095,7 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4> {
           width: 24,
           height: 24,
           decoration: BoxDecoration(
-            color: isSelected ? SecondBenchLayoutTokens.accentGreen : const Color(0xFF10B981),
+            color: isSelected ? StandFlowTokens.accentGreen : const Color(0xFF10B981),
             shape: BoxShape.circle,
             border: Border.all(color: Colors.white, width: 2),
             boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 4)],
@@ -929,7 +1108,7 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4> {
   // ==========================================
   // PAINEL LATERAL COM GRADE DE COMPONENTES FÍSICOS (Escala Aumentada)
   // ==========================================
-  Widget _buildSidePanel() {
+  Widget _buildSidePanelContent() {
     final libraryGridItems = [
       const SecondBenchGridItemData(
         id: 'lib_battery',
@@ -956,7 +1135,7 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4> {
         label: 'Resistor 680 Ω',
         assetPath: 'assets/components/resistor.png',
         badgeText: 'Ideal',
-        badgeColor: SecondBenchLayoutTokens.primaryGreen,
+        badgeColor: StandFlowTokens.primaryGreen,
       ),
       const SecondBenchGridItemData(
         id: 'lib_r68',
@@ -990,16 +1169,69 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4> {
       ),
     ];
 
-    return SecondBenchSidePanel(
-      title: 'Biblioteca de Peças',
-      subtitle: 'Arraste os componentes para a bancada para montar o circuito.',
-      icon: Icons.inventory_2_rounded,
-      child: SecondBenchItemGrid<Phase4LibraryItem>(
-        items: libraryGridItems,
-        assetHeight: 64, // Escala perceptiva aumentada para excelente visibilidade
-        onItemTap: (item) {
-          _addComponentFromLibrary(item.value);
-        },
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF0FDF4),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.inventory_2_rounded, color: Color(0xFF10B981), size: 20),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Biblioteca de Peças',
+                      style: GoogleFonts.rajdhani(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF0F172A),
+                      ),
+                    ),
+                    Text(
+                      'Toque ou arraste as peças para a bancada.',
+                      style: GoogleFonts.outfit(
+                        fontSize: 12,
+                        color: const Color(0xFF64748B),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SecondBenchItemGrid<Phase4LibraryItem>(
+            items: libraryGridItems,
+            assetHeight: 56,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            onItemTap: (item) {
+              _addComponentFromLibrary(item.value);
+            },
+          ),
+        ],
       ),
     );
   }
@@ -1010,33 +1242,19 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4> {
     final relY = 0.30 + (count ~/ 3) * 0.28;
     _addComponentAtRelativePosition(item, Offset(relX, relY));
   }
-}
 
-class _Phase4WirePainter extends CustomPainter {
-  final List<CircuitConnection> connections;
-  final Offset Function(CircuitTerminal) calculateTerminalPos;
-  final Offset? activeWireStartPos;
-
-  _Phase4WirePainter({
-    required this.connections,
-    required this.calculateTerminalPos,
-    this.activeWireStartPos,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFF10B981)
-      ..strokeWidth = 3.5
-      ..style = PaintingStyle.stroke;
-
-    for (final conn in connections) {
-      final p1 = calculateTerminalPos(conn.from);
-      final p2 = calculateTerminalPos(conn.to);
-      canvas.drawLine(p1, p2, paint);
+  List<WirePath> _buildWirePaths(Size benchSize) {
+    final List<WirePath> wirePaths = [];
+    for (final conn in _connections) {
+      final p1 = _calculateTerminalPos(conn.from, benchSize);
+      final p2 = _calculateTerminalPos(conn.to, benchSize);
+      wirePaths.add(WirePath(
+        points: [p1, p2],
+        color: const Color(0xFF10B981),
+        isActive: _isCircuitLit,
+        thickness: 5.0,
+      ));
     }
+    return wirePaths;
   }
-
-  @override
-  bool shouldRepaint(covariant _Phase4WirePainter oldDelegate) => true;
 }

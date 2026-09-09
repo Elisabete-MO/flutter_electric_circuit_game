@@ -10,7 +10,7 @@ import 'second_bench_phase1.dart';
 import 'second_bench_phase2.dart';
 import 'second_bench_phase3.dart';
 import 'second_bench_phase4.dart';
-import 'widgets/second_bench_header.dart';
+import '../common_stand/stand_flow_header.dart';
 
 /// Coordenador principal do fluxo do Segundo Estande - Acende Aí (4 Fases).
 class SecondBenchFlowScreen extends ConsumerStatefulWidget {
@@ -171,27 +171,38 @@ class _SecondBenchFlowScreenState extends ConsumerState<SecondBenchFlowScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFF021712),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Cabeçalho único padronizado no topo do Estande 2
-            SecondBenchHeader(
-              currentPhaseId: _flowState.currentPhaseId,
-              completedPhaseIds: _flowState.completedPhaseIds,
-              unlockedPhaseIds: _flowState.unlockedPhaseIds,
-              onSelectPhase: _navigateToPhase,
-              onBack: () => Navigator.of(context).maybePop(),
-            ),
-
-            // Conteúdo Ativo da Fase com Scaffold Compartilhado
-            Expanded(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                child: _buildCurrentPhaseWidget(),
+      backgroundColor: const Color(0xFF0F172A),
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/backgrounds/floor.png'),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              StandFlowHeader(
+                standName: 'ACENDE AÍ',
+                standNumber: 2,
+                currentMissionNumber: _flowState.currentPhaseId,
+                completedMissionNumbers: _flowState.completedPhaseIds,
+                unlockedMissionNumbers: _flowState.unlockedPhaseIds,
+                totalMissions: 4,
+                onSelectMission: _navigateToPhase,
+                onBack: () => Navigator.of(context).maybePop(),
               ),
-            ),
-          ],
+              Expanded(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: _buildCurrentPhaseWidget(),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

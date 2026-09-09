@@ -26,7 +26,7 @@ void main() {
 
       expect(find.textContaining('Inspecione o circuito'), findsOneWidget);
       expect(find.text('1 de 5 inspecionados'), findsOneWidget);
-      expect(find.text('CONCLUIR INSPEÇÃO'), findsOneWidget);
+      expect(find.textContaining('INSPECIONE OS 5 PONTOS'), findsOneWidget);
     });
 
     testWidgets('Nenhum texto visível possui emojis', (tester) async {
@@ -60,7 +60,6 @@ void main() {
       await tester.pumpWidget(buildTestWidget());
       await tester.pumpAndSettle();
 
-      // Botão "CONCLUIR INSPEÇÃO" inicialmente desabilitado (apenas 1 ponto marcado por padrão)
       // Toca nos marcadores de 2 a 5
       for (int i = 2; i <= 5; i++) {
         final marker = find.text('$i');
@@ -71,8 +70,8 @@ void main() {
       }
 
       // Após inspecionar os 5 pontos, o botão fica habilitado e transita para Diagnóstico
-      final button = find.widgetWithText(FilledButton, 'CONCLUIR INSPEÇÃO');
-      expect(tester.widget<FilledButton>(button).onPressed, isNotNull);
+      final button = find.widgetWithText(ElevatedButton, 'CONCLUIR INSPEÇÃO');
+      expect(tester.widget<ElevatedButton>(button).onPressed, isNotNull);
 
       await tester.tap(button);
       await tester.pumpAndSettle();

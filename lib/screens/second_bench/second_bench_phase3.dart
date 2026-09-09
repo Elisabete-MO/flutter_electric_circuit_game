@@ -2,12 +2,14 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../models/first_step_component.dart';
+import '../../widgets/component_physical_painter.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
-import 'second_bench_tokens.dart';
-import 'widgets/second_bench_action_bar.dart';
+import '../common_stand/stand_flow_tokens.dart';
+import '../../widgets/workbench_components.dart';
+import '../../widgets/workbench_sidebar_cards.dart';
+import '../../widgets/workbench_table_frame.dart';
 import 'widgets/second_bench_item_grid.dart';
-import 'widgets/second_bench_phase_scaffold.dart';
-import 'widgets/second_bench_side_panel.dart';
 
 /// Tipos de símbolos elétricos esquemáticos da Fase 3 (4 corretos + 2 distratores reais)
 enum Phase3SymbolType {
@@ -193,7 +195,7 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
           decoration: BoxDecoration(
             color: const Color(0xFF0F172A),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: SecondBenchLayoutTokens.primaryGreen, width: 1.5),
+            border: Border.all(color: StandFlowTokens.primaryGreen, width: 1.5),
             boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 16)],
           ),
           child: Column(
@@ -202,7 +204,7 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.schema_rounded, color: SecondBenchLayoutTokens.primaryGreen, size: 26),
+                  const Icon(Icons.schema_rounded, color: StandFlowTokens.primaryGreen, size: 26),
                   const SizedBox(width: 10),
                   Text(
                     'Ajuda — Fase 3',
@@ -224,8 +226,8 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
                 child: OutlinedButton(
                   onPressed: () => Navigator.of(context).pop(),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: SecondBenchLayoutTokens.primaryGreen,
-                    side: const BorderSide(color: SecondBenchLayoutTokens.primaryGreen),
+                    foregroundColor: StandFlowTokens.primaryGreen,
+                    side: const BorderSide(color: StandFlowTokens.primaryGreen),
                   ),
                   child: const Text('ENTENDI'),
                 ),
@@ -243,7 +245,7 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('• ', style: TextStyle(color: SecondBenchLayoutTokens.primaryGreen, fontWeight: FontWeight.bold)),
+          const Text('• ', style: TextStyle(color: StandFlowTokens.primaryGreen, fontWeight: FontWeight.bold)),
           Expanded(
             child: Text(
               text,
@@ -257,53 +259,144 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
 
   @override
   Widget build(BuildContext context) {
-    return SecondBenchPhaseScaffold(
-      phase: 3,
-      title: 'Do componente ao símbolo',
-      instruction: 'Associe cada componente físico da bancada ao seu símbolo esquemático no diagrama elétrico.',
-      introIcon: Icons.schema_rounded,
-      onHelpTap: _showHelpModal,
-      backgroundAsset: 'assets/backgrounds/background_fase_03_prancheta_tecnica.png',
-      workspace: _buildWorkspace(),
-      sidePanel: _buildSidePanel(),
-      actionBar: SecondBenchActionBar(
-        statusText: _isDiagramMode
-            ? 'Arraste ou toque nos símbolos esquemáticos para completar o diagrama.'
-            : 'Modo de consulta física ativo. Alterne para "Diagrama" para editar.',
-        progressText: '$_filledSlotsCount de 4 símbolos posicionados',
-        actions: [
-          OutlinedButton.icon(
-            onPressed: _resetDiagram,
-            icon: const Icon(Icons.refresh_rounded, size: 18),
-            label: Text(
-              'REINICIAR',
-              style: TextStyle(
-                fontFamily: GoogleFonts.rajdhani().fontFamily,
-                fontWeight: FontWeight.bold,
+    return Row(
+      children: [
+        // Área Principal da Bancada
+        Expanded(
+          flex: 7,
+          child: WorkbenchTableFrame(
+            usePhysicalStyle: !_isDiagramMode,
+            onStyleChanged: (isPhysical) =>
+                setState(() => _isDiagramMode = !isPhysical),
+            showModeSelector: true,
+            leftHeaderWidget: _buildDiagramStatusBadge(),
+            rightHeaderWidget: _buildDiagramProgressBadge(),
+            bottomWidget: _buildResetButton(),
+            child: _buildWorkspace(),
+          ),
+        ),
+        const SizedBox(width: 16),
+        // Painel Lateral (Objetivo + Biblioteca de Símbolos + Ação)
+        Expanded(
+          flex: 3,
+          child: WorkbenchSidePanel(
+            teamTitle: 'Painel da Equipe Iluminação',
+            showTeamHeader: false,
+            buttonColor: const Color(0xFF10B981),
+            buttonLabel: 'VERIFICAR DIAGRAMA',
+            toolboxItems: [
+              const WorkbenchMissionObjectiveCard(
+                missionNumber: 3,
+                title: 'Do componente ao símbolo',
+                description: 'Associe cada componente físico da bancada ao seu símbolo esquemático no diagrama elétrico.',
+                voltsTip: 'Alterne entre o modo Físico e Esquemático. Arraste ou toque nos símbolos esquemáticos para completar o diagrama.',
+                accentColor: Color(0xFF0284C7),
               ),
-            ),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.white70,
-              side: const BorderSide(color: Colors.white30),
+              const SizedBox(height: 12),
+              _buildSidePanelContent(),
+            ],
+            onEnergizePressed: () {
+              if (_isAllSlotsFilled) {
+                _verifyDiagram();
+              } else {
+                _showHelpModal();
+              }
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildResetButton() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.90),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFCBD5E1)),
+      ),
+      child: OutlinedButton.icon(
+        onPressed: _resetDiagram,
+        icon: const Icon(Icons.refresh_rounded, size: 18, color: Color(0xFF0F172A)),
+        label: Text(
+          'REINICIAR DIAGRAMA',
+          style: GoogleFonts.rajdhani(
+            color: const Color(0xFF0F172A),
+            fontWeight: FontWeight.bold,
+            fontSize: 12,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          side: BorderSide.none,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDiagramStatusBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFCBD5E1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            _isDiagramMode ? Icons.schema_rounded : Icons.visibility_rounded,
+            color: _isDiagramMode ? const Color(0xFF0284C7) : const Color(0xFF10B981),
+            size: 16,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            _isDiagramMode ? 'MODO DIAGRAMA' : 'CONSULTA FÍSICA',
+            style: GoogleFonts.rajdhani(
+              color: _isDiagramMode ? const Color(0xFF0284C7) : const Color(0xFF10B981),
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
             ),
           ),
-          const SizedBox(width: 8),
-          FilledButton.icon(
-            onPressed: _isAllSlotsFilled ? _verifyDiagram : null,
-            icon: const Icon(Icons.check_circle_rounded),
-            label: Text(
-              'VERIFICAR DIAGRAMA',
-              style: TextStyle(
-                fontFamily: GoogleFonts.rajdhani().fontFamily,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.1,
-              ),
-            ),
-            style: FilledButton.styleFrom(
-              backgroundColor: SecondBenchLayoutTokens.primaryGreen,
-              foregroundColor: Colors.black,
-              disabledBackgroundColor: Colors.white12,
-              disabledForegroundColor: Colors.white38,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDiagramProgressBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A).withValues(alpha: 0.90),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.check_circle_rounded, color: Color(0xFF00FF9D), size: 16),
+          const SizedBox(width: 6),
+          Text(
+            '$_filledSlotsCount de 4 símbolos',
+            style: GoogleFonts.rajdhani(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
             ),
           ),
         ],
@@ -378,28 +471,54 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
                 top: batRect.top,
                 width: batRect.width,
                 height: batRect.height,
-                child: Image.asset('assets/components/battery.png', fit: BoxFit.contain),
+                child: CustomPaint(
+                  painter: ComponentPhysicalPainter(
+                    type: ComponentType.battery,
+                    isActive: true,
+                    isDarkMode: false,
+                    value: 9.0,
+                  ),
+                ),
               ),
               Positioned(
                 left: resRect.left,
                 top: resRect.top,
                 width: resRect.width,
                 height: resRect.height,
-                child: Image.asset('assets/components/resistor.png', fit: BoxFit.contain),
+                child: CustomPaint(
+                  painter: ComponentPhysicalPainter(
+                    type: ComponentType.resistor,
+                    isActive: true,
+                    isDarkMode: false,
+                    value: 680.0,
+                  ),
+                ),
               ),
               Positioned(
                 left: ledRect.left,
                 top: ledRect.top,
                 width: ledRect.width,
                 height: ledRect.height,
-                child: Image.asset('assets/components/led_off.png', fit: BoxFit.contain),
+                child: CustomPaint(
+                  painter: ComponentPhysicalPainter(
+                    type: ComponentType.led,
+                    isActive: false,
+                    isDarkMode: false,
+                  ),
+                ),
               ),
               Positioned(
                 left: swRect.left,
                 top: swRect.top,
                 width: swRect.width,
                 height: swRect.height,
-                child: Image.asset('assets/components/switch_open.png', fit: BoxFit.contain),
+                child: CustomPaint(
+                  painter: ComponentPhysicalPainter(
+                    type: ComponentType.switchComponent,
+                    isActive: false,
+                    isDarkMode: false,
+                  ),
+                ),
               ),
               Positioned(
                 left: (w - 280) / 2,
@@ -409,11 +528,11 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
                   decoration: BoxDecoration(
                     color: const Color(0xFF0F172A).withValues(alpha: 0.9),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: SecondBenchLayoutTokens.primaryGreen),
+                    border: Border.all(color: StandFlowTokens.primaryGreen),
                   ),
                   child: const Text(
                     'Modo Físico de Consulta (Sem Edição)',
-                    style: TextStyle(color: SecondBenchLayoutTokens.primaryGreen, fontWeight: FontWeight.bold, fontSize: 12),
+                    style: TextStyle(color: StandFlowTokens.primaryGreen, fontWeight: FontWeight.bold, fontSize: 12),
                   ),
                 ),
               ),
@@ -437,7 +556,7 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
       decoration: BoxDecoration(
         color: const Color(0xFF061811).withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: SecondBenchLayoutTokens.primaryGreen.withValues(alpha: 0.5)),
+        border: Border.all(color: StandFlowTokens.primaryGreen.withValues(alpha: 0.5)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -471,7 +590,7 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFF0A2E20) : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
-          border: isSelected ? Border.all(color: SecondBenchLayoutTokens.primaryGreen, width: 1.2) : null,
+          border: isSelected ? Border.all(color: StandFlowTokens.primaryGreen, width: 1.2) : null,
         ),
         child: Text(
           title,
@@ -504,11 +623,11 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
 
           Color borderColor;
           if (validation == true) {
-            borderColor = SecondBenchLayoutTokens.primaryGreen;
+            borderColor = StandFlowTokens.primaryGreen;
           } else if (validation == false) {
             borderColor = const Color(0xFFFF5252);
           } else if (isHovering) {
-            borderColor = SecondBenchLayoutTokens.primaryGreen;
+            borderColor = StandFlowTokens.primaryGreen;
           } else if (placedSymbol != null) {
             borderColor = const Color(0xFF38BDF8);
           } else {
@@ -528,7 +647,7 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
               duration: const Duration(milliseconds: 200),
               decoration: BoxDecoration(
                 color: isHovering
-                    ? SecondBenchLayoutTokens.primaryGreen.withValues(alpha: 0.15)
+                    ? StandFlowTokens.primaryGreen.withValues(alpha: 0.15)
                     : const Color(0xFF071B12).withValues(alpha: 0.95),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
@@ -538,7 +657,7 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
                 boxShadow: isHovering
                     ? [
                         BoxShadow(
-                          color: SecondBenchLayoutTokens.primaryGreen.withValues(alpha: 0.4),
+                          color: StandFlowTokens.primaryGreen.withValues(alpha: 0.4),
                           blurRadius: 10,
                           spreadRadius: 2,
                         ),
@@ -591,7 +710,7 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
   // ==========================================
   // PAINEL LATERAL (Biblioteca Exclusiva de Símbolos Esquemáticos)
   // ==========================================
-  Widget _buildSidePanel() {
+  Widget _buildSidePanelContent() {
     final gridItems = _librarySymbols.map((sym) {
       final label = switch (sym) {
         Phase3SymbolType.battery => 'Bateria',
@@ -622,18 +741,71 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
       );
     }).toList();
 
-    return SecondBenchSidePanel(
-      title: 'Biblioteca de Símbolos',
-      subtitle: 'Selecione ou arraste os símbolos esquemáticos para o circuito.',
-      icon: Icons.auto_awesome_mosaic_rounded,
-      child: SecondBenchItemGrid<Phase3SymbolType>(
-        items: gridItems,
-        assetHeight: 52,
-        onItemTap: (item) {
-          setState(() {
-            _selectedLibrarySymbol = item.isSelected ? null : item.value;
-          });
-        },
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF0FDF4),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.auto_awesome_mosaic_rounded, color: Color(0xFF10B981), size: 20),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Biblioteca de Símbolos',
+                      style: GoogleFonts.rajdhani(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF0F172A),
+                      ),
+                    ),
+                    Text(
+                      'Toque ou arraste os símbolos para os 4 encaixes.',
+                      style: GoogleFonts.outfit(
+                        fontSize: 12,
+                        color: const Color(0xFF64748B),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SecondBenchItemGrid<Phase3SymbolType>(
+            items: gridItems,
+            assetHeight: 52,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            onItemTap: (item) {
+              setState(() {
+                _selectedLibrarySymbol = item.isSelected ? null : item.value;
+              });
+            },
+          ),
+        ],
       ),
     );
   }

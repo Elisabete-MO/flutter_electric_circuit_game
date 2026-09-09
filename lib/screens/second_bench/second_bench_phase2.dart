@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../models/first_step_component.dart';
 import '../../models/phase2_inspection_data.dart';
+import '../../widgets/component_physical_painter.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
-import 'second_bench_tokens.dart';
-import 'widgets/second_bench_action_bar.dart';
-import 'widgets/second_bench_phase_scaffold.dart';
-import 'widgets/second_bench_side_panel.dart';
+import '../../widgets/realistic_wire_painter.dart';
+import '../common_stand/stand_flow_tokens.dart';
+import '../../widgets/workbench_components.dart';
+import '../../widgets/workbench_sidebar_cards.dart';
+import '../../widgets/workbench_table_frame.dart';
 
 /// Fase 2 do Segundo Estande (Acende Aí): Inspecione o circuito.
 class SecondBenchPhase2 extends StatefulWidget {
@@ -24,7 +27,9 @@ class SecondBenchPhase2 extends StatefulWidget {
   State<SecondBenchPhase2> createState() => _SecondBenchPhase2State();
 }
 
-class _SecondBenchPhase2State extends State<SecondBenchPhase2> {
+class _SecondBenchPhase2State extends State<SecondBenchPhase2>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _flowController;
   late InspectionScenario _currentScenario;
   late List<InspectionPointData> _points;
 
@@ -45,8 +50,18 @@ class _SecondBenchPhase2State extends State<SecondBenchPhase2> {
   @override
   void initState() {
     super.initState();
+    _flowController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
     _currentScenario = widget.initialScenario;
     _updatePointsForCurrentScenario();
+  }
+
+  @override
+  void dispose() {
+    _flowController.dispose();
+    super.dispose();
   }
 
   void _updatePointsForCurrentScenario() {
@@ -64,6 +79,7 @@ class _SecondBenchPhase2State extends State<SecondBenchPhase2> {
   void _changeScenario(InspectionScenario newScenario) {
     setState(() {
       _currentScenario = newScenario;
+      _flowController.stop();
       _updatePointsForCurrentScenario();
     });
   }
@@ -107,6 +123,11 @@ class _SecondBenchPhase2State extends State<SecondBenchPhase2> {
     setState(() {
       _isSwitchClosed = true;
       _isLedOn = (_currentScenario == InspectionScenario.correct && isCorrect);
+      if (_isLedOn) {
+        _flowController.repeat();
+      } else {
+        _flowController.stop();
+      }
     });
 
     Future.delayed(const Duration(milliseconds: 500), () {
@@ -141,6 +162,7 @@ class _SecondBenchPhase2State extends State<SecondBenchPhase2> {
               setState(() {
                 _isSwitchClosed = false;
                 _isLedOn = false;
+                _flowController.stop();
               });
             }
           },
@@ -168,7 +190,7 @@ class _SecondBenchPhase2State extends State<SecondBenchPhase2> {
               decoration: BoxDecoration(
                 color: const Color(0xFF0F172A),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: SecondBenchLayoutTokens.primaryGreen, width: 1.5),
+                border: Border.all(color: StandFlowTokens.primaryGreen, width: 1.5),
                 boxShadow: const [
                   BoxShadow(color: Colors.black54, blurRadius: 16),
                 ],
@@ -187,7 +209,7 @@ class _SecondBenchPhase2State extends State<SecondBenchPhase2> {
                         ),
                         child: const Icon(
                           Icons.fact_check_rounded,
-                          color: SecondBenchLayoutTokens.primaryGreen,
+                          color: StandFlowTokens.primaryGreen,
                           size: 24,
                         ),
                       ),
@@ -221,8 +243,8 @@ class _SecondBenchPhase2State extends State<SecondBenchPhase2> {
                     child: OutlinedButton(
                       onPressed: () => Navigator.of(context).pop(),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: SecondBenchLayoutTokens.primaryGreen,
-                        side: const BorderSide(color: SecondBenchLayoutTokens.primaryGreen),
+                        foregroundColor: StandFlowTokens.primaryGreen,
+                        side: const BorderSide(color: StandFlowTokens.primaryGreen),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -248,7 +270,7 @@ class _SecondBenchPhase2State extends State<SecondBenchPhase2> {
           const Text(
             '• ',
             style: TextStyle(
-              color: SecondBenchLayoutTokens.primaryGreen,
+              color: StandFlowTokens.primaryGreen,
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
@@ -271,61 +293,145 @@ class _SecondBenchPhase2State extends State<SecondBenchPhase2> {
 
   @override
   Widget build(BuildContext context) {
-    return SecondBenchPhaseScaffold(
-      phase: 2,
-      title: 'Inspecione o circuito',
-      instruction: 'Examine os cinco pontos de teste do circuito físico montado antes de energizar.',
-      introIcon: Icons.fact_check_rounded,
-      onHelpTap: _showHelpModal,
-      backgroundAsset: 'assets/backgrounds/background_fase_02_bancada.png',
-      workspace: _buildBenchWorkspace(),
-      sidePanel: _buildSidePanel(),
-      actionBar: SecondBenchActionBar(
-        statusText: _isDiagnosisMode
-            ? 'Declare o diagnóstico do circuito após a inspeção.'
-            : (_isAllPointsInspected
-                ? 'Todos os 5 pontos inspecionados! Clique para emitir o diagnóstico.'
-                : 'Inspecione os 5 pontos de teste na bancada.'),
-        progressText: '${_inspectedPointIds.length} de ${_points.length} inspecionados',
-        actions: [
-          if (!_isDiagnosisMode)
-            FilledButton.icon(
-              onPressed: _isAllPointsInspected ? _startDiagnosisMode : null,
-              icon: const Icon(Icons.assignment_turned_in_rounded),
-              label: Text(
-                'CONCLUIR INSPEÇÃO',
-                style: TextStyle(
-                  fontFamily: GoogleFonts.rajdhani().fontFamily,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.1,
-                ),
+    return Row(
+      children: [
+        // Área Principal da Bancada
+        Expanded(
+          flex: 7,
+          child: WorkbenchTableFrame(
+            usePhysicalStyle: true,
+            onStyleChanged: (_) {},
+            showModeSelector: false,
+            leftHeaderWidget: _buildInspectionStatusBadge(),
+            rightHeaderWidget: _buildInspectionProgressBadge(),
+            child: _buildBenchWorkspace(),
+          ),
+        ),
+        const SizedBox(width: 16),
+        // Painel Lateral (Objetivo + Conteúdo de Inspeção/Diagnóstico + Ação)
+        Expanded(
+          flex: 3,
+          child: WorkbenchSidePanel(
+            teamTitle: 'Painel da Equipe Iluminação',
+            showTeamHeader: false,
+            buttonColor: _isDiagnosisMode
+                ? const Color(0xFF00FF9D)
+                : const Color(0xFF10B981),
+            buttonLabel: _isDiagnosisMode
+                ? 'TESTAR RESULTADO'
+                : (_isAllPointsInspected
+                    ? 'CONCLUIR INSPEÇÃO'
+                    : 'INSPECIONE OS 5 PONTOS (${_inspectedPointIds.length}/5)'),
+            toolboxItems: [
+              const WorkbenchMissionObjectiveCard(
+                missionNumber: 2,
+                title: 'Inspecione o circuito',
+                description: 'Examine os cinco pontos de teste do circuito físico montado antes de energizar.',
+                voltsTip: 'Toque nos marcadores numerados de 1 a 5 na bancada e conclua a inspeção antes de testar.',
+                accentColor: Color(0xFF0284C7),
               ),
-              style: FilledButton.styleFrom(
-                backgroundColor: SecondBenchLayoutTokens.primaryGreen,
-                foregroundColor: Colors.black,
-                disabledBackgroundColor: Colors.white12,
-                disabledForegroundColor: Colors.white38,
-              ),
-            )
-          else
-            FilledButton.icon(
-              onPressed: _selectedDiagnosisIndex != null ? _confirmDiagnosis : null,
-              icon: const Icon(Icons.bolt_rounded),
-              label: Text(
-                'TESTAR RESULTADO',
-                style: TextStyle(
-                  fontFamily: GoogleFonts.rajdhani().fontFamily,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.1,
-                ),
-              ),
-              style: FilledButton.styleFrom(
-                backgroundColor: SecondBenchLayoutTokens.accentGreen,
-                foregroundColor: Colors.black,
-                disabledBackgroundColor: Colors.white12,
-                disabledForegroundColor: Colors.white38,
-              ),
+              const SizedBox(height: 12),
+              _buildSidePanelContent(),
+            ],
+            onEnergizePressed: () {
+              if (_isDiagnosisMode) {
+                if (_selectedDiagnosisIndex != null) {
+                  _confirmDiagnosis();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Selecione um diagnóstico na lista antes de testar.'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+              } else {
+                if (_isAllPointsInspected) {
+                  _startDiagnosisMode();
+                } else {
+                  _showHelpModal();
+                }
+              }
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInspectionStatusBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFCBD5E1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            _isDiagnosisMode
+                ? Icons.assignment_turned_in_rounded
+                : (_isAllPointsInspected ? Icons.check_circle_rounded : Icons.fact_check_rounded),
+            color: _isDiagnosisMode
+                ? const Color(0xFF059669)
+                : (_isAllPointsInspected ? const Color(0xFF10B981) : const Color(0xFF0284C7)),
+            size: 16,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            _isDiagnosisMode
+                ? 'MODO DIAGNÓSTICO'
+                : (_isAllPointsInspected ? 'INSPEÇÃO PRONTA' : 'MODO INSPEÇÃO'),
+            style: GoogleFonts.rajdhani(
+              color: _isDiagnosisMode
+                  ? const Color(0xFF059669)
+                  : (_isAllPointsInspected ? const Color(0xFF10B981) : const Color(0xFF0284C7)),
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInspectionProgressBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A).withValues(alpha: 0.90),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.speed_rounded, color: Color(0xFF00FF9D), size: 16),
+          const SizedBox(width: 6),
+          Text(
+            '${_inspectedPointIds.length} de ${_points.length} inspecionados',
+            style: GoogleFonts.rajdhani(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
         ],
       ),
     );
@@ -369,6 +475,98 @@ class _SecondBenchPhase2State extends State<SecondBenchPhase2> {
           Offset(w * 0.32, h * 0.72),                   // Marker 5: Continuidade dos Fios (no retorno)
         ];
 
+        final List<WirePath> wires = [];
+        final isConducting = _isLedOn;
+
+        // 1. Fio Vermelho (Bateria + -> Resistor Esquerda)
+        if (_currentScenario != InspectionScenario.missingResistor) {
+          wires.add(WirePath(
+            points: [
+              batPosTerm,
+              Offset(batPosTerm.dx + 40, batPosTerm.dy - 50),
+              Offset(resLeftTerm.dx - 40, resLeftTerm.dy),
+              resLeftTerm,
+            ],
+            color: const Color(0xFFEF4444),
+            isActive: isConducting,
+            thickness: 5.0,
+          ));
+
+          // Fio Vermelho (Resistor Direita -> LED Ânodo)
+          wires.add(WirePath(
+            points: [
+              resRightTerm,
+              Offset(resRightTerm.dx + 40, resRightTerm.dy),
+              Offset(ledAnodeTerm.dx, resRightTerm.dy),
+              ledAnodeTerm,
+            ],
+            color: const Color(0xFFEF4444),
+            isActive: isConducting,
+            thickness: 5.0,
+          ));
+        } else {
+          // Se resistor ausente, fio direto da Bateria + para o LED
+          wires.add(WirePath(
+            points: [
+              batPosTerm,
+              Offset(batPosTerm.dx + 40, resCenter.dy - 30),
+              Offset(ledAnodeTerm.dx, resCenter.dy - 30),
+              ledAnodeTerm,
+            ],
+            color: const Color(0xFFEF4444),
+            isActive: isConducting,
+            thickness: 5.0,
+          ));
+        }
+
+        // 2. Fio Azul (LED Cátodo -> Interruptor Direita)
+        wires.add(WirePath(
+          points: [
+            ledCathodeTerm,
+            Offset(ledCathodeTerm.dx, swRightTerm.dy),
+            swRightTerm,
+          ],
+          color: const Color(0xFF2563EB),
+          isActive: isConducting,
+          thickness: 5.0,
+        ));
+
+        // 3. Fio Azul (Interruptor Esquerda -> Bateria -)
+        if (_currentScenario == InspectionScenario.openCircuit) {
+          // Interrupção visível no percurso (Circuito Aberto)
+          wires.add(WirePath(
+            points: [
+              swLeftTerm,
+              Offset(swLeftTerm.dx - 60, swLeftTerm.dy),
+            ],
+            color: const Color(0xFF2563EB),
+            isActive: false,
+            thickness: 5.0,
+          ));
+          wires.add(WirePath(
+            points: [
+              Offset(batNegTerm.dx - 40, swLeftTerm.dy - 20),
+              Offset(batNegTerm.dx - 40, batNegTerm.dy),
+              batNegTerm,
+            ],
+            color: const Color(0xFF2563EB),
+            isActive: false,
+            thickness: 5.0,
+          ));
+        } else {
+          wires.add(WirePath(
+            points: [
+              swLeftTerm,
+              Offset(batNegTerm.dx - 40, swLeftTerm.dy),
+              Offset(batNegTerm.dx - 40, batNegTerm.dy),
+              batNegTerm,
+            ],
+            color: const Color(0xFF2563EB),
+            isActive: isConducting,
+            thickness: 5.0,
+          ));
+        }
+
         return Stack(
           clipBehavior: Clip.none,
           children: [
@@ -381,7 +579,7 @@ class _SecondBenchPhase2State extends State<SecondBenchPhase2> {
                 decoration: BoxDecoration(
                   color: Colors.black.withValues(alpha: 0.65),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: SecondBenchLayoutTokens.primaryGreen.withValues(alpha: 0.4)),
+                  border: Border.all(color: StandFlowTokens.primaryGreen.withValues(alpha: 0.4)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -397,7 +595,7 @@ class _SecondBenchPhase2State extends State<SecondBenchPhase2> {
                         style: TextStyle(
                           fontFamily: GoogleFonts.rajdhani().fontFamily,
                           fontSize: 12,
-                          color: SecondBenchLayoutTokens.accentGreen,
+                          color: StandFlowTokens.accentGreen,
                           fontWeight: FontWeight.bold,
                         ),
                         isDense: true,
@@ -433,20 +631,17 @@ class _SecondBenchPhase2State extends State<SecondBenchPhase2> {
               ),
             ),
 
-            // 1. Fios condutores físicos curvos (CustomPainter na camada inferior)
+            // 1. Fios condutores físicos (RealisticWireWidget com elétrons animados)
             Positioned.fill(
-              child: CustomPaint(
-                painter: _PhysicalWirePainter(
-                  batPos: batPosTerm,
-                  batNeg: batNegTerm,
-                  resLeft: resLeftTerm,
-                  resRight: resRightTerm,
-                  ledAnode: ledAnodeTerm,
-                  ledCathode: ledCathodeTerm,
-                  swLeft: swLeftTerm,
-                  swRight: swRightTerm,
-                  scenario: _currentScenario,
-                ),
+              child: AnimatedBuilder(
+                animation: _flowController,
+                builder: (context, child) {
+                  return RealisticWireWidget(
+                    wires: wires,
+                    animationValue: _flowController.value,
+                    showElectrons: _isLedOn,
+                  );
+                },
               ),
             ),
 
@@ -455,7 +650,14 @@ class _SecondBenchPhase2State extends State<SecondBenchPhase2> {
               center: batCenter,
               width: 120,
               height: 140,
-              child: Image.asset('assets/components/battery.png', fit: BoxFit.contain),
+              child: CustomPaint(
+                painter: ComponentPhysicalPainter(
+                  type: ComponentType.battery,
+                  isActive: true,
+                  isDarkMode: false,
+                  value: 9.0,
+                ),
+              ),
             ),
 
             // 3. Componente 2: RESISTOR DE 680 Ω (Topo)
@@ -467,7 +669,15 @@ class _SecondBenchPhase2State extends State<SecondBenchPhase2> {
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    Image.asset('assets/components/resistor.png', fit: BoxFit.contain),
+                    CustomPaint(
+                      size: const Size(140, 70),
+                      painter: ComponentPhysicalPainter(
+                        type: ComponentType.resistor,
+                        isActive: true,
+                        isDarkMode: false,
+                        value: _currentScenario == InspectionScenario.incorrectResistor ? 68.0 : 680.0,
+                      ),
+                    ),
                     if (_currentScenario == InspectionScenario.incorrectResistor)
                       Positioned(
                         top: -10,
@@ -496,7 +706,7 @@ class _SecondBenchPhase2State extends State<SecondBenchPhase2> {
                           decoration: BoxDecoration(
                             color: const Color(0xFF04382B),
                             borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: SecondBenchLayoutTokens.primaryGreen),
+                            border: Border.all(color: StandFlowTokens.primaryGreen),
                           ),
                           child: Text(
                             '680 Ω',
@@ -504,7 +714,7 @@ class _SecondBenchPhase2State extends State<SecondBenchPhase2> {
                               fontFamily: GoogleFonts.rajdhani().fontFamily,
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
-                              color: SecondBenchLayoutTokens.primaryGreen,
+                              color: StandFlowTokens.primaryGreen,
                             ),
                           ),
                         ),
@@ -520,12 +730,12 @@ class _SecondBenchPhase2State extends State<SecondBenchPhase2> {
               height: 130,
               child: Transform.scale(
                 scaleX: _currentScenario == InspectionScenario.reversedLed ? -1.0 : 1.0,
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 250),
-                  child: Image.asset(
-                    _isLedOn ? 'assets/components/led_on.png' : 'assets/components/led_off.png',
-                    key: ValueKey(_isLedOn),
-                    fit: BoxFit.contain,
+                child: CustomPaint(
+                  painter: ComponentPhysicalPainter(
+                    type: ComponentType.led,
+                    isActive: _isLedOn,
+                    isDarkMode: false,
+                    brightnessRatio: _isLedOn ? 1.0 : 0.0,
                   ),
                 ),
               ),
@@ -536,9 +746,12 @@ class _SecondBenchPhase2State extends State<SecondBenchPhase2> {
               center: swCenter,
               width: 130,
               height: 90,
-              child: Image.asset(
-                _isSwitchClosed ? 'assets/components/switch_closed.png' : 'assets/components/switch_open.png',
-                fit: BoxFit.contain,
+              child: CustomPaint(
+                painter: ComponentPhysicalPainter(
+                  type: ComponentType.switchComponent,
+                  isActive: _isSwitchClosed,
+                  isDarkMode: false,
+                ),
               ),
             ),
 
@@ -568,7 +781,7 @@ class _SecondBenchPhase2State extends State<SecondBenchPhase2> {
                       height: isSelected ? 42 : 36,
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? SecondBenchLayoutTokens.accentGreen
+                            ? StandFlowTokens.accentGreen
                             : (isInspected
                                 ? const Color(0xFF04382B)
                                 : const Color(0xFF0F172A)),
@@ -577,14 +790,14 @@ class _SecondBenchPhase2State extends State<SecondBenchPhase2> {
                           color: isSelected
                               ? Colors.white
                               : (isInspected
-                                  ? SecondBenchLayoutTokens.primaryGreen
+                                  ? StandFlowTokens.primaryGreen
                                   : Colors.white60),
                           width: isSelected ? 2.5 : 1.5,
                         ),
                         boxShadow: [
                           BoxShadow(
                             color: isSelected
-                                ? SecondBenchLayoutTokens.accentGreen.withValues(alpha: 0.7)
+                                ? StandFlowTokens.accentGreen.withValues(alpha: 0.7)
                                 : Colors.black45,
                             blurRadius: isSelected ? 12 : 6,
                           ),
@@ -651,9 +864,9 @@ class _SecondBenchPhase2State extends State<SecondBenchPhase2> {
   // ==========================================
   // PAINEL LATERAL (Modo Inspeção & Modo Diagnóstico)
   // ==========================================
-  Widget _buildSidePanel() {
+  Widget _buildSidePanelContent() {
     if (_isDiagnosisMode) {
-      return _buildDiagnosisSidePanel();
+      return _buildDiagnosisSidePanelContent();
     }
 
     final pt = _points.firstWhere(
@@ -663,113 +876,152 @@ class _SecondBenchPhase2State extends State<SecondBenchPhase2> {
 
     final selectedAnswerIndex = _selectedAnswers[pt.id];
 
-    return SecondBenchSidePanel(
-      title: 'Ponto ${pt.id} — ${pt.title}',
-      subtitle: pt.description,
-      icon: Icons.fact_check_rounded,
-      child: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Ilustração/Esquema didático auxiliar do ponto selecionado
-            _buildPointVisualDiagram(pt.id),
-            const SizedBox(height: 12),
-
-            Text(
-              pt.question,
-              style: TextStyle(
-                fontFamily: GoogleFonts.outfit().fontFamily,
-                fontSize: 14.5,
-                fontWeight: FontWeight.bold,
-                color: SecondBenchLayoutTokens.textDark,
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            ...List.generate(pt.options.length, (optIndex) {
-              final isSelected = selectedAnswerIndex == optIndex;
-
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: InkWell(
-                  onTap: () => _onAnswerSelected(pt.id, optIndex),
-                  borderRadius: BorderRadius.circular(10),
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? const Color(0xFFD1EBE1)
-                          : const Color(0xFFFFFDF7),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: isSelected
-                            ? SecondBenchLayoutTokens.primaryGreen
-                            : const Color(0xFFD6CFC0),
-                        width: isSelected ? 1.8 : 1.0,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          isSelected
-                              ? Icons.radio_button_checked_rounded
-                              : Icons.radio_button_unchecked_rounded,
-                          color: isSelected
-                              ? SecondBenchLayoutTokens.primaryGreen
-                              : Colors.black45,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            pt.options[optIndex],
-                            style: TextStyle(
-                              fontFamily: GoogleFonts.outfit().fontFamily,
-                              fontSize: 13,
-                              color: SecondBenchLayoutTokens.textDark,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }),
-
-            if (selectedAnswerIndex != null) ...[
-              const SizedBox(height: 10),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
               Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE2F3EC),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: SecondBenchLayoutTokens.primaryGreen),
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFEFF6FF),
+                  shape: BoxShape.circle,
                 ),
-                child: Row(
+                child: const Icon(Icons.fact_check_rounded, color: Color(0xFF2563EB), size: 20),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.info_outline_rounded, color: SecondBenchLayoutTokens.darkGreen, size: 18),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        pt.explanation,
-                        style: TextStyle(
-                          fontFamily: GoogleFonts.outfit().fontFamily,
-                          fontSize: 12.5,
-                          color: SecondBenchLayoutTokens.textDark,
-                          height: 1.3,
-                        ),
+                    Text(
+                      'Ponto ${pt.id} — ${pt.title}',
+                      style: GoogleFonts.rajdhani(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF0F172A),
+                      ),
+                    ),
+                    Text(
+                      pt.description,
+                      style: GoogleFonts.outfit(
+                        fontSize: 12,
+                        color: const Color(0xFF64748B),
                       ),
                     ),
                   ],
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 12),
+          _buildPointVisualDiagram(pt.id),
+          const SizedBox(height: 12),
+          Text(
+            pt.question,
+            style: TextStyle(
+              fontFamily: GoogleFonts.outfit().fontFamily,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: StandFlowTokens.textDark,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...List.generate(pt.options.length, (optIndex) {
+            final isSelected = selectedAnswerIndex == optIndex;
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: InkWell(
+                onTap: () => _onAnswerSelected(pt.id, optIndex),
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? const Color(0xFFD1EBE1)
+                        : const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isSelected
+                          ? StandFlowTokens.primaryGreen
+                          : const Color(0xFFE2E8F0),
+                      width: isSelected ? 1.8 : 1.0,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        isSelected
+                            ? Icons.radio_button_checked_rounded
+                            : Icons.radio_button_unchecked_rounded,
+                        color: isSelected
+                            ? StandFlowTokens.primaryGreen
+                            : Colors.black45,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          pt.options[optIndex],
+                          style: TextStyle(
+                            fontFamily: GoogleFonts.outfit().fontFamily,
+                            fontSize: 13,
+                            color: StandFlowTokens.textDark,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+          if (selectedAnswerIndex != null) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE2F3EC),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: StandFlowTokens.primaryGreen),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.info_outline_rounded, color: StandFlowTokens.darkGreen, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      pt.explanation,
+                      style: TextStyle(
+                        fontFamily: GoogleFonts.outfit().fontFamily,
+                        fontSize: 12.5,
+                        color: StandFlowTokens.textDark,
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -840,7 +1092,7 @@ class _SecondBenchPhase2State extends State<SecondBenchPhase2> {
     return const SizedBox.shrink();
   }
 
-  Widget _buildDiagnosisSidePanel() {
+  Widget _buildDiagnosisSidePanelContent() {
     final diagnoses = [
       'Circuito correto e pronto para energizar',
       'LED invertido (cátodo no polo positivo)',
@@ -849,15 +1101,60 @@ class _SecondBenchPhase2State extends State<SecondBenchPhase2> {
       'Circuito aberto (fio desconectado)',
     ];
 
-    return SecondBenchSidePanel(
-      title: 'Diagnóstico do Circuito',
-      subtitle: 'Com base nas suas medições e inspeções, selecione o diagnóstico do circuito.',
-      icon: Icons.assignment_rounded,
-      child: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: List.generate(diagnoses.length, (index) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFEF3C7),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.assignment_rounded, color: Color(0xFFD97706), size: 20),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Diagnóstico do Circuito',
+                      style: GoogleFonts.rajdhani(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF0F172A),
+                      ),
+                    ),
+                    Text(
+                      'Com base nas suas medições e inspeções, selecione o diagnóstico do circuito.',
+                      style: GoogleFonts.outfit(
+                        fontSize: 12,
+                        color: const Color(0xFF64748B),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          ...List.generate(diagnoses.length, (index) {
             final isSelected = _selectedDiagnosisIndex == index;
 
             return Padding(
@@ -870,12 +1167,12 @@ class _SecondBenchPhase2State extends State<SecondBenchPhase2> {
                   decoration: BoxDecoration(
                     color: isSelected
                         ? const Color(0xFFD1EBE1)
-                        : const Color(0xFFFFFDF7),
+                        : const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isSelected
-                          ? SecondBenchLayoutTokens.primaryGreen
-                          : const Color(0xFFD6CFC0),
+                          ? StandFlowTokens.primaryGreen
+                          : const Color(0xFFE2E8F0),
                       width: isSelected ? 2.0 : 1.0,
                     ),
                   ),
@@ -886,7 +1183,7 @@ class _SecondBenchPhase2State extends State<SecondBenchPhase2> {
                             ? Icons.check_circle_rounded
                             : Icons.circle_outlined,
                         color: isSelected
-                            ? SecondBenchLayoutTokens.primaryGreen
+                            ? StandFlowTokens.primaryGreen
                             : Colors.black38,
                         size: 22,
                       ),
@@ -896,9 +1193,9 @@ class _SecondBenchPhase2State extends State<SecondBenchPhase2> {
                           diagnoses[index],
                           style: TextStyle(
                             fontFamily: GoogleFonts.outfit().fontFamily,
-                            fontSize: 13.5,
+                            fontSize: 13,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            color: SecondBenchLayoutTokens.textDark,
+                            color: StandFlowTokens.textDark,
                           ),
                         ),
                       ),
@@ -908,148 +1205,8 @@ class _SecondBenchPhase2State extends State<SecondBenchPhase2> {
               ),
             );
           }),
-        ),
+        ],
       ),
     );
-  }
-}
-
-/// Painter dos fios condutores elétricos físicos (Red = Positivo, Black = Negativo)
-class _PhysicalWirePainter extends CustomPainter {
-  final Offset batPos;
-  final Offset batNeg;
-  final Offset resLeft;
-  final Offset resRight;
-  final Offset ledAnode;
-  final Offset ledCathode;
-  final Offset swLeft;
-  final Offset swRight;
-  final InspectionScenario scenario;
-
-  _PhysicalWirePainter({
-    required this.batPos,
-    required this.batNeg,
-    required this.resLeft,
-    required this.resRight,
-    required this.ledAnode,
-    required this.ledCathode,
-    required this.swLeft,
-    required this.swRight,
-    required this.scenario,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final redWirePaint = Paint()
-      ..color = const Color(0xFFDC2626) // Vermelho físico vibrante
-      ..strokeWidth = 6.0
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    final blackWirePaint = Paint()
-      ..color = const Color(0xFF1E293B) // Preto/Grafite escuro físico
-      ..strokeWidth = 6.0
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    final sleevePaint = Paint()
-      ..color = Colors.black
-      ..strokeWidth = 10.0
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.butt;
-
-    // 1. Fio Vermelho (Bateria + -> Resistor Esquerda)
-    if (scenario != InspectionScenario.missingResistor) {
-      final p1 = Path();
-      p1.moveTo(batPos.dx, batPos.dy);
-      p1.cubicTo(
-        batPos.dx + 40, batPos.dy - 80,
-        resLeft.dx - 60, resLeft.dy,
-        resLeft.dx, resLeft.dy,
-      );
-      canvas.drawPath(p1, redWirePaint);
-      _drawTerminalSleeve(canvas, batPos, sleevePaint);
-      _drawTerminalSleeve(canvas, resLeft, sleevePaint);
-
-      // Fio Vermelho (Resistor Direita -> LED Ânodo)
-      final p2 = Path();
-      p2.moveTo(resRight.dx, resRight.dy);
-      p2.cubicTo(
-        resRight.dx + 60, resRight.dy,
-        ledAnode.dx - 40, ledAnode.dy - 30,
-        ledAnode.dx, ledAnode.dy,
-      );
-      canvas.drawPath(p2, redWirePaint);
-      _drawTerminalSleeve(canvas, resRight, sleevePaint);
-      _drawTerminalSleeve(canvas, ledAnode, sleevePaint);
-    } else {
-      // Se resistor ausente, fio direto da Bateria + para o LED
-      final pDirect = Path();
-      pDirect.moveTo(batPos.dx, batPos.dy);
-      pDirect.cubicTo(
-        batPos.dx + 120, batPos.dy - 120,
-        ledAnode.dx - 60, ledAnode.dy - 40,
-        ledAnode.dx, ledAnode.dy,
-      );
-      canvas.drawPath(pDirect, redWirePaint);
-      _drawTerminalSleeve(canvas, batPos, sleevePaint);
-      _drawTerminalSleeve(canvas, ledAnode, sleevePaint);
-    }
-
-    // 2. Fio Preto (LED Cátodo -> Interruptor Direita)
-    final p3 = Path();
-    p3.moveTo(ledCathode.dx, ledCathode.dy);
-    p3.cubicTo(
-      ledCathode.dx + 20, ledCathode.dy + 50,
-      swRight.dx + 50, swRight.dy,
-      swRight.dx, swRight.dy,
-    );
-    canvas.drawPath(p3, blackWirePaint);
-    _drawTerminalSleeve(canvas, ledCathode, sleevePaint);
-    _drawTerminalSleeve(canvas, swRight, sleevePaint);
-
-    // 3. Fio Preto (Interruptor Esquerda -> Bateria -)
-    if (scenario == InspectionScenario.openCircuit) {
-      // Interrupção visível no percurso (Circuito Aberto)
-      final p4a = Path();
-      p4a.moveTo(swLeft.dx, swLeft.dy);
-      p4a.cubicTo(
-        swLeft.dx - 40, swLeft.dy,
-        swLeft.dx - 80, swLeft.dy - 10,
-        swLeft.dx - 90, swLeft.dy - 20,
-      );
-      canvas.drawPath(p4a, blackWirePaint);
-
-      final p4b = Path();
-      p4b.moveTo(batNeg.dx, batNeg.dy);
-      p4b.cubicTo(
-        batNeg.dx - 40, batNeg.dy + 80,
-        batNeg.dx + 20, swLeft.dy + 40,
-        batNeg.dx + 40, swLeft.dy + 10,
-      );
-      canvas.drawPath(p4b, blackWirePaint);
-      _drawTerminalSleeve(canvas, swLeft, sleevePaint);
-      _drawTerminalSleeve(canvas, batNeg, sleevePaint);
-    } else {
-      final p4 = Path();
-      p4.moveTo(swLeft.dx, swLeft.dy);
-      p4.cubicTo(
-        swLeft.dx - 80, swLeft.dy,
-        batNeg.dx - 60, batNeg.dy + 80,
-        batNeg.dx, batNeg.dy,
-      );
-      canvas.drawPath(p4, blackWirePaint);
-      _drawTerminalSleeve(canvas, swLeft, sleevePaint);
-      _drawTerminalSleeve(canvas, batNeg, sleevePaint);
-    }
-  }
-
-  void _drawTerminalSleeve(Canvas canvas, Offset pos, Paint paint) {
-    canvas.drawCircle(pos, 6.0, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _PhysicalWirePainter oldDelegate) {
-    return oldDelegate.scenario != scenario;
   }
 }

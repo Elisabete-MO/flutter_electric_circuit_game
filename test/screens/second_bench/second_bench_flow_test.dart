@@ -9,8 +9,8 @@ import 'package:eletrolab/screens/second_bench/second_bench_phase1.dart';
 import 'package:eletrolab/screens/second_bench/second_bench_phase2.dart';
 import 'package:eletrolab/screens/second_bench/second_bench_phase3.dart';
 import 'package:eletrolab/screens/second_bench/second_bench_phase4.dart';
-import 'package:eletrolab/screens/second_bench/widgets/second_bench_header.dart';
-import 'package:eletrolab/screens/second_bench/widgets/second_bench_side_panel.dart';
+import 'package:eletrolab/screens/common_stand/stand_flow_header.dart';
+import 'package:eletrolab/widgets/workbench_components.dart';
 import 'package:eletrolab/state/progress_controller.dart';
 
 // Estado serializado com todas as 4 fases desbloqueadas (fase 1 em exibição).
@@ -54,9 +54,9 @@ void main() {
     testWidgets('Exibe o cabeçalho padronizado e a Fase 1 inicialmente', (tester) async {
       await pumpSecondBench(tester);
 
-      expect(find.byType(SecondBenchHeader), findsOneWidget);
+      expect(find.byType(StandFlowHeader), findsOneWidget);
       expect(find.byType(SecondBenchPhase1), findsOneWidget);
-      expect(find.textContaining('Fase 1'), findsWidgets);
+      expect(find.textContaining('Missão 1'), findsWidgets);
     });
 
     // Navegação entre fases requer que elas estejam desbloqueadas.
@@ -68,18 +68,18 @@ void main() {
       // Parte de Fase 1
       expect(find.byType(SecondBenchPhase1), findsOneWidget);
 
-      // Toca na pílula "Fase 2" — deve navegar
-      await tester.tap(find.text('Fase 2').first);
+      // Toca na pílula "Missão 2" — deve navegar
+      await tester.tap(find.text('Missão 2').first);
       await tester.pumpAndSettle();
       expect(find.byType(SecondBenchPhase2), findsOneWidget);
 
-      // Toca na pílula "Fase 3"
-      await tester.tap(find.text('Fase 3').first);
+      // Toca na pílula "Missão 3"
+      await tester.tap(find.text('Missão 3').first);
       await tester.pumpAndSettle();
       expect(find.byType(SecondBenchPhase3), findsOneWidget);
 
-      // Toca na pílula "Fase 4"
-      await tester.tap(find.text('Fase 4').first);
+      // Toca na pílula "Missão 4"
+      await tester.tap(find.text('Missão 4').first);
       await tester.pumpAndSettle();
       expect(find.byType(SecondBenchPhase4), findsOneWidget);
     });
@@ -90,8 +90,8 @@ void main() {
 
       expect(find.byType(SecondBenchPhase1), findsOneWidget);
 
-      // Toca em Fase 2 (bloqueada) — deve permanecer na Fase 1
-      await tester.tap(find.text('Fase 2').first);
+      // Toca em Missão 2 (bloqueada) — deve permanecer na Fase 1
+      await tester.tap(find.text('Missão 2').first);
       await tester.pumpAndSettle();
       expect(find.byType(SecondBenchPhase1), findsOneWidget);
       expect(find.byType(SecondBenchPhase2), findsNothing);
@@ -99,7 +99,7 @@ void main() {
 
     testWidgets('Renderiza o painel lateral em todas as fases no Desktop', (tester) async {
       await pumpSecondBench(tester, size: const Size(1600, 900));
-      expect(find.byType(SecondBenchSidePanel), findsWidgets);
+      expect(find.byType(WorkbenchSidePanel), findsWidgets);
     });
 
     testWidgets('Renderiza sem emojis nos textos visíveis da Fase 1', (tester) async {

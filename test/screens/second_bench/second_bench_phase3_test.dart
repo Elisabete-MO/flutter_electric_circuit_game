@@ -45,19 +45,19 @@ void main() {
       await tester.pumpAndSettle();
 
       // Modo Diagrama ativo por padrão
-      expect(find.text('0 de 4 símbolos posicionados'), findsOneWidget);
+      expect(find.text('0 de 4 símbolos'), findsOneWidget);
 
-      // Toca na opção Físico
-      await tester.tap(find.text('Físico').first);
+      // Toca na opção Físico 3D
+      await tester.tap(find.text('Físico 3D').first);
       await tester.pumpAndSettle();
 
       expect(find.textContaining('Modo Físico de Consulta'), findsOneWidget);
 
-      // Retorna para Diagrama
-      await tester.tap(find.text('Diagrama').first);
+      // Retorna para Esquemático
+      await tester.tap(find.text('Esquemático').first);
       await tester.pumpAndSettle();
 
-      expect(find.text('0 de 4 símbolos posicionados'), findsOneWidget);
+      expect(find.text('0 de 4 símbolos'), findsOneWidget);
     });
 
     testWidgets('Nenhum texto visível possui emojis', (tester) async {
@@ -84,15 +84,20 @@ void main() {
       }
     });
 
-    testWidgets('Botão Verificar Diagrama inicia desabilitado', (tester) async {
+    testWidgets('Botão Verificar Diagrama exibe ajuda quando acionado antes de preencher os encaixes', (tester) async {
       await tester.binding.setSurfaceSize(const Size(1600, 900));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
       await tester.pumpWidget(buildTestWidget());
       await tester.pumpAndSettle();
 
-      final btn = find.widgetWithText(FilledButton, 'VERIFICAR DIAGRAMA');
-      expect(tester.widget<FilledButton>(btn).onPressed, isNull);
+      final btn = find.widgetWithText(ElevatedButton, 'VERIFICAR DIAGRAMA');
+      expect(btn, findsOneWidget);
+
+      await tester.tap(btn);
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Ajuda — Fase 3'), findsOneWidget);
     });
   });
 }

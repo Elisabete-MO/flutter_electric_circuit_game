@@ -6,10 +6,10 @@ import '../../models/phase1_component_data.dart';
 import '../../widgets/component_physical_painter.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
 import '../../widgets/prof_volts_full_body.dart';
-import 'second_bench_tokens.dart';
-import 'widgets/second_bench_action_bar.dart';
-import 'widgets/second_bench_phase_scaffold.dart';
-import 'widgets/second_bench_side_panel.dart';
+import '../common_stand/stand_flow_tokens.dart';
+import '../../widgets/workbench_components.dart';
+import '../../widgets/workbench_sidebar_cards.dart';
+import '../../widgets/workbench_table_frame.dart';
 
 /// Fase 1 do Segundo Estande (Acende Aí): Conheça os componentes.
 class SecondBenchPhase1 extends StatefulWidget {
@@ -120,7 +120,7 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
           decoration: BoxDecoration(
             color: const Color(0xFF0F172A),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: SecondBenchLayoutTokens.primaryGreen, width: 2),
+            border: Border.all(color: StandFlowTokens.primaryGreen, width: 2),
             boxShadow: const [
               BoxShadow(
                 color: Color(0x6610B981),
@@ -142,7 +142,7 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
                   fontFamily: GoogleFonts.rajdhani().fontFamily,
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: SecondBenchLayoutTokens.primaryGreen,
+                  color: StandFlowTokens.primaryGreen,
                   letterSpacing: 1.2,
                 ),
               ),
@@ -177,7 +177,7 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
                     ),
                   ),
                   style: FilledButton.styleFrom(
-                    backgroundColor: SecondBenchLayoutTokens.primaryGreen,
+                    backgroundColor: StandFlowTokens.primaryGreen,
                     foregroundColor: Colors.black,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
@@ -212,7 +212,7 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
               decoration: BoxDecoration(
                 color: const Color(0xFF0F172A),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: SecondBenchLayoutTokens.primaryGreen, width: 1.5),
+                border: Border.all(color: StandFlowTokens.primaryGreen, width: 1.5),
                 boxShadow: const [
                   BoxShadow(color: Colors.black54, blurRadius: 16),
                 ],
@@ -231,7 +231,7 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
                         ),
                         child: const Icon(
                           Icons.help_outline_rounded,
-                          color: SecondBenchLayoutTokens.primaryGreen,
+                          color: StandFlowTokens.primaryGreen,
                           size: 24,
                         ),
                       ),
@@ -264,8 +264,8 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
                     child: OutlinedButton(
                       onPressed: () => Navigator.of(context).pop(),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: SecondBenchLayoutTokens.primaryGreen,
-                        side: const BorderSide(color: SecondBenchLayoutTokens.primaryGreen),
+                        foregroundColor: StandFlowTokens.primaryGreen,
+                        side: const BorderSide(color: StandFlowTokens.primaryGreen),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -291,7 +291,7 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
           const Text(
             '• ',
             style: TextStyle(
-              color: SecondBenchLayoutTokens.primaryGreen,
+              color: StandFlowTokens.primaryGreen,
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
@@ -318,36 +318,120 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
       return _buildQuizScaffold();
     }
 
-    return SecondBenchPhaseScaffold(
-      phase: 1,
-      title: 'Conheça os componentes',
-      instruction: 'Explore os cinco componentes usados no desafio para liberar o quiz.',
-      introIcon: Icons.search_rounded,
-      onHelpTap: _showHelpModal,
-      workspace: _buildBenchWorkspace(),
-      sidePanel: _buildSidePanel(),
-      actionBar: SecondBenchActionBar(
-        statusText: _isAllExplored
-            ? 'Todos os 5 componentes explorados! Pronto para o quiz.'
-            : 'Explore os cinco componentes da bancada.',
-        progressText: '${_exploredIds.length} de ${_components.length} explorados',
-        actions: [
-          FilledButton.icon(
-            onPressed: _isAllExplored ? _startQuiz : null,
-            icon: const Icon(Icons.quiz_rounded),
-            label: Text(
-              'INICIAR QUIZ',
-              style: TextStyle(
-                fontFamily: GoogleFonts.rajdhani().fontFamily,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.1,
+    return Row(
+      children: [
+        // Área Principal da Bancada
+        Expanded(
+          flex: 7,
+          child: WorkbenchTableFrame(
+            usePhysicalStyle: true,
+            onStyleChanged: (_) {},
+            showModeSelector: false,
+            leftHeaderWidget: _buildExplorationStatusBadge(),
+            rightHeaderWidget: _buildExplorationProgressBadge(),
+            child: _buildBenchWorkspace(),
+          ),
+        ),
+        const SizedBox(width: 16),
+        // Painel Lateral (Objetivo + Detalhes Didáticos + Ação)
+        Expanded(
+          flex: 3,
+          child: WorkbenchSidePanel(
+            teamTitle: 'Painel da Equipe Iluminação',
+            showTeamHeader: false,
+            buttonColor: _isAllExplored
+                ? const Color(0xFF10B981)
+                : const Color(0xFF0284C7),
+            buttonLabel: _isAllExplored
+                ? 'INICIAR QUIZ DE FIXAÇÃO'
+                : 'EXPLORE OS 5 COMPONENTES (${_exploredIds.length}/5)',
+            toolboxItems: [
+              const WorkbenchMissionObjectiveCard(
+                missionNumber: 1,
+                title: 'Conheça os componentes',
+                description: 'Explore os cinco componentes da bancada para entender suas funções didáticas e liberar o quiz.',
+                voltsTip: 'Toque em cada peça na bancada para examinar seus terminais e funções didáticas.',
+                accentColor: Color(0xFF0284C7),
               ),
+              const SizedBox(height: 12),
+              _buildSidePanelContent(),
+            ],
+            onEnergizePressed: () {
+              if (_isAllExplored) {
+                _startQuiz();
+              } else {
+                _showHelpModal();
+              }
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildExplorationStatusBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFCBD5E1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            _isAllExplored ? Icons.check_circle_rounded : Icons.search_rounded,
+            color: _isAllExplored ? const Color(0xFF10B981) : const Color(0xFF0284C7),
+            size: 16,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            _isAllExplored ? 'EXPLORAÇÃO COMPLETA' : 'MODO EXPLORAÇÃO',
+            style: GoogleFonts.rajdhani(
+              color: _isAllExplored ? const Color(0xFF10B981) : const Color(0xFF0284C7),
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
             ),
-            style: FilledButton.styleFrom(
-              backgroundColor: SecondBenchLayoutTokens.primaryGreen,
-              foregroundColor: Colors.black,
-              disabledBackgroundColor: Colors.white12,
-              disabledForegroundColor: Colors.white38,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExplorationProgressBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A).withValues(alpha: 0.90),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.fact_check_rounded, color: Color(0xFF00FF9D), size: 16),
+          const SizedBox(width: 6),
+          Text(
+            '${_exploredIds.length} de ${_components.length} explorados',
+            style: GoogleFonts.rajdhani(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
             ),
           ),
         ],
@@ -392,19 +476,13 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
               final posX = (w * relativeXs[index]) - (widths[index] / 2);
               final posY = (h * relativeYs[index]) - (heights[index] / 2);
 
-              Widget compImage = Image.asset(
-                comp.assetPath,
-                width: widths[index],
-                height: heights[index],
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) => CustomPaint(
-                  painter: ComponentPhysicalPainter(
-                    type: comp.type,
-                    isActive: true,
-                    isDarkMode: true,
-                  ),
-                  child: SizedBox(width: widths[index], height: heights[index]),
+              Widget compImage = CustomPaint(
+                painter: ComponentPhysicalPainter(
+                  type: comp.type,
+                  isActive: true,
+                  isDarkMode: false,
                 ),
+                child: SizedBox(width: widths[index], height: heights[index]),
               );
 
               if (isSelected) {
@@ -413,7 +491,7 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: SecondBenchLayoutTokens.primaryGreen.withValues(alpha: 0.7),
+                        color: StandFlowTokens.primaryGreen.withValues(alpha: 0.7),
                         blurRadius: 18,
                         spreadRadius: 3,
                       ),
@@ -460,9 +538,9 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
                             color: isSelected
-                                ? SecondBenchLayoutTokens.primaryGreen
+                                ? StandFlowTokens.primaryGreen
                                 : (isExplored
-                                    ? SecondBenchLayoutTokens.primaryGreen.withValues(alpha: 0.6)
+                                    ? StandFlowTokens.primaryGreen.withValues(alpha: 0.6)
                                     : const Color(0xFF2E6B49)),
                             width: isSelected ? 1.8 : 1.0,
                           ),
@@ -479,7 +557,7 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
                                 child: Icon(
                                   Icons.check_circle_rounded,
                                   size: 13,
-                                  color: SecondBenchLayoutTokens.accentGreen,
+                                  color: StandFlowTokens.accentGreen,
                                 ),
                               ),
                             Flexible(
@@ -513,16 +591,20 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
   // ==========================================
   // PAINEL LATERAL PADRONIZADO (Cor Creme)
   // ==========================================
-  Widget _buildSidePanel() {
+  Widget _buildSidePanelContent() {
     if (_selectedIndex == null) {
-      return SecondBenchSidePanel(
-        title: 'Selecione um componente',
-        subtitle: 'Toque em qualquer peca na bancada para ver seus detalhes didaticos.',
-        icon: Icons.touch_app_rounded,
-        child: const Center(
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: Center(
           child: Text(
-            'Nenhum componente selecionado.',
-            style: TextStyle(color: Colors.black54),
+            'Toque em qualquer componente na bancada para examinar seus detalhes didáticos.',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.outfit(color: const Color(0xFF64748B), fontSize: 13),
           ),
         ),
       );
@@ -530,136 +612,173 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
 
     final item = _components[_selectedIndex!];
 
-    return SecondBenchSidePanel(
-      title: item.name,
-      subtitle: item.shortDescription,
-      icon: item.icon,
-      child: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildDetailSection('Função Didática', item.function, Icons.settings_power_rounded),
-            _buildDetailSection('Terminais de Conexão', item.terminals, Icons.electrical_services_rounded),
-            if (item.polarity != null)
-              _buildDetailSection('Polaridade', item.polarity!, Icons.swap_horiz_rounded),
-            _buildDetailSection('Cuidados & Segurança', item.safety, Icons.warning_amber_rounded, isCaution: true),
-
-            const SizedBox(height: 12),
-
-            // Painel Expansível "Saiba Mais"
-            Theme(
-              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-              child: Material(
-                color: Colors.transparent,
-                child: ExpansionTile(
-                  initiallyExpanded: _isLearnMoreExpanded,
-                  onExpansionChanged: (exp) => setState(() => _isLearnMoreExpanded = exp),
-                  tilePadding: EdgeInsets.zero,
-                  iconColor: SecondBenchLayoutTokens.darkGreen,
-                  title: Text(
-                    'Saiba mais sobre o componente',
-                    style: TextStyle(
-                      fontFamily: GoogleFonts.rajdhani().fontFamily,
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: SecondBenchLayoutTokens.darkGreen,
-                    ),
-                  ),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFECFDF5),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(item.icon, color: const Color(0xFF059669), size: 20),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF2EAD9),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFFE2D7C3)),
+                    Text(
+                      item.name,
+                      style: GoogleFonts.rajdhani(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF0F172A),
                       ),
-                      child: Text(
-                        item.learnMore,
-                        style: TextStyle(
-                          fontFamily: GoogleFonts.outfit().fontFamily,
-                          fontSize: 13,
-                          color: SecondBenchLayoutTokens.textDark,
-                          height: 1.4,
-                        ),
+                    ),
+                    Text(
+                      item.shortDescription,
+                      style: GoogleFonts.outfit(
+                        fontSize: 12,
+                        color: const Color(0xFF64748B),
                       ),
                     ),
                   ],
                 ),
               ),
-            ),
-
-            const SizedBox(height: 12),
-
-            // Questão de Checagem
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE8F4EE),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: SecondBenchLayoutTokens.primaryGreen.withValues(alpha: 0.5)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            ],
+          ),
+          const SizedBox(height: 14),
+          _buildDetailSection('Função Didática', item.function, Icons.settings_power_rounded),
+          _buildDetailSection('Terminais de Conexão', item.terminals, Icons.electrical_services_rounded),
+          if (item.polarity != null)
+            _buildDetailSection('Polaridade', item.polarity!, Icons.swap_horiz_rounded),
+          _buildDetailSection('Cuidados & Segurança', item.safety, Icons.warning_amber_rounded, isCaution: true),
+          const SizedBox(height: 12),
+          Theme(
+            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+            child: Material(
+              color: Colors.transparent,
+              child: ExpansionTile(
+                initiallyExpanded: _isLearnMoreExpanded,
+                onExpansionChanged: (exp) => setState(() => _isLearnMoreExpanded = exp),
+                tilePadding: EdgeInsets.zero,
+                iconColor: StandFlowTokens.darkGreen,
+                title: Text(
+                  'Saiba mais sobre o componente',
+                  style: TextStyle(
+                    fontFamily: GoogleFonts.rajdhani().fontFamily,
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: StandFlowTokens.darkGreen,
+                  ),
+                ),
                 children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.help_outline_rounded, size: 18, color: SecondBenchLayoutTokens.darkGreen),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Teste Rápido',
-                        style: TextStyle(
-                          fontFamily: GoogleFonts.rajdhani().fontFamily,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: SecondBenchLayoutTokens.darkGreen,
-                        ),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFCBD5E1)),
+                    ),
+                    child: Text(
+                      item.learnMore,
+                      style: TextStyle(
+                        fontFamily: GoogleFonts.outfit().fontFamily,
+                        fontSize: 13,
+                        color: StandFlowTokens.textDark,
+                        height: 1.4,
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    item.checkQuestion,
-                    style: TextStyle(
-                      fontFamily: GoogleFonts.outfit().fontFamily,
-                      fontSize: 13,
-                      color: SecondBenchLayoutTokens.textDark,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  if (!_isCheckAnswerRevealed)
-                    OutlinedButton(
-                      onPressed: () => setState(() => _isCheckAnswerRevealed = true),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: SecondBenchLayoutTokens.darkGreen,
-                        side: const BorderSide(color: SecondBenchLayoutTokens.darkGreen),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      ),
-                      child: const Text('Revelar Resposta'),
-                    )
-                  else
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: SecondBenchLayoutTokens.primaryGreen),
-                      ),
-                      child: Text(
-                        item.checkAnswer,
-                        style: TextStyle(
-                          fontFamily: GoogleFonts.outfit().fontFamily,
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w600,
-                          color: SecondBenchLayoutTokens.darkGreen,
-                        ),
-                      ),
-                    ),
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE8F4EE),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: StandFlowTokens.primaryGreen.withValues(alpha: 0.5)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.help_outline_rounded, size: 18, color: StandFlowTokens.darkGreen),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Teste Rápido',
+                      style: TextStyle(
+                        fontFamily: GoogleFonts.rajdhani().fontFamily,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: StandFlowTokens.darkGreen,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  item.checkQuestion,
+                  style: TextStyle(
+                    fontFamily: GoogleFonts.outfit().fontFamily,
+                    fontSize: 13,
+                    color: StandFlowTokens.textDark,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                if (!_isCheckAnswerRevealed)
+                  OutlinedButton(
+                    onPressed: () => setState(() => _isCheckAnswerRevealed = true),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: StandFlowTokens.darkGreen,
+                      side: const BorderSide(color: StandFlowTokens.darkGreen),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    ),
+                    child: const Text('Revelar Resposta'),
+                  )
+                else
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: StandFlowTokens.primaryGreen),
+                    ),
+                    child: Text(
+                      item.checkAnswer,
+                      style: TextStyle(
+                        fontFamily: GoogleFonts.outfit().fontFamily,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: StandFlowTokens.darkGreen,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -675,7 +794,7 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
               Icon(
                 icon,
                 size: 16,
-                color: isCaution ? const Color(0xFFD97706) : SecondBenchLayoutTokens.darkGreen,
+                color: isCaution ? const Color(0xFFD97706) : StandFlowTokens.darkGreen,
               ),
               const SizedBox(width: 6),
               Text(
@@ -684,7 +803,7 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
                   fontFamily: GoogleFonts.rajdhani().fontFamily,
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: isCaution ? const Color(0xFFD97706) : SecondBenchLayoutTokens.darkGreen,
+                  color: isCaution ? const Color(0xFFD97706) : StandFlowTokens.darkGreen,
                 ),
               ),
             ],
@@ -695,7 +814,7 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
             style: TextStyle(
               fontFamily: GoogleFonts.outfit().fontFamily,
               fontSize: 13,
-              color: SecondBenchLayoutTokens.textDark,
+              color: StandFlowTokens.textDark,
               height: 1.3,
             ),
           ),
@@ -711,7 +830,7 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
     final q = _quizQuestions[_quizCurrentIndex];
 
     return Scaffold(
-      backgroundColor: SecondBenchLayoutTokens.bgDark,
+      backgroundColor: StandFlowTokens.bgDark,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -723,7 +842,7 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
                 decoration: BoxDecoration(
                   color: const Color(0xFF0F172A),
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: SecondBenchLayoutTokens.primaryGreen, width: 1.5),
+                  border: Border.all(color: StandFlowTokens.primaryGreen, width: 1.5),
                   boxShadow: const [
                     BoxShadow(color: Colors.black54, blurRadius: 16, offset: Offset(0, 4)),
                   ],
@@ -742,7 +861,7 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
                           ),
                           child: const Icon(
                             Icons.quiz_rounded,
-                            color: SecondBenchLayoutTokens.primaryGreen,
+                            color: StandFlowTokens.primaryGreen,
                             size: 24,
                           ),
                         ),
@@ -765,7 +884,7 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
                                 style: TextStyle(
                                   fontFamily: GoogleFonts.outfit().fontFamily,
                                   fontSize: 13,
-                                  color: SecondBenchLayoutTokens.primaryGreen,
+                                  color: StandFlowTokens.primaryGreen,
                                 ),
                               ),
                             ],
