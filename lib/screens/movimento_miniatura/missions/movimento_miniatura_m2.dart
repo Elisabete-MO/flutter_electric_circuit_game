@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../core/ui_scale.dart';
+
 import '../../../models/circuit_action.dart';
 import '../../../models/first_step_component.dart';
 import '../../../models/stand_mission.dart';
@@ -269,6 +271,7 @@ class _MovimentoMiniaturaM2State extends State<MovimentoMiniaturaM2>
   }
 
   Widget _buildPhysicalCanvas() {
+    final scale = context.uiScale;
     final isReversed = _m2ReversedPolarity;
     return Center(
       child: Column(
@@ -281,11 +284,10 @@ class _MovimentoMiniaturaM2State extends State<MovimentoMiniaturaM2>
                 builder: (context, constraints) {
                   final w = constraints.maxWidth;
                   final h = constraints.maxHeight;
-                  final batteryX = w * 0.15;
-                  final motorX = w * 0.85;
+                  final batteryX = w * 0.18;
+                  final motorX = w * 0.82;
                   final centerY = h * 0.5;
-                  final sock = (w * 0.16).clamp(105.0, 135.0);
-                  final comp = sock * 0.62;
+                  final sock = scale.size(110.0, min: 90.0, max: 140.0);
 
                   final batteryPlacement = ComponentPlacement(
                     position: Offset(batteryX, centerY),
@@ -309,6 +311,7 @@ class _MovimentoMiniaturaM2State extends State<MovimentoMiniaturaM2>
                           ? const Color(0xFF0284C7)
                           : const Color(0xFFD97706),
                       isActive: true,
+                      thickness: scale.size(5.5, min: 4.5, max: 8.0),
                     ).toWirePath());
                     wires.add(DynamicWirePath.fromComponents(
                       compA: isReversed ? batteryPlacement : motorPlacement,
@@ -317,6 +320,7 @@ class _MovimentoMiniaturaM2State extends State<MovimentoMiniaturaM2>
                       terminalIndexB: isReversed ? 0 : 1,
                       color: const Color(0xFF64748B),
                       isActive: true,
+                      thickness: scale.size(5.5, min: 4.5, max: 8.0),
                     ).toWirePath());
                   }
 
@@ -357,7 +361,7 @@ class _MovimentoMiniaturaM2State extends State<MovimentoMiniaturaM2>
                           ),
                           onTap: () {},
                           symbolWidget: CustomPaint(
-                            size: Size(comp, comp),
+                            size: Size(sock, sock),
                             painter: ComponentPhysicalPainter(
                               type: ComponentType.battery,
                               isDarkMode: false,
@@ -389,7 +393,7 @@ class _MovimentoMiniaturaM2State extends State<MovimentoMiniaturaM2>
                           ),
                           onTap: () {},
                           symbolWidget: CustomPaint(
-                            size: Size(comp, comp),
+                            size: Size(sock, sock),
                             painter: ComponentPhysicalPainter(
                               type: ComponentType.motor,
                               isActive: _m2BatteryInserted && _m2MotorInserted,
@@ -453,6 +457,7 @@ class _MovimentoMiniaturaM2State extends State<MovimentoMiniaturaM2>
   }
 
   Widget _buildSchematicCanvas() {
+    final scale = context.uiScale;
     final isReversed = _m2ReversedPolarity;
     return Center(
       child: Column(
@@ -465,11 +470,10 @@ class _MovimentoMiniaturaM2State extends State<MovimentoMiniaturaM2>
                 builder: (context, constraints) {
                   final w = constraints.maxWidth;
                   final h = constraints.maxHeight;
-                  final batteryX = w * 0.15;
-                  final motorX = w * 0.85;
+                  final batteryX = w * 0.18;
+                  final motorX = w * 0.82;
                   final centerY = h * 0.5;
-                  final sock = (w * 0.16).clamp(95.0, 125.0);
-                  final comp = sock * 0.65;
+                  final sock = scale.size(95.0, min: 80.0, max: 130.0);
 
                   final batteryPlacement = ComponentPlacement(
                     position: Offset(batteryX, centerY),
@@ -493,6 +497,7 @@ class _MovimentoMiniaturaM2State extends State<MovimentoMiniaturaM2>
                           ? const Color(0xFF0284C7)
                           : const Color(0xFFD97706),
                       isActive: true,
+                      thickness: scale.size(4.5, min: 3.5, max: 7.0),
                     ).toWirePath());
                     wires.add(DynamicWirePath.fromComponents(
                       compA: isReversed ? batteryPlacement : motorPlacement,
@@ -501,6 +506,7 @@ class _MovimentoMiniaturaM2State extends State<MovimentoMiniaturaM2>
                       terminalIndexB: isReversed ? 0 : 1,
                       color: const Color(0xFF64748B),
                       isActive: true,
+                      thickness: scale.size(4.5, min: 3.5, max: 7.0),
                     ).toWirePath());
                   }
 
@@ -541,7 +547,7 @@ class _MovimentoMiniaturaM2State extends State<MovimentoMiniaturaM2>
                           ),
                           onTap: () {},
                           symbolWidget: CustomPaint(
-                            size: Size(comp, comp),
+                            size: Size(sock, sock),
                             painter: CircuitSymbolPainter(
                               type: ComponentType.battery,
                               color: const Color(0xFF0F172A),
@@ -549,7 +555,7 @@ class _MovimentoMiniaturaM2State extends State<MovimentoMiniaturaM2>
                             ),
                           ),
                           placeholderWidget: CustomPaint(
-                            size: Size(comp * 0.85, comp * 0.85),
+                            size: Size(sock * 0.85, sock * 0.85),
                             painter: CircuitSymbolPainter(
                               type: ComponentType.battery,
                               isActive: false,
@@ -584,7 +590,7 @@ class _MovimentoMiniaturaM2State extends State<MovimentoMiniaturaM2>
                           ),
                           onTap: () {},
                           symbolWidget: CustomPaint(
-                            size: Size(comp, comp),
+                            size: Size(sock, sock),
                             painter: CircuitSymbolPainter(
                               type: ComponentType.motor,
                               isActive: _m2MotorInserted,
@@ -593,7 +599,7 @@ class _MovimentoMiniaturaM2State extends State<MovimentoMiniaturaM2>
                             ),
                           ),
                           placeholderWidget: CustomPaint(
-                            size: Size(comp * 0.85, comp * 0.85),
+                            size: Size(sock * 0.85, sock * 0.85),
                             painter: CircuitSymbolPainter(
                               type: ComponentType.motor,
                               isActive: false,

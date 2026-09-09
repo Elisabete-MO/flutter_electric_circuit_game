@@ -6,6 +6,7 @@ import '../../../models/first_step_component.dart';
 import '../../../models/stand_mission.dart';
 import '../../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../../state/circuit_undo_redo_controller.dart';
+import '../../../core/ui_scale.dart';
 import '../../../widgets/circuit_symbol_painter.dart';
 import '../../../widgets/component_physical_painter.dart';
 import '../../../widgets/physical_blueprint_socket.dart';
@@ -318,8 +319,8 @@ class _MovimentoMiniaturaM5State extends State<MovimentoMiniaturaM5>
                   final batteryX = w * 0.2;
                   final motorX = w * 0.75;
                   final centerY = h * 0.5;
-                  final sock = (w * 0.16).clamp(105.0, 135.0);
-                  final comp = sock * 0.62;
+                  final scale = context.uiScale;
+                  final sock = scale.size(110.0, min: 90.0, max: 140.0);
 
                   final batteryPlacement = ComponentPlacement(
                     position: Offset(batteryX, centerY),
@@ -393,7 +394,7 @@ class _MovimentoMiniaturaM5State extends State<MovimentoMiniaturaM5>
                           ),
                           onTap: () {},
                           symbolWidget: CustomPaint(
-                            size: Size(comp, comp),
+                            size: Size(sock, sock),
                             painter: ComponentPhysicalPainter(
                               type: ComponentType.battery,
                               isDarkMode: false,
@@ -425,7 +426,7 @@ class _MovimentoMiniaturaM5State extends State<MovimentoMiniaturaM5>
                           ),
                           onTap: () {},
                           symbolWidget: CustomPaint(
-                            size: Size(comp, comp),
+                            size: Size(sock, sock),
                             painter: ComponentPhysicalPainter(
                               type: ComponentType.motor,
                               isActive: _isWorking,
@@ -559,8 +560,8 @@ class _MovimentoMiniaturaM5State extends State<MovimentoMiniaturaM5>
                   final batteryX = w * 0.2;
                   final motorX = w * 0.75;
                   final centerY = h * 0.5;
-                  final sock = (w * 0.16).clamp(95.0, 125.0);
-                  final comp = sock * 0.65;
+                  final scale = context.uiScale;
+                  final sock = scale.size(95.0, min: 80.0, max: 130.0);
 
                   final batteryPlacement = ComponentPlacement(
                     position: Offset(batteryX, centerY),
@@ -634,7 +635,7 @@ class _MovimentoMiniaturaM5State extends State<MovimentoMiniaturaM5>
                           ),
                           onTap: () {},
                           symbolWidget: CustomPaint(
-                            size: Size(comp, comp),
+                            size: Size(sock, sock),
                             painter: CircuitSymbolPainter(
                               type: ComponentType.battery,
                               color: const Color(0xFF0F172A),
@@ -642,7 +643,7 @@ class _MovimentoMiniaturaM5State extends State<MovimentoMiniaturaM5>
                             ),
                           ),
                           placeholderWidget: CustomPaint(
-                            size: Size(comp * 0.85, comp * 0.85),
+                            size: Size(sock * 0.85, sock * 0.85),
                             painter: CircuitSymbolPainter(
                               type: ComponentType.battery,
                               isActive: false,
@@ -677,7 +678,7 @@ class _MovimentoMiniaturaM5State extends State<MovimentoMiniaturaM5>
                           ),
                           onTap: () {},
                           symbolWidget: CustomPaint(
-                            size: Size(comp, comp),
+                            size: Size(sock, sock),
                             painter: CircuitSymbolPainter(
                               type: ComponentType.motor,
                               isActive: _isWorking,
@@ -686,7 +687,7 @@ class _MovimentoMiniaturaM5State extends State<MovimentoMiniaturaM5>
                             ),
                           ),
                           placeholderWidget: CustomPaint(
-                            size: Size(comp * 0.85, comp * 0.85),
+                            size: Size(sock * 0.85, sock * 0.85),
                             painter: CircuitSymbolPainter(
                               type: ComponentType.motor,
                               isActive: false,

@@ -6,6 +6,7 @@ import '../../../models/first_step_component.dart';
 import '../../../models/stand_mission.dart';
 import '../../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../../state/circuit_undo_redo_controller.dart';
+import '../../../core/ui_scale.dart';
 import '../../../widgets/circuit_symbol_painter.dart';
 import '../../../widgets/component_physical_painter.dart';
 import '../../../widgets/component_vector_painters.dart';
@@ -297,8 +298,8 @@ class _MovimentoMiniaturaM3State extends State<MovimentoMiniaturaM3>
                   final switchX = w * 0.42;
                   final motorX = w * 0.78;
                   final centerY = h * 0.5;
-                  final sock = (w * 0.16).clamp(105.0, 135.0);
-                  final comp = sock * 0.62;
+                  final scale = context.uiScale;
+                  final sock = scale.size(110.0, min: 90.0, max: 140.0);
 
                   final batteryPlacement = ComponentPlacement(
                     position: Offset(batteryX, centerY),
@@ -387,7 +388,7 @@ class _MovimentoMiniaturaM3State extends State<MovimentoMiniaturaM3>
                           ),
                           onTap: () {},
                           symbolWidget: CustomPaint(
-                            size: Size(comp, comp),
+                            size: Size(sock, sock),
                             painter: ComponentPhysicalPainter(
                               type: ComponentType.battery,
                               isDarkMode: false,
@@ -420,9 +421,9 @@ class _MovimentoMiniaturaM3State extends State<MovimentoMiniaturaM3>
                             }
                           },
                           symbolWidget: _usePhysicalStyle
-                              ? PushButtonVectorWidget(size: comp)
+                              ? PushButtonVectorWidget(size: sock * 0.7)
                               : SchematicSwitchWidget(
-                                  size: comp,
+                                  size: sock * 0.7,
                                   isPushButton: true,
                                   color: const Color(0xFFEF4444),
                                 ),
@@ -452,7 +453,7 @@ class _MovimentoMiniaturaM3State extends State<MovimentoMiniaturaM3>
                           ),
                           onTap: () {},
                           symbolWidget: CustomPaint(
-                            size: Size(comp, comp),
+                            size: Size(sock, sock),
                             painter: ComponentPhysicalPainter(
                               type: ComponentType.motor,
                               isActive: _isMotorSpinning,
@@ -542,8 +543,8 @@ class _MovimentoMiniaturaM3State extends State<MovimentoMiniaturaM3>
                   final switchX = w * 0.42;
                   final motorX = w * 0.78;
                   final centerY = h * 0.5;
-                  final sock = (w * 0.16).clamp(95.0, 125.0);
-                  final comp = sock * 0.65;
+                  final scale = context.uiScale;
+                  final sock = scale.size(95.0, min: 80.0, max: 130.0);
 
                   final batteryPlacement = ComponentPlacement(
                     position: Offset(batteryX, centerY),
@@ -632,7 +633,7 @@ class _MovimentoMiniaturaM3State extends State<MovimentoMiniaturaM3>
                           ),
                           onTap: () {},
                           symbolWidget: CustomPaint(
-                            size: Size(comp, comp),
+                            size: Size(sock, sock),
                             painter: CircuitSymbolPainter(
                               type: ComponentType.battery,
                               color: const Color(0xFF0F172A),
@@ -640,7 +641,7 @@ class _MovimentoMiniaturaM3State extends State<MovimentoMiniaturaM3>
                             ),
                           ),
                           placeholderWidget: CustomPaint(
-                            size: Size(comp * 0.85, comp * 0.85),
+                            size: Size(sock * 0.85, sock * 0.85),
                             painter: CircuitSymbolPainter(
                               type: ComponentType.battery,
                               isActive: false,
@@ -672,12 +673,12 @@ class _MovimentoMiniaturaM3State extends State<MovimentoMiniaturaM3>
                           onTap: () => setState(() =>
                               _m3PushButtonPressed = !_m3PushButtonPressed),
                           symbolWidget: SchematicSwitchWidget(
-                            size: comp,
+                            size: sock * 0.7,
                             isPushButton: true,
                             color: const Color(0xFFEF4444),
                           ),
                           placeholderWidget: SchematicSwitchWidget(
-                            size: comp * 0.85,
+                            size: sock * 0.6,
                             isPushButton: true,
                             color: const Color(0xFF94A3B8),
                           ),
@@ -708,7 +709,7 @@ class _MovimentoMiniaturaM3State extends State<MovimentoMiniaturaM3>
                           ),
                           onTap: () {},
                           symbolWidget: CustomPaint(
-                            size: Size(comp, comp),
+                            size: Size(sock, sock),
                             painter: CircuitSymbolPainter(
                               type: ComponentType.motor,
                               isActive: _isMotorSpinning,
@@ -717,7 +718,7 @@ class _MovimentoMiniaturaM3State extends State<MovimentoMiniaturaM3>
                             ),
                           ),
                           placeholderWidget: CustomPaint(
-                            size: Size(comp * 0.85, comp * 0.85),
+                            size: Size(sock * 0.85, sock * 0.85),
                             painter: CircuitSymbolPainter(
                               type: ComponentType.motor,
                               isActive: false,
