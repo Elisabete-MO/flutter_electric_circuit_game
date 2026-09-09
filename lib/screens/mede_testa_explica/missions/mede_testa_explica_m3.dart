@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../core/ui_scale.dart';
 import '../../../models/circuit_action.dart';
 import '../../../models/first_step_component.dart';
 import '../../../models/stand_mission.dart';
@@ -142,7 +143,7 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
               'Ajuste o reostato para variar a corrente.';
         }
       } else {
-        feedback = 'Arraste o Amperímetro da gaveta para medir a corrente.';
+        feedback = 'Arraste o Amperímetro da gaveta para medir a corrente em série.';
       }
 
       if (isSuccess) {
@@ -181,7 +182,7 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
           ],
         ),
         content: Text(
-          'Perfeito! Você validou experimentalmente a Lei de Ohm (I = V / R). Ao aumentar a resistência do reostato, a corrente que circula diminui proporcionalmente.',
+          'Perfeito! Você validou experimentalmente a 1ª Lei de Ohm (I = V / R). Ao aumentar a resistência do reostato, a corrente medida pelo amperímetro diminui proporcionalmente.',
           style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14),
         ),
         actions: [
@@ -251,6 +252,46 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
     );
   }
 
+  Widget _buildUndoRedoButtons() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: _usePhysicalStyle ? Colors.white : const Color(0xFF0F172A),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: _usePhysicalStyle
+              ? const Color(0xFFCBD5E1)
+              : const Color(0xFF334155),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.undo_rounded),
+            tooltip: 'Desfazer',
+            color: _undoRedoController.canUndo
+                ? const Color(0xFF059669)
+                : Colors.grey,
+            onPressed: _undoRedoController.canUndo
+                ? () => setState(() => _undoRedoController.undo())
+                : null,
+          ),
+          IconButton(
+            icon: const Icon(Icons.redo_rounded),
+            tooltip: 'Refazer',
+            color: _undoRedoController.canRedo
+                ? const Color(0xFF059669)
+                : Colors.grey,
+            onPressed: _undoRedoController.canRedo
+                ? () => setState(() => _undoRedoController.redo())
+                : null,
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentMa = (9.0 / _m3ResistanceValue) * 1000.0;
@@ -273,6 +314,7 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
                     currentMa: _m3AmperimeterInserted ? currentMa : 0.0,
                     isClosed: _isClosed,
                   ),
+                  bottomWidget: _buildUndoRedoButtons(),
                   child: _usePhysicalStyle
                       ? _buildPhysicalCanvas()
                       : _buildSchematicCanvas(),
@@ -307,11 +349,6 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
                 ],
               ),
               const SizedBox(height: 12),
-              MedeTestaUndoRedoButtons(
-                controller: _undoRedoController,
-                onUndo: () => setState(() => _undoRedoController.undo()),
-                onRedo: () => setState(() => _undoRedoController.redo()),
-              ),
               MedeTestaSideToolbox(
                 usePhysicalStyle: _usePhysicalStyle,
                 onReset: _reset,
@@ -326,6 +363,7 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
   }
 
   Widget _buildPhysicalCanvas() {
+    final scale = UiScale.of(context);
     final currentMa = (9.0 / _m3ResistanceValue) * 1000.0;
     final allInserted =
         _m3BatteryInserted && _m3ResistorInserted && _m3LedInserted;
@@ -341,7 +379,7 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
           style: GoogleFonts.rajdhani(
             color: const Color(0xFF10B981),
             fontWeight: FontWeight.bold,
-            fontSize: 18,
+            fontSize: scale.font(18, min: 14, max: 22),
           ),
         ),
         const SizedBox(height: 8),
@@ -352,15 +390,16 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
               builder: (context, constraints) {
                 final w = constraints.maxWidth;
                 final h = constraints.maxHeight;
-                final batteryX = w * 0.2;
-                final batteryY = h * 0.72;
-                final resistorX = w * 0.5;
+                final batteryX = w * 0.20;
+                final batteryY = h * 0.65;
+                final resistorX = w * 0.50;
                 final resistorY = h * 0.25;
-                final ledX = w * 0.8;
+                final ledX = w * 0.80;
                 final ledY = h * 0.25;
-                final ammeterX = w * 0.2;
-                final ammeterY = h * 0.12;
-                final sock = (w * 0.16).clamp(105.0, 135.0);
+                final ammeterX = w * 0.20;
+                final ammeterY = h * 0.18;
+
+                final sock = scale.size(110.0, min: 90.0, max: 135.0);
                 final comp = sock * 0.62;
 
                 final batteryPlacement = ComponentPlacement(
@@ -412,13 +451,14 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
                 }
 
                 return Stack(
+                  clipBehavior: Clip.none,
                   children: [
                     if (wires.isNotEmpty)
                       Positioned.fill(
                         child: RealisticWireWidget(
                           wires: wires,
                           animationValue: 0,
-                          showElectrons: false,
+                          showElectrons: allInserted,
                         ),
                       ),
                     Positioned(
@@ -550,8 +590,8 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
                     ),
                     if (_m3AmperimeterInserted)
                       Positioned(
-                        left: ammeterX - 60,
-                        top: ammeterY + sock / 2 + 6,
+                        left: ammeterX - 45,
+                        top: ammeterY + sock / 2 + 8,
                         child: MedeTestaMeterReading(
                           value: ammeterReading.toStringAsFixed(1),
                           unit: 'mA',
@@ -565,28 +605,44 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
           ),
         ),
         const SizedBox(height: 8),
-        Text(
-          'Ajuste o Reostato:',
-          style: GoogleFonts.rajdhani(
-            color: const Color(0xFF0F172A),
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 24),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(12),
           ),
-        ),
-        Slider(
-          value: _m3ResistanceValue,
-          min: 100.0,
-          max: 1000.0,
-          divisions: 18,
-          activeColor: const Color(0xFF10B981),
-          label: '${_m3ResistanceValue.round()} Ω',
-          onChanged: (val) => setState(() => _m3ResistanceValue = val),
+          child: Row(
+            children: [
+              Text(
+                'Reostato (R): ${_m3ResistanceValue.round()} Ω',
+                style: GoogleFonts.rajdhani(
+                  color: const Color(0xFF0F172A),
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Slider(
+                  value: _m3ResistanceValue,
+                  min: 100.0,
+                  max: 1000.0,
+                  divisions: 18,
+                  activeColor: const Color(0xFF10B981),
+                  label: '${_m3ResistanceValue.round()} Ω',
+                  onChanged: (val) => setState(() => _m3ResistanceValue = val),
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
   }
 
   Widget _buildSchematicCanvas() {
+    final scale = UiScale.of(context);
     final currentMa = (9.0 / _m3ResistanceValue) * 1000.0;
     final allInserted =
         _m3BatteryInserted && _m3ResistorInserted && _m3LedInserted;
@@ -598,11 +654,11 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          'Lei de Ohm: I = V / R (${currentMa.toStringAsFixed(1)} mA)',
+          'Diagrama Esquemático — Lei de Ohm (I = V / R)',
           style: GoogleFonts.rajdhani(
             color: const Color(0xFF10B981),
             fontWeight: FontWeight.bold,
-            fontSize: 18,
+            fontSize: scale.font(18, min: 14, max: 22),
           ),
         ),
         const SizedBox(height: 8),
@@ -613,15 +669,16 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
               builder: (context, constraints) {
                 final w = constraints.maxWidth;
                 final h = constraints.maxHeight;
-                final batteryX = w * 0.2;
-                final batteryY = h * 0.72;
-                final resistorX = w * 0.5;
+                final batteryX = w * 0.20;
+                final batteryY = h * 0.65;
+                final resistorX = w * 0.50;
                 final resistorY = h * 0.25;
-                final ledX = w * 0.8;
+                final ledX = w * 0.80;
                 final ledY = h * 0.25;
-                final ammeterX = w * 0.2;
-                final ammeterY = h * 0.12;
-                final sock = (w * 0.16).clamp(95.0, 125.0);
+                final ammeterX = w * 0.20;
+                final ammeterY = h * 0.18;
+
+                final sock = scale.size(105.0, min: 85.0, max: 130.0);
                 final comp = sock * 0.65;
 
                 final batteryPlacement = ComponentPlacement(
@@ -673,13 +730,14 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
                 }
 
                 return Stack(
+                  clipBehavior: Clip.none,
                   children: [
                     if (wires.isNotEmpty)
                       Positioned.fill(
                         child: RealisticWireWidget(
                           wires: wires,
                           animationValue: 0,
-                          showElectrons: false,
+                          showElectrons: allInserted,
                         ),
                       ),
                     Positioned(
@@ -850,8 +908,8 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
                     ),
                     if (_m3AmperimeterInserted)
                       Positioned(
-                        left: ammeterX - 60,
-                        top: ammeterY + sock / 2 + 6,
+                        left: ammeterX - 45,
+                        top: ammeterY + sock / 2 + 8,
                         child: MedeTestaMeterReading(
                           value: ammeterReading.toStringAsFixed(1),
                           unit: 'mA',
@@ -865,22 +923,37 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
           ),
         ),
         const SizedBox(height: 8),
-        Text(
-          'Ajuste o Reostato:',
-          style: GoogleFonts.rajdhani(
-            color: const Color(0xFF0F172A),
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 24),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(12),
           ),
-        ),
-        Slider(
-          value: _m3ResistanceValue,
-          min: 100.0,
-          max: 1000.0,
-          divisions: 18,
-          activeColor: const Color(0xFF10B981),
-          label: '${_m3ResistanceValue.round()} Ω',
-          onChanged: (val) => setState(() => _m3ResistanceValue = val),
+          child: Row(
+            children: [
+              Text(
+                'Reostato (R): ${_m3ResistanceValue.round()} Ω',
+                style: GoogleFonts.rajdhani(
+                  color: const Color(0xFF0F172A),
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Slider(
+                  value: _m3ResistanceValue,
+                  min: 100.0,
+                  max: 1000.0,
+                  divisions: 18,
+                  activeColor: const Color(0xFF10B981),
+                  label: '${_m3ResistanceValue.round()} Ω',
+                  onChanged: (val) => setState(() => _m3ResistanceValue = val),
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );

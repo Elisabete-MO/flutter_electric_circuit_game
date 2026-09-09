@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../core/ui_scale.dart';
 import '../../../models/circuit_action.dart';
 import '../../../models/first_step_component.dart';
 import '../../../models/stand_mission.dart';
@@ -133,15 +134,15 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
         if (result.hasClosedLoop) {
           final currentMa = result.current * 1000;
           feedback =
-              'Diagnóstico confirmado! Com 10kΩ, a corrente é apenas ${currentMa.toStringAsFixed(2)}mA. '
-              'O resistor limita excessivamente a corrente.';
+              'Diagnóstico confirmado! Com 10kΩ, a corrente é de apenas ${currentMa.toStringAsFixed(2)}mA. '
+              'O resistor limita excessivamente o fluxo de elétrons.';
           isSuccess = true;
         } else {
           feedback = 'O resistor de 10kΩ é muito alto para este circuito.';
         }
       } else if (_m5SelectedReportIndex == null) {
         feedback =
-            'Faça as medições e selecione o diagnóstico no relatório final.';
+            'Faça as medições e selecione o diagnóstico no relatório de investigação.';
       } else {
         feedback =
             'Revise a medição: a bateria fornece 9V normal e o LED está com polaridade correta.';
@@ -173,7 +174,7 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
                 color: Color(0xFF10B981), size: 32),
             const SizedBox(width: 12),
             Text(
-              'Missão Concluída!',
+              'Estande Concluído!',
               style: GoogleFonts.rajdhani(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -183,7 +184,7 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
           ],
         ),
         content: Text(
-          'Diagnóstico investigativo impecável! Você identificou que o valor da resistência (10 kΩ) era elevado demais para acender o LED com brilho visível.',
+          'Diagnóstico investigativo impecável! Você identificou que o valor da resistência (10 kΩ) era elevado demais para acender o LED com brilho visível, fechando com sucesso todas as investigações do Estande 07.',
           style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14),
         ),
         actions: [
@@ -253,6 +254,46 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
     );
   }
 
+  Widget _buildUndoRedoButtons() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: _usePhysicalStyle ? Colors.white : const Color(0xFF0F172A),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: _usePhysicalStyle
+              ? const Color(0xFFCBD5E1)
+              : const Color(0xFF334155),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.undo_rounded),
+            tooltip: 'Desfazer',
+            color: _undoRedoController.canUndo
+                ? const Color(0xFF059669)
+                : Colors.grey,
+            onPressed: _undoRedoController.canUndo
+                ? () => setState(() => _undoRedoController.undo())
+                : null,
+          ),
+          IconButton(
+            icon: const Icon(Icons.redo_rounded),
+            tooltip: 'Refazer',
+            color: _undoRedoController.canRedo
+                ? const Color(0xFF059669)
+                : Colors.grey,
+            onPressed: _undoRedoController.canRedo
+                ? () => setState(() => _undoRedoController.redo())
+                : null,
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     const voltage = 9.0;
@@ -275,6 +316,7 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
                     currentMa: currentMa,
                     isClosed: true,
                   ),
+                  bottomWidget: _buildUndoRedoButtons(),
                   child: _usePhysicalStyle
                       ? _buildPhysicalCanvas()
                       : _buildSchematicCanvas(),
@@ -303,17 +345,12 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
                 currentStepIndex: _currentStepperIndex,
                 isStepCompleted: _isStepCompleted,
                 steps: const [
-                  'Montar e medir o circuito de teste',
-                  'Identificar a causa do LED fraco',
-                  'Registrar a conclusão correta no relatório',
+                  'Montar e inspecionar o circuito sob teste',
+                  'Investigar a causa do LED permanecer fraco/apagado',
+                  'Registrar a conclusão correta no relatório pericial',
                 ],
               ),
               const SizedBox(height: 12),
-              MedeTestaUndoRedoButtons(
-                controller: _undoRedoController,
-                onUndo: () => setState(() => _undoRedoController.undo()),
-                onRedo: () => setState(() => _undoRedoController.redo()),
-              ),
               Text(
                 'Conclusão do Diário de Investigação:',
                 style: GoogleFonts.rajdhani(
@@ -334,7 +371,7 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
               MedeTestaReportOptionTile(
                 index: 1,
                 label:
-                    'O resistor de 10kΩ é muito alto para o LED, limitando excessivamente a corrente.',
+                    'O resistor de 10kΩ é muito alto para o LED, limitando excessivamente a corrente (~0.9mA).',
                 isSelected: _m5SelectedReportIndex == 1,
                 onSelect: (idx) =>
                     setState(() => _m5SelectedReportIndex = idx),
@@ -362,15 +399,17 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
   }
 
   Widget _buildPhysicalCanvas() {
+    final scale = UiScale.of(context);
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          'Diagnóstico: Por que o LED está fraco?',
+          'Diagnóstico Investigativo: Por que o LED não acende com brilho total?',
           style: GoogleFonts.rajdhani(
             color: const Color(0xFFD97706),
             fontWeight: FontWeight.bold,
-            fontSize: 16,
+            fontSize: scale.font(16, min: 14, max: 20),
           ),
         ),
         const SizedBox(height: 8),
@@ -381,11 +420,12 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
               builder: (context, constraints) {
                 final w = constraints.maxWidth;
                 final h = constraints.maxHeight;
-                final centerX = w * 0.5;
-                final batteryY = h * 0.15;
-                final resistorY = h * 0.5;
-                final ledY = h * 0.85;
-                final sock = (w * 0.16).clamp(105.0, 135.0);
+                final centerX = w * 0.50;
+                final batteryY = h * 0.18;
+                final resistorY = h * 0.50;
+                final ledY = h * 0.82;
+
+                final sock = scale.size(110.0, min: 90.0, max: 135.0);
                 final comp = sock * 0.62;
 
                 final batteryPlacement = ComponentPlacement(
@@ -437,13 +477,14 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
                 }
 
                 return Stack(
+                  clipBehavior: Clip.none,
                   children: [
                     if (wires.isNotEmpty)
                       Positioned.fill(
                         child: RealisticWireWidget(
                           wires: wires,
                           animationValue: 0,
-                          showElectrons: false,
+                          showElectrons: true,
                         ),
                       ),
                     Positioned(
@@ -554,15 +595,17 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
   }
 
   Widget _buildSchematicCanvas() {
+    final scale = UiScale.of(context);
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          'Diagnóstico: Por que o LED está fraco?',
+          'Diagrama Esquemático — Diagnóstico de Falha',
           style: GoogleFonts.rajdhani(
             color: const Color(0xFFD97706),
             fontWeight: FontWeight.bold,
-            fontSize: 16,
+            fontSize: scale.font(16, min: 14, max: 20),
           ),
         ),
         const SizedBox(height: 8),
@@ -573,11 +616,12 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
               builder: (context, constraints) {
                 final w = constraints.maxWidth;
                 final h = constraints.maxHeight;
-                final centerX = w * 0.5;
-                final batteryY = h * 0.15;
-                final resistorY = h * 0.5;
-                final ledY = h * 0.85;
-                final sock = (w * 0.16).clamp(95.0, 125.0);
+                final centerX = w * 0.50;
+                final batteryY = h * 0.18;
+                final resistorY = h * 0.50;
+                final ledY = h * 0.82;
+
+                final sock = scale.size(105.0, min: 85.0, max: 130.0);
                 final comp = sock * 0.65;
 
                 final batteryPlacement = ComponentPlacement(
@@ -629,13 +673,14 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
                 }
 
                 return Stack(
+                  clipBehavior: Clip.none,
                   children: [
                     if (wires.isNotEmpty)
                       Positioned.fill(
                         child: RealisticWireWidget(
                           wires: wires,
                           animationValue: 0,
-                          showElectrons: false,
+                          showElectrons: true,
                         ),
                       ),
                     Positioned(

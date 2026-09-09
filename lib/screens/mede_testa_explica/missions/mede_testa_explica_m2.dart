@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../core/ui_scale.dart';
 import '../../../models/circuit_action.dart';
 import '../../../models/first_step_component.dart';
 import '../../../models/stand_mission.dart';
@@ -57,14 +58,18 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
 
   int get _currentStepperIndex {
     if (!(_m2BatteryInserted && _m2BulbInserted)) return 0;
-    if (!(_redProbeConnected && _blackProbeConnected)) return 1;
+    if (!_m2VoltmeterInserted || !(_redProbeConnected && _blackProbeConnected)) {
+      return 1;
+    }
     return 2;
   }
 
   bool _isStepCompleted(int index) {
     if (index == 0) return _m2BatteryInserted && _m2BulbInserted;
-    if (index == 1) return _redProbeConnected && _blackProbeConnected;
-    if (index == 2) return _isClosed;
+    if (index == 1) {
+      return _m2VoltmeterInserted && _redProbeConnected && _blackProbeConnected;
+    }
+    if (index == 2) return _isClosed && _m2VoltmeterInserted;
     return false;
   }
 
@@ -131,18 +136,19 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
             .connect('bulb1', 'B', 'bat1', 'A')
             .simulate();
         if (result.hasClosedLoop) {
-          final vDrop = result.componentVoltages['bulb1'] ?? 0;
+          final vDrop = result.componentVoltages['bulb1'] ?? 9.0;
           feedback =
               'Queda de tensão na lâmpada: ${vDrop.toStringAsFixed(2)}V. '
-              'A carga consome tensão do circuito.';
+              'A carga converte a diferença de potencial em luz e calor.';
           isSuccess = true;
         } else {
-          feedback = 'Circuito aberto. Verifique as conexões.';
+          feedback = 'Circuito aberto. Verifique as conexões da bancada.';
         }
       } else if (!_m2VoltmeterInserted) {
-        feedback = 'Arraste o Voltímetro da gaveta para o circuito.';
+        feedback = 'Arraste o Voltímetro da gaveta para medir a carga.';
       } else {
-        feedback = 'Conecte as pontas de prova nos dois lados da lâmpada.';
+        feedback =
+            'Conecte as pontas de prova vermelha e preta nos terminais da lâmpada.';
       }
 
       if (isSuccess) {
@@ -181,7 +187,7 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
           ],
         ),
         content: Text(
-          'Fantástico! Você comprovou que a lâmpada consome a tensão fornecida pela fonte (queda de tensão na carga).',
+          'Fantástico! Você comprovou que a carga (lâmpada incandescente) recebe e consome a totalidade dos 9.0V da fonte, medindo com o voltímetro em paralelo nos terminais A e B.',
           style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14),
         ),
         actions: [
@@ -251,6 +257,46 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
     );
   }
 
+  Widget _buildUndoRedoButtons() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: _usePhysicalStyle ? Colors.white : const Color(0xFF0F172A),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: _usePhysicalStyle
+              ? const Color(0xFFCBD5E1)
+              : const Color(0xFF334155),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.undo_rounded),
+            tooltip: 'Desfazer',
+            color: _undoRedoController.canUndo
+                ? const Color(0xFF059669)
+                : Colors.grey,
+            onPressed: _undoRedoController.canUndo
+                ? () => setState(() => _undoRedoController.undo())
+                : null,
+          ),
+          IconButton(
+            icon: const Icon(Icons.redo_rounded),
+            tooltip: 'Refazer',
+            color: _undoRedoController.canRedo
+                ? const Color(0xFF059669)
+                : Colors.grey,
+            onPressed: _undoRedoController.canRedo
+                ? () => setState(() => _undoRedoController.redo())
+                : null,
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final showReading = _m2BatteryInserted &&
@@ -278,6 +324,7 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
                     currentMa: currentMa,
                     isClosed: _isClosed,
                   ),
+                  bottomWidget: _buildUndoRedoButtons(),
                   child: _usePhysicalStyle
                       ? _buildPhysicalCanvas()
                       : _buildSchematicCanvas(),
@@ -307,16 +354,11 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
                 isStepCompleted: _isStepCompleted,
                 steps: const [
                   'Inserir bateria e lâmpada no circuito',
-                  'Conectar ponteiras do voltímetro na lâmpada',
+                  'Posicionar Voltímetro e conectar na lâmpada',
                   'Medir a queda de tensão e energizar',
                 ],
               ),
               const SizedBox(height: 12),
-              MedeTestaUndoRedoButtons(
-                controller: _undoRedoController,
-                onUndo: () => setState(() => _undoRedoController.undo()),
-                onRedo: () => setState(() => _undoRedoController.redo()),
-              ),
               MedeTestaSideToolbox(
                 usePhysicalStyle: _usePhysicalStyle,
                 onReset: _reset,
@@ -331,6 +373,7 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
   }
 
   Widget _buildPhysicalCanvas() {
+    final scale = UiScale.of(context);
     final showReading = _m2BatteryInserted &&
         _m2BulbInserted &&
         _m2VoltmeterInserted &&
@@ -342,14 +385,14 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          'Circuito Energizado com Lâmpada em Carga',
+          'Medição de Queda de Potencial (Queda de Tensão na Carga)',
           style: GoogleFonts.rajdhani(
             color: const Color(0xFF0F172A),
             fontWeight: FontWeight.bold,
-            fontSize: 16,
+            fontSize: scale.font(17, min: 14, max: 20),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         Expanded(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -357,12 +400,13 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
               builder: (context, constraints) {
                 final w = constraints.maxWidth;
                 final h = constraints.maxHeight;
-                final batteryX = w * 0.2;
-                final bulbX = w * 0.75;
-                final centerY = h * 0.5;
-                final voltmeterX = (batteryX + bulbX) / 2;
-                final voltmeterY = h * 0.15;
-                final sock = (w * 0.16).clamp(105.0, 135.0);
+                final batteryX = w * 0.22;
+                final bulbX = w * 0.78;
+                final centerY = h * 0.60;
+                final voltmeterX = w * 0.50;
+                final voltmeterY = h * 0.18;
+
+                final sock = scale.size(110.0, min: 90.0, max: 135.0);
                 final comp = sock * 0.62;
 
                 final batteryPlacement = ComponentPlacement(
@@ -397,15 +441,33 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
                 }
 
                 return Stack(
+                  clipBehavior: Clip.none,
                   children: [
+                    // Fios de alimentação principais da fonte para a lâmpada
                     if (wires.isNotEmpty)
                       Positioned.fill(
                         child: RealisticWireWidget(
                           wires: wires,
                           animationValue: 0,
-                          showElectrons: false,
+                          showElectrons: _m2BatteryInserted && _m2BulbInserted,
                         ),
                       ),
+
+                    // Fios de ponta de prova do Voltímetro para a Lâmpada
+                    if (_m2BulbInserted)
+                      Positioned.fill(
+                        child: CustomPaint(
+                          painter: MedeTestaDualProbeWirePainter(
+                            fromCenter: Offset(voltmeterX, voltmeterY),
+                            toCenter: Offset(bulbX, centerY),
+                            isConnected: _m2VoltmeterInserted &&
+                                _redProbeConnected &&
+                                _blackProbeConnected,
+                          ),
+                        ),
+                      ),
+
+                    // Socket 1: Bateria 9V
                     Positioned(
                       left: batteryX - sock / 2,
                       top: centerY - sock / 2,
@@ -438,6 +500,8 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
                         ),
                       ),
                     ),
+
+                    // Socket 2: Lâmpada (Carga)
                     Positioned(
                       left: bulbX - sock / 2,
                       top: centerY - sock / 2,
@@ -471,6 +535,34 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
                         ),
                       ),
                     ),
+
+                    // Pontas de prova nos terminais da lâmpada
+                    if (_m2BulbInserted)
+                      Positioned(
+                        left: bulbX - 55,
+                        top: centerY - sock / 2 - 38,
+                        child: MedeTestaProbeSlot(
+                          isRed: true,
+                          isConnected: _redProbeConnected,
+                          onTap: () => setState(
+                              () => _redProbeConnected = !_redProbeConnected),
+                          label: 'Nó (+)',
+                        ),
+                      ),
+                    if (_m2BulbInserted)
+                      Positioned(
+                        left: bulbX + 5,
+                        top: centerY - sock / 2 - 38,
+                        child: MedeTestaProbeSlot(
+                          isRed: false,
+                          isConnected: _blackProbeConnected,
+                          onTap: () => setState(() =>
+                              _blackProbeConnected = !_blackProbeConnected),
+                          label: 'Nó (-)',
+                        ),
+                      ),
+
+                    // Socket 3: Voltímetro (Topo Central)
                     Positioned(
                       left: voltmeterX - sock / 2,
                       top: voltmeterY - sock / 2,
@@ -501,38 +593,16 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
                         ),
                       ),
                     ),
+
+                    // Leitura Digital Voltímetro
                     if (_m2VoltmeterInserted)
                       Positioned(
-                        left: voltmeterX - 40,
-                        top: voltmeterY + sock / 2 + 4,
+                        left: voltmeterX - 45,
+                        top: voltmeterY + sock / 2 + 10,
                         child: MedeTestaMeterReading(
                           value: voltageReading.toStringAsFixed(1),
                           unit: 'V DC',
                           color: const Color(0xFF0284C7),
-                        ),
-                      ),
-                    if (_m2BatteryInserted && _m2BulbInserted)
-                      Positioned(
-                        left: (batteryX + bulbX) / 2 - 10,
-                        top: centerY - 50,
-                        child: MedeTestaProbeSlot(
-                          isRed: true,
-                          isConnected: _redProbeConnected,
-                          onTap: () => setState(
-                              () => _redProbeConnected = !_redProbeConnected),
-                          label: 'A',
-                        ),
-                      ),
-                    if (_m2BatteryInserted && _m2BulbInserted)
-                      Positioned(
-                        left: (batteryX + bulbX) / 2 - 10,
-                        top: centerY + 30,
-                        child: MedeTestaProbeSlot(
-                          isRed: false,
-                          isConnected: _blackProbeConnected,
-                          onTap: () => setState(() =>
-                              _blackProbeConnected = !_blackProbeConnected),
-                          label: 'B',
                         ),
                       ),
                   ],
@@ -546,6 +616,7 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
   }
 
   Widget _buildSchematicCanvas() {
+    final scale = UiScale.of(context);
     final showReading = _m2BatteryInserted &&
         _m2BulbInserted &&
         _m2VoltmeterInserted &&
@@ -557,14 +628,14 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          'Circuito Energizado com Lâmpada em Carga',
+          'Diagrama Esquemático — Queda de Tensão na Lâmpada',
           style: GoogleFonts.rajdhani(
             color: const Color(0xFF0F172A),
             fontWeight: FontWeight.bold,
-            fontSize: 16,
+            fontSize: scale.font(17, min: 14, max: 20),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         Expanded(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -572,11 +643,11 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
               builder: (context, constraints) {
                 final w = constraints.maxWidth;
                 final h = constraints.maxHeight;
-                final batteryX = w * 0.2;
-                final bulbX = w * 0.75;
-                final centerY = h * 0.5;
-                final voltmeterX = (batteryX + bulbX) / 2;
-                final voltmeterY = h * 0.12;
+                final batteryX = w * 0.22;
+                final bulbX = w * 0.78;
+                final centerY = h * 0.60;
+                final voltmeterX = w * 0.50;
+                final voltmeterY = h * 0.18;
 
                 final batteryPlacement = ComponentPlacement(
                   position: Offset(batteryX, centerY),
@@ -609,19 +680,35 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
                   ).toWirePath());
                 }
 
-                final sock = (w * 0.16).clamp(95.0, 125.0);
+                final sock = scale.size(105.0, min: 85.0, max: 130.0);
                 final comp = sock * 0.65;
 
                 return Stack(
+                  clipBehavior: Clip.none,
                   children: [
                     if (wires.isNotEmpty)
                       Positioned.fill(
                         child: RealisticWireWidget(
                           wires: wires,
                           animationValue: 0,
-                          showElectrons: false,
+                          showElectrons: _m2BatteryInserted && _m2BulbInserted,
                         ),
                       ),
+
+                    // Fios de ponta de prova esquemáticos
+                    if (_m2BulbInserted)
+                      Positioned.fill(
+                        child: CustomPaint(
+                          painter: MedeTestaDualProbeWirePainter(
+                            fromCenter: Offset(voltmeterX, voltmeterY),
+                            toCenter: Offset(bulbX, centerY),
+                            isConnected: _m2VoltmeterInserted &&
+                                _redProbeConnected &&
+                                _blackProbeConnected,
+                          ),
+                        ),
+                      ),
+
                     Positioned(
                       left: batteryX - sock / 2,
                       top: centerY - sock / 2,
@@ -748,35 +835,11 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
                     if (_m2VoltmeterInserted)
                       Positioned(
                         left: voltmeterX - 45,
-                        top: voltmeterY + sock / 2 + 4,
+                        top: voltmeterY + sock / 2 + 10,
                         child: MedeTestaMeterReading(
                           value: voltageReading.toStringAsFixed(1),
                           unit: 'V DC',
                           color: const Color(0xFF0284C7),
-                        ),
-                      ),
-                    if (_m2BatteryInserted && _m2BulbInserted)
-                      Positioned(
-                        left: (batteryX + bulbX) / 2 - 10,
-                        top: centerY - 55,
-                        child: MedeTestaProbeSlot(
-                          isRed: true,
-                          isConnected: _redProbeConnected,
-                          onTap: () => setState(
-                              () => _redProbeConnected = !_redProbeConnected),
-                          label: 'A',
-                        ),
-                      ),
-                    if (_m2BatteryInserted && _m2BulbInserted)
-                      Positioned(
-                        left: (batteryX + bulbX) / 2 - 10,
-                        top: centerY + 30,
-                        child: MedeTestaProbeSlot(
-                          isRed: false,
-                          isConnected: _blackProbeConnected,
-                          onTap: () => setState(() =>
-                              _blackProbeConnected = !_blackProbeConnected),
-                          label: 'B',
                         ),
                       ),
                   ],

@@ -395,6 +395,85 @@ class MedeTestaUndoRedoButtons extends StatelessWidget {
   }
 }
 
+/// Painter para fiação com pontas de prova entre medidores e componentes
+class MedeTestaDualProbeWirePainter extends CustomPainter {
+  final Offset fromCenter;
+  final Offset toCenter;
+  final Color redWireColor;
+  final Color blackWireColor;
+  final bool isConnected;
+
+  MedeTestaDualProbeWirePainter({
+    required this.fromCenter,
+    required this.toCenter,
+    this.redWireColor = const Color(0xFFEF4444),
+    this.blackWireColor = const Color(0xFF1E293B),
+    this.isConnected = true,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (!isConnected) return;
+
+    final fromPositive = fromCenter + const Offset(15, -15);
+    final fromNegative = fromCenter + const Offset(15, 15);
+    final toPositive = toCenter + const Offset(-15, -15);
+    final toNegative = toCenter + const Offset(-15, 15);
+
+    // Fio Vermelho (Positivo)
+    final redPaint = Paint()
+      ..color = redWireColor
+      ..strokeWidth = 3.5
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final redPath = Path()
+      ..moveTo(fromPositive.dx, fromPositive.dy)
+      ..cubicTo(
+        (fromPositive.dx + toPositive.dx) / 2,
+        fromPositive.dy - 25,
+        (fromPositive.dx + toPositive.dx) / 2,
+        toPositive.dy - 25,
+        toPositive.dx,
+        toPositive.dy,
+      );
+    canvas.drawPath(redPath, redPaint);
+
+    // Fio Preto (Negativo)
+    final blackPaint = Paint()
+      ..color = blackWireColor
+      ..strokeWidth = 3.5
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final blackPath = Path()
+      ..moveTo(fromNegative.dx, fromNegative.dy)
+      ..cubicTo(
+        (fromNegative.dx + toNegative.dx) / 2,
+        fromNegative.dy + 25,
+        (fromNegative.dx + toNegative.dx) / 2,
+        toNegative.dy + 25,
+        toNegative.dx,
+        toNegative.dy,
+      );
+    canvas.drawPath(blackPath, blackPaint);
+
+    // Terminais das pontas de prova
+    final probePaintRed = Paint()..color = const Color(0xFFB91C1C);
+    final probePaintBlack = Paint()..color = const Color(0xFF0F172A);
+    canvas.drawCircle(toPositive, 4.5, probePaintRed);
+    canvas.drawCircle(toNegative, 4.5, probePaintBlack);
+    canvas.drawCircle(fromPositive, 4.0, probePaintRed);
+    canvas.drawCircle(fromNegative, 4.0, probePaintBlack);
+  }
+
+  @override
+  bool shouldRepaint(covariant MedeTestaDualProbeWirePainter oldDelegate) =>
+      oldDelegate.fromCenter != fromCenter ||
+      oldDelegate.toCenter != toCenter ||
+      oldDelegate.isConnected != isConnected;
+}
+
 /// Gaveta de ferramentas para Stand 07
 class MedeTestaSideToolbox extends StatelessWidget {
   final bool usePhysicalStyle;
@@ -414,7 +493,7 @@ class MedeTestaSideToolbox extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(bottom: 8.0, top: 4.0),
           child: Text(
-            'Componentes Básicos:',
+            'Instrumentos & Componentes:',
             style: GoogleFonts.rajdhani(
               color: const Color(0xFF64748B),
               fontWeight: FontWeight.bold,
@@ -430,7 +509,7 @@ class MedeTestaSideToolbox extends StatelessWidget {
             WorkbenchSymbolToolboxTile<String>(
               data: 'multimeter_v',
               label: 'Voltímetro',
-              tooltip: 'Voltímetro (Medidor de Tensão)',
+              tooltip: 'Voltímetro (Medição em Paralelo)',
               symbolWidget: MeterVectorWidget(
                 size: 34,
                 meterType: 'V',
@@ -441,7 +520,7 @@ class MedeTestaSideToolbox extends StatelessWidget {
             WorkbenchSymbolToolboxTile<String>(
               data: 'multimeter_a',
               label: 'Amperímetro',
-              tooltip: 'Amperímetro (Medidor de Corrente)',
+              tooltip: 'Amperímetro (Medição em Série)',
               symbolWidget: MeterVectorWidget(
                 size: 34,
                 meterType: 'A',
@@ -450,9 +529,9 @@ class MedeTestaSideToolbox extends StatelessWidget {
               color: const Color(0xFFD97706),
             ),
             WorkbenchSymbolToolboxTile<String>(
-              data: 'bateria_9v',
-              label: 'Fonte 9V',
-              tooltip: 'Fonte DC 9V',
+              data: 'battery',
+              label: 'Bateria 9V',
+              tooltip: 'Fonte de Tensão DC 9V',
               symbolWidget: usePhysicalStyle
                   ? CustomPaint(
                       size: const Size(34, 34),
@@ -470,6 +549,76 @@ class MedeTestaSideToolbox extends StatelessWidget {
                       ),
                     ),
               color: const Color(0xFF0284C7),
+            ),
+            WorkbenchSymbolToolboxTile<String>(
+              data: 'bulb',
+              label: 'Lâmpada',
+              tooltip: 'Lâmpada Incandescente (Carga)',
+              symbolWidget: usePhysicalStyle
+                  ? CustomPaint(
+                      size: const Size(34, 34),
+                      painter: ComponentPhysicalPainter(
+                        type: ComponentType.bulb,
+                        isActive: false,
+                        isDarkMode: false,
+                      ),
+                    )
+                  : CustomPaint(
+                      size: const Size(34, 34),
+                      painter: CircuitSymbolPainter(
+                        type: ComponentType.bulb,
+                        isActive: false,
+                        color: const Color(0xFF0F172A),
+                        strokeWidth: 2.0,
+                      ),
+                    ),
+              color: const Color(0xFFF59E0B),
+            ),
+            WorkbenchSymbolToolboxTile<String>(
+              data: 'resistor',
+              label: 'Resistor',
+              tooltip: 'Resistor Limitador',
+              symbolWidget: usePhysicalStyle
+                  ? CustomPaint(
+                      size: const Size(34, 34),
+                      painter: ComponentPhysicalPainter(
+                        type: ComponentType.resistor,
+                        isDarkMode: false,
+                      ),
+                    )
+                  : CustomPaint(
+                      size: const Size(34, 34),
+                      painter: CircuitSymbolPainter(
+                        type: ComponentType.resistor,
+                        color: const Color(0xFF0F172A),
+                        strokeWidth: 2.0,
+                      ),
+                    ),
+              color: const Color(0xFFD97706),
+            ),
+            WorkbenchSymbolToolboxTile<String>(
+              data: 'led',
+              label: 'LED',
+              tooltip: 'LED Indicador',
+              symbolWidget: usePhysicalStyle
+                  ? CustomPaint(
+                      size: const Size(34, 34),
+                      painter: ComponentPhysicalPainter(
+                        type: ComponentType.led,
+                        isActive: false,
+                        isDarkMode: false,
+                      ),
+                    )
+                  : CustomPaint(
+                      size: const Size(34, 34),
+                      painter: CircuitSymbolPainter(
+                        type: ComponentType.led,
+                        isActive: false,
+                        color: const Color(0xFF0F172A),
+                        strokeWidth: 2.0,
+                      ),
+                    ),
+              color: Colors.redAccent,
             ),
           ],
         ),

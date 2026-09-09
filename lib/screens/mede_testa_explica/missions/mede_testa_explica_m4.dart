@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../core/ui_scale.dart';
 import '../../../models/circuit_action.dart';
 import '../../../models/first_step_component.dart';
 import '../../../models/stand_mission.dart';
@@ -138,13 +139,13 @@ class _MedeTestaExplicaM4State extends State<MedeTestaExplicaM4> {
             isSuccess = true;
           } else if (currentMa > 15) {
             feedback =
-                'Corrente excessiva: ${currentMa.toStringAsFixed(1)}mA! O LED pode queimar.';
+                'Corrente excessiva: ${currentMa.toStringAsFixed(1)}mA! Risco térmico e queima do LED.';
           } else {
             feedback =
-                'Corrente insuficiente: ${currentMa.toStringAsFixed(1)}mA. LED ficará apagado.';
+                'Corrente insuficiente: ${currentMa.toStringAsFixed(1)}mA. O LED não atinge brilho visível.';
           }
         } else if (result.isShortCircuit) {
-          feedback = 'Curto-circuito! Resistor muito baixo!';
+          feedback = 'Curto-circuito! Resistor com valor excessivamente baixo!';
         } else {
           feedback = result.errorMessage ?? 'Erro na simulação.';
         }
@@ -189,7 +190,7 @@ class _MedeTestaExplicaM4State extends State<MedeTestaExplicaM4> {
           ],
         ),
         content: Text(
-          'Excelente escolha! O resistor de 680 Ω limitou a corrente em ~13.2 mA, garantindo brilho ideal do LED sem risco de sobrecorrente.',
+          'Excelente escolha! O resistor de 680 Ω limitou a corrente em ~13.2 mA, garantindo brilho ideal do LED sem sobreaquecimento ou danos ao componente semicondutor.',
           style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14),
         ),
         actions: [
@@ -230,7 +231,7 @@ class _MedeTestaExplicaM4State extends State<MedeTestaExplicaM4> {
                 color: Colors.redAccent, size: 28),
             const SizedBox(width: 10),
             Text(
-              'Atenção na Escolha',
+              'Atenção no Dimensionamento',
               style: GoogleFonts.rajdhani(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -253,6 +254,46 @@ class _MedeTestaExplicaM4State extends State<MedeTestaExplicaM4> {
                 fontWeight: FontWeight.bold,
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUndoRedoButtons() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: _usePhysicalStyle ? Colors.white : const Color(0xFF0F172A),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: _usePhysicalStyle
+              ? const Color(0xFFCBD5E1)
+              : const Color(0xFF334155),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.undo_rounded),
+            tooltip: 'Desfazer',
+            color: _undoRedoController.canUndo
+                ? const Color(0xFF059669)
+                : Colors.grey,
+            onPressed: _undoRedoController.canUndo
+                ? () => setState(() => _undoRedoController.undo())
+                : null,
+          ),
+          IconButton(
+            icon: const Icon(Icons.redo_rounded),
+            tooltip: 'Refazer',
+            color: _undoRedoController.canRedo
+                ? const Color(0xFF059669)
+                : Colors.grey,
+            onPressed: _undoRedoController.canRedo
+                ? () => setState(() => _undoRedoController.redo())
+                : null,
           ),
         ],
       ),
@@ -283,6 +324,7 @@ class _MedeTestaExplicaM4State extends State<MedeTestaExplicaM4> {
                     currentMa: currentMa,
                     isClosed: _isClosed,
                   ),
+                  bottomWidget: _buildUndoRedoButtons(),
                   child: _usePhysicalStyle
                       ? _buildPhysicalCanvas()
                       : _buildSchematicCanvas(),
@@ -317,13 +359,8 @@ class _MedeTestaExplicaM4State extends State<MedeTestaExplicaM4> {
                 ],
               ),
               const SizedBox(height: 12),
-              MedeTestaUndoRedoButtons(
-                controller: _undoRedoController,
-                onUndo: () => setState(() => _undoRedoController.undo()),
-                onRedo: () => setState(() => _undoRedoController.redo()),
-              ),
               Text(
-                'Selecione o Resistor de Proteção:',
+                'Opções de Resistores com Código de Cores:',
                 style: GoogleFonts.rajdhani(
                   color: const Color(0xFF0284C7),
                   fontWeight: FontWeight.bold,
@@ -333,7 +370,7 @@ class _MedeTestaExplicaM4State extends State<MedeTestaExplicaM4> {
               const SizedBox(height: 8),
               MedeTestaResistorOptionTile(
                 value: 68,
-                label: '68 Ω (Baixa Resistência — Perigo!)',
+                label: '68 Ω (Azul-Cinza-Preto) — Perigo Térmico!',
                 color: Colors.redAccent,
                 isSelected: _m4SelectedResistor == 68,
                 onSelect: (val) => setState(() => _m4SelectedResistor = val),
@@ -341,7 +378,7 @@ class _MedeTestaExplicaM4State extends State<MedeTestaExplicaM4> {
               const SizedBox(height: 6),
               MedeTestaResistorOptionTile(
                 value: 680,
-                label: '680 Ω (Resistência Ideal — ~13mA)',
+                label: '680 Ω (Azul-Cinza-Marrom) — Ideal (~13.2mA)',
                 color: const Color(0xFF00E5FF),
                 isSelected: _m4SelectedResistor == 680,
                 onSelect: (val) => setState(() => _m4SelectedResistor = val),
@@ -349,7 +386,7 @@ class _MedeTestaExplicaM4State extends State<MedeTestaExplicaM4> {
               const SizedBox(height: 6),
               MedeTestaResistorOptionTile(
                 value: 6800,
-                label: '6.8 kΩ (Alta Resistência — LED fraco)',
+                label: '6.8 kΩ (Azul-Cinza-Vermelho) — Alta Resistência',
                 color: Colors.amber,
                 isSelected: _m4SelectedResistor == 6800,
                 onSelect: (val) => setState(() => _m4SelectedResistor = val),
@@ -369,6 +406,7 @@ class _MedeTestaExplicaM4State extends State<MedeTestaExplicaM4> {
   }
 
   Widget _buildPhysicalCanvas() {
+    final scale = UiScale.of(context);
     final hasResistor = _m4SelectedResistor != null;
     final isSafe = _m4SelectedResistor == 680;
     final isBurned = _m4SelectedResistor == 68;
@@ -385,7 +423,7 @@ class _MedeTestaExplicaM4State extends State<MedeTestaExplicaM4> {
                 ? const Color(0xFF10B981)
                 : (isBurned ? Colors.redAccent : Colors.amberAccent),
             fontWeight: FontWeight.bold,
-            fontSize: 16,
+            fontSize: scale.font(16, min: 14, max: 20),
           ),
         ),
         const SizedBox(height: 8),
@@ -396,15 +434,14 @@ class _MedeTestaExplicaM4State extends State<MedeTestaExplicaM4> {
               builder: (context, constraints) {
                 final w = constraints.maxWidth;
                 final h = constraints.maxHeight;
-                final batteryX = w * 0.15;
-                final batteryY = h * 0.5;
-                final resistorCenterX = w * 0.5;
-                final r1Y = h * 0.22;
-                final r2Y = h * 0.5;
-                final r3Y = h * 0.78;
-                final ledX = w * 0.85;
-                final ledY = h * 0.5;
-                final sock = (w * 0.16).clamp(105.0, 135.0);
+                final batteryX = w * 0.18;
+                final batteryY = h * 0.50;
+                final resistorCenterX = w * 0.50;
+                final r2Y = h * 0.50;
+                final ledX = w * 0.82;
+                final ledY = h * 0.50;
+
+                final sock = scale.size(110.0, min: 90.0, max: 135.0);
                 final comp = sock * 0.62;
 
                 final batteryPlacement = ComponentPlacement(
@@ -456,13 +493,14 @@ class _MedeTestaExplicaM4State extends State<MedeTestaExplicaM4> {
                 }
 
                 return Stack(
+                  clipBehavior: Clip.none,
                   children: [
                     if (wires.isNotEmpty)
                       Positioned.fill(
                         child: RealisticWireWidget(
                           wires: wires,
                           animationValue: 0,
-                          showElectrons: false,
+                          showElectrons: hasResistor && !isBurned,
                         ),
                       ),
                     Positioned(
@@ -497,43 +535,38 @@ class _MedeTestaExplicaM4State extends State<MedeTestaExplicaM4> {
                         ),
                       ),
                     ),
-                    for (final entry in [
-                      MapEntry(0, r1Y),
-                      MapEntry(1, r2Y),
-                      MapEntry(2, r3Y),
-                    ])
-                      Positioned(
-                        left: resistorCenterX - sock / 2,
-                        top: entry.value - sock / 2,
-                        child: PhysicalBlueprintSocket<String>(
-                          expectedData: 'resistor',
-                          isFilled: _m4ResistorInserted,
-                          rotation: _m4ResistorRotation,
-                          width: sock,
-                          height: sock,
-                          showLabel: true,
-                          onAccept: (_) => _insertComponent(
-                            name: 'Resistor',
-                            getInserted: () => _m4ResistorInserted,
-                            setInserted: (v) => _m4ResistorInserted = v,
-                            getRotation: () => _m4ResistorRotation,
-                            setRotation: (v) => _m4ResistorRotation = v,
-                          ),
-                          onRotate: () => _rotateComponent(
-                            name: 'Resistor',
-                            getRotation: () => _m4ResistorRotation,
-                            setRotation: (v) => _m4ResistorRotation = v,
-                          ),
-                          onTap: () {},
-                          symbolWidget: CustomPaint(
-                            size: Size(comp, comp),
-                            painter: ComponentPhysicalPainter(
-                              type: ComponentType.resistor,
-                              isDarkMode: false,
-                            ),
+                    Positioned(
+                      left: resistorCenterX - sock / 2,
+                      top: r2Y - sock / 2,
+                      child: PhysicalBlueprintSocket<String>(
+                        expectedData: 'resistor',
+                        isFilled: _m4ResistorInserted,
+                        rotation: _m4ResistorRotation,
+                        width: sock,
+                        height: sock,
+                        showLabel: true,
+                        onAccept: (_) => _insertComponent(
+                          name: 'Resistor',
+                          getInserted: () => _m4ResistorInserted,
+                          setInserted: (v) => _m4ResistorInserted = v,
+                          getRotation: () => _m4ResistorRotation,
+                          setRotation: (v) => _m4ResistorRotation = v,
+                        ),
+                        onRotate: () => _rotateComponent(
+                          name: 'Resistor',
+                          getRotation: () => _m4ResistorRotation,
+                          setRotation: (v) => _m4ResistorRotation = v,
+                        ),
+                        onTap: () {},
+                        symbolWidget: CustomPaint(
+                          size: Size(comp, comp),
+                          painter: ComponentPhysicalPainter(
+                            type: ComponentType.resistor,
+                            isDarkMode: false,
                           ),
                         ),
                       ),
+                    ),
                     Positioned(
                       left: ledX - sock / 2,
                       top: ledY - sock / 2,
@@ -579,6 +612,7 @@ class _MedeTestaExplicaM4State extends State<MedeTestaExplicaM4> {
   }
 
   Widget _buildSchematicCanvas() {
+    final scale = UiScale.of(context);
     final hasResistor = _m4SelectedResistor != null;
     final isBurned = _m4SelectedResistor == 68;
 
@@ -592,7 +626,7 @@ class _MedeTestaExplicaM4State extends State<MedeTestaExplicaM4> {
           style: GoogleFonts.rajdhani(
             color: const Color(0xFF0F172A),
             fontWeight: FontWeight.bold,
-            fontSize: 16,
+            fontSize: scale.font(16, min: 14, max: 20),
           ),
         ),
         const SizedBox(height: 8),
@@ -603,13 +637,14 @@ class _MedeTestaExplicaM4State extends State<MedeTestaExplicaM4> {
               builder: (context, constraints) {
                 final w = constraints.maxWidth;
                 final h = constraints.maxHeight;
-                final batteryX = w * 0.15;
-                final batteryY = h * 0.5;
-                final resistorCenterX = w * 0.5;
-                final r2Y = h * 0.5;
-                final ledX = w * 0.85;
-                final ledY = h * 0.5;
-                final sock = (w * 0.16).clamp(95.0, 125.0);
+                final batteryX = w * 0.18;
+                final batteryY = h * 0.50;
+                final resistorCenterX = w * 0.50;
+                final r2Y = h * 0.50;
+                final ledX = w * 0.82;
+                final ledY = h * 0.50;
+
+                final sock = scale.size(105.0, min: 85.0, max: 130.0);
                 final comp = sock * 0.65;
 
                 final batteryPlacement = ComponentPlacement(
@@ -661,13 +696,14 @@ class _MedeTestaExplicaM4State extends State<MedeTestaExplicaM4> {
                 }
 
                 return Stack(
+                  clipBehavior: Clip.none,
                   children: [
                     if (wires.isNotEmpty)
                       Positioned.fill(
                         child: RealisticWireWidget(
                           wires: wires,
                           animationValue: 0,
-                          showElectrons: false,
+                          showElectrons: hasResistor && !isBurned,
                         ),
                       ),
                     Positioned(
