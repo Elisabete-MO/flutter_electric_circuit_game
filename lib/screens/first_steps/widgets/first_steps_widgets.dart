@@ -72,6 +72,8 @@ class FirstStepsComponentTile extends StatelessWidget {
   final bool usePhysicalStyle;
   final VoidCallback onTap;
   final VoidCallback? onToggleActive;
+  final bool hideLabel;
+  final String? badgeText;
 
   const FirstStepsComponentTile({
     super.key,
@@ -80,6 +82,8 @@ class FirstStepsComponentTile extends StatelessWidget {
     required this.usePhysicalStyle,
     required this.onTap,
     this.onToggleActive,
+    this.hideLabel = false,
+    this.badgeText,
   });
 
   @override
@@ -90,10 +94,10 @@ class FirstStepsComponentTile extends StatelessWidget {
     final bgColor = isSelected
         ? (usePhysicalStyle
             ? const Color(0xFFE0F2FE)
-            : const Color(0xFF0C4A6E).withValues(alpha: 0.75))
+            : const Color(0xFF0C4A6E).withValues(alpha: 0.85))
         : (usePhysicalStyle
-            ? Colors.white.withValues(alpha: 0.95)
-            : const Color(0xFF1E293B).withValues(alpha: 0.90));
+            ? Colors.white.withValues(alpha: 0.96)
+            : const Color(0xFF1E293B).withValues(alpha: 0.92));
 
     final borderColor = isSelected
         ? const Color(0xFF0284C7)
@@ -105,6 +109,8 @@ class FirstStepsComponentTile extends StatelessWidget {
         ? const Color(0xFF0F172A)
         : Colors.white;
 
+    final paintSize = scale.size(72, min: 52, max: 105);
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(scale.size(16, min: 12, max: 24)),
@@ -115,36 +121,34 @@ class FirstStepsComponentTile extends StatelessWidget {
           color: bgColor,
           borderRadius: BorderRadius.circular(scale.size(16, min: 12, max: 24)),
           border: Border.all(
-            color: borderColor,
-            width: isSelected ? 2.2 : 1.2,
+            color: isSelected ? const Color(0xFF00E5FF) : borderColor,
+            width: isSelected ? 2.4 : 1.2,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: const Color(0xFF0284C7).withValues(alpha: 0.35),
-                    blurRadius: scale.size(10, min: 6, max: 18),
+                    color: const Color(0xFF0284C7).withValues(alpha: 0.45),
+                    blurRadius: scale.size(12, min: 8, max: 20),
                     offset: const Offset(0, 4),
                   ),
                 ]
               : [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
+                    color: Colors.black.withValues(alpha: 0.08),
                     blurRadius: scale.size(6, min: 3, max: 10),
+                    offset: const Offset(0, 2),
                   ),
                 ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Área de renderização visual
+            // Área de renderização visual ampliada
             Expanded(
               child: Center(
                 child: usePhysicalStyle
                     ? CustomPaint(
-                        size: Size(
-                          scale.size(65, min: 45, max: 95),
-                          scale.size(65, min: 45, max: 95),
-                        ),
+                        size: Size(paintSize, paintSize),
                         painter: ComponentPhysicalPainter(
                           type: component.type,
                           isActive: component.isActive,
@@ -152,75 +156,105 @@ class FirstStepsComponentTile extends StatelessWidget {
                         ),
                       )
                     : CustomPaint(
-                        size: Size(
-                          scale.size(65, min: 45, max: 95),
-                          scale.size(65, min: 45, max: 95),
-                        ),
+                        size: Size(paintSize, paintSize),
                         painter: CircuitSymbolPainter(
                           type: component.type,
                           isActive: component.isActive,
                           color: usePhysicalStyle
                               ? const Color(0xFF0F172A)
-                              : const Color(0xFF00E5FF),
-                          strokeWidth: 2.2,
+                              : (isSelected
+                                  ? const Color(0xFF00E5FF)
+                                  : const Color(0xFF38BDF8)),
+                          strokeWidth: 2.4,
                         ),
                       ),
               ),
             ),
             const SizedBox(height: 6),
-            // Nome do Componente
-            Text(
-              component.namePt,
-              style: GoogleFonts.rajdhani(
-                color: textColor,
-                fontSize: scale.font(14, min: 12, max: 19),
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.5,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 2),
-            // Botão de alternar estado se suportar (Lâmpada / Chave / LED)
-            if (component.supportsStateToggle)
-              InkWell(
-                onTap: onToggleActive,
-                borderRadius: BorderRadius.circular(10),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: component.isActive
-                        ? const Color(0xFF10B981).withValues(alpha: 0.18)
-                        : Colors.grey.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: component.isActive
-                          ? const Color(0xFF10B981)
-                          : Colors.grey.withValues(alpha: 0.4),
-                      width: 0.8,
-                    ),
-                  ),
-                  child: Text(
-                    component.isActive ? 'LIGADO' : 'DESLIGADO',
-                    style: GoogleFonts.rajdhani(
-                      color: component.isActive
-                          ? const Color(0xFF10B981)
-                          : (usePhysicalStyle ? Colors.black54 : Colors.white60),
-                      fontSize: scale.font(10, min: 9, max: 14),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              )
-            else
+            // Rótulo ou identificador da opção (no Quiz)
+            if (!hideLabel) ...[
               Text(
-                usePhysicalStyle ? 'Físico' : 'Esquemático',
-                style: GoogleFonts.outfit(
-                  color: usePhysicalStyle ? Colors.black45 : Colors.white38,
-                  fontSize: scale.font(10.5, min: 9, max: 14),
+                component.namePt,
+                style: GoogleFonts.rajdhani(
+                  color: textColor,
+                  fontSize: scale.font(14.5, min: 12.5, max: 20),
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 2),
+              if (component.supportsStateToggle)
+                InkWell(
+                  onTap: onToggleActive,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: component.isActive
+                          ? const Color(0xFF10B981).withValues(alpha: 0.2)
+                          : Colors.grey.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: component.isActive
+                            ? const Color(0xFF10B981)
+                            : Colors.grey.withValues(alpha: 0.4),
+                        width: 1.0,
+                      ),
+                    ),
+                    child: Text(
+                      component.isActive ? 'LIGADO' : 'DESLIGADO',
+                      style: GoogleFonts.rajdhani(
+                        color: component.isActive
+                            ? const Color(0xFF10B981)
+                            : (usePhysicalStyle ? Colors.black54 : Colors.white60),
+                        fontSize: scale.font(10.5, min: 9.5, max: 14),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                Text(
+                  usePhysicalStyle ? 'Físico' : 'Esquemático',
+                  style: GoogleFonts.outfit(
+                    color: usePhysicalStyle ? Colors.black45 : Colors.white38,
+                    fontSize: scale.font(10.5, min: 9, max: 14),
+                  ),
+                ),
+            ] else ...[
+              // No modo quiz, exibe apenas a identificação da opção para não entregar o nome
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? const Color(0xFF00E5FF).withValues(alpha: 0.25)
+                      : (usePhysicalStyle
+                          ? const Color(0xFFF1F5F9)
+                          : const Color(0xFF0F172A)),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: isSelected
+                        ? const Color(0xFF00E5FF)
+                        : (usePhysicalStyle
+                            ? const Color(0xFFCBD5E1)
+                            : const Color(0xFF334155)),
+                  ),
+                ),
+                child: Text(
+                  badgeText ?? '?',
+                  style: GoogleFonts.rajdhani(
+                    color: isSelected
+                        ? (usePhysicalStyle ? const Color(0xFF0284C7) : const Color(0xFF00E5FF))
+                        : (usePhysicalStyle ? const Color(0xFF475569) : Colors.white70),
+                    fontSize: scale.font(13, min: 11, max: 17),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
+            ],
           ],
         ),
       ),
@@ -241,20 +275,82 @@ class FirstStepsComponentDetailCard extends StatelessWidget {
     this.onToggleState,
   });
 
+  String _getCategoryName(ComponentType type) {
+    switch (type) {
+      case ComponentType.battery:
+      case ComponentType.powerSupply:
+        return 'FONTE DE ENERGIA';
+      case ComponentType.bulb:
+      case ComponentType.motor:
+      case ComponentType.buzzer:
+        return 'CARGA / ATUADOR';
+      case ComponentType.switchComponent:
+        return 'DISPOSITIVO DE CONTROLE';
+      case ComponentType.resistor:
+      case ComponentType.potentiometer:
+        return 'LIMITADOR DE CORRENTE';
+      case ComponentType.diode:
+      case ComponentType.led:
+        return 'SEMICONDUTOR POLARIZADO';
+      case ComponentType.connectingWire:
+        return 'CONDUTOR ELÉTRICO';
+      case ComponentType.capacitor:
+        return 'ARMAZENADOR DE CARGA';
+      case ComponentType.fuse:
+        return 'PROTEÇÃO';
+    }
+  }
+
+  List<String> _getTerminals(ComponentType type) {
+    switch (type) {
+      case ComponentType.battery:
+        return ['Polo Positivo (+)', 'Polo Negativo (-)'];
+      case ComponentType.bulb:
+        return ['Terminal Central (Base)', 'Rosca Metálica'];
+      case ComponentType.switchComponent:
+        return ['Contato 1 (Entrada)', 'Contato 2 (Saída)'];
+      case ComponentType.resistor:
+        return ['Terminal A (Bidirecional)', 'Terminal B (Bidirecional)'];
+      case ComponentType.diode:
+        return ['Ânodo (+)', 'Cátodo (-)'];
+      case ComponentType.led:
+        return ['Ânodo (+) Terminal Longo', 'Cátodo (-) Terminal Curto'];
+      case ComponentType.motor:
+        return ['Borne Positivo (+)', 'Borne Negativo (-)'];
+      case ComponentType.connectingWire:
+        return ['Extremidade A', 'Extremidade B'];
+      default:
+        return ['Terminal 1', 'Terminal 2'];
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final scale = context.uiScale;
+    final category = _getCategoryName(component.type);
+    final terminals = _getTerminals(component.type);
 
     return Container(
       padding: EdgeInsets.all(scale.spacing(14, min: 10, max: 20)),
       decoration: BoxDecoration(
         color: const Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(scale.size(16, min: 12, max: 24)),
-        border: Border.all(color: const Color(0xFF0284C7).withValues(alpha: 0.4), width: 1.5),
+        border: Border.all(
+          color: const Color(0xFF0284C7).withValues(alpha: 0.4),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Cabeçalho com Ícone e Categoria
           Row(
             children: [
               Container(
@@ -294,9 +390,88 @@ class FirstStepsComponentDetailCard extends StatelessWidget {
                   ],
                 ),
               ),
+              // Badge de Categoria
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0F172A),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFF0284C7), width: 1),
+                ),
+                child: Text(
+                  category,
+                  style: GoogleFonts.rajdhani(
+                    color: const Color(0xFF00E5FF),
+                    fontSize: scale.font(10, min: 8.5, max: 13),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
+
+          // Preview Ampliado do Componente
+          Container(
+            width: double.infinity,
+            height: scale.size(90, min: 70, max: 120),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F172A),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFF334155)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CustomPaint(
+                      size: const Size(45, 45),
+                      painter: ComponentPhysicalPainter(
+                        type: component.type,
+                        isActive: component.isActive,
+                        isDarkMode: true,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Visual Físico',
+                      style: GoogleFonts.outfit(
+                        color: Colors.white54,
+                        fontSize: scale.font(10, min: 8.5, max: 13),
+                      ),
+                    ),
+                  ],
+                ),
+                Container(width: 1, height: 50, color: const Color(0xFF334155)),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CustomPaint(
+                      size: const Size(45, 45),
+                      painter: CircuitSymbolPainter(
+                        type: component.type,
+                        isActive: component.isActive,
+                        color: const Color(0xFF00E5FF),
+                        strokeWidth: 2.2,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Símbolo IEC',
+                      style: GoogleFonts.outfit(
+                        color: const Color(0xFF00E5FF),
+                        fontSize: scale.font(10, min: 8.5, max: 13),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
           // Função no circuito
           Text(
             'Função no Circuito:',
@@ -311,16 +486,57 @@ class FirstStepsComponentDetailCard extends StatelessWidget {
             component.description,
             style: GoogleFonts.outfit(
               color: Colors.white70,
-              fontSize: scale.font(13, min: 11, max: 17),
+              fontSize: scale.font(12.5, min: 11, max: 17),
               height: 1.35,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
+
+          // Terminais e Conexões
+          Text(
+            'Terminais e Conexão:',
+            style: GoogleFonts.rajdhani(
+              color: const Color(0xFF10B981),
+              fontSize: scale.font(14, min: 12, max: 18),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: terminals.map((t) {
+              final isPositive = t.contains('+');
+              final isNegative = t.contains('-');
+              final chipColor = isPositive
+                  ? const Color(0xFFEF4444)
+                  : (isNegative ? const Color(0xFF0284C7) : const Color(0xFF10B981));
+
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: chipColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: chipColor.withValues(alpha: 0.5)),
+                ),
+                child: Text(
+                  t,
+                  style: GoogleFonts.rajdhani(
+                    color: Colors.white,
+                    fontSize: scale.font(11, min: 9.5, max: 14),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 10),
+
           // Símbolo Esquemático
           Text(
             'Representação no Diagrama:',
             style: GoogleFonts.rajdhani(
-              color: const Color(0xFF10B981),
+              color: const Color(0xFFF59E0B),
               fontSize: scale.font(14, min: 12, max: 18),
               fontWeight: FontWeight.bold,
             ),
@@ -330,12 +546,13 @@ class FirstStepsComponentDetailCard extends StatelessWidget {
             component.symbolDescription,
             style: GoogleFonts.outfit(
               color: Colors.white70,
-              fontSize: scale.font(12.5, min: 10.5, max: 16.5),
+              fontSize: scale.font(12, min: 10.5, max: 16),
               height: 1.35,
             ),
           ),
+
           if (component.supportsStateToggle && onToggleState != null) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(

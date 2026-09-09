@@ -3,14 +3,13 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/ui_scale.dart';
 import '../../../models/first_step_component.dart';
-import '../../../widgets/circuit_symbol_painter.dart';
-import '../../../widgets/component_physical_painter.dart';
 import '../../../widgets/prof_volts_feedback_dialog.dart';
 import '../../../widgets/prof_volts_full_body.dart';
 import '../../../widgets/success_confetti_overlay.dart';
 import '../../../widgets/workbench_components.dart';
 import '../../../widgets/workbench_sidebar_cards.dart';
 import '../../../widgets/workbench_table_frame.dart';
+import '../widgets/first_steps_widgets.dart';
 
 /// Módulo 3 do Estande 01 — Desafio de Fixação (Quiz do Prof. Volts).
 class FirstStepsQuizTab extends StatefulWidget {
@@ -30,8 +29,8 @@ class _FirstStepsQuizTabState extends State<FirstStepsQuizTab> {
   late List<FirstStepComponent> _availableOptions;
   int _currentIndex = 0;
   int _score = 0;
-  bool _usePhysicalStyle = false; // Começa no modo esquemático para testar símbolos
-  final Set<String> _answeredCorrectlyIds = {};
+  bool _usePhysicalStyle = false; // Inicia no modo esquemático para testar os símbolos
+  String? _selectedOptionId;
 
   @override
   void initState() {
@@ -44,18 +43,22 @@ class _FirstStepsQuizTabState extends State<FirstStepsQuizTab> {
     setState(() {
       _currentIndex = 0;
       _score = 0;
-      _answeredCorrectlyIds.clear();
+      _selectedOptionId = null;
       _quizQuestions = List.from(FirstStepComponent.defaultList)..shuffle();
     });
   }
 
   void _onAnswer(FirstStepComponent selected) {
+    setState(() {
+      _selectedOptionId = selected.id;
+    });
+
     final currentTarget = _quizQuestions[_currentIndex];
     final isCorrect = selected.id == currentTarget.id;
 
     final feedbackMessage = isCorrect
-        ? 'Excelente! Você identificou corretamente o componente ${currentTarget.namePt}.'
-        : 'Atenção: Você selecionou ${selected.namePt}, mas o componente procurado era ${currentTarget.namePt}.';
+        ? 'Excelente! Você identificou corretamente o símbolo do(a) ${currentTarget.namePt}.'
+        : 'Atenção: Você selecionou o símbolo de ${selected.namePt}, mas o componente procurado era ${currentTarget.namePt}.';
 
     showDialog(
       context: context,
@@ -66,9 +69,9 @@ class _FirstStepsQuizTabState extends State<FirstStepsQuizTab> {
         onAction: () {
           Navigator.of(context).pop();
           setState(() {
+            _selectedOptionId = null;
             if (isCorrect) {
               _score++;
-              _answeredCorrectlyIds.add(selected.id);
             }
             if (_currentIndex < _quizQuestions.length - 1) {
               _currentIndex++;
@@ -225,14 +228,15 @@ class _FirstStepsQuizTabState extends State<FirstStepsQuizTab> {
                     padding: const EdgeInsets.all(16),
                     child: Column(
                       children: [
-                        // Card da Pergunta
+                        // Card da Pergunta com Instrução em Destaque
                         Container(
                           width: double.infinity,
-                          padding: EdgeInsets.all(scale.spacing(12, min: 8, max: 18)),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: scale.spacing(16, min: 12, max: 24),
+                            vertical: scale.spacing(10, min: 8, max: 16),
+                          ),
                           decoration: BoxDecoration(
-                            color: _usePhysicalStyle
-                                ? const Color(0xFFE0F2FE)
-                                : const Color(0xFF1E293B),
+                            color: const Color(0xFF0F172A).withValues(alpha: 0.85),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
                               color: const Color(0xFF0284C7),
@@ -242,22 +246,20 @@ class _FirstStepsQuizTabState extends State<FirstStepsQuizTab> {
                           child: Column(
                             children: [
                               Text(
-                                'SELECIONE O COMPONENTE ABAIXO:',
+                                'SELECIONE O SÍMBOLO OU COMPONENTE CORRESPONDENTE:',
                                 style: GoogleFonts.rajdhani(
-                                  color: _usePhysicalStyle
-                                      ? const Color(0xFF0F172A)
-                                      : const Color(0xFF00E5FF),
+                                  color: const Color(0xFF00E5FF),
                                   fontWeight: FontWeight.bold,
-                                  fontSize: scale.font(15, min: 12, max: 19),
+                                  fontSize: scale.font(14, min: 12, max: 18),
                                   letterSpacing: 1.0,
                                 ),
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 2),
                               Text(
                                 currentTarget.namePt.toUpperCase(),
                                 style: GoogleFonts.rajdhani(
                                   color: const Color(0xFF10B981),
-                                  fontSize: scale.font(22, min: 18, max: 30),
+                                  fontSize: scale.font(24, min: 19, max: 32),
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 1.5,
                                 ),
@@ -266,7 +268,7 @@ class _FirstStepsQuizTabState extends State<FirstStepsQuizTab> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        // Grid com opções para o aluno selecionar
+                        // Grid com opções (sem os nomes escritos para não entregar a resposta!)
                         Expanded(
                           child: LayoutBuilder(
                             builder: (context, constraints) {
@@ -286,74 +288,15 @@ class _FirstStepsQuizTabState extends State<FirstStepsQuizTab> {
                                 ),
                                 itemBuilder: (context, index) {
                                   final comp = _availableOptions[index];
+                                  final isSelected = comp.id == _selectedOptionId;
 
-                                  return InkWell(
+                                  return FirstStepsComponentTile(
+                                    component: comp,
+                                    isSelected: isSelected,
+                                    usePhysicalStyle: _usePhysicalStyle,
+                                    hideLabel: true,
+                                    badgeText: 'Opção ${String.fromCharCode(65 + index)}',
                                     onTap: () => _onAnswer(comp),
-                                    borderRadius: BorderRadius.circular(14),
-                                    child: Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: _usePhysicalStyle
-                                            ? Colors.white
-                                            : const Color(0xFF1E293B),
-                                        borderRadius: BorderRadius.circular(14),
-                                        border: Border.all(
-                                          color: _usePhysicalStyle
-                                              ? const Color(0xFFCBD5E1)
-                                              : const Color(0xFF334155),
-                                          width: 1.2,
-                                        ),
-                                      ),
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Expanded(
-                                            child: Center(
-                                              child: _usePhysicalStyle
-                                                  ? CustomPaint(
-                                                      size: const Size(60, 60),
-                                                      painter:
-                                                          ComponentPhysicalPainter(
-                                                        type: comp.type,
-                                                        isActive: false,
-                                                        isDarkMode:
-                                                            !_usePhysicalStyle,
-                                                      ),
-                                                    )
-                                                  : CustomPaint(
-                                                      size: const Size(60, 60),
-                                                      painter:
-                                                          CircuitSymbolPainter(
-                                                        type: comp.type,
-                                                        isActive: false,
-                                                        color: _usePhysicalStyle
-                                                            ? const Color(
-                                                                0xFF0F172A)
-                                                            : const Color(
-                                                                0xFF00E5FF),
-                                                        strokeWidth: 2.2,
-                                                      ),
-                                                    ),
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            comp.namePt,
-                                            style: GoogleFonts.rajdhani(
-                                              color: _usePhysicalStyle
-                                                  ? const Color(0xFF0F172A)
-                                                  : Colors.white,
-                                              fontSize: scale.font(13,
-                                                  min: 11, max: 17),
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
                                   );
                                 },
                               );
@@ -376,16 +319,18 @@ class _FirstStepsQuizTabState extends State<FirstStepsQuizTab> {
             teamTitle: 'Desafio do Prof. Volts',
             showTeamHeader: false,
             buttonColor: const Color(0xFF059669),
+            buttonLabel: 'FINALIZAR QUIZ ➔',
             toolboxItems: [
               WorkbenchMissionObjectiveCard(
                 missionNumber: 3,
                 title: 'Desafio de Fixação',
                 description:
-                    'Identifique o componente ou símbolo esquemático solicitado. Teste sua memória e consolide o aprendizado!',
+                    'Identifique o componente ou símbolo esquemático solicitado. Teste sua memória visual para consolidar o aprendizado!',
                 voltsTip:
                     'Alterne entre o modo Físico e Esquemático no topo da bancada se quiser treinar a identificação de símbolos.',
               ),
               const SizedBox(height: 12),
+              // Card do Placar
               Container(
                 padding: EdgeInsets.all(scale.spacing(14, min: 10, max: 20)),
                 decoration: BoxDecoration(
@@ -394,23 +339,38 @@ class _FirstStepsQuizTabState extends State<FirstStepsQuizTab> {
                   border: Border.all(
                     color: const Color(0xFF00E5FF).withValues(alpha: 0.4),
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.15),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
                 child: Column(
                   children: [
-                    Text(
-                      'SEU PLACAR',
-                      style: GoogleFonts.rajdhani(
-                        color: Colors.white70,
-                        fontWeight: FontWeight.bold,
-                        fontSize: scale.font(14, min: 12, max: 18),
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.stars_rounded, color: Colors.amber, size: 20),
+                        const SizedBox(width: 6),
+                        Text(
+                          'SEU PLACAR',
+                          style: GoogleFonts.rajdhani(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: scale.font(15, min: 13, max: 20),
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 6),
                     Text(
                       '$_score / ${_quizQuestions.length}',
                       style: GoogleFonts.rajdhani(
                         color: const Color(0xFF10B981),
-                        fontSize: scale.font(32, min: 24, max: 42),
+                        fontSize: scale.font(34, min: 26, max: 44),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -424,6 +384,14 @@ class _FirstStepsQuizTabState extends State<FirstStepsQuizTab> {
                         valueColor: const AlwaysStoppedAnimation<Color>(
                           Color(0xFF00E5FF),
                         ),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Progresso: ${(((_currentIndex + 1) / _quizQuestions.length) * 100).toInt()}%',
+                      style: GoogleFonts.outfit(
+                        color: Colors.white60,
+                        fontSize: scale.font(11, min: 9.5, max: 14),
                       ),
                     ),
                   ],

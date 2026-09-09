@@ -26,6 +26,7 @@ class FirstStepsAnatomyTab extends StatefulWidget {
 class _FirstStepsAnatomyTabState extends State<FirstStepsAnatomyTab> {
   bool _usePhysicalStyle = true;
   int _selectedCategoryIndex = 0; // 0: Polarizados, 1: Bidirecionais
+  String? _highlightedTerminal;
 
   void _onCompleteAnatomy() {
     showSuccessConfetti(context);
@@ -102,11 +103,29 @@ class _FirstStepsAnatomyTabState extends State<FirstStepsAnatomyTab> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 12),
+                        // Grid 2x2 com os 4 componentes da categoria selecionada
                         Expanded(
-                          child: _selectedCategoryIndex == 0
-                              ? _buildPolarizedSection()
-                              : _buildBidirectionalSection(),
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              final crossAxisCount =
+                                  constraints.maxWidth >= 700 ? 2 : 1;
+                              final spacing = scale.spacing(12, min: 8, max: 16);
+
+                              return GridView.count(
+                                physics: const BouncingScrollPhysics(),
+                                crossAxisCount: crossAxisCount,
+                                crossAxisSpacing: spacing,
+                                mainAxisSpacing: spacing,
+                                childAspectRatio: constraints.maxWidth >= 700
+                                    ? 1.55
+                                    : 2.1,
+                                children: _selectedCategoryIndex == 0
+                                    ? _buildPolarizedCards()
+                                    : _buildBidirectionalCards(),
+                              );
+                            },
+                          ),
                         ),
                       ],
                     ),
@@ -124,6 +143,7 @@ class _FirstStepsAnatomyTabState extends State<FirstStepsAnatomyTab> {
             teamTitle: 'Análise de Conexões',
             showTeamHeader: false,
             buttonColor: const Color(0xFF059669),
+            buttonLabel: 'AVANÇAR PARA O QUIZ ➔',
             toolboxItems: [
               WorkbenchMissionObjectiveCard(
                 missionNumber: 2,
@@ -174,6 +194,15 @@ class _FirstStepsAnatomyTabState extends State<FirstStepsAnatomyTab> {
                     : const Color(0xFF334155)),
             width: isSelected ? 2.0 : 1.0,
           ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF0284C7).withValues(alpha: 0.35),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -202,66 +231,94 @@ class _FirstStepsAnatomyTabState extends State<FirstStepsAnatomyTab> {
     );
   }
 
-  Widget _buildPolarizedSection() {
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      child: Column(
-        children: [
-          _buildAnatomyCard(
-            title: 'Bateria / Pilha (Fonte de Tensão)',
-            type: ComponentType.battery,
-            terminalLeft: 'Polo Positivo (+)',
-            terminalRight: 'Polo Negativo (-)',
-            colorLeft: const Color(0xFFEF4444),
-            colorRight: const Color(0xFF1E293B),
-            description:
-                'O polo positivo (+) tem maior potencial elétrico. A corrente convencional sai do polo positivo e retorna pelo polo negativo (-).',
-          ),
-          const SizedBox(height: 12),
-          _buildAnatomyCard(
-            title: 'LED (Diodo Emissor de Luz)',
-            type: ComponentType.led,
-            terminalLeft: 'Ânodo (+) Terminal Longo',
-            terminalRight: 'Cátodo (-) Terminal Curto',
-            colorLeft: const Color(0xFFEF4444),
-            colorRight: const Color(0xFF0284C7),
-            description:
-                'O LED só conduz corrente do Ânodo para o Cátodo. Se for ligado invertido, o circuito permanecerá em estado aberto e apagado.',
-          ),
-        ],
+  List<Widget> _buildPolarizedCards() {
+    return [
+      _buildAnatomyCard(
+        title: 'Bateria (Fonte DC)',
+        type: ComponentType.battery,
+        terminalLeft: 'Polo Positivo (+)',
+        terminalRight: 'Polo Negativo (-)',
+        colorLeft: const Color(0xFFEF4444),
+        colorRight: const Color(0xFF0284C7),
+        description:
+            'Polo (+) com potencial mais alto. A corrente convencional sai pelo (+) e retorna pelo (-).',
       ),
-    );
+      _buildAnatomyCard(
+        title: 'LED (Emissor de Luz)',
+        type: ComponentType.led,
+        terminalLeft: 'Ânodo (+) Longo',
+        terminalRight: 'Cátodo (-) Curto',
+        colorLeft: const Color(0xFFEF4444),
+        colorRight: const Color(0xFF0284C7),
+        description:
+            'Só acende quando a corrente entra pelo Ânodo (+) e sai pelo Cátodo (-).',
+      ),
+      _buildAnatomyCard(
+        title: 'Diodo Retificador',
+        type: ComponentType.diode,
+        terminalLeft: 'Ânodo (Entrada)',
+        terminalRight: 'Cátodo (Barra)',
+        colorLeft: const Color(0xFFEF4444),
+        colorRight: const Color(0xFF0284C7),
+        description:
+            'Funciona como uma válvula de sentido único, bloqueando correntes reversas.',
+      ),
+      _buildAnatomyCard(
+        title: 'Motor Elétrico DC',
+        type: ComponentType.motor,
+        terminalLeft: 'Borne (+)',
+        terminalRight: 'Borne (-)',
+        colorLeft: const Color(0xFFEF4444),
+        colorRight: const Color(0xFF0284C7),
+        description:
+            'Inverter os polos inverte o sentido de rotação mecânica do eixo.',
+      ),
+    ];
   }
 
-  Widget _buildBidirectionalSection() {
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      child: Column(
-        children: [
-          _buildAnatomyCard(
-            title: 'Lâmpada Incandescente (Carga)',
-            type: ComponentType.bulb,
-            terminalLeft: 'Terminal A (Base)',
-            terminalRight: 'Terminal B (Rosca)',
-            colorLeft: const Color(0xFFF59E0B),
-            colorRight: const Color(0xFFF59E0B),
-            description:
-                'A lâmpada incandescente não tem polaridade! A corrente pode fluir em qualquer direção através do filamento de tungstênio.',
-          ),
-          const SizedBox(height: 12),
-          _buildAnatomyCard(
-            title: 'Resistor (Limitador de Corrente)',
-            type: ComponentType.resistor,
-            terminalLeft: 'Terminal 1',
-            terminalRight: 'Terminal 2',
-            colorLeft: const Color(0xFF10B981),
-            colorRight: const Color(0xFF10B981),
-            description:
-                'O resistor é perfeitamente simétrico e reversível. A oposição à corrente é idêntica em ambos os sentidos.',
-          ),
-        ],
+  List<Widget> _buildBidirectionalCards() {
+    return [
+      _buildAnatomyCard(
+        title: 'Lâmpada Incandescente',
+        type: ComponentType.bulb,
+        terminalLeft: 'Terminal A (Base)',
+        terminalRight: 'Terminal B (Rosca)',
+        colorLeft: const Color(0xFFF59E0B),
+        colorRight: const Color(0xFFF59E0B),
+        description:
+            'Sem polaridade: a corrente pode fluir em qualquer sentido pelo filamento.',
       ),
-    );
+      _buildAnatomyCard(
+        title: 'Resistor Linear',
+        type: ComponentType.resistor,
+        terminalLeft: 'Terminal 1',
+        terminalRight: 'Terminal 2',
+        colorLeft: const Color(0xFF10B981),
+        colorRight: const Color(0xFF10B981),
+        description:
+            'Totalmente reversível: oferece a mesma oposição à corrente em ambos os lados.',
+      ),
+      _buildAnatomyCard(
+        title: 'Interruptor / Chave',
+        type: ComponentType.switchComponent,
+        terminalLeft: 'Contato 1',
+        terminalRight: 'Contato 2',
+        colorLeft: const Color(0xFF10B981),
+        colorRight: const Color(0xFF10B981),
+        description:
+            'Abre ou fecha o trecho condutor independentemente de qual terminal recebe a tensão.',
+      ),
+      _buildAnatomyCard(
+        title: 'Fio de Conexão',
+        type: ComponentType.connectingWire,
+        terminalLeft: 'Extremidade A',
+        terminalRight: 'Extremidade B',
+        colorLeft: const Color(0xFF10B981),
+        colorRight: const Color(0xFF10B981),
+        description:
+            'Condutor ideal de resistência nula, transporta elétrons nos dois sentidos.',
+      ),
+    ];
   }
 
   Widget _buildAnatomyCard({
@@ -276,21 +333,30 @@ class _FirstStepsAnatomyTabState extends State<FirstStepsAnatomyTab> {
     final scale = context.uiScale;
 
     return Container(
-      padding: EdgeInsets.all(scale.spacing(14, min: 10, max: 20)),
+      padding: EdgeInsets.all(scale.spacing(12, min: 8, max: 16)),
       decoration: BoxDecoration(
         color: _usePhysicalStyle
             ? Colors.white
-            : const Color(0xFF1E293B).withValues(alpha: 0.9),
+            : const Color(0xFF1E293B).withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: _usePhysicalStyle
               ? const Color(0xFFCBD5E1)
               : const Color(0xFF334155),
+          width: 1.2,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Título do componente
           Text(
             title,
             style: GoogleFonts.rajdhani(
@@ -298,78 +364,103 @@ class _FirstStepsAnatomyTabState extends State<FirstStepsAnatomyTab> {
                   ? const Color(0xFF0F172A)
                   : const Color(0xFF00E5FF),
               fontWeight: FontWeight.bold,
-              fontSize: scale.font(16, min: 13, max: 20),
+              fontSize: scale.font(15, min: 13, max: 19),
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              // Visualizador do Componente
-              Container(
-                width: scale.size(80, min: 60, max: 110),
-                height: scale.size(80, min: 60, max: 110),
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: _usePhysicalStyle
-                      ? const Color(0xFFF1F5F9)
-                      : const Color(0xFF0F172A),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Center(
-                  child: _usePhysicalStyle
-                      ? CustomPaint(
-                          size: const Size(55, 55),
-                          painter: ComponentPhysicalPainter(
-                            type: type,
-                            isActive: true,
-                            isDarkMode: !_usePhysicalStyle,
+          const SizedBox(height: 8),
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Visualizador do Componente
+                Container(
+                  width: scale.size(68, min: 50, max: 88),
+                  height: scale.size(68, min: 50, max: 88),
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: _usePhysicalStyle
+                        ? const Color(0xFFF1F5F9)
+                        : const Color(0xFF0F172A),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _usePhysicalStyle
+                          ? const Color(0xFFE2E8F0)
+                          : const Color(0xFF334155),
+                    ),
+                  ),
+                  child: Center(
+                    child: _usePhysicalStyle
+                        ? CustomPaint(
+                            size: const Size(48, 48),
+                            painter: ComponentPhysicalPainter(
+                              type: type,
+                              isActive: true,
+                              isDarkMode: !_usePhysicalStyle,
+                            ),
+                          )
+                        : CustomPaint(
+                            size: const Size(48, 48),
+                            painter: CircuitSymbolPainter(
+                              type: type,
+                              isActive: true,
+                              color: _usePhysicalStyle
+                                  ? const Color(0xFF0F172A)
+                                  : const Color(0xFF00E5FF),
+                              strokeWidth: 2.2,
+                            ),
                           ),
-                        )
-                      : CustomPaint(
-                          size: const Size(55, 55),
-                          painter: CircuitSymbolPainter(
-                            type: type,
-                            isActive: true,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                // Terminais e descrição
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Badges dos terminais
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          _buildTerminalBadge(
+                            terminalLeft,
+                            colorLeft,
+                          ),
+                          Icon(
+                            Icons.arrow_forward_rounded,
+                            size: scale.icon(14, min: 12, max: 18),
                             color: _usePhysicalStyle
-                                ? const Color(0xFF0F172A)
-                                : const Color(0xFF00E5FF),
-                            strokeWidth: 2.2,
+                                ? Colors.black45
+                                : Colors.white54,
                           ),
-                        ),
-                ),
-              ),
-              const SizedBox(width: 14),
-              // Terminais
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 4,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        _buildTerminalBadge(terminalLeft, colorLeft),
-                        const Icon(Icons.arrow_forward_rounded,
-                            size: 16, color: Colors.grey),
-                        _buildTerminalBadge(terminalRight, colorRight),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      description,
-                      style: GoogleFonts.outfit(
-                        color: _usePhysicalStyle
-                            ? const Color(0xFF475569)
-                            : Colors.white70,
-                        fontSize: scale.font(12.5, min: 11, max: 16),
-                        height: 1.35,
+                          _buildTerminalBadge(
+                            terminalRight,
+                            colorRight,
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 6),
+                      Text(
+                        description,
+                        style: GoogleFonts.outfit(
+                          color: _usePhysicalStyle
+                              ? const Color(0xFF475569)
+                              : Colors.white70,
+                          fontSize: scale.font(11.5, min: 10, max: 15),
+                          height: 1.3,
+                        ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -378,19 +469,33 @@ class _FirstStepsAnatomyTabState extends State<FirstStepsAnatomyTab> {
 
   Widget _buildTerminalBadge(String label, Color color) {
     final scale = context.uiScale;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color, width: 1.2),
-      ),
-      child: Text(
-        label,
-        style: GoogleFonts.rajdhani(
-          color: color,
-          fontSize: scale.font(12, min: 10, max: 15),
-          fontWeight: FontWeight.bold,
+    final isHighlighted = _highlightedTerminal == label;
+
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _highlightedTerminal = isHighlighted ? null : label;
+        });
+      },
+      borderRadius: BorderRadius.circular(6),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: isHighlighted ? 0.35 : 0.15),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: color,
+            width: isHighlighted ? 1.8 : 1.0,
+          ),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.rajdhani(
+            color: _usePhysicalStyle ? color : Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: scale.font(11, min: 9.5, max: 14),
+          ),
         ),
       ),
     );
@@ -398,6 +503,7 @@ class _FirstStepsAnatomyTabState extends State<FirstStepsAnatomyTab> {
 
   Widget _buildRulesCard() {
     final scale = context.uiScale;
+
     return Container(
       padding: EdgeInsets.all(scale.spacing(14, min: 10, max: 20)),
       decoration: BoxDecoration(
@@ -413,30 +519,43 @@ class _FirstStepsAnatomyTabState extends State<FirstStepsAnatomyTab> {
         children: [
           Row(
             children: [
-              const Icon(Icons.tips_and_updates_rounded,
-                  color: Color(0xFF10B981), size: 20),
+              const Icon(Icons.lightbulb_rounded, color: Color(0xFF10B981), size: 20),
               const SizedBox(width: 8),
               Text(
                 'Regras de Ouro:',
                 style: GoogleFonts.rajdhani(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
-                  fontSize: scale.font(16, min: 13, max: 20),
+                  fontSize: scale.font(15, min: 13, max: 20),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          Text(
-            '• Nunca conecte o polo (+) diretamente ao (-) da bateria sem uma carga (isso causaria um curto-circuito perigoso!).\n'
+          _buildRuleItem(
+            '• Nunca conecte o polo (+) diretamente ao (-) da bateria sem uma carga (isso causaria um curto-circuito perigoso).',
+          ),
+          const SizedBox(height: 4),
+          _buildRuleItem(
             '• A corrente sempre precisa de um caminho fechado (loop) para fluir.',
-            style: GoogleFonts.outfit(
-              color: Colors.white70,
-              fontSize: scale.font(13, min: 11, max: 17),
-              height: 1.4,
-            ),
+          ),
+          const SizedBox(height: 4),
+          _buildRuleItem(
+            '• Componentes polarizados só funcionam quando inseridos na orientação correta.',
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildRuleItem(String text) {
+    final scale = context.uiScale;
+    return Text(
+      text,
+      style: GoogleFonts.outfit(
+        color: Colors.white70,
+        fontSize: scale.font(12, min: 10.5, max: 16),
+        height: 1.35,
       ),
     );
   }

@@ -71,7 +71,7 @@ void main() {
       )));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('SELECIONE O COMPONENTE'), findsOneWidget);
+      expect(find.textContaining('SELECIONE O SÍMBOLO OU COMPONENTE'), findsOneWidget);
       expect(find.textContaining('SEU PLACAR'), findsOneWidget);
     });
   });

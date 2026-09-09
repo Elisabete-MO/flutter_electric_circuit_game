@@ -82,20 +82,39 @@ class _FirstStepsShowcaseTabState extends State<FirstStepsShowcaseTab> {
                     padding: const EdgeInsets.all(16),
                     child: Column(
                       children: [
-                        Text(
-                          _usePhysicalStyle
-                              ? 'Vitrine Realista dos Componentes — Toque para inspecionar'
-                              : 'Diagrama Esquemático Universal (Norma IEC/ABNT) — Toque para inspecionar',
-                          style: GoogleFonts.rajdhani(
-                            color: _usePhysicalStyle
-                                ? const Color(0xFF0F172A)
-                                : const Color(0xFF00E5FF),
-                            fontWeight: FontWeight.bold,
-                            fontSize: scale.font(16, min: 13, max: 20),
+                        // Faixa de Título com Alto Contraste
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: scale.spacing(14, min: 10, max: 20),
+                            vertical: scale.spacing(6, min: 4, max: 10),
                           ),
-                          textAlign: TextAlign.center,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0F172A).withValues(alpha: 0.82),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: _usePhysicalStyle
+                                  ? const Color(0xFF0284C7).withValues(alpha: 0.5)
+                                  : const Color(0xFF00E5FF).withValues(alpha: 0.5),
+                              width: 1.2,
+                            ),
+                          ),
+                          child: Text(
+                            _usePhysicalStyle
+                                ? 'Vitrine Realista dos Componentes — Toque em um item para inspecionar'
+                                : 'Diagrama Esquemático Universal (Norma IEC/ABNT) — Toque para inspecionar',
+                            style: GoogleFonts.rajdhani(
+                              color: _usePhysicalStyle
+                                  ? Colors.white
+                                  : const Color(0xFF00E5FF),
+                              fontWeight: FontWeight.bold,
+                              fontSize: scale.font(14.5, min: 12.5, max: 18),
+                              letterSpacing: 0.5,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                         const SizedBox(height: 12),
+                        // Grade de Componentes
                         Expanded(
                           child: LayoutBuilder(
                             builder: (context, constraints) {
@@ -146,6 +165,7 @@ class _FirstStepsShowcaseTabState extends State<FirstStepsShowcaseTab> {
             teamTitle: 'Guia de Componentes',
             showTeamHeader: false,
             buttonColor: const Color(0xFF059669),
+            buttonLabel: 'AVANÇAR PARA TERMINAIS ➔',
             toolboxItems: [
               WorkbenchMissionObjectiveCard(
                 missionNumber: 1,
