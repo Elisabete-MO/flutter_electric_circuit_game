@@ -369,6 +369,28 @@ class MovimentoSideToolbox extends StatelessWidget {
           runSpacing: 10,
           children: [
             WorkbenchSymbolToolboxTile<String>(
+              data: 'battery',
+              label: 'Bateria',
+              tooltip: 'Fonte DC (6V)',
+              symbolWidget: usePhysicalStyle
+                  ? CustomPaint(
+                      size: const Size(34, 34),
+                      painter: ComponentPhysicalPainter(
+                        type: ComponentType.battery,
+                        isDarkMode: false,
+                      ),
+                    )
+                  : CustomPaint(
+                      size: const Size(34, 34),
+                      painter: CircuitSymbolPainter(
+                        type: ComponentType.battery,
+                        color: const Color(0xFF0F172A),
+                        strokeWidth: 2.0,
+                      ),
+                    ),
+              color: const Color(0xFFD97706),
+            ),
+            WorkbenchSymbolToolboxTile<String>(
               data: 'motor_cc',
               label: 'Motor CC',
               tooltip: 'Motor CC',

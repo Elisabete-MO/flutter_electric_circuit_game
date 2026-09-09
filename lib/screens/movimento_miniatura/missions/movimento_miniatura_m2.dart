@@ -234,6 +234,7 @@ class _MovimentoMiniaturaM2State extends State<MovimentoMiniaturaM2>
                     currentMa: currentMa,
                     isClosed: _isClosed,
                   ),
+                  bottomWidget: _buildUndoRedoButtons(),
                   child: _usePhysicalStyle
                       ? _buildPhysicalCanvas()
                       : _buildSchematicCanvas(),
@@ -255,11 +256,6 @@ class _MovimentoMiniaturaM2State extends State<MovimentoMiniaturaM2>
               _buildInvestigationStepperCard(),
               const SizedBox(height: 12),
               MovimentoPredictionBadge(prediction: _m2Prediction),
-              MovimentoUndoRedoButtons(
-                controller: _undoRedoController,
-                onUndo: () => setState(() => _undoRedoController.undo()),
-                onRedo: () => setState(() => _undoRedoController.redo()),
-              ),
               MovimentoSideToolbox(usePhysicalStyle: _usePhysicalStyle),
             ],
             onEnergizePressed: _onEnergizePressed,
@@ -267,6 +263,42 @@ class _MovimentoMiniaturaM2State extends State<MovimentoMiniaturaM2>
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildUndoRedoButtons() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.85),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFCBD5E1)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.undo_rounded, size: 20),
+            tooltip: 'Desfazer ação',
+            color: _undoRedoController.canUndo
+                ? const Color(0xFF0F172A)
+                : const Color(0xFFCBD5E1),
+            onPressed: _undoRedoController.canUndo
+                ? () => setState(() => _undoRedoController.undo())
+                : null,
+          ),
+          IconButton(
+            icon: const Icon(Icons.redo_rounded, size: 20),
+            tooltip: 'Refazer ação',
+            color: _undoRedoController.canRedo
+                ? const Color(0xFF0F172A)
+                : const Color(0xFFCBD5E1),
+            onPressed: _undoRedoController.canRedo
+                ? () => setState(() => _undoRedoController.redo())
+                : null,
+          ),
+        ],
+      ),
     );
   }
 
