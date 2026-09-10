@@ -1,25 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../core/ui_scale.dart';
-
 import '../../../models/circuit_action.dart';
-import '../../../models/first_step_component.dart';
-import '../../../models/stand_mission.dart';
-import '../../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../../state/circuit_undo_redo_controller.dart';
-import '../../../widgets/circuit_symbol_painter.dart';
-import '../../../widgets/component_physical_painter.dart';
-import '../../../widgets/physical_blueprint_socket.dart';
 import '../../../widgets/prof_volts_explanation_dialog.dart';
 import '../../../widgets/prof_volts_feedback_dialog.dart';
 import '../../../widgets/prof_volts_prediction_dialog.dart';
-import '../../../widgets/realistic_wire_painter.dart';
-import '../../../widgets/schematic_blueprint_socket.dart';
 import '../../../widgets/success_confetti_overlay.dart';
 import '../../../widgets/workbench_components.dart';
-import '../../../widgets/workbench_sidebar_cards.dart';
 import '../../../widgets/workbench_table_frame.dart';
+import '../widgets/movimento_miniatura_breadboard_painter.dart';
 import '../widgets/movimento_miniatura_widgets.dart';
 
 /// Missão 2 do Estande 06 — Inversão de Polaridade e Sentido de Rotação.
@@ -37,81 +27,48 @@ class MovimentoMiniaturaM2 extends StatefulWidget {
 
 class _MovimentoMiniaturaM2State extends State<MovimentoMiniaturaM2>
     with SingleTickerProviderStateMixin {
-  final StandMission _mission = StandMission.movimentoMiniaturaMissions[1];
   final CircuitUndoRedoController _undoRedoController =
       CircuitUndoRedoController();
 
-  late final AnimationController _currentFlowController;
+  late final AnimationController _animController;
 
   bool _usePhysicalStyle = true;
   bool _isSimulating = false;
-
-  bool _m2ReversedPolarity = false;
-  bool _m2BatteryInserted = false;
-  double _m2BatteryRotation = 0.0;
-  bool _m2MotorInserted = false;
-  double _m2MotorRotation = 0.0;
-  String? _m2Prediction;
+  bool _isReversed = false;
+  bool _isEnergized = false;
+  String? _prediction;
 
   @override
   void initState() {
     super.initState();
-    _currentFlowController = AnimationController(
+    _animController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 1000),
     )..repeat();
   }
 
   @override
   void dispose() {
-    _currentFlowController.dispose();
+    _animController.dispose();
     super.dispose();
   }
 
-  bool get _isClosed => _m2BatteryInserted && _m2MotorInserted;
+  bool get _isClosed => _isEnergized;
 
-  void _insertComponent({
-    required String name,
-    required bool Function() getInserted,
-    required void Function(bool) setInserted,
-    required double Function() getRotation,
-    required void Function(double) setRotation,
-  }) {
-    final prevInserted = getInserted();
-    final prevRotation = getRotation();
-    final nextInserted = !prevInserted;
-    _undoRedoController.execute(InsertComponentAction(
-      description: nextInserted ? 'Inserir $name' : 'Remover $name',
-      onApply: () => setState(() {
-        setInserted(nextInserted);
-        if (nextInserted) setRotation(0);
-      }),
-      onUndo: () => setState(() {
-        setInserted(prevInserted);
-        setRotation(prevRotation);
-      }),
-    ));
-  }
-
-  void _rotateComponent({
-    required String name,
-    required double Function() getRotation,
-    required void Function(double) setRotation,
-  }) {
-    final prevRotation = getRotation();
-    final newRotation = (prevRotation + 90) % 360;
-    _undoRedoController.execute(RotateComponentAction(
-      description: 'Girar $name (${newRotation.toInt()}°)',
-      onApply: () => setState(() => setRotation(newRotation)),
-      onUndo: () => setState(() => setRotation(prevRotation)),
+  void _togglePolarity() {
+    final prev = _isReversed;
+    _undoRedoController.execute(ToggleBoolAction(
+      description: 'Inverter Polaridade dos Cabos do Motor',
+      onApply: () => setState(() => _isReversed = !prev),
+      onUndo: () => setState(() => _isReversed = prev),
     ));
   }
 
   void _onEnergizePressed() {
-    if (_m2Prediction == null) {
+    if (_prediction == null) {
       _showPredictionDialog();
     } else {
-      _validateMission();
+      _validate();
     }
   }
 
@@ -121,33 +78,31 @@ class _MovimentoMiniaturaM2State extends State<MovimentoMiniaturaM2>
       barrierDismissible: false,
       builder: (context) => ProfVoltsPredictionDialog(
         question:
-            'Se inverter a polaridade da bateria, o que acontece com o motor?',
+            'O que acontecerá ao inverter os polos (+) e (–) conectados ao motor CC?',
         options: const [
-          'Gira no mesmo sentido',
-          'Gira no sentido inverso',
-          'Para de girar',
+          'O sentido de rotação se inverte para anti-horário ↺',
+          'O motor para de girar',
+          'O motor queima',
           'Não sei'
         ],
         onPredict: (prediction) {
           Navigator.of(context).pop();
-          setState(() => _m2Prediction = prediction);
-          _validateMission();
+          setState(() => _prediction = prediction);
+          _validate();
         },
       ),
     );
   }
 
-  void _showExplanationDialog(bool isSuccess) {
-    if (!isSuccess || !mounted) return;
+  void _showExplanationDialog() {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => ProfVoltsExplanationDialog(
-        question: 'Por que inverter a polaridade muda o sentido do motor?',
+        question: 'Por que inverter a polaridade inverte o sentido do motor CC?',
         options: const [
-          'Polaridade inverte o campo magnético',
-          'Corrente muda de intensidade',
-          'Resistor inverte a queda',
+          'Inverter a corrente inverte o sentido do campo magnético, invertendo a força no rotor',
+          'A hélice física muda de ângulo sozinha',
           'Não sei explicar'
         ],
         onExplain: (_) {
@@ -159,103 +114,76 @@ class _MovimentoMiniaturaM2State extends State<MovimentoMiniaturaM2>
     );
   }
 
-  Future<void> _validateMission() async {
-    if (_isSimulating) return;
+  Future<void> _validate() async {
     setState(() => _isSimulating = true);
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (!mounted) return;
 
-    try {
-      bool isSuccess = false;
-      String feedbackMessage = _mission.failureFeedback;
-
-      if (_m2ReversedPolarity) {
-        final result = await MissionCircuitBuilder()
-            .addBattery(id: 'bat1', voltage: 6.0)
-            .addMotor(id: 'motor1')
-            .connect('bat1', 'B', 'motor1', 'A')
-            .connect('motor1', 'B', 'bat1', 'A')
-            .simulate();
-        if (result.hasClosedLoop && result.errorMessage == null) {
-          feedbackMessage =
-              'Polaridade invertida! Campo magnético reverso: giro anti-horário.';
-          isSuccess = true;
-        } else {
-          feedbackMessage =
-              result.errorMessage ?? 'Inverta a polaridade da fonte.';
-        }
-      } else {
-        feedbackMessage =
-            'Inverta a polaridade da fonte para alterar o sentido do campo magnético.';
-      }
-
-      final fullMessage = isSuccess
-          ? 'Missão "${_mission.title}" concluída! ${_mission.victoryCriteria}.\n\nSua previsão: "$_m2Prediction"\n\nProf. Volts: "${_mission.voltsMediation}"'
-          : '$feedbackMessage\n\nProf. Volts: "${_mission.voltsMediation}"';
-
-      if (mounted) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => ProfVoltsFeedbackDialog(
-            isCorrect: isSuccess,
-            message: fullMessage,
-            onAction: () {
-              Navigator.of(context).pop();
-              if (isSuccess) {
-                _showExplanationDialog(true);
-              }
-            },
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isSimulating = false);
+    if (!_isReversed) {
+      setState(() {
+        _isEnergized = false;
+        _isSimulating = false;
+      });
+      showDialog(
+        context: context,
+        builder: (context) => ProfVoltsFeedbackDialog(
+          isCorrect: false,
+          message:
+              'O motor ainda está em polaridade direta. Use o botão na bancada para inverter os terminais e comprovar a reversão de giro.',
+          onAction: () => Navigator.of(context).pop(),
+        ),
+      );
+      return;
     }
+
+    setState(() {
+      _isEnergized = true;
+      _isSimulating = false;
+    });
+
+    await Future.delayed(const Duration(milliseconds: 600));
+    if (!mounted) return;
+    _showExplanationDialog();
   }
 
   @override
   Widget build(BuildContext context) {
-    final double voltage = 6.0;
-    final double currentMa = _isClosed ? 120.0 : 0.0;
-
     return Row(
       children: [
+        // Área Principal da Bancada
         Expanded(
           flex: 7,
-          child: Column(
-            children: [
-              Expanded(
-                child: WorkbenchTableFrame(
-                  usePhysicalStyle: _usePhysicalStyle,
-                  onStyleChanged: (val) =>
-                      setState(() => _usePhysicalStyle = val),
-                  leftHeaderWidget: MovimentoStatusCard(isClosed: _isClosed),
-                  rightHeaderWidget: MovimentoTelemetryCard(
-                    voltage: voltage,
-                    currentMa: currentMa,
-                    isClosed: _isClosed,
-                  ),
-                  bottomWidget: _buildUndoRedoButtons(),
-                  child: _usePhysicalStyle
-                      ? _buildPhysicalCanvas()
-                      : _buildSchematicCanvas(),
-                ),
-              ),
-            ],
+          child: WorkbenchTableFrame(
+            usePhysicalStyle: _usePhysicalStyle,
+            onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
+            leftHeaderWidget: MovimentoStatusCard(isClosed: _isClosed),
+            rightHeaderWidget: MovimentoTelemetryCard(
+              voltage: 6.0,
+              currentMa: _isClosed ? 120.0 : 0.0,
+              isClosed: _isClosed,
+            ),
+            bottomWidget: MovimentoUndoRedoButtons(
+              controller: _undoRedoController,
+              onUndo: () => setState(() => _undoRedoController.undo()),
+              onRedo: () => setState(() => _undoRedoController.redo()),
+            ),
+            child: _buildWorkbenchDisplay(),
           ),
         ),
         const SizedBox(width: 16),
+        // Painel Lateral (Objetivo, Stepper & Validação)
         Expanded(
           flex: 3,
           child: WorkbenchSidePanel(
             teamTitle: 'Painel da Equipe Mecânica',
             showTeamHeader: false,
-            buttonColor: const Color(0xFF059669),
+            buttonColor: const Color(0xFF0284C7),
             toolboxItems: [
               _buildMissionObjectiveCard(),
               const SizedBox(height: 12),
               _buildInvestigationStepperCard(),
               const SizedBox(height: 12),
-              MovimentoPredictionBadge(prediction: _m2Prediction),
+              MovimentoPredictionBadge(prediction: _prediction),
               MovimentoSideToolbox(usePhysicalStyle: _usePhysicalStyle),
             ],
             onEnergizePressed: _onEnergizePressed,
@@ -266,469 +194,273 @@ class _MovimentoMiniaturaM2State extends State<MovimentoMiniaturaM2>
     );
   }
 
-  Widget _buildUndoRedoButtons() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFCBD5E1)),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.undo_rounded, size: 20),
-            tooltip: 'Desfazer ação',
-            color: _undoRedoController.canUndo
-                ? const Color(0xFF0F172A)
-                : const Color(0xFFCBD5E1),
-            onPressed: _undoRedoController.canUndo
-                ? () => setState(() => _undoRedoController.undo())
-                : null,
+  Widget _buildWorkbenchDisplay() {
+    return Stack(
+      children: [
+        // 1. Desenho do Motor CC na Protoboard
+        Positioned.fill(
+          child: AnimatedBuilder(
+            animation: _animController,
+            builder: (context, child) {
+              return CustomPaint(
+                painter: MovimentoMiniaturaBreadboardPainter(
+                  animationValue: _animController.value,
+                  usePhysicalStyle: _usePhysicalStyle,
+                  isClosed: _isClosed,
+                  isReversed: _isReversed,
+                  hasMotor: true,
+                ),
+              );
+            },
           ),
-          IconButton(
-            icon: const Icon(Icons.redo_rounded, size: 20),
-            tooltip: 'Refazer ação',
-            color: _undoRedoController.canRedo
-                ? const Color(0xFF0F172A)
-                : const Color(0xFFCBD5E1),
-            onPressed: _undoRedoController.canRedo
-                ? () => setState(() => _undoRedoController.redo())
-                : null,
+        ),
+
+        // 2. Dock de Controle na Bancada
+        Positioned(
+          left: 20,
+          bottom: 16,
+          right: 20,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F172A).withValues(alpha: 0.88),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: const Color(0xFF0284C7).withValues(alpha: 0.5),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 12,
+              runSpacing: 8,
+              children: [
+                FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _isReversed
+                        ? const Color(0xFFF97316)
+                        : const Color(0xFF0284C7),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
+                  ),
+                  onPressed: _togglePolarity,
+                  icon: const Icon(Icons.swap_horiz_rounded, size: 18),
+                  label: Text(
+                    _isReversed
+                        ? 'Polaridade Invertida: Polo (–) ➔ Polo (+)'
+                        : 'Polaridade Direta: Polo (+) ➔ Polo (–)',
+                    style: GoogleFonts.rajdhani(
+                        fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
-  }
-
-  Widget _buildPhysicalCanvas() {
-    final scale = context.uiScale;
-    final isReversed = _m2ReversedPolarity;
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final w = constraints.maxWidth;
-                  final h = constraints.maxHeight;
-                  final batteryX = w * 0.18;
-                  final motorX = w * 0.82;
-                  final centerY = h * 0.5;
-                  final sock = scale.size(110.0, min: 90.0, max: 140.0);
-
-                  final batteryPlacement = ComponentPlacement(
-                    position: Offset(batteryX, centerY),
-                    rotation: _m2BatteryRotation,
-                    type: ComponentType.battery,
-                  );
-                  final motorPlacement = ComponentPlacement(
-                    position: Offset(motorX, centerY),
-                    rotation: _m2MotorRotation,
-                    type: ComponentType.motor,
-                  );
-
-                  final wires = <WirePath>[];
-                  if (_m2BatteryInserted && _m2MotorInserted) {
-                    wires.add(DynamicWirePath.fromComponents(
-                      compA: isReversed ? motorPlacement : batteryPlacement,
-                      terminalIndexA: isReversed ? 0 : 1,
-                      compB: isReversed ? batteryPlacement : motorPlacement,
-                      terminalIndexB: isReversed ? 1 : 0,
-                      color: isReversed
-                          ? const Color(0xFF0284C7)
-                          : const Color(0xFFD97706),
-                      isActive: true,
-                      thickness: scale.size(5.5, min: 4.5, max: 8.0),
-                    ).toWirePath());
-                    wires.add(DynamicWirePath.fromComponents(
-                      compA: isReversed ? batteryPlacement : motorPlacement,
-                      terminalIndexA: isReversed ? 1 : 0,
-                      compB: isReversed ? motorPlacement : batteryPlacement,
-                      terminalIndexB: isReversed ? 0 : 1,
-                      color: const Color(0xFF64748B),
-                      isActive: true,
-                      thickness: scale.size(5.5, min: 4.5, max: 8.0),
-                    ).toWirePath());
-                  }
-
-                  return Stack(
-                    children: [
-                      if (wires.isNotEmpty)
-                        Positioned.fill(
-                          child: AnimatedBuilder(
-                            animation: _currentFlowController,
-                            builder: (context, _) => RealisticWireWidget(
-                              wires: wires,
-                              animationValue: _currentFlowController.value,
-                              showElectrons: true,
-                            ),
-                          ),
-                        ),
-                      Positioned(
-                        left: batteryX - sock / 2,
-                        top: centerY - sock / 2,
-                        child: PhysicalBlueprintSocket<String>(
-                          expectedData: 'battery',
-                          isFilled: _m2BatteryInserted,
-                          rotation: _m2BatteryRotation,
-                          width: sock,
-                          height: sock,
-                          showLabel: false,
-                          onAccept: (_) => _insertComponent(
-                            name: 'Bateria',
-                            getInserted: () => _m2BatteryInserted,
-                            setInserted: (v) => _m2BatteryInserted = v,
-                            getRotation: () => _m2BatteryRotation,
-                            setRotation: (v) => _m2BatteryRotation = v,
-                          ),
-                          onRotate: () => _rotateComponent(
-                            name: 'Bateria',
-                            getRotation: () => _m2BatteryRotation,
-                            setRotation: (v) => _m2BatteryRotation = v,
-                          ),
-                          onTap: () {},
-                          symbolWidget: CustomPaint(
-                            size: Size(sock, sock),
-                            painter: ComponentPhysicalPainter(
-                              type: ComponentType.battery,
-                              isDarkMode: false,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: motorX - sock / 2,
-                        top: centerY - sock / 2,
-                        child: PhysicalBlueprintSocket<String>(
-                          expectedData: 'motor_cc',
-                          isFilled: _m2MotorInserted,
-                          rotation: _m2MotorRotation,
-                          width: sock,
-                          height: sock,
-                          showLabel: false,
-                          onAccept: (_) => _insertComponent(
-                            name: 'Motor CC',
-                            getInserted: () => _m2MotorInserted,
-                            setInserted: (v) => _m2MotorInserted = v,
-                            getRotation: () => _m2MotorRotation,
-                            setRotation: (v) => _m2MotorRotation = v,
-                          ),
-                          onRotate: () => _rotateComponent(
-                            name: 'Motor CC',
-                            getRotation: () => _m2MotorRotation,
-                            setRotation: (v) => _m2MotorRotation = v,
-                          ),
-                          onTap: () {},
-                          symbolWidget: CustomPaint(
-                            size: Size(sock, sock),
-                            painter: ComponentPhysicalPainter(
-                              type: ComponentType.motor,
-                              isActive: _m2BatteryInserted && _m2MotorInserted,
-                              isDarkMode: false,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            isReversed
-                ? 'Sentido: ANTI-HORÁRIO ↺ (Polaridade Invertida -/+)'
-                : 'Sentido: HORÁRIO ↻ (Polaridade Padrão +/-)',
-            style: GoogleFonts.rajdhani(
-              color: isReversed
-                  ? const Color(0xFF0284C7)
-                  : const Color(0xFFD97706),
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
-          ),
-          const SizedBox(height: 12),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFF0F172A),
-              side: BorderSide(
-                color: isReversed
-                    ? const Color(0xFF0284C7)
-                    : const Color(0xFFD97706),
-                width: 2,
-              ),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-            ),
-            icon:
-                const Icon(Icons.sync_alt_rounded, color: Color(0xFF0284C7)),
-            label: Text(
-              isReversed
-                  ? 'Polaridade: Polo (-) → Polo (+)'
-                  : 'Inverter Polaridade (+/- ➔ -/+)',
-              style: GoogleFonts.rajdhani(
-                color: const Color(0xFF0F172A),
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-              ),
-            ),
-            onPressed: () =>
-                setState(() => _m2ReversedPolarity = !_m2ReversedPolarity),
-          ),
-          const SizedBox(height: 16),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSchematicCanvas() {
-    final scale = context.uiScale;
-    final isReversed = _m2ReversedPolarity;
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final w = constraints.maxWidth;
-                  final h = constraints.maxHeight;
-                  final batteryX = w * 0.18;
-                  final motorX = w * 0.82;
-                  final centerY = h * 0.5;
-                  final sock = scale.size(95.0, min: 80.0, max: 130.0);
-
-                  final batteryPlacement = ComponentPlacement(
-                    position: Offset(batteryX, centerY),
-                    rotation: _m2BatteryRotation,
-                    type: ComponentType.battery,
-                  );
-                  final motorPlacement = ComponentPlacement(
-                    position: Offset(motorX, centerY),
-                    rotation: _m2MotorRotation,
-                    type: ComponentType.motor,
-                  );
-
-                  final wires = <WirePath>[];
-                  if (_m2BatteryInserted && _m2MotorInserted) {
-                    wires.add(DynamicWirePath.fromComponents(
-                      compA: isReversed ? motorPlacement : batteryPlacement,
-                      terminalIndexA: isReversed ? 0 : 1,
-                      compB: isReversed ? batteryPlacement : motorPlacement,
-                      terminalIndexB: isReversed ? 1 : 0,
-                      color: isReversed
-                          ? const Color(0xFF0284C7)
-                          : const Color(0xFFD97706),
-                      isActive: true,
-                      thickness: scale.size(4.5, min: 3.5, max: 7.0),
-                    ).toWirePath());
-                    wires.add(DynamicWirePath.fromComponents(
-                      compA: isReversed ? batteryPlacement : motorPlacement,
-                      terminalIndexA: isReversed ? 1 : 0,
-                      compB: isReversed ? motorPlacement : batteryPlacement,
-                      terminalIndexB: isReversed ? 0 : 1,
-                      color: const Color(0xFF64748B),
-                      isActive: true,
-                      thickness: scale.size(4.5, min: 3.5, max: 7.0),
-                    ).toWirePath());
-                  }
-
-                  return Stack(
-                    children: [
-                      if (wires.isNotEmpty)
-                        Positioned.fill(
-                          child: AnimatedBuilder(
-                            animation: _currentFlowController,
-                            builder: (context, _) => RealisticWireWidget(
-                              wires: wires,
-                              animationValue: _currentFlowController.value,
-                              showElectrons: true,
-                            ),
-                          ),
-                        ),
-                      Positioned(
-                        left: batteryX - sock / 2,
-                        top: centerY - sock / 2,
-                        child: SchematicBlueprintSocket<String>(
-                          expectedData: 'battery',
-                          isFilled: _m2BatteryInserted,
-                          showLabel: false,
-                          rotation: _m2BatteryRotation,
-                          width: sock,
-                          height: sock,
-                          onAccept: (_) => _insertComponent(
-                            name: 'Bateria',
-                            getInserted: () => _m2BatteryInserted,
-                            setInserted: (v) => _m2BatteryInserted = v,
-                            getRotation: () => _m2BatteryRotation,
-                            setRotation: (v) => _m2BatteryRotation = v,
-                          ),
-                          onRotate: () => _rotateComponent(
-                            name: 'Bateria',
-                            getRotation: () => _m2BatteryRotation,
-                            setRotation: (v) => _m2BatteryRotation = v,
-                          ),
-                          onTap: () {},
-                          symbolWidget: CustomPaint(
-                            size: Size(sock, sock),
-                            painter: CircuitSymbolPainter(
-                              type: ComponentType.battery,
-                              color: const Color(0xFF0F172A),
-                              strokeWidth: 2.5,
-                            ),
-                          ),
-                          placeholderWidget: CustomPaint(
-                            size: Size(sock * 0.85, sock * 0.85),
-                            painter: CircuitSymbolPainter(
-                              type: ComponentType.battery,
-                              isActive: false,
-                              color: const Color(0xFF94A3B8),
-                              strokeWidth: 2.0,
-                            ),
-                          ),
-                          label: '',
-                        ),
-                      ),
-                      Positioned(
-                        left: motorX - sock / 2,
-                        top: centerY - sock / 2,
-                        child: SchematicBlueprintSocket<String>(
-                          expectedData: 'motor_cc',
-                          isFilled: _m2MotorInserted,
-                          showLabel: false,
-                          rotation: _m2MotorRotation,
-                          width: sock,
-                          height: sock,
-                          onAccept: (_) => _insertComponent(
-                            name: 'Motor CC',
-                            getInserted: () => _m2MotorInserted,
-                            setInserted: (v) => _m2MotorInserted = v,
-                            getRotation: () => _m2MotorRotation,
-                            setRotation: (v) => _m2MotorRotation = v,
-                          ),
-                          onRotate: () => _rotateComponent(
-                            name: 'Motor CC',
-                            getRotation: () => _m2MotorRotation,
-                            setRotation: (v) => _m2MotorRotation = v,
-                          ),
-                          onTap: () {},
-                          symbolWidget: CustomPaint(
-                            size: Size(sock, sock),
-                            painter: CircuitSymbolPainter(
-                              type: ComponentType.motor,
-                              isActive: _m2MotorInserted,
-                              color: const Color(0xFF0F172A),
-                              strokeWidth: 2.5,
-                            ),
-                          ),
-                          placeholderWidget: CustomPaint(
-                            size: Size(sock * 0.85, sock * 0.85),
-                            painter: CircuitSymbolPainter(
-                              type: ComponentType.motor,
-                              isActive: false,
-                              color: const Color(0xFF94A3B8),
-                              strokeWidth: 2.0,
-                            ),
-                          ),
-                          label: '',
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            isReversed
-                ? 'Sentido: ANTI-HORÁRIO ↺ (Polaridade Invertida -/+)'
-                : 'Sentido: HORÁRIO ↻ (Polaridade Padrão +/-)',
-            style: GoogleFonts.rajdhani(
-              color: isReversed
-                  ? const Color(0xFF0284C7)
-                  : const Color(0xFFD97706),
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
-          ),
-          const SizedBox(height: 12),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFF0F172A),
-              side: BorderSide(
-                color: isReversed
-                    ? const Color(0xFF0284C7)
-                    : const Color(0xFFD97706),
-                width: 2,
-              ),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-            ),
-            icon:
-                const Icon(Icons.sync_alt_rounded, color: Color(0xFF0284C7)),
-            label: Text(
-              isReversed
-                  ? 'Polaridade: Polo (-) → Polo (+)'
-                  : 'Inverter Polaridade (+/- ➔ -/+)',
-              style: GoogleFonts.rajdhani(
-                color: const Color(0xFF0F172A),
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-              ),
-            ),
-            onPressed: () =>
-                setState(() => _m2ReversedPolarity = !_m2ReversedPolarity),
-          ),
-          const SizedBox(height: 16),
-        ],
-      ),
-    );
-  }
-
-  int get _currentStepperIndex {
-    if (_m2Prediction == null) return 0;
-    if (!_m2BatteryInserted || !_m2MotorInserted) return 1;
-    return 2;
-  }
-
-  bool _isStepCompleted(int index) {
-    if (index == 0) return _m2Prediction != null;
-    if (index == 1) return _m2BatteryInserted && _m2MotorInserted;
-    if (index == 2) return _m2ReversedPolarity;
-    return false;
   }
 
   Widget _buildMissionObjectiveCard() {
-    return WorkbenchMissionObjectiveCard(
-      missionNumber: 2,
-      title: _mission.title,
-      description: _mission.objective,
-      voltsTip: _mission.voltsMediation,
-      accentColor: const Color(0xFF0284C7),
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.sync_rounded,
+                  color: Color(0xFF0284C7), size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Missão 2 · Troca de Sentido',
+                  style: GoogleFonts.rajdhani(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Inverta a polaridade dos cabos de alimentação na Protoboard para comprovar que o sentido de rotação do motor CC muda para anti-horário ↺.',
+            style: GoogleFonts.outfit(
+              fontSize: 12,
+              color: const Color(0xFF64748B),
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFEF3C7),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.smart_toy_rounded,
+                    color: Color(0xFFD97706), size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Prof. Volts: "A regra da mão direita explica: invertendo a corrente, a força magnética no enrolamento se inverte instantaneamente!"',
+                    style: GoogleFonts.outfit(
+                      fontSize: 11,
+                      fontStyle: FontStyle.italic,
+                      color: const Color(0xFF92400E),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildInvestigationStepperCard() {
-    return WorkbenchInvestigationStepperCard(
-      title: 'Progresso da reversão',
-      currentStepIndex: _currentStepperIndex,
-      isStepCompleted: _isStepCompleted,
-      steps: const [
-        'Prever efeito da inversão',
-        'Montar circuito inicial do motor',
-        'Inverter polaridade e comprovar reversão',
-      ],
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.fact_check_rounded,
+                  color: Color(0xFF0284C7), size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Progresso da reversão',
+                  style: GoogleFonts.rajdhani(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          _buildStepItem(
+            stepNumber: 1,
+            title: 'Prever efeito da inversão',
+            isCompleted: _prediction != null,
+            isActive: _prediction == null,
+            onTap: _showPredictionDialog,
+          ),
+          const SizedBox(height: 8),
+          _buildStepItem(
+            stepNumber: 2,
+            title: 'Inverter polaridade dos cabos',
+            isCompleted: _isReversed,
+            isActive: _prediction != null && !_isReversed,
+          ),
+          const SizedBox(height: 8),
+          _buildStepItem(
+            stepNumber: 3,
+            title: 'Energizar e verificar rotação anti-horária ↺',
+            isCompleted: _isClosed && _isReversed,
+            isActive: _isReversed,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStepItem({
+    required int stepNumber,
+    required String title,
+    required bool isCompleted,
+    required bool isActive,
+    VoidCallback? onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        decoration: BoxDecoration(
+          color: isActive
+              ? const Color(0xFF0284C7).withValues(alpha: 0.08)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: isActive
+              ? Border.all(
+                  color: const Color(0xFF0284C7).withValues(alpha: 0.4))
+              : null,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isCompleted
+                    ? const Color(0xFF10B981)
+                    : (isActive
+                        ? const Color(0xFF0284C7)
+                        : const Color(0xFFE2E8F0)),
+              ),
+              child: Center(
+                child: isCompleted
+                    ? const Icon(Icons.check, size: 14, color: Colors.white)
+                    : Text(
+                        '$stepNumber',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: isActive
+                              ? Colors.white
+                              : const Color(0xFF64748B),
+                        ),
+                      ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                title,
+                style: GoogleFonts.outfit(
+                  fontSize: 12,
+                  fontWeight:
+                      isActive ? FontWeight.bold : FontWeight.normal,
+                  color: isCompleted
+                      ? const Color(0xFF0F172A)
+                      : (isActive
+                          ? const Color(0xFF0284C7)
+                          : const Color(0xFF64748B)),
+                ),
+              ),
+            ),
+            if (onTap != null && !isCompleted)
+              const Icon(Icons.arrow_forward_rounded,
+                  size: 14, color: Color(0xFF0284C7)),
+          ],
+        ),
+      ),
     );
   }
 }

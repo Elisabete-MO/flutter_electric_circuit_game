@@ -2,26 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../models/circuit_action.dart';
-import '../../../models/first_step_component.dart';
-import '../../../models/stand_mission.dart';
-import '../../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../../state/circuit_undo_redo_controller.dart';
-import '../../../core/ui_scale.dart';
-import '../../../widgets/circuit_symbol_painter.dart';
-import '../../../widgets/component_physical_painter.dart';
-import '../../../widgets/physical_blueprint_socket.dart';
 import '../../../widgets/prof_volts_explanation_dialog.dart';
 import '../../../widgets/prof_volts_feedback_dialog.dart';
 import '../../../widgets/prof_volts_prediction_dialog.dart';
-import '../../../widgets/realistic_wire_painter.dart';
-import '../../../widgets/schematic_blueprint_socket.dart';
 import '../../../widgets/success_confetti_overlay.dart';
 import '../../../widgets/workbench_components.dart';
-import '../../../widgets/workbench_sidebar_cards.dart';
 import '../../../widgets/workbench_table_frame.dart';
+import '../widgets/movimento_miniatura_breadboard_painter.dart';
 import '../widgets/movimento_miniatura_widgets.dart';
 
-/// Missão 5 do Estande 06 — Diagnóstico do Mini Carrinho.
+/// Missão 5 do Estande 06 — Ponte H e Controle Bidirecional do Motor CC.
 class MovimentoMiniaturaM5 extends StatefulWidget {
   final VoidCallback onMissionComplete;
 
@@ -36,99 +27,58 @@ class MovimentoMiniaturaM5 extends StatefulWidget {
 
 class _MovimentoMiniaturaM5State extends State<MovimentoMiniaturaM5>
     with SingleTickerProviderStateMixin {
-  final StandMission _mission = StandMission.movimentoMiniaturaMissions[4];
   final CircuitUndoRedoController _undoRedoController =
       CircuitUndoRedoController();
 
-  late final AnimationController _currentFlowController;
+  late final AnimationController _animController;
 
   bool _usePhysicalStyle = true;
   bool _isSimulating = false;
-
-  bool _m5WireRepaired = false;
-  bool _m5CarTested = false;
-  bool _m5BatteryInserted = false;
-  double _m5BatteryRotation = 0.0;
-  bool _m5MotorInserted = false;
-  double _m5MotorRotation = 0.0;
-  String? _m5Prediction;
+  bool _hBridgeInstalled = false;
+  int _activeChannel = 1; // 1 = D0 (Horário / Verde), 2 = D1 (Anti-horário / Vermelho), 0 = Parado
+  bool _testedForward = false;
+  bool _testedReverse = false;
+  String? _prediction;
 
   @override
   void initState() {
     super.initState();
-    _currentFlowController = AnimationController(
+    _animController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 1000),
     )..repeat();
   }
 
   @override
   void dispose() {
-    _currentFlowController.dispose();
+    _animController.dispose();
     super.dispose();
   }
 
-  bool get _isWorking =>
-      _m5WireRepaired &&
-      _m5CarTested &&
-      _m5BatteryInserted &&
-      _m5MotorInserted;
+  bool get _isClosed => _hBridgeInstalled && _activeChannel != 0;
 
-  int get _currentStepperIndex {
-    if (!_m5WireRepaired) return 0;
-    if (!(_m5BatteryInserted && _m5MotorInserted)) return 1;
-    return 2;
-  }
-
-  bool _isStepCompleted(int index) {
-    if (index == 0) return _m5WireRepaired;
-    if (index == 1) return _m5BatteryInserted && _m5MotorInserted;
-    if (index == 2) return _m5CarTested;
-    return false;
-  }
-
-  void _insertComponent({
-    required String name,
-    required bool Function() getInserted,
-    required void Function(bool) setInserted,
-    required double Function() getRotation,
-    required void Function(double) setRotation,
-  }) {
-    final prevInserted = getInserted();
-    final prevRotation = getRotation();
-    final nextInserted = !prevInserted;
+  void _toggleHBridge() {
+    final prev = _hBridgeInstalled;
     _undoRedoController.execute(InsertComponentAction(
-      description: nextInserted ? 'Inserir $name' : 'Remover $name',
-      onApply: () => setState(() {
-        setInserted(nextInserted);
-        if (nextInserted) setRotation(0);
-      }),
-      onUndo: () => setState(() {
-        setInserted(prevInserted);
-        setRotation(prevRotation);
-      }),
+      description: prev ? 'Remover Módulo Ponte H' : 'Instalar Ponte H na Protoboard',
+      onApply: () => setState(() => _hBridgeInstalled = !prev),
+      onUndo: () => setState(() => _hBridgeInstalled = prev),
     ));
   }
 
-  void _rotateComponent({
-    required String name,
-    required double Function() getRotation,
-    required void Function(double) setRotation,
-  }) {
-    final prevRotation = getRotation();
-    final newRotation = (prevRotation + 90) % 360;
-    _undoRedoController.execute(RotateComponentAction(
-      description: 'Girar $name (${newRotation.toInt()}°)',
-      onApply: () => setState(() => setRotation(newRotation)),
-      onUndo: () => setState(() => setRotation(prevRotation)),
-    ));
+  void _selectChannel(int channel) {
+    setState(() {
+      _activeChannel = channel;
+      if (channel == 1) _testedForward = true;
+      if (channel == 2) _testedReverse = true;
+    });
   }
 
   void _onEnergizePressed() {
-    if (_m5Prediction == null) {
+    if (_prediction == null) {
       _showPredictionDialog();
     } else {
-      _validateMission();
+      _validate();
     }
   }
 
@@ -137,34 +87,32 @@ class _MovimentoMiniaturaM5State extends State<MovimentoMiniaturaM5>
       context: context,
       barrierDismissible: false,
       builder: (context) => ProfVoltsPredictionDialog(
-        question: 'O motor não gira. Qual a causa mais provável?',
+        question:
+            'Como a Ponte H permite reverter o motor CC eletronicamente sem trocar fios manuais?',
         options: const [
-          'Circuito aberto',
-          'Curto-circuito',
-          'Resistor queimado',
+          'Chaveia 4 transistores em pares diagonais, invertendo o sentido da corrente no motor',
+          'Altera a frequência da rede elétrica',
+          'Inverte a posição física da bateria',
           'Não sei'
         ],
         onPredict: (prediction) {
           Navigator.of(context).pop();
-          setState(() => _m5Prediction = prediction);
-          _validateMission();
+          setState(() => _prediction = prediction);
+          _validate();
         },
       ),
     );
   }
 
-  void _showExplanationDialog(bool isSuccess) {
-    if (!isSuccess || !mounted) return;
+  void _showExplanationDialog() {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => ProfVoltsExplanationDialog(
-        question:
-            'Qual evidência mostrou onde estava a falha no circuito do motor?',
+        question: 'Por que a Ponte H é a base de robôs, carrinhos e automação industrial?',
         options: const [
-          'Medição de continuidade / inspeção visual',
-          'Teste de tensão nos terminais',
-          'Substituição de componente',
+          'Permite que sinais lógicos de microcontroladores (D0/D1) controlem sentido e frenagem com segurança',
+          'Diminui a necessidade de bateria',
           'Não sei explicar'
         ],
         onExplain: (_) {
@@ -176,120 +124,81 @@ class _MovimentoMiniaturaM5State extends State<MovimentoMiniaturaM5>
     );
   }
 
-  Future<void> _validateMission() async {
-    if (_isSimulating) return;
+  Future<void> _validate() async {
     setState(() => _isSimulating = true);
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (!mounted) return;
 
-    try {
-      bool isSuccess = false;
-      String feedbackMessage = _mission.failureFeedback;
-
-      if (_m5WireRepaired && _m5CarTested) {
-        final result = await MissionCircuitBuilder()
-            .addBattery(id: 'bat1', voltage: 6.0)
-            .addMotor(id: 'motor1')
-            .connect('bat1', 'B', 'motor1', 'A')
-            .connect('motor1', 'B', 'bat1', 'A')
-            .simulate();
-        if (result.hasClosedLoop && result.errorMessage == null) {
-          feedbackMessage =
-              'Mau contato reparado! Carrinho funcional com corrente circulando.';
-          isSuccess = true;
-        } else {
-          feedbackMessage =
-              result.errorMessage ?? 'Ainda há problema na fiação.';
-        }
-      } else if (!_m5WireRepaired) {
-        feedbackMessage =
-            'Inspecione os terminais do motor para encontrar e reparar a fiação solta.';
-      } else {
-        feedbackMessage =
-            'Teste o acionamento do mini carrinho após o reparo!';
-      }
-
-      final fullMessage = isSuccess
-          ? 'Missão "${_mission.title}" concluída! ${_mission.victoryCriteria}.\n\nSua previsão: "$_m5Prediction"\n\nProf. Volts: "${_mission.voltsMediation}"'
-          : '$feedbackMessage\n\nProf. Volts: "${_mission.voltsMediation}"';
-
-      if (mounted) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => ProfVoltsFeedbackDialog(
-            isCorrect: isSuccess,
-            message: fullMessage,
-            onAction: () {
-              Navigator.of(context).pop();
-              if (isSuccess) {
-                _showExplanationDialog(true);
-              }
-            },
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isSimulating = false);
+    if (!_hBridgeInstalled) {
+      setState(() => _isSimulating = false);
+      showDialog(
+        context: context,
+        builder: (context) => ProfVoltsFeedbackDialog(
+          isCorrect: false,
+          message:
+              'Instale os 4 transistores e conexões da Ponte H na Protoboard para permitir controle bidirecional.',
+          onAction: () => Navigator.of(context).pop(),
+        ),
+      );
+      return;
     }
+
+    if (!_testedForward || !_testedReverse) {
+      setState(() => _isSimulating = false);
+      showDialog(
+        context: context,
+        builder: (context) => ProfVoltsFeedbackDialog(
+          isCorrect: false,
+          message:
+              'Acione tanto o canal D0 (Horário ↻) quanto o canal D1 (Anti-horário ↺) para validar a reversão eletrônica completa.',
+          onAction: () => Navigator.of(context).pop(),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSimulating = false);
+    _showExplanationDialog();
   }
 
   @override
   Widget build(BuildContext context) {
-    final double voltage = 6.0;
-    final double currentMa = _isWorking ? 120.0 : 0.0;
-
     return Row(
       children: [
+        // Área Principal da Bancada
         Expanded(
           flex: 7,
-          child: Column(
-            children: [
-              Expanded(
-                child: WorkbenchTableFrame(
-                  usePhysicalStyle: _usePhysicalStyle,
-                  onStyleChanged: (val) =>
-                      setState(() => _usePhysicalStyle = val),
-                  leftHeaderWidget: MovimentoStatusCard(isClosed: _isWorking),
-                  rightHeaderWidget: MovimentoTelemetryCard(
-                    voltage: voltage,
-                    currentMa: currentMa,
-                    isClosed: _isWorking,
-                  ),
-                  bottomWidget: _buildUndoRedoButtons(),
-                  child: _usePhysicalStyle
-                      ? _buildPhysicalCanvas()
-                      : _buildSchematicCanvas(),
-                ),
-              ),
-            ],
+          child: WorkbenchTableFrame(
+            usePhysicalStyle: _usePhysicalStyle,
+            onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
+            leftHeaderWidget: MovimentoStatusCard(isClosed: _isClosed),
+            rightHeaderWidget: MovimentoTelemetryCard(
+              voltage: 6.0,
+              currentMa: _isClosed ? 140.0 : 0.0,
+              isClosed: _isClosed,
+            ),
+            bottomWidget: MovimentoUndoRedoButtons(
+              controller: _undoRedoController,
+              onUndo: () => setState(() => _undoRedoController.undo()),
+              onRedo: () => setState(() => _undoRedoController.redo()),
+            ),
+            child: _buildWorkbenchDisplay(),
           ),
         ),
         const SizedBox(width: 16),
+        // Painel Lateral (Objetivo, Stepper & Validação)
         Expanded(
           flex: 3,
           child: WorkbenchSidePanel(
             teamTitle: 'Painel da Equipe Mecânica',
             showTeamHeader: false,
-            buttonColor: const Color(0xFF059669),
+            buttonColor: const Color(0xFF0284C7),
             toolboxItems: [
-              WorkbenchMissionObjectiveCard(
-                missionNumber: 5,
-                title: _mission.title,
-                description: _mission.objective,
-                voltsTip: _mission.voltsMediation,
-              ),
+              _buildMissionObjectiveCard(),
               const SizedBox(height: 12),
-              WorkbenchInvestigationStepperCard(
-                title: 'Roteiro de investigação',
-                currentStepIndex: _currentStepperIndex,
-                isStepCompleted: _isStepCompleted,
-                steps: const [
-                  'Diagnosticar o mau contato do carrinho',
-                  'Reparar o fio e inserir bateria + motor',
-                  'Demonstrar ao visitante (botão + polaridade)',
-                ],
-              ),
+              _buildInvestigationStepperCard(),
               const SizedBox(height: 12),
-              MovimentoPredictionBadge(prediction: _m5Prediction),
+              MovimentoPredictionBadge(prediction: _prediction),
               MovimentoSideToolbox(usePhysicalStyle: _usePhysicalStyle),
             ],
             onEnergizePressed: _onEnergizePressed,
@@ -300,542 +209,311 @@ class _MovimentoMiniaturaM5State extends State<MovimentoMiniaturaM5>
     );
   }
 
-  Widget _buildUndoRedoButtons() {
+  Widget _buildWorkbenchDisplay() {
+    return Stack(
+      children: [
+        // 1. Desenho da Ponte H na Protoboard com Motor CC
+        Positioned.fill(
+          child: AnimatedBuilder(
+            animation: _animController,
+            builder: (context, child) {
+              return CustomPaint(
+                painter: MovimentoMiniaturaBreadboardPainter(
+                  animationValue: _animController.value,
+                  usePhysicalStyle: _usePhysicalStyle,
+                  isClosed: _isClosed,
+                  isReversed: _activeChannel == 2,
+                  hasMotor: true,
+                  showHBridge: _hBridgeInstalled,
+                  hBridgeDirection: _activeChannel,
+                ),
+              );
+            },
+          ),
+        ),
+
+        // 2. Dock de Controle na Bancada
+        Positioned(
+          left: 20,
+          bottom: 16,
+          right: 20,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F172A).withValues(alpha: 0.88),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: const Color(0xFF0284C7).withValues(alpha: 0.5),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 12,
+              runSpacing: 8,
+              children: [
+                FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _hBridgeInstalled
+                        ? const Color(0xFF0284C7)
+                        : const Color(0xFF334155),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                  ),
+                  onPressed: _toggleHBridge,
+                  icon: Icon(
+                    _hBridgeInstalled
+                        ? Icons.check_circle_rounded
+                        : Icons.add_circle_outline_rounded,
+                    size: 16,
+                  ),
+                  label: Text(
+                    _hBridgeInstalled ? 'Ponte H Conectada (4x NPN)' : 'Instalar Ponte H na Protoboard',
+                    style: GoogleFonts.rajdhani(
+                        fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
+                ),
+                if (_hBridgeInstalled) ...[
+                  FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: _activeChannel == 1
+                          ? const Color(0xFF10B981)
+                          : const Color(0xFF334155),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                    ),
+                    onPressed: () => _selectChannel(1),
+                    icon: const Icon(Icons.rotate_right_rounded, size: 16),
+                    label: Text(
+                      'CANAL D0: HORÁRIO ↻ (LED VERDE)',
+                      style: GoogleFonts.rajdhani(
+                          fontWeight: FontWeight.bold, fontSize: 12),
+                    ),
+                  ),
+                  FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: _activeChannel == 2
+                          ? const Color(0xFFEF4444)
+                          : const Color(0xFF334155),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                    ),
+                    onPressed: () => _selectChannel(2),
+                    icon: const Icon(Icons.rotate_left_rounded, size: 16),
+                    label: Text(
+                      'CANAL D1: ANTI-HORÁRIO ↺ (LED VERMELHO)',
+                      style: GoogleFonts.rajdhani(
+                          fontWeight: FontWeight.bold, fontSize: 12),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMissionObjectiveCard() {
     return Container(
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFCBD5E1)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          IconButton(
-            icon: const Icon(Icons.undo_rounded, size: 20),
-            tooltip: 'Desfazer ação',
-            color: _undoRedoController.canUndo
-                ? const Color(0xFF0F172A)
-                : const Color(0xFFCBD5E1),
-            onPressed: _undoRedoController.canUndo
-                ? () => setState(() => _undoRedoController.undo())
-                : null,
+          Row(
+            children: [
+              const Icon(Icons.hub_rounded,
+                  color: Color(0xFF0284C7), size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Missão 5 · Ponte H Bidirecional',
+                  style: GoogleFonts.rajdhani(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+              ),
+            ],
           ),
-          IconButton(
-            icon: const Icon(Icons.redo_rounded, size: 20),
-            tooltip: 'Refazer ação',
-            color: _undoRedoController.canRedo
-                ? const Color(0xFF0F172A)
-                : const Color(0xFFCBD5E1),
-            onPressed: _undoRedoController.canRedo
-                ? () => setState(() => _undoRedoController.redo())
-                : null,
+          const SizedBox(height: 6),
+          Text(
+            'Implemente uma Ponte H com 4 transistores na Protoboard e comande o giro horário e anti-horário pelos canais lógicos D0 e D1 com sinalização por LEDs.',
+            style: GoogleFonts.outfit(
+              fontSize: 12,
+              color: const Color(0xFF64748B),
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFEF3C7),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.smart_toy_rounded,
+                    color: Color(0xFFD97706), size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Prof. Volts: "Com a Ponte H, controlamos a direção de rotação com sinais lógicos de 5V sem mover nenhum fio!"',
+                    style: GoogleFonts.outfit(
+                      fontSize: 11,
+                      fontStyle: FontStyle.italic,
+                      color: const Color(0xFF92400E),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildPhysicalCanvas() {
-    return Center(
+  Widget _buildInvestigationStepperCard() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final w = constraints.maxWidth;
-                  final h = constraints.maxHeight;
-                  final batteryX = w * 0.2;
-                  final motorX = w * 0.75;
-                  final centerY = h * 0.5;
-                  final scale = context.uiScale;
-                  final sock = scale.size(110.0, min: 90.0, max: 140.0);
-
-                  final batteryPlacement = ComponentPlacement(
-                    position: Offset(batteryX, centerY),
-                    rotation: _m5BatteryRotation,
-                    type: ComponentType.battery,
-                  );
-                  final motorPlacement = ComponentPlacement(
-                    position: Offset(motorX, centerY),
-                    rotation: _m5MotorRotation,
-                    type: ComponentType.motor,
-                  );
-
-                  final wires = <WirePath>[];
-                  if (_m5BatteryInserted && _m5MotorInserted) {
-                    wires.add(DynamicWirePath.fromComponents(
-                      compA: batteryPlacement,
-                      terminalIndexA: 1,
-                      compB: motorPlacement,
-                      terminalIndexB: 0,
-                      color: _m5WireRepaired
-                          ? const Color(0xFF10B981)
-                          : const Color(0xFFD97706),
-                      isActive: _m5WireRepaired,
-                    ).toWirePath());
-                    wires.add(DynamicWirePath.fromComponents(
-                      compA: motorPlacement,
-                      terminalIndexA: 1,
-                      compB: batteryPlacement,
-                      terminalIndexB: 0,
-                      color: const Color(0xFF64748B),
-                      isActive: _m5WireRepaired,
-                    ).toWirePath());
-                  }
-
-                  return Stack(
-                    children: [
-                      if (wires.isNotEmpty)
-                        Positioned.fill(
-                          child: AnimatedBuilder(
-                            animation: _currentFlowController,
-                            builder: (context, _) => RealisticWireWidget(
-                              wires: wires,
-                              animationValue: _isWorking
-                                  ? _currentFlowController.value
-                                  : 0,
-                              showElectrons: _isWorking,
-                            ),
-                          ),
-                        ),
-                      Positioned(
-                        left: batteryX - sock / 2,
-                        top: centerY - sock / 2,
-                        child: PhysicalBlueprintSocket<String>(
-                          expectedData: 'battery',
-                          isFilled: _m5BatteryInserted,
-                          rotation: _m5BatteryRotation,
-                          width: sock,
-                          height: sock,
-                          showLabel: false,
-                          onAccept: (_) => _insertComponent(
-                            name: 'Bateria',
-                            getInserted: () => _m5BatteryInserted,
-                            setInserted: (v) => _m5BatteryInserted = v,
-                            getRotation: () => _m5BatteryRotation,
-                            setRotation: (v) => _m5BatteryRotation = v,
-                          ),
-                          onRotate: () => _rotateComponent(
-                            name: 'Bateria',
-                            getRotation: () => _m5BatteryRotation,
-                            setRotation: (v) => _m5BatteryRotation = v,
-                          ),
-                          onTap: () {},
-                          symbolWidget: CustomPaint(
-                            size: Size(sock, sock),
-                            painter: ComponentPhysicalPainter(
-                              type: ComponentType.battery,
-                              isDarkMode: false,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: motorX - sock / 2,
-                        top: centerY - sock / 2,
-                        child: PhysicalBlueprintSocket<String>(
-                          expectedData: 'motor_cc',
-                          isFilled: _m5MotorInserted,
-                          rotation: _m5MotorRotation,
-                          width: sock,
-                          height: sock,
-                          showLabel: false,
-                          onAccept: (_) => _insertComponent(
-                            name: 'Motor CC',
-                            getInserted: () => _m5MotorInserted,
-                            setInserted: (v) => _m5MotorInserted = v,
-                            getRotation: () => _m5MotorRotation,
-                            setRotation: (v) => _m5MotorRotation = v,
-                          ),
-                          onRotate: () => _rotateComponent(
-                            name: 'Motor CC',
-                            getRotation: () => _m5MotorRotation,
-                            setRotation: (v) => _m5MotorRotation = v,
-                          ),
-                          onTap: () {},
-                          symbolWidget: CustomPaint(
-                            size: Size(sock, sock),
-                            painter: ComponentPhysicalPainter(
-                              type: ComponentType.motor,
-                              isActive: _isWorking,
-                              isDarkMode: false,
-                            ),
-                          ),
-                        ),
-                      ),
-                      if (_m5BatteryInserted &&
-                          _m5MotorInserted &&
-                          !_m5WireRepaired)
-                        Positioned(
-                          left: (batteryX + motorX) / 2 - 20,
-                          top: centerY - 40,
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFD97706)
-                                  .withValues(alpha: 0.9),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.warning_amber_rounded,
-                                color: Colors.white, size: 24),
-                          ),
-                        ),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: _m5WireRepaired
-                    ? const Color(0xFF0284C7)
-                    : const Color(0xFFD97706),
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  _m5WireRepaired
-                      ? Icons.build_circle_rounded
-                      : Icons.warning_amber_rounded,
-                  color: _m5WireRepaired
-                      ? const Color(0xFF0284C7)
-                      : const Color(0xFFD97706),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  _m5WireRepaired
-                      ? 'Fiação Reparada: Mau contato corrigido!'
-                      : 'Diagnóstico: Fio solto no terminal positivo',
+          Row(
+            children: [
+              const Icon(Icons.fact_check_rounded,
+                  color: Color(0xFF0284C7), size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Progresso da Ponte H',
                   style: GoogleFonts.rajdhani(
-                    color: const Color(0xFF0F172A),
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: const Color(0xFF0F172A),
-                  side: BorderSide(
-                    color: _m5WireRepaired
-                        ? const Color(0xFF0284C7)
-                        : const Color(0xFFD97706),
-                  ),
-                ),
-                icon: const Icon(Icons.handyman_rounded,
-                    color: Color(0xFFD97706)),
-                label: Text(
-                  _m5WireRepaired ? 'Reparado (Soldado)' : 'Reparar Mau Contato',
-                  style: GoogleFonts.rajdhani(
                     color: const Color(0xFF0F172A),
-                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                onPressed: () =>
-                    setState(() => _m5WireRepaired = !_m5WireRepaired),
-              ),
-              const SizedBox(width: 12),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0284C7),
-                  foregroundColor: Colors.white,
-                ),
-                icon: const Icon(Icons.play_arrow_rounded, color: Colors.white),
-                label: Text(
-                  'Testar Carrinho',
-                  style: GoogleFonts.rajdhani(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                onPressed: () => setState(() => _m5CarTested = true),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
+          _buildStepItem(
+            stepNumber: 1,
+            title: 'Prever funcionamento da Ponte H',
+            isCompleted: _prediction != null,
+            isActive: _prediction == null,
+            onTap: _showPredictionDialog,
+          ),
+          const SizedBox(height: 8),
+          _buildStepItem(
+            stepNumber: 2,
+            title: 'Instalar Ponte H na Protoboard',
+            isCompleted: _hBridgeInstalled,
+            isActive: _prediction != null && !_hBridgeInstalled,
+          ),
+          const SizedBox(height: 8),
+          _buildStepItem(
+            stepNumber: 3,
+            title: 'Testar giro D0 (Horário) e D1 (Anti-horário)',
+            isCompleted: _testedForward && _testedReverse,
+            isActive: _hBridgeInstalled,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildSchematicCanvas() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final w = constraints.maxWidth;
-                  final h = constraints.maxHeight;
-                  final batteryX = w * 0.2;
-                  final motorX = w * 0.75;
-                  final centerY = h * 0.5;
-                  final scale = context.uiScale;
-                  final sock = scale.size(95.0, min: 80.0, max: 130.0);
-
-                  final batteryPlacement = ComponentPlacement(
-                    position: Offset(batteryX, centerY),
-                    rotation: _m5BatteryRotation,
-                    type: ComponentType.battery,
-                  );
-                  final motorPlacement = ComponentPlacement(
-                    position: Offset(motorX, centerY),
-                    rotation: _m5MotorRotation,
-                    type: ComponentType.motor,
-                  );
-
-                  final wires = <WirePath>[];
-                  if (_m5BatteryInserted && _m5MotorInserted) {
-                    wires.add(DynamicWirePath.fromComponents(
-                      compA: batteryPlacement,
-                      terminalIndexA: 1,
-                      compB: motorPlacement,
-                      terminalIndexB: 0,
-                      color: _m5WireRepaired
-                          ? const Color(0xFF10B981)
-                          : const Color(0xFFD97706),
-                      isActive: _m5WireRepaired,
-                    ).toWirePath());
-                    wires.add(DynamicWirePath.fromComponents(
-                      compA: motorPlacement,
-                      terminalIndexA: 1,
-                      compB: batteryPlacement,
-                      terminalIndexB: 0,
-                      color: const Color(0xFF64748B),
-                      isActive: _m5WireRepaired,
-                    ).toWirePath());
-                  }
-
-                  return Stack(
-                    children: [
-                      if (wires.isNotEmpty)
-                        Positioned.fill(
-                          child: AnimatedBuilder(
-                            animation: _currentFlowController,
-                            builder: (context, _) => RealisticWireWidget(
-                              wires: wires,
-                              animationValue: _isWorking
-                                  ? _currentFlowController.value
-                                  : 0,
-                              showElectrons: _isWorking,
-                            ),
-                          ),
-                        ),
-                      Positioned(
-                        left: batteryX - sock / 2,
-                        top: centerY - sock / 2,
-                        child: SchematicBlueprintSocket<String>(
-                          expectedData: 'battery',
-                          isFilled: _m5BatteryInserted,
-                          showLabel: false,
-                          rotation: _m5BatteryRotation,
-                          width: sock,
-                          height: sock,
-                          onAccept: (_) => _insertComponent(
-                            name: 'Bateria',
-                            getInserted: () => _m5BatteryInserted,
-                            setInserted: (v) => _m5BatteryInserted = v,
-                            getRotation: () => _m5BatteryRotation,
-                            setRotation: (v) => _m5BatteryRotation = v,
-                          ),
-                          onRotate: () => _rotateComponent(
-                            name: 'Bateria',
-                            getRotation: () => _m5BatteryRotation,
-                            setRotation: (v) => _m5BatteryRotation = v,
-                          ),
-                          onTap: () {},
-                          symbolWidget: CustomPaint(
-                            size: Size(sock, sock),
-                            painter: CircuitSymbolPainter(
-                              type: ComponentType.battery,
-                              color: const Color(0xFF0F172A),
-                              strokeWidth: 2.5,
-                            ),
-                          ),
-                          placeholderWidget: CustomPaint(
-                            size: Size(sock * 0.85, sock * 0.85),
-                            painter: CircuitSymbolPainter(
-                              type: ComponentType.battery,
-                              isActive: false,
-                              color: const Color(0xFF94A3B8),
-                              strokeWidth: 2.0,
-                            ),
-                          ),
-                          label: '',
-                        ),
-                      ),
-                      Positioned(
-                        left: motorX - sock / 2,
-                        top: centerY - sock / 2,
-                        child: SchematicBlueprintSocket<String>(
-                          expectedData: 'motor_cc',
-                          isFilled: _m5MotorInserted,
-                          showLabel: false,
-                          rotation: _m5MotorRotation,
-                          width: sock,
-                          height: sock,
-                          onAccept: (_) => _insertComponent(
-                            name: 'Motor CC',
-                            getInserted: () => _m5MotorInserted,
-                            setInserted: (v) => _m5MotorInserted = v,
-                            getRotation: () => _m5MotorRotation,
-                            setRotation: (v) => _m5MotorRotation = v,
-                          ),
-                          onRotate: () => _rotateComponent(
-                            name: 'Motor CC',
-                            getRotation: () => _m5MotorRotation,
-                            setRotation: (v) => _m5MotorRotation = v,
-                          ),
-                          onTap: () {},
-                          symbolWidget: CustomPaint(
-                            size: Size(sock, sock),
-                            painter: CircuitSymbolPainter(
-                              type: ComponentType.motor,
-                              isActive: _isWorking,
-                              color: const Color(0xFF0F172A),
-                              strokeWidth: 2.5,
-                            ),
-                          ),
-                          placeholderWidget: CustomPaint(
-                            size: Size(sock * 0.85, sock * 0.85),
-                            painter: CircuitSymbolPainter(
-                              type: ComponentType.motor,
-                              isActive: false,
-                              color: const Color(0xFF94A3B8),
-                              strokeWidth: 2.0,
-                            ),
-                          ),
-                          label: '',
-                        ),
-                      ),
-                      if (_m5BatteryInserted &&
-                          _m5MotorInserted &&
-                          !_m5WireRepaired)
-                        Positioned(
-                          left: (batteryX + motorX) / 2 - 20,
-                          top: centerY - 40,
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFD97706)
-                                  .withValues(alpha: 0.9),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.warning_amber_rounded,
-                                color: Colors.white, size: 24),
-                          ),
-                        ),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: _m5WireRepaired
-                    ? const Color(0xFF0284C7)
-                    : const Color(0xFFD97706),
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  _m5WireRepaired
-                      ? Icons.build_circle_rounded
-                      : Icons.warning_amber_rounded,
-                  color: _m5WireRepaired
-                      ? const Color(0xFF0284C7)
-                      : const Color(0xFFD97706),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  _m5WireRepaired
-                      ? 'Fiação Reparada: Mau contato corrigido!'
-                      : 'Diagnóstico: Fio solto no terminal positivo',
-                  style: GoogleFonts.rajdhani(
-                    color: const Color(0xFF0F172A),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: const Color(0xFF0F172A),
-                  side: BorderSide(
-                    color: _m5WireRepaired
+  Widget _buildStepItem({
+    required int stepNumber,
+    required String title,
+    required bool isCompleted,
+    required bool isActive,
+    VoidCallback? onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        decoration: BoxDecoration(
+          color: isActive
+              ? const Color(0xFF0284C7).withValues(alpha: 0.08)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: isActive
+              ? Border.all(
+                  color: const Color(0xFF0284C7).withValues(alpha: 0.4))
+              : null,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isCompleted
+                    ? const Color(0xFF10B981)
+                    : (isActive
                         ? const Color(0xFF0284C7)
-                        : const Color(0xFFD97706),
-                  ),
-                ),
-                icon: const Icon(Icons.handyman_rounded,
-                    color: Color(0xFFD97706)),
-                label: Text(
-                  _m5WireRepaired ? 'Reparado (Soldado)' : 'Reparar Mau Contato',
-                  style: GoogleFonts.rajdhani(
-                    color: const Color(0xFF0F172A),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                onPressed: () =>
-                    setState(() => _m5WireRepaired = !_m5WireRepaired),
+                        : const Color(0xFFE2E8F0)),
               ),
-              const SizedBox(width: 12),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0284C7),
-                  foregroundColor: Colors.white,
-                ),
-                icon: const Icon(Icons.play_arrow_rounded, color: Colors.white),
-                label: Text(
-                  'Testar Carrinho',
-                  style: GoogleFonts.rajdhani(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                onPressed: () => setState(() => _m5CarTested = true),
+              child: Center(
+                child: isCompleted
+                    ? const Icon(Icons.check, size: 14, color: Colors.white)
+                    : Text(
+                        '$stepNumber',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: isActive
+                              ? Colors.white
+                              : const Color(0xFF64748B),
+                        ),
+                      ),
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-        ],
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                title,
+                style: GoogleFonts.outfit(
+                  fontSize: 12,
+                  fontWeight:
+                      isActive ? FontWeight.bold : FontWeight.normal,
+                  color: isCompleted
+                      ? const Color(0xFF0F172A)
+                      : (isActive
+                          ? const Color(0xFF0284C7)
+                          : const Color(0xFF64748B)),
+                ),
+              ),
+            ),
+            if (onTap != null && !isCompleted)
+              const Icon(Icons.arrow_forward_rounded,
+                  size: 14, color: Color(0xFF0284C7)),
+          ],
+        ),
       ),
     );
   }

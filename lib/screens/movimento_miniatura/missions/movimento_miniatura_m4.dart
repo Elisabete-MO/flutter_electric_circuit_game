@@ -2,26 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../models/circuit_action.dart';
-import '../../../models/first_step_component.dart';
-import '../../../models/stand_mission.dart';
-import '../../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../../state/circuit_undo_redo_controller.dart';
-import '../../../core/ui_scale.dart';
-import '../../../widgets/circuit_symbol_painter.dart';
-import '../../../widgets/component_physical_painter.dart';
-import '../../../widgets/physical_blueprint_socket.dart';
 import '../../../widgets/prof_volts_explanation_dialog.dart';
 import '../../../widgets/prof_volts_feedback_dialog.dart';
 import '../../../widgets/prof_volts_prediction_dialog.dart';
-import '../../../widgets/realistic_wire_painter.dart';
-import '../../../widgets/schematic_blueprint_socket.dart';
 import '../../../widgets/success_confetti_overlay.dart';
 import '../../../widgets/workbench_components.dart';
-import '../../../widgets/workbench_sidebar_cards.dart';
 import '../../../widgets/workbench_table_frame.dart';
+import '../widgets/movimento_miniatura_breadboard_painter.dart';
 import '../widgets/movimento_miniatura_widgets.dart';
 
-/// Missão 4 do Estande 06 — Painel com LED Indicador em Paralelo.
+/// Missão 4 do Estande 06 — Chaveamento com Transistor NPN e LED Sinalizador.
 class MovimentoMiniaturaM4 extends StatefulWidget {
   final VoidCallback onMissionComplete;
 
@@ -36,86 +27,63 @@ class MovimentoMiniaturaM4 extends StatefulWidget {
 
 class _MovimentoMiniaturaM4State extends State<MovimentoMiniaturaM4>
     with SingleTickerProviderStateMixin {
-  final StandMission _mission = StandMission.movimentoMiniaturaMissions[3];
   final CircuitUndoRedoController _undoRedoController =
       CircuitUndoRedoController();
 
-  late final AnimationController _currentFlowController;
+  late final AnimationController _animController;
 
   bool _usePhysicalStyle = true;
   bool _isSimulating = false;
-
-  bool _m4LedInserted = false;
-  bool _m4ResistorInserted = false;
-  bool _m4BatteryInserted = false;
-  double _m4BatteryRotation = 0.0;
-  bool _m4MotorInserted = false;
-  double _m4MotorRotation = 0.0;
-  String? _m4Prediction;
+  bool _transistorInserted = false;
+  bool _ledIndicatorInserted = false;
+  bool _isBaseTriggered = false;
+  String? _prediction;
 
   @override
   void initState() {
     super.initState();
-    _currentFlowController = AnimationController(
+    _animController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 1000),
     )..repeat();
   }
 
   @override
   void dispose() {
-    _currentFlowController.dispose();
+    _animController.dispose();
     super.dispose();
   }
 
-  bool get _isSystemReady =>
-      _m4BatteryInserted &&
-      _m4MotorInserted &&
-      _m4LedInserted &&
-      _m4ResistorInserted;
+  bool get _isClosed =>
+      _transistorInserted && _ledIndicatorInserted && _isBaseTriggered;
 
-  void _insertComponent({
-    required String name,
-    required bool Function() getInserted,
-    required void Function(bool) setInserted,
-    required double Function() getRotation,
-    required void Function(double) setRotation,
-  }) {
-    final prevInserted = getInserted();
-    final prevRotation = getRotation();
-    final nextInserted = !prevInserted;
+  void _toggleTransistor() {
+    final prev = _transistorInserted;
     _undoRedoController.execute(InsertComponentAction(
-      description: nextInserted ? 'Inserir $name' : 'Remover $name',
-      onApply: () => setState(() {
-        setInserted(nextInserted);
-        if (nextInserted) setRotation(0);
-      }),
-      onUndo: () => setState(() {
-        setInserted(prevInserted);
-        setRotation(prevRotation);
-      }),
+      description: prev ? 'Remover Transistor NPN' : 'Instalar Transistor NPN na Protoboard',
+      onApply: () => setState(() => _transistorInserted = !prev),
+      onUndo: () => setState(() => _transistorInserted = prev),
     ));
   }
 
-  void _rotateComponent({
-    required String name,
-    required double Function() getRotation,
-    required void Function(double) setRotation,
-  }) {
-    final prevRotation = getRotation();
-    final newRotation = (prevRotation + 90) % 360;
-    _undoRedoController.execute(RotateComponentAction(
-      description: 'Girar $name (${newRotation.toInt()}°)',
-      onApply: () => setState(() => setRotation(newRotation)),
-      onUndo: () => setState(() => setRotation(prevRotation)),
+  void _toggleLedIndicator() {
+    final prev = _ledIndicatorInserted;
+    _undoRedoController.execute(InsertComponentAction(
+      description: prev ? 'Remover LED Indicador' : 'Instalar LED Verde Indicador na Protoboard',
+      onApply: () => setState(() => _ledIndicatorInserted = !prev),
+      onUndo: () => setState(() => _ledIndicatorInserted = prev),
     ));
+  }
+
+  void _toggleBaseTrigger() {
+    setState(() => _isBaseTriggered = !_isBaseTriggered);
   }
 
   void _onEnergizePressed() {
-    if (_m4Prediction == null) {
+    if (_prediction == null) {
       _showPredictionDialog();
     } else {
-      _validateMission();
+      _validate();
     }
   }
 
@@ -124,34 +92,32 @@ class _MovimentoMiniaturaM4State extends State<MovimentoMiniaturaM4>
       context: context,
       barrierDismissible: false,
       builder: (context) => ProfVoltsPredictionDialog(
-        question: 'O LED em paralelo com o motor acende junto? Por que?',
+        question:
+            'Como se comportam o motor e o LED indicador montados em ramos paralelos na Protoboard?',
         options: const [
-          'LED acende junto com motor',
-          'LED não acende',
-          'Motor não liga',
+          'Ambos recebem 6.0V e operam simultaneamente quando a base do transistor é polarizada',
+          'O motor rouba toda a tensão e o LED fica apagado',
+          'O circuito entra em curto',
           'Não sei'
         ],
         onPredict: (prediction) {
           Navigator.of(context).pop();
-          setState(() => _m4Prediction = prediction);
-          _validateMission();
+          setState(() => _prediction = prediction);
+          _validate();
         },
       ),
     );
   }
 
-  void _showExplanationDialog(bool isSuccess) {
-    if (!isSuccess || !mounted) return;
+  void _showExplanationDialog() {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => ProfVoltsExplanationDialog(
-        question:
-            'Por que o LED precisa de resistor mesmo em paralelo com o motor?',
+        question: 'Por que o transistor é usado como chave eletrônica para motores?',
         options: const [
-          'LED precisa limitar corrente com resistor próprio',
-          'Resistor protege a bateria',
-          'Motor já limita a corrente',
+          'Uma pequena corrente de base permite comutar a corrente maior exigida pelo motor com segurança',
+          'O transistor gera energia extra do nada',
           'Não sei explicar'
         ],
         onExplain: (_) {
@@ -163,116 +129,73 @@ class _MovimentoMiniaturaM4State extends State<MovimentoMiniaturaM4>
     );
   }
 
-  Future<void> _validateMission() async {
-    if (_isSimulating) return;
+  Future<void> _validate() async {
     setState(() => _isSimulating = true);
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (!mounted) return;
 
-    try {
-      bool isSuccess = false;
-      String feedbackMessage = _mission.failureFeedback;
-
-      if (_m4LedInserted && _m4ResistorInserted) {
-        final result = await MissionCircuitBuilder()
-            .addBattery(id: 'bat1', voltage: 6.0)
-            .addMotor(id: 'motor1')
-            .connect('bat1', 'B', 'motor1', 'A')
-            .connect('motor1', 'B', 'bat1', 'A')
-            .addResistor(id: 'r1', resistance: 680.0)
-            .addLed(id: 'led1')
-            .connect('bat1', 'B', 'r1', 'A')
-            .connect('r1', 'B', 'led1', 'A')
-            .connect('led1', 'B', 'bat1', 'A')
-            .simulate();
-        if (result.hasClosedLoop && result.errorMessage == null) {
-          final motorCurrent =
-              (result.componentCurrents['motor1'] ?? 0) * 1000;
-          final ledCurrent =
-              (result.componentCurrents['led1'] ?? 0) * 1000;
-          feedbackMessage =
-              'LED indicador em paralelo validado! Motor: ${motorCurrent.toStringAsFixed(1)}mA, LED: ${ledCurrent.toStringAsFixed(1)}mA.';
-          isSuccess = true;
-        } else {
-          feedbackMessage = result.errorMessage ??
-              'O LED indicador precisa de resistor de proteção!';
-        }
-      } else if (!_m4LedInserted) {
-        feedbackMessage =
-            'Conecte o LED indicador no ramo em paralelo!';
-      } else {
-        feedbackMessage =
-            'O LED indicador também necessita de resistor de proteção!';
-      }
-
-      final fullMessage = isSuccess
-          ? 'Missão "${_mission.title}" concluída! ${_mission.victoryCriteria}.\n\nSua previsão: "$_m4Prediction"\n\nProf. Volts: "${_mission.voltsMediation}"'
-          : '$feedbackMessage\n\nProf. Volts: "${_mission.voltsMediation}"';
-
-      if (mounted) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => ProfVoltsFeedbackDialog(
-            isCorrect: isSuccess,
-            message: fullMessage,
-            onAction: () {
-              Navigator.of(context).pop();
-              if (isSuccess) {
-                _showExplanationDialog(true);
-              }
-            },
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isSimulating = false);
+    if (!_transistorInserted || !_ledIndicatorInserted) {
+      setState(() => _isSimulating = false);
+      showDialog(
+        context: context,
+        builder: (context) => ProfVoltsFeedbackDialog(
+          isCorrect: false,
+          message:
+              'Instale tanto o Transistor NPN quanto o LED Indicador Verde na Protoboard para concluir o circuito de chaveamento.',
+          onAction: () => Navigator.of(context).pop(),
+        ),
+      );
+      return;
     }
+
+    setState(() {
+      _isBaseTriggered = true;
+      _isSimulating = false;
+    });
+
+    await Future.delayed(const Duration(milliseconds: 700));
+    if (!mounted) return;
+    _showExplanationDialog();
   }
 
   @override
   Widget build(BuildContext context) {
-    final double voltage = 6.0;
-    final double currentMa = _isSystemReady ? 135.0 : 0.0;
-
     return Row(
       children: [
+        // Área Principal da Bancada
         Expanded(
           flex: 7,
-          child: Column(
-            children: [
-              Expanded(
-                child: WorkbenchTableFrame(
-                  usePhysicalStyle: _usePhysicalStyle,
-                  onStyleChanged: (val) =>
-                      setState(() => _usePhysicalStyle = val),
-                  leftHeaderWidget:
-                      MovimentoStatusCard(isClosed: _isSystemReady),
-                  rightHeaderWidget: MovimentoTelemetryCard(
-                    voltage: voltage,
-                    currentMa: currentMa,
-                    isClosed: _isSystemReady,
-                  ),
-                  bottomWidget: _buildUndoRedoButtons(),
-                  child: _usePhysicalStyle
-                      ? _buildPhysicalCanvas()
-                      : _buildSchematicCanvas(),
-                ),
-              ),
-            ],
+          child: WorkbenchTableFrame(
+            usePhysicalStyle: _usePhysicalStyle,
+            onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
+            leftHeaderWidget: MovimentoStatusCard(isClosed: _isClosed),
+            rightHeaderWidget: MovimentoTelemetryCard(
+              voltage: 6.0,
+              currentMa: _isClosed ? 135.0 : 0.0,
+              isClosed: _isClosed,
+            ),
+            bottomWidget: MovimentoUndoRedoButtons(
+              controller: _undoRedoController,
+              onUndo: () => setState(() => _undoRedoController.undo()),
+              onRedo: () => setState(() => _undoRedoController.redo()),
+            ),
+            child: _buildWorkbenchDisplay(),
           ),
         ),
         const SizedBox(width: 16),
+        // Painel Lateral (Objetivo, Stepper & Validação)
         Expanded(
           flex: 3,
           child: WorkbenchSidePanel(
             teamTitle: 'Painel da Equipe Mecânica',
             showTeamHeader: false,
-            buttonColor: const Color(0xFF059669),
+            buttonColor: const Color(0xFF0284C7),
             toolboxItems: [
               _buildMissionObjectiveCard(),
               const SizedBox(height: 12),
               _buildInvestigationStepperCard(),
               const SizedBox(height: 12),
-              MovimentoPredictionBadge(prediction: _m4Prediction),
+              MovimentoPredictionBadge(prediction: _prediction),
               MovimentoSideToolbox(usePhysicalStyle: _usePhysicalStyle),
             ],
             onEnergizePressed: _onEnergizePressed,
@@ -283,659 +206,317 @@ class _MovimentoMiniaturaM4State extends State<MovimentoMiniaturaM4>
     );
   }
 
-  Widget _buildUndoRedoButtons() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFCBD5E1)),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.undo_rounded, size: 20),
-            tooltip: 'Desfazer ação',
-            color: _undoRedoController.canUndo
-                ? const Color(0xFF0F172A)
-                : const Color(0xFFCBD5E1),
-            onPressed: _undoRedoController.canUndo
-                ? () => setState(() => _undoRedoController.undo())
-                : null,
+  Widget _buildWorkbenchDisplay() {
+    return Stack(
+      children: [
+        // 1. Desenho do Motor CC, Transistor e LED na Protoboard
+        Positioned.fill(
+          child: AnimatedBuilder(
+            animation: _animController,
+            builder: (context, child) {
+              return CustomPaint(
+                painter: MovimentoMiniaturaBreadboardPainter(
+                  animationValue: _animController.value,
+                  usePhysicalStyle: _usePhysicalStyle,
+                  isClosed: _isClosed,
+                  isReversed: false,
+                  hasMotor: true,
+                  showTransistor: _transistorInserted,
+                  isTransistorTriggered: _isBaseTriggered,
+                  hasIndicatorLed: _ledIndicatorInserted,
+                ),
+              );
+            },
           ),
-          IconButton(
-            icon: const Icon(Icons.redo_rounded, size: 20),
-            tooltip: 'Refazer ação',
-            color: _undoRedoController.canRedo
-                ? const Color(0xFF0F172A)
-                : const Color(0xFFCBD5E1),
-            onPressed: _undoRedoController.canRedo
-                ? () => setState(() => _undoRedoController.redo())
-                : null,
-          ),
-        ],
-      ),
-    );
-  }
+        ),
 
-  Widget _buildPhysicalCanvas() {
-    final isSystemReady = _m4LedInserted && _m4ResistorInserted;
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final w = constraints.maxWidth;
-                  final h = constraints.maxHeight;
-                  final batteryX = w * 0.1;
-                  final motorX = w * 0.45;
-                  final resistorX = w * 0.7;
-                  final ledX = w * 0.88;
-                  final topY = h * 0.3;
-                  final bottomY = h * 0.7;
-                  final scale = context.uiScale;
-                  final sock = scale.size(110.0, min: 90.0, max: 140.0);
-
-                  final batteryPlacement = ComponentPlacement(
-                    position: Offset(batteryX, topY),
-                    rotation: _m4BatteryRotation,
-                    type: ComponentType.battery,
-                  );
-                  final motorPlacement = ComponentPlacement(
-                    position: Offset(motorX, topY),
-                    rotation: _m4MotorRotation,
-                    type: ComponentType.motor,
-                  );
-                  final resistorPlacement = ComponentPlacement(
-                    position: Offset(resistorX, bottomY),
-                    rotation: 0,
-                    type: ComponentType.resistor,
-                  );
-                  final ledPlacement = ComponentPlacement(
-                    position: Offset(ledX, bottomY),
-                    rotation: 0,
-                    type: ComponentType.led,
-                  );
-
-                  final wires = <WirePath>[];
-                  if (_m4BatteryInserted && _m4MotorInserted) {
-                    wires.add(DynamicWirePath.fromComponents(
-                      compA: batteryPlacement,
-                      terminalIndexA: 1,
-                      compB: motorPlacement,
-                      terminalIndexB: 0,
-                      color: const Color(0xFFD97706),
-                      isActive: isSystemReady,
-                    ).toWirePath());
-                    wires.add(DynamicWirePath.fromComponents(
-                      compA: motorPlacement,
-                      terminalIndexA: 1,
-                      compB: batteryPlacement,
-                      terminalIndexB: 0,
-                      color: const Color(0xFF64748B),
-                      isActive: isSystemReady,
-                    ).toWirePath());
-                  }
-                  if (_m4BatteryInserted && _m4ResistorInserted) {
-                    wires.add(DynamicWirePath.fromComponents(
-                      compA: batteryPlacement,
-                      terminalIndexA: 1,
-                      compB: resistorPlacement,
-                      terminalIndexB: 0,
-                      color: const Color(0xFF10B981),
-                      isActive: isSystemReady,
-                    ).toWirePath());
-                  }
-                  if (_m4ResistorInserted && _m4LedInserted) {
-                    wires.add(DynamicWirePath.fromComponents(
-                      compA: resistorPlacement,
-                      terminalIndexA: 1,
-                      compB: ledPlacement,
-                      terminalIndexB: 0,
-                      color: const Color(0xFF10B981),
-                      isActive: isSystemReady,
-                    ).toWirePath());
-                  }
-                  if (_m4LedInserted && _m4BatteryInserted) {
-                    wires.add(DynamicWirePath.fromComponents(
-                      compA: ledPlacement,
-                      terminalIndexA: 1,
-                      compB: batteryPlacement,
-                      terminalIndexB: 0,
-                      color: const Color(0xFF64748B),
-                      isActive: isSystemReady,
-                    ).toWirePath());
-                  }
-
-                  return Stack(
-                    children: [
-                      if (wires.isNotEmpty)
-                        Positioned.fill(
-                          child: AnimatedBuilder(
-                            animation: _currentFlowController,
-                            builder: (context, _) => RealisticWireWidget(
-                              wires: wires,
-                              animationValue: isSystemReady
-                                  ? _currentFlowController.value
-                                  : 0,
-                              showElectrons: isSystemReady,
-                            ),
-                          ),
-                        ),
-                      Positioned(
-                        left: batteryX - sock / 2,
-                        top: topY - sock / 2,
-                        child: PhysicalBlueprintSocket<String>(
-                          expectedData: 'battery',
-                          isFilled: _m4BatteryInserted,
-                          rotation: _m4BatteryRotation,
-                          width: sock,
-                          height: sock,
-                          showLabel: false,
-                          onAccept: (_) => _insertComponent(
-                            name: 'Bateria',
-                            getInserted: () => _m4BatteryInserted,
-                            setInserted: (v) => _m4BatteryInserted = v,
-                            getRotation: () => _m4BatteryRotation,
-                            setRotation: (v) => _m4BatteryRotation = v,
-                          ),
-                          onRotate: () => _rotateComponent(
-                            name: 'Bateria',
-                            getRotation: () => _m4BatteryRotation,
-                            setRotation: (v) => _m4BatteryRotation = v,
-                          ),
-                          onTap: () {},
-                          symbolWidget: CustomPaint(
-                            size: Size(sock, sock),
-                            painter: ComponentPhysicalPainter(
-                              type: ComponentType.battery,
-                              isDarkMode: false,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: motorX - sock / 2,
-                        top: topY - sock / 2,
-                        child: PhysicalBlueprintSocket<String>(
-                          expectedData: 'motor_cc',
-                          isFilled: _m4MotorInserted,
-                          rotation: _m4MotorRotation,
-                          width: sock,
-                          height: sock,
-                          showLabel: false,
-                          onAccept: (_) => _insertComponent(
-                            name: 'Motor CC',
-                            getInserted: () => _m4MotorInserted,
-                            setInserted: (v) => _m4MotorInserted = v,
-                            getRotation: () => _m4MotorRotation,
-                            setRotation: (v) => _m4MotorRotation = v,
-                          ),
-                          onRotate: () => _rotateComponent(
-                            name: 'Motor CC',
-                            getRotation: () => _m4MotorRotation,
-                            setRotation: (v) => _m4MotorRotation = v,
-                          ),
-                          onTap: () {},
-                          symbolWidget: CustomPaint(
-                            size: Size(sock, sock),
-                            painter: ComponentPhysicalPainter(
-                              type: ComponentType.motor,
-                              isActive: isSystemReady,
-                              isDarkMode: false,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: resistorX - sock / 2,
-                        top: bottomY - sock / 2,
-                        child: PhysicalBlueprintSocket<String>(
-                          expectedData: 'resistor_680',
-                          isFilled: _m4ResistorInserted,
-                          rotation: 0,
-                          width: sock,
-                          height: sock,
-                          showLabel: false,
-                          onAccept: (_) => _insertComponent(
-                            name: 'Resistor',
-                            getInserted: () => _m4ResistorInserted,
-                            setInserted: (v) => _m4ResistorInserted = v,
-                            getRotation: () => 0,
-                            setRotation: (v) {},
-                          ),
-                          onRotate: () {},
-                          onTap: () => setState(() =>
-                              _m4ResistorInserted = !_m4ResistorInserted),
-                          symbolWidget: CustomPaint(
-                            size: Size(sock, sock),
-                            painter: ComponentPhysicalPainter(
-                              type: ComponentType.resistor,
-                              isDarkMode: false,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: ledX - sock / 2,
-                        top: bottomY - sock / 2,
-                        child: PhysicalBlueprintSocket<String>(
-                          expectedData: 'led_indicator',
-                          isFilled: _m4LedInserted,
-                          rotation: 0,
-                          width: sock,
-                          height: sock,
-                          showLabel: false,
-                          onAccept: (_) => _insertComponent(
-                            name: 'LED',
-                            getInserted: () => _m4LedInserted,
-                            setInserted: (v) => _m4LedInserted = v,
-                            getRotation: () => 0,
-                            setRotation: (v) {},
-                          ),
-                          onRotate: () {},
-                          onTap: () => setState(
-                              () => _m4LedInserted = !_m4LedInserted),
-                          symbolWidget: CustomPaint(
-                            size: Size(sock, sock),
-                            painter: ComponentPhysicalPainter(
-                              type: ComponentType.led,
-                              isActive: isSystemReady,
-                              isDarkMode: false,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
+        // 2. Dock de Controle na Bancada
+        Positioned(
+          left: 20,
+          bottom: 16,
+          right: 20,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F172A).withValues(alpha: 0.88),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: const Color(0xFF0284C7).withValues(alpha: 0.5),
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 12,
+              runSpacing: 8,
+              children: [
+                FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _transistorInserted
+                        ? const Color(0xFF0284C7)
+                        : const Color(0xFF334155),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                  ),
+                  onPressed: _toggleTransistor,
+                  icon: Icon(
+                    _transistorInserted
+                        ? Icons.check_circle_rounded
+                        : Icons.add_circle_outline_rounded,
+                    size: 16,
+                  ),
+                  label: Text(
+                    _transistorInserted ? 'Transistor NPN Instalado' : 'Instalar Transistor NPN',
+                    style: GoogleFonts.rajdhani(
+                        fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
+                ),
+                FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _ledIndicatorInserted
+                        ? const Color(0xFF10B981)
+                        : const Color(0xFF334155),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                  ),
+                  onPressed: _toggleLedIndicator,
+                  icon: Icon(
+                    _ledIndicatorInserted
+                        ? Icons.check_circle_rounded
+                        : Icons.add_circle_outline_rounded,
+                    size: 16,
+                  ),
+                  label: Text(
+                    _ledIndicatorInserted ? 'LED Indicador Verde Conectado' : 'Conectar LED Indicador',
+                    style: GoogleFonts.rajdhani(
+                        fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
+                ),
+                if (_transistorInserted && _ledIndicatorInserted)
+                  FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: _isBaseTriggered
+                          ? const Color(0xFF10B981)
+                          : const Color(0xFFEAB308),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                    ),
+                    onPressed: _toggleBaseTrigger,
+                    icon: const Icon(Icons.flash_on_rounded, size: 16),
+                    label: Text(
+                      _isBaseTriggered ? 'SINAL NA BASE (ON)' : 'DISPARAR BASE NPN',
+                      style: GoogleFonts.rajdhani(
+                          fontWeight: FontWeight.bold, fontSize: 12),
+                    ),
+                  ),
+              ],
             ),
           ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                isSystemReady ? Icons.check_circle : Icons.info_outline,
-                color: isSystemReady
-                    ? const Color(0xFF10B981)
-                    : const Color(0xFF64748B),
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                isSystemReady
-                    ? 'Circuito Paralelo Completo: Motor + LED'
-                    : 'Insira Resistor e LED no ramo paralelo',
-                style: GoogleFonts.rajdhani(
-                  color: isSystemReady
-                      ? const Color(0xFF10B981)
-                      : const Color(0xFF64748B),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-        ],
-      ),
+        ),
+      ],
     );
-  }
-
-  Widget _buildSchematicCanvas() {
-    final isSystemReady = _m4LedInserted && _m4ResistorInserted;
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final w = constraints.maxWidth;
-                  final h = constraints.maxHeight;
-                  final batteryX = w * 0.1;
-                  final motorX = w * 0.45;
-                  final resistorX = w * 0.7;
-                  final ledX = w * 0.88;
-                  final topY = h * 0.3;
-                  final bottomY = h * 0.7;
-                  final scale = context.uiScale;
-                  final sock = scale.size(95.0, min: 80.0, max: 130.0);
-
-                  final batteryPlacement = ComponentPlacement(
-                    position: Offset(batteryX, topY),
-                    rotation: _m4BatteryRotation,
-                    type: ComponentType.battery,
-                  );
-                  final motorPlacement = ComponentPlacement(
-                    position: Offset(motorX, topY),
-                    rotation: _m4MotorRotation,
-                    type: ComponentType.motor,
-                  );
-                  final resistorPlacement = ComponentPlacement(
-                    position: Offset(resistorX, bottomY),
-                    rotation: 0,
-                    type: ComponentType.resistor,
-                  );
-                  final ledPlacement = ComponentPlacement(
-                    position: Offset(ledX, bottomY),
-                    rotation: 0,
-                    type: ComponentType.led,
-                  );
-
-                  final wires = <WirePath>[];
-                  if (_m4BatteryInserted && _m4MotorInserted) {
-                    wires.add(DynamicWirePath.fromComponents(
-                      compA: batteryPlacement,
-                      terminalIndexA: 1,
-                      compB: motorPlacement,
-                      terminalIndexB: 0,
-                      color: const Color(0xFFD97706),
-                      isActive: isSystemReady,
-                    ).toWirePath());
-                    wires.add(DynamicWirePath.fromComponents(
-                      compA: motorPlacement,
-                      terminalIndexA: 1,
-                      compB: batteryPlacement,
-                      terminalIndexB: 0,
-                      color: const Color(0xFF64748B),
-                      isActive: isSystemReady,
-                    ).toWirePath());
-                  }
-                  if (_m4BatteryInserted && _m4ResistorInserted) {
-                    wires.add(DynamicWirePath.fromComponents(
-                      compA: batteryPlacement,
-                      terminalIndexA: 1,
-                      compB: resistorPlacement,
-                      terminalIndexB: 0,
-                      color: const Color(0xFF10B981),
-                      isActive: isSystemReady,
-                    ).toWirePath());
-                  }
-                  if (_m4ResistorInserted && _m4LedInserted) {
-                    wires.add(DynamicWirePath.fromComponents(
-                      compA: resistorPlacement,
-                      terminalIndexA: 1,
-                      compB: ledPlacement,
-                      terminalIndexB: 0,
-                      color: const Color(0xFF10B981),
-                      isActive: isSystemReady,
-                    ).toWirePath());
-                  }
-                  if (_m4LedInserted && _m4BatteryInserted) {
-                    wires.add(DynamicWirePath.fromComponents(
-                      compA: ledPlacement,
-                      terminalIndexA: 1,
-                      compB: batteryPlacement,
-                      terminalIndexB: 0,
-                      color: const Color(0xFF64748B),
-                      isActive: isSystemReady,
-                    ).toWirePath());
-                  }
-
-                  return Stack(
-                    children: [
-                      if (wires.isNotEmpty)
-                        Positioned.fill(
-                          child: AnimatedBuilder(
-                            animation: _currentFlowController,
-                            builder: (context, _) => RealisticWireWidget(
-                              wires: wires,
-                              animationValue: isSystemReady
-                                  ? _currentFlowController.value
-                                  : 0,
-                              showElectrons: isSystemReady,
-                            ),
-                          ),
-                        ),
-                      Positioned(
-                        left: batteryX - sock / 2,
-                        top: topY - sock / 2,
-                        child: SchematicBlueprintSocket<String>(
-                          expectedData: 'battery',
-                          isFilled: _m4BatteryInserted,
-                          showLabel: false,
-                          rotation: _m4BatteryRotation,
-                          width: sock,
-                          height: sock,
-                          onAccept: (_) => _insertComponent(
-                            name: 'Bateria',
-                            getInserted: () => _m4BatteryInserted,
-                            setInserted: (v) => _m4BatteryInserted = v,
-                            getRotation: () => _m4BatteryRotation,
-                            setRotation: (v) => _m4BatteryRotation = v,
-                          ),
-                          onRotate: () => _rotateComponent(
-                            name: 'Bateria',
-                            getRotation: () => _m4BatteryRotation,
-                            setRotation: (v) => _m4BatteryRotation = v,
-                          ),
-                          onTap: () {},
-                          symbolWidget: CustomPaint(
-                            size: Size(sock, sock),
-                            painter: CircuitSymbolPainter(
-                              type: ComponentType.battery,
-                              color: const Color(0xFF0F172A),
-                              strokeWidth: 2.5,
-                            ),
-                          ),
-                          placeholderWidget: CustomPaint(
-                            size: Size(sock * 0.85, sock * 0.85),
-                            painter: CircuitSymbolPainter(
-                              type: ComponentType.battery,
-                              isActive: false,
-                              color: const Color(0xFF94A3B8),
-                              strokeWidth: 2.0,
-                            ),
-                          ),
-                          label: '',
-                        ),
-                      ),
-                      Positioned(
-                        left: motorX - sock / 2,
-                        top: topY - sock / 2,
-                        child: SchematicBlueprintSocket<String>(
-                          expectedData: 'motor_cc',
-                          isFilled: _m4MotorInserted,
-                          showLabel: false,
-                          rotation: _m4MotorRotation,
-                          width: sock,
-                          height: sock,
-                          onAccept: (_) => _insertComponent(
-                            name: 'Motor CC',
-                            getInserted: () => _m4MotorInserted,
-                            setInserted: (v) => _m4MotorInserted = v,
-                            getRotation: () => _m4MotorRotation,
-                            setRotation: (v) => _m4MotorRotation = v,
-                          ),
-                          onRotate: () => _rotateComponent(
-                            name: 'Motor CC',
-                            getRotation: () => _m4MotorRotation,
-                            setRotation: (v) => _m4MotorRotation = v,
-                          ),
-                          onTap: () {},
-                          symbolWidget: CustomPaint(
-                            size: Size(sock, sock),
-                            painter: CircuitSymbolPainter(
-                              type: ComponentType.motor,
-                              isActive: isSystemReady,
-                              color: const Color(0xFF0F172A),
-                              strokeWidth: 2.5,
-                            ),
-                          ),
-                          placeholderWidget: CustomPaint(
-                            size: Size(sock * 0.85, sock * 0.85),
-                            painter: CircuitSymbolPainter(
-                              type: ComponentType.motor,
-                              isActive: false,
-                              color: const Color(0xFF94A3B8),
-                              strokeWidth: 2.0,
-                            ),
-                          ),
-                          label: '',
-                        ),
-                      ),
-                      Positioned(
-                        left: resistorX - sock / 2,
-                        top: bottomY - sock / 2,
-                        child: SchematicBlueprintSocket<String>(
-                          expectedData: 'resistor_680',
-                          isFilled: _m4ResistorInserted,
-                          showLabel: false,
-                          rotation: 0,
-                          width: sock,
-                          height: sock,
-                          onAccept: (_) => _insertComponent(
-                            name: 'Resistor',
-                            getInserted: () => _m4ResistorInserted,
-                            setInserted: (v) => _m4ResistorInserted = v,
-                            getRotation: () => 0,
-                            setRotation: (v) {},
-                          ),
-                          onRotate: () {},
-                          onTap: () => setState(() =>
-                              _m4ResistorInserted = !_m4ResistorInserted),
-                          symbolWidget: CustomPaint(
-                            size: Size(sock, sock),
-                            painter: CircuitSymbolPainter(
-                              type: ComponentType.resistor,
-                              color: const Color(0xFF0F172A),
-                              strokeWidth: 2.5,
-                            ),
-                          ),
-                          placeholderWidget: CustomPaint(
-                            size: Size(sock * 0.85, sock * 0.85),
-                            painter: CircuitSymbolPainter(
-                              type: ComponentType.resistor,
-                              isActive: false,
-                              color: const Color(0xFF94A3B8),
-                              strokeWidth: 2.0,
-                            ),
-                          ),
-                          label: '',
-                        ),
-                      ),
-                      Positioned(
-                        left: ledX - sock / 2,
-                        top: bottomY - sock / 2,
-                        child: SchematicBlueprintSocket<String>(
-                          expectedData: 'led_indicator',
-                          isFilled: _m4LedInserted,
-                          showLabel: false,
-                          rotation: 0,
-                          width: sock,
-                          height: sock,
-                          onAccept: (_) => _insertComponent(
-                            name: 'LED',
-                            getInserted: () => _m4LedInserted,
-                            setInserted: (v) => _m4LedInserted = v,
-                            getRotation: () => 0,
-                            setRotation: (v) {},
-                          ),
-                          onRotate: () {},
-                          onTap: () => setState(
-                              () => _m4LedInserted = !_m4LedInserted),
-                          symbolWidget: CustomPaint(
-                            size: Size(sock, sock),
-                            painter: CircuitSymbolPainter(
-                              type: ComponentType.led,
-                              isActive: isSystemReady,
-                              color: const Color(0xFF0F172A),
-                              strokeWidth: 2.5,
-                            ),
-                          ),
-                          placeholderWidget: CustomPaint(
-                            size: Size(sock * 0.85, sock * 0.85),
-                            painter: CircuitSymbolPainter(
-                              type: ComponentType.led,
-                              isActive: false,
-                              color: const Color(0xFF94A3B8),
-                              strokeWidth: 2.0,
-                            ),
-                          ),
-                          label: '',
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                isSystemReady ? Icons.check_circle : Icons.info_outline,
-                color: isSystemReady
-                    ? const Color(0xFF10B981)
-                    : const Color(0xFF64748B),
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                isSystemReady
-                    ? 'Circuito Paralelo Completo: Motor + LED'
-                    : 'Insira Resistor e LED no ramo paralelo',
-                style: GoogleFonts.rajdhani(
-                  color: isSystemReady
-                      ? const Color(0xFF10B981)
-                      : const Color(0xFF64748B),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-        ],
-      ),
-    );
-  }
-
-  int get _currentStepperIndex {
-    if (_m4Prediction == null) return 0;
-    if (!(_m4BatteryInserted && _m4MotorInserted && _m4ResistorInserted && _m4LedInserted)) return 1;
-    return 2;
-  }
-
-  bool _isStepCompleted(int index) {
-    if (index == 0) return _m4Prediction != null;
-    if (index == 1) return _m4ResistorInserted && _m4LedInserted;
-    if (index == 2) return _m4ResistorInserted && _m4LedInserted && _m4BatteryInserted && _m4MotorInserted;
-    return false;
   }
 
   Widget _buildMissionObjectiveCard() {
-    return WorkbenchMissionObjectiveCard(
-      missionNumber: 4,
-      title: _mission.title,
-      description: _mission.objective,
-      voltsTip: _mission.voltsMediation,
-      accentColor: const Color(0xFF0284C7),
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.alt_route_rounded,
+                  color: Color(0xFF0284C7), size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Missão 4 · Chaveamento & Indicador',
+                  style: GoogleFonts.rajdhani(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Monte o transistor NPN como chave eletrônica para o motor e adicione um LED Verde de status em paralelo para sinalizar quando o motor estiver ativo.',
+            style: GoogleFonts.outfit(
+              fontSize: 12,
+              color: const Color(0xFF64748B),
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFEF3C7),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.smart_toy_rounded,
+                    color: Color(0xFFD97706), size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Prof. Volts: "Em circuitos paralelos, o motor e o LED compartilham a mesma tensão de 6V sem interferência de carga!"',
+                    style: GoogleFonts.outfit(
+                      fontSize: 11,
+                      fontStyle: FontStyle.italic,
+                      color: const Color(0xFF92400E),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildInvestigationStepperCard() {
-    return WorkbenchInvestigationStepperCard(
-      title: 'Progresso da montagem',
-      currentStepIndex: _currentStepperIndex,
-      isStepCompleted: _isStepCompleted,
-      steps: const [
-        'Prever comportamento do ramo paralelo',
-        'Instalar resistor e LED indicador',
-        'Energizar motor e sinalizador juntos',
-      ],
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.fact_check_rounded,
+                  color: Color(0xFF0284C7), size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Progresso do chaveamento',
+                  style: GoogleFonts.rajdhani(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          _buildStepItem(
+            stepNumber: 1,
+            title: 'Prever ramo paralelo e transistor',
+            isCompleted: _prediction != null,
+            isActive: _prediction == null,
+            onTap: _showPredictionDialog,
+          ),
+          const SizedBox(height: 8),
+          _buildStepItem(
+            stepNumber: 2,
+            title: 'Instalar Transistor NPN e LED Verde',
+            isCompleted: _transistorInserted && _ledIndicatorInserted,
+            isActive: _prediction != null && (!_transistorInserted || !_ledIndicatorInserted),
+          ),
+          const SizedBox(height: 8),
+          _buildStepItem(
+            stepNumber: 3,
+            title: 'Disparar base e validar operação',
+            isCompleted: _isClosed,
+            isActive: _transistorInserted && _ledIndicatorInserted,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStepItem({
+    required int stepNumber,
+    required String title,
+    required bool isCompleted,
+    required bool isActive,
+    VoidCallback? onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        decoration: BoxDecoration(
+          color: isActive
+              ? const Color(0xFF0284C7).withValues(alpha: 0.08)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: isActive
+              ? Border.all(
+                  color: const Color(0xFF0284C7).withValues(alpha: 0.4))
+              : null,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isCompleted
+                    ? const Color(0xFF10B981)
+                    : (isActive
+                        ? const Color(0xFF0284C7)
+                        : const Color(0xFFE2E8F0)),
+              ),
+              child: Center(
+                child: isCompleted
+                    ? const Icon(Icons.check, size: 14, color: Colors.white)
+                    : Text(
+                        '$stepNumber',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: isActive
+                              ? Colors.white
+                              : const Color(0xFF64748B),
+                        ),
+                      ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                title,
+                style: GoogleFonts.outfit(
+                  fontSize: 12,
+                  fontWeight:
+                      isActive ? FontWeight.bold : FontWeight.normal,
+                  color: isCompleted
+                      ? const Color(0xFF0F172A)
+                      : (isActive
+                          ? const Color(0xFF0284C7)
+                          : const Color(0xFF64748B)),
+                ),
+              ),
+            ),
+            if (onTap != null && !isCompleted)
+              const Icon(Icons.arrow_forward_rounded,
+                  size: 14, color: Color(0xFF0284C7)),
+          ],
+        ),
+      ),
     );
   }
 }

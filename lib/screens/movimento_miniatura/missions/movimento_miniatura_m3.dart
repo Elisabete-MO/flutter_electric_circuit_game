@@ -2,28 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../models/circuit_action.dart';
-import '../../../models/first_step_component.dart';
-import '../../../models/stand_mission.dart';
-import '../../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../../state/circuit_undo_redo_controller.dart';
-import '../../../core/ui_scale.dart';
-import '../../../widgets/circuit_symbol_painter.dart';
-import '../../../widgets/component_physical_painter.dart';
-import '../../../widgets/component_vector_painters.dart';
-import '../../../widgets/physical_blueprint_socket.dart';
 import '../../../widgets/prof_volts_explanation_dialog.dart';
 import '../../../widgets/prof_volts_feedback_dialog.dart';
 import '../../../widgets/prof_volts_prediction_dialog.dart';
-import '../../../widgets/realistic_wire_painter.dart';
-import '../../../widgets/schematic_blueprint_socket.dart';
-import '../../../widgets/schematic_symbol_painters.dart';
 import '../../../widgets/success_confetti_overlay.dart';
 import '../../../widgets/workbench_components.dart';
-import '../../../widgets/workbench_sidebar_cards.dart';
 import '../../../widgets/workbench_table_frame.dart';
+import '../widgets/movimento_miniatura_breadboard_painter.dart';
 import '../widgets/movimento_miniatura_widgets.dart';
 
-/// Missão 3 do Estande 06 — Partida com Push-button.
+/// Missão 3 do Estande 06 — Botão de Partida (Chave Táctil na Protoboard).
 class MovimentoMiniaturaM3 extends StatefulWidget {
   final VoidCallback onMissionComplete;
 
@@ -38,86 +27,59 @@ class MovimentoMiniaturaM3 extends StatefulWidget {
 
 class _MovimentoMiniaturaM3State extends State<MovimentoMiniaturaM3>
     with SingleTickerProviderStateMixin {
-  final StandMission _mission = StandMission.movimentoMiniaturaMissions[2];
   final CircuitUndoRedoController _undoRedoController =
       CircuitUndoRedoController();
 
-  late final AnimationController _currentFlowController;
+  late final AnimationController _animController;
 
   bool _usePhysicalStyle = true;
   bool _isSimulating = false;
-
-  bool _m3PushButtonInserted = false;
-  bool _m3PushButtonPressed = false;
-  bool _m3BatteryInserted = false;
-  double _m3BatteryRotation = 0.0;
-  bool _m3MotorInserted = false;
-  double _m3MotorRotation = 0.0;
-  String? _m3Prediction;
+  bool _buttonInserted = false;
+  bool _isButtonPressed = false;
+  String? _prediction;
 
   @override
   void initState() {
     super.initState();
-    _currentFlowController = AnimationController(
+    _animController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 1000),
     )..repeat();
   }
 
   @override
   void dispose() {
-    _currentFlowController.dispose();
+    _animController.dispose();
     super.dispose();
   }
 
-  bool get _isMotorSpinning =>
-      _m3BatteryInserted &&
-      _m3PushButtonInserted &&
-      _m3MotorInserted &&
-      _m3PushButtonPressed;
+  bool get _isClosed => _buttonInserted && _isButtonPressed;
 
-  void _insertComponent({
-    required String name,
-    required bool Function() getInserted,
-    required void Function(bool) setInserted,
-    required double Function() getRotation,
-    required void Function(double) setRotation,
-  }) {
-    final prevInserted = getInserted();
-    final prevRotation = getRotation();
-    final nextInserted = !prevInserted;
+  void _toggleButtonInserted() {
+    final prev = _buttonInserted;
     _undoRedoController.execute(InsertComponentAction(
-      description: nextInserted ? 'Inserir $name' : 'Remover $name',
+      description: prev ? 'Remover Pushbutton' : 'Inserir Pushbutton na Protoboard',
       onApply: () => setState(() {
-        setInserted(nextInserted);
-        if (nextInserted) setRotation(0);
+        _buttonInserted = !prev;
+        if (!_buttonInserted) _isButtonPressed = false;
       }),
       onUndo: () => setState(() {
-        setInserted(prevInserted);
-        setRotation(prevRotation);
+        _buttonInserted = prev;
+        if (!_buttonInserted) _isButtonPressed = false;
       }),
     ));
   }
 
-  void _rotateComponent({
-    required String name,
-    required double Function() getRotation,
-    required void Function(double) setRotation,
-  }) {
-    final prevRotation = getRotation();
-    final newRotation = (prevRotation + 90) % 360;
-    _undoRedoController.execute(RotateComponentAction(
-      description: 'Girar $name (${newRotation.toInt()}°)',
-      onApply: () => setState(() => setRotation(newRotation)),
-      onUndo: () => setState(() => setRotation(prevRotation)),
-    ));
+  void _toggleButtonState() {
+    if (!_buttonInserted) return;
+    setState(() => _isButtonPressed = !_isButtonPressed);
   }
 
   void _onEnergizePressed() {
-    if (_m3Prediction == null) {
+    if (_prediction == null) {
       _showPredictionDialog();
     } else {
-      _validateMission();
+      _validate();
     }
   }
 
@@ -126,34 +88,32 @@ class _MovimentoMiniaturaM3State extends State<MovimentoMiniaturaM3>
       context: context,
       barrierDismissible: false,
       builder: (context) => ProfVoltsPredictionDialog(
-        question: 'Com o push-button em série, quando o motor gira?',
+        question:
+            'O que acontecerá ao adicionar uma chave táctil (pushbutton) em série com o motor?',
         options: const [
-          'Motor gira só pressionando',
-          'Motor gira sempre',
-          'Motor não gira nunca',
+          'O motor só gira enquanto o botão estiver pressionado',
+          'O motor fica ligado direto sem parar',
+          'O botão queima por excesso de corrente',
           'Não sei'
         ],
         onPredict: (prediction) {
           Navigator.of(context).pop();
-          setState(() => _m3Prediction = prediction);
-          _validateMission();
+          setState(() => _prediction = prediction);
+          _validate();
         },
       ),
     );
   }
 
-  void _showExplanationDialog(bool isSuccess) {
-    if (!isSuccess || !mounted) return;
+  void _showExplanationDialog() {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => ProfVoltsExplanationDialog(
-        question:
-            'Por que o motor só gira enquanto o botão está pressionado?',
+        question: 'Qual o papel de uma chave táctil (pushbutton) no controle de motores?',
         options: const [
-          'Push-button é momentâneo, só fecha ao pressionar',
-          'Motor precisa de impulso constante',
-          'Bateria descarrega rápido',
+          'Interrompe fisicamente o circuito quando solta, permitindo controle sob demanda',
+          'Aumenta a velocidade máxima do motor',
           'Não sei explicar'
         ],
         onExplain: (_) {
@@ -165,109 +125,75 @@ class _MovimentoMiniaturaM3State extends State<MovimentoMiniaturaM3>
     );
   }
 
-  Future<void> _validateMission() async {
-    if (_isSimulating) return;
+  Future<void> _validate() async {
     setState(() => _isSimulating = true);
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (!mounted) return;
 
-    try {
-      bool isSuccess = false;
-      String feedbackMessage = _mission.failureFeedback;
-
-      if (_m3PushButtonInserted && _m3PushButtonPressed) {
-        final result = await MissionCircuitBuilder()
-            .addBattery(id: 'bat1', voltage: 6.0)
-            .addSwitch(id: 'sw1', closed: true)
-            .addMotor(id: 'motor1')
-            .connect('bat1', 'B', 'sw1', 'A')
-            .connect('sw1', 'B', 'motor1', 'A')
-            .connect('motor1', 'B', 'bat1', 'A')
-            .simulate();
-        if (result.hasClosedLoop && result.errorMessage == null) {
-          feedbackMessage =
-              'Push-button acionado! Motor CC em operação via interruptor de pressão.';
-          isSuccess = true;
-        } else {
-          feedbackMessage = result.errorMessage ??
-              'O interruptor deve interromper a corrente quando solto.';
-        }
-      } else if (!_m3PushButtonInserted) {
-        feedbackMessage =
-            'Instale o interruptor tipo push-button na linha de corrente!';
-      } else {
-        feedbackMessage =
-            'Pressione e segure o botão de partida para acionar o motor CC.';
-      }
-
-      final fullMessage = isSuccess
-          ? 'Missão "${_mission.title}" concluída! ${_mission.victoryCriteria}.\n\nSua previsão: "$_m3Prediction"\n\nProf. Volts: "${_mission.voltsMediation}"'
-          : '$feedbackMessage\n\nProf. Volts: "${_mission.voltsMediation}"';
-
-      if (mounted) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => ProfVoltsFeedbackDialog(
-            isCorrect: isSuccess,
-            message: fullMessage,
-            onAction: () {
-              Navigator.of(context).pop();
-              if (isSuccess) {
-                _showExplanationDialog(true);
-              }
-            },
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isSimulating = false);
+    if (!_buttonInserted) {
+      setState(() {
+        _isSimulating = false;
+      });
+      showDialog(
+        context: context,
+        builder: (context) => ProfVoltsFeedbackDialog(
+          isCorrect: false,
+          message:
+              'Insira a chave táctil (pushbutton) na vala central da Protoboard para controlar a partida do motor.',
+          onAction: () => Navigator.of(context).pop(),
+        ),
+      );
+      return;
     }
+
+    setState(() {
+      _isButtonPressed = true;
+      _isSimulating = false;
+    });
+
+    await Future.delayed(const Duration(milliseconds: 700));
+    if (!mounted) return;
+    _showExplanationDialog();
   }
 
   @override
   Widget build(BuildContext context) {
-    final double voltage = 6.0;
-    final double currentMa = _isMotorSpinning ? 120.0 : 0.0;
-
     return Row(
       children: [
+        // Área Principal da Bancada
         Expanded(
           flex: 7,
-          child: Column(
-            children: [
-              Expanded(
-                child: WorkbenchTableFrame(
-                  usePhysicalStyle: _usePhysicalStyle,
-                  onStyleChanged: (val) =>
-                      setState(() => _usePhysicalStyle = val),
-                  leftHeaderWidget:
-                      MovimentoStatusCard(isClosed: _isMotorSpinning),
-                  rightHeaderWidget: MovimentoTelemetryCard(
-                    voltage: voltage,
-                    currentMa: currentMa,
-                    isClosed: _isMotorSpinning,
-                  ),
-                  bottomWidget: _buildUndoRedoButtons(),
-                  child: _usePhysicalStyle
-                      ? _buildPhysicalCanvas()
-                      : _buildSchematicCanvas(),
-                ),
-              ),
-            ],
+          child: WorkbenchTableFrame(
+            usePhysicalStyle: _usePhysicalStyle,
+            onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
+            leftHeaderWidget: MovimentoStatusCard(isClosed: _isClosed),
+            rightHeaderWidget: MovimentoTelemetryCard(
+              voltage: 6.0,
+              currentMa: _isClosed ? 120.0 : 0.0,
+              isClosed: _isClosed,
+            ),
+            bottomWidget: MovimentoUndoRedoButtons(
+              controller: _undoRedoController,
+              onUndo: () => setState(() => _undoRedoController.undo()),
+              onRedo: () => setState(() => _undoRedoController.redo()),
+            ),
+            child: _buildWorkbenchDisplay(),
           ),
         ),
         const SizedBox(width: 16),
+        // Painel Lateral (Objetivo, Stepper & Validação)
         Expanded(
           flex: 3,
           child: WorkbenchSidePanel(
             teamTitle: 'Painel da Equipe Mecânica',
             showTeamHeader: false,
-            buttonColor: const Color(0xFF059669),
+            buttonColor: const Color(0xFF0284C7),
             toolboxItems: [
               _buildMissionObjectiveCard(),
               const SizedBox(height: 12),
               _buildInvestigationStepperCard(),
               const SizedBox(height: 12),
-              MovimentoPredictionBadge(prediction: _m3Prediction),
+              MovimentoPredictionBadge(prediction: _prediction),
               MovimentoSideToolbox(usePhysicalStyle: _usePhysicalStyle),
             ],
             onEnergizePressed: _onEnergizePressed,
@@ -278,587 +204,304 @@ class _MovimentoMiniaturaM3State extends State<MovimentoMiniaturaM3>
     );
   }
 
-  Widget _buildUndoRedoButtons() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFCBD5E1)),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.undo_rounded, size: 20),
-            tooltip: 'Desfazer ação',
-            color: _undoRedoController.canUndo
-                ? const Color(0xFF0F172A)
-                : const Color(0xFFCBD5E1),
-            onPressed: _undoRedoController.canUndo
-                ? () => setState(() => _undoRedoController.undo())
-                : null,
-          ),
-          IconButton(
-            icon: const Icon(Icons.redo_rounded, size: 20),
-            tooltip: 'Refazer ação',
-            color: _undoRedoController.canRedo
-                ? const Color(0xFF0F172A)
-                : const Color(0xFFCBD5E1),
-            onPressed: _undoRedoController.canRedo
-                ? () => setState(() => _undoRedoController.redo())
-                : null,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPhysicalCanvas() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final w = constraints.maxWidth;
-                  final h = constraints.maxHeight;
-                  final batteryX = w * 0.12;
-                  final switchX = w * 0.42;
-                  final motorX = w * 0.78;
-                  final centerY = h * 0.5;
-                  final scale = context.uiScale;
-                  final sock = scale.size(110.0, min: 90.0, max: 140.0);
-
-                  final batteryPlacement = ComponentPlacement(
-                    position: Offset(batteryX, centerY),
-                    rotation: _m3BatteryRotation,
-                    type: ComponentType.battery,
-                  );
-                  final switchPlacement = ComponentPlacement(
-                    position: Offset(switchX, centerY),
-                    rotation: 0,
-                    type: ComponentType.switchComponent,
-                  );
-                  final motorPlacement = ComponentPlacement(
-                    position: Offset(motorX, centerY),
-                    rotation: _m3MotorRotation,
-                    type: ComponentType.motor,
-                  );
-
-                  final wires = <WirePath>[];
-                  if (_m3BatteryInserted && _m3PushButtonInserted) {
-                    wires.add(DynamicWirePath.fromComponents(
-                      compA: batteryPlacement,
-                      terminalIndexA: 1,
-                      compB: switchPlacement,
-                      terminalIndexB: 0,
-                      color: const Color(0xFFD97706),
-                      isActive: _isMotorSpinning,
-                    ).toWirePath());
-                  }
-                  if (_m3PushButtonInserted && _m3MotorInserted) {
-                    wires.add(DynamicWirePath.fromComponents(
-                      compA: switchPlacement,
-                      terminalIndexA: 1,
-                      compB: motorPlacement,
-                      terminalIndexB: 0,
-                      color: const Color(0xFF0284C7),
-                      isActive: _isMotorSpinning,
-                    ).toWirePath());
-                  }
-                  if (_m3MotorInserted && _m3BatteryInserted) {
-                    wires.add(DynamicWirePath.fromComponents(
-                      compA: motorPlacement,
-                      terminalIndexA: 1,
-                      compB: batteryPlacement,
-                      terminalIndexB: 0,
-                      color: const Color(0xFF64748B),
-                      isActive: _isMotorSpinning,
-                    ).toWirePath());
-                  }
-
-                  return Stack(
-                    children: [
-                      if (wires.isNotEmpty)
-                        Positioned.fill(
-                          child: AnimatedBuilder(
-                            animation: _currentFlowController,
-                            builder: (context, _) => RealisticWireWidget(
-                              wires: wires,
-                              animationValue: _isMotorSpinning
-                                  ? _currentFlowController.value
-                                  : 0,
-                              showElectrons: _isMotorSpinning,
-                            ),
-                          ),
-                        ),
-                      Positioned(
-                        left: batteryX - sock / 2,
-                        top: centerY - sock / 2,
-                        child: PhysicalBlueprintSocket<String>(
-                          expectedData: 'battery',
-                          isFilled: _m3BatteryInserted,
-                          rotation: _m3BatteryRotation,
-                          width: sock,
-                          height: sock,
-                          showLabel: false,
-                          onAccept: (_) => _insertComponent(
-                            name: 'Bateria',
-                            getInserted: () => _m3BatteryInserted,
-                            setInserted: (v) => _m3BatteryInserted = v,
-                            getRotation: () => _m3BatteryRotation,
-                            setRotation: (v) => _m3BatteryRotation = v,
-                          ),
-                          onRotate: () => _rotateComponent(
-                            name: 'Bateria',
-                            getRotation: () => _m3BatteryRotation,
-                            setRotation: (v) => _m3BatteryRotation = v,
-                          ),
-                          onTap: () {},
-                          symbolWidget: CustomPaint(
-                            size: Size(sock, sock),
-                            painter: ComponentPhysicalPainter(
-                              type: ComponentType.battery,
-                              isDarkMode: false,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: switchX - sock / 2,
-                        top: centerY - sock / 2,
-                        child: PhysicalBlueprintSocket<String>(
-                          expectedData: 'push_button',
-                          isFilled: _m3PushButtonInserted,
-                          rotation: 0,
-                          width: sock,
-                          height: sock,
-                          showLabel: false,
-                          onAccept: (_) => _insertComponent(
-                            name: 'Botão',
-                            getInserted: () => _m3PushButtonInserted,
-                            setInserted: (v) => _m3PushButtonInserted = v,
-                            getRotation: () => 0,
-                            setRotation: (v) {},
-                          ),
-                          onRotate: () {},
-                          onTap: () {
-                            if (_m3PushButtonInserted) {
-                              setState(() =>
-                                  _m3PushButtonPressed = !_m3PushButtonPressed);
-                            }
-                          },
-                          symbolWidget: _usePhysicalStyle
-                              ? PushButtonVectorWidget(size: sock * 0.7)
-                              : SchematicSwitchWidget(
-                                  size: sock * 0.7,
-                                  isPushButton: true,
-                                  color: const Color(0xFFEF4444),
-                                ),
-                        ),
-                      ),
-                      Positioned(
-                        left: motorX - sock / 2,
-                        top: centerY - sock / 2,
-                        child: PhysicalBlueprintSocket<String>(
-                          expectedData: 'motor_cc',
-                          isFilled: _m3MotorInserted,
-                          rotation: _m3MotorRotation,
-                          width: sock,
-                          height: sock,
-                          showLabel: false,
-                          onAccept: (_) => _insertComponent(
-                            name: 'Motor CC',
-                            getInserted: () => _m3MotorInserted,
-                            setInserted: (v) => _m3MotorInserted = v,
-                            getRotation: () => _m3MotorRotation,
-                            setRotation: (v) => _m3MotorRotation = v,
-                          ),
-                          onRotate: () => _rotateComponent(
-                            name: 'Motor CC',
-                            getRotation: () => _m3MotorRotation,
-                            setRotation: (v) => _m3MotorRotation = v,
-                          ),
-                          onTap: () {},
-                          symbolWidget: CustomPaint(
-                            size: Size(sock, sock),
-                            painter: ComponentPhysicalPainter(
-                              type: ComponentType.motor,
-                              isActive: _isMotorSpinning,
-                              isDarkMode: false,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          if (_m3PushButtonInserted)
-            GestureDetector(
-              onTapDown: (_) =>
-                  setState(() => _m3PushButtonPressed = true),
-              onTapUp: (_) =>
-                  setState(() => _m3PushButtonPressed = false),
-              onTapCancel: () =>
-                  setState(() => _m3PushButtonPressed = false),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 32, vertical: 16),
-                decoration: BoxDecoration(
-                  color: _m3PushButtonPressed
-                      ? const Color(0xFF0284C7)
-                      : const Color(0xFF0F172A),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: (_m3PushButtonPressed
-                              ? const Color(0xFF0284C7)
-                              : const Color(0xFF0F172A))
-                          .withValues(alpha: 0.2),
-                      blurRadius: 12,
-                    ),
-                  ],
+  Widget _buildWorkbenchDisplay() {
+    return Stack(
+      children: [
+        // 1. Desenho do Motor CC e Pushbutton na Protoboard
+        Positioned.fill(
+          child: AnimatedBuilder(
+            animation: _animController,
+            builder: (context, child) {
+              return CustomPaint(
+                painter: MovimentoMiniaturaBreadboardPainter(
+                  animationValue: _animController.value,
+                  usePhysicalStyle: _usePhysicalStyle,
+                  isClosed: _isClosed,
+                  isReversed: false,
+                  hasMotor: true,
+                  showPushButton: _buttonInserted,
+                  isPushButtonPressed: _isButtonPressed,
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      _m3PushButtonPressed
+              );
+            },
+          ),
+        ),
+
+        // 2. Dock de Controle na Bancada
+        Positioned(
+          left: 20,
+          bottom: 16,
+          right: 20,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F172A).withValues(alpha: 0.88),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: const Color(0xFF0284C7).withValues(alpha: 0.5),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 12,
+              runSpacing: 8,
+              children: [
+                FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _buttonInserted
+                        ? const Color(0xFF0284C7)
+                        : const Color(0xFF334155),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
+                  ),
+                  onPressed: _toggleButtonInserted,
+                  icon: Icon(
+                    _buttonInserted
+                        ? Icons.check_circle_rounded
+                        : Icons.add_circle_outline_rounded,
+                    size: 18,
+                  ),
+                  label: Text(
+                    _buttonInserted
+                        ? 'Pushbutton Instalado na Vala'
+                        : 'Instalar Pushbutton na Protoboard',
+                    style: GoogleFonts.rajdhani(
+                        fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                ),
+                if (_buttonInserted)
+                  FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: _isButtonPressed
+                          ? const Color(0xFF10B981)
+                          : const Color(0xFFDC2626),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 10),
+                    ),
+                    onPressed: _toggleButtonState,
+                    icon: Icon(
+                      _isButtonPressed
                           ? Icons.play_arrow_rounded
-                          : Icons.radio_button_checked_rounded,
-                      color: Colors.white,
-                      size: 28,
+                          : Icons.stop_rounded,
+                      size: 18,
                     ),
-                    const SizedBox(width: 10),
-                    Text(
-                      _m3PushButtonPressed
-                          ? 'MOTOR EM PARTIDA!'
-                          : 'SEGURE PARA ACIONAR',
+                    label: Text(
+                      _isButtonPressed
+                          ? 'BOTÃO PRESSIONADO (ON)'
+                          : 'PRESSIONAR BOTÃO (TESTE)',
                       style: GoogleFonts.rajdhani(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                      ),
+                          fontWeight: FontWeight.bold, fontSize: 13),
                     ),
-                  ],
-                ),
-              ),
-            ),
-          const SizedBox(height: 16),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSchematicCanvas() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final w = constraints.maxWidth;
-                  final h = constraints.maxHeight;
-                  final batteryX = w * 0.12;
-                  final switchX = w * 0.42;
-                  final motorX = w * 0.78;
-                  final centerY = h * 0.5;
-                  final scale = context.uiScale;
-                  final sock = scale.size(95.0, min: 80.0, max: 130.0);
-
-                  final batteryPlacement = ComponentPlacement(
-                    position: Offset(batteryX, centerY),
-                    rotation: _m3BatteryRotation,
-                    type: ComponentType.battery,
-                  );
-                  final switchPlacement = ComponentPlacement(
-                    position: Offset(switchX, centerY),
-                    rotation: 0,
-                    type: ComponentType.switchComponent,
-                  );
-                  final motorPlacement = ComponentPlacement(
-                    position: Offset(motorX, centerY),
-                    rotation: _m3MotorRotation,
-                    type: ComponentType.motor,
-                  );
-
-                  final wires = <WirePath>[];
-                  if (_m3BatteryInserted && _m3PushButtonInserted) {
-                    wires.add(DynamicWirePath.fromComponents(
-                      compA: batteryPlacement,
-                      terminalIndexA: 1,
-                      compB: switchPlacement,
-                      terminalIndexB: 0,
-                      color: const Color(0xFFD97706),
-                      isActive: _isMotorSpinning,
-                    ).toWirePath());
-                  }
-                  if (_m3PushButtonInserted && _m3MotorInserted) {
-                    wires.add(DynamicWirePath.fromComponents(
-                      compA: switchPlacement,
-                      terminalIndexA: 1,
-                      compB: motorPlacement,
-                      terminalIndexB: 0,
-                      color: const Color(0xFF0284C7),
-                      isActive: _isMotorSpinning,
-                    ).toWirePath());
-                  }
-                  if (_m3MotorInserted && _m3BatteryInserted) {
-                    wires.add(DynamicWirePath.fromComponents(
-                      compA: motorPlacement,
-                      terminalIndexA: 1,
-                      compB: batteryPlacement,
-                      terminalIndexB: 0,
-                      color: const Color(0xFF64748B),
-                      isActive: _isMotorSpinning,
-                    ).toWirePath());
-                  }
-
-                  return Stack(
-                    children: [
-                      if (wires.isNotEmpty)
-                        Positioned.fill(
-                          child: AnimatedBuilder(
-                            animation: _currentFlowController,
-                            builder: (context, _) => RealisticWireWidget(
-                              wires: wires,
-                              animationValue: _isMotorSpinning
-                                  ? _currentFlowController.value
-                                  : 0,
-                              showElectrons: _isMotorSpinning,
-                            ),
-                          ),
-                        ),
-                      Positioned(
-                        left: batteryX - sock / 2,
-                        top: centerY - sock / 2,
-                        child: SchematicBlueprintSocket<String>(
-                          expectedData: 'battery',
-                          isFilled: _m3BatteryInserted,
-                          showLabel: false,
-                          rotation: _m3BatteryRotation,
-                          width: sock,
-                          height: sock,
-                          onAccept: (_) => _insertComponent(
-                            name: 'Bateria',
-                            getInserted: () => _m3BatteryInserted,
-                            setInserted: (v) => _m3BatteryInserted = v,
-                            getRotation: () => _m3BatteryRotation,
-                            setRotation: (v) => _m3BatteryRotation = v,
-                          ),
-                          onRotate: () => _rotateComponent(
-                            name: 'Bateria',
-                            getRotation: () => _m3BatteryRotation,
-                            setRotation: (v) => _m3BatteryRotation = v,
-                          ),
-                          onTap: () {},
-                          symbolWidget: CustomPaint(
-                            size: Size(sock, sock),
-                            painter: CircuitSymbolPainter(
-                              type: ComponentType.battery,
-                              color: const Color(0xFF0F172A),
-                              strokeWidth: 2.5,
-                            ),
-                          ),
-                          placeholderWidget: CustomPaint(
-                            size: Size(sock * 0.85, sock * 0.85),
-                            painter: CircuitSymbolPainter(
-                              type: ComponentType.battery,
-                              isActive: false,
-                              color: const Color(0xFF94A3B8),
-                              strokeWidth: 2.0,
-                            ),
-                          ),
-                          label: '',
-                        ),
-                      ),
-                      Positioned(
-                        left: switchX - sock / 2,
-                        top: centerY - sock / 2,
-                        child: SchematicBlueprintSocket<String>(
-                          expectedData: 'push_button',
-                          isFilled: _m3PushButtonInserted,
-                          showLabel: false,
-                          rotation: 0,
-                          width: sock,
-                          height: sock,
-                          onAccept: (_) => _insertComponent(
-                            name: 'Push-Button',
-                            getInserted: () => _m3PushButtonInserted,
-                            setInserted: (v) => _m3PushButtonInserted = v,
-                            getRotation: () => 0,
-                            setRotation: (v) {},
-                          ),
-                          onRotate: () {},
-                          onTap: () => setState(() =>
-                              _m3PushButtonPressed = !_m3PushButtonPressed),
-                          symbolWidget: SchematicSwitchWidget(
-                            size: sock * 0.7,
-                            isPushButton: true,
-                            color: const Color(0xFFEF4444),
-                          ),
-                          placeholderWidget: SchematicSwitchWidget(
-                            size: sock * 0.6,
-                            isPushButton: true,
-                            color: const Color(0xFF94A3B8),
-                          ),
-                          label: '',
-                        ),
-                      ),
-                      Positioned(
-                        left: motorX - sock / 2,
-                        top: centerY - sock / 2,
-                        child: SchematicBlueprintSocket<String>(
-                          expectedData: 'motor_cc',
-                          isFilled: _m3MotorInserted,
-                          showLabel: false,
-                          rotation: _m3MotorRotation,
-                          width: sock,
-                          height: sock,
-                          onAccept: (_) => _insertComponent(
-                            name: 'Motor CC',
-                            getInserted: () => _m3MotorInserted,
-                            setInserted: (v) => _m3MotorInserted = v,
-                            getRotation: () => _m3MotorRotation,
-                            setRotation: (v) => _m3MotorRotation = v,
-                          ),
-                          onRotate: () => _rotateComponent(
-                            name: 'Motor CC',
-                            getRotation: () => _m3MotorRotation,
-                            setRotation: (v) => _m3MotorRotation = v,
-                          ),
-                          onTap: () {},
-                          symbolWidget: CustomPaint(
-                            size: Size(sock, sock),
-                            painter: CircuitSymbolPainter(
-                              type: ComponentType.motor,
-                              isActive: _isMotorSpinning,
-                              color: const Color(0xFF0F172A),
-                              strokeWidth: 2.5,
-                            ),
-                          ),
-                          placeholderWidget: CustomPaint(
-                            size: Size(sock * 0.85, sock * 0.85),
-                            painter: CircuitSymbolPainter(
-                              type: ComponentType.motor,
-                              isActive: false,
-                              color: const Color(0xFF94A3B8),
-                              strokeWidth: 2.0,
-                            ),
-                          ),
-                          label: '',
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
+                  ),
+              ],
             ),
           ),
-          const SizedBox(height: 8),
-          if (_m3PushButtonInserted)
-            GestureDetector(
-              onTapDown: (_) =>
-                  setState(() => _m3PushButtonPressed = true),
-              onTapUp: (_) =>
-                  setState(() => _m3PushButtonPressed = false),
-              onTapCancel: () =>
-                  setState(() => _m3PushButtonPressed = false),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 32, vertical: 16),
-                decoration: BoxDecoration(
-                  color: _m3PushButtonPressed
-                      ? const Color(0xFF0284C7)
-                      : const Color(0xFF0F172A),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: (_m3PushButtonPressed
-                              ? const Color(0xFF0284C7)
-                              : const Color(0xFF0F172A))
-                          .withValues(alpha: 0.2),
-                      blurRadius: 12,
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      _m3PushButtonPressed
-                          ? Icons.play_arrow_rounded
-                          : Icons.radio_button_checked_rounded,
-                      color: Colors.white,
-                      size: 28,
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      _m3PushButtonPressed
-                          ? 'MOTOR EM PARTIDA!'
-                          : 'SEGURE PARA ACIONAR',
-                      style: GoogleFonts.rajdhani(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          const SizedBox(height: 16),
-        ],
-      ),
+        ),
+      ],
     );
-  }
-
-  int get _currentStepperIndex {
-    if (_m3Prediction == null) return 0;
-    if (!(_m3BatteryInserted && _m3PushButtonInserted && _m3MotorInserted)) return 1;
-    return 2;
-  }
-
-  bool _isStepCompleted(int index) {
-    if (index == 0) return _m3Prediction != null;
-    if (index == 1) return _m3BatteryInserted && _m3PushButtonInserted && _m3MotorInserted;
-    if (index == 2) return _m3PushButtonPressed && _isMotorSpinning;
-    return false;
   }
 
   Widget _buildMissionObjectiveCard() {
-    return WorkbenchMissionObjectiveCard(
-      missionNumber: 3,
-      title: _mission.title,
-      description: _mission.objective,
-      voltsTip: _mission.voltsMediation,
-      accentColor: const Color(0xFF0284C7),
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.touch_app_rounded,
+                  color: Color(0xFF0284C7), size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Missão 3 · Botão de Partida',
+                  style: GoogleFonts.rajdhani(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Instale o Pushbutton na vala central da Protoboard em série com o motor CC para implementar o controle de partida e parada pulsada sob demanda.',
+            style: GoogleFonts.outfit(
+              fontSize: 12,
+              color: const Color(0xFF64748B),
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFEF3C7),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.smart_toy_rounded,
+                    color: Color(0xFFD97706), size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Prof. Volts: "A chave SPST momentânea é o elemento fundamental de controle em painéis de partida industrial!"',
+                    style: GoogleFonts.outfit(
+                      fontSize: 11,
+                      fontStyle: FontStyle.italic,
+                      color: const Color(0xFF92400E),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildInvestigationStepperCard() {
-    return WorkbenchInvestigationStepperCard(
-      title: 'Progresso da montagem',
-      currentStepIndex: _currentStepperIndex,
-      isStepCompleted: _isStepCompleted,
-      steps: const [
-        'Prever acionamento pulsado',
-        'Montar bateria, botão e motor',
-        'Pressionar botão e testar partida',
-      ],
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.fact_check_rounded,
+                  color: Color(0xFF0284C7), size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Progresso da montagem',
+                  style: GoogleFonts.rajdhani(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          _buildStepItem(
+            stepNumber: 1,
+            title: 'Prever acionamento pulsado',
+            isCompleted: _prediction != null,
+            isActive: _prediction == null,
+            onTap: _showPredictionDialog,
+          ),
+          const SizedBox(height: 8),
+          _buildStepItem(
+            stepNumber: 2,
+            title: 'Instalar Pushbutton na Protoboard',
+            isCompleted: _buttonInserted,
+            isActive: _prediction != null && !_buttonInserted,
+          ),
+          const SizedBox(height: 8),
+          _buildStepItem(
+            stepNumber: 3,
+            title: 'Pressionar botão e testar partida',
+            isCompleted: _isClosed,
+            isActive: _buttonInserted,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStepItem({
+    required int stepNumber,
+    required String title,
+    required bool isCompleted,
+    required bool isActive,
+    VoidCallback? onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        decoration: BoxDecoration(
+          color: isActive
+              ? const Color(0xFF0284C7).withValues(alpha: 0.08)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: isActive
+              ? Border.all(
+                  color: const Color(0xFF0284C7).withValues(alpha: 0.4))
+              : null,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isCompleted
+                    ? const Color(0xFF10B981)
+                    : (isActive
+                        ? const Color(0xFF0284C7)
+                        : const Color(0xFFE2E8F0)),
+              ),
+              child: Center(
+                child: isCompleted
+                    ? const Icon(Icons.check, size: 14, color: Colors.white)
+                    : Text(
+                        '$stepNumber',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: isActive
+                              ? Colors.white
+                              : const Color(0xFF64748B),
+                        ),
+                      ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                title,
+                style: GoogleFonts.outfit(
+                  fontSize: 12,
+                  fontWeight:
+                      isActive ? FontWeight.bold : FontWeight.normal,
+                  color: isCompleted
+                      ? const Color(0xFF0F172A)
+                      : (isActive
+                          ? const Color(0xFF0284C7)
+                          : const Color(0xFF64748B)),
+                ),
+              ),
+            ),
+            if (onTap != null && !isCompleted)
+              const Icon(Icons.arrow_forward_rounded,
+                  size: 14, color: Color(0xFF0284C7)),
+          ],
+        ),
+      ),
     );
   }
 }

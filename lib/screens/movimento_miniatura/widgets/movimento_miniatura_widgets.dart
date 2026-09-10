@@ -19,11 +19,10 @@ class MovimentoStatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final statusColor =
         isClosed ? const Color(0xFF10B981) : const Color(0xFF64748B);
-    final statusText =
-        isClosed ? 'CIRCUITO FECHADO (ON)' : 'CIRCUITO ABERTO (OFF)';
+    final statusText = isClosed ? 'FECHADO (ON)' : 'ABERTO (OFF)';
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(16),
@@ -31,7 +30,7 @@ class MovimentoStatusCard extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 6,
+            blurRadius: 4,
             offset: const Offset(0, 2),
           ),
         ],
@@ -39,30 +38,21 @@ class MovimentoStatusCard extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            width: 8,
-            height: 8,
+          Container(
+            width: 7,
+            height: 7,
             decoration: BoxDecoration(
               color: statusColor,
               shape: BoxShape.circle,
-              boxShadow: [
-                if (isClosed)
-                  BoxShadow(
-                    color: statusColor.withValues(alpha: 0.6),
-                    blurRadius: 6,
-                    spreadRadius: 1.5,
-                  ),
-              ],
             ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 5),
           Text(
             statusText,
             style: GoogleFonts.rajdhani(
               color: statusColor,
               fontWeight: FontWeight.bold,
-              fontSize: 12,
+              fontSize: 11,
             ),
           ),
         ],
@@ -87,7 +77,7 @@ class MovimentoTelemetryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(16),
@@ -95,7 +85,7 @@ class MovimentoTelemetryCard extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 6,
+            blurRadius: 4,
             offset: const Offset(0, 2),
           ),
         ],
@@ -104,30 +94,16 @@ class MovimentoTelemetryCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'TENSÃO: ',
-            style: GoogleFonts.rajdhani(
-              color: const Color(0xFF64748B),
-              fontWeight: FontWeight.bold,
-              fontSize: 11,
-            ),
-          ),
-          Text(
             '${voltage.toStringAsFixed(1)}V',
             style: GoogleFonts.rajdhani(
               color: const Color(0xFF0284C7),
               fontWeight: FontWeight.bold,
-              fontSize: 12,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            '| CORRENTE: ',
-            style: GoogleFonts.rajdhani(
-              color: const Color(0xFF64748B),
-              fontWeight: FontWeight.bold,
               fontSize: 11,
             ),
           ),
+          const SizedBox(width: 4),
+          const Text('|', style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 10)),
+          const SizedBox(width: 4),
           Text(
             '${currentMa.toStringAsFixed(0)}mA',
             style: GoogleFonts.rajdhani(
@@ -135,7 +111,7 @@ class MovimentoTelemetryCard extends StatelessWidget {
                   ? const Color(0xFF10B981)
                   : const Color(0xFF94A3B8),
               fontWeight: FontWeight.bold,
-              fontSize: 12,
+              fontSize: 11,
             ),
           ),
         ],

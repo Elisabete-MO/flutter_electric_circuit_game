@@ -1,27 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-import '../../../core/ui_scale.dart';
 import '../../../models/circuit_action.dart';
-import '../../../models/first_step_component.dart';
-import '../../../models/stand_mission.dart';
-import '../../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../../state/circuit_undo_redo_controller.dart';
-import '../../../widgets/circuit_symbol_painter.dart';
-import '../../../widgets/component_physical_painter.dart';
-import '../../../widgets/physical_blueprint_socket.dart';
 import '../../../widgets/prof_volts_explanation_dialog.dart';
 import '../../../widgets/prof_volts_feedback_dialog.dart';
 import '../../../widgets/prof_volts_prediction_dialog.dart';
-import '../../../widgets/realistic_wire_painter.dart';
-import '../../../widgets/schematic_blueprint_socket.dart';
-import '../../../widgets/schematic_symbol_painters.dart';
 import '../../../widgets/success_confetti_overlay.dart';
 import '../../../widgets/workbench_components.dart';
-import '../../../widgets/workbench_sidebar_cards.dart';
 import '../../../widgets/workbench_table_frame.dart';
+import '../widgets/movimento_miniatura_breadboard_painter.dart';
 import '../widgets/movimento_miniatura_widgets.dart';
 
-/// Missão 1 do Estande 06 — Primeiro Giro do Motor CC.
+/// Missão 1 do Estande 06 — Primeiro Giro do Motor CC na Protoboard.
 class MovimentoMiniaturaM1 extends StatefulWidget {
   final VoidCallback onMissionComplete;
 
@@ -36,80 +27,48 @@ class MovimentoMiniaturaM1 extends StatefulWidget {
 
 class _MovimentoMiniaturaM1State extends State<MovimentoMiniaturaM1>
     with SingleTickerProviderStateMixin {
-  final StandMission _mission = StandMission.movimentoMiniaturaMissions[0];
   final CircuitUndoRedoController _undoRedoController =
       CircuitUndoRedoController();
 
-  late final AnimationController _currentFlowController;
+  late final AnimationController _animController;
 
   bool _usePhysicalStyle = true;
   bool _isSimulating = false;
-
-  bool _m1MotorInserted = false;
-  bool _m1BatteryInserted = false;
-  double _m1BatteryRotation = 0.0;
-  double _m1MotorRotation = 0.0;
-  String? _m1Prediction;
+  bool _motorConnected = false;
+  bool _isEnergized = false;
+  String? _prediction;
 
   @override
   void initState() {
     super.initState();
-    _currentFlowController = AnimationController(
+    _animController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 1000),
     )..repeat();
   }
 
   @override
   void dispose() {
-    _currentFlowController.dispose();
+    _animController.dispose();
     super.dispose();
   }
 
-  bool get _isClosed => _m1BatteryInserted && _m1MotorInserted;
+  bool get _isClosed => _motorConnected && _isEnergized;
 
-  void _insertComponent({
-    required String name,
-    required bool Function() getInserted,
-    required void Function(bool) setInserted,
-    required double Function() getRotation,
-    required void Function(double) setRotation,
-  }) {
-    final prevInserted = getInserted();
-    final prevRotation = getRotation();
-    final nextInserted = !prevInserted;
+  void _toggleMotor() {
+    final prev = _motorConnected;
     _undoRedoController.execute(InsertComponentAction(
-      description: nextInserted ? 'Inserir $name' : 'Remover $name',
-      onApply: () => setState(() {
-        setInserted(nextInserted);
-        if (nextInserted) setRotation(0);
-      }),
-      onUndo: () => setState(() {
-        setInserted(prevInserted);
-        setRotation(prevRotation);
-      }),
-    ));
-  }
-
-  void _rotateComponent({
-    required String name,
-    required double Function() getRotation,
-    required void Function(double) setRotation,
-  }) {
-    final prevRotation = getRotation();
-    final newRotation = (prevRotation + 90) % 360;
-    _undoRedoController.execute(RotateComponentAction(
-      description: 'Girar $name (${newRotation.toInt()}°)',
-      onApply: () => setState(() => setRotation(newRotation)),
-      onUndo: () => setState(() => setRotation(prevRotation)),
+      description: prev ? 'Desconectar Motor CC' : 'Conectar Motor CC na Protoboard',
+      onApply: () => setState(() => _motorConnected = !prev),
+      onUndo: () => setState(() => _motorConnected = prev),
     ));
   }
 
   void _onEnergizePressed() {
-    if (_m1Prediction == null) {
+    if (_prediction == null) {
       _showPredictionDialog();
     } else {
-      _validateMission();
+      _validate();
     }
   }
 
@@ -119,33 +78,31 @@ class _MovimentoMiniaturaM1State extends State<MovimentoMiniaturaM1>
       barrierDismissible: false,
       builder: (context) => ProfVoltsPredictionDialog(
         question:
-            'O que acontecerá ao fechar o circuito com o motor CC conectado?',
+            'O que acontecerá ao ligar a fonte CC com o motor conectado na Protoboard?',
         options: const [
-          'Motor gira',
-          'Motor não gira',
-          'Motor queima',
+          'O motor CC gira no sentido horário ↻',
+          'O motor não se move',
+          'O motor queima instantaneamente',
           'Não sei'
         ],
         onPredict: (prediction) {
           Navigator.of(context).pop();
-          setState(() => _m1Prediction = prediction);
-          _validateMission();
+          setState(() => _prediction = prediction);
+          _validate();
         },
       ),
     );
   }
 
-  void _showExplanationDialog(bool isSuccess) {
-    if (!isSuccess || !mounted) return;
+  void _showExplanationDialog() {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => ProfVoltsExplanationDialog(
-        question: 'Por que o motor só gira com o circuito fechado?',
+        question: 'Por que o motor CC gira quando o circuito é fechado?',
         options: const [
-          'Corrente precisa de caminho completo',
-          'Motor armazena energia',
-          'Bateria precisa de retorno',
+          'A corrente elétrica cria um campo magnético que produz torque mecânico no rotor',
+          'A bateria empurra ar através do motor',
           'Não sei explicar'
         ],
         onExplain: (_) {
@@ -157,104 +114,76 @@ class _MovimentoMiniaturaM1State extends State<MovimentoMiniaturaM1>
     );
   }
 
-  Future<void> _validateMission() async {
-    if (_isSimulating) return;
+  Future<void> _validate() async {
     setState(() => _isSimulating = true);
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (!mounted) return;
 
-    try {
-      bool isSuccess = false;
-      String feedbackMessage = _mission.failureFeedback;
-
-      if (_m1MotorInserted) {
-        final result = await MissionCircuitBuilder()
-            .addBattery(id: 'bat1', voltage: 6.0)
-            .addMotor(id: 'motor1')
-            .connect('bat1', 'B', 'motor1', 'A')
-            .connect('motor1', 'B', 'bat1', 'A')
-            .simulate();
-        if (result.hasClosedLoop && result.errorMessage == null) {
-          final currentMa = result.current * 1000;
-          feedbackMessage =
-              'Motor CC validado! Corrente: ${currentMa.toStringAsFixed(1)}mA. O eixo gera torque rotacional.';
-          isSuccess = true;
-        } else {
-          feedbackMessage = result.errorMessage ??
-              'Confira se ambos os terminais do motor estão conectados!';
-        }
-      } else {
-        feedbackMessage =
-            'Confira se ambos os terminais do motor estão conectados à fonte didática!';
-      }
-
-      final fullMessage = isSuccess
-          ? 'Missão "${_mission.title}" concluída! ${_mission.victoryCriteria}.\n\nSua previsão: "$_m1Prediction"\n\nProf. Volts: "${_mission.voltsMediation}"'
-          : '$feedbackMessage\n\nProf. Volts: "${_mission.voltsMediation}"';
-
-      if (mounted) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => ProfVoltsFeedbackDialog(
-            isCorrect: isSuccess,
-            message: fullMessage,
-            onAction: () {
-              Navigator.of(context).pop();
-              if (isSuccess) {
-                _showExplanationDialog(true);
-              }
-            },
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isSimulating = false);
+    if (!_motorConnected) {
+      setState(() {
+        _isEnergized = false;
+        _isSimulating = false;
+      });
+      showDialog(
+        context: context,
+        builder: (context) => ProfVoltsFeedbackDialog(
+          isCorrect: false,
+          message:
+              'O motor CC precisa estar conectado aos barramentos da Protoboard para receber energia.',
+          onAction: () => Navigator.of(context).pop(),
+        ),
+      );
+      return;
     }
+
+    setState(() {
+      _isEnergized = true;
+      _isSimulating = false;
+    });
+
+    await Future.delayed(const Duration(milliseconds: 600));
+    if (!mounted) return;
+    _showExplanationDialog();
   }
 
   @override
   Widget build(BuildContext context) {
-    final double voltage = 6.0;
-    final double currentMa = _isClosed ? 120.0 : 0.0;
-
     return Row(
       children: [
+        // Área Principal da Bancada
         Expanded(
           flex: 7,
-          child: Column(
-            children: [
-              Expanded(
-                child: WorkbenchTableFrame(
-                  usePhysicalStyle: _usePhysicalStyle,
-                  onStyleChanged: (val) =>
-                      setState(() => _usePhysicalStyle = val),
-                  leftHeaderWidget: MovimentoStatusCard(isClosed: _isClosed),
-                  rightHeaderWidget: MovimentoTelemetryCard(
-                    voltage: voltage,
-                    currentMa: currentMa,
-                    isClosed: _isClosed,
-                  ),
-                  bottomWidget: _buildUndoRedoButtons(),
-                  child: _usePhysicalStyle
-                      ? _buildPhysicalCanvas()
-                      : _buildSchematicCanvas(),
-                ),
-              ),
-            ],
+          child: WorkbenchTableFrame(
+            usePhysicalStyle: _usePhysicalStyle,
+            onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
+            leftHeaderWidget: MovimentoStatusCard(isClosed: _isClosed),
+            rightHeaderWidget: MovimentoTelemetryCard(
+              voltage: 6.0,
+              currentMa: _isClosed ? 120.0 : 0.0,
+              isClosed: _isClosed,
+            ),
+            bottomWidget: MovimentoUndoRedoButtons(
+              controller: _undoRedoController,
+              onUndo: () => setState(() => _undoRedoController.undo()),
+              onRedo: () => setState(() => _undoRedoController.redo()),
+            ),
+            child: _buildWorkbenchDisplay(),
           ),
         ),
         const SizedBox(width: 16),
+        // Painel Lateral (Objetivo, Stepper & Validação)
         Expanded(
           flex: 3,
           child: WorkbenchSidePanel(
             teamTitle: 'Painel da Equipe Mecânica',
             showTeamHeader: false,
-            buttonColor: const Color(0xFF059669),
+            buttonColor: const Color(0xFF0284C7),
             toolboxItems: [
               _buildMissionObjectiveCard(),
               const SizedBox(height: 12),
               _buildInvestigationStepperCard(),
               const SizedBox(height: 12),
-              MovimentoPredictionBadge(prediction: _m1Prediction),
+              MovimentoPredictionBadge(prediction: _prediction),
               MovimentoSideToolbox(usePhysicalStyle: _usePhysicalStyle),
             ],
             onEnergizePressed: _onEnergizePressed,
@@ -265,364 +194,278 @@ class _MovimentoMiniaturaM1State extends State<MovimentoMiniaturaM1>
     );
   }
 
-  Widget _buildUndoRedoButtons() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFCBD5E1)),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.undo_rounded, size: 20),
-            tooltip: 'Desfazer ação',
-            color: _undoRedoController.canUndo
-                ? const Color(0xFF0F172A)
-                : const Color(0xFFCBD5E1),
-            onPressed: _undoRedoController.canUndo
-                ? () => setState(() => _undoRedoController.undo())
-                : null,
+  Widget _buildWorkbenchDisplay() {
+    return Stack(
+      children: [
+        // 1. Desenho do Motor CC, Protoboard e Bateria 9V
+        Positioned.fill(
+          child: AnimatedBuilder(
+            animation: _animController,
+            builder: (context, child) {
+              return CustomPaint(
+                painter: MovimentoMiniaturaBreadboardPainter(
+                  animationValue: _animController.value,
+                  usePhysicalStyle: _usePhysicalStyle,
+                  isClosed: _isClosed,
+                  isReversed: false,
+                  hasMotor: _motorConnected,
+                ),
+              );
+            },
           ),
-          IconButton(
-            icon: const Icon(Icons.redo_rounded, size: 20),
-            tooltip: 'Refazer ação',
-            color: _undoRedoController.canRedo
-                ? const Color(0xFF0F172A)
-                : const Color(0xFFCBD5E1),
-            onPressed: _undoRedoController.canRedo
-                ? () => setState(() => _undoRedoController.redo())
-                : null,
+        ),
+
+        // 2. Dock de Controle Interativo na Bancada
+        Positioned(
+          left: 20,
+          bottom: 16,
+          right: 20,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F172A).withValues(alpha: 0.88),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: const Color(0xFF0284C7).withValues(alpha: 0.5),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 12,
+              runSpacing: 8,
+              children: [
+                FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _motorConnected
+                        ? const Color(0xFF0284C7)
+                        : const Color(0xFF334155),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
+                  ),
+                  onPressed: _toggleMotor,
+                  icon: Icon(
+                    _motorConnected
+                        ? Icons.check_circle_rounded
+                        : Icons.add_circle_outline_rounded,
+                    size: 18,
+                  ),
+                  label: Text(
+                    _motorConnected
+                        ? 'Motor Conectado na Protoboard'
+                        : 'Conectar Motor CC na Protoboard',
+                    style: GoogleFonts.rajdhani(
+                        fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMissionObjectiveCard() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.motion_photos_on_rounded,
+                  color: Color(0xFF0284C7), size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Missão 1 · Primeiro Giro',
+                  style: GoogleFonts.rajdhani(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Conecte o motor CC à Protoboard e ligue a alimentação para observar a conversão de energia elétrica em torque rotacional no sentido horário ↻.',
+            style: GoogleFonts.outfit(
+              fontSize: 12,
+              color: const Color(0xFF64748B),
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFEF3C7),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.smart_toy_rounded,
+                    color: Color(0xFFD97706), size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Prof. Volts: "A corrente elétrica que percorre a bobina interna interage com os ímãs fixos do estator, fazendo o eixo girar!"',
+                    style: GoogleFonts.outfit(
+                      fontSize: 11,
+                      fontStyle: FontStyle.italic,
+                      color: const Color(0xFF92400E),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildPhysicalCanvas() {
-    final scale = context.uiScale;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final double width = constraints.maxWidth;
-        final double height = constraints.maxHeight;
-        final double batteryX = width * 0.18;
-        final double motorX = width * 0.82;
-        final double centerY = height * 0.50;
-        final sock = scale.size(110.0, min: 90.0, max: 140.0);
-
-        final batteryPlacement = ComponentPlacement(
-          position: Offset(batteryX, centerY),
-          rotation: _m1BatteryRotation,
-          type: ComponentType.battery,
-        );
-        final motorPlacement = ComponentPlacement(
-          position: Offset(motorX, centerY),
-          rotation: _m1MotorRotation,
-          type: ComponentType.motor,
-        );
-
-        final wires = <WirePath>[];
-        if (_isClosed) {
-          wires.add(DynamicWirePath.fromComponents(
-            compA: batteryPlacement,
-            terminalIndexA: 1,
-            compB: motorPlacement,
-            terminalIndexB: 0,
-            color: const Color(0xFFD97706),
-            isActive: true,
-            thickness: scale.size(5.5, min: 4.5, max: 8.0),
-          ).toWirePath());
-          wires.add(DynamicWirePath.fromComponents(
-            compA: motorPlacement,
-            terminalIndexA: 1,
-            compB: batteryPlacement,
-            terminalIndexB: 0,
-            color: const Color(0xFF64748B),
-            isActive: true,
-            thickness: scale.size(5.5, min: 4.5, max: 8.0),
-          ).toWirePath());
-        }
-
-        return Stack(
-          children: [
-            if (wires.isNotEmpty)
-              Positioned.fill(
-                child: AnimatedBuilder(
-                  animation: _currentFlowController,
-                  builder: (context, _) => RealisticWireWidget(
-                    wires: wires,
-                    animationValue: _currentFlowController.value,
-                    showElectrons: true,
-                  ),
-                ),
-              ),
-            Positioned(
-              left: batteryX - sock / 2,
-              top: centerY - sock / 2,
-              child: PhysicalBlueprintSocket<String>(
-                expectedData: 'battery',
-                isFilled: _m1BatteryInserted,
-                showLabel: false,
-                rotation: _m1BatteryRotation,
-                width: sock,
-                height: sock,
-                onAccept: (_) => _insertComponent(
-                  name: 'Bateria',
-                  getInserted: () => _m1BatteryInserted,
-                  setInserted: (v) => _m1BatteryInserted = v,
-                  getRotation: () => _m1BatteryRotation,
-                  setRotation: (v) => _m1BatteryRotation = v,
-                ),
-                onRotate: () => _rotateComponent(
-                  name: 'Bateria',
-                  getRotation: () => _m1BatteryRotation,
-                  setRotation: (v) => _m1BatteryRotation = v,
-                ),
-                onTap: () {},
-                symbolWidget: CustomPaint(
-                  size: Size(sock, sock),
-                  painter: ComponentPhysicalPainter(
-                    type: ComponentType.battery,
-                    isDarkMode: false,
-                  ),
-                ),
-                placeholderWidget: CustomPaint(
-                  size: Size(sock, sock),
-                  painter: ComponentPhysicalPainter(
-                    type: ComponentType.battery,
-                    isActive: false,
-                    isDarkMode: false,
-                  ),
-                ),
-                label: '',
-              ),
-            ),
-            Positioned(
-              left: motorX - sock / 2,
-              top: centerY - sock / 2,
-              child: PhysicalBlueprintSocket<String>(
-                expectedData: 'motor_cc',
-                isFilled: _m1MotorInserted,
-                showLabel: false,
-                rotation: _m1MotorRotation,
-                width: sock,
-                height: sock,
-                onAccept: (_) => _insertComponent(
-                  name: 'Motor CC',
-                  getInserted: () => _m1MotorInserted,
-                  setInserted: (v) => _m1MotorInserted = v,
-                  getRotation: () => _m1MotorRotation,
-                  setRotation: (v) => _m1MotorRotation = v,
-                ),
-                onRotate: () => _rotateComponent(
-                  name: 'Motor CC',
-                  getRotation: () => _m1MotorRotation,
-                  setRotation: (v) => _m1MotorRotation = v,
-                ),
-                onTap: () {},
-                symbolWidget: CustomPaint(
-                  size: Size(sock, sock),
-                  painter: ComponentPhysicalPainter(
-                    type: ComponentType.motor,
-                    isActive: _m1MotorInserted,
-                    isDarkMode: false,
-                  ),
-                ),
-                placeholderWidget: CustomPaint(
-                  size: Size(sock, sock),
-                  painter: ComponentPhysicalPainter(
-                    type: ComponentType.motor,
-                    isActive: false,
-                    isDarkMode: false,
-                  ),
-                ),
-                label: '',
-              ),
-            ),
-            Positioned(
-              left: 0,
-              right: 0,
-              top: 8,
-              child: Center(
-                child: MovimentoAnimatedMotorWidget(
-                  isRunning: _isClosed,
-                  isReversed: false,
-                  usePhysicalStyle: _usePhysicalStyle,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildSchematicCanvas() {
-    final scale = context.uiScale;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final double width = constraints.maxWidth;
-        final double height = constraints.maxHeight;
-        final double batteryX = width * 0.18;
-        final double motorX = width * 0.82;
-        final double centerY = height * 0.50;
-        final sock = scale.size(95.0, min: 80.0, max: 130.0);
-
-        return Stack(
-          children: [
-            Positioned.fill(
-              child: AnimatedBuilder(
-                animation: _currentFlowController,
-                builder: (context, _) => CustomPaint(
-                  size: Size(width, height),
-                  painter: SchematicCircuitWirePainterMotor(
-                    isClosed: _isClosed,
-                    animationValue: _currentFlowController.value,
-                    wireColor: const Color(0xFF1E293B),
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              left: batteryX - sock / 2,
-              top: centerY - sock / 2,
-              child: SchematicBlueprintSocket<String>(
-                expectedData: 'battery',
-                isFilled: _m1BatteryInserted,
-                showLabel: false,
-                rotation: _m1BatteryRotation,
-                width: sock,
-                height: sock,
-                onAccept: (_) => _insertComponent(
-                  name: 'Bateria',
-                  getInserted: () => _m1BatteryInserted,
-                  setInserted: (v) => _m1BatteryInserted = v,
-                  getRotation: () => _m1BatteryRotation,
-                  setRotation: (v) => _m1BatteryRotation = v,
-                ),
-                onRotate: () => _rotateComponent(
-                  name: 'Bateria',
-                  getRotation: () => _m1BatteryRotation,
-                  setRotation: (v) => _m1BatteryRotation = v,
-                ),
-                onTap: () {},
-                symbolWidget: CustomPaint(
-                  size: Size(sock, sock),
-                  painter: CircuitSymbolPainter(
-                    type: ComponentType.battery,
-                    color: const Color(0xFF0F172A),
-                    strokeWidth: 2.5,
-                  ),
-                ),
-                placeholderWidget: CustomPaint(
-                  size: Size(sock, sock),
-                  painter: CircuitSymbolPainter(
-                    type: ComponentType.battery,
-                    isActive: false,
-                    color: const Color(0xFF94A3B8),
-                    strokeWidth: 2.0,
-                  ),
-                ),
-                label: '',
-              ),
-            ),
-            Positioned(
-              left: motorX - sock / 2,
-              top: centerY - sock / 2,
-              child: SchematicBlueprintSocket<String>(
-                expectedData: 'motor_cc',
-                isFilled: _m1MotorInserted,
-                showLabel: false,
-                rotation: _m1MotorRotation,
-                width: sock,
-                height: sock,
-                onAccept: (_) => _insertComponent(
-                  name: 'Motor CC',
-                  getInserted: () => _m1MotorInserted,
-                  setInserted: (v) => _m1MotorInserted = v,
-                  getRotation: () => _m1MotorRotation,
-                  setRotation: (v) => _m1MotorRotation = v,
-                ),
-                onRotate: () => _rotateComponent(
-                  name: 'Motor CC',
-                  getRotation: () => _m1MotorRotation,
-                  setRotation: (v) => _m1MotorRotation = v,
-                ),
-                onTap: () {},
-                symbolWidget: CustomPaint(
-                  size: Size(sock, sock),
-                  painter: CircuitSymbolPainter(
-                    type: ComponentType.motor,
-                    isActive: _m1MotorInserted,
-                    color: const Color(0xFF0F172A),
-                    strokeWidth: 2.5,
-                  ),
-                ),
-                placeholderWidget: CustomPaint(
-                  size: Size(sock, sock),
-                  painter: CircuitSymbolPainter(
-                    type: ComponentType.motor,
-                    isActive: false,
-                    color: const Color(0xFF94A3B8),
-                    strokeWidth: 2.0,
-                  ),
-                ),
-                label: '',
-              ),
-            ),
-            Positioned(
-              left: 0,
-              right: 0,
-              top: 8,
-              child: Center(
-                child: MovimentoAnimatedMotorWidget(
-                  isRunning: _isClosed,
-                  isReversed: false,
-                  usePhysicalStyle: _usePhysicalStyle,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  int get _currentStepperIndex {
-    if (_m1Prediction == null) return 0;
-    if (!_isClosed) return 1;
-    return 2;
-  }
-
-  bool _isStepCompleted(int index) {
-    if (index == 0) return _m1Prediction != null;
-    if (index == 1) return _isClosed;
-    if (index == 2) return _isClosed && _m1Prediction != null;
-    return false;
-  }
-
-  Widget _buildMissionObjectiveCard() {
-    return WorkbenchMissionObjectiveCard(
-      missionNumber: 1,
-      title: _mission.title,
-      description: _mission.objective,
-      voltsTip: _mission.voltsMediation,
-      accentColor: const Color(0xFF0284C7),
-    );
-  }
-
   Widget _buildInvestigationStepperCard() {
-    return WorkbenchInvestigationStepperCard(
-      title: 'Progresso da montagem',
-      currentStepIndex: _currentStepperIndex,
-      isStepCompleted: _isStepCompleted,
-      steps: const [
-        'Prever sentido de rotação',
-        'Posicionar bateria e motor CC',
-        'Acionar e verificar giro do eixo',
-      ],
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.fact_check_rounded,
+                  color: Color(0xFF0284C7), size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Progresso da montagem',
+                  style: GoogleFonts.rajdhani(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          _buildStepItem(
+            stepNumber: 1,
+            title: 'Registrar previsão de rotação',
+            isCompleted: _prediction != null,
+            isActive: _prediction == null,
+            onTap: _showPredictionDialog,
+          ),
+          const SizedBox(height: 8),
+          _buildStepItem(
+            stepNumber: 2,
+            title: 'Conectar Motor CC na Protoboard',
+            isCompleted: _motorConnected,
+            isActive: _prediction != null && !_motorConnected,
+          ),
+          const SizedBox(height: 8),
+          _buildStepItem(
+            stepNumber: 3,
+            title: 'Energizar e verificar giro do eixo',
+            isCompleted: _isClosed,
+            isActive: _motorConnected,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStepItem({
+    required int stepNumber,
+    required String title,
+    required bool isCompleted,
+    required bool isActive,
+    VoidCallback? onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        decoration: BoxDecoration(
+          color: isActive
+              ? const Color(0xFF0284C7).withValues(alpha: 0.08)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: isActive
+              ? Border.all(
+                  color: const Color(0xFF0284C7).withValues(alpha: 0.4))
+              : null,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isCompleted
+                    ? const Color(0xFF10B981)
+                    : (isActive
+                        ? const Color(0xFF0284C7)
+                        : const Color(0xFFE2E8F0)),
+              ),
+              child: Center(
+                child: isCompleted
+                    ? const Icon(Icons.check, size: 14, color: Colors.white)
+                    : Text(
+                        '$stepNumber',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: isActive
+                              ? Colors.white
+                              : const Color(0xFF64748B),
+                        ),
+                      ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                title,
+                style: GoogleFonts.outfit(
+                  fontSize: 12,
+                  fontWeight:
+                      isActive ? FontWeight.bold : FontWeight.normal,
+                  color: isCompleted
+                      ? const Color(0xFF0F172A)
+                      : (isActive
+                          ? const Color(0xFF0284C7)
+                          : const Color(0xFF64748B)),
+                ),
+              ),
+            ),
+            if (onTap != null && !isCompleted)
+              const Icon(Icons.arrow_forward_rounded,
+                  size: 14, color: Color(0xFF0284C7)),
+          ],
+        ),
+      ),
     );
   }
 }
