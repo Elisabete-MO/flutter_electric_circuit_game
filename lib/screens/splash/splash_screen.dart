@@ -216,19 +216,21 @@ class _SplashScreenState extends State<SplashScreen>
                           vertical: scale.spacing(4, min: 3, max: 6),
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF04281E).withValues(alpha: 0.85),
+                          color: const Color(
+                            0xFF04281E,
+                          ).withValues(alpha: 0.85),
                           borderRadius: BorderRadius.circular(scale.size(20)),
                           border: Border.all(
-                            color: const Color(0xFF10B981).withValues(
-                              alpha: 0.45 + (0.35 * progress),
-                            ),
+                            color: const Color(
+                              0xFF10B981,
+                            ).withValues(alpha: 0.45 + (0.35 * progress)),
                             width: 1.0,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF10B981).withValues(
-                                alpha: 0.20 * progress,
-                              ),
+                              color: const Color(
+                                0xFF10B981,
+                              ).withValues(alpha: 0.20 * progress),
                               blurRadius: scale.size(8),
                             ),
                           ],
@@ -248,9 +250,9 @@ class _SplashScreenState extends State<SplashScreen>
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFF10B981).withValues(
-                                      alpha: 0.6 * progress,
-                                    ),
+                                    color: const Color(
+                                      0xFF10B981,
+                                    ).withValues(alpha: 0.6 * progress),
                                     blurRadius: 4,
                                   ),
                                 ],
@@ -282,8 +284,9 @@ class _SplashScreenState extends State<SplashScreen>
                           letterSpacing: 2.0,
                           shadows: [
                             Shadow(
-                              color: const Color(0xFF10B981)
-                                  .withValues(alpha: 0.55 * progress),
+                              color: const Color(
+                                0xFF10B981,
+                              ).withValues(alpha: 0.55 * progress),
                               blurRadius: scale.size(24),
                             ),
                           ],
@@ -293,7 +296,7 @@ class _SplashScreenState extends State<SplashScreen>
                       SizedBox(height: scale.spacing(4)),
 
                       Text(
-                        'MISSÃO: ENERGIZAR A FEIRA DE CIÊNCIAS',
+                        'ENERGIZANDO A FEIRA DE CIÊNCIAS',
                         textAlign: TextAlign.center,
                         style: GoogleFonts.outfit(
                           color: const Color(0xFF34D399),
@@ -420,14 +423,14 @@ class _SplashScreenState extends State<SplashScreen>
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF10B981)
-                .withValues(alpha: 0.25 + (0.55 * progress)),
+            color: const Color(
+              0xFF10B981,
+            ).withValues(alpha: 0.25 + (0.55 * progress)),
             blurRadius: scale.size(16 + (28 * progress)),
             spreadRadius: scale.size(1 + (3 * progress)),
           ),
           BoxShadow(
-            color: EletroLabColors.neonCyan
-                .withValues(alpha: 0.15 * progress),
+            color: EletroLabColors.neonCyan.withValues(alpha: 0.15 * progress),
             blurRadius: scale.size(32 * progress),
             spreadRadius: scale.size(2 * progress),
           ),
@@ -484,9 +487,9 @@ class _SplashScreenState extends State<SplashScreen>
                 borderRadius: BorderRadius.circular(scale.size(8)),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF10B981).withValues(
-                      alpha: 0.45 + (0.40 * progress),
-                    ),
+                    color: const Color(
+                      0xFF10B981,
+                    ).withValues(alpha: 0.45 + (0.40 * progress)),
                     blurRadius: scale.size(10),
                     spreadRadius: 1,
                   ),
@@ -506,10 +509,7 @@ class _CircuitGridPainter extends CustomPainter {
   final double phase;
   final double chargeProgress;
 
-  _CircuitGridPainter({
-    required this.phase,
-    required this.chargeProgress,
-  });
+  _CircuitGridPainter({required this.phase, required this.chargeProgress});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -524,28 +524,56 @@ class _CircuitGridPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     final paintNode = Paint()
-      ..color = const Color(0xFF10B981).withValues(alpha: 0.4 + 0.4 * chargeProgress)
+      ..color = const Color(
+        0xFF10B981,
+      ).withValues(alpha: 0.4 + 0.4 * chargeProgress)
       ..style = PaintingStyle.fill;
 
     final center = Offset(size.width / 2, size.height / 2);
 
     // Linhas esquemáticas dos 4 cantos em direção ao centro
-    _drawCircuitBranch(canvas, paintLine, paintGlow, paintNode,
-        Offset(0, size.height * 0.2), Offset(center.dx - 180, center.dy - 60));
+    _drawCircuitBranch(
+      canvas,
+      paintLine,
+      paintGlow,
+      paintNode,
+      Offset(0, size.height * 0.2),
+      Offset(center.dx - 180, center.dy - 60),
+    );
 
-    _drawCircuitBranch(canvas, paintLine, paintGlow, paintNode,
-        Offset(0, size.height * 0.8), Offset(center.dx - 180, center.dy + 60));
+    _drawCircuitBranch(
+      canvas,
+      paintLine,
+      paintGlow,
+      paintNode,
+      Offset(0, size.height * 0.8),
+      Offset(center.dx - 180, center.dy + 60),
+    );
 
-    _drawCircuitBranch(canvas, paintLine, paintGlow, paintNode,
-        Offset(size.width, size.height * 0.2), Offset(center.dx + 180, center.dy - 60));
+    _drawCircuitBranch(
+      canvas,
+      paintLine,
+      paintGlow,
+      paintNode,
+      Offset(size.width, size.height * 0.2),
+      Offset(center.dx + 180, center.dy - 60),
+    );
 
-    _drawCircuitBranch(canvas, paintLine, paintGlow, paintNode,
-        Offset(size.width, size.height * 0.8), Offset(center.dx + 180, center.dy + 60));
+    _drawCircuitBranch(
+      canvas,
+      paintLine,
+      paintGlow,
+      paintNode,
+      Offset(size.width, size.height * 0.8),
+      Offset(center.dx + 180, center.dy + 60),
+    );
 
     // Pulso de energia percorrendo a tela
     final pulseAlpha = (math.sin(phase) + 1.0) / 2.0;
     final pulsePaint = Paint()
-      ..color = const Color(0xFF00E5FF).withValues(alpha: 0.12 * pulseAlpha * chargeProgress)
+      ..color = const Color(
+        0xFF00E5FF,
+      ).withValues(alpha: 0.12 * pulseAlpha * chargeProgress)
       ..strokeWidth = 2.5
       ..style = PaintingStyle.stroke;
 
