@@ -196,7 +196,6 @@ class _LetrerosLedM2State extends State<LetrerosLedM2>
           _buildInvestigationStepperCard(),
           const SizedBox(height: 12),
           buildLetrerosLedPredictionBadge(_prediction),
-          _buildSideInstructions(),
         ],
         onEnergizePressed: _onEnergizePressed,
         isLoading: _isSimulating,
@@ -335,31 +334,6 @@ class _LetrerosLedM2State extends State<LetrerosLedM2>
           ],
         );
       },
-    );
-  }
-
-  Widget _buildSideInstructions() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Dica do Professor Volts:',
-          style: GoogleFonts.rajdhani(
-            color: const Color(0xFF0284C7),
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'LEDs são diodos: eles só conduzem corrente em sentido direto (do ânodo para o cátodo). Quando invertidos na protoboard, atuam como isolantes e o letreiro permanece apagado!',
-          style: GoogleFonts.rajdhani(
-            color: const Color(0xFF475569),
-            fontSize: 13,
-            height: 1.3,
-          ),
-        ),
-      ],
     );
   }
 

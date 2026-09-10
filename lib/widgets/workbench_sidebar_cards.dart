@@ -275,12 +275,13 @@ class _RobotAvatarPainter extends CustomPainter {
 /// ----------------------------------------------------------------------------
 /// CARD 1: OBJETIVO DA MISSÃO COM DICA DO PROF. VOLTS
 /// ----------------------------------------------------------------------------
-class WorkbenchMissionObjectiveCard extends StatelessWidget {
+class WorkbenchMissionObjectiveCard extends StatefulWidget {
   final int missionNumber;
   final String title;
   final String description;
   final String voltsTip;
   final Color accentColor;
+  final bool initiallyExpanded;
 
   const WorkbenchMissionObjectiveCard({
     super.key,
@@ -289,7 +290,23 @@ class WorkbenchMissionObjectiveCard extends StatelessWidget {
     required this.description,
     required this.voltsTip,
     this.accentColor = const Color(0xFF0284C7),
+    this.initiallyExpanded = false,
   });
+
+  @override
+  State<WorkbenchMissionObjectiveCard> createState() =>
+      _WorkbenchMissionObjectiveCardState();
+}
+
+class _WorkbenchMissionObjectiveCardState
+    extends State<WorkbenchMissionObjectiveCard> {
+  late bool _isExpanded;
+
+  @override
+  void initState() {
+    super.initState();
+    _isExpanded = widget.initiallyExpanded;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -321,18 +338,18 @@ class WorkbenchMissionObjectiveCard extends StatelessWidget {
                 height: scale.size(28, min: 22, max: 40),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: accentColor.withValues(alpha: 0.12),
+                  color: widget.accentColor.withValues(alpha: 0.12),
                 ),
                 child: Icon(
                   Icons.crisis_alert_rounded,
-                  color: accentColor,
+                  color: widget.accentColor,
                   size: scale.icon(18, min: 14, max: 26),
                 ),
               ),
               SizedBox(width: scale.spacing(8, min: 5, max: 14)),
               Expanded(
                 child: Text(
-                  'Missão $missionNumber · $title',
+                  'Missão ${widget.missionNumber} · ${widget.title}',
                   style: GoogleFonts.outfit(
                     color: const Color(0xFF0F172A),
                     fontWeight: FontWeight.w700,
@@ -348,7 +365,7 @@ class WorkbenchMissionObjectiveCard extends StatelessWidget {
 
           // Texto Descritivo do Desafio
           Text(
-            description,
+            widget.description,
             style: GoogleFonts.outfit(
               color: const Color(0xFF475569),
               fontSize: scale.font(UiTypography.body),
@@ -356,10 +373,73 @@ class WorkbenchMissionObjectiveCard extends StatelessWidget {
               fontWeight: FontWeight.w400,
             ),
           ),
-          SizedBox(height: scale.spacing(12, min: 8, max: 18)),
 
-          // Caixa de Dica Acolhedora do Prof. Volts
-          ProfVoltsTipBox(voltsTip: voltsTip),
+          // Botão Interativo de Dica do Professor Volts (enxuga o card por padrão)
+          if (widget.voltsTip.isNotEmpty) ...[
+            SizedBox(height: scale.spacing(10, min: 6, max: 16)),
+            InkWell(
+              onTap: () => setState(() => _isExpanded = !_isExpanded),
+              borderRadius: BorderRadius.circular(scale.size(12, min: 8, max: 18)),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: EdgeInsets.symmetric(
+                  horizontal: scale.spacing(10, min: 6, max: 16),
+                  vertical: scale.spacing(6, min: 4, max: 10),
+                ),
+                decoration: BoxDecoration(
+                  color: _isExpanded
+                      ? const Color(0xFFFEF3C7)
+                      : const Color(0xFFFFFBEB),
+                  borderRadius: BorderRadius.circular(
+                    scale.size(12, min: 8, max: 18),
+                  ),
+                  border: Border.all(
+                    color: _isExpanded
+                        ? const Color(0xFFF59E0B)
+                        : const Color(0xFFFDE68A),
+                    width: 1.0,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ProfVoltsAvatar(size: scale.size(20, min: 16, max: 28)),
+                    SizedBox(width: scale.spacing(6, min: 4, max: 10)),
+                    Text(
+                      _isExpanded
+                          ? 'Ocultar dica do Prof. Volts'
+                          : 'Dica do Prof. Volts',
+                      style: GoogleFonts.outfit(
+                        color: const Color(0xFFB45309),
+                        fontWeight: FontWeight.w600,
+                        fontSize: scale.font(UiTypography.label),
+                      ),
+                    ),
+                    SizedBox(width: scale.spacing(4, min: 2, max: 8)),
+                    Icon(
+                      _isExpanded
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                      color: const Color(0xFFB45309),
+                      size: scale.icon(18, min: 14, max: 24),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeInOut,
+              child: _isExpanded
+                  ? Padding(
+                      padding: EdgeInsets.only(
+                        top: scale.spacing(10, min: 6, max: 16),
+                      ),
+                      child: ProfVoltsTipBox(voltsTip: widget.voltsTip),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ],
         ],
       ),
     );

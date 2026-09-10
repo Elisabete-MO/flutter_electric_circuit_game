@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../models/circuit_action.dart';
 import '../../../models/first_step_component.dart';
@@ -236,8 +235,6 @@ class _RuasMaqueteM1State extends State<RuasMaqueteM1>
               _buildMissionObjectiveCard(),
               const SizedBox(height: 12),
               _buildInvestigationStepperCard(),
-              const SizedBox(height: 12),
-              _buildSideTools(),
             ],
             onEnergizePressed: _validate,
           ),
@@ -338,31 +335,6 @@ class _RuasMaqueteM1State extends State<RuasMaqueteM1>
         ),
       ),
     ];
-  }
-
-  Widget _buildSideTools() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Dica do Professor Volts:',
-          style: GoogleFonts.rajdhani(
-            color: const Color(0xFF0284C7),
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Arraste ou toque no símbolo da Bateria para energizar e conectar os dois postes da maquete em circuito em série.',
-          style: GoogleFonts.rajdhani(
-            color: const Color(0xFF475569),
-            fontSize: 13,
-            height: 1.3,
-          ),
-        ),
-      ],
-    );
   }
 
   Widget _buildUndoRedoButtons() {
