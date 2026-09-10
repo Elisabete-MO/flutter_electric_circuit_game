@@ -12,26 +12,26 @@ import '../../../widgets/success_confetti_overlay.dart';
 import '../../../widgets/workbench_components.dart';
 import '../../../widgets/workbench_sidebar_cards.dart';
 import '../../../widgets/workbench_table_frame.dart';
+import '../widgets/letreros_led_breadboard_painter.dart';
 import '../widgets/letreros_led_widgets.dart';
 
-/// Missão 5 do Estande 05 — Entrada e Saída (Ramos Independentes).
+/// Missão 5 do Estande 05 — Entrada e Saída (Ramos Independentes em Paralelo).
 class LetrerosLedM5 extends StatefulWidget {
   final VoidCallback onMissionComplete;
 
-  const LetrerosLedM5({
-    super.key,
-    required this.onMissionComplete,
-  });
+  const LetrerosLedM5({super.key, required this.onMissionComplete});
 
   @override
   State<LetrerosLedM5> createState() => _LetrerosLedM5State();
 }
 
-class _LetrerosLedM5State extends State<LetrerosLedM5> {
+class _LetrerosLedM5State extends State<LetrerosLedM5>
+    with SingleTickerProviderStateMixin {
   final StandMission _mission = StandMission.letrerosLedMissions[4];
   final CircuitUndoRedoController _undoRedoController =
       CircuitUndoRedoController();
 
+  late AnimationController _electronAnimController;
   bool _usePhysicalStyle = true;
   bool _isSimulating = false;
 
@@ -40,9 +40,31 @@ class _LetrerosLedM5State extends State<LetrerosLedM5> {
   bool _m5OneBranchDisconnected = false;
   String? _prediction;
 
+  @override
+  void initState() {
+    super.initState();
+    _electronAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _electronAnimController.dispose();
+    super.dispose();
+  }
+
   bool get _isClosed =>
       _m5BranchEntradaActive ||
       (_m5BranchSaidaActive && !_m5OneBranchDisconnected);
+
+  double get _currentTelemetryMa {
+    double ma = 0.0;
+    if (_m5BranchEntradaActive) ma += 10.3;
+    if (_m5BranchSaidaActive && !_m5OneBranchDisconnected) ma += 10.3;
+    return ma;
+  }
 
   void _onEnergizePressed() {
     if (_prediction == null) {
@@ -57,12 +79,13 @@ class _LetrerosLedM5State extends State<LetrerosLedM5> {
       context: context,
       barrierDismissible: false,
       builder: (context) => ProfVoltsPredictionDialog(
-        question: 'Se remover um ramo, o que acontece com o outro?',
+        question:
+            'Em um circuito paralelo com resistores dedicados, o que acontece ao desligar um letreiro?',
         options: const [
-          'Continua aceso',
-          'Apaga junto',
-          'Fica mais fraco',
-          'Não sei'
+          'O outro continua aceso com corrente estável',
+          'Ambos apagam imediatamente',
+          'O outro letreiro queima',
+          'Não sei',
         ],
         onPredict: (prediction) {
           Navigator.of(context).pop();
@@ -78,11 +101,12 @@ class _LetrerosLedM5State extends State<LetrerosLedM5> {
       context: context,
       barrierDismissible: false,
       builder: (context) => ProfVoltsExplanationDialog(
-        question: 'Por que cada placa precisa de resistor próprio?',
+        question:
+            'Por que cada ramo paralelo precisa de seu próprio resistor limitador?',
         options: const [
-          'Cada ramo paralelo precisa limitar sua corrente',
-          'O resistor protege a bateria',
-          'Não sei explicar'
+          'Para garantir que a corrente em cada LED seja independente e segura',
+          'Porque a bateria só funciona se houver mais de um resistor',
+          'Não sei explicar',
         ],
         onExplain: (_) {
           Navigator.of(context).pop();
@@ -116,16 +140,18 @@ class _LetrerosLedM5State extends State<LetrerosLedM5> {
             .connect('led_saida', 'B', 'bat1', 'A')
             .simulate();
         if (result.hasClosedLoop && result.errorMessage == null) {
+          final totalMa = result.current * 1000;
           feedbackMessage =
-              'Letreiros de Entrada e Saída montados em ramos independentes! Ao desligar ou remover um ramo, o outro continua aceso.';
+              'Letreiros de ENTRADA e SAÍDA funcionando em paralelo! Corrente total: ${totalMa.toStringAsFixed(1)}mA (~10.3 mA por ramo). A independência dos ramos foi demonstrada com maestria!';
           isSuccess = true;
         } else {
-          feedbackMessage = result.errorMessage ??
+          feedbackMessage =
+              result.errorMessage ??
               'Construa os dois ramos com seus próprios resistores.';
         }
       } else {
         feedbackMessage =
-            'Construa letreiros de Entrada e Saída independentes, cada um com seu LED e resistor próprios de 680 Ω.';
+            'Construa ambos os ramos na protoboard: ENTRADA (Verde + 680 Ω) e SAÍDA (Vermelho + 680 Ω).';
       }
 
       final fullMessage = isSuccess
@@ -166,11 +192,11 @@ class _LetrerosLedM5State extends State<LetrerosLedM5> {
             leftHeaderWidget: buildLetrerosLedStatusCard(_isClosed),
             rightHeaderWidget: buildLetrerosLedTelemetryCard(
               9.0,
-              _isClosed ? 20.6 : 0.0,
+              _currentTelemetryMa,
               _isClosed,
             ),
             bottomWidget: _buildUndoRedoButtons(),
-            child: _buildSignDisplay(),
+            child: _buildWorkbenchDisplay(),
           ),
         ),
         const SizedBox(width: 16),
@@ -197,181 +223,232 @@ class _LetrerosLedM5State extends State<LetrerosLedM5> {
     );
   }
 
-  Widget _buildSignDisplay() {
+  Widget _buildWorkbenchDisplay() {
     final entradaLit = _m5BranchEntradaActive;
     final saidaLit = _m5BranchSaidaActive && !_m5OneBranchDisconnected;
 
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Stack(
           children: [
-            buildLetrerosLedSignBoard(
-              title: 'ENTRADA',
-              color: const Color(0xFF10B981),
-              isLit: entradaLit,
+            // 1. Protoboard com 2 Ramos em Paralelo e Letreiros Duplos
+            Positioned.fill(
+              child: AnimatedBuilder(
+                animation: _electronAnimController,
+                builder: (context, child) {
+                  return CustomPaint(
+                    painter: LetrerosLedBreadboardPainter(
+                      animationValue: _electronAnimController.value,
+                      usePhysicalStyle: _usePhysicalStyle,
+                      isClosed: saidaLit,
+                      signTitle: _m5OneBranchDisconnected
+                          ? 'DESCONECTADO'
+                          : 'SAÍDA ➔',
+                      signColor: _m5OneBranchDisconnected
+                          ? Colors.grey
+                          : const Color(0xFFEF4444),
+                      secondSignTitle: 'ENTRADA ➔',
+                      secondSignColor: const Color(0xFF10B981),
+                      secondSignLit: entradaLit,
+                      secondBranchActive: true,
+                      hasResistor:
+                          _m5BranchSaidaActive && !_m5OneBranchDisconnected,
+                      resistorValue: '680 Ω',
+                      hasLed: _m5BranchSaidaActive && !_m5OneBranchDisconnected,
+                      ledDirectPolarity: true,
+                      jumperConnected:
+                          _m5BranchSaidaActive && !_m5OneBranchDisconnected,
+                    ),
+                  );
+                },
+              ),
             ),
-            buildLetrerosLedSignBoard(
-              title: _m5OneBranchDisconnected ? 'SAÍDA (REMOVIDO)' : 'SAÍDA',
-              color: _m5OneBranchDisconnected ? Colors.grey : Colors.redAccent,
-              isLit: saidaLit,
-              isBurnt: _m5OneBranchDisconnected,
+
+            // 2. Painel Inferior de Controle dos Ramos
+            Positioned(
+              left: 16,
+              bottom: 12,
+              right: 16,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0F172A).withValues(alpha: 0.92),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: (entradaLit && saidaLit)
+                        ? const Color(0xFF10B981)
+                        : const Color(0xFF38BDF8),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Wrap(
+                  spacing: 10,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    // Botão Ramo Entrada (Verde)
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _m5BranchEntradaActive
+                            ? const Color(0xFF10B981)
+                            : const Color(0xFF1E293B),
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Color(0xFF10B981)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      icon: Icon(
+                        _m5BranchEntradaActive
+                            ? Icons.check_circle_rounded
+                            : Icons.add_circle_outline_rounded,
+                        size: 18,
+                        color: Colors.white,
+                      ),
+                      label: Text(
+                        _m5BranchEntradaActive
+                            ? 'Ramo ENTRADA Ativo (Verde)'
+                            : 'Montar Ramo ENTRADA',
+                        style: GoogleFonts.rajdhani(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                      onPressed: () {
+                        final prev = _m5BranchEntradaActive;
+                        _undoRedoController.execute(
+                          ToggleBoolAction(
+                            description: 'Toggle Ramo Entrada',
+                            onApply: () =>
+                                setState(() => _m5BranchEntradaActive = !prev),
+                            onUndo: () =>
+                                setState(() => _m5BranchEntradaActive = prev),
+                          ),
+                        );
+                      },
+                    ),
+
+                    // Botão Ramo Saída (Vermelho)
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _m5BranchSaidaActive
+                            ? const Color(0xFFEF4444)
+                            : const Color(0xFF1E293B),
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Color(0xFFEF4444)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      icon: Icon(
+                        _m5BranchSaidaActive
+                            ? Icons.check_circle_rounded
+                            : Icons.add_circle_outline_rounded,
+                        size: 18,
+                        color: Colors.white,
+                      ),
+                      label: Text(
+                        _m5BranchSaidaActive
+                            ? 'Ramo SAÍDA Ativo (Vermelho)'
+                            : 'Montar Ramo SAÍDA',
+                        style: GoogleFonts.rajdhani(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                      onPressed: () {
+                        final prev = _m5BranchSaidaActive;
+                        _undoRedoController.execute(
+                          ToggleBoolAction(
+                            description: 'Toggle Ramo Saída',
+                            onApply: () =>
+                                setState(() => _m5BranchSaidaActive = !prev),
+                            onUndo: () =>
+                                setState(() => _m5BranchSaidaActive = prev),
+                          ),
+                        );
+                      },
+                    ),
+
+                    // Botão Demonstrativo de Remoção do Ramo Saída
+                    if (_m5BranchEntradaActive && _m5BranchSaidaActive)
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(
+                            color: _m5OneBranchDisconnected
+                                ? Colors.amberAccent
+                                : const Color(0xFF38BDF8),
+                            width: 1.5,
+                          ),
+                          backgroundColor: const Color(0xFF1E293B),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        icon: Icon(
+                          _m5OneBranchDisconnected
+                              ? Icons.power_off_rounded
+                              : Icons.power_rounded,
+                          color: _m5OneBranchDisconnected
+                              ? Colors.amberAccent
+                              : const Color(0xFF38BDF8),
+                          size: 18,
+                        ),
+                        label: Text(
+                          _m5OneBranchDisconnected
+                              ? 'Ramo SAÍDA Desconectado (ENTRADA segue 100% aceso!)'
+                              : 'Simular Desconexão de um Ramo',
+                          style: GoogleFonts.rajdhani(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                        onPressed: () {
+                          final prev = _m5OneBranchDisconnected;
+                          _undoRedoController.execute(
+                            ToggleBoolAction(
+                              description: 'Desconectar Ramo',
+                              onApply: () => setState(
+                                () => _m5OneBranchDisconnected = !prev,
+                              ),
+                              onUndo: () => setState(
+                                () => _m5OneBranchDisconnected = prev,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                  ],
+                ),
+              ),
             ),
           ],
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          decoration: BoxDecoration(
-            color: const Color(0xFF0F172A),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: (entradaLit && _m5BranchSaidaActive)
-                  ? const Color(0xFF10B981)
-                  : Colors.amberAccent,
-              width: 2.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: ((entradaLit && _m5BranchSaidaActive)
-                        ? const Color(0xFF10B981)
-                        : Colors.amberAccent)
-                    .withValues(alpha: 0.15),
-                blurRadius: 16,
-                spreadRadius: 2,
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              Wrap(
-                spacing: 14,
-                runSpacing: 12,
-                alignment: WrapAlignment.center,
-                children: [
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _m5BranchEntradaActive
-                          ? const Color(0xFF10B981)
-                          : const Color(0xFF1E293B),
-                      side: const BorderSide(color: Color(0xFF10B981), width: 1.5),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 14),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                    icon: Icon(
-                      _m5BranchEntradaActive
-                          ? Icons.check
-                          : Icons.add_circle_outline_rounded,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                    label: Text(
-                      _m5BranchEntradaActive
-                          ? 'Ramo Entrada Montado (680Ω)'
-                          : 'Montar Ramo Entrada (680Ω)',
-                      style: GoogleFonts.rajdhani(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                      ),
-                    ),
-                    onPressed: () {
-                      final prev = _m5BranchEntradaActive;
-                      _undoRedoController.execute(ToggleBoolAction(
-                        description: 'Toggle Ramo Entrada',
-                        onApply: () =>
-                            setState(() => _m5BranchEntradaActive = !prev),
-                        onUndo: () =>
-                            setState(() => _m5BranchEntradaActive = prev),
-                      ));
-                    },
-                  ),
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _m5BranchSaidaActive
-                          ? const Color(0xFF10B981)
-                          : const Color(0xFF1E293B),
-                      side: const BorderSide(color: Color(0xFF10B981), width: 1.5),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 14),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                    icon: Icon(
-                      _m5BranchSaidaActive
-                          ? Icons.check
-                          : Icons.add_circle_outline_rounded,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                    label: Text(
-                      _m5BranchSaidaActive
-                          ? 'Ramo Saída Montado (680Ω)'
-                          : 'Montar Ramo Saída (680Ω)',
-                      style: GoogleFonts.rajdhani(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                      ),
-                    ),
-                    onPressed: () {
-                      final prev = _m5BranchSaidaActive;
-                      _undoRedoController.execute(ToggleBoolAction(
-                        description: 'Toggle Ramo Saída',
-                        onApply: () =>
-                            setState(() => _m5BranchSaidaActive = !prev),
-                        onUndo: () =>
-                            setState(() => _m5BranchSaidaActive = prev),
-                      ));
-                    },
-                  ),
-                ],
-              ),
-              if (_m5BranchEntradaActive && _m5BranchSaidaActive) ...[
-                const SizedBox(height: 14),
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFF38BDF8), width: 1.5),
-                    backgroundColor: const Color(0xFF1E293B),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
-                  icon: Icon(
-                    _m5OneBranchDisconnected
-                        ? Icons.power_off_rounded
-                        : Icons.power_rounded,
-                    color: const Color(0xFF38BDF8),
-                  ),
-                  label: Text(
-                    _m5OneBranchDisconnected
-                        ? 'Demonstrativo: Ramo Saída Desconectado (Entrada Continua Aceso!)'
-                        : 'Simular Remoção do Ramo Saída pela Banca',
-                    style: GoogleFonts.rajdhani(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                    ),
-                  ),
-                  onPressed: () {
-                    final prev = _m5OneBranchDisconnected;
-                    _undoRedoController.execute(ToggleBoolAction(
-                      description: 'Remover Ramo para Teste',
-                      onApply: () =>
-                          setState(() => _m5OneBranchDisconnected = !prev),
-                      onUndo: () =>
-                          setState(() => _m5OneBranchDisconnected = prev),
-                    ));
-                  },
-                ),
-              ],
-            ],
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
 
@@ -389,7 +466,7 @@ class _LetrerosLedM5State extends State<LetrerosLedM5> {
         ),
         const SizedBox(height: 6),
         Text(
-          'Cada ramo paralelo possui seu próprio resistor limitador de 680Ω. Se um letreiro falhar ou for desconectado, o outro permanece funcionando com tensão e corrente nominais!',
+          'Cada ramo paralelo possui seu próprio resistor limitador de 680 Ω. Ao desconectar ou desligar o letreiro de Saída, o letreiro de Entrada permanece funcionando perfeitamente!',
           style: GoogleFonts.rajdhani(
             color: const Color(0xFF475569),
             fontSize: 13,
