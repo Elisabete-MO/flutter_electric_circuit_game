@@ -79,17 +79,19 @@ class LetrerosLedBreadboardPainter extends CustomPainter {
       _drawSingleSignBoard(canvas, size);
     }
 
-    // 2. Proporções da Protoboard (elevada para liberar o dock inferior)
-    final bbLeft = (w * 0.32).clamp(180.0, 290.0);
-    final bbWidth = (w - bbLeft - (w * 0.04)).clamp(270.0, 520.0);
-    final bbTop = (h * 0.24).clamp(70.0, 115.0);
-    final bbHeight = (h * 0.54).clamp(170.0, 240.0);
+    // 2. Proporções da Bateria 9V (Horizontal à esquerda, perfeitamente alinhada ao centro da protoboard)
+    final batWidth = (w * 0.17).clamp(55.0, 155.0);
+    final batHeight = (batWidth * 0.60).clamp(34.0, 92.0);
+    final batLeft = (w * 0.03).clamp(8.0, 32.0);
+
+    // 3. Proporções da Protoboard (à direita da bateria)
+    final spacing = (w * 0.03).clamp(8.0, 24.0);
+    final bbLeft = batLeft + batWidth + spacing;
+    final bbWidth = (w - bbLeft - 14.0).clamp(140.0, 560.0);
+    final bbTop = (h * 0.24).clamp(60.0, 115.0);
+    final bbHeight = (h * 0.54).clamp(140.0, 240.0);
     final breadboardRect = Rect.fromLTWH(bbLeft, bbTop, bbWidth, bbHeight);
 
-    // 3. Proporções da Bateria 9V (Horizontal à esquerda, perfeitamente alinhada ao centro da protoboard)
-    final batWidth = (w * 0.20).clamp(105.0, 155.0);
-    final batHeight = (batWidth * 0.60).clamp(62.0, 92.0);
-    final batLeft = (w * 0.04).clamp(14.0, 32.0);
     final batTop = bbTop + (bbHeight - batHeight) * 0.48;
     final batteryRect = Rect.fromLTWH(batLeft, batTop, batWidth, batHeight);
 

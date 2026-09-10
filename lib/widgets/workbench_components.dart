@@ -481,87 +481,100 @@ class WorkbenchSidePanel extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (showTeamHeader) ...[
-            Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: scale.spacing(12, min: 8, max: 20),
-                vertical: scale.spacing(10, min: 6, max: 16),
-              ),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(scale.size(12, min: 8, max: 18)),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.widgets_rounded, color: const Color(0xFF0284C7), size: scale.icon(20, min: 16, max: 28)),
-                  SizedBox(width: scale.spacing(8, min: 5, max: 14)),
-                  Expanded(
-                    child: Text(
-                      teamTitle,
-                      style: GoogleFonts.rajdhani(
-                        color: const Color(0xFF0F172A),
-                        fontWeight: FontWeight.bold,
-                        fontSize: scale.font(15, min: 13, max: 22),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final hasBoundedHeight = constraints.hasBoundedHeight;
+
+          final itemsContent = Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: toolboxItems,
+          );
+
+          return Column(
+            mainAxisSize: hasBoundedHeight ? MainAxisSize.max : MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (showTeamHeader) ...[
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: scale.spacing(12, min: 8, max: 20),
+                    vertical: scale.spacing(10, min: 6, max: 16),
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(scale.size(12, min: 8, max: 18)),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.widgets_rounded, color: const Color(0xFF0284C7), size: scale.icon(20, min: 16, max: 28)),
+                      SizedBox(width: scale.spacing(8, min: 5, max: 14)),
+                      Expanded(
+                        child: Text(
+                          teamTitle,
+                          style: GoogleFonts.rajdhani(
+                            color: const Color(0xFF0F172A),
+                            fontWeight: FontWeight.bold,
+                            fontSize: scale.font(15, min: 13, max: 22),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    ],
+                  ),
+                ),
+                SizedBox(height: scale.spacing(12, min: 8, max: 18)),
+              ],
+              if (hasBoundedHeight)
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: itemsContent,
+                  ),
+                )
+              else
+                itemsContent,
+              SizedBox(height: scale.spacing(12, min: 8, max: 18)),
+              SizedBox(
+                width: double.infinity,
+                height: scale.size(48, min: 40, max: 68),
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: buttonColor ?? const Color(0xFF059669),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(scale.size(12, min: 8, max: 18)),
+                    ),
+                    elevation: 3,
+                  ),
+                  icon: isLoading
+                      ? SizedBox(
+                          width: scale.size(18, min: 14, max: 26),
+                          height: scale.size(18, min: 14, max: 26),
+                          child: const CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Icon(Icons.play_arrow_rounded, color: Colors.white, size: scale.icon(22, min: 18, max: 32)),
+                  label: Text(
+                    isLoading
+                        ? 'SIMULANDO...'
+                        : (buttonLabel ?? 'ENERGIZAR E VALIDAR BANCADA'),
+                    style: GoogleFonts.rajdhani(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: scale.font(14, min: 12, max: 22),
                     ),
                   ),
-                ],
-              ),
-            ),
-            SizedBox(height: scale.spacing(12, min: 8, max: 18)),
-          ],
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                children: toolboxItems,
-              ),
-            ),
-          ),
-          SizedBox(height: scale.spacing(12, min: 8, max: 18)),
-          SizedBox(
-            width: double.infinity,
-            height: scale.size(48, min: 40, max: 68),
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: buttonColor ?? const Color(0xFF059669),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(scale.size(12, min: 8, max: 18)),
-                ),
-                elevation: 3,
-              ),
-              icon: isLoading
-                  ? SizedBox(
-                      width: scale.size(18, min: 14, max: 26),
-                      height: scale.size(18, min: 14, max: 26),
-                      child: const CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : Icon(Icons.play_arrow_rounded, color: Colors.white, size: scale.icon(22, min: 18, max: 32)),
-              label: Text(
-                isLoading
-                    ? 'SIMULANDO...'
-                    : (buttonLabel ?? 'ENERGIZAR E VALIDAR BANCADA'),
-                style: GoogleFonts.rajdhani(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: scale.font(14, min: 12, max: 22),
+                  onPressed: isLoading ? null : onEnergizePressed,
                 ),
               ),
-              onPressed: isLoading ? null : onEnergizePressed,
-            ),
-          ),
-        ],
+            ],
+          );
+        },
       ),
     );
   }
 }
-

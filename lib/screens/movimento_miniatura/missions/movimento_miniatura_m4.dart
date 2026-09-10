@@ -160,49 +160,38 @@ class _MovimentoMiniaturaM4State extends State<MovimentoMiniaturaM4>
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        // Área Principal da Bancada
-        Expanded(
-          flex: 7,
-          child: WorkbenchTableFrame(
-            usePhysicalStyle: _usePhysicalStyle,
-            onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
-            leftHeaderWidget: MovimentoStatusCard(isClosed: _isClosed),
-            rightHeaderWidget: MovimentoTelemetryCard(
-              voltage: 6.0,
-              currentMa: _isClosed ? 135.0 : 0.0,
-              isClosed: _isClosed,
-            ),
-            bottomWidget: MovimentoUndoRedoButtons(
-              controller: _undoRedoController,
-              onUndo: () => setState(() => _undoRedoController.undo()),
-              onRedo: () => setState(() => _undoRedoController.redo()),
-            ),
-            child: _buildWorkbenchDisplay(),
-          ),
+    return WorkbenchResponsiveLayout(
+      workbench: WorkbenchTableFrame(
+        usePhysicalStyle: _usePhysicalStyle,
+        onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
+        leftHeaderWidget: MovimentoStatusCard(isClosed: _isClosed),
+        rightHeaderWidget: MovimentoTelemetryCard(
+          voltage: 6.0,
+          currentMa: _isClosed ? 135.0 : 0.0,
+          isClosed: _isClosed,
         ),
-        const SizedBox(width: 16),
-        // Painel Lateral (Objetivo, Stepper & Validação)
-        Expanded(
-          flex: 3,
-          child: WorkbenchSidePanel(
-            teamTitle: 'Painel da Equipe Mecânica',
-            showTeamHeader: false,
-            buttonColor: const Color(0xFF0284C7),
-            toolboxItems: [
-              _buildMissionObjectiveCard(),
-              const SizedBox(height: 12),
-              _buildInvestigationStepperCard(),
-              const SizedBox(height: 12),
-              MovimentoPredictionBadge(prediction: _prediction),
-              MovimentoSideToolbox(usePhysicalStyle: _usePhysicalStyle),
-            ],
-            onEnergizePressed: _onEnergizePressed,
-            isLoading: _isSimulating,
-          ),
+        bottomWidget: MovimentoUndoRedoButtons(
+          controller: _undoRedoController,
+          onUndo: () => setState(() => _undoRedoController.undo()),
+          onRedo: () => setState(() => _undoRedoController.redo()),
         ),
-      ],
+        child: _buildWorkbenchDisplay(),
+      ),
+      sidePanel: WorkbenchSidePanel(
+        teamTitle: 'Painel da Equipe Mecânica',
+        showTeamHeader: false,
+        buttonColor: const Color(0xFF0284C7),
+        toolboxItems: [
+          _buildMissionObjectiveCard(),
+          const SizedBox(height: 12),
+          _buildInvestigationStepperCard(),
+          const SizedBox(height: 12),
+          MovimentoPredictionBadge(prediction: _prediction),
+          MovimentoSideToolbox(usePhysicalStyle: _usePhysicalStyle),
+        ],
+        onEnergizePressed: _onEnergizePressed,
+        isLoading: _isSimulating,
+      ),
     );
   }
 

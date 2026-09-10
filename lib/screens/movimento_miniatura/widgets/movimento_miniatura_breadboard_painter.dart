@@ -62,24 +62,28 @@ class MovimentoMiniaturaBreadboardPainter extends CustomPainter {
     final w = size.width;
     final h = size.height;
 
-    // 1. Proporções da Protoboard Central
-    final bbLeft = (w * 0.31).clamp(180.0, 290.0);
-    final bbWidth = (w * 0.42).clamp(240.0, 380.0);
-    final bbTop = (h * 0.22).clamp(65.0, 105.0);
-    final bbHeight = (h * 0.54).clamp(165.0, 235.0);
+    // 1. Motor CC 130 na VERTICAL (à esquerda da Protoboard, com hélices no topo)
+    final motorWidth = (w * 0.13).clamp(46.0, 96.0);
+    final motorHeight = (motorWidth * 1.45).clamp(66.0, 138.0);
+    final motorLeft = (w * 0.03).clamp(8.0, 42.0);
+
+    // 2. Bateria 9V na HORIZONTAL (à direita da Protoboard)
+    final batWidth = (w * 0.16).clamp(52.0, 145.0);
+    final batHeight = (batWidth * 0.60).clamp(32.0, 88.0);
+    final batRight = w - 12.0;
+    final batLeft = batRight - batWidth;
+
+    // 3. Proporções da Protoboard Central (entre o Motor e a Bateria)
+    final spacing = (w * 0.03).clamp(8.0, 24.0);
+    final bbLeft = motorLeft + motorWidth + spacing;
+    final bbWidth = (batLeft - bbLeft - spacing).clamp(130.0, 440.0);
+    final bbTop = (h * 0.22).clamp(60.0, 105.0);
+    final bbHeight = (h * 0.54).clamp(140.0, 235.0);
     final breadboardRect = Rect.fromLTWH(bbLeft, bbTop, bbWidth, bbHeight);
 
-    // 2. Motor CC 130 na VERTICAL (à esquerda da Protoboard, com hélices no topo)
-    final motorWidth = (w * 0.15).clamp(72.0, 96.0);
-    final motorHeight = (motorWidth * 1.45).clamp(105.0, 138.0);
-    final motorLeft = (w * 0.08).clamp(20.0, 52.0);
     final motorTop = bbTop + (bbHeight - motorHeight) * 0.52 + 10.0;
     final motorRect = Rect.fromLTWH(motorLeft, motorTop, motorWidth, motorHeight);
 
-    // 3. Bateria 9V na HORIZONTAL (à direita da Protoboard)
-    final batWidth = (w * 0.19).clamp(95.0, 145.0);
-    final batHeight = (batWidth * 0.60).clamp(58.0, 88.0);
-    final batLeft = (bbLeft + bbWidth + (w * 0.04)).clamp(w * 0.77, w * 0.83);
     final batTop = bbTop + (bbHeight - batHeight) * 0.46;
     final batteryRect = Rect.fromLTWH(batLeft, batTop, batWidth, batHeight);
 

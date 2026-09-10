@@ -133,68 +133,57 @@ class _CircuitoSeguroM5State extends State<CircuitoSeguroM5>
     final voltage = _isAuditedAndSafe ? 9.0 : (_shortCircuitPresent ? 1.2 : 0.0);
     final current = _isAuditedAndSafe ? 13.0 : (_shortCircuitPresent ? 450.0 : 0.0);
 
-    return Row(
-      children: [
-        // 1. Bancada Principal
-        Expanded(
-          flex: 7,
-          child: WorkbenchTableFrame(
-            usePhysicalStyle: _usePhysicalStyle,
-            onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
-            leftHeaderWidget: CircuitoSeguroStatusCard(state: statusState),
-            rightHeaderWidget: CircuitoSeguroTelemetryCard(
-              voltage: voltage,
-              currentMa: current,
-              isSafe: _isAuditedAndSafe,
-            ),
-            bottomWidget: CircuitoSeguroUndoRedoButtons(
-              controller: _undoRedoController,
-              onUndo: () => setState(() => _undoRedoController.undo()),
-              onRedo: () => setState(() => _undoRedoController.redo()),
-            ),
-            child: AnimatedBuilder(
-              animation: _electronAnimController,
-              builder: (context, child) {
-                return CustomPaint(
-                  painter: CircuitoSeguroPainter(
-                    missionIndex: 4,
-                    animValue: _electronAnimController.value,
-                    usePhysicalStyle: _usePhysicalStyle,
-                    isArmingSwitchClosed: _switchArmed,
-                    isShortCircuitActive: _shortCircuitPresent,
-                    isWireBroken: _wireBroken,
-                    isWireRepaired: _wireRepaired,
-                    isFuseInserted: true,
-                    isFuseBlown: _fuseBlown,
-                    isFuseCorrectRating: true,
-                    isLedInserted: true,
-                    isResistorInserted: true,
-                    isBuzzerActive: _isAuditedAndSafe,
-                  ),
-                );
-              },
-            ),
-          ),
+    return WorkbenchResponsiveLayout(
+      workbench: WorkbenchTableFrame(
+        usePhysicalStyle: _usePhysicalStyle,
+        onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
+        leftHeaderWidget: CircuitoSeguroStatusCard(state: statusState),
+        rightHeaderWidget: CircuitoSeguroTelemetryCard(
+          voltage: voltage,
+          currentMa: current,
+          isSafe: _isAuditedAndSafe,
         ),
-        const SizedBox(width: 16),
-        // 2. Painel Lateral
-        Expanded(
-          flex: 3,
-          child: WorkbenchSidePanel(
-            teamTitle: 'Equipe Segurança',
-            showTeamHeader: false,
-            buttonColor: const Color(0xFF10B981),
-            toolboxItems: [
-              _buildObjectiveCard(),
-              const SizedBox(height: 12),
-              _buildInvestigationStepper(),
-              const SizedBox(height: 12),
-              _buildToolboxControls(),
-            ],
-            onEnergizePressed: _validate,
-          ),
+        bottomWidget: CircuitoSeguroUndoRedoButtons(
+          controller: _undoRedoController,
+          onUndo: () => setState(() => _undoRedoController.undo()),
+          onRedo: () => setState(() => _undoRedoController.redo()),
         ),
-      ],
+        child: AnimatedBuilder(
+          animation: _electronAnimController,
+          builder: (context, child) {
+            return CustomPaint(
+              painter: CircuitoSeguroPainter(
+                missionIndex: 4,
+                animValue: _electronAnimController.value,
+                usePhysicalStyle: _usePhysicalStyle,
+                isArmingSwitchClosed: _switchArmed,
+                isShortCircuitActive: _shortCircuitPresent,
+                isWireBroken: _wireBroken,
+                isWireRepaired: _wireRepaired,
+                isFuseInserted: true,
+                isFuseBlown: _fuseBlown,
+                isFuseCorrectRating: true,
+                isLedInserted: true,
+                isResistorInserted: true,
+                isBuzzerActive: _isAuditedAndSafe,
+              ),
+            );
+          },
+        ),
+      ),
+      sidePanel: WorkbenchSidePanel(
+        teamTitle: 'Equipe Segurança',
+        showTeamHeader: false,
+        buttonColor: const Color(0xFF10B981),
+        toolboxItems: [
+          _buildObjectiveCard(),
+          const SizedBox(height: 12),
+          _buildInvestigationStepper(),
+          const SizedBox(height: 12),
+          _buildToolboxControls(),
+        ],
+        onEnergizePressed: _validate,
+      ),
     );
   }
 

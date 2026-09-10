@@ -73,17 +73,19 @@ class CircuitoSeguroPainter extends CustomPainter {
     final w = size.width;
     final h = size.height;
 
-    // 1. Dimensões e Proporções da Protoboard Central
-    final bbLeft = (w * 0.18).clamp(120.0, 240.0);
-    final bbWidth = (w * 0.54).clamp(320.0, 560.0);
-    final bbTop = (h * 0.22).clamp(70.0, 110.0);
-    final bbHeight = (h * 0.56).clamp(180.0, 260.0);
+    // 1. Proporções da Bateria 9V Horizontal (à direita)
+    final batWidth = (w * 0.16).clamp(55.0, 140.0);
+    final batHeight = (batWidth * 0.60).clamp(34.0, 84.0);
+    final batRight = w - 14.0;
+    final batLeft = batRight - batWidth;
+
+    // 2. Dimensões da Protoboard Central (à esquerda da bateria)
+    final bbLeft = (w * 0.05).clamp(10.0, 140.0);
+    final bbWidth = (batLeft - bbLeft - (w * 0.03).clamp(8.0, 24.0)).clamp(140.0, 600.0);
+    final bbTop = (h * 0.22).clamp(60.0, 110.0);
+    final bbHeight = (h * 0.56).clamp(150.0, 260.0);
     final breadboardRect = Rect.fromLTWH(bbLeft, bbTop, bbWidth, bbHeight);
 
-    // 2. Bateria 9V na HORIZONTAL (à direita da Protoboard)
-    final batWidth = (w * 0.18).clamp(100.0, 145.0);
-    final batHeight = (batWidth * 0.60).clamp(60.0, 88.0);
-    final batLeft = (bbLeft + bbWidth + (w * 0.04)).clamp(w * 0.76, w * 0.82);
     final batTop = bbTop + (bbHeight - batHeight) * 0.50;
     final batteryRect = Rect.fromLTWH(batLeft, batTop, batWidth, batHeight);
 

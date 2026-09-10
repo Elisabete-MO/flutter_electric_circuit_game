@@ -71,31 +71,58 @@ class WorkbenchTableFrame extends StatelessWidget {
               top: scale.spacing(12, min: 8, max: 20),
               left: scale.spacing(16, min: 10, max: 28),
               right: scale.spacing(16, min: 10, max: 28),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Canto Esquerdo: Card de Status
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: leftHeaderWidget ?? const SizedBox.shrink(),
-                    ),
-                  ),
+              child: LayoutBuilder(
+                builder: (context, headerConstraints) {
+                  final headerW = headerConstraints.maxWidth;
+                  final isCompact = headerW < 540;
+                  final isUltraCompact = headerW < 400;
 
-                  // Centro: Seletor de Modo (Esquemático vs Físico 3D)
-                  if (showModeSelector)
-                    _buildVisualModeSelector(context)
-                  else
-                    const SizedBox.shrink(),
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Canto Esquerdo: Card de Status
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: leftHeaderWidget != null
+                              ? FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: leftHeaderWidget!,
+                                )
+                              : const SizedBox.shrink(),
+                        ),
+                      ),
 
-                  // Canto Direito: Card de Telemetria
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: rightHeaderWidget ?? const SizedBox.shrink(),
-                    ),
-                  ),
-                ],
+                      // Centro: Seletor de Modo (Esquemático vs Físico 3D)
+                      if (showModeSelector)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: _buildVisualModeSelector(
+                            context,
+                            isCompact: isCompact,
+                            isUltraCompact: isUltraCompact,
+                          ),
+                        )
+                      else
+                        const SizedBox.shrink(),
+
+                      // Canto Direito: Card de Telemetria
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: rightHeaderWidget != null
+                              ? FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerRight,
+                                  child: rightHeaderWidget!,
+                                )
+                              : const SizedBox.shrink(),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
 
@@ -115,7 +142,11 @@ class WorkbenchTableFrame extends StatelessWidget {
     );
   }
 
-  Widget _buildVisualModeSelector(BuildContext context) {
+  Widget _buildVisualModeSelector(
+    BuildContext context, {
+    bool isCompact = false,
+    bool isUltraCompact = false,
+  }) {
     final scale = context.uiScale;
 
     return Container(
@@ -142,7 +173,9 @@ class WorkbenchTableFrame extends StatelessWidget {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               padding: EdgeInsets.symmetric(
-                horizontal: scale.spacing(14, min: 10, max: 24),
+                horizontal: isUltraCompact
+                    ? 8
+                    : (isCompact ? 10 : scale.spacing(14, min: 10, max: 24)),
                 vertical: scale.spacing(4, min: 2, max: 8),
               ),
               decoration: BoxDecoration(
@@ -170,17 +203,19 @@ class WorkbenchTableFrame extends StatelessWidget {
                         ? Colors.white
                         : const Color(0xFF64748B),
                   ),
-                  SizedBox(width: scale.spacing(5, min: 3, max: 8)),
-                  Text(
-                    'Esquemático',
-                    style: GoogleFonts.rajdhani(
-                      fontWeight: FontWeight.bold,
-                      fontSize: scale.font(12.5, min: 11, max: 18),
-                      color: !usePhysicalStyle
-                          ? Colors.white
-                          : const Color(0xFF64748B),
+                  if (!isUltraCompact) ...[
+                    SizedBox(width: scale.spacing(5, min: 3, max: 8)),
+                    Text(
+                      isCompact ? 'Esq.' : 'Esquemático',
+                      style: GoogleFonts.rajdhani(
+                        fontWeight: FontWeight.bold,
+                        fontSize: scale.font(12.5, min: 11, max: 18),
+                        color: !usePhysicalStyle
+                            ? Colors.white
+                            : const Color(0xFF64748B),
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
@@ -192,7 +227,9 @@ class WorkbenchTableFrame extends StatelessWidget {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               padding: EdgeInsets.symmetric(
-                horizontal: scale.spacing(14, min: 10, max: 24),
+                horizontal: isUltraCompact
+                    ? 8
+                    : (isCompact ? 10 : scale.spacing(14, min: 10, max: 24)),
                 vertical: scale.spacing(4, min: 2, max: 8),
               ),
               decoration: BoxDecoration(
@@ -220,23 +257,91 @@ class WorkbenchTableFrame extends StatelessWidget {
                         ? Colors.white
                         : const Color(0xFF64748B),
                   ),
-                  SizedBox(width: scale.spacing(5, min: 3, max: 8)),
-                  Text(
-                    'Físico 3D',
-                    style: GoogleFonts.rajdhani(
-                      fontWeight: FontWeight.bold,
-                      fontSize: scale.font(12.5, min: 11, max: 18),
-                      color: usePhysicalStyle
-                          ? Colors.white
-                          : const Color(0xFF64748B),
+                  if (!isUltraCompact) ...[
+                    SizedBox(width: scale.spacing(5, min: 3, max: 8)),
+                    Text(
+                      isCompact ? 'Físico' : 'Físico 3D',
+                      style: GoogleFonts.rajdhani(
+                        fontWeight: FontWeight.bold,
+                        fontSize: scale.font(12.5, min: 11, max: 18),
+                        color: usePhysicalStyle
+                            ? Colors.white
+                            : const Color(0xFF64748B),
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Layout Responsivo Universal para Bancadas do EletroLab (Bancada + Painel Lateral).
+///
+/// Garante que:
+/// - Em telas largas (Desktop/Notebooks), a bancada ocupe o espaço nobre e o painel
+///   lateral tenha uma largura proporcional e equilibrada (270-340px), evitando que
+///   os cards fiquem "recuados demais" ou esvaziados à direita.
+/// - Em telas intermediárias (Tablets/Telas menores), o painel lateral preserve sua
+///   legibilidade mínima sem esmagar o conteúdo dos cards.
+/// - Em telas compactas (< 720px), faz o reflow responsivo vertical com rolagem suave,
+///   impedindo qualquer overflow horizontal.
+class WorkbenchResponsiveLayout extends StatelessWidget {
+  final Widget workbench;
+  final Widget sidePanel;
+  final double spacing;
+
+  const WorkbenchResponsiveLayout({
+    super.key,
+    required this.workbench,
+    required this.sidePanel,
+    this.spacing = 16,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final w = constraints.maxWidth;
+        final h = constraints.maxHeight;
+
+        // Modo Vertical / Empilhado para telas estreitas (portrait ou mobile < 720px)
+        if (w < 720) {
+          return SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(
+                  height: h > 0 ? (h * 0.58).clamp(320.0, 500.0) : 340.0,
+                  child: workbench,
+                ),
+                SizedBox(height: spacing),
+                sidePanel,
+              ],
+            ),
+          );
+        }
+
+        // Modo Horizontal com Proporção Otimizada
+        // Painel lateral com largura calibrada entre 270px e 340px
+        final sidePanelWidth = (w * 0.28).clamp(270.0, 340.0);
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(child: workbench),
+            SizedBox(width: spacing),
+            SizedBox(
+              width: sidePanelWidth,
+              child: sidePanel,
+            ),
+          ],
+        );
+      },
     );
   }
 }

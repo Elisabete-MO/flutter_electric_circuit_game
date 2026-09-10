@@ -172,45 +172,34 @@ class _LetrerosLedM3State extends State<LetrerosLedM3>
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        // Área Principal da Bancada
-        Expanded(
-          flex: 7,
-          child: WorkbenchTableFrame(
-            usePhysicalStyle: _usePhysicalStyle,
-            onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
-            leftHeaderWidget: buildLetrerosLedStatusCard(_allFixed),
-            rightHeaderWidget: buildLetrerosLedTelemetryCard(
-              9.0,
-              _allFixed ? 10.3 : 0.0,
-              _allFixed,
-            ),
-            bottomWidget: _buildUndoRedoButtons(),
-            child: _buildWorkbenchDisplay(),
-          ),
+    return WorkbenchResponsiveLayout(
+      workbench: WorkbenchTableFrame(
+        usePhysicalStyle: _usePhysicalStyle,
+        onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
+        leftHeaderWidget: buildLetrerosLedStatusCard(_allFixed),
+        rightHeaderWidget: buildLetrerosLedTelemetryCard(
+          9.0,
+          _allFixed ? 10.3 : 0.0,
+          _allFixed,
         ),
-        const SizedBox(width: 16),
-        // Painel Lateral (Objetivo, Stepper & Validação)
-        Expanded(
-          flex: 3,
-          child: WorkbenchSidePanel(
-            teamTitle: 'Painel da Equipe Sinalização',
-            showTeamHeader: false,
-            buttonColor: const Color(0xFF059669),
-            toolboxItems: [
-              _buildMissionObjectiveCard(),
-              const SizedBox(height: 12),
-              _buildInvestigationStepperCard(),
-              const SizedBox(height: 12),
-              buildLetrerosLedPredictionBadge(_prediction),
-              _buildSideInstructions(),
-            ],
-            onEnergizePressed: _onEnergizePressed,
-            isLoading: _isSimulating,
-          ),
-        ),
-      ],
+        bottomWidget: _buildUndoRedoButtons(),
+        child: _buildWorkbenchDisplay(),
+      ),
+      sidePanel: WorkbenchSidePanel(
+        teamTitle: 'Painel da Equipe Sinalização',
+        showTeamHeader: false,
+        buttonColor: const Color(0xFF059669),
+        toolboxItems: [
+          _buildMissionObjectiveCard(),
+          const SizedBox(height: 12),
+          _buildInvestigationStepperCard(),
+          const SizedBox(height: 12),
+          buildLetrerosLedPredictionBadge(_prediction),
+          _buildSideInstructions(),
+        ],
+        onEnergizePressed: _onEnergizePressed,
+        isLoading: _isSimulating,
+      ),
     );
   }
 
