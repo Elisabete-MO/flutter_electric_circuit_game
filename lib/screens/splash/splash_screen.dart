@@ -207,72 +207,7 @@ class _SplashScreenState extends State<SplashScreen>
                       // Emblema Central com Raio Energizado
                       _buildEnergizedEmblem(scale, progress),
 
-                      SizedBox(height: scale.spacing(18, min: 12, max: 28)),
-
-                      // Badge de Franquia / Edição: JOGO 1 • VOLUME 1
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: scale.spacing(14, min: 10, max: 20),
-                          vertical: scale.spacing(4, min: 3, max: 6),
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(
-                            0xFF04281E,
-                          ).withValues(alpha: 0.85),
-                          borderRadius: BorderRadius.circular(scale.size(20)),
-                          border: Border.all(
-                            color: const Color(
-                              0xFF10B981,
-                            ).withValues(alpha: 0.45 + (0.35 * progress)),
-                            width: 1.0,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(
-                                0xFF10B981,
-                              ).withValues(alpha: 0.20 * progress),
-                              blurRadius: scale.size(8),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: scale.size(6, min: 5, max: 8),
-                              height: scale.size(6, min: 5, max: 8),
-                              decoration: BoxDecoration(
-                                color: Color.lerp(
-                                  const Color(0xFF059669),
-                                  const Color(0xFF10B981),
-                                  progress,
-                                ),
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(
-                                      0xFF10B981,
-                                    ).withValues(alpha: 0.6 * progress),
-                                    blurRadius: 4,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            SizedBox(width: scale.spacing(6, min: 4, max: 8)),
-                            Text(
-                              'JOGO 1 • VOLUME 1',
-                              style: GoogleFonts.rajdhani(
-                                color: const Color(0xFF6EE7B7),
-                                fontSize: scale.font(12.5, min: 10, max: 16),
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 1.8,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      SizedBox(height: scale.spacing(8, min: 4, max: 12)),
+                      SizedBox(height: scale.spacing(20, min: 14, max: 30)),
 
                       // Marca Oficial do Jogo
                       Text(
@@ -306,7 +241,12 @@ class _SplashScreenState extends State<SplashScreen>
                         ),
                       ),
 
-                      SizedBox(height: scale.spacing(32, min: 20, max: 48)),
+                      SizedBox(height: scale.spacing(12, min: 8, max: 18)),
+
+                      // Badge de Franquia / Edição: JOGO 1 • VOLUME 1
+                      _buildVolumeBadge(scale, progress),
+
+                      SizedBox(height: scale.spacing(28, min: 18, max: 42)),
 
                       // Medidor de Voltagem e Porcentagem
                       Padding(
@@ -446,6 +386,70 @@ class _SplashScreenState extends State<SplashScreen>
           ),
           size: iconSize,
         ),
+      ),
+    );
+  }
+
+  Widget _buildVolumeBadge(UiScale scale, double progress) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: scale.spacing(14, min: 10, max: 20),
+        vertical: scale.spacing(4, min: 3, max: 6),
+      ),
+      decoration: BoxDecoration(
+        color: const Color(
+          0xFF04281E,
+        ).withValues(alpha: 0.85),
+        borderRadius: BorderRadius.circular(scale.size(20)),
+        border: Border.all(
+          color: const Color(
+            0xFF10B981,
+          ).withValues(alpha: 0.45 + (0.35 * progress)),
+          width: 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(
+              0xFF10B981,
+            ).withValues(alpha: 0.20 * progress),
+            blurRadius: scale.size(8),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: scale.size(6, min: 5, max: 8),
+            height: scale.size(6, min: 5, max: 8),
+            decoration: BoxDecoration(
+              color: Color.lerp(
+                const Color(0xFF059669),
+                const Color(0xFF10B981),
+                progress,
+              ),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(
+                    0xFF10B981,
+                  ).withValues(alpha: 0.6 * progress),
+                  blurRadius: 4,
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: scale.spacing(6, min: 4, max: 8)),
+          Text(
+            'JOGO 1 • VOLUME 1',
+            style: GoogleFonts.rajdhani(
+              color: const Color(0xFF6EE7B7),
+              fontSize: scale.font(12.5, min: 10, max: 16),
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.8,
+            ),
+          ),
+        ],
       ),
     );
   }

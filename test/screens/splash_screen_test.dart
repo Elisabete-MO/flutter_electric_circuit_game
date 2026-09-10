@@ -51,7 +51,7 @@ void main() {
 
       expect(find.text('JOGO 1 • VOLUME 1'), findsOneWidget);
       expect(find.text('EletroLab'), findsOneWidget);
-      expect(find.text('MISSÃO: ENERGIZAR A FEIRA DE CIÊNCIAS'), findsOneWidget);
+      expect(find.text('ENERGIZANDO A FEIRA DE CIÊNCIAS'), findsOneWidget);
       expect(find.byIcon(Icons.bolt_rounded), findsWidgets);
       expect(find.textContaining('0.0 V'), findsOneWidget);
       expect(find.textContaining('%'), findsOneWidget);
