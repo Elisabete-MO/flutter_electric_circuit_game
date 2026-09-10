@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -45,11 +46,14 @@ class WorkbenchTableFrame extends StatelessWidget {
         borderRadius: BorderRadius.circular(scale.size(20, min: 14, max: 32)),
         child: Stack(
           children: [
-            // 1. Imagem de Fundo da Mesa Vista Superior
+            // 1. Mesa e Lousa 100% Vetoriais (Nenhum bitmap esticado, nitidez perfeita em qualquer resolução)
             Positioned.fill(
-              child: Image.asset(
-                'assets/images/backgrounds/mesa_eletrolab_vista_superior.png',
-                fit: BoxFit.fill,
+              child: CustomPaint(
+                painter: WorkbenchDeskPainter(
+                  woodRadius: scale.size(20, min: 14, max: 32),
+                  boardRadius: scale.size(16, min: 12, max: 24),
+                  borderMargin: scale.spacing(14, min: 8, max: 22),
+                ),
               ),
             ),
 
@@ -57,10 +61,10 @@ class WorkbenchTableFrame extends StatelessWidget {
             Positioned.fill(
               child: Padding(
                 padding: EdgeInsets.only(
-                  top: scale.spacing(54, min: 40, max: 80),
-                  bottom: scale.spacing(50, min: 36, max: 76),
-                  left: scale.spacing(16, min: 10, max: 28),
-                  right: scale.spacing(16, min: 10, max: 28),
+                  top: scale.spacing(52, min: 38, max: 76),
+                  bottom: scale.spacing(48, min: 34, max: 72),
+                  left: scale.spacing(18, min: 12, max: 30),
+                  right: scale.spacing(18, min: 12, max: 30),
                 ),
                 child: child,
               ),
@@ -354,6 +358,195 @@ class WorkbenchResponsiveLayout extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+/// Pintor Vetorial da Mesa de Laboratório do EletroLab.
+///
+/// Renderiza nativamente em canvas:
+/// 1. Tampo da mesa em madeira rica com gradiente de iluminação realista.
+/// 2. Lousa central / tapete maker (cutting mat) verde-escuro profundo.
+/// 3. Moldura de madeira escura com chanfro em relevo de luz e sombra.
+/// 4. Grid milimetrado vetorial sutil e nítido em qualquer densidade de tela.
+/// 5. Rebites / parafusos de latão dourados com fenda a 45° nos 4 cantos da lousa.
+class WorkbenchDeskPainter extends CustomPainter {
+  final double woodRadius;
+  final double boardRadius;
+  final double borderMargin;
+
+  const WorkbenchDeskPainter({
+    required this.woodRadius,
+    required this.boardRadius,
+    required this.borderMargin,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.width <= 0 || size.height <= 0) return;
+
+    final fullRect = Offset.zero & size;
+    final woodRRect = RRect.fromRectAndRadius(fullRect, Radius.circular(woodRadius));
+
+    // 1. Tampo da Mesa (Madeira Vetorial com gradiente realista de carvalho maker)
+    final woodPaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color(0xFFE29B4D), // Carvalho claro no topo (iluminação zenital)
+          Color(0xFFD48A3C),
+          Color(0xFFC47A2C),
+          Color(0xFFB0681B), // Sombra suave na base
+        ],
+        stops: [0.0, 0.35, 0.70, 1.0],
+      ).createShader(fullRect);
+
+    canvas.drawRRect(woodRRect, woodPaint);
+
+    // Veios sutis da madeira (linhas orgânicas muito suaves)
+    final grainPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.035)
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke;
+
+    final double grainStep = math.max(12.0, size.height / 28);
+    for (double y = grainStep; y < size.height; y += grainStep) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), grainPaint);
+    }
+
+    // 2. Lousa Verde Central / Tapete de Montagem Maker
+    final boardMarginHorizontal = borderMargin;
+    final boardMarginVertical = borderMargin * 0.85;
+
+    final boardRect = Rect.fromLTRB(
+      boardMarginHorizontal,
+      boardMarginVertical,
+      size.width - boardMarginHorizontal,
+      size.height - boardMarginVertical,
+    );
+
+    if (boardRect.width <= 10 || boardRect.height <= 10) return;
+
+    final boardRRect = RRect.fromRectAndRadius(boardRect, Radius.circular(boardRadius));
+
+    // Sombra externa suave da lousa projetada na mesa
+    final shadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.32)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+    canvas.drawRRect(boardRRect.shift(const Offset(0, 3)), shadowPaint);
+
+    // Fundo do Tapete Verde Esmeralda (Cutting Mat de Bancada)
+    final matPaint = Paint()
+      ..shader = RadialGradient(
+        center: Alignment.center,
+        radius: 0.85,
+        colors: const [
+          Color(0xFF0C3829), // Centro esmeralda profundo
+          Color(0xFF07241A),
+          Color(0xFF031610), // Bordas escuras
+        ],
+      ).createShader(boardRect);
+    canvas.drawRRect(boardRRect, matPaint);
+
+    // 3. Grid Milimetrado Vetorial (alinhado e nítido)
+    canvas.save();
+    canvas.clipRRect(boardRRect);
+
+    final gridPaint = Paint()
+      ..color = const Color(0xFF10B981).withValues(alpha: 0.07)
+      ..strokeWidth = 1.0;
+
+    const double gridSpacing = 22.0;
+    for (double x = boardRect.left + (boardRect.width % gridSpacing) / 2; x < boardRect.right; x += gridSpacing) {
+      canvas.drawLine(Offset(x, boardRect.top), Offset(x, boardRect.bottom), gridPaint);
+    }
+    for (double y = boardRect.top + (boardRect.height % gridSpacing) / 2; y < boardRect.bottom; y += gridSpacing) {
+      canvas.drawLine(Offset(boardRect.left, y), Offset(boardRect.right, y), gridPaint);
+    }
+
+    // Moldura chanfrada de madeira escura ao redor da lousa com bisel
+    final framePaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Color(0xFF5A381C), // Bisel superior iluminado
+          Color(0xFF351F0D),
+          Color(0xFF241407), // Bisel inferior em sombra
+        ],
+      ).createShader(boardRect)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.5;
+    canvas.drawRRect(boardRRect, framePaint);
+
+    // Vinheta interna suave
+    final innerVignette = Paint()
+      ..color = Colors.black.withValues(alpha: 0.22)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0;
+    canvas.drawRRect(boardRRect, innerVignette);
+
+    canvas.restore();
+
+    // 4. Parafusos / Rebites de Latão Dourados nos 4 cantos da moldura
+    final screwOffset = boardRadius * 0.95;
+    final List<Offset> screwCenters = [
+      Offset(boardRect.left + screwOffset, boardRect.top + screwOffset),
+      Offset(boardRect.right - screwOffset, boardRect.top + screwOffset),
+      Offset(boardRect.left + screwOffset, boardRect.bottom - screwOffset),
+      Offset(boardRect.right - screwOffset, boardRect.bottom - screwOffset),
+    ];
+
+    const double screwRadius = 5.0;
+    for (final center in screwCenters) {
+      // Sombra do parafuso
+      canvas.drawCircle(
+        center + const Offset(0, 1.2),
+        screwRadius,
+        Paint()..color = Colors.black.withValues(alpha: 0.50),
+      );
+
+      // Corpo de latão com gradiente metálico
+      final screwPaint = Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFFBE486),
+            Color(0xFFD4AF37),
+            Color(0xFF8C6B1B),
+          ],
+        ).createShader(Rect.fromCircle(center: center, radius: screwRadius));
+      canvas.drawCircle(center, screwRadius, screwPaint);
+
+      // Borda metálica fina
+      canvas.drawCircle(
+        center,
+        screwRadius,
+        Paint()
+          ..color = const Color(0xFF634A12)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.8,
+      );
+
+      // Fenda a 45 graus
+      final fendaPaint = Paint()
+        ..color = const Color(0xFF4A3409)
+        ..strokeWidth = 1.1
+        ..strokeCap = StrokeCap.round;
+      canvas.drawLine(
+        center + const Offset(-2.0, -2.0),
+        center + const Offset(2.0, 2.0),
+        fendaPaint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant WorkbenchDeskPainter oldDelegate) {
+    return oldDelegate.woodRadius != woodRadius ||
+        oldDelegate.boardRadius != boardRadius ||
+        oldDelegate.borderMargin != borderMargin;
   }
 }
 
