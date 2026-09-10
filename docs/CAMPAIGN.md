@@ -121,15 +121,15 @@ Introduzir anodo/catodo, polaridade, diodo e limitacao de corrente.
 
 “Alguns componentes possuem direcao. Proteger tambem faz parte da montagem.”
 
-### Banco de missoes candidatas
+### Banco de missões (Implementadas no Estande 05)
 
-| Missao candidata | Objetivo | Componentes/conceitos | Fenomeno ou validacao | Status |
+| Missão | Objetivo | Componentes / Conceitos | Fenômeno / Validação na Protoboard | Status |
 |---|---|---|---|---|
-| Sentido do LED | Acender LED orientado corretamente. | Anodo/catodo. | Conducao direta. | Forte candidata |
-| LED invertido | Diagnosticar orientacao incorreta. | Polaridade. | LED bloqueia no sentido inverso. | Forte candidata |
-| Resistor protetor | Limitar corrente. | LED, resistor e fonte. | Faixa didatica segura. | Forte candidata |
-| Sinalizacao dupla | Proteger dois LEDs. | Ramos e resistores. | Cada ramo protegido. | Proposta |
-| Letreiro com defeito | Corrigir polaridade e resistor. | Inspecao. | Diagnostico antes de energizar. | Proposta |
+| **M1: Placa de Saída** | Inserir LED e Resistor na Protoboard e energizar. | Bateria 9V, Protoboard, LED Vermelho, R680Ω. | Condução direta, fluxo de elétrons e acendimento do letreiro SAÍDA ➔. | **Implementada** |
+| **M2: Polaridade e Sentido** | Diagnosticar e corrigir polaridade invertida do LED. | Ânodo `A(+)`, Cátodo `K(–)`, rotação do LED na Protoboard. | Bloqueio no sentido inverso (LED apagado) vs. condução em polaridade direta. | **Implementada** |
+| **M3: Diagnóstico de Falha** | Inspecionar e resolver 3 falhas potenciais do circuito. | Fio rompido, resistor deslocado e LED invertido. | Diagnóstico por hipóteses antes de reenergizar a bancada. | **Implementada** |
+| **M4: Proteção e Sobrecarga** | Comparar valores de resistência limitadora de corrente. | Resistores 68Ω, 680Ω e 6.8kΩ com código de 4 cores. | Queima por sobrecorrente (68Ω), ideal (680Ω) e subcorrente (6.8kΩ). | **Implementada** |
+| **M5: Sinalização Dupla** | Montar dois ramos em paralelo independentes. | Ramo SAÍDA (Vermelho) e Ramo ENTRADA (Verde). | Dois ramos independentes com proteção individual por resistor 680Ω. | **Implementada** |
 
 ## Movimento em Miniatura
 
