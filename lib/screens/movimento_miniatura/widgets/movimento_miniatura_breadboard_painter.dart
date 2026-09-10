@@ -4,8 +4,9 @@ import 'package:google_fonts/google_fonts.dart';
 
 /// Painter de bancada para o Estande 06 (Movimento em Miniatura — Motor CC).
 /// Renderiza:
-/// - Motor CC 130 realista na HORIZONTAL (à esquerda) com carcaça de aço escovado, chanfros,
-///   tampa traseira com terminais de cobre, eixo com bucha de bronze e engrenagem dourada giratória
+/// - Motor CC 130 realista na VERTICAL (à esquerda) com hélice aerodinâmica de 3 pás com acabamento
+///   premium e efeito de rotação realista / fluxo de ar, carcaça metálica com chanfros e ventilação,
+///   tampa traseira amarela inferior com terminais de cobre
 /// - Bateria 9V na HORIZONTAL (à direita) com acabamento em cobre, terminais e snap clip
 /// - Protoboard central com proporções harmonizadas, linhas a-j, colunas 1-20 e barramentos (+/-)
 /// - Componentes montados: Transistores NPN TO-92, Resistores, Pushbutton e LEDs de sentido (D0/D1)
@@ -54,7 +55,7 @@ class MovimentoMiniaturaBreadboardPainter extends CustomPainter {
   }
 
   // =========================================================================
-  // MODO FÍSICO REALISTA (Motor horizontal, Protoboard e Bateria horizontal)
+  // MODO FÍSICO REALISTA (Motor vertical com hélices, Protoboard e Bateria horizontal)
   // =========================================================================
 
   void _paintPhysicalWorkbench(Canvas canvas, Size size) {
@@ -68,11 +69,11 @@ class MovimentoMiniaturaBreadboardPainter extends CustomPainter {
     final bbHeight = (h * 0.54).clamp(165.0, 235.0);
     final breadboardRect = Rect.fromLTWH(bbLeft, bbTop, bbWidth, bbHeight);
 
-    // 2. Motor CC 130 na HORIZONTAL (à esquerda da Protoboard)
-    final motorWidth = (w * 0.23).clamp(115.0, 165.0);
-    final motorHeight = (motorWidth * 0.58).clamp(66.0, 96.0);
-    final motorLeft = (w * 0.04).clamp(12.0, 32.0);
-    final motorTop = bbTop + (bbHeight - motorHeight) * 0.46;
+    // 2. Motor CC 130 na VERTICAL (à esquerda da Protoboard, com hélices no topo)
+    final motorWidth = (w * 0.15).clamp(72.0, 96.0);
+    final motorHeight = (motorWidth * 1.45).clamp(105.0, 138.0);
+    final motorLeft = (w * 0.08).clamp(20.0, 52.0);
+    final motorTop = bbTop + (bbHeight - motorHeight) * 0.52 + 10.0;
     final motorRect = Rect.fromLTWH(motorLeft, motorTop, motorWidth, motorHeight);
 
     // 3. Bateria 9V na HORIZONTAL (à direita da Protoboard)
@@ -85,7 +86,7 @@ class MovimentoMiniaturaBreadboardPainter extends CustomPainter {
     // Renderizar Elementos
     _drawHorizontal9VBattery(canvas, batteryRect);
     _drawBreadboard(canvas, breadboardRect);
-    _drawHorizontalDCMotor(canvas, motorRect);
+    _drawVerticalDCMotor(canvas, motorRect);
     _drawCircuitConnections(canvas, size, motorRect, breadboardRect, batteryRect);
   }
 
@@ -189,127 +190,125 @@ class MovimentoMiniaturaBreadboardPainter extends CustomPainter {
     canvas.drawCircle(Offset(clipBarRect.center.dx, negTerminalY), 2.2, Paint()..color = const Color(0xFFCBD5E1));
   }
 
-  /// Desenha o Motor CC 130 altamente detalhado na HORIZONTAL
-  void _drawHorizontalDCMotor(Canvas canvas, Rect rect) {
+  /// Desenha o Motor CC 130 na VERTICAL com Hélice Aerodinâmica de Alta Performance no Topo
+  void _drawVerticalDCMotor(Canvas canvas, Rect rect) {
     // Sombra suave do motor
     canvas.drawRRect(
-      RRect.fromRectAndRadius(rect.shift(const Offset(3, 5)), const Radius.circular(12)),
+      RRect.fromRectAndRadius(rect.shift(const Offset(3, 5)), const Radius.circular(10)),
       Paint()
         ..color = Colors.black.withValues(alpha: 0.35)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7),
     );
 
-    // Divisão das partes do Motor 130 Horizontal:
-    // [Tampa Traseira com Bornes] (esquerda) | [Carcaça Cilíndrica com Chanfros] (centro) | [Bucha de Bronze e Eixo com Engrenagem] (direita)
-    final rearCapWidth = rect.width * 0.18;
-    final metalBodyWidth = rect.width * 0.64;
-    final shaftSectionWidth = rect.width - rearCapWidth - metalBodyWidth;
+    // Divisão das partes do Motor 130 Vertical:
+    // [Hélice & Bucha no Eixo] (topo) | [Carcaça Metálica] (centro) | [Tampa Traseira Amarela] (base inferior)
+    final rearCapHeight = rect.height * 0.18;
+    final metalBodyHeight = rect.height * 0.82;
 
-    // 1. Tampa Traseira Plástica (à esquerda, amarela/dourada clássica de motor 130)
-    final rearRect = Rect.fromLTWH(rect.left, rect.top, rearCapWidth, rect.height);
+    // 1. Tampa Traseira Plástica na Base (amarela/dourada clássica)
+    final rearRect = Rect.fromLTWH(rect.left, rect.bottom - rearCapHeight, rect.width, rearCapHeight);
     final rearPaint = Paint()
       ..shader = const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [Color(0xFFFACC15), Color(0xFFEAB308), Color(0xFFCA8A04)],
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+        colors: [Color(0xFFCA8A04), Color(0xFFFACC15), Color(0xFFEAB308), Color(0xFFCA8A04)],
       ).createShader(rearRect);
 
     canvas.drawRRect(
       RRect.fromRectAndCorners(
         rearRect,
-        topLeft: const Radius.circular(10),
-        bottomLeft: const Radius.circular(10),
+        bottomLeft: const Radius.circular(8),
+        bottomRight: const Radius.circular(8),
       ),
       rearPaint,
     );
 
-    // 2. Lâminas de Contato / Terminais de Cobre na Tampa Traseira (saída à esquerda)
-    final termTopY = rect.top + rect.height * 0.28;
-    final termBotY = rect.top + rect.height * 0.72;
+    // 2. Terminais de Cobre na Base Inferior (lâminas de contato com olhais de solda)
+    final term1X = rect.left + rect.width * 0.28;
+    final term2X = rect.left + rect.width * 0.72;
     final copperLeadPaint = Paint()..color = const Color(0xFFD97706)..strokeWidth = 3.5..strokeCap = StrokeCap.round;
 
-    canvas.drawLine(Offset(rect.left + 4, termTopY), Offset(rect.left - 6, termTopY), copperLeadPaint);
-    canvas.drawLine(Offset(rect.left + 4, termBotY), Offset(rect.left - 6, termBotY), copperLeadPaint);
+    canvas.drawLine(Offset(term1X, rect.bottom - 2), Offset(term1X, rect.bottom + 8), copperLeadPaint);
+    canvas.drawLine(Offset(term2X, rect.bottom - 2), Offset(term2X, rect.bottom + 8), copperLeadPaint);
 
-    // Orifícios de solda nos terminais
-    canvas.drawCircle(Offset(rect.left - 6, termTopY), 2.2, Paint()..color = const Color(0xFF1E293B));
-    canvas.drawCircle(Offset(rect.left - 6, termBotY), 2.2, Paint()..color = const Color(0xFF1E293B));
+    // Olhais de solda
+    canvas.drawCircle(Offset(term1X, rect.bottom + 8), 2.2, Paint()..color = const Color(0xFF1E293B));
+    canvas.drawCircle(Offset(term2X, rect.bottom + 8), 2.2, Paint()..color = const Color(0xFF1E293B));
 
-    // 3. Carcaça Metálica Cilíndrica Central (com chanfros e relevo de aço escovado)
-    final metalRect = Rect.fromLTWH(rect.left + rearCapWidth, rect.top, metalBodyWidth, rect.height);
+    // 3. Carcaça Metálica Cilíndrica Central com Chanfros Verticais
+    final metalRect = Rect.fromLTWH(rect.left, rect.top, rect.width, metalBodyHeight);
     final metalPaint = Paint()
       ..shader = const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [Color(0xFF475569), Color(0xFF94A3B8), Color(0xFFE2E8F0), Color(0xFF64748B), Color(0xFF334155)],
-        stops: [0.0, 0.25, 0.50, 0.75, 1.0],
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+        colors: [Color(0xFF334155), Color(0xFF64748B), Color(0xFFE2E8F0), Color(0xFF94A3B8), Color(0xFF475569)],
+        stops: [0.0, 0.22, 0.50, 0.78, 1.0],
       ).createShader(metalRect);
 
-    // Desenhar corpo com chanfros superior e inferior (formato característico do motor 130)
+    // Formato com chanfros laterais (característica do motor 130)
     final motorBodyPath = Path()
-      ..moveTo(metalRect.left, metalRect.top + 6)
-      ..lineTo(metalRect.left + 8, metalRect.top)
-      ..lineTo(metalRect.right - 8, metalRect.top)
-      ..lineTo(metalRect.right, metalRect.top + 6)
+      ..moveTo(metalRect.left + 6, metalRect.top)
+      ..lineTo(metalRect.right - 6, metalRect.top)
+      ..lineTo(metalRect.right, metalRect.top + 8)
       ..lineTo(metalRect.right, metalRect.bottom - 6)
-      ..lineTo(metalRect.right - 8, metalRect.bottom)
-      ..lineTo(metalRect.left + 8, metalRect.bottom)
+      ..lineTo(metalRect.right - 6, metalRect.bottom)
+      ..lineTo(metalRect.left + 6, metalRect.bottom)
       ..lineTo(metalRect.left, metalRect.bottom - 6)
+      ..lineTo(metalRect.left, metalRect.top + 8)
       ..close();
     canvas.drawPath(motorBodyPath, metalPaint);
 
     // Borda metálica sutil
     canvas.drawPath(motorBodyPath, Paint()..color = const Color(0xFF1E293B).withValues(alpha: 0.6)..style = PaintingStyle.stroke..strokeWidth = 1.4);
 
-    // Ranhuras de ventilação estampadas na carcaça
+    // Ranhuras de ventilação estampadas na carcaça metálica (horizontais)
     final ventPaint = Paint()..color = const Color(0xFF1E293B)..strokeWidth = 2.2..strokeCap = StrokeCap.round;
-    final ventX1 = metalRect.left + metalBodyWidth * 0.30;
-    final ventX2 = metalRect.left + metalBodyWidth * 0.60;
-    canvas.drawLine(Offset(ventX1, metalRect.top + 12), Offset(ventX1, metalRect.top + 24), ventPaint);
-    canvas.drawLine(Offset(ventX2, metalRect.top + 12), Offset(ventX2, metalRect.top + 24), ventPaint);
-    canvas.drawLine(Offset(ventX1, metalRect.bottom - 24), Offset(ventX1, metalRect.bottom - 12), ventPaint);
-    canvas.drawLine(Offset(ventX2, metalRect.bottom - 24), Offset(ventX2, metalRect.bottom - 12), ventPaint);
+    final ventY1 = metalRect.top + metalBodyHeight * 0.26;
+    final ventY2 = metalRect.top + metalBodyHeight * 0.68;
+    canvas.drawLine(Offset(metalRect.left + 12, ventY1), Offset(metalRect.left + 24, ventY1), ventPaint);
+    canvas.drawLine(Offset(metalRect.right - 24, ventY1), Offset(metalRect.right - 12, ventY1), ventPaint);
+    canvas.drawLine(Offset(metalRect.left + 12, ventY2), Offset(metalRect.left + 24, ventY2), ventPaint);
+    canvas.drawLine(Offset(metalRect.right - 24, ventY2), Offset(metalRect.right - 12, ventY2), ventPaint);
 
-    // Parafusos de fixação no corpo
-    canvas.drawCircle(Offset(metalRect.center.dx, metalRect.center.dy - 12), 2.2, Paint()..color = const Color(0xFFCBD5E1));
-    canvas.drawCircle(Offset(metalRect.center.dx, metalRect.center.dy + 12), 2.2, Paint()..color = const Color(0xFFCBD5E1));
+    // Rebites de fixação central
+    canvas.drawCircle(Offset(metalRect.center.dx - 14, metalRect.center.dy), 2.2, Paint()..color = const Color(0xFFCBD5E1));
+    canvas.drawCircle(Offset(metalRect.center.dx + 14, metalRect.center.dy), 2.2, Paint()..color = const Color(0xFFCBD5E1));
 
-    // Rótulo na carcaça metálica
+    // Rótulo na carcaça
     final tp = TextPainter(
       text: TextSpan(
         text: 'MOTOR CC 6V',
         style: GoogleFonts.rajdhani(
-          color: const Color(0xFF0F172A).withValues(alpha: 0.85),
+          color: const Color(0xFF0F172A).withValues(alpha: 0.88),
           fontWeight: FontWeight.bold,
-          fontSize: (rect.height * 0.18).clamp(9.0, 13.0),
-          letterSpacing: 1.5,
+          fontSize: (rect.width * 0.16).clamp(10.0, 13.0),
+          letterSpacing: 1.2,
         ),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
     tp.paint(canvas, Offset(metalRect.center.dx - tp.width / 2, metalRect.center.dy - tp.height / 2));
 
-    // 4. Bucha de Bronze e Eixo Frontal (à direita)
-    final shaftBaseX = metalRect.right;
-    final shaftCenterY = rect.center.dy;
+    // 4. Mancal / Bucha de Bronze e Eixo Superior
+    final shaftCenterX = rect.center.dx;
+    final shaftTopY = rect.top - 20;
 
     // Colar da bucha de bronze
-    final bushingRect = Rect.fromCenter(center: Offset(shaftBaseX + 3, shaftCenterY), width: 6, height: 16);
+    final bushingRect = Rect.fromCenter(center: Offset(shaftCenterX, rect.top - 2), width: 14, height: 6);
     canvas.drawRRect(RRect.fromRectAndRadius(bushingRect, const Radius.circular(2)), Paint()..color = const Color(0xFFD97706));
 
     // Eixo de aço polido
-    final shaftLength = shaftSectionWidth + 8;
     canvas.drawLine(
-      Offset(shaftBaseX + 6, shaftCenterY),
-      Offset(shaftBaseX + 6 + shaftLength, shaftCenterY),
+      Offset(shaftCenterX, rect.top),
+      Offset(shaftCenterX, shaftTopY),
       Paint()..color = const Color(0xFFE2E8F0)..strokeWidth = 3.8..strokeCap = StrokeCap.round,
     );
 
-    // 5. Engrenagem Dourada / Rotor de 8 dentes animado no Eixo
-    final rotorCenter = Offset(shaftBaseX + 6 + shaftLength, shaftCenterY);
-    _drawHorizontalRotatingGear(canvas, rotorCenter);
+    // 5. Hélice Aerodinâmica Realista (Fan Propeller) no Topo do Eixo
+    final propellerCenter = Offset(shaftCenterX, shaftTopY);
+    _drawAerodynamicPropeller(canvas, propellerCenter);
 
-    // 6. Badge de Status do Motor
+    // 6. Badge de Status do Motor (abaixo da base)
     final isMotorActive = isClosed && hasMotor && (!isFaulty);
     final rotationText = isMotorActive
         ? (isReversed ? 'ANTI-HORÁRIO ↺' : 'HORÁRIO ↻')
@@ -321,82 +320,131 @@ class MovimentoMiniaturaBreadboardPainter extends CustomPainter {
     final badgePainter = TextPainter(
       text: TextSpan(
         text: rotationText,
-        style: GoogleFonts.rajdhani(color: rotationColor, fontWeight: FontWeight.bold, fontSize: 10),
+        style: GoogleFonts.rajdhani(color: rotationColor, fontWeight: FontWeight.bold, fontSize: 9.5),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
 
-    final badgeRect = Rect.fromCenter(center: Offset(rect.center.dx, rect.bottom + 14), width: badgePainter.width + 12, height: 18);
-    canvas.drawRRect(RRect.fromRectAndRadius(badgeRect, const Radius.circular(6)), Paint()..color = const Color(0xFF0F172A).withValues(alpha: 0.90));
+    final badgeRect = Rect.fromCenter(center: Offset(rect.center.dx, rect.bottom + 22), width: badgePainter.width + 12, height: 18);
+    canvas.drawRRect(RRect.fromRectAndRadius(badgeRect, const Radius.circular(6)), Paint()..color = const Color(0xFF0F172A).withValues(alpha: 0.92));
     canvas.drawRRect(RRect.fromRectAndRadius(badgeRect, const Radius.circular(6)), Paint()..color = rotationColor.withValues(alpha: 0.5)..style = PaintingStyle.stroke..strokeWidth = 1.0);
-    badgePainter.paint(canvas, Offset(rect.center.dx - badgePainter.width / 2, rect.bottom + 14 - badgePainter.height / 2));
+    badgePainter.paint(canvas, Offset(rect.center.dx - badgePainter.width / 2, rect.bottom + 22 - badgePainter.height / 2));
   }
 
-  /// Desenha a engrenagem dourada com dentes girando em alta velocidade
-  void _drawHorizontalRotatingGear(Canvas canvas, Offset center) {
+  /// Desenha a Hélice Aerodinâmica de 3 Pás Realista com Spinner Central e Efeito de Vento
+  void _drawAerodynamicPropeller(Canvas canvas, Offset center) {
     final isMotorActive = isClosed && hasMotor && (!isFaulty);
     final angle = isMotorActive
-        ? (isReversed ? -animationValue * 2 * math.pi * 4 : animationValue * 2 * math.pi * 4)
+        ? (isReversed ? -animationValue * 2 * math.pi * 5 : animationValue * 2 * math.pi * 5)
         : 0.0;
 
-    canvas.save();
-    canvas.translate(center.dx, center.dy);
-    canvas.rotate(angle);
+    const bladeRadius = 32.0;
+    const bladeCount = 3;
 
-    const gearRadius = 14.0;
-    const teeth = 8;
-    final gearPath = Path();
+    // Sombra suave sob a hélice
+    canvas.drawCircle(
+      center.translate(2, 4),
+      bladeRadius * 0.9,
+      Paint()
+        ..color = Colors.black.withValues(alpha: 0.22)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+    );
 
-    for (int i = 0; i < teeth; i++) {
-      final a1 = (i * 2 * math.pi / teeth);
-      final a2 = a1 + (math.pi / teeth) * 0.5;
-      final a3 = a1 + (math.pi / teeth);
-
-      final rOuter = gearRadius + 3.0;
-      final rInner = gearRadius - 2.0;
-
-      if (i == 0) {
-        gearPath.moveTo(math.cos(a1) * rInner, math.sin(a1) * rInner);
-      } else {
-        gearPath.lineTo(math.cos(a1) * rInner, math.sin(a1) * rInner);
-      }
-      gearPath.lineTo(math.cos(a2) * rOuter, math.sin(a2) * rOuter);
-      gearPath.lineTo(math.cos(a3) * rInner, math.sin(a3) * rInner);
-    }
-    gearPath.close();
-
-    // Gradiente metálico da engrenagem dourada
-    final gearPaint = Paint()
-      ..shader = const RadialGradient(
-        colors: [Color(0xFFFEF08A), Color(0xFFEAB308), Color(0xFFB45309)],
-      ).createShader(Rect.fromCircle(center: Offset.zero, radius: gearRadius + 4));
-
-    canvas.drawPath(gearPath, gearPaint);
-    canvas.drawPath(gearPath, Paint()..color = const Color(0xFF78350F)..style = PaintingStyle.stroke..strokeWidth = 1.0);
-
-    // Núcleo central da engrenagem
-    canvas.drawCircle(Offset.zero, 5.0, Paint()..color = const Color(0xFFCBD5E1));
-    canvas.drawCircle(Offset.zero, 2.5, Paint()..color = const Color(0xFF0F172A));
-
-    canvas.restore();
-
-    // Ondas de fluxo de ar quando ativo
+    // Se o motor estiver girando rápido, renderiza o disco translúcido de motion blur
     if (isMotorActive) {
+      final blurPaint = Paint()
+        ..shader = RadialGradient(
+          colors: [
+            (isReversed ? const Color(0xFFF97316) : const Color(0xFF38BDF8)).withValues(alpha: 0.35),
+            (isReversed ? const Color(0xFFEA580C) : const Color(0xFF0284C7)).withValues(alpha: 0.15),
+            Colors.transparent,
+          ],
+          stops: const [0.2, 0.75, 1.0],
+        ).createShader(Rect.fromCircle(center: center, radius: bladeRadius + 4));
+      canvas.drawCircle(center, bladeRadius + 4, blurPaint);
+
+      // Linhas dinâmicas de vórtice / fluxo de vento
       final windPaint = Paint()
-        ..color = (isReversed ? const Color(0xFFF97316) : const Color(0xFF38BDF8)).withValues(alpha: 0.45)
+        ..color = (isReversed ? const Color(0xFFFDBA74) : const Color(0xFF7DD3FC)).withValues(alpha: 0.55)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.5
         ..strokeCap = StrokeCap.round;
 
-      final windOffset = (animationValue * 16) % 16;
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: 20 + windOffset),
-        isReversed ? math.pi * 0.7 : -math.pi * 0.3,
-        math.pi * 0.6,
-        false,
-        windPaint,
-      );
+      final windSpin = (animationValue * 2 * math.pi * 2) % (2 * math.pi);
+      canvas.drawArc(Rect.fromCircle(center: center, radius: bladeRadius + 8), windSpin, math.pi * 0.7, false, windPaint);
+      canvas.drawArc(Rect.fromCircle(center: center, radius: bladeRadius + 14), -windSpin + 1.2, math.pi * 0.5, false, windPaint);
     }
+
+    // Desenho das 3 Pás da Hélice com rotação
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.rotate(angle);
+
+    for (int i = 0; i < bladeCount; i++) {
+      final bladeAngle = i * (2 * math.pi / bladeCount);
+      canvas.save();
+      canvas.rotate(bladeAngle);
+
+      final bladePath = Path();
+      // Perfil aerodinâmico (Airfoil) suave com raiz e ponta arredondada
+      bladePath.moveTo(0, -4);
+      bladePath.cubicTo(8, -8, 14, -bladeRadius * 0.55, 6, -bladeRadius + 3);
+      bladePath.quadraticBezierTo(2, -bladeRadius - 2, -2, -bladeRadius + 2);
+      bladePath.cubicTo(-8, -bladeRadius * 0.65, -6, -8, 0, -4);
+      bladePath.close();
+
+      // Gradiente aerodinâmico elegante na pá (Azul elétrico / Ciano ou Laranja)
+      final bladeGrad = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: isReversed
+            ? [const Color(0xFFFED7AA), const Color(0xFFF97316), const Color(0xFFC2410C)]
+            : [const Color(0xFFE0F2FE), const Color(0xFF38BDF8), const Color(0xFF0369A1)],
+      ).createShader(Rect.fromCircle(center: Offset(0, -bladeRadius / 2), radius: bladeRadius / 2));
+
+      canvas.drawPath(bladePath, Paint()..shader = bladeGrad);
+
+      // Friso de reflexo especular na borda de ataque da pá
+      final highlightPath = Path()
+        ..moveTo(2, -6)
+        ..quadraticBezierTo(7, -bladeRadius * 0.5, 4, -bladeRadius + 4);
+      canvas.drawPath(
+        highlightPath,
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.75)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.2
+          ..strokeCap = StrokeCap.round,
+      );
+
+      // Borda sutil de contorno
+      canvas.drawPath(
+        bladePath,
+        Paint()
+          ..color = (isReversed ? const Color(0xFF7C2D12) : const Color(0xFF0C4A6E)).withValues(alpha: 0.65)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.9,
+      );
+
+      canvas.restore();
+    }
+
+    // Cubo Central / Ogiva (Spinner) da Hélice
+    const hubRadius = 7.5;
+    final spinnerGrad = RadialGradient(
+      center: const Alignment(-0.35, -0.35),
+      colors: [Colors.white, const Color(0xFF94A3B8), const Color(0xFF1E293B)],
+      stops: const [0.0, 0.55, 1.0],
+    ).createShader(Rect.fromCircle(center: Offset.zero, radius: hubRadius));
+
+    canvas.drawCircle(Offset.zero, hubRadius, Paint()..shader = spinnerGrad);
+    canvas.drawCircle(Offset.zero, hubRadius, Paint()..color = const Color(0xFF0F172A)..style = PaintingStyle.stroke..strokeWidth = 1.2);
+
+    // Parafuso / Eixo central cromado
+    canvas.drawCircle(Offset.zero, 2.5, Paint()..color = const Color(0xFFCBD5E1));
+    canvas.drawCircle(Offset.zero, 1.2, Paint()..color = const Color(0xFF0F172A));
+
+    canvas.restore();
   }
 
   /// Desenha a Protoboard central
@@ -510,7 +558,7 @@ class MovimentoMiniaturaBreadboardPainter extends CustomPainter {
     canvas.drawCircle(center, 1.0, core);
   }
 
-  /// Desenha a fiação da bateria 9V horizontal, fiação do motor CC horizontal e componentes
+  /// Desenha a fiação da bateria 9V horizontal, fiação do motor CC vertical e componentes
   void _drawCircuitConnections(Canvas canvas, Size size, Rect motorRect, Rect bbRect, Rect batRect) {
     // 1. Fiação da Bateria 9V Horizontal para a Protoboard
     final clipX = batRect.left - 8;
@@ -538,9 +586,9 @@ class MovimentoMiniaturaBreadboardPainter extends CustomPainter {
     final startX = bbRect.left + 30.0;
     final stepX = (bbRect.width - 60.0) / (cols - 1);
 
-    // 2. Fiação dos Terminais do Motor CC Horizontal para a Protoboard
-    final motorTermTop = Offset(motorRect.left - 6, motorRect.top + motorRect.height * 0.28);
-    final motorTermBot = Offset(motorRect.left - 6, motorRect.top + motorRect.height * 0.72);
+    // 2. Fiação dos Terminais da Base do Motor CC Vertical para a Protoboard
+    final motorTerm1 = Offset(motorRect.left + motorRect.width * 0.28, motorRect.bottom + 8);
+    final motorTerm2 = Offset(motorRect.left + motorRect.width * 0.72, motorRect.bottom + 8);
 
     final col2X = startX + 2 * stepX;
     final col5X = startX + 5 * stepX;
@@ -551,12 +599,12 @@ class MovimentoMiniaturaBreadboardPainter extends CustomPainter {
     final bbMotorHole2 = Offset(col5X, rowFY);
 
     if (hasMotor) {
-      // Cabo Superior do Motor (Verde ou Roxo)
-      final wireM1Ctrl1 = Offset(motorTermTop.dx - 20, motorTermTop.dy - 25);
-      final wireM1Ctrl2 = Offset(bbMotorHole1.dx - 25, bbMotorHole1.dy - 20);
+      // Cabo 1 do Motor (Verde ou Amarelo invertido)
+      final wireM1Ctrl1 = Offset(motorTerm1.dx - 15, motorTerm1.dy + 30);
+      final wireM1Ctrl2 = Offset(bbMotorHole1.dx - 25, bbMotorHole1.dy - 10);
       _drawCurvedWire(
         canvas,
-        motorTermTop,
+        motorTerm1,
         wireM1Ctrl1,
         wireM1Ctrl2,
         bbMotorHole1,
@@ -565,12 +613,12 @@ class MovimentoMiniaturaBreadboardPainter extends CustomPainter {
         thickness: 3.2,
       );
 
-      // Cabo Inferior do Motor (Amarelo ou Ciano)
-      final wireM2Ctrl1 = Offset(motorTermBot.dx - 20, motorTermBot.dy + 25);
-      final wireM2Ctrl2 = Offset(bbMotorHole2.dx - 25, bbMotorHole2.dy + 20);
+      // Cabo 2 do Motor (Amarelo ou Verde invertido)
+      final wireM2Ctrl1 = Offset(motorTerm2.dx + 15, motorTerm2.dy + 30);
+      final wireM2Ctrl2 = Offset(bbMotorHole2.dx - 15, bbMotorHole2.dy + 15);
       _drawCurvedWire(
         canvas,
-        motorTermBot,
+        motorTerm2,
         wireM2Ctrl1,
         wireM2Ctrl2,
         bbMotorHole2,
