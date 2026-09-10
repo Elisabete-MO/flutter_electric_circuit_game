@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../app/routes.dart';
 import '../../app/theme.dart';
 import '../../core/ui_scale.dart';
+import '../../utils/preloader.dart';
 import '../../widgets/circuit_e_emblem.dart';
 
 /// Tela de Abertura (Splash/Boot) do EletroLab.
@@ -66,14 +67,12 @@ class _SplashScreenState extends State<SplashScreen>
 
     _progressController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
+        // Só navega quando o preload de todos os assets estiver concluído
         if (_preloadFinished || !widget.preloadAssets) {
           _navigateNext();
-        } else {
-          // Timeout de segurança caso o preload demore no dispositivo
-          Future.delayed(const Duration(milliseconds: 1000), () {
-            if (mounted) _navigateNext();
-          });
         }
+        // Se o preload ainda não terminou, o _navigateNext() será chamado
+        // pelo próprio _startPreload() ao terminar
       }
     });
 
@@ -106,27 +105,17 @@ class _SplashScreenState extends State<SplashScreen>
       return;
     }
 
-    // Aguarda o primeiro frame para o context estar pronto para precacheImage
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final imagesToPreload = [
-        'assets/intro/gym_front.png',
-        'assets/intro/gym_front_open_door.png',
-        'assets/intro/spritesheet_nuri.png',
-        'assets/images/component_battery_horizontal.png',
-        'assets/images/component_bulb_on.png',
-        'assets/images/component_bulb_off.png',
-        'assets/images/component_switch_on.png',
-        'assets/images/component_switch_off.png',
-      ];
-
-      for (final path in imagesToPreload) {
-        try {
-          if (mounted) {
-            await precacheImage(AssetImage(path), context);
-          }
-        } catch (_) {
-          // Ignora caso algum asset específico não esteja disponível
+      try {
+        if (mounted) {
+          await Preloader.preloadResources(
+            context,
+            imageAssets: Preloader.allAppAssets,
+            blockInteractions: false, // Splash já é a tela de bloqueio
+          );
         }
+      } catch (_) {
+        // Ignora caso algum asset específico não esteja disponível
       }
 
       if (mounted) {
