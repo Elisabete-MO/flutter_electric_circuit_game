@@ -8,6 +8,7 @@ class CircuitEEmblem extends StatelessWidget {
     required this.size,
     this.progress = 1.0,
     this.pulseGlow = true,
+    this.color,
   });
 
   /// Dimensão do emblema (largura e altura)
@@ -18,6 +19,9 @@ class CircuitEEmblem extends StatelessWidget {
 
   /// Se deve exibir o glow neon pulsante
   final bool pulseGlow;
+
+  /// Cor sólida opcional para renderização monocromática (ex: todo branco)
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +34,7 @@ class CircuitEEmblem extends StatelessWidget {
         painter: _CircuitEVectorPainter(
           progress: progress.clamp(0.0, 1.0),
           pulseGlow: pulseGlow,
+          color: color,
         ),
       ),
     );
@@ -39,13 +44,18 @@ class CircuitEEmblem extends StatelessWidget {
 class _CircuitEVectorPainter extends CustomPainter {
   final double progress;
   final bool pulseGlow;
+  final Color? color;
 
   // Cache para evitar reconstruir caminhos em repaints frequentes
   Path? _cachedPath;
   List<RRect>? _cachedPadRRects;
   Rect? _cachedBounds;
 
-  _CircuitEVectorPainter({required this.progress, required this.pulseGlow});
+  _CircuitEVectorPainter({
+    required this.progress,
+    required this.pulseGlow,
+    this.color,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -65,6 +75,34 @@ class _CircuitEVectorPainter extends CustomPainter {
 
     final path = _cachedPath!;
     final padRRects = _cachedPadRRects!;
+
+    if (color != null) {
+      // Renderização monocromática
+      if (pulseGlow) {
+        final blurRadius = (size.width * 0.05).clamp(2.5, 12.0);
+        final glowPaint = Paint()
+          ..color = color!.withValues(alpha: 0.45)
+          ..style = PaintingStyle.fill
+          ..maskFilter = MaskFilter.blur(BlurStyle.normal, blurRadius);
+        canvas.drawPath(path, glowPaint);
+        for (final rrect in padRRects) {
+          canvas.drawRRect(rrect, glowPaint);
+        }
+      }
+
+      final corePaint = Paint()
+        ..color = color!
+        ..style = PaintingStyle.fill;
+      canvas.drawPath(path, corePaint);
+
+      final padPaint = Paint()
+        ..color = color!
+        ..style = PaintingStyle.fill;
+      for (final rrect in padRRects) {
+        canvas.drawRRect(rrect, padPaint);
+      }
+      return;
+    }
 
     // Gradiente dinâmico de energização:
     // Ciano Elétrico -> Esmeralda -> Menta -> Ouro Âmbar
@@ -152,6 +190,7 @@ class _CircuitEVectorPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _CircuitEVectorPainter oldDelegate) {
     return oldDelegate.progress != progress ||
-        oldDelegate.pulseGlow != pulseGlow;
+        oldDelegate.pulseGlow != pulseGlow ||
+        oldDelegate.color != color;
   }
 }
