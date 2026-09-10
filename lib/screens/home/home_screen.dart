@@ -65,6 +65,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       Navigator.of(context).pushNamed(Routes.movimentoMiniatura);
     } else if (stand.number == 7 || stand.id == 'mede_testa') {
       Navigator.of(context).pushNamed(Routes.medeTestaExplica);
+    } else if (stand.number == 8 || stand.id == 'circuito_seguro') {
+      Navigator.of(context).pushNamed(Routes.circuitoSeguro);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

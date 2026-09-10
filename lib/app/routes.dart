@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../screens/circuito_seguro/circuito_seguro_screen.dart';
 import '../screens/first_steps/first_steps_screen.dart';
 import '../screens/second_bench/second_bench_flow_screen.dart';
 import '../screens/home/home_screen.dart';
@@ -25,6 +26,7 @@ abstract final class Routes {
   static const String letrerosLed = '/letreros-led';
   static const String movimentoMiniatura = '/movimento-miniatura';
   static const String medeTestaExplica = '/mede-testa-explica';
+  static const String circuitoSeguro = '/circuito-seguro';
   static const String sandbox = '/sandbox';
   static const String settings = '/settings';
 
@@ -39,6 +41,7 @@ abstract final class Routes {
     letrerosLed: (_) => const LetrerosLedScreen(),
     movimentoMiniatura: (_) => const MovimentoMiniaturaScreen(),
     medeTestaExplica: (_) => const MedeTestaExplicaScreen(),
+    circuitoSeguro: (_) => const CircuitoSeguroScreen(),
     sandbox: (_) => const SandboxScreen(),
     settings: (_) => const SettingsScreen(),
   };
