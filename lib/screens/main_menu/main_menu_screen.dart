@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../app/routes.dart';
 import '../../core/ui_scale.dart';
 import '../../state/progress_controller.dart';
+import '../../utils/preloader.dart';
 import '../../widgets/circuit_e_emblem.dart';
 
 /// Tela de Menu Principal / Página Inicial do EletroLab.

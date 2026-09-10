@@ -11,6 +11,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Aumenta o cache de imagens para 512 MB, garantindo que todos os assets
+  // pré-carregados pela SplashScreen permaneçam na memória sem serem descartados.
+  PaintingBinding.instance.imageCache.maximumSizeBytes = 512 * 1024 * 1024;
+  PaintingBinding.instance.imageCache.maximumSize = 500;
+
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.landscapeLeft,
     DeviceOrientation.landscapeRight,
