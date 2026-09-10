@@ -207,7 +207,70 @@ class _SplashScreenState extends State<SplashScreen>
                       // Emblema Central com Raio Energizado
                       _buildEnergizedEmblem(scale, progress),
 
-                      SizedBox(height: scale.spacing(22, min: 14, max: 32)),
+                      SizedBox(height: scale.spacing(18, min: 12, max: 28)),
+
+                      // Badge de Franquia / Edição: JOGO 1 • VOLUME 1
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: scale.spacing(14, min: 10, max: 20),
+                          vertical: scale.spacing(4, min: 3, max: 6),
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF04281E).withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(scale.size(20)),
+                          border: Border.all(
+                            color: const Color(0xFF10B981).withValues(
+                              alpha: 0.45 + (0.35 * progress),
+                            ),
+                            width: 1.0,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF10B981).withValues(
+                                alpha: 0.20 * progress,
+                              ),
+                              blurRadius: scale.size(8),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: scale.size(6, min: 5, max: 8),
+                              height: scale.size(6, min: 5, max: 8),
+                              decoration: BoxDecoration(
+                                color: Color.lerp(
+                                  const Color(0xFF059669),
+                                  const Color(0xFF10B981),
+                                  progress,
+                                ),
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF10B981).withValues(
+                                      alpha: 0.6 * progress,
+                                    ),
+                                    blurRadius: 4,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(width: scale.spacing(6, min: 4, max: 8)),
+                            Text(
+                              'JOGO 1 • VOLUME 1',
+                              style: GoogleFonts.rajdhani(
+                                color: const Color(0xFF6EE7B7),
+                                fontSize: scale.font(12.5, min: 10, max: 16),
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 1.8,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      SizedBox(height: scale.spacing(8, min: 4, max: 12)),
 
                       // Marca Oficial do Jogo
                       Text(
@@ -230,17 +293,17 @@ class _SplashScreenState extends State<SplashScreen>
                       SizedBox(height: scale.spacing(4)),
 
                       Text(
-                        'LABORATÓRIO VIRTUAL DE CIRCUITOS',
+                        'MISSÃO: ENERGIZAR A FEIRA DE CIÊNCIAS',
                         textAlign: TextAlign.center,
                         style: GoogleFonts.outfit(
                           color: const Color(0xFF34D399),
-                          fontSize: scale.font(14, min: 11, max: 18),
+                          fontSize: scale.font(13.5, min: 10.5, max: 17),
                           fontWeight: FontWeight.w700,
-                          letterSpacing: 3.5,
+                          letterSpacing: 2.8,
                         ),
                       ),
 
-                      SizedBox(height: scale.spacing(36, min: 22, max: 52)),
+                      SizedBox(height: scale.spacing(32, min: 20, max: 48)),
 
                       // Medidor de Voltagem e Porcentagem
                       Padding(
@@ -289,18 +352,40 @@ class _SplashScreenState extends State<SplashScreen>
 
                       SizedBox(height: scale.spacing(14, min: 10, max: 20)),
 
-                      // Mensagem de Status Dinâmica
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 300),
-                        child: Text(
-                          statusText,
-                          key: ValueKey<String>(statusText),
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.outfit(
-                            color: Colors.white70,
-                            fontSize: scale.font(14.5, min: 12, max: 19),
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 0.3,
+                      // Mensagem de Status Dinâmica com altura fixa para evitar sobreposição
+                      SizedBox(
+                        height: scale.size(26, min: 20, max: 34),
+                        child: Center(
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 250),
+                            layoutBuilder: (currentChild, previousChildren) {
+                              return Stack(
+                                alignment: Alignment.center,
+                                children: <Widget>[
+                                  ...previousChildren,
+                                  ?currentChild,
+                                ],
+                              );
+                            },
+                            transitionBuilder: (child, animation) {
+                              return FadeTransition(
+                                opacity: animation,
+                                child: child,
+                              );
+                            },
+                            child: Text(
+                              statusText,
+                              key: ValueKey<String>(statusText),
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.outfit(
+                                color: Colors.white70,
+                                fontSize: scale.font(14.5, min: 12, max: 19),
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
                           ),
                         ),
                       ),
