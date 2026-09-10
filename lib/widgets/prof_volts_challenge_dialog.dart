@@ -90,7 +90,7 @@ class ProfVoltsChallengeDialog extends StatelessWidget {
                 message,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   height: 1.4,
-                  fontSize: 15,
+                  fontSize: 16,
                   fontFamily: GoogleFonts.outfit().fontFamily,
                 ),
                 textAlign: TextAlign.center,
@@ -130,7 +130,7 @@ class ProfVoltsChallengeDialog extends StatelessWidget {
                       fontFamily: GoogleFonts.rajdhani().fontFamily,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.5,
-                      fontSize: 16,
+                      fontSize: 18,
                     ),
                   ),
                   icon: Icon(buttonIcon, size: 20, color: buttonTextColor),

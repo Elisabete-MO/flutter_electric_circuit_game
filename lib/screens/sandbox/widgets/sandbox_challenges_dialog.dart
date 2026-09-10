@@ -234,7 +234,7 @@ class _SandboxChallengesDialogState extends State<SandboxChallengesDialog> with 
                         Text(
                           widget.isEn ? 'TROUBLESHOOTING & CIRCUIT SHARING' : 'DESAFIOS DE DIAGNÓSTICO & UGC',
                           style: GoogleFonts.rajdhani(
-                            fontSize: 16,
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: widget.isDark ? const Color(0xFFFFB300) : Colors.black87,
                             letterSpacing: 1.0,
@@ -242,7 +242,7 @@ class _SandboxChallengesDialogState extends State<SandboxChallengesDialog> with 
                         ),
                         Text(
                           widget.isEn ? 'Solve faulty circuits or share yours' : 'Encontre defeitos ou compartilhe circuitos',
-                          style: TextStyle(fontSize: 11, color: widget.isDark ? Colors.grey[400] : Colors.grey[700]),
+                          style: TextStyle(fontSize: 14, color: widget.isDark ? Colors.grey[400] : Colors.grey[700]),
                         ),
                       ],
                     ),
@@ -327,7 +327,7 @@ class _SandboxChallengesDialogState extends State<SandboxChallengesDialog> with 
                         children: [
                           Text(
                             widget.isEn ? 'Export Current Circuit:' : 'Exportar Circuito Atual:',
-                            style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold, fontSize: 13),
+                            style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold, fontSize: 16),
                           ),
                           const SizedBox(height: 6),
                           OutlinedButton.icon(
@@ -349,7 +349,7 @@ class _SandboxChallengesDialogState extends State<SandboxChallengesDialog> with 
 
                           Text(
                             widget.isEn ? 'Import Circuit from Code:' : 'Importar Circuito via Código:',
-                            style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold, fontSize: 13),
+                            style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold, fontSize: 16),
                           ),
                           const SizedBox(height: 6),
                           TextField(
@@ -360,7 +360,7 @@ class _SandboxChallengesDialogState extends State<SandboxChallengesDialog> with 
                               border: const OutlineInputBorder(),
                               contentPadding: const EdgeInsets.all(10),
                             ),
-                            style: const TextStyle(fontSize: 11, fontFamily: 'monospace'),
+                            style: const TextStyle(fontSize: 14, fontFamily: 'monospace'),
                           ),
                           const SizedBox(height: 10),
                           FilledButton.icon(
@@ -406,12 +406,12 @@ class _SandboxChallengesDialogState extends State<SandboxChallengesDialog> with 
               children: [
                 Text(
                   title,
-                  style: GoogleFonts.rajdhani(fontSize: 14, fontWeight: FontWeight.bold),
+                  style: GoogleFonts.rajdhani(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   description,
-                  style: TextStyle(fontSize: 11, color: widget.isDark ? Colors.grey[400] : Colors.grey[700]),
+                  style: TextStyle(fontSize: 14, color: widget.isDark ? Colors.grey[400] : Colors.grey[700]),
                 ),
               ],
             ),
@@ -424,7 +424,7 @@ class _SandboxChallengesDialogState extends State<SandboxChallengesDialog> with 
               foregroundColor: Colors.black87,
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             ),
-            child: Text(widget.isEn ? 'START' : 'INICIAR', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+            child: Text(widget.isEn ? 'START' : 'INICIAR', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
           ),
         ],
       ),

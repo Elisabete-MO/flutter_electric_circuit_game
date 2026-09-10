@@ -136,7 +136,7 @@ class _SandboxMascotPanelWidgetState extends State<SandboxMascotPanelWidget> wit
                                 badgeTitle,
                                 overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.rajdhani(
-                                  fontSize: 11,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 1.2,
                                   color: themeColor,
@@ -151,7 +151,7 @@ class _SandboxMascotPanelWidgetState extends State<SandboxMascotPanelWidget> wit
                         Text(
                           widget.message,
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 14,
                             height: 1.35,
                             fontWeight: FontWeight.w500,
                             color: widget.isDark ? Colors.white.withValues(alpha: 0.9) : Colors.black.withValues(alpha: 0.9),
@@ -182,7 +182,7 @@ class _SandboxMascotPanelWidgetState extends State<SandboxMascotPanelWidget> wit
                                     Text(
                                       widget.quickActionLabel!,
                                       style: TextStyle(
-                                        fontSize: 11,
+                                        fontSize: 14,
                                         fontWeight: FontWeight.bold,
                                         color: widget.isDark ? Colors.white : Colors.black.withValues(alpha: 0.9),
                                       ),

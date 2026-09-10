@@ -139,7 +139,7 @@ class SandboxMultimeterWidget extends StatelessWidget {
     final blackComp = sandboxState.components.where((c) => c.id == blackProbe.componentId).firstOrNull;
 
     return Container(
-      width: 280,
+      width: 320,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.95) : const Color(0xFFF1F5F9),
@@ -179,7 +179,7 @@ class SandboxMultimeterWidget extends StatelessWidget {
                     'CYBER-MULTIMETER 9000',
                     style: TextStyle(
                       fontFamily: GoogleFonts.rajdhani().fontFamily,
-                      fontSize: 12,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.2,
                       color: isDark ? Colors.white70 : Colors.black87,
@@ -222,7 +222,7 @@ class SandboxMultimeterWidget extends StatelessWidget {
                       isOff ? "POWER OFF" : (isHold ? "HOLD" : "AUTO RANGE"),
                       style: TextStyle(
                         fontFamily: GoogleFonts.shareTechMono().fontFamily,
-                        fontSize: 9,
+                        fontSize: 12,
                         color: isOff ? Colors.grey : (isHold ? Colors.amber : const Color(0xFF00F5D4)),
                         fontWeight: FontWeight.bold,
                       ),
@@ -231,7 +231,7 @@ class SandboxMultimeterWidget extends StatelessWidget {
                       unitStr,
                       style: TextStyle(
                         fontFamily: GoogleFonts.shareTechMono().fontFamily,
-                        fontSize: 10,
+                        fontSize: 12,
                         fontWeight: FontWeight.bold,
                         color: const Color(0xFF00FF9D),
                       ),
@@ -336,7 +336,7 @@ class SandboxMultimeterWidget extends StatelessWidget {
                               ? '${redComp?.type.name.toUpperCase() ?? "COMP"} (${redProbe.terminal})'
                               : (isEn ? 'Red (+): Free' : 'Vermelho (+): Livre'),
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: 12,
                             fontFamily: GoogleFonts.rajdhani().fontFamily,
                             fontWeight: FontWeight.bold,
                             color: const Color(0xFFFF3B7F),
@@ -368,7 +368,7 @@ class SandboxMultimeterWidget extends StatelessWidget {
                               ? '${blackComp?.type.name.toUpperCase() ?? "COMP"} (${blackProbe.terminal})'
                               : (isEn ? 'Black (-): Free' : 'Preto (-): Livre'),
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: 12,
                             fontFamily: GoogleFonts.rajdhani().fontFamily,
                             fontWeight: FontWeight.bold,
                             color: isDark ? Colors.cyanAccent : Colors.blueGrey,
@@ -414,7 +414,7 @@ class SandboxMultimeterWidget extends StatelessWidget {
               label,
               style: TextStyle(
                 fontFamily: GoogleFonts.rajdhani().fontFamily,
-                fontSize: 10,
+                fontSize: 12,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                 color: isSelected ? activeColor : (isDark ? Colors.white70 : Colors.black87),
               ),
