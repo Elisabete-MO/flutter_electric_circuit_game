@@ -116,7 +116,7 @@ void main() {
         await pumpApp(tester, skipIntro: false);
 
         expect(
-          find.text('EletroLab'),
+          find.textContaining('ELETRO', findRichText: true),
           findsWidgets,
         );
       },

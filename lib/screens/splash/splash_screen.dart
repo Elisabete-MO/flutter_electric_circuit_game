@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../app/routes.dart';
 import '../../app/theme.dart';
 import '../../core/ui_scale.dart';
+import '../../widgets/circuit_e_emblem.dart';
 
 /// Tela de Abertura (Splash/Boot) do EletroLab.
 /// Executa o pré-carregamento dos assets pesados, exibe animação de energização
@@ -209,22 +210,53 @@ class _SplashScreenState extends State<SplashScreen>
 
                       SizedBox(height: scale.spacing(20, min: 14, max: 30)),
 
-                      // Marca Oficial do Jogo
-                      Text(
-                        'EletroLab',
-                        style: GoogleFonts.rajdhani(
-                          color: Colors.white,
-                          fontSize: scale.font(42, min: 28, max: 56),
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 2.0,
-                          shadows: [
-                            Shadow(
-                              color: const Color(
-                                0xFF10B981,
-                              ).withValues(alpha: 0.55 * progress),
-                              blurRadius: scale.size(24),
+                      // Marca Oficial do Jogo: ELETROLAB dual-tone
+                      Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: 'ELETRO',
+                              style: TextStyle(
+                                color: const Color(0xFFF8FAFC),
+                                shadows: [
+                                  Shadow(
+                                    color: const Color(0xFF34D399)
+                                        .withValues(alpha: 0.70 * progress),
+                                    blurRadius: scale.size(12),
+                                  ),
+                                  Shadow(
+                                    color: const Color(0xFF00E5FF)
+                                        .withValues(alpha: 0.55 * progress),
+                                    blurRadius: scale.size(24),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'LAB',
+                              style: TextStyle(
+                                color: const Color(0xFFFBBF24),
+                                shadows: [
+                                  Shadow(
+                                    color: const Color(0xFFF59E0B)
+                                        .withValues(alpha: 0.85 * progress),
+                                    blurRadius: scale.size(16),
+                                  ),
+                                  Shadow(
+                                    color: const Color(0xFFD97706)
+                                        .withValues(alpha: 0.60 * progress),
+                                    blurRadius: scale.size(32),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
+                        ),
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.orbitron(
+                          fontSize: scale.font(40, min: 26, max: 54),
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 4.0,
                         ),
                       ),
 
@@ -344,49 +376,12 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Widget _buildEnergizedEmblem(UiScale scale, double progress) {
-    final double size = scale.size(96, min: 72, max: 130);
-    final double iconSize = scale.icon(52, min: 38, max: 74);
+    final double size = scale.size(118, min: 88, max: 154);
 
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: const Color(0xFF04281E),
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: Color.lerp(
-            const Color(0xFF065F46),
-            const Color(0xFF10B981),
-            progress,
-          )!,
-          width: 2.2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(
-              0xFF10B981,
-            ).withValues(alpha: 0.25 + (0.55 * progress)),
-            blurRadius: scale.size(16 + (28 * progress)),
-            spreadRadius: scale.size(1 + (3 * progress)),
-          ),
-          BoxShadow(
-            color: EletroLabColors.neonCyan.withValues(alpha: 0.15 * progress),
-            blurRadius: scale.size(32 * progress),
-            spreadRadius: scale.size(2 * progress),
-          ),
-        ],
-      ),
-      child: Center(
-        child: Icon(
-          Icons.bolt_rounded,
-          color: Color.lerp(
-            const Color(0xFF059669),
-            const Color(0xFF34D399),
-            progress,
-          ),
-          size: iconSize,
-        ),
-      ),
+    return CircuitEEmblem(
+      size: size,
+      progress: progress,
+      pulseGlow: true,
     );
   }
 

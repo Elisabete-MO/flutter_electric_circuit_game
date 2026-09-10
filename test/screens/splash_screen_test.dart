@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:eletrolab/app/routes.dart';
 import 'package:eletrolab/screens/splash/splash_screen.dart';
 import 'package:eletrolab/state/progress_controller.dart';
+import 'package:eletrolab/widgets/circuit_e_emblem.dart';
 
 void main() {
   setUp(() {
@@ -50,9 +51,10 @@ void main() {
       await tester.pump();
 
       expect(find.text('JOGO 1 • VOLUME 1'), findsOneWidget);
-      expect(find.text('EletroLab'), findsOneWidget);
+      expect(find.textContaining('ELETRO', findRichText: true), findsOneWidget);
+      expect(find.textContaining('LAB', findRichText: true), findsOneWidget);
       expect(find.text('ENERGIZANDO A FEIRA DE CIÊNCIAS'), findsOneWidget);
-      expect(find.byIcon(Icons.bolt_rounded), findsWidgets);
+      expect(find.byType(CircuitEEmblem), findsOneWidget);
       expect(find.textContaining('0.0 V'), findsOneWidget);
       expect(find.textContaining('%'), findsOneWidget);
     });

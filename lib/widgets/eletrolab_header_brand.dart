@@ -2,10 +2,10 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../core/ui_scale.dart';
+import 'circuit_e_emblem.dart';
 
 /// Marca oficial do EletroLab para ser exibida nos cabeçalhos de todas as telas.
-/// Exibe a badge circular com o ícone de raio verde esmeralda e o título 'EletroLab'
-/// envolto em uma cápsula glassmorphic elegante.
+/// Exibe o emblema tecnológico 'E' de circuito e o título dual-tone 'ELETROLAB'
 class EletroLabHeaderBrand extends StatelessWidget {
   const EletroLabHeaderBrand({
     super.key,
@@ -23,12 +23,10 @@ class EletroLabHeaderBrand extends StatelessWidget {
   Widget build(BuildContext context) {
     final scale = context.uiScale;
     final double baseCircle = compact ? 34.0 : 44.0;
-    final double baseIcon = compact ? 20.0 : 26.0;
-    final double baseTitleFont = compact ? 18.0 : 23.0;
+    final double baseTitleFont = compact ? 17.0 : 22.0;
     final double baseSubFont = UiTypography.label;
 
     final double circleSize = scale.size(baseCircle);
-    final double iconSize = scale.icon(baseIcon);
     final double titleFontSize = scale.font(baseTitleFont);
     final double subtitleFontSize = scale.font(baseSubFont);
 
@@ -61,46 +59,52 @@ class EletroLabHeaderBrand extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Badge Circular do Raio Verde Esmeralda
-              Container(
-                width: circleSize,
-                height: circleSize,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF04382B),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: const Color(0xFF10B981),
-                    width: 1.5,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF10B981).withValues(alpha: 0.45),
-                      blurRadius: scale.size(10),
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Icon(
-                    Icons.bolt_rounded,
-                    color: const Color(0xFF10B981), // Raio Verde Esmeralda
-                    size: iconSize,
-                  ),
-                ),
+              // Emblema Tecnológico de Circuito 'E'
+              CircuitEEmblem(
+                size: circleSize,
+                progress: 1.0,
+                pulseGlow: true,
               ),
-              SizedBox(width: scale.spacing(8)),
+              SizedBox(width: scale.spacing(9)),
 
-              // Textos com a tipografia padronizada
+              // Textos com a tipografia dual-tone ELETROLAB
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    'EletroLab',
-                    style: GoogleFonts.rajdhani(
-                      color: Colors.white,
+                  Text.rich(
+                    TextSpan(
+                      children: const [
+                        TextSpan(
+                          text: 'ELETRO',
+                          style: TextStyle(
+                            color: Color(0xFFF8FAFC),
+                            shadows: [
+                              Shadow(
+                                color: Color(0xFF10B981),
+                                blurRadius: 8,
+                              ),
+                            ],
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'LAB',
+                          style: TextStyle(
+                            color: Color(0xFFFBBF24),
+                            shadows: [
+                              Shadow(
+                                color: Color(0xFFF59E0B),
+                                blurRadius: 10,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    style: GoogleFonts.orbitron(
                       fontWeight: FontWeight.w900,
                       fontSize: titleFontSize,
-                      letterSpacing: 0.8,
+                      letterSpacing: 2.0,
                     ),
                   ),
                   if (showSubtitle) ...[
