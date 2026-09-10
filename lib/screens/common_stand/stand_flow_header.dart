@@ -3,10 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/ui_scale.dart';
 import '../../widgets/eletrolab_header_brand.dart';
-import 'stand_flow_tokens.dart';
 
-/// Cabeçalho padronizado e balanceado em 3 zonas (Identidade, Stepper Central e Progresso/Ações)
-/// para os fluxos de missões nos estandes do EletroLab.
+/// Cabeçalho padronizado, esguio (slim) e balanceado em 3 zonas
+/// (Identidade, Stepper Central e Progresso/Ações) para os fluxos de missões dos estandes.
 class StandFlowHeader extends StatelessWidget {
   final String standName;
   final int standNumber;
@@ -39,11 +38,11 @@ class StandFlowHeader extends StatelessWidget {
 
     return Container(
       constraints: BoxConstraints(
-        minHeight: scale.size(StandFlowTokens.headerHeight, min: 58, max: 88),
+        minHeight: scale.size(50, min: 44, max: 66),
       ),
       padding: EdgeInsets.symmetric(
-        horizontal: scale.spacing(12, min: 8, max: 24),
-        vertical: scale.spacing(6, min: 4, max: 12),
+        horizontal: scale.spacing(12, min: 8, max: 20),
+        vertical: scale.spacing(3, min: 2, max: 6),
       ),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -55,13 +54,13 @@ class StandFlowHeader extends StatelessWidget {
           ],
         ),
         border: const Border(
-          bottom: BorderSide(color: Color(0xFF1E293B), width: 1.5),
+          bottom: BorderSide(color: Color(0xFF1E293B), width: 1.2),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.35),
-            blurRadius: scale.size(10, min: 6, max: 18),
-            offset: const Offset(0, 3),
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: scale.size(8, min: 4, max: 14),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -85,7 +84,7 @@ class StandFlowHeader extends StatelessWidget {
                 showStandName: showStandName,
               ),
 
-              SizedBox(width: scale.spacing(8, min: 4, max: 16)),
+              SizedBox(width: scale.spacing(8, min: 4, max: 14)),
 
               // ===============================================================
               // 2. ZONA CENTRAL — Stepper / Linha do Tempo das Missões
@@ -115,17 +114,17 @@ class StandFlowHeader extends StatelessWidget {
                               isCompleted: isCompleted,
                               isUnlocked: isUnlocked,
                             ),
-                            // Trilha conectora entre as missões
+                            // Trilha conectora esguia entre as missões
                             if (missionNumber < totalMissions && !isCompact)
                               Container(
-                                width: scale.spacing(8, min: 3, max: 14),
-                                height: 2,
+                                width: scale.spacing(8, min: 3, max: 12),
+                                height: 1.8,
                                 margin: EdgeInsets.symmetric(
-                                  horizontal: scale.spacing(2, min: 1, max: 4),
+                                  horizontal: scale.spacing(2, min: 1, max: 3),
                                 ),
                                 decoration: BoxDecoration(
                                   color: (isCompleted && isNextUnlocked)
-                                      ? StandFlowTokens.primaryGreen.withValues(alpha: 0.6)
+                                      ? const Color(0xFF10B981).withValues(alpha: 0.6)
                                       : const Color(0xFF334155).withValues(alpha: 0.5),
                                   borderRadius: BorderRadius.circular(1),
                                 ),
@@ -138,7 +137,7 @@ class StandFlowHeader extends StatelessWidget {
                 ),
               ),
 
-              SizedBox(width: scale.spacing(8, min: 4, max: 16)),
+              SizedBox(width: scale.spacing(8, min: 4, max: 14)),
 
               // ===============================================================
               // 3. ZONA DIREITA — Progresso Global & Ações Úteis
@@ -151,7 +150,7 @@ class StandFlowHeader extends StatelessWidget {
     );
   }
 
-  /// Zona esquerda: Botão voltar, logo institucional e badge temático do estande
+  /// Zona esquerda: Botão voltar, logo institucional compacto e badge temático
   Widget _buildLeftIdentityZone(
     BuildContext context,
     UiScale scale, {
@@ -161,47 +160,50 @@ class StandFlowHeader extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Botão de Retorno estilizado
+        // Botão de Retorno estilizado e esguio
         Material(
           color: Colors.transparent,
           child: InkWell(
-            borderRadius: BorderRadius.circular(scale.size(10, min: 8, max: 16)),
+            borderRadius: BorderRadius.circular(scale.size(8, min: 6, max: 12)),
             onTap: onBack ?? () => Navigator.of(context).maybePop(),
             child: Container(
-              padding: EdgeInsets.all(scale.spacing(6, min: 4, max: 10)),
+              padding: EdgeInsets.all(scale.spacing(5, min: 3, max: 7)),
               decoration: BoxDecoration(
                 color: const Color(0xFF1E293B).withValues(alpha: 0.7),
-                borderRadius: BorderRadius.circular(scale.size(10, min: 8, max: 16)),
+                borderRadius: BorderRadius.circular(scale.size(8, min: 6, max: 12)),
                 border: Border.all(color: const Color(0xFF334155), width: 1.0),
               ),
               child: Icon(
                 Icons.arrow_back_rounded,
                 color: Colors.white,
-                size: scale.icon(20, min: 16, max: 28),
+                size: scale.icon(17, min: 14, max: 22),
               ),
             ),
           ),
         ),
 
-        // Brand Compacto (sem o subtítulo longo para economizar espaço horizontal)
+        // Brand Compacto
         if (showFullBrand) ...[
-          SizedBox(width: scale.spacing(8, min: 4, max: 14)),
-          const EletroLabHeaderBrand(compact: true, showSubtitle: false),
-          SizedBox(width: scale.spacing(8, min: 4, max: 14)),
+          SizedBox(width: scale.spacing(6, min: 3, max: 10)),
+          Transform.scale(
+            scale: 0.88,
+            child: const EletroLabHeaderBrand(compact: true, showSubtitle: false),
+          ),
+          SizedBox(width: scale.spacing(4, min: 2, max: 8)),
           Container(
-            height: scale.size(20, min: 16, max: 28),
-            width: 1.2,
+            height: scale.size(16, min: 12, max: 22),
+            width: 1.0,
             color: const Color(0xFF334155).withValues(alpha: 0.6),
           ),
         ],
 
-        SizedBox(width: scale.spacing(8, min: 4, max: 14)),
+        SizedBox(width: scale.spacing(6, min: 3, max: 10)),
 
         // Badge Inteligente do Estande (Número + Nome Temático)
         Container(
           padding: EdgeInsets.symmetric(
-            horizontal: scale.spacing(9, min: 6, max: 14),
-            vertical: scale.spacing(5, min: 3, max: 8),
+            horizontal: scale.spacing(8, min: 5, max: 12),
+            vertical: scale.spacing(3.5, min: 2, max: 6),
           ),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
@@ -210,15 +212,15 @@ class StandFlowHeader extends StatelessWidget {
                 Color(0xFF064E3B),
               ],
             ),
-            borderRadius: BorderRadius.circular(scale.size(10, min: 8, max: 16)),
+            borderRadius: BorderRadius.circular(scale.size(8, min: 6, max: 12)),
             border: Border.all(
-              color: StandFlowTokens.primaryGreen.withValues(alpha: 0.45),
-              width: 1.2,
+              color: const Color(0xFF10B981).withValues(alpha: 0.45),
+              width: 1.1,
             ),
             boxShadow: [
               BoxShadow(
-                color: StandFlowTokens.primaryGreen.withValues(alpha: 0.12),
-                blurRadius: scale.size(6, min: 4, max: 10),
+                color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                blurRadius: scale.size(5, min: 3, max: 8),
               ),
             ],
           ),
@@ -227,16 +229,16 @@ class StandFlowHeader extends StatelessWidget {
             children: [
               Icon(
                 Icons.developer_board_rounded,
-                color: StandFlowTokens.accentGreen,
-                size: scale.icon(15, min: 12, max: 20),
+                color: const Color(0xFF00FF9D),
+                size: scale.icon(14, min: 11, max: 18),
               ),
-              SizedBox(width: scale.spacing(5, min: 3, max: 8)),
+              SizedBox(width: scale.spacing(5, min: 3, max: 7)),
               Text(
                 'Estande ${standNumber.toString().padLeft(2, '0')}',
                 style: GoogleFonts.rajdhani(
-                  fontSize: scale.font(13, min: 11.5, max: 18),
+                  fontSize: scale.font(12.5, min: 11, max: 16),
                   fontWeight: FontWeight.bold,
-                  color: StandFlowTokens.accentGreen,
+                  color: const Color(0xFF00FF9D),
                   letterSpacing: 0.5,
                 ),
               ),
@@ -244,22 +246,22 @@ class StandFlowHeader extends StatelessWidget {
                 Text(
                   ' · ',
                   style: GoogleFonts.rajdhani(
-                    fontSize: scale.font(13, min: 11, max: 18),
+                    fontSize: scale.font(12, min: 10.5, max: 16),
                     color: Colors.white38,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 ConstrainedBox(
                   constraints: BoxConstraints(
-                    maxWidth: scale.size(130, min: 90, max: 200),
+                    maxWidth: scale.size(130, min: 90, max: 180),
                   ),
                   child: Text(
                     standName.toUpperCase(),
                     style: GoogleFonts.rajdhani(
-                      fontSize: scale.font(12, min: 10.5, max: 16),
+                      fontSize: scale.font(11.5, min: 10, max: 15),
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
-                      letterSpacing: 0.5,
+                      letterSpacing: 0.4,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -273,7 +275,7 @@ class StandFlowHeader extends StatelessWidget {
     );
   }
 
-  /// Pílula individual da missão com estados refinados
+  /// Pílula individual da missão com altura enxuta
   Widget _buildMissionPill({
     required BuildContext context,
     required int missionNumber,
@@ -288,22 +290,22 @@ class StandFlowHeader extends StatelessWidget {
     Widget? icon;
 
     if (isCurrent) {
-      bg = StandFlowTokens.primaryGreen;
-      border = StandFlowTokens.accentGreen;
+      bg = const Color(0xFF10B981);
+      border = const Color(0xFF00FF9D);
       text = Colors.black;
       icon = Icon(
         Icons.bolt_rounded,
         color: Colors.black,
-        size: scale.icon(14, min: 12, max: 18),
+        size: scale.icon(13, min: 11, max: 16),
       );
     } else if (isCompleted) {
       bg = const Color(0xFF064E3B);
-      border = StandFlowTokens.primaryGreen.withValues(alpha: 0.6);
+      border = const Color(0xFF10B981).withValues(alpha: 0.6);
       text = Colors.white;
       icon = Icon(
         Icons.check_circle_rounded,
-        color: StandFlowTokens.accentGreen,
-        size: scale.icon(13, min: 11, max: 18),
+        color: const Color(0xFF00FF9D),
+        size: scale.icon(12, min: 10, max: 16),
       );
     } else if (isUnlocked) {
       bg = const Color(0xFF1E293B);
@@ -312,7 +314,7 @@ class StandFlowHeader extends StatelessWidget {
       icon = Icon(
         Icons.play_circle_outline_rounded,
         color: Colors.white70,
-        size: scale.icon(13, min: 11, max: 18),
+        size: scale.icon(12, min: 10, max: 16),
       );
     } else {
       bg = const Color(0xFF1E293B).withValues(alpha: 0.45);
@@ -321,28 +323,28 @@ class StandFlowHeader extends StatelessWidget {
       icon = Icon(
         Icons.lock_outline_rounded,
         color: const Color(0xFF64748B),
-        size: scale.icon(12, min: 10, max: 16),
+        size: scale.icon(11, min: 9, max: 14),
       );
     }
 
     return InkWell(
       onTap: isUnlocked ? () => onSelectMission?.call(missionNumber) : null,
-      borderRadius: BorderRadius.circular(scale.size(16, min: 12, max: 24)),
+      borderRadius: BorderRadius.circular(scale.size(14, min: 10, max: 20)),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: EdgeInsets.symmetric(
-          horizontal: scale.spacing(9, min: 6, max: 16),
-          vertical: scale.spacing(5, min: 4, max: 10),
+          horizontal: scale.spacing(8, min: 5, max: 13),
+          vertical: scale.spacing(3.5, min: 2.5, max: 6),
         ),
         decoration: BoxDecoration(
           color: bg,
-          borderRadius: BorderRadius.circular(scale.size(16, min: 12, max: 24)),
-          border: Border.all(color: border, width: isCurrent ? 1.8 : 1.0),
+          borderRadius: BorderRadius.circular(scale.size(14, min: 10, max: 20)),
+          border: Border.all(color: border, width: isCurrent ? 1.6 : 1.0),
           boxShadow: isCurrent
               ? [
                   BoxShadow(
-                    color: StandFlowTokens.primaryGreen.withValues(alpha: 0.35),
-                    blurRadius: scale.size(8, min: 5, max: 14),
+                    color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                    blurRadius: scale.size(6, min: 4, max: 10),
                   ),
                 ]
               : null,
@@ -352,12 +354,12 @@ class StandFlowHeader extends StatelessWidget {
           children: [
             if (icon != null) ...[
               icon,
-              SizedBox(width: scale.spacing(4, min: 2, max: 6)),
+              SizedBox(width: scale.spacing(3, min: 2, max: 5)),
             ],
             Text(
               'Missão $missionNumber',
               style: GoogleFonts.rajdhani(
-                fontSize: scale.font(12.5, min: 11, max: 17),
+                fontSize: scale.font(12, min: 10.5, max: 15),
                 fontWeight: isCurrent ? FontWeight.bold : FontWeight.w600,
                 color: text,
               ),
@@ -368,7 +370,7 @@ class StandFlowHeader extends StatelessWidget {
     );
   }
 
-  /// Zona direita: Card de progresso global e botões de suporte
+  /// Zona direita: Card de progresso compacto e botões de suporte esguios
   Widget _buildRightProgressAndActionsZone(
     BuildContext context,
     UiScale scale,
@@ -381,16 +383,16 @@ class StandFlowHeader extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Card de Progresso da Jornada
+        // Card de Progresso da Jornada Slim
         if (!isCompact) ...[
           Container(
             padding: EdgeInsets.symmetric(
-              horizontal: scale.spacing(8, min: 6, max: 14),
-              vertical: scale.spacing(4, min: 3, max: 8),
+              horizontal: scale.spacing(7, min: 5, max: 11),
+              vertical: scale.spacing(3, min: 2, max: 5),
             ),
             decoration: BoxDecoration(
               color: const Color(0xFF1E293B).withValues(alpha: 0.6),
-              borderRadius: BorderRadius.circular(scale.size(10, min: 8, max: 14)),
+              borderRadius: BorderRadius.circular(scale.size(8, min: 6, max: 12)),
               border: Border.all(
                 color: isFullyCompleted
                     ? const Color(0xFFF59E0B)
@@ -407,10 +409,10 @@ class StandFlowHeader extends StatelessWidget {
                       : Icons.military_tech_rounded,
                   color: isFullyCompleted
                       ? const Color(0xFFF59E0B)
-                      : StandFlowTokens.accentGreen,
-                  size: scale.icon(16, min: 13, max: 22),
+                      : const Color(0xFF00FF9D),
+                  size: scale.icon(14, min: 11, max: 18),
                 ),
-                SizedBox(width: scale.spacing(5, min: 3, max: 8)),
+                SizedBox(width: scale.spacing(4, min: 2, max: 6)),
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -420,22 +422,23 @@ class StandFlowHeader extends StatelessWidget {
                       style: GoogleFonts.rajdhani(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: scale.font(12, min: 10.5, max: 15),
+                        fontSize: scale.font(11.5, min: 10, max: 14),
+                        height: 1.1,
                       ),
                     ),
-                    SizedBox(height: scale.spacing(2, min: 1, max: 4)),
+                    SizedBox(height: scale.spacing(1.5, min: 1, max: 3)),
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(2),
+                      borderRadius: BorderRadius.circular(1.5),
                       child: SizedBox(
-                        width: scale.size(44, min: 32, max: 64),
-                        height: scale.size(3, min: 2.5, max: 5),
+                        width: scale.size(40, min: 28, max: 54),
+                        height: scale.size(2.5, min: 2, max: 4),
                         child: LinearProgressIndicator(
                           value: progressFraction,
                           backgroundColor: const Color(0xFF334155),
                           valueColor: AlwaysStoppedAnimation<Color>(
                             isFullyCompleted
                                 ? const Color(0xFFF59E0B)
-                                : StandFlowTokens.primaryGreen,
+                                : const Color(0xFF10B981),
                           ),
                         ),
                       ),
@@ -445,27 +448,31 @@ class StandFlowHeader extends StatelessWidget {
               ],
             ),
           ),
-          SizedBox(width: scale.spacing(4, min: 2, max: 8)),
+          SizedBox(width: scale.spacing(2, min: 1, max: 6)),
         ],
 
-        // Botão de Ajuda
+        // Botão de Ajuda Slim
         if (onHelpTap != null)
           IconButton(
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
             icon: Icon(
               Icons.help_outline_rounded,
               color: Colors.white70,
-              size: scale.icon(19, min: 15, max: 26),
+              size: scale.icon(17, min: 14, max: 22),
             ),
             tooltip: 'Ajuda da Missão',
             onPressed: onHelpTap,
           ),
 
-        // Botão de Configurações
+        // Botão de Configurações Slim
         IconButton(
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
           icon: Icon(
             Icons.settings_outlined,
             color: Colors.white60,
-            size: scale.icon(18, min: 14, max: 24),
+            size: scale.icon(16, min: 13, max: 20),
           ),
           tooltip: 'Configurações',
           onPressed: onSettingsTap ?? () => Navigator.of(context).pushNamed('/settings'),
