@@ -181,406 +181,797 @@ class CircuitoSeguroPainter extends CustomPainter {
     canvas.drawCircle(Offset(clipBarRect.center.dx, negTerminalY), 2.2, Paint()..color = const Color(0xFFCBD5E1));
   }
 
-  /// Protoboard Central com trilhas e barramentos
+  /// Protoboard Central com acabamento plástico ABS, coordenadas e barramentos
   void _drawBreadboard(Canvas canvas, Rect rect) {
-    // Sombra da Protoboard
+    // 1. Sombra suave da Protoboard na mesa
     canvas.drawRRect(
-      RRect.fromRectAndRadius(rect.shift(const Offset(3, 5)), const Radius.circular(12)),
-      Paint()..color = Colors.black.withValues(alpha: 0.25)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7),
+      RRect.fromRectAndRadius(rect.shift(const Offset(4, 6)), const Radius.circular(14)),
+      Paint()
+        ..color = Colors.black.withValues(alpha: 0.28)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
     );
 
-    // Corpo da Placa (Branco marfim)
+    // 2. Chassi da Placa (Plástico ABS fosco marfim/off-white)
     final boardPaint = Paint()
       ..shader = const LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [Color(0xFFF8FAFC), Color(0xFFEDEFEF), Color(0xFFE2E8F0)],
+        colors: [Color(0xFFFAFAFA), Color(0xFFF1F5F9), Color(0xFFE2E8F0)],
       ).createShader(rect);
     canvas.drawRRect(RRect.fromRectAndRadius(rect, const Radius.circular(12)), boardPaint);
+
+    // Borda chanfrada de precisão
     canvas.drawRRect(
       RRect.fromRectAndRadius(rect, const Radius.circular(12)),
-      Paint()..color = const Color(0xFFCBD5E1)..style = PaintingStyle.stroke..strokeWidth = 1.6,
+      Paint()
+        ..color = const Color(0xFFCBD5E1)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.8,
     );
 
-    // Canal central (Trench)
-    final trenchY = rect.top + rect.height * 0.50;
-    final trenchRect = Rect.fromLTWH(rect.left + 16, trenchY - 3.5, rect.width - 32, 7);
-    canvas.drawRRect(RRect.fromRectAndRadius(trenchRect, const Radius.circular(3)), Paint()..color = const Color(0xFFCBD5E1));
+    // Encaixes laterais de expansão (dentes macho/fêmea típicos de protoboards reais)
+    final notchPaint = Paint()..color = const Color(0xFFE2E8F0);
+    final notchBorder = Paint()
+      ..color = const Color(0xFFCBD5E1)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+    for (double ny = rect.top + rect.height * 0.28; ny <= rect.top + rect.height * 0.72; ny += rect.height * 0.40) {
+      final leftNotch = Rect.fromCenter(center: Offset(rect.left, ny), width: 6, height: 16);
+      canvas.drawRRect(RRect.fromRectAndRadius(leftNotch, const Radius.circular(2)), notchPaint);
+      canvas.drawRRect(RRect.fromRectAndRadius(leftNotch, const Radius.circular(2)), notchBorder);
 
-    // Barramentos Superior e Inferior (+ Vermelho e - Azul)
-    final topPowerPlusY = rect.top + rect.height * 0.10;
-    final topPowerMinusY = rect.top + rect.height * 0.17;
-    final botPowerPlusY = rect.top + rect.height * 0.83;
-    final botPowerMinusY = rect.top + rect.height * 0.90;
-
-    final busRedPaint = Paint()..color = const Color(0xFFEF4444).withValues(alpha: 0.7)..strokeWidth = 1.5;
-    final busBluePaint = Paint()..color = const Color(0xFF3B82F6).withValues(alpha: 0.7)..strokeWidth = 1.5;
-
-    canvas.drawLine(Offset(rect.left + 24, topPowerPlusY), Offset(rect.right - 24, topPowerPlusY), busRedPaint);
-    canvas.drawLine(Offset(rect.left + 24, topPowerMinusY), Offset(rect.right - 24, topPowerMinusY), busBluePaint);
-    canvas.drawLine(Offset(rect.left + 24, botPowerPlusY), Offset(rect.right - 24, botPowerPlusY), busRedPaint);
-    canvas.drawLine(Offset(rect.left + 24, botPowerMinusY), Offset(rect.right - 24, botPowerMinusY), busBluePaint);
-
-    // Furos Metálicos (Grid 14 colunas x 10 linhas)
-    final holePaint = Paint()..color = const Color(0xFF64748B)..style = PaintingStyle.fill;
-    final holeInner = Paint()..color = const Color(0xFF0F172A)..style = PaintingStyle.fill;
-
-    const numCols = 16;
-    final colSpacing = (rect.width - 60) / (numCols - 1);
-
-    for (int col = 0; col < numCols; col++) {
-      final x = rect.left + 30 + col * colSpacing;
-
-      // Furos do barramento de alimentação
-      for (final py in [topPowerPlusY, topPowerMinusY, botPowerPlusY, botPowerMinusY]) {
-        canvas.drawCircle(Offset(x, py), 2.2, holePaint);
-        canvas.drawCircle(Offset(x, py), 1.2, holeInner);
-      }
-
-      // Furos das trilhas superiores (A-E)
-      for (int row = 0; row < 5; row++) {
-        final y = rect.top + rect.height * 0.24 + row * (rect.height * 0.046);
-        canvas.drawCircle(Offset(x, y), 2.0, holePaint);
-        canvas.drawCircle(Offset(x, y), 1.1, holeInner);
-      }
-
-      // Furos das trilhas inferiores (F-J)
-      for (int row = 0; row < 5; row++) {
-        final y = rect.top + rect.height * 0.56 + row * (rect.height * 0.046);
-        canvas.drawCircle(Offset(x, y), 2.0, holePaint);
-        canvas.drawCircle(Offset(x, y), 1.1, holeInner);
-      }
+      final rightNotch = Rect.fromCenter(center: Offset(rect.right, ny), width: 6, height: 16);
+      canvas.drawRRect(RRect.fromRectAndRadius(rightNotch, const Radius.circular(2)), notchPaint);
+      canvas.drawRRect(RRect.fromRectAndRadius(rightNotch, const Radius.circular(2)), notchBorder);
     }
 
-    // Texto de identificação da bancada na borda
-    _drawText(canvas, 'PROTOBOARD ELECI-LAB · BANCADA SEGURA', Offset(rect.left + 20, rect.top + 4), const Color(0xFF94A3B8), 8);
+    // 3. Canaleta Central (Trench) com sombra interna de profundidade
+    final trenchY = rect.top + rect.height * 0.50;
+    final trenchRect = Rect.fromLTWH(rect.left + 24, trenchY - 4.5, rect.width - 48, 9);
+    final trenchPaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Color(0xFF94A3B8), Color(0xFFCBD5E1), Color(0xFFE2E8F0)],
+      ).createShader(trenchRect);
+    canvas.drawRRect(RRect.fromRectAndRadius(trenchRect, const Radius.circular(3)), trenchPaint);
+    canvas.drawLine(
+      Offset(trenchRect.left + 4, trenchY),
+      Offset(trenchRect.right - 4, trenchY),
+      Paint()..color = const Color(0xFF64748B)..strokeWidth = 1.2,
+    );
+
+    // 4. Barramentos de Alimentação (+ Vermelho e - Azul)
+    final topPowerPlusY = rect.top + rect.height * 0.08;
+    final topPowerMinusY = rect.top + rect.height * 0.15;
+    final botPowerMinusY = rect.top + rect.height * 0.85;
+    final botPowerPlusY = rect.top + rect.height * 0.92;
+
+    final busLeft = rect.left + 32.0;
+    final busRight = rect.right - 32.0;
+
+    _drawPowerRailLine(canvas, Offset(busLeft, topPowerPlusY), Offset(busRight, topPowerPlusY), const Color(0xFFEF4444), '+');
+    _drawPowerRailLine(canvas, Offset(busLeft, topPowerMinusY), Offset(busRight, topPowerMinusY), const Color(0xFF3B82F6), '–');
+    _drawPowerRailLine(canvas, Offset(busLeft, botPowerMinusY), Offset(busRight, botPowerMinusY), const Color(0xFF3B82F6), '–');
+    _drawPowerRailLine(canvas, Offset(busLeft, botPowerPlusY), Offset(busRight, botPowerPlusY), const Color(0xFFEF4444), '+');
+
+    // 5. Matriz de Furos (24 colunas x 10 linhas + barramentos) e Coordenadas
+    _drawBreadboardGrid(canvas, rect, topPowerPlusY, topPowerMinusY, botPowerMinusY, botPowerPlusY);
+
+    // 6. Inscrição técnica elegante
+    _drawText(
+      canvas,
+      'ELECI-LAB · PROTOBOARD 830 TIE-POINTS · CIRCUITO SEGURO',
+      Offset(rect.left + 34, rect.top + 2),
+      const Color(0xFF94A3B8),
+      7.5,
+    );
+  }
+
+  void _drawPowerRailLine(Canvas canvas, Offset start, Offset end, Color color, String sign) {
+    canvas.drawLine(start, end, Paint()..color = color.withValues(alpha: 0.85)..strokeWidth = 1.6);
+    final signPainter = TextPainter(
+      text: TextSpan(text: sign, style: GoogleFonts.rajdhani(color: color, fontWeight: FontWeight.bold, fontSize: 11)),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    signPainter.paint(canvas, Offset(start.dx - 12, start.dy - signPainter.height / 2));
+    signPainter.paint(canvas, Offset(end.dx + 4, end.dy - signPainter.height / 2));
+  }
+
+  void _drawBreadboardGrid(
+    Canvas canvas,
+    Rect rect,
+    double topPowerPlusY,
+    double topPowerMinusY,
+    double botPowerMinusY,
+    double botPowerPlusY,
+  ) {
+    const cols = 24;
+    final startX = rect.left + 36.0;
+    final stepX = (rect.width - 72.0) / (cols - 1);
+
+    final rowStepTop = (rect.height * 0.24) / 4;
+    final rowStartYTop = rect.top + rect.height * 0.22;
+
+    final rowStepBot = (rect.height * 0.24) / 4;
+    final rowStartYBot = rect.top + rect.height * 0.55;
+
+    // Rótulos de Linhas (a..e no topo e f..j na base)
+    final rowLabelsTop = ['a', 'b', 'c', 'd', 'e'];
+    for (int r = 0; r < 5; r++) {
+      final ly = rowStartYTop + r * rowStepTop;
+      _drawText(canvas, rowLabelsTop[r], Offset(startX - 14, ly - 4.5), const Color(0xFF94A3B8), 7.5);
+      _drawText(canvas, rowLabelsTop[r], Offset(rect.right - 26, ly - 4.5), const Color(0xFF94A3B8), 7.5);
+    }
+
+    final rowLabelsBot = ['f', 'g', 'h', 'i', 'j'];
+    for (int r = 0; r < 5; r++) {
+      final ly = rowStartYBot + r * rowStepBot;
+      _drawText(canvas, rowLabelsBot[r], Offset(startX - 14, ly - 4.5), const Color(0xFF94A3B8), 7.5);
+      _drawText(canvas, rowLabelsBot[r], Offset(rect.right - 26, ly - 4.5), const Color(0xFF94A3B8), 7.5);
+    }
+
+    for (int col = 0; col < cols; col++) {
+      final cx = startX + col * stepX;
+
+      // Barramento superior
+      _drawSingleBreadboardHole(canvas, Offset(cx, topPowerPlusY));
+      _drawSingleBreadboardHole(canvas, Offset(cx, topPowerMinusY));
+
+      // Banco superior (a..e)
+      for (int r = 0; r < 5; r++) {
+        _drawSingleBreadboardHole(canvas, Offset(cx, rowStartYTop + r * rowStepTop));
+      }
+
+      // Banco inferior (f..j)
+      for (int r = 0; r < 5; r++) {
+        _drawSingleBreadboardHole(canvas, Offset(cx, rowStartYBot + r * rowStepBot));
+      }
+
+      // Barramento inferior
+      _drawSingleBreadboardHole(canvas, Offset(cx, botPowerMinusY));
+      _drawSingleBreadboardHole(canvas, Offset(cx, botPowerPlusY));
+
+      // Números das colunas serigrafados (1, 5, 10, 15, 20, 24)
+      if (col == 0 || (col + 1) % 5 == 0 || col == cols - 1) {
+        final colNum = (col + 1).toString();
+        final numPainter = TextPainter(
+          text: TextSpan(text: colNum, style: GoogleFonts.rajdhani(color: const Color(0xFF64748B), fontWeight: FontWeight.bold, fontSize: 8.0)),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        numPainter.paint(canvas, Offset(cx - numPainter.width / 2, rect.top + rect.height * 0.17));
+        numPainter.paint(canvas, Offset(cx - numPainter.width / 2, rect.top + rect.height * 0.80));
+      }
+    }
+  }
+
+  /// Furo quadrado com pino de mola niquelado
+  void _drawSingleBreadboardHole(Canvas canvas, Offset center) {
+    // Borda metálica do orifício
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromCircle(center: center, radius: 2.4), const Radius.circular(0.8)),
+      Paint()..color = const Color(0xFF94A3B8),
+    );
+    // Cavidade escura interna
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromCircle(center: center, radius: 1.6), const Radius.circular(0.5)),
+      Paint()..color = const Color(0xFF0F172A),
+    );
+    // Reflexo da mola interna de contato
+    canvas.drawCircle(center.translate(-0.4, -0.4), 0.7, Paint()..color = const Color(0xFFCBD5E1));
   }
 
   /// Componentes Físicos montados nos furos da Protoboard
   void _drawBreadboardComponents(Canvas canvas, Rect bb) {
-    const numCols = 16;
-    final colSpacing = (bb.width - 60) / (numCols - 1);
+    const cols = 24;
+    final startX = bb.left + 36.0;
+    final stepX = (bb.width - 72.0) / (cols - 1);
 
-    // Coordenadas das colunas
-    final col3X = bb.left + 30 + 2 * colSpacing;
-    final col5X = bb.left + 30 + 4 * colSpacing;
-    final col8X = bb.left + 30 + 7 * colSpacing;
-    final col11X = bb.left + 30 + 10 * colSpacing;
-    final col13X = bb.left + 30 + 12 * colSpacing;
-    final col15X = bb.left + 30 + 14 * colSpacing;
+    final rowStepTop = (bb.height * 0.24) / 4;
+    final rowStartYTop = bb.top + bb.height * 0.22;
 
+    final rowStepBot = (bb.height * 0.24) / 4;
+    final rowStartYBot = bb.top + bb.height * 0.55;
+
+    // Coordenadas das colunas-chave
+    final col4X = startX + 3 * stepX;
+    final col7X = startX + 6 * stepX;
+    final col11X = startX + 10 * stepX;
+    final col13X = startX + 12 * stepX;
+    final col17X = startX + 16 * stepX;
+    final col19X = startX + 18 * stepX;
+    final col21X = startX + 20 * stepX;
+
+    final rowCY = rowStartYTop + 2 * rowStepTop;
+    final rowDY = rowStartYTop + 3 * rowStepTop;
+    final rowGY = rowStartYBot + 1 * rowStepBot;
     final trenchY = bb.top + bb.height * 0.50;
 
-    // 1. Chave Seccionadora com Flip Guard (Colunas 4-5, sobre a vala central)
-    _drawSafetySwitchOnBreadboard(canvas, Offset(col5X, trenchY));
+    // 1. Chave Seccionadora com Flip Guard (Coluna 4, sobre a vala central)
+    _drawSafetySwitchOnBreadboard(canvas, Offset(col4X, trenchY));
 
-    // 2. Porta-Fusível 5x20mm com Tubo de Vidro (Colunas 8-11)
+    // 2. Porta-Fusível 5x20mm com Tubo de Vidro (Coluna 7 até Coluna 11, Linha C)
     if (isFuseInserted) {
-      _drawGlassFuseOnBreadboard(canvas, col8X, col11X, bb.top + bb.height * 0.33);
+      _drawGlassFuseOnBreadboard(canvas, col7X, col11X, rowCY);
     }
 
-    // 3. Resistor Limitador 680Ω (Colunas 11-13)
+    // 3. Resistor de Precisão 680Ω (Coluna 13 até Coluna 17, Linha C)
     if (isResistorInserted) {
-      _drawResistorOnBreadboard(canvas, col11X, col13X, bb.top + bb.height * 0.33);
+      _drawResistorOnBreadboard(canvas, col13X, col17X, rowCY);
     }
 
-    // 4. LED de Segurança 5mm (Coluna 13-14)
+    // 4. LED de Segurança 5mm (Coluna 17 e Coluna 19, Linha G)
     if (isLedInserted) {
-      _drawLedOnBreadboard(canvas, Offset(col13X, bb.top + bb.height * 0.65));
+      _drawLedOnBreadboard(canvas, Offset(col17X, rowGY), Offset(col19X, rowGY));
     }
 
-    // 5. Buzzer Piezoelétrico (Coluna 15)
+    // 5. Buzzer Piezoelétrico (Coluna 21, Banco Inferior)
     if (missionIndex >= 3) {
-      _drawBuzzerOnBreadboard(canvas, Offset(col15X, bb.top + bb.height * 0.65));
+      _drawBuzzerOnBreadboard(canvas, Offset(col21X, rowGY));
     }
 
-    // 6. Curto-Circuito (M1 e M5): Fio jumper amarelo conectando saída da chave direto ao terra
+    // 6. Curto-Circuito (M1 e M5): Fio jumper conectando a saída da chave direto ao terra
     if (isShortCircuitActive) {
-      _drawShortCircuitJumper(canvas, col5X, trenchY + 12, bb.left + 30 + 5 * colSpacing, bb.top + bb.height * 0.90);
+      final botPowerMinusY = bb.top + bb.height * 0.85;
+      _drawShortCircuitJumper(canvas, col4X, trenchY + 14, startX + 5 * stepX, botPowerMinusY);
     }
 
-    // 7. Teste de Continuidade (M2)
+    // 7. Teste de Continuidade (M2) com Pontas de Prova
     if (missionIndex == 1 && isTestingContinuity) {
-      _drawContinuityProbesOnBreadboard(canvas, col5X, trenchY - 14, col8X, bb.top + bb.height * 0.33);
+      _drawContinuityProbesOnBreadboard(canvas, col4X + 18, trenchY - 14, col7X - 18, rowCY);
     }
   }
 
-  /// Chave de Segurança montada na Protoboard
+  /// Chave de Segurança montada na Protoboard com armadura vermelha móvel
   void _drawSafetySwitchOnBreadboard(Canvas canvas, Offset center) {
-    final baseRect = Rect.fromCenter(center: center, width: 34, height: 34);
+    final baseRect = Rect.fromCenter(center: center, width: 36, height: 36);
+
+    // Sombra da chave
     canvas.drawRRect(
-      RRect.fromRectAndRadius(baseRect.shift(const Offset(2, 3)), const Radius.circular(6)),
-      Paint()..color = Colors.black26,
+      RRect.fromRectAndRadius(baseRect.shift(const Offset(2, 4)), const Radius.circular(6)),
+      Paint()..color = Colors.black38..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
     );
+
+    // Base plástica industrial
     canvas.drawRRect(
       RRect.fromRectAndRadius(baseRect, const Radius.circular(6)),
       Paint()..color = const Color(0xFF1E293B),
     );
-
-    // Terminais metálicos nos furos
-    final pinPaint = Paint()..color = const Color(0xFFCBD5E1)..strokeWidth = 2.5;
-    canvas.drawLine(Offset(baseRect.left, baseRect.center.dy - 6), Offset(baseRect.left - 6, baseRect.center.dy - 6), pinPaint);
-    canvas.drawLine(Offset(baseRect.right, baseRect.center.dy - 6), Offset(baseRect.right + 6, baseRect.center.dy - 6), pinPaint);
-    canvas.drawLine(Offset(baseRect.left, baseRect.center.dy + 6), Offset(baseRect.left - 6, baseRect.center.dy + 6), pinPaint);
-    canvas.drawLine(Offset(baseRect.right, baseRect.center.dy + 6), Offset(baseRect.right + 6, baseRect.center.dy + 6), pinPaint);
-
-    // Tampa Protetora Vermelha (Flip Guard)
-    final guardColor = isArmingSwitchClosed ? const Color(0xFFDC2626) : const Color(0xFF991B1B);
-    final guardRect = Rect.fromCenter(
-      center: Offset(center.dx, isArmingSwitchClosed ? center.dy - 12 : center.dy - 2),
-      width: 24,
-      height: 14,
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(baseRect, const Radius.circular(6)),
+      Paint()..color = const Color(0xFF475569)..style = PaintingStyle.stroke..strokeWidth = 1.2,
     );
-    canvas.drawRRect(RRect.fromRectAndRadius(guardRect, const Radius.circular(3)), Paint()..color = guardColor);
 
-    // Alavanca
-    final leverPaint = Paint()..color = const Color(0xFFF1F5F9)..strokeWidth = 3.5..strokeCap = StrokeCap.round;
+    // Parafusos nos 4 cantos da base
+    final screwPaint = Paint()..color = const Color(0xFF94A3B8);
+    for (final corner in [
+      Offset(baseRect.left + 4, baseRect.top + 4),
+      Offset(baseRect.right - 4, baseRect.top + 4),
+      Offset(baseRect.left + 4, baseRect.bottom - 4),
+      Offset(baseRect.right - 4, baseRect.bottom - 4),
+    ]) {
+      canvas.drawCircle(corner, 1.6, screwPaint);
+      canvas.drawLine(corner.translate(-1, 0), corner.translate(1, 0), Paint()..color = const Color(0xFF0F172A)..strokeWidth = 0.6);
+    }
+
+    // Terminais de inserção nos furos da protoboard (topo e fundo)
+    final pinPaint = Paint()..color = const Color(0xFFCBD5E1)..strokeWidth = 2.4..strokeCap = StrokeCap.round;
+    canvas.drawLine(Offset(center.dx, baseRect.top), Offset(center.dx, baseRect.top - 6), pinPaint);
+    canvas.drawLine(Offset(center.dx, baseRect.bottom), Offset(center.dx, baseRect.bottom + 6), pinPaint);
+
+    // Flip Guard (Armadura Articulada Vermelha)
     if (isArmingSwitchClosed) {
-      canvas.drawLine(Offset(center.dx, center.dy + 4), Offset(center.dx, center.dy - 8), leverPaint);
-      canvas.drawCircle(Offset(center.dx, center.dy - 8), 3, Paint()..color = const Color(0xFF38BDF8));
+      // FECHADA/ARMADA: Proteção cobrindo a alavanca
+      final guardRect = Rect.fromCenter(center: center.translate(0, -2), width: 22, height: 26);
+      final guardGrad = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Color(0xFFEF4444), Color(0xFFDC2626), Color(0xFF991B1B)],
+      ).createShader(guardRect);
+      canvas.drawRRect(RRect.fromRectAndRadius(guardRect, const Radius.circular(4)), Paint()..shader = guardGrad);
+      canvas.drawRRect(RRect.fromRectAndRadius(guardRect, const Radius.circular(4)), Paint()..color = const Color(0xFF7F1D1D)..style = PaintingStyle.stroke..strokeWidth = 1.2);
+
+      // Friso de relevo
+      canvas.drawLine(Offset(guardRect.left + 4, guardRect.center.dy), Offset(guardRect.right - 4, guardRect.center.dy), Paint()..color = Colors.white.withValues(alpha: 0.5)..strokeWidth = 1.4);
+
+      // LED indicador na chave
+      canvas.drawCircle(center.translate(0, 7), 2.5, Paint()..color = const Color(0xFF38BDF8));
     } else {
-      canvas.drawLine(Offset(center.dx, center.dy + 4), Offset(center.dx + 8, center.dy + 6), leverPaint);
-      canvas.drawCircle(Offset(center.dx + 8, center.dy + 6), 3, Paint()..color = const Color(0xFF64748B));
+      // ABERTA/DESARMADA: Tampa levantada em perspectiva
+      final guardPath = Path()
+        ..moveTo(baseRect.left + 4, baseRect.top - 6)
+        ..lineTo(baseRect.right - 4, baseRect.top - 6)
+        ..lineTo(baseRect.right - 8, baseRect.top - 20)
+        ..lineTo(baseRect.left + 8, baseRect.top - 20)
+        ..close();
+      canvas.drawPath(guardPath, Paint()..color = const Color(0xFFDC2626));
+      canvas.drawPath(guardPath, Paint()..color = const Color(0xFF7F1D1D)..style = PaintingStyle.stroke..strokeWidth = 1.2);
+
+      // Alavanca metálica livre exposta
+      final leverPaint = Paint()..color = const Color(0xFFE2E8F0)..strokeWidth = 3.5..strokeCap = StrokeCap.round;
+      canvas.drawLine(center.translate(0, 4), center.translate(0, -6), leverPaint);
+      canvas.drawCircle(center.translate(0, -6), 3.2, Paint()..color = const Color(0xFF64748B));
     }
   }
 
-  /// Fusível de Vidro 5x20mm montado na Protoboard
+  /// Fusível de Vidro 5x20mm montado com clips prateados nos furos
   void _drawGlassFuseOnBreadboard(Canvas canvas, double x1, double x2, double y) {
     final fuseWidth = x2 - x1;
-    final fuseRect = Rect.fromLTWH(x1, y - 8, fuseWidth, 16);
+    final fuseRect = Rect.fromLTWH(x1, y - 9, fuseWidth, 18);
 
-    // Garras de suporte na protoboard
-    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(x1 - 4, y - 10, 8, 20), const Radius.circular(2)), Paint()..color = const Color(0xFF475569));
-    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(x2 - 4, y - 10, 8, 20), const Radius.circular(2)), Paint()..color = const Color(0xFF475569));
+    // 1. Clips Metálicos de Suporte (Latão Niquelado) nas colunas da protoboard
+    final clipPaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Color(0xFFE2E8F0), Color(0xFF94A3B8), Color(0xFF475569)],
+      ).createShader(Rect.fromLTWH(x1 - 5, y - 12, 10, 24));
 
-    // Tubo de Vidro Cilíndrico
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(x1 - 5, y - 12, 10, 24), const Radius.circular(3)), clipPaint);
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(x2 - 5, y - 12, 10, 24), const Radius.circular(3)), clipPaint);
+
+    // Pinos de inserção dos clips na protoboard
+    canvas.drawCircle(Offset(x1, y + 12), 2.2, Paint()..color = const Color(0xFFCBD5E1));
+    canvas.drawCircle(Offset(x2, y + 12), 2.2, Paint()..color = const Color(0xFFCBD5E1));
+
+    // 2. Sombra do Tubo de Vidro
     canvas.drawRRect(
-      RRect.fromRectAndRadius(fuseRect.shift(const Offset(1, 2)), const Radius.circular(4)),
-      Paint()..color = Colors.black12,
+      RRect.fromRectAndRadius(fuseRect.shift(const Offset(2, 3)), const Radius.circular(5)),
+      Paint()..color = Colors.black26..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
     );
 
+    // 3. Cápsula de Vidro Cilíndrica Translúcida
     final glassPaint = Paint()
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: isFuseBlown
-            ? [const Color(0x88475569), const Color(0xBB1E293B), const Color(0x66475569)]
-            : [const Color(0x66E0F2FE), const Color(0x33BAE6FD), const Color(0x8838BDF8)],
+            ? [const Color(0x66475569), const Color(0x991E293B), const Color(0x44475569)]
+            : [const Color(0x77E0F2FE), const Color(0x33BAE6FD), const Color(0x8838BDF8)],
       ).createShader(fuseRect);
-    canvas.drawRRect(RRect.fromRectAndRadius(fuseRect, const Radius.circular(4)), glassPaint);
+    canvas.drawRRect(RRect.fromRectAndRadius(fuseRect, const Radius.circular(5)), glassPaint);
 
-    // Terminais Metálicos das extremidades
-    final capPaint = Paint()
+    // Brilho especular superior do vidro
+    canvas.drawLine(
+      Offset(x1 + 10, y - 5),
+      Offset(x2 - 10, y - 5),
+      Paint()..color = Colors.white.withValues(alpha: 0.85)..strokeWidth = 1.4..strokeCap = StrokeCap.round,
+    );
+
+    // 4. Ponteiras Metálicas Cromadas das Extremidades
+    final capWidth = 10.0;
+    final capGrad = const LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0xFFFFFFFF), Color(0xFFCBD5E1), Color(0xFF64748B), Color(0xFF334155)],
+    );
+    final leftCapRect = Rect.fromLTWH(x1, y - 9, capWidth, 18);
+    final rightCapRect = Rect.fromLTWH(x2 - capWidth, y - 9, capWidth, 18);
+
+    canvas.drawRRect(RRect.fromRectAndRadius(leftCapRect, const Radius.circular(3)), Paint()..shader = capGrad.createShader(leftCapRect));
+    canvas.drawRRect(RRect.fromRectAndRadius(rightCapRect, const Radius.circular(3)), Paint()..shader = capGrad.createShader(rightCapRect));
+
+    // 5. Filamento Interno e Rótulo
+    if (isFuseBlown) {
+      // Filamento rompido com bolha de fusão e fuligem escura
+      final p1 = Path()..moveTo(x1 + capWidth, y)..lineTo(x1 + fuseWidth * 0.40, y + 2);
+      final p2 = Path()..moveTo(x2 - capWidth, y)..lineTo(x1 + fuseWidth * 0.60, y - 2);
+      canvas.drawPath(p1, Paint()..color = const Color(0xFF0F172A)..strokeWidth = 1.4);
+      canvas.drawPath(p2, Paint()..color = const Color(0xFF0F172A)..strokeWidth = 1.4);
+
+      // Fuligem preta no centro
+      canvas.drawCircle(fuseRect.center, 5.5, Paint()..color = Colors.black.withValues(alpha: 0.65)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2));
+      canvas.drawCircle(Offset(x1 + fuseWidth * 0.40, y + 2), 1.8, Paint()..color = const Color(0xFF475569));
+      canvas.drawCircle(Offset(x1 + fuseWidth * 0.60, y - 2), 1.8, Paint()..color = const Color(0xFF475569));
+    } else {
+      // Filamento metálico íntegro
+      final filColor = isCircuitEnergized ? const Color(0xFFFDE047) : const Color(0xFFCBD5E1);
+      final filPath = Path()
+        ..moveTo(x1 + capWidth, y)
+        ..quadraticBezierTo(fuseRect.center.dx, y + (isCircuitEnergized ? 2.5 : 1.5), x2 - capWidth, y);
+      canvas.drawPath(filPath, Paint()..color = filColor..strokeWidth = 1.6);
+
+      if (isCircuitEnergized) {
+        canvas.drawCircle(fuseRect.center, 2.0, Paint()..color = const Color(0xFFFEF08A));
+      }
+    }
+
+    // Inscrição miniatura na tampa
+    _drawText(canvas, 'F100mA', Offset(fuseRect.center.dx - 12, y + 10), const Color(0xFF64748B), 7);
+  }
+
+  /// Resistor com pernas axiais dobradas e faixas de código de cores
+  void _drawResistorOnBreadboard(Canvas canvas, double x1, double x2, double y) {
+    // 1. Pernas de Arame Prateado Rígido entrando nos furos
+    final leadPaint = Paint()
+      ..color = const Color(0xFF94A3B8)
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final bodyWidth = (x2 - x1) * 0.55;
+    final bodyCenter = Offset((x1 + x2) / 2, y);
+
+    // Perna esquerda: furo x1 -> centro
+    canvas.drawLine(Offset(x1, y), Offset(bodyCenter.dx - bodyWidth / 2, y), leadPaint);
+    // Perna direita: centro -> furo x2
+    canvas.drawLine(Offset(bodyCenter.dx + bodyWidth / 2, y), Offset(x2, y), leadPaint);
+
+    // Pontas de solda/furo
+    canvas.drawCircle(Offset(x1, y), 2.2, Paint()..color = const Color(0xFFCBD5E1));
+    canvas.drawCircle(Offset(x2, y), 2.2, Paint()..color = const Color(0xFFCBD5E1));
+
+    // 2. Sombra do Resistor
+    final bodyRect = Rect.fromCenter(center: bodyCenter, width: bodyWidth, height: 11);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(bodyRect.shift(const Offset(2, 3)), const Radius.circular(4)),
+      Paint()..color = Colors.black26..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+    );
+
+    // 3. Corpo Cerâmico (Haltere com extremidades abauladas)
+    final bodyPaint = Paint()
       ..shader = const LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [Color(0xFFF1F5F9), Color(0xFF94A3B8), Color(0xFF475569)],
-      ).createShader(fuseRect);
-    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(x1, y - 8, 8, 16), const Radius.circular(2)), capPaint);
-    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(x2 - 8, y - 8, 8, 16), const Radius.circular(2)), capPaint);
+        colors: [Color(0xFFFDE68A), Color(0xFFE2C9A7), Color(0xFFB49B7A)],
+      ).createShader(bodyRect);
+    canvas.drawRRect(RRect.fromRectAndRadius(bodyRect, const Radius.circular(4)), bodyPaint);
+    canvas.drawRRect(RRect.fromRectAndRadius(bodyRect, const Radius.circular(4)), Paint()..color = const Color(0xFF92673B)..style = PaintingStyle.stroke..strokeWidth = 0.8);
 
-    // Filamento Interno
-    if (isFuseBlown) {
-      // Filamento partido com fuligem
-      final p1 = Path()..moveTo(x1 + 8, y)..lineTo(x1 + fuseWidth * 0.42, y + 2);
-      final p2 = Path()..moveTo(x2 - 8, y)..lineTo(x1 + fuseWidth * 0.58, y - 2);
-      canvas.drawPath(p1, Paint()..color = const Color(0xFF0F172A)..strokeWidth = 1.2);
-      canvas.drawPath(p2, Paint()..color = const Color(0xFF0F172A)..strokeWidth = 1.2);
-      canvas.drawCircle(Offset(fuseRect.center.dx, y), 4.5, Paint()..color = const Color(0xCC000000));
-    } else {
-      // Filamento metálico íntegro
-      canvas.drawLine(
-        Offset(x1 + 8, y),
-        Offset(x2 - 8, y),
-        Paint()
-          ..color = isCircuitEnergized ? const Color(0xFFFDE047) : const Color(0xFFCBD5E1)
-          ..strokeWidth = 1.6,
-      );
-    }
+    // 4. Faixas de Cores do Resistor 680Ω (Azul, Cinza, Marrom, Ouro)
+    final bandWidth = bodyWidth * 0.11;
+    final startBandX = bodyRect.left + bodyWidth * 0.16;
+    final bandSpacing = bodyWidth * 0.20;
+
+    canvas.drawRect(Rect.fromLTWH(startBandX, bodyRect.top, bandWidth, 11), Paint()..color = const Color(0xFF2563EB)); // 6 (Azul)
+    canvas.drawRect(Rect.fromLTWH(startBandX + bandSpacing, bodyRect.top, bandWidth, 11), Paint()..color = const Color(0xFF64748B)); // 8 (Cinza)
+    canvas.drawRect(Rect.fromLTWH(startBandX + 2 * bandSpacing, bodyRect.top, bandWidth, 11), Paint()..color = const Color(0xFF78350F)); // ×10 (Marrom)
+    canvas.drawRect(Rect.fromLTWH(startBandX + 3 * bandSpacing, bodyRect.top, bandWidth * 0.8, 11), Paint()..color = const Color(0xFFEAB308)); // ±5% (Ouro)
+
+    // Badge com o valor nominal
+    _drawText(canvas, '680Ω', Offset(bodyCenter.dx - 8, y + 7), const Color(0xFF64748B), 7.5);
   }
 
-  /// Resistor com anéis de precisão nos furos
-  void _drawResistorOnBreadboard(Canvas canvas, double x1, double x2, double y) {
-    // Pernas do resistor dobradas nos furos
-    final leadPaint = Paint()..color = const Color(0xFF94A3B8)..strokeWidth = 2.0..style = PaintingStyle.stroke;
-    final leadPath = Path()
-      ..moveTo(x1, y)
-      ..lineTo(x1 + 6, y)
-      ..lineTo(x2 - 6, y)
-      ..lineTo(x2, y);
-    canvas.drawPath(leadPath, leadPaint);
-
-    // Corpo cerâmico
-    final bodyRect = Rect.fromCenter(center: Offset((x1 + x2) / 2, y), width: x2 - x1 - 10, height: 10);
-    canvas.drawRRect(RRect.fromRectAndRadius(bodyRect, const Radius.circular(3)), Paint()..color = const Color(0xFFD4B996));
-
-    // Faixas de cores (680Ω: Azul, Cinza, Marrom, Ouro)
-    final bandW = bodyRect.width * 0.12;
-    canvas.drawRect(Rect.fromLTWH(bodyRect.left + bodyRect.width * 0.18, bodyRect.top, bandW, 10), Paint()..color = const Color(0xFF2563EB));
-    canvas.drawRect(Rect.fromLTWH(bodyRect.left + bodyRect.width * 0.38, bodyRect.top, bandW, 10), Paint()..color = const Color(0xFF64748B));
-    canvas.drawRect(Rect.fromLTWH(bodyRect.left + bodyRect.width * 0.58, bodyRect.top, bandW, 10), Paint()..color = const Color(0xFF78350F));
-    canvas.drawRect(Rect.fromLTWH(bodyRect.left + bodyRect.width * 0.78, bodyRect.top, bandW * 0.8, 10), Paint()..color = const Color(0xFFEAB308));
-  }
-
-  /// LED 5mm com efeito de cúpula e brilho
-  void _drawLedOnBreadboard(Canvas canvas, Offset pos) {
+  /// LED 5mm de Alta Fidelidade com Ânodo e Cátodo nos furos
+  void _drawLedOnBreadboard(Canvas canvas, Offset anodePos, Offset cathodePos) {
     final ledOn = isCircuitEnergized;
-    final ledColor = ledOn ? const Color(0xFF10B981) : const Color(0xFF065F46);
+    final center = Offset((anodePos.dx + cathodePos.dx) / 2, (anodePos.dy + cathodePos.dy) / 2 - 12);
 
-    // Brilho volumétrico
+    // 1. Pernas metálicas entrando nos furos
+    final leadPaint = Paint()..color = const Color(0xFF94A3B8)..strokeWidth = 2.0..style = PaintingStyle.stroke;
+    canvas.drawLine(anodePos, Offset(center.dx - 3, center.dy + 7), leadPaint);
+    canvas.drawLine(cathodePos, Offset(center.dx + 3, center.dy + 7), leadPaint);
+
+    canvas.drawCircle(anodePos, 2.2, Paint()..color = const Color(0xFFCBD5E1));
+    canvas.drawCircle(cathodePos, 2.2, Paint()..color = const Color(0xFFCBD5E1));
+
+    // 2. Halo Volumétrico de Iluminação (quando aceso)
+    const ledRadius = 9.5;
     if (ledOn) {
       canvas.drawCircle(
-        pos,
-        22,
+        center,
+        24,
         Paint()
-          ..color = const Color(0xFF10B981).withValues(alpha: 0.40)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
+          ..color = const Color(0xFF10B981).withValues(alpha: 0.42)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12),
       );
     }
 
-    // Terminal e base
-    canvas.drawCircle(pos, 8, Paint()..color = ledColor);
-    canvas.drawCircle(pos.translate(-2, -2), 3, Paint()..color = Colors.white.withValues(alpha: ledOn ? 0.8 : 0.2));
-    canvas.drawCircle(pos, 8, Paint()..color = const Color(0xFF0F172A).withValues(alpha: 0.3)..style = PaintingStyle.stroke..strokeWidth = 1.2);
+    // 3. Flange da Base do LED (com chanfro reto no cátodo)
+    final flangeRect = Rect.fromCenter(center: Offset(center.dx, center.dy + 6), width: 17, height: 4);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(flangeRect, const Radius.circular(1.5)),
+      Paint()..color = ledOn ? const Color(0xFF059669) : const Color(0xFF064E3B),
+    );
+
+    // 4. Cúpula de Resina Epóxi Difusa
+    final effColor = ledOn ? const Color(0xFF10B981) : const Color(0xFF047857);
+    final domePaint = Paint()
+      ..shader = RadialGradient(
+        center: const Alignment(-0.35, -0.35),
+        colors: [
+          Colors.white.withValues(alpha: ledOn ? 0.95 : 0.40),
+          effColor,
+          const Color(0xFF064E3B),
+        ],
+        stops: const [0.0, 0.65, 1.0],
+      ).createShader(Rect.fromCircle(center: center, radius: ledRadius));
+
+    canvas.drawCircle(center, ledRadius, domePaint);
+    canvas.drawCircle(center, ledRadius, Paint()..color = const Color(0xFF064E3B)..style = PaintingStyle.stroke..strokeWidth = 1.0);
+
+    // Reflexo especular na lente
+    canvas.drawCircle(center.translate(-3, -3), 2.2, Paint()..color = Colors.white.withValues(alpha: ledOn ? 0.85 : 0.30));
+
+    _drawText(canvas, 'LED', Offset(center.dx - 6, center.dy + 10), const Color(0xFF64748B), 7);
   }
 
-  /// Buzzer Piezoelétrico montado
+  /// Buzzer Piezoelétrico com orifício de som e ondas acústicas
   void _drawBuzzerOnBreadboard(Canvas canvas, Offset pos) {
-    canvas.drawCircle(pos.translate(2, 3), 12, Paint()..color = Colors.black26);
-    canvas.drawCircle(pos, 12, Paint()..color = const Color(0xFF0F172A));
-    canvas.drawCircle(pos, 4, Paint()..color = const Color(0xFF334155));
+    // Sombra
+    canvas.drawCircle(pos.translate(2, 4), 13, Paint()..color = Colors.black26..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4));
 
+    // Corpo Cilíndrico
+    final bodyPaint = Paint()
+      ..shader = const RadialGradient(
+        center: Alignment(-0.3, -0.3),
+        colors: [Color(0xFF334155), Color(0xFF1E293B), Color(0xFF0F172A)],
+      ).createShader(Rect.fromCircle(center: pos, radius: 13));
+    canvas.drawCircle(pos, 13, bodyPaint);
+    canvas.drawCircle(pos, 13, Paint()..color = const Color(0xFF475569)..style = PaintingStyle.stroke..strokeWidth = 1.2);
+
+    // Orifício acústico central
+    canvas.drawCircle(pos, 4.5, Paint()..color = const Color(0xFF020617));
+
+    // Símbolo polar (+)
+    _drawText(canvas, '+', pos.translate(6, -11), const Color(0xFF94A3B8), 8.5);
+
+    // Ondas sonoras se o circuito estiver energizado
     if (isCircuitEnergized) {
-      final waveRadius = 14 + 6 * (animValue % 1.0);
+      final waveRadius = 15 + 7 * (animValue % 1.0);
       final wavePaint = Paint()
-        ..color = const Color(0xFF38BDF8).withValues(alpha: 0.6)
+        ..color = const Color(0xFF38BDF8).withValues(alpha: (1.0 - (animValue % 1.0)) * 0.7)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.8;
       canvas.drawArc(Rect.fromCircle(center: pos, radius: waveRadius), -0.7, 1.4, false, wavePaint);
     }
   }
 
-  /// Fio de Curto Jumper com faíscas
+  /// Conector Dupont injetado (inserção no furo da protoboard)
+  void _drawDupontTip(Canvas canvas, Offset pos, Color wireColor, {bool isPointingDown = true}) {
+    final tipRect = Rect.fromCenter(
+      center: Offset(pos.dx, isPointingDown ? pos.dy - 6 : pos.dy + 6),
+      width: 6,
+      height: 10,
+    );
+
+    // Corpo plástico preto do Dupont
+    canvas.drawRRect(RRect.fromRectAndRadius(tipRect, const Radius.circular(1.5)), Paint()..color = const Color(0xFF1E293B));
+    canvas.drawRRect(RRect.fromRectAndRadius(tipRect, const Radius.circular(1.5)), Paint()..color = const Color(0xFF475569)..style = PaintingStyle.stroke..strokeWidth = 0.8);
+
+    // Colar de alívio com a cor do fio
+    final collarY = isPointingDown ? tipRect.top : tipRect.bottom;
+    canvas.drawCircle(Offset(pos.dx, collarY), 2.0, Paint()..color = wireColor);
+
+    // Pino metálico niquelado inserido
+    canvas.drawCircle(pos, 1.8, Paint()..color = const Color(0xFFCBD5E1));
+  }
+
+  /// Fio de Curto Jumper com faíscas pedagógicas
   void _drawShortCircuitJumper(Canvas canvas, double x1, double y1, double x2, double y2) {
     final path = Path()
       ..moveTo(x1, y1)
-      ..cubicTo(x1 + 10, y1 + 30, x2 - 10, y2 - 20, x2, y2);
+      ..cubicTo(x1 + 10, y1 + 35, x2 - 15, y2 - 25, x2, y2);
 
-    canvas.drawPath(path.shift(const Offset(1, 2)), Paint()..color = Colors.black26..strokeWidth = 5..style = PaintingStyle.stroke..strokeCap = StrokeCap.round);
+    canvas.drawPath(path.shift(const Offset(2, 3)), Paint()..color = Colors.black26..strokeWidth = 5..style = PaintingStyle.stroke..strokeCap = StrokeCap.round);
     canvas.drawPath(
       path,
       Paint()
         ..color = const Color(0xFFF59E0B)
-        ..strokeWidth = 4.5
+        ..strokeWidth = 4.2
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round,
     );
 
-    // Faíscas didáticas pulsantes no curto
+    _drawDupontTip(canvas, Offset(x1, y1), const Color(0xFFF59E0B), isPointingDown: false);
+    _drawDupontTip(canvas, Offset(x2, y2), const Color(0xFFF59E0B), isPointingDown: true);
+
+    // Faíscas elétricas pedagógicas
     for (int i = 0; i < 5; i++) {
       final angle = (animValue * math.pi * 2) + (i * math.pi / 2.5);
-      final r = 6 + 5 * math.sin(animValue * math.pi * 4 + i);
+      final r = 7 + 5 * math.sin(animValue * math.pi * 4 + i);
       final px = x1 + r * math.cos(angle);
       final py = y1 + r * math.sin(angle);
       canvas.drawCircle(Offset(px, py), 2.0, Paint()..color = const Color(0xFFFDE047));
     }
   }
 
-  /// Pontas de Prova de Teste de Continuidade (M2)
+  /// Pontas de Prova do Multímetro para Teste de Continuidade (M2)
   void _drawContinuityProbesOnBreadboard(Canvas canvas, double redX, double redY, double blackX, double blackY) {
-    final redProbeCenter = Offset(redX + 15, redY - 24);
-    final blackProbeCenter = Offset(blackX - 15, blackY - 24);
+    final redProbeTop = Offset(redX + 16, redY - 32);
+    final blackProbeTop = Offset(blackX - 16, blackY - 32);
 
-    // Haste vermelha
-    canvas.drawLine(redProbeCenter, Offset(redX, redY), Paint()..color = const Color(0xFFEF4444)..strokeWidth = 3.5..strokeCap = StrokeCap.round);
-    canvas.drawCircle(redProbeCenter, 5, Paint()..color = const Color(0xFFDC2626));
+    // Haste vermelha (+)
+    canvas.drawLine(redProbeTop, Offset(redX, redY), Paint()..color = const Color(0xFFEF4444)..strokeWidth = 4.0..strokeCap = StrokeCap.round);
+    canvas.drawCircle(Offset(redX, redY), 2.5, Paint()..color = const Color(0xFFCBD5E1)); // Ponta de agulha metálica
 
-    // Haste preta
-    canvas.drawLine(blackProbeCenter, Offset(blackX, blackY), Paint()..color = const Color(0xFF1E293B)..strokeWidth = 3.5..strokeCap = StrokeCap.round);
-    canvas.drawCircle(blackProbeCenter, 5, Paint()..color = const Color(0xFF0F172A));
+    // Haste preta (-)
+    canvas.drawLine(blackProbeTop, Offset(blackX, blackY), Paint()..color = const Color(0xFF1E293B)..strokeWidth = 4.0..strokeCap = StrokeCap.round);
+    canvas.drawCircle(Offset(blackX, blackY), 2.5, Paint()..color = const Color(0xFFCBD5E1));
 
-    // LED no testador de continuidade
+    // Status do teste
     final testOk = isContinuityOk;
     final testColor = testOk ? const Color(0xFF10B981) : const Color(0xFFEF4444);
-    _drawText(canvas, testOk ? 'CONTINUIDADE OK (BIP)' : 'SEM SINAL (FIO ROMPIDO)', Offset((redX + blackX) / 2 - 45, redY - 38), testColor, 9);
+    _drawText(canvas, testOk ? 'CONTINUIDADE OK (BIP)' : 'SEM SINAL (CABO ROMPIDO)', Offset((redX + blackX) / 2 - 50, redY - 42), testColor, 9.0);
   }
 
-  /// Fios Jumpers que interligam a Bateria e a Protoboard
+  /// Fios Jumpers que interligam a Bateria, a Protoboard e todos os blocos do circuito
   void _drawJumpersAndWires(Canvas canvas, Rect bb, Rect bat) {
-    const numCols = 16;
-    final colSpacing = (bb.width - 60) / (numCols - 1);
+    const cols = 24;
+    final startX = bb.left + 36.0;
+    final stepX = (bb.width - 72.0) / (cols - 1);
 
-    final col5X = bb.left + 30 + 4 * colSpacing;
-    final col8X = bb.left + 30 + 7 * colSpacing;
-    final col13X = bb.left + 30 + 12 * colSpacing;
+    final rowStepTop = (bb.height * 0.24) / 4;
+    final rowStartYTop = bb.top + bb.height * 0.22;
 
-    final topPowerPlusY = bb.top + bb.height * 0.10;
-    final botPowerMinusY = bb.top + bb.height * 0.90;
+    final rowStepBot = (bb.height * 0.24) / 4;
+    final rowStartYBot = bb.top + bb.height * 0.55;
+
+    final topPowerPlusY = bb.top + bb.height * 0.08;
+    final botPowerMinusY = bb.top + bb.height * 0.85;
     final trenchY = bb.top + bb.height * 0.50;
 
-    final wireRed = Paint()..color = const Color(0xFFDC2626)..strokeWidth = 4.5..style = PaintingStyle.stroke..strokeCap = StrokeCap.round;
-    final wireBlack = Paint()..color = const Color(0xFF1E293B)..strokeWidth = 4.5..style = PaintingStyle.stroke..strokeCap = StrokeCap.round;
-    final wireOrange = Paint()..color = const Color(0xFFF97316)..strokeWidth = 4.0..style = PaintingStyle.stroke..strokeCap = StrokeCap.round;
-    final wireShadow = Paint()..color = Colors.black26..strokeWidth = 5.5..style = PaintingStyle.stroke..strokeCap = StrokeCap.round;
+    final col4X = startX + 3 * stepX;
+    final col7X = startX + 6 * stepX;
+    final col11X = startX + 10 * stepX;
+    final col13X = startX + 12 * stepX;
+    final col17X = startX + 16 * stepX;
+    final col19X = startX + 18 * stepX;
 
-    // 1. Bat(+) -> Barramento Superior (+) da Protoboard
-    final pBatPlus = Path()
-      ..moveTo(bat.left - 10, bat.top + bat.height * 0.28)
-      ..cubicTo(bat.left - 30, bat.top - 10, bb.right - 10, topPowerPlusY - 15, bb.right - 30, topPowerPlusY);
-    canvas.drawPath(pBatPlus.shift(const Offset(2, 3)), wireShadow);
-    canvas.drawPath(pBatPlus, wireRed);
+    final rowAY = rowStartYTop;
+    final rowCY = rowStartYTop + 2 * rowStepTop;
+    final rowEY = rowStartYTop + 4 * rowStepTop;
+    final rowFY = rowStartYBot;
+    final rowIY = rowStartYBot + 3 * rowStepBot;
 
-    // 2. Bat(-) -> Barramento Inferior (-) da Protoboard
-    final pBatMinus = Path()
-      ..moveTo(bat.left - 10, bat.top + bat.height * 0.72)
-      ..cubicTo(bat.left - 30, bat.bottom + 10, bb.right - 10, botPowerMinusY + 15, bb.right - 30, botPowerMinusY);
-    canvas.drawPath(pBatMinus.shift(const Offset(2, 3)), wireShadow);
-    canvas.drawPath(pBatMinus, wireBlack);
+    final wireRed = const Color(0xFFDC2626);
+    final wireBlack = const Color(0xFF1E293B);
+    final wireOrange = const Color(0xFFF97316);
+    final wireBlue = const Color(0xFF2563EB);
 
-    // 3. Jumper: Barramento(+) -> Entrada da Chave (Col 5)
-    final pPowerToSw = Path()
-      ..moveTo(bb.left + 30 + 4 * colSpacing, topPowerPlusY)
-      ..cubicTo(col5X - 10, topPowerPlusY + 15, col5X - 10, trenchY - 25, col5X, trenchY - 14);
-    canvas.drawPath(pPowerToSw.shift(const Offset(1, 2)), wireShadow);
-    canvas.drawPath(pPowerToSw, wireRed);
+    // 1. Cabo Vermelho (+) da Bateria -> Barramento Superior (+) da Protoboard
+    final batPosTerm = Offset(bat.left - 8, bat.top + bat.height * 0.28);
+    final bbPowerTopPlus = Offset(bb.right - 28, topPowerPlusY);
+    _drawCatenaryWire(
+      canvas,
+      batPosTerm,
+      Offset(bat.left - 25, bat.top - 12),
+      Offset(bbPowerTopPlus.dx + 18, topPowerPlusY - 10),
+      bbPowerTopPlus,
+      wireRed,
+      thickness: 4.2,
+    );
+    _drawDupontTip(canvas, bbPowerTopPlus, wireRed, isPointingDown: true);
 
-    // 4. Jumper: Saída da Chave -> Fusível (Col 8)
+    // 2. Cabo Preto (–) da Bateria -> Barramento Inferior (-) da Protoboard
+    final batNegTerm = Offset(bat.left - 8, bat.top + bat.height * 0.72);
+    final bbPowerBotMinus = Offset(bb.right - 28, botPowerMinusY);
+    _drawCatenaryWire(
+      canvas,
+      batNegTerm,
+      Offset(bat.left - 25, bat.bottom + 12),
+      Offset(bbPowerBotMinus.dx + 18, botPowerMinusY + 10),
+      bbPowerBotMinus,
+      wireBlack,
+      thickness: 4.2,
+    );
+    _drawDupontTip(canvas, bbPowerBotMinus, wireBlack, isPointingDown: false);
+
+    // 3. Jumper Barramento Topo (+) -> Entrada da Chave de Segurança (Coluna 4, Linha A)
+    final pPowerToSwStart = Offset(startX + 2 * stepX, topPowerPlusY);
+    final pPowerToSwEnd = Offset(col4X, rowAY);
+    _drawCatenaryWire(
+      canvas,
+      pPowerToSwStart,
+      Offset(col4X - 12, topPowerPlusY + 15),
+      Offset(col4X - 8, rowAY - 10),
+      pPowerToSwEnd,
+      wireRed,
+      thickness: 3.6,
+    );
+    _drawDupontTip(canvas, pPowerToSwStart, wireRed, isPointingDown: true);
+    _drawDupontTip(canvas, pPowerToSwEnd, wireRed, isPointingDown: true);
+
+    // 4. Jumper Saída da Chave -> Entrada do Porta-Fusível (Coluna 4 para Coluna 7)
+    final pSwOut = Offset(col4X, trenchY - 14);
+    final pFuseIn = Offset(col7X, rowCY);
+
     if (isWireBroken && !isWireRepaired) {
-      // Fio quebrado com ponta solta (M2)
-      final pBroken1 = Path()..moveTo(col5X, trenchY + 14)..lineTo(col5X + 18, trenchY + 28);
-      final pBroken2 = Path()..moveTo(col8X, bb.top + bb.height * 0.33)..lineTo(col8X - 14, bb.top + bb.height * 0.22);
-      canvas.drawPath(pBroken1, Paint()..color = const Color(0xFFEF4444)..strokeWidth = 3.5..style = PaintingStyle.stroke..strokeCap = StrokeCap.round);
-      canvas.drawPath(pBroken2, Paint()..color = const Color(0xFFEF4444)..strokeWidth = 3.5..style = PaintingStyle.stroke..strokeCap = StrokeCap.round);
-      canvas.drawCircle(Offset(col5X + 18, trenchY + 28), 2.5, Paint()..color = Colors.white);
-      canvas.drawCircle(Offset(col8X - 14, bb.top + bb.height * 0.22), 2.5, Paint()..color = Colors.white);
+      // M2: Fio rompido com pontas de cobre expostas
+      final midBreak = Offset((pSwOut.dx + pFuseIn.dx) / 2, (pSwOut.dy + pFuseIn.dy) / 2 - 8);
+
+      final pPart1 = Path()..moveTo(pSwOut.dx, pSwOut.dy)..quadraticBezierTo(pSwOut.dx + 6, pSwOut.dy - 12, midBreak.dx - 5, midBreak.dy);
+      final pPart2 = Path()..moveTo(midBreak.dx + 5, midBreak.dy)..quadraticBezierTo(pFuseIn.dx - 6, pFuseIn.dy - 12, pFuseIn.dx, pFuseIn.dy);
+
+      canvas.drawPath(pPart1, Paint()..color = wireOrange..strokeWidth = 3.4..style = PaintingStyle.stroke..strokeCap = StrokeCap.round);
+      canvas.drawPath(pPart2, Paint()..color = wireOrange..strokeWidth = 3.4..style = PaintingStyle.stroke..strokeCap = StrokeCap.round);
+
+      // Cobre exposto desfiado nas pontas
+      canvas.drawCircle(Offset(midBreak.dx - 5, midBreak.dy), 2.2, Paint()..color = const Color(0xFFF59E0B));
+      canvas.drawCircle(Offset(midBreak.dx + 5, midBreak.dy), 2.2, Paint()..color = const Color(0xFFF59E0B));
+
+      _drawDupontTip(canvas, pSwOut, wireOrange, isPointingDown: false);
+      _drawDupontTip(canvas, pFuseIn, wireOrange, isPointingDown: true);
     } else {
-      final pSwToFuse = Path()
-        ..moveTo(col5X, trenchY - 14)
-        ..cubicTo(col5X + 12, bb.top + bb.height * 0.20, col8X - 12, bb.top + bb.height * 0.20, col8X, bb.top + bb.height * 0.33);
-      canvas.drawPath(pSwToFuse.shift(const Offset(1, 2)), wireShadow);
-      canvas.drawPath(pSwToFuse, wireOrange);
+      // Fio íntegro ou reparado com luva termorretrátil
+      _drawCatenaryWire(
+        canvas,
+        pSwOut,
+        Offset(col4X + 8, pSwOut.dy - 14),
+        Offset(col7X - 8, rowCY - 14),
+        pFuseIn,
+        wireOrange,
+        thickness: 3.6,
+      );
+      _drawDupontTip(canvas, pSwOut, wireOrange, isPointingDown: false);
+      _drawDupontTip(canvas, pFuseIn, wireOrange, isPointingDown: true);
+
+      if (isWireBroken && isWireRepaired) {
+        // Luva Termorretrátil Azul cobrindo a emenda
+        final midFix = Offset((pSwOut.dx + pFuseIn.dx) / 2, (pSwOut.dy + pFuseIn.dy) / 2 - 12);
+        final fixRect = Rect.fromCenter(center: midFix, width: 14, height: 7);
+        canvas.drawRRect(RRect.fromRectAndRadius(fixRect, const Radius.circular(2)), Paint()..color = const Color(0xFF1D4ED8));
+        canvas.drawLine(Offset(fixRect.left + 3, fixRect.top), Offset(fixRect.left + 3, fixRect.bottom), Paint()..color = const Color(0xFF93C5FD)..strokeWidth = 1.0);
+        canvas.drawLine(Offset(fixRect.right - 3, fixRect.top), Offset(fixRect.right - 3, fixRect.bottom), Paint()..color = const Color(0xFF93C5FD)..strokeWidth = 1.0);
+      }
     }
 
-    // 5. Jumper: Saída do LED -> Barramento Inferior (-)
-    final pLedToGnd = Path()
-      ..moveTo(col13X, bb.top + bb.height * 0.65 + 8)
-      ..cubicTo(col13X, botPowerMinusY - 10, col13X + 10, botPowerMinusY - 5, col13X + 10, botPowerMinusY);
-    canvas.drawPath(pLedToGnd.shift(const Offset(1, 2)), wireShadow);
-    canvas.drawPath(pLedToGnd, wireBlack);
+    // 5. Jumper Saída do Fusível -> Entrada do Resistor (Coluna 11 para Coluna 13)
+    final pFuseOut = Offset(col11X, rowCY);
+    final pResIn = Offset(col13X, rowCY);
+    final bridgePath = Path()
+      ..moveTo(pFuseOut.dx, pFuseOut.dy)
+      ..cubicTo(pFuseOut.dx + 4, rowCY - 10, pResIn.dx - 4, rowCY - 10, pResIn.dx, pResIn.dy);
+    canvas.drawPath(bridgePath, Paint()..color = wireOrange..strokeWidth = 3.2..style = PaintingStyle.stroke..strokeCap = StrokeCap.round);
+    _drawDupontTip(canvas, pFuseOut, wireOrange, isPointingDown: true);
+    _drawDupontTip(canvas, pResIn, wireOrange, isPointingDown: true);
 
-    // 6. Animação de Elétrons pelo circuito
+    // 6. Jumper de Travessia da Vala Central (Coluna 17: Linha E -> Linha F)
+    final pTrenchTop = Offset(col17X, rowEY);
+    final pTrenchBot = Offset(col17X, rowFY);
+    final trenchJumper = Path()
+      ..moveTo(pTrenchTop.dx, pTrenchTop.dy)
+      ..cubicTo(col17X + 10, pTrenchTop.dy + 10, col17X + 10, pTrenchBot.dy - 10, pTrenchBot.dx, pTrenchBot.dy);
+    canvas.drawPath(trenchJumper, Paint()..color = wireBlue..strokeWidth = 3.4..style = PaintingStyle.stroke..strokeCap = StrokeCap.round);
+    _drawDupontTip(canvas, pTrenchTop, wireBlue, isPointingDown: true);
+    _drawDupontTip(canvas, pTrenchBot, wireBlue, isPointingDown: false);
+
+    // 7. Jumper Retorno do LED -> Barramento Inferior (-) (Coluna 19 -> Barramento -)
+    final pLedOut = Offset(col19X, rowIY);
+    final pGndEnd = Offset(col19X + 6, botPowerMinusY);
+    _drawCatenaryWire(
+      canvas,
+      pLedOut,
+      Offset(col19X, pLedOut.dy + 12),
+      Offset(pGndEnd.dx, botPowerMinusY - 12),
+      pGndEnd,
+      wireBlack,
+      thickness: 3.4,
+    );
+    _drawDupontTip(canvas, pLedOut, wireBlack, isPointingDown: false);
+    _drawDupontTip(canvas, pGndEnd, wireBlack, isPointingDown: false);
+
+    // 8. Animação de Fluxo de Elétrons
     if (isCircuitEnergized || isShortCircuitActive) {
-      _drawAnimatedElectrons(canvas, bb, bat, col5X, col8X, col13X, topPowerPlusY, botPowerMinusY, trenchY);
+      _drawAnimatedElectrons(canvas, bb, bat, col4X, col7X, col17X, topPowerPlusY, botPowerMinusY, trenchY);
     }
+  }
+
+  void _drawCatenaryWire(Canvas canvas, Offset start, Offset ctrl1, Offset ctrl2, Offset end, Color color, {double thickness = 3.6}) {
+    final path = Path()
+      ..moveTo(start.dx, start.dy)
+      ..cubicTo(ctrl1.dx, ctrl1.dy, ctrl2.dx, ctrl2.dy, end.dx, end.dy);
+
+    // Sombra do fio
+    canvas.drawPath(
+      path.shift(const Offset(2, 3)),
+      Paint()..color = Colors.black26..strokeWidth = thickness + 1.2..style = PaintingStyle.stroke..strokeCap = StrokeCap.round,
+    );
+
+    // Fio encapado com brilho
+    canvas.drawPath(
+      path,
+      Paint()..color = color..strokeWidth = thickness..style = PaintingStyle.stroke..strokeCap = StrokeCap.round,
+    );
   }
 
   void _drawAnimatedElectrons(
     Canvas canvas,
     Rect bb,
     Rect bat,
-    double col5X,
-    double col8X,
-    double col13X,
+    double col4X,
+    double col7X,
+    double col17X,
     double topPlusY,
     double botMinusY,
     double trenchY,
@@ -588,30 +979,30 @@ class CircuitoSeguroPainter extends CustomPainter {
     final electronColor = isShortCircuitActive ? const Color(0xFFEF4444) : const Color(0xFF38BDF8);
     final electronPaint = Paint()..color = electronColor..style = PaintingStyle.fill;
 
-    for (double t = 0; t < 1.0; t += 0.10) {
+    for (double t = 0; t < 1.0; t += 0.12) {
       final curT = (t + animValue) % 1.0;
       Offset pt;
       if (curT < 0.30) {
         final subT = curT / 0.30;
         pt = Offset(
-          bat.left - 10 + subT * (col5X - (bat.left - 10)),
+          bat.left - 8 + subT * (col4X - (bat.left - 8)),
           bat.top + bat.height * 0.28 + subT * (trenchY - (bat.top + bat.height * 0.28)),
         );
-      } else if (curT < 0.60) {
-        final subT = (curT - 0.30) / 0.30;
+      } else if (curT < 0.65) {
+        final subT = (curT - 0.30) / 0.35;
         if (isShortCircuitActive) {
-          pt = Offset(col5X + subT * 10, trenchY + subT * (botMinusY - trenchY));
+          pt = Offset(col4X + subT * 10, trenchY + subT * (botMinusY - trenchY));
         } else {
-          pt = Offset(col5X + subT * (col13X - col5X), bb.top + bb.height * 0.33);
+          pt = Offset(col7X + subT * (col17X - col7X), bb.top + bb.height * 0.32);
         }
       } else {
-        final subT = (curT - 0.60) / 0.40;
+        final subT = (curT - 0.65) / 0.35;
         pt = Offset(
-          col13X + subT * (bat.left - 10 - col13X),
+          col17X + subT * (bat.left - 8 - col17X),
           botMinusY + subT * (bat.top + bat.height * 0.72 - botMinusY),
         );
       }
-      canvas.drawCircle(pt, 2.8, electronPaint);
+      canvas.drawCircle(pt, 2.6, electronPaint);
     }
   }
 
