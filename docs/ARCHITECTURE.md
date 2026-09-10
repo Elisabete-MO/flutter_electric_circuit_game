@@ -43,9 +43,10 @@ As rotas atuais são definidas em `lib/app/routes.dart`.
 
 | Rota                   | Tela                       | Estado |
 | ---------------------- | -------------------------- | ------ |
-| `/`                    | `MainMenuScreen`           | Ativa  |
-| `/intro`               | `IntroScreen`              | Ativa  |
-| `/home`                | `HomeScreen`               | Ativa  |
+| `/`                    | `SplashScreen`             | Ativa (Boot e pré-carregamento de assets via `Preloader`) |
+| `/menu`                | `MainMenuScreen`           | Ativa (Menu Principal e seleção de modos) |
+| `/intro`               | `IntroScreen`              | Ativa (Introdução com a Professora Nuri) |
+| `/home`                | `HomeScreen`               | Ativa (Mapa da Feira de Ciências) |
 | `/first-steps`         | `FirstStepsScreen`         | Ativa  |
 | `/second-bench`        | `SecondBenchFlowScreen`    | Ativa  |
 | `/liga-desliga`        | `LigaDesligaScreen`        | Ativa  |
@@ -53,8 +54,11 @@ As rotas atuais são definidas em `lib/app/routes.dart`.
 | `/letreros-led`        | `LetrerosLedScreen`        | Ativa  |
 | `/movimento-miniatura` | `MovimentoMiniaturaScreen` | Ativa  |
 | `/mede-testa-explica`  | `MedeTestaExplicaScreen`   | Ativa  |
+| `/circuito-seguro`     | `CircuitoSeguroScreen`     | Ativa  |
 | `/sandbox`             | `SandboxScreen`            | Ativa  |
 | `/settings`            | `SettingsScreen`           | Ativa  |
+
+O fluxo de abertura inicia na `SplashScreen`, que executa o `Preloader.preloadResources()` para carregar preventivamente os assets gráficos e de som, redirecionando em seguida para o `MainMenuScreen`.
 
 O fluxo legado `/first-bench` foi removido após a auditoria inicial por estar sem navegação ativa e ter sido funcionalmente substituído pelo fluxo `second_bench`.
 
@@ -362,30 +366,30 @@ A limpeza estrutural removeu:
 * testes placeholder sem comportamento real;
 * testes exclusivos do fluxo legado `first_bench`.
 
-A baseline técnica pós-limpeza deve permanecer sincronizada com a última execução real de:
+A baseline técnica deve permanecer sincronizada com a última execução real de:
 
 ```bash
 flutter analyze
 flutter test
 ```
 
-No estado pós-limpeza final registrado durante a reconstrução documental:
+No estado atual da suíte de testes:
 
 | Métrica           | Estado         |
 | ----------------- | -------------- |
-| Arquivos de teste | 9              |
-| Casos de teste    | 47             |
-| `flutter analyze` | Sem issues     |
+| Arquivos de teste | 18             |
 | `flutter test`    | Todos passando |
+| Cobertura de Responsividade | Suíte dedicada com 12 resoluções para SplashScreen, MainMenuScreen e IntroScreen |
 
 A suíte cobre atualmente partes reais do sistema, incluindo:
 
 * `CircuitValidator`;
-* fluxo `second_bench`;
-* missões guiadas selecionadas;
-* geometria/alinhamento de terminais;
-* navegação e widgets principais;
-* comportamentos da Bancada.
+* fluxo `second_bench` (fases 1, 2 e 3);
+* missões guiadas selecionadas (`liga_desliga`, `letreros_led`, `movimento_miniatura`, `circuito_seguro`, `first_steps`);
+* geometria/alinhamento de terminais e sockets;
+* navegação e widgets principais (`SplashScreen`, `MainMenuScreen`, `IntroScreen`);
+* responsividade de interface e bancada de trabalho (`Workbench`, `UiScale`);
+* comportamentos e persistência da Bancada.
 
 Não há suíte `integration_test/` dedicada registrada na auditoria original.
 

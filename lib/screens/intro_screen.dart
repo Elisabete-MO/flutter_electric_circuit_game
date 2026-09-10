@@ -371,7 +371,9 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
                   ),
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
-                      maxWidth: uiScale.isDesktop ? 820.0 : 640.0,
+                      maxWidth: uiScale.isDesktop
+                          ? 820.0
+                          : (maxH < 450 ? 520.0 : 640.0),
                     ),
                     child: SpeechBubbleWidget(
                       step: step,
