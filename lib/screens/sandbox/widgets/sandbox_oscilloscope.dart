@@ -54,7 +54,7 @@ class _SandboxOscilloscopeWidgetState extends State<SandboxOscilloscopeWidget> w
     final activeSignal = _selectedChannel.startsWith("CH1") ? widget.voltageSignal : widget.currentSignal;
 
     return Container(
-      width: 320,
+      width: 340,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: widget.isDark ? const Color(0xFF0A111E).withValues(alpha: 0.95) : const Color(0xFFF1F5F9),
@@ -94,7 +94,7 @@ class _SandboxOscilloscopeWidgetState extends State<SandboxOscilloscopeWidget> w
                     'CYBER-SCOPE HUD-X',
                     style: TextStyle(
                       fontFamily: GoogleFonts.rajdhani().fontFamily,
-                      fontSize: 12,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.2,
                       color: widget.isDark ? Colors.white70 : Colors.black87,
@@ -171,7 +171,7 @@ class _SandboxOscilloscopeWidgetState extends State<SandboxOscilloscopeWidget> w
                 isDense: true,
                 dropdownColor: widget.isDark ? const Color(0xFF0F172A) : Colors.white,
                 style: TextStyle(
-                  fontSize: 10,
+                  fontSize: 12,
                   fontFamily: GoogleFonts.rajdhani().fontFamily,
                   fontWeight: FontWeight.bold,
                   color: const Color(0xFF00FF9D),
@@ -192,7 +192,7 @@ class _SandboxOscilloscopeWidgetState extends State<SandboxOscilloscopeWidget> w
                   Text(
                     '${_voltsPerDiv}V/Div',
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 12,
                       fontFamily: GoogleFonts.shareTechMono().fontFamily,
                       color: widget.isDark ? Colors.white70 : Colors.black87,
                     ),
@@ -234,7 +234,7 @@ class _SandboxOscilloscopeWidgetState extends State<SandboxOscilloscopeWidget> w
                       child: Text(
                         '${_timePerDivMs}ms',
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 12,
                           fontFamily: GoogleFonts.shareTechMono().fontFamily,
                           color: const Color(0xFF00FF9D),
                           fontWeight: FontWeight.bold,

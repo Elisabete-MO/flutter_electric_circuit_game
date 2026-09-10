@@ -113,7 +113,7 @@ class SandboxMetricsPanelWidget extends ConsumerWidget {
             if (isSwitch) ...[
               Text(
                 isEn ? 'Switch State:' : 'Estado do interruptor:',
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 6),
               ElevatedButton.icon(
@@ -139,12 +139,12 @@ class SandboxMetricsPanelWidget extends ConsumerWidget {
                 children: [
                   Text(
                     valueLabel,
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                   ),
                   Text(
                     '${component.value.toStringAsFixed(1)}$unit',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
                     ),
@@ -171,7 +171,7 @@ class SandboxMetricsPanelWidget extends ConsumerWidget {
               const SizedBox(height: 16),
               Text(
                 isEn ? 'Connected Wires:' : 'Fios Conectados:',
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey),
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey),
               ),
               const SizedBox(height: 6),
               Container(
@@ -192,7 +192,7 @@ class SandboxMetricsPanelWidget extends ConsumerWidget {
                             Expanded(
                               child: Text(
                                 getWireDescription(wire),
-                                style: const TextStyle(fontSize: 10),
+                                style: const TextStyle(fontSize: 12),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -268,7 +268,7 @@ class SandboxMetricsPanelWidget extends ConsumerWidget {
     if (!active) {
       return Text(
         isEn ? 'No current flow.' : 'Sem passagem de corrente.',
-        style: const TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: Colors.grey),
+        style: const TextStyle(fontSize: 14, fontStyle: FontStyle.italic, color: Colors.grey),
       );
     }
 
@@ -289,17 +289,17 @@ class SandboxMetricsPanelWidget extends ConsumerWidget {
         children: [
           Text(
             isEn ? 'Live Metrics:' : 'Métricas Elétricas:',
-            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey),
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey),
           ),
           const SizedBox(height: 4),
           Text(
             '${isEn ? 'Current:' : 'Corrente:'} ${current.toStringAsFixed(2)} A',
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
           ),
           if (component.type != ComponentType.battery)
             Text(
               '${isEn ? 'V Drop:' : 'Queda V:'} ${vDrop.toStringAsFixed(2)} V',
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
             ),
         ],
       ),

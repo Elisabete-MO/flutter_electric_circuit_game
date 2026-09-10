@@ -55,7 +55,7 @@ class SandboxInspectorDialog extends StatelessWidget {
                         Text(
                           isEn ? 'PROF. VOLTS SMART INSPECTOR' : 'INSPETOR INTELIGENTE PROF. VOLTS',
                           style: GoogleFonts.rajdhani(
-                            fontSize: 16,
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
                             letterSpacing: 1.0,
@@ -64,7 +64,7 @@ class SandboxInspectorDialog extends StatelessWidget {
                         Text(
                           isEn ? 'Real-time Circuit Diagnostics' : 'Diagnóstico de Falhas em Tempo Real',
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: 14,
                             color: isDark ? Colors.grey[400] : Colors.grey[700],
                           ),
                         ),
@@ -167,7 +167,7 @@ class SandboxInspectorDialog extends StatelessWidget {
                 Text(
                   title,
                   style: GoogleFonts.rajdhani(
-                    fontSize: 14,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: isDark ? Colors.white : Colors.black87,
                   ),
@@ -176,7 +176,7 @@ class SandboxInspectorDialog extends StatelessWidget {
                 Text(
                   description,
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 14,
                     color: isDark ? Colors.grey[300] : Colors.grey[800],
                   ),
                 ),
@@ -195,7 +195,7 @@ class SandboxInspectorDialog extends StatelessWidget {
                         Expanded(
                           child: Text(
                             recommendation,
-                            style: const TextStyle(fontSize: 10, fontStyle: FontStyle.italic),
+                            style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
                           ),
                         ),
                       ],

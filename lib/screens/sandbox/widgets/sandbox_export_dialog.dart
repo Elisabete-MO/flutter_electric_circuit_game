@@ -132,7 +132,7 @@ class SandboxExportDialog extends StatelessWidget {
                         Text(
                           isEn ? 'TECHNICAL REPORT & BOM (BILL OF MATERIALS)' : 'RELATÓRIO TÉCNICO & BOM DO CIRCUITO',
                           style: GoogleFonts.rajdhani(
-                            fontSize: 16,
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: isDark ? const Color(0xFF00FF9D) : Colors.black87,
                             letterSpacing: 1.0,
@@ -140,7 +140,7 @@ class SandboxExportDialog extends StatelessWidget {
                         ),
                         Text(
                           isEn ? 'Laboratory specification & electrical metrics summary' : 'Especificação de laboratório e resumo de métricas',
-                          style: TextStyle(fontSize: 11, color: isDark ? Colors.grey[400] : Colors.grey[700]),
+                          style: TextStyle(fontSize: 14, color: isDark ? Colors.grey[400] : Colors.grey[700]),
                         ),
                       ],
                     ),
@@ -171,7 +171,7 @@ class SandboxExportDialog extends StatelessWidget {
               // Tabela de Componentes (BOM)
               Text(
                 isEn ? 'BILL OF MATERIALS (BOM):' : 'LISTA DE MATERIAIS & POTÊNCIA (BOM):',
-                style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold, fontSize: 13, color: isDark ? Colors.white70 : Colors.black87),
+                style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold, fontSize: 16, color: isDark ? Colors.white70 : Colors.black87),
               ),
               const SizedBox(height: 8),
 
@@ -286,13 +286,13 @@ class SandboxExportDialog extends StatelessWidget {
           children: [
             Text(
               label,
-              style: GoogleFonts.rajdhani(fontSize: 10, fontWeight: FontWeight.bold, color: accentColor),
+              style: GoogleFonts.rajdhani(fontSize: 12, fontWeight: FontWeight.bold, color: accentColor),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 4),
             Text(
               value,
-              style: GoogleFonts.shareTechMono(fontSize: 14, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87),
+              style: GoogleFonts.shareTechMono(fontSize: 16, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87),
               textAlign: TextAlign.center,
             ),
           ],
@@ -307,7 +307,7 @@ class SandboxExportDialog extends StatelessWidget {
       child: Text(
         text,
         style: GoogleFonts.rajdhani(
-          fontSize: isHeader ? 11 : 12,
+          fontSize: isHeader ? 14 : 15,
           fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
           color: isDark ? Colors.white : Colors.black87,
         ),

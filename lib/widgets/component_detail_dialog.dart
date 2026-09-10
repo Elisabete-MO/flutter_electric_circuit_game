@@ -75,7 +75,7 @@ class _ComponentDetailDialogState extends State<ComponentDetailDialog> {
                         if (subtitleName.isNotEmpty && subtitleName != displayName)
                           Text(
                             subtitleName,
-                            style: theme.textTheme.labelMedium?.copyWith(
+                            style: theme.textTheme.bodyMedium?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
                           ),
@@ -111,7 +111,7 @@ class _ComponentDetailDialogState extends State<ComponentDetailDialog> {
                         children: [
                           Text(
                             l10n.compPhysical,
-                            style: theme.textTheme.labelSmall?.copyWith(
+                            style: theme.textTheme.labelMedium?.copyWith(
                               fontWeight: FontWeight.w600,
                               color: theme.colorScheme.primary,
                             ),
@@ -156,7 +156,7 @@ class _ComponentDetailDialogState extends State<ComponentDetailDialog> {
                         children: [
                           Text(
                             l10n.compSchematic,
-                            style: theme.textTheme.labelSmall?.copyWith(
+                            style: theme.textTheme.labelMedium?.copyWith(
                               fontWeight: FontWeight.w600,
                               color: theme.colorScheme.tertiary,
                             ),
@@ -186,27 +186,27 @@ class _ComponentDetailDialogState extends State<ComponentDetailDialog> {
               // Descrição pedagógica
               Text(
                 l10n.compFunction,
-                style: theme.textTheme.titleSmall?.copyWith(
+                style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 _component.description,
-                style: theme.textTheme.bodyMedium,
+                style: theme.textTheme.bodyLarge,
               ),
               const SizedBox(height: 16),
 
               Text(
                 l10n.compSymbolMeaning,
-                style: theme.textTheme.titleSmall?.copyWith(
+                style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 _component.symbolDescription,
-                style: theme.textTheme.bodyMedium?.copyWith(
+                style: theme.textTheme.bodyLarge?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
