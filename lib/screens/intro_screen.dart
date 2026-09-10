@@ -209,29 +209,27 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
             ),
           ),
 
-          // 2. Conteúdo da Cena (Cabeçalho + Layout Responsivo Alinhado ao Chão)
+          // 2. Conteúdo da Cena (Nuri e Balão ocupam a área útil da tela)
           SafeArea(
             child: FadeTransition(
               opacity: _fadeAnimation,
-              child: Column(
-                children: [
-                  // Cabeçalho da Tela (EletroLab + Pular)
-                  _buildHeader(context),
-
-                  // Área Principal da Cena (Nuri no chão)
-                  Expanded(
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        return _buildSceneLayout(
-                          context,
-                          currentStep,
-                          constraints,
-                        );
-                      },
-                    ),
-                  ),
-                ],
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return _buildSceneLayout(
+                    context,
+                    currentStep,
+                    constraints,
+                  );
+                },
               ),
+            ),
+          ),
+
+          // 3. Botão flutuante "Pular" no canto superior direito
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topRight,
+              child: _buildHeader(context),
             ),
           ),
         ],
@@ -239,7 +237,7 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
     );
   }
 
-  /// Barra de topo com o botão Pular
+  /// Barra de topo com o botão Pular (HUD flutuante)
   Widget _buildHeader(BuildContext context) {
     final scale = context.uiScale;
 
@@ -248,13 +246,11 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
         horizontal: scale.spacing(20, min: 14, max: 32),
         vertical: scale.spacing(8, min: 4, max: 14),
       ),
-      child: Align(
-        alignment: Alignment.topRight,
-        child: InkWell(
-          onTap: _enterGym,
-          borderRadius: BorderRadius.circular(
-            scale.size(20, min: 16, max: 28),
-          ),
+      child: InkWell(
+        onTap: _enterGym,
+        borderRadius: BorderRadius.circular(
+          scale.size(20, min: 16, max: 28),
+        ),
           child: Container(
             padding: EdgeInsets.symmetric(
               horizontal: scale.spacing(16, min: 12, max: 22),
@@ -299,9 +295,8 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
             ),
           ),
         ),
-      ),
-    );
-  }
+      );
+    }
 
   /// Layout Responsivo da Cena (Alinhado ao chão do ginásio e diálogo na altura dos olhos da Nuri)
   Widget _buildSceneLayout(
@@ -318,10 +313,10 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
       // LAYOUT WIDESCREEN / DESKTOP / TABLET (Nuri no chão, Diálogo na altura da cabeça/olhos)
       final double maxSpriteH = uiScale.size(
         uiScale.isDesktop ? 640.0 : 460.0,
-        min: 200.0,
+        min: 120.0,
         max: 850.0,
       );
-      final double spriteHeight = (maxH * (maxH < 450 ? 0.62 : 0.74)).clamp(160.0, maxSpriteH);
+      final double spriteHeight = (maxH * (maxH < 450 ? 0.58 : 0.72)).clamp(50.0, maxSpriteH);
       final double spriteWidth = spriteHeight * (540.0 / 900.0);
 
       return Align(
@@ -399,68 +394,73 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
         ),
       );
     } else {
-      // LAYOUT MOBILE / TELAS VERTICAIS ESTREITAS
-      final double spriteHeight = (maxH * 0.36).clamp(140.0, 240.0);
+      // LAYOUT MOBILE / TELAS VERTICAIS ESTREITAS (Com scroll de segurança anti-overflow)
+      final double spriteHeight = (maxH * 0.30).clamp(50.0, 220.0);
       final double spriteWidth = spriteHeight * (540.0 / 900.0);
 
       return Align(
         alignment: Alignment.bottomCenter,
-        child: Padding(
-          padding: const EdgeInsets.only(
-            left: 12,
-            right: 12,
-            bottom: 10,
-            top: 4,
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              // 1. PROFESSORA NURI (NO CHÃO)
-              Stack(
-                alignment: Alignment.bottomCenter,
-                children: [
-                  Positioned(
-                    bottom: 4,
-                    child: Container(
-                      width: spriteWidth * 0.75,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(100),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.55),
-                            blurRadius: 12,
-                            spreadRadius: 2,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+        child: SingleChildScrollView(
+          physics: const ClampingScrollPhysics(),
+          reverse: true,
+          child: Padding(
+            padding: const EdgeInsets.only(
+              left: 12,
+              right: 12,
+              bottom: 10,
+              top: 4,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                // 1. PROFESSORA NURI (NO CHÃO)
+                Stack(
+                  alignment: Alignment.bottomCenter,
+                  children: [
+                    Positioned(
+                      bottom: 4,
+                      child: Container(
+                        width: spriteWidth * 0.75,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(100),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.55),
+                              blurRadius: 12,
+                              spreadRadius: 2,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  _buildNuriSprite(spriteWidth, spriteHeight),
-                ],
-              ),
-
-              const SizedBox(height: 6),
-
-              // 2. CARD NARRATIVO NA BASE
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 520),
-                child: SpeechBubbleWidget(
-                  step: step,
-                  displayedText: _displayedText,
-                  currentStepIndex: _currentStepIndex,
-                  totalSteps: _steps.length,
-                  isTyping: _isTyping,
-                  pulseAnimation: _pulseAnimation,
-                  tailPosition: TailPosition.none,
-                  onTapCard: () {
-                    if (_isTyping) _finishTyping();
-                  },
-                  onPressedNext: _onNextPressed,
+                    _buildNuriSprite(spriteWidth, spriteHeight),
+                  ],
                 ),
-              ),
-            ],
+
+                const SizedBox(height: 6),
+
+                // 2. CARD NARRATIVO NA BASE
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 520),
+                  child: SpeechBubbleWidget(
+                    step: step,
+                    displayedText: _displayedText,
+                    currentStepIndex: _currentStepIndex,
+                    totalSteps: _steps.length,
+                    isTyping: _isTyping,
+                    pulseAnimation: _pulseAnimation,
+                    tailPosition: TailPosition.none,
+                    onTapCard: () {
+                      if (_isTyping) _finishTyping();
+                    },
+                    onPressedNext: _onNextPressed,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -712,12 +712,7 @@ class SpeechBubbleWidget extends StatelessWidget {
                       SizedBox(height: scale.spacing(12, min: 8, max: 18)),
 
                       // Texto com Efeito Typewriter e Realce de Palavras-Chave
-                      ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minHeight: scale.size(54, min: 40, max: 78),
-                        ),
-                        child: _buildRichDialogueText(displayedText, scale),
-                      ),
+                      _buildRichDialogueText(displayedText, scale),
 
                       SizedBox(height: scale.spacing(14, min: 10, max: 20)),
 

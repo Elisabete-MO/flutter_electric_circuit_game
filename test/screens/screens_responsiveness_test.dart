@@ -28,6 +28,8 @@ void main() {
     Size(390, 844),   // Mobile Portrait
     Size(360, 780),   // Mobile Portrait padrão
     Size(320, 568),   // Mobile Portrait compacto
+    Size(320, 480),   // Mobile Portrait ultra-curto (iPhone 4)
+    Size(600, 300),   // Mobile Landscape ultra-curto
   ];
 
   Widget createTestApp(Widget home) {
