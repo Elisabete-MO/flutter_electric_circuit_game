@@ -403,16 +403,11 @@ class WorkbenchDeskPainter extends CustomPainter {
 
     canvas.drawRRect(woodRRect, woodPaint);
 
-    // Veios sutis da madeira (linhas orgânicas muito suaves)
-    final grainPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.035)
-      ..strokeWidth = 1.0
-      ..style = PaintingStyle.stroke;
-
-    final double grainStep = math.max(12.0, size.height / 28);
-    for (double y = grainStep; y < size.height; y += grainStep) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), grainPaint);
-    }
+    // Textura rica da madeira de carvalho (pranchas, veios sinuosos, nós e bisel 3D)
+    canvas.save();
+    canvas.clipRRect(woodRRect);
+    _drawWoodTexture(canvas, size);
+    canvas.restore();
 
     // 2. Lousa Verde Central / Tapete de Montagem Maker
     final boardMarginHorizontal = borderMargin;
@@ -538,6 +533,114 @@ class WorkbenchDeskPainter extends CustomPainter {
         center + const Offset(-2.0, -2.0),
         center + const Offset(2.0, 2.0),
         fendaPaint,
+      );
+    }
+  }
+
+  void _drawWoodTexture(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+
+    // A. Pranchas de carvalho (linhas horizontais divisórias sutis)
+    final double plankHeight = math.max(38.0, h / 6.5);
+    final plankDark = Paint()
+      ..color = const Color(0xFF532407).withValues(alpha: 0.16)
+      ..strokeWidth = 1.6
+      ..style = PaintingStyle.stroke;
+    final plankLight = Paint()
+      ..color = const Color(0xFFFFE5B4).withValues(alpha: 0.12)
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke;
+
+    for (double y = plankHeight; y < h; y += plankHeight) {
+      final pathDark = Path()..moveTo(0, y);
+      final pathLight = Path()..moveTo(0, y + 1.2);
+      for (double x = 20; x <= w; x += 20) {
+        final dy = 0.6 * math.sin(x * 0.02 + y);
+        pathDark.lineTo(x, y + dy);
+        pathLight.lineTo(x, y + 1.2 + dy);
+      }
+      canvas.drawPath(pathDark, plankDark);
+      canvas.drawPath(pathLight, plankLight);
+    }
+
+    // B. Veios e estrias finas orgânicas da madeira
+    final fiberDark = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    final fiberLight = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final double fiberStep = math.max(5.0, h / 45);
+    for (double y = fiberStep * 0.5; y < h; y += fiberStep) {
+      final double waveFreq = 0.008 + ((y * 17) % 7) * 0.0015;
+      final double waveAmp = 1.2 + ((y * 29) % 5) * 0.6;
+      final double yOffsetPhase = (y * 0.13) % (2 * math.pi);
+
+      final bool isHighlight = (y.toInt() % 3 == 0);
+      final double alpha = isHighlight ? 0.045 : 0.065;
+
+      final paint = isHighlight
+          ? (fiberLight
+            ..color = const Color(0xFFFFE8B8).withValues(alpha: alpha)
+            ..strokeWidth = (y.toInt() % 2 == 0) ? 1.0 : 0.6)
+          : (fiberDark
+            ..color = const Color(0xFF4A1F04).withValues(alpha: alpha)
+            ..strokeWidth = (y.toInt() % 2 == 0) ? 1.2 : 0.8);
+
+      final path = Path()..moveTo(0, y);
+      const double stepX = 25.0;
+      for (double x = stepX; x <= w; x += stepX) {
+        final curveY = y + waveAmp * math.sin(x * waveFreq + yOffsetPhase);
+        path.lineTo(x, curveY);
+      }
+      canvas.drawPath(path, paint);
+    }
+
+    // C. Nós / Anéis de crescimento suaves de carvalho nos cantos
+    _drawWoodKnot(canvas, Offset(w * 0.14, h * 0.22), radiusX: 52, radiusY: 14);
+    _drawWoodKnot(canvas, Offset(w * 0.86, h * 0.78), radiusX: 62, radiusY: 16);
+
+    // D. Bisel de relevo e espessura do tampo
+    final topHighlight = Paint()
+      ..shader = LinearGradient(
+        colors: [
+          Colors.white.withValues(alpha: 0.35),
+          Colors.white.withValues(alpha: 0.12),
+          Colors.transparent,
+        ],
+        stops: const [0.0, 0.4, 1.0],
+      ).createShader(Rect.fromLTWH(0, 0, w, 3))
+      ..strokeWidth = 1.8
+      ..style = PaintingStyle.stroke;
+    canvas.drawLine(const Offset(4, 1), Offset(w - 4, 1), topHighlight);
+
+    final bottomShadow = Paint()
+      ..color = const Color(0xFF381502).withValues(alpha: 0.45)
+      ..strokeWidth = 2.5
+      ..style = PaintingStyle.stroke;
+    canvas.drawLine(Offset(4, h - 1.2), Offset(w - 4, h - 1.2), bottomShadow);
+  }
+
+  void _drawWoodKnot(
+    Canvas canvas,
+    Offset center, {
+    required double radiusX,
+    required double radiusY,
+  }) {
+    for (int ring = 1; ring <= 4; ring++) {
+      final rx = radiusX * (ring / 4.0);
+      final ry = radiusY * (ring / 4.0);
+      final knotPaint = Paint()
+        ..color = (ring % 2 == 0)
+            ? const Color(0xFF582405).withValues(alpha: 0.08)
+            : const Color(0xFFFFD99E).withValues(alpha: 0.05)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0;
+      canvas.drawOval(
+        Rect.fromCenter(center: center, width: rx * 2, height: ry * 2),
+        knotPaint,
       );
     }
   }
