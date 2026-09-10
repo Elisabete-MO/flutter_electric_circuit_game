@@ -8,7 +8,6 @@ import '../app/routes.dart';
 import '../app/theme.dart';
 import '../core/ui_scale.dart';
 import '../state/progress_controller.dart';
-import '../widgets/eletrolab_header_brand.dart';
 
 /// Posição da cauda/pointer do Balão de Fala.
 enum TailPosition { left, bottom }
@@ -240,7 +239,7 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
     );
   }
 
-  /// Barra de topo com o título do EletroLab e o botão Pular
+  /// Barra de topo com o botão Pular
   Widget _buildHeader(BuildContext context) {
     final scale = context.uiScale;
 
@@ -249,52 +248,48 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
         horizontal: scale.spacing(20, min: 14, max: 32),
         vertical: scale.spacing(12, min: 8, max: 20),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const EletroLabHeaderBrand(),
-
-          InkWell(
-            onTap: _enterGym,
-            borderRadius: BorderRadius.circular(
-              scale.size(22, min: 16, max: 30),
+      child: Align(
+        alignment: Alignment.topRight,
+        child: InkWell(
+          onTap: _enterGym,
+          borderRadius: BorderRadius.circular(
+            scale.size(22, min: 16, max: 30),
+          ),
+          child: Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: scale.spacing(16, min: 12, max: 24),
+              vertical: scale.spacing(9, min: 7, max: 15),
             ),
-            child: Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: scale.spacing(16, min: 12, max: 24),
-                vertical: scale.spacing(9, min: 7, max: 15),
+            decoration: BoxDecoration(
+              color: const Color(0xFF04281E).withValues(alpha: 0.85),
+              borderRadius: BorderRadius.circular(
+                scale.size(22, min: 16, max: 30),
               ),
-              decoration: BoxDecoration(
-                color: const Color(0xFF04281E).withValues(alpha: 0.85),
-                borderRadius: BorderRadius.circular(
-                  scale.size(22, min: 16, max: 30),
-                ),
-                border: Border.all(
-                  color: const Color(0xFF10B981).withValues(alpha: 0.45),
-                ),
+              border: Border.all(
+                color: const Color(0xFF10B981).withValues(alpha: 0.45),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Pular',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontWeight: FontWeight.w600,
-                      fontSize: scale.font(14.5, min: 12, max: 20),
-                    ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Pular',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w600,
+                    fontSize: scale.font(14.5, min: 12, max: 20),
                   ),
-                  SizedBox(width: scale.spacing(6, min: 3, max: 10)),
-                  Icon(
-                    Icons.fast_forward_rounded,
-                    color: const Color(0xFF10B981),
-                    size: scale.icon(18, min: 15, max: 24),
-                  ),
-                ],
-              ),
+                ),
+                SizedBox(width: scale.spacing(6, min: 4, max: 10)),
+                Icon(
+                  Icons.skip_next_rounded,
+                  color: Colors.white70,
+                  size: scale.icon(18, min: 14, max: 24),
+                ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }

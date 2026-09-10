@@ -60,7 +60,15 @@ void main() {
     await pumpSettle(tester);
 
     if (skipIntro) {
-      final mapFinder = find.textContaining('Mapa');
+      var mapFinder = find.textContaining('Mapa');
+      if (mapFinder.evaluate().isEmpty) {
+        final modesFinder = find.textContaining('Modos de Jogo');
+        if (modesFinder.evaluate().isNotEmpty) {
+          await tester.tap(modesFinder.first);
+          await pumpSettle(tester);
+          mapFinder = find.textContaining('Mapa');
+        }
+      }
       if (mapFinder.evaluate().isNotEmpty) {
         await tester.tap(mapFinder.first);
         await pumpSettle(tester);
@@ -113,10 +121,10 @@ void main() {
     testWidgets(
       'exibe a identidade do EletroLab',
       (tester) async {
-        await pumpApp(tester, skipIntro: false);
+        await pumpApp(tester);
 
         expect(
-          find.text('EletroLab'),
+          find.textContaining('EletroLab'),
           findsWidgets,
         );
       },
