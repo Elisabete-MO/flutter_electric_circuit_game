@@ -473,105 +473,108 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
 
   /// Cabeçalho com a Marca Oficial Horizontal sem fundo (monograma na altura dos textos)
   Widget _buildBrandingHeader(UiScale scale) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        // Emblema Vetorial monocromático branco acompanhando a altura total dos textos
-        CircuitEEmblem(
-          size: scale.size(54, min: 44, max: 64),
-          color: Colors.white,
-          progress: 1.0,
-          pulseGlow: true,
-        ),
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Emblema Vetorial monocromático branco acompanhando a altura total dos textos
+          CircuitEEmblem(
+            size: scale.size(54, min: 44, max: 64),
+            color: Colors.white,
+            progress: 1.0,
+            pulseGlow: true,
+          ),
 
-        SizedBox(width: scale.spacing(14, min: 10, max: 18)),
+          SizedBox(width: scale.spacing(14, min: 10, max: 18)),
 
-        // Textos alinhados horizontalmente ao lado do emblema
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Linha superior: Marca Oficial ELETROLAB dual-tone + Badge de Volume
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(
-                        text: 'ELETRO',
-                        style: TextStyle(
-                          color: const Color(0xFFF8FAFC),
-                          shadows: [
-                            Shadow(
-                              color: Colors.black.withValues(alpha: 0.75),
-                              blurRadius: scale.size(8),
-                              offset: Offset(0, scale.size(2)),
-                            ),
-                            Shadow(
-                              color: const Color(
-                                0xFF34D399,
-                              ).withValues(alpha: 0.70),
-                              blurRadius: scale.size(10),
-                            ),
-                          ],
+          // Textos alinhados horizontalmente ao lado do emblema
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Linha superior: Marca Oficial ELETROLAB dual-tone + Badge de Volume
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: 'ELETRO',
+                          style: TextStyle(
+                            color: const Color(0xFFF8FAFC),
+                            shadows: [
+                              Shadow(
+                                color: Colors.black.withValues(alpha: 0.75),
+                                blurRadius: scale.size(8),
+                                offset: Offset(0, scale.size(2)),
+                              ),
+                              Shadow(
+                                color: const Color(
+                                  0xFF34D399,
+                                ).withValues(alpha: 0.70),
+                                blurRadius: scale.size(10),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      TextSpan(
-                        text: 'LAB',
-                        style: TextStyle(
-                          color: const Color(0xFFFBBF24),
-                          shadows: [
-                            Shadow(
-                              color: Colors.black.withValues(alpha: 0.75),
-                              blurRadius: scale.size(8),
-                              offset: Offset(0, scale.size(2)),
-                            ),
-                            Shadow(
-                              color: const Color(
-                                0xFFF59E0B,
-                              ).withValues(alpha: 0.85),
-                              blurRadius: scale.size(12),
-                            ),
-                          ],
+                        TextSpan(
+                          text: 'LAB',
+                          style: TextStyle(
+                            color: const Color(0xFFFBBF24),
+                            shadows: [
+                              Shadow(
+                                color: Colors.black.withValues(alpha: 0.75),
+                                blurRadius: scale.size(8),
+                                offset: Offset(0, scale.size(2)),
+                              ),
+                              Shadow(
+                                color: const Color(
+                                  0xFFF59E0B,
+                                ).withValues(alpha: 0.85),
+                                blurRadius: scale.size(12),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
+                    style: GoogleFonts.orbitron(
+                      fontSize: scale.font(22, min: 17, max: 28),
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 2.5,
+                    ),
                   ),
-                  style: GoogleFonts.orbitron(
-                    fontSize: scale.font(22, min: 17, max: 28),
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 2.5,
-                  ),
-                ),
-                SizedBox(width: scale.spacing(8, min: 6, max: 12)),
-                _buildVolumeBadge(scale),
-              ],
-            ),
-
-            SizedBox(height: scale.spacing(3)),
-
-            // Subtítulo Oficial
-            Text(
-              'ENERGIZANDO A FEIRA DE CIÊNCIAS',
-              style: GoogleFonts.outfit(
-                color: Colors.white,
-                fontSize: scale.font(10.5, min: 8.5, max: 13.0),
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.6,
-                shadows: [
-                  Shadow(
-                    color: Colors.black.withValues(alpha: 0.85),
-                    blurRadius: scale.size(6),
-                    offset: Offset(0, scale.size(1.5)),
-                  ),
+                  SizedBox(width: scale.spacing(8, min: 6, max: 12)),
+                  _buildVolumeBadge(scale),
                 ],
               ),
-            ),
-          ],
-        ),
-      ],
+
+              SizedBox(height: scale.spacing(3)),
+
+              // Subtítulo Oficial
+              Text(
+                'ENERGIZANDO A FEIRA DE CIÊNCIAS',
+                style: GoogleFonts.outfit(
+                  color: Colors.white,
+                  fontSize: scale.font(10.5, min: 8.5, max: 13.0),
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.6,
+                  shadows: [
+                    Shadow(
+                      color: Colors.black.withValues(alpha: 0.85),
+                      blurRadius: scale.size(6),
+                      offset: Offset(0, scale.size(1.5)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 

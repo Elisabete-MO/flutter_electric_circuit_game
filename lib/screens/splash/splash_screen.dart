@@ -185,14 +185,16 @@ class _SplashScreenState extends State<SplashScreen>
           // 3. Conteúdo Central de Energização
           SafeArea(
             child: Center(
-              child: Padding(
-                padding: scale.insetsSymmetric(horizontal: 28, vertical: 20),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: scale.size(520, min: 360, max: 720),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
+              child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                child: Padding(
+                  padding: scale.insetsSymmetric(horizontal: 28, vertical: 16),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: scale.size(520, min: 360, max: 720),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                     children: [
                       // Emblema Central com Raio Energizado
                       _buildEnergizedEmblem(scale, progress),
@@ -359,6 +361,7 @@ class _SplashScreenState extends State<SplashScreen>
               ),
             ),
           ),
+        ),
         ],
       ),
     );
