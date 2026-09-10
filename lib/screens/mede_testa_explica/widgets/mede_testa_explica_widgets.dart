@@ -322,72 +322,30 @@ class MedeTestaUndoRedoButtons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        color: Colors.white.withValues(alpha: 0.85),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFCBD5E1)),
       ),
+      padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Tooltip(
-            message: controller.canUndo
-                ? 'Desfazer: ${controller.lastUndoDescription}'
-                : 'Nada para desfazer',
-            child: IconButton(
-              icon: Icon(
-                Icons.undo_rounded,
-                color: controller.canUndo
-                    ? const Color(0xFF0284C7)
-                    : const Color(0xFFCBD5E1),
-                size: 22,
-              ),
-              onPressed: controller.canUndo ? onUndo : null,
-              style: IconButton.styleFrom(
-                backgroundColor: controller.canUndo
-                    ? const Color(0xFF0284C7).withValues(alpha: 0.1)
-                    : Colors.transparent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
+          IconButton(
+            icon: const Icon(Icons.undo_rounded, size: 20),
+            tooltip: 'Desfazer ação',
+            color: controller.canUndo
+                ? const Color(0xFF0F172A)
+                : const Color(0xFFCBD5E1),
+            onPressed: controller.canUndo ? onUndo : null,
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Text(
-              '${controller.undoCount}',
-              style: GoogleFonts.rajdhani(
-                color: const Color(0xFF64748B),
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          Tooltip(
-            message: controller.canRedo
-                ? 'Refazer: ${controller.lastRedoDescription}'
-                : 'Nada para refazer',
-            child: IconButton(
-              icon: Icon(
-                Icons.redo_rounded,
-                color: controller.canRedo
-                    ? const Color(0xFF0284C7)
-                    : const Color(0xFFCBD5E1),
-                size: 22,
-              ),
-              onPressed: controller.canRedo ? onRedo : null,
-              style: IconButton.styleFrom(
-                backgroundColor: controller.canRedo
-                    ? const Color(0xFF0284C7).withValues(alpha: 0.1)
-                    : Colors.transparent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
+          IconButton(
+            icon: const Icon(Icons.redo_rounded, size: 20),
+            tooltip: 'Refazer ação',
+            color: controller.canRedo
+                ? const Color(0xFF0F172A)
+                : const Color(0xFFCBD5E1),
+            onPressed: controller.canRedo ? onRedo : null,
           ),
         ],
       ),
