@@ -304,6 +304,8 @@ class WorkbenchResponsiveLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scale = context.uiScale;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final w = constraints.maxWidth;
@@ -311,15 +313,19 @@ class WorkbenchResponsiveLayout extends StatelessWidget {
 
         // Modo Vertical / Empilhado para telas estreitas (portrait ou mobile < 720px)
         if (w < 720) {
+          final benchHeight = h > 0
+              ? (h * 0.58).clamp(scale.size(320, min: 280, max: 480), scale.size(500, min: 380, max: 640))
+              : scale.size(340, min: 300, max: 480);
+
           return SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 SizedBox(
-                  height: h > 0 ? (h * 0.58).clamp(320.0, 500.0) : 340.0,
+                  height: benchHeight,
                   child: workbench,
                 ),
-                SizedBox(height: spacing),
+                SizedBox(height: scale.spacing(spacing, min: 10, max: 24)),
                 sidePanel,
               ],
             ),
@@ -327,14 +333,19 @@ class WorkbenchResponsiveLayout extends StatelessWidget {
         }
 
         // Modo Horizontal com Proporção Otimizada
-        // Painel lateral com largura calibrada entre 270px e 340px
-        final sidePanelWidth = (w * 0.28).clamp(270.0, 340.0);
+        // Painel lateral com largura calibrada pelo UiScale (270px a 340px em 1080p, escalando em 2K/4K)
+        final sidePanelWidth = scale.cardWidth(
+          300.0,
+          maxPercent: 0.32,
+          min: 270.0,
+          max: scale.size(360.0, min: 300.0, max: 540.0),
+        );
 
         return Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(child: workbench),
-            SizedBox(width: spacing),
+            SizedBox(width: scale.spacing(spacing, min: 10, max: 24)),
             SizedBox(
               width: sidePanelWidth,
               child: sidePanel,
