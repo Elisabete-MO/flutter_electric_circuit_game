@@ -145,15 +145,15 @@ Reconhecer motor CC como carga e relacionar polaridade, controle e movimento.
 
 “Luz e movimento sao resultados diferentes da mesma energia eletrica.”
 
-### Banco de missoes candidatas
+### Banco de missões (Implementadas no Estande 06)
 
-| Missao candidata | Objetivo | Componentes/conceitos | Fenomeno ou validacao | Status |
+| Missão | Objetivo | Componentes / Conceitos | Fenômeno / Validação na Protoboard | Status |
 |---|---|---|---|---|
-| Primeiro giro | Energizar motor. | Dois terminais do motor. | Rotacao. | Proposta |
-| Troca de sentido | Inverter polaridade. | Motor CC e fonte. | Direcao de rotacao. | Em validacao tecnica |
-| Botao de partida | Controlar motor. | SPST. | Liga/desliga. | Proposta |
-| Indicador | Mostrar motor ativo. | LED/resistor. | Indicacao protegida. | Proposta |
-| Carrinho parado | Diagnosticar falha. | Fonte, caminho e chave. | Correcao causal. | Proposta |
+| **M1: Primeiro Giro** | Conectar motor CC aos barramentos da Protoboard. | Motor CC 6V, Protoboard, Bateria 9V com snap clip. | Torque rotacional no sentido horário ↻ e fluxo de elétrons. | **Implementada** |
+| **M2: Troca de Sentido** | Inverter polaridade dos cabos de alimentação. | Polos `(+)` e `(–)` nos terminais do motor. | Inversão do campo magnético e rotação anti-horária ↺. | **Implementada** |
+| **M3: Botão de Partida** | Controlar acionamento sob demanda. | Chave táctil (Pushbutton de 4 pinos) na vala central. | Interrupção física do circuito e partida pulsada. | **Implementada** |
+| **M4: Chaveamento & Indicador** | Chavear motor via transistor com LED de status. | Transistor NPN TO-92, resistor de base e LED Verde. | Chaveamento de carga indutiva e compartilhamento de tensão 6V. | **Implementada** |
+| **M5: Ponte H Bidirecional** | Controlar sentido bidirecional eletronicamente. | Ponte H com 4 transistores NPN e LEDs D0/D1. | Comutação lógica sem inversão manual de fios (D0 Verde / D1 Vermelho). | **Implementada** |
 
 ## Mede, Testa e Explica
 
