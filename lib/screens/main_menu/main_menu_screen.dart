@@ -555,13 +555,13 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
             Text(
               'ENERGIZANDO A FEIRA DE CIÊNCIAS',
               style: GoogleFonts.outfit(
-                color: const Color(0xFF34D399),
+                color: Colors.white,
                 fontSize: scale.font(10.5, min: 8.5, max: 13.0),
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.6,
                 shadows: [
                   Shadow(
-                    color: Colors.black.withValues(alpha: 0.8),
+                    color: Colors.black.withValues(alpha: 0.85),
                     blurRadius: scale.size(6),
                     offset: Offset(0, scale.size(1.5)),
                   ),
