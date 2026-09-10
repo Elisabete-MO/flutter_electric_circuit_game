@@ -13,10 +13,12 @@ import '../screens/movimento_miniatura/movimento_miniatura_screen.dart';
 import '../screens/ruas_maquete/ruas_maquete_screen.dart';
 import '../screens/sandbox/sandbox_screen.dart';
 import '../screens/settings/settings_screen.dart';
+import '../screens/splash/splash_screen.dart';
 
 /// Rotas nomeadas do EletroLab.
 abstract final class Routes {
-  static const String menu = '/';
+  static const String splash = '/';
+  static const String menu = '/menu';
   static const String intro = '/intro';
   static const String home = '/home';
   static const String firstSteps = '/first-steps';
@@ -31,6 +33,7 @@ abstract final class Routes {
   static const String settings = '/settings';
 
   static final Map<String, WidgetBuilder> all = {
+    splash: (_) => const SplashScreen(),
     menu: (_) => const MainMenuScreen(),
     intro: (_) => const IntroScreen(),
     home: (_) => const HomeScreen(),

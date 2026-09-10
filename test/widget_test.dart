@@ -53,7 +53,7 @@ void main() {
             () => SettingsController(initial: settings),
           ),
         ],
-        child: const EletroLabApp(),
+        child: const EletroLabApp(initialRoute: Routes.menu),
       ),
     );
 

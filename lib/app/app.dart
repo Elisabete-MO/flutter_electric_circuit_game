@@ -12,7 +12,13 @@ import '../widgets/landscape_guard.dart';
 
 /// Widget raiz do EletroLab.
 class EletroLabApp extends ConsumerWidget {
-  const EletroLabApp({super.key});
+  const EletroLabApp({
+    super.key,
+    this.initialRoute,
+  });
+
+  /// Rota inicial opcional (padrão: Routes.splash)
+  final String? initialRoute;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -32,7 +38,7 @@ class EletroLabApp extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: AppLocalizations.supportedLocales,
-      initialRoute: Routes.menu,
+      initialRoute: initialRoute ?? Routes.splash,
       routes: Routes.all,
       builder: (context, child) {
         final mediaQuery = MediaQuery.of(context);

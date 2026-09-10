@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../app/routes.dart';
 import '../app/theme.dart';
 import '../core/ui_scale.dart';
+import '../state/progress_controller.dart';
 import '../widgets/eletrolab_header_brand.dart';
 
 /// Posição da cauda/pointer do Balão de Fala.
@@ -172,6 +173,12 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
   }
 
   void _enterGym() {
+    try {
+      final prefs = ref.read(sharedPreferencesProvider);
+      prefs.setBool('has_seen_intro', true);
+    } catch (_) {
+      // Ignora caso SharedPreferences não esteja configurado
+    }
     Navigator.of(context).pushReplacementNamed(Routes.home);
   }
 
