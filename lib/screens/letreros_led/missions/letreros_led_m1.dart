@@ -210,6 +210,7 @@ class _LetrerosLedM1State extends State<LetrerosLedM1>
           _isClosed,
         ),
         bottomWidget: _buildUndoRedoButtons(),
+        voltsTip: _mission.voltsMediation,
         child: _buildWorkbenchDisplay(),
       ),
       sidePanel: WorkbenchSidePanel(

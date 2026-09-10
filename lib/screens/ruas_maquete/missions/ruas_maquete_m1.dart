@@ -169,6 +169,7 @@ class _RuasMaqueteM1State extends State<RuasMaqueteM1>
               _isClosed,
             ),
             bottomWidget: _buildUndoRedoButtons(),
+            voltsTip: _mission.voltsMediation,
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final w = constraints.maxWidth;

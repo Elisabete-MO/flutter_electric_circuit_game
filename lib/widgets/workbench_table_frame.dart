@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../core/ui_scale.dart';
+import 'prof_volts_feedback_dialog.dart';
+import 'workbench_sidebar_cards.dart';
 
 /// Moldura Padronizada da Mesa de Laboratório (EletroLab)
 /// Utiliza o asset `mesa_eletrolab_vista_superior.png` como fundo vetorial/fotográfico
@@ -15,6 +17,8 @@ class WorkbenchTableFrame extends StatelessWidget {
   final Widget? rightHeaderWidget;
   final Widget? bottomWidget;
   final bool showModeSelector;
+  final String? voltsTip;
+  final VoidCallback? onHintPressed;
 
   const WorkbenchTableFrame({
     super.key,
@@ -25,6 +29,8 @@ class WorkbenchTableFrame extends StatelessWidget {
     this.rightHeaderWidget,
     this.bottomWidget,
     this.showModeSelector = true,
+    this.voltsTip,
+    this.onHintPressed,
   });
 
   @override
@@ -138,6 +144,78 @@ class WorkbenchTableFrame extends StatelessWidget {
                 right: 0,
                 child: Center(
                   child: bottomWidget!,
+                ),
+              ),
+
+            // 5. Botão Flutuante de Dica do Professor Volts (Canto Inferior Direito da Bancada)
+            if (voltsTip != null || onHintPressed != null)
+              Positioned(
+                bottom: scale.spacing(12, min: 8, max: 20),
+                right: scale.spacing(14, min: 8, max: 22),
+                child: Tooltip(
+                  message: 'Dica do Professor Volts',
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        if (onHintPressed != null) {
+                          onHintPressed!();
+                        } else if (voltsTip != null && voltsTip!.isNotEmpty) {
+                          showDialog(
+                            context: context,
+                            builder: (ctx) => ProfVoltsTipDialog(voltsTip: voltsTip!),
+                          );
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(scale.size(24, min: 18, max: 32)),
+                      child: Container(
+                        height: scale.size(40, min: 32, max: 48),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: scale.spacing(10, min: 7, max: 14),
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.95),
+                          borderRadius: BorderRadius.circular(
+                            scale.size(24, min: 18, max: 32),
+                          ),
+                          border: Border.all(
+                            color: const Color(0xFFF59E0B),
+                            width: 1.5,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFD97706).withValues(alpha: 0.25),
+                              blurRadius: scale.size(8, min: 4, max: 14),
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            ProfVoltsAvatar(
+                              size: scale.size(24, min: 18, max: 30),
+                            ),
+                            SizedBox(width: scale.spacing(5, min: 3, max: 8)),
+                            Text(
+                              'Dica',
+                              style: GoogleFonts.outfit(
+                                color: const Color(0xFFB45309),
+                                fontWeight: FontWeight.bold,
+                                fontSize: scale.font(UiTypography.label),
+                              ),
+                            ),
+                            SizedBox(width: scale.spacing(2, min: 1, max: 4)),
+                            Icon(
+                              Icons.lightbulb_rounded,
+                              size: scale.icon(16, min: 12, max: 20),
+                              color: const Color(0xFFF59E0B),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
           ],

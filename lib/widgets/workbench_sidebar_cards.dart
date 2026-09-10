@@ -282,6 +282,7 @@ class WorkbenchMissionObjectiveCard extends StatefulWidget {
   final String voltsTip;
   final Color accentColor;
   final bool initiallyExpanded;
+  final bool showInlineHint;
 
   const WorkbenchMissionObjectiveCard({
     super.key,
@@ -291,6 +292,7 @@ class WorkbenchMissionObjectiveCard extends StatefulWidget {
     required this.voltsTip,
     this.accentColor = const Color(0xFF0284C7),
     this.initiallyExpanded = false,
+    this.showInlineHint = false,
   });
 
   @override
@@ -374,8 +376,8 @@ class _WorkbenchMissionObjectiveCardState
             ),
           ),
 
-          // Botão Interativo de Dica do Professor Volts (enxuga o card por padrão)
-          if (widget.voltsTip.isNotEmpty) ...[
+          // Botão Interativo Opcional de Dica do Prof. Volts (se habilitado)
+          if (widget.showInlineHint && widget.voltsTip.isNotEmpty) ...[
             SizedBox(height: scale.spacing(10, min: 6, max: 16)),
             InkWell(
               onTap: () => setState(() => _isExpanded = !_isExpanded),
@@ -400,30 +402,33 @@ class _WorkbenchMissionObjectiveCardState
                     width: 1.0,
                   ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    ProfVoltsAvatar(size: scale.size(20, min: 16, max: 28)),
-                    SizedBox(width: scale.spacing(6, min: 4, max: 10)),
-                    Text(
-                      _isExpanded
-                          ? 'Ocultar dica do Prof. Volts'
-                          : 'Dica do Prof. Volts',
-                      style: GoogleFonts.outfit(
-                        color: const Color(0xFFB45309),
-                        fontWeight: FontWeight.w600,
-                        fontSize: scale.font(UiTypography.label),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ProfVoltsAvatar(size: scale.size(20, min: 16, max: 28)),
+                      SizedBox(width: scale.spacing(6, min: 4, max: 10)),
+                      Text(
+                        _isExpanded
+                            ? 'Ocultar dica do Prof. Volts'
+                            : 'Dica do Prof. Volts',
+                        style: GoogleFonts.outfit(
+                          color: const Color(0xFFB45309),
+                          fontWeight: FontWeight.w600,
+                          fontSize: scale.font(UiTypography.label),
+                        ),
                       ),
-                    ),
-                    SizedBox(width: scale.spacing(4, min: 2, max: 8)),
-                    Icon(
-                      _isExpanded
-                          ? Icons.keyboard_arrow_up_rounded
-                          : Icons.keyboard_arrow_down_rounded,
-                      color: const Color(0xFFB45309),
-                      size: scale.icon(18, min: 14, max: 24),
-                    ),
-                  ],
+                      SizedBox(width: scale.spacing(4, min: 2, max: 8)),
+                      Icon(
+                        _isExpanded
+                            ? Icons.keyboard_arrow_up_rounded
+                            : Icons.keyboard_arrow_down_rounded,
+                        color: const Color(0xFFB45309),
+                        size: scale.icon(18, min: 14, max: 24),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

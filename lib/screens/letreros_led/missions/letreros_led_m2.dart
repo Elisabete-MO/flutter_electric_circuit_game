@@ -184,6 +184,7 @@ class _LetrerosLedM2State extends State<LetrerosLedM2>
           _m2LedInvertedFixed,
         ),
         bottomWidget: _buildUndoRedoButtons(),
+        voltsTip: _mission.voltsMediation,
         child: _buildWorkbenchDisplay(),
       ),
       sidePanel: WorkbenchSidePanel(
