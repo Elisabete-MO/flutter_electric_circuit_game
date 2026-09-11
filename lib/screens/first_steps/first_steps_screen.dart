@@ -98,35 +98,44 @@ class _FirstStepsScreenState extends State<FirstStepsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0B1120),
-      body: TechGridBackground(
-        child: SafeArea(
-          child: Column(
-            children: [
-              // Cabeçalho Padronizado do Estande
-              StandFlowHeader(
-                standName: 'Primeiros Passos',
-                standNumber: 1,
-                totalMissions: 3,
-                currentMissionNumber: _currentModuleNumber,
-                completedMissionNumbers: _completedModuleNumbers,
-                unlockedMissionNumbers: _unlockedModuleNumbers,
-                onSelectMission: (missionNum) =>
-                    setState(() => _currentModuleNumber = missionNum),
-                onHelpTap: _showHelpDialog,
-              ),
-              // Conteúdo do Módulo Ativo
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    child: _buildCurrentModule(),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          StandNavigator.navigateBackToFairMap(context);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFF0B1120),
+        body: TechGridBackground(
+          child: SafeArea(
+            child: Column(
+              children: [
+                // Cabeçalho Padronizado do Estande
+                StandFlowHeader(
+                  standName: 'Primeiros Passos',
+                  standNumber: 1,
+                  totalMissions: 3,
+                  currentMissionNumber: _currentModuleNumber,
+                  completedMissionNumbers: _completedModuleNumbers,
+                  unlockedMissionNumbers: _unlockedModuleNumbers,
+                  onSelectMission: (missionNum) =>
+                      setState(() => _currentModuleNumber = missionNum),
+                  onHelpTap: _showHelpDialog,
+                  onBack: () => StandNavigator.navigateBackToFairMap(context),
+                ),
+                // Conteúdo do Módulo Ativo
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: _buildCurrentModule(),
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

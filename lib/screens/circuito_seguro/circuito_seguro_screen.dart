@@ -94,10 +94,7 @@ class _CircuitoSeguroScreenState extends ConsumerState<CircuitoSeguroScreen> {
                 ),
                 const SizedBox(height: 24),
                 FilledButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    Navigator.of(context).pop();
-                  },
+                  onPressed: () => StandNavigator.navigateBackToFairMap(context),
                   icon: const Icon(Icons.map_rounded),
                   label: Text(
                     'RETORNAR AO MAPA',
@@ -129,38 +126,46 @@ class _CircuitoSeguroScreenState extends ConsumerState<CircuitoSeguroScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
-      body: Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/backgrounds/floor.png'),
-            fit: BoxFit.cover,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          StandNavigator.navigateBackToFairMap(context);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFF0F172A),
+        body: Container(
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/backgrounds/floor.png'),
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              StandFlowHeader(
-                standName: 'CIRCUITO SEGURO',
-                standNumber: 8,
-                currentMissionNumber: _flowState.currentMissionNumber,
-                completedMissionNumbers: _flowState.completedMissionNumbers,
-                unlockedMissionNumbers: _flowState.unlockedMissionNumbers,
-                totalMissions: 5,
-                onSelectMission: _navigateToMission,
-                onBack: () => Navigator.of(context).maybePop(),
-              ),
-              Expanded(
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: _buildCurrentMissionWidget(),
+          child: SafeArea(
+            child: Column(
+              children: [
+                StandFlowHeader(
+                  standName: 'CIRCUITO SEGURO',
+                  standNumber: 8,
+                  currentMissionNumber: _flowState.currentMissionNumber,
+                  completedMissionNumbers: _flowState.completedMissionNumbers,
+                  unlockedMissionNumbers: _flowState.unlockedMissionNumbers,
+                  totalMissions: 5,
+                  onSelectMission: _navigateToMission,
+                  onBack: () => StandNavigator.navigateBackToFairMap(context),
+                ),
+                Expanded(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: _buildCurrentMissionWidget(),
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

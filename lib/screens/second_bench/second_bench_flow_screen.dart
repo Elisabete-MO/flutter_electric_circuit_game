@@ -129,10 +129,7 @@ class _SecondBenchFlowScreenState extends ConsumerState<SecondBenchFlowScreen> {
                 ),
                 const SizedBox(height: 24),
                 FilledButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    Navigator.of(context).pop(); // Retorna ao mapa
-                  },
+                  onPressed: () => StandNavigator.navigateBackToFairMap(context),
                   icon: const Icon(Icons.map_rounded),
                   label: Text(
                     'RETORNAR AO MAPA',
@@ -170,38 +167,46 @@ class _SecondBenchFlowScreenState extends ConsumerState<SecondBenchFlowScreen> {
       );
     }
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
-      body: Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/backgrounds/floor.png'),
-            fit: BoxFit.cover,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          StandNavigator.navigateBackToFairMap(context);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFF0F172A),
+        body: Container(
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/backgrounds/floor.png'),
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              StandFlowHeader(
-                standName: 'ACENDE AÍ',
-                standNumber: 2,
-                currentMissionNumber: _flowState.currentPhaseId,
-                completedMissionNumbers: _flowState.completedPhaseIds,
-                unlockedMissionNumbers: _flowState.unlockedPhaseIds,
-                totalMissions: 4,
-                onSelectMission: _navigateToPhase,
-                onBack: () => Navigator.of(context).maybePop(),
-              ),
-              Expanded(
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: _buildCurrentPhaseWidget(),
+          child: SafeArea(
+            child: Column(
+              children: [
+                StandFlowHeader(
+                  standName: 'ACENDE AÍ',
+                  standNumber: 2,
+                  currentMissionNumber: _flowState.currentPhaseId,
+                  completedMissionNumbers: _flowState.completedPhaseIds,
+                  unlockedMissionNumbers: _flowState.unlockedPhaseIds,
+                  totalMissions: 4,
+                  onSelectMission: _navigateToPhase,
+                  onBack: () => StandNavigator.navigateBackToFairMap(context),
+                ),
+                Expanded(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: _buildCurrentPhaseWidget(),
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

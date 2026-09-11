@@ -3,6 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/ui_scale.dart';
 import '../../widgets/eletrolab_header_brand.dart';
+import 'stand_navigator.dart';
+
+export 'stand_navigator.dart';
 
 /// Cabeçalho padronizado, esguio (slim) e balanceado em 3 zonas
 /// (Identidade, Stepper Central e Progresso/Ações) para os fluxos de missões dos estandes.
@@ -165,7 +168,7 @@ class StandFlowHeader extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             borderRadius: BorderRadius.circular(scale.size(8, min: 6, max: 12)),
-            onTap: onBack ?? () => Navigator.of(context).maybePop(),
+            onTap: onBack ?? () => StandNavigator.navigateBackToFairMap(context),
             child: Container(
               padding: EdgeInsets.all(scale.spacing(5, min: 3, max: 7)),
               decoration: BoxDecoration(
@@ -352,10 +355,8 @@ class StandFlowHeader extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (icon != null) ...[
-              icon,
-              SizedBox(width: scale.spacing(3, min: 2, max: 5)),
-            ],
+            icon,
+            SizedBox(width: scale.spacing(3, min: 2, max: 5)),
             Text(
               'Missão $missionNumber',
               style: GoogleFonts.rajdhani(

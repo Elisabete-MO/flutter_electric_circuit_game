@@ -39,6 +39,36 @@ class EletroLabApp extends ConsumerWidget {
       ],
       supportedLocales: AppLocalizations.supportedLocales,
       initialRoute: initialRoute ?? Routes.splash,
+      onGenerateInitialRoutes: (initialRoute) {
+        if (initialRoute == Routes.splash || initialRoute == '/') {
+          return [
+            MaterialPageRoute(
+              settings: const RouteSettings(name: Routes.splash),
+              builder: Routes.all[Routes.splash]!,
+            ),
+          ];
+        }
+        if (initialRoute != Routes.home &&
+            initialRoute != Routes.menu &&
+            Routes.all.containsKey(initialRoute)) {
+          return [
+            MaterialPageRoute(
+              settings: const RouteSettings(name: Routes.home),
+              builder: Routes.all[Routes.home]!,
+            ),
+            MaterialPageRoute(
+              settings: RouteSettings(name: initialRoute),
+              builder: Routes.all[initialRoute]!,
+            ),
+          ];
+        }
+        return [
+          MaterialPageRoute(
+            settings: RouteSettings(name: initialRoute),
+            builder: Routes.all[initialRoute] ?? Routes.all[Routes.splash]!,
+          ),
+        ];
+      },
       routes: Routes.all,
       builder: (context, child) {
         final mediaQuery = MediaQuery.of(context);

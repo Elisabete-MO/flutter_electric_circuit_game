@@ -157,6 +157,7 @@ class _LigaDesligaM3State extends State<LigaDesligaM3>
           child: WorkbenchTableFrame(
             usePhysicalStyle: _usePhysicalStyle,
             onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
+            voltsTip: _mission.voltsMediation,
             leftHeaderWidget: buildLigaDesligaStatusCard(_isClosed),
             rightHeaderWidget: buildLigaDesligaTelemetryCard(
               9.0,

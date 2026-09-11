@@ -27,6 +27,7 @@ import 'widgets/sandbox_multimeter.dart';
 import 'widgets/sandbox_oscilloscope.dart';
 import 'widgets/sandbox_inspector_dialog.dart';
 import 'widgets/sandbox_export_dialog.dart';
+import '../common_stand/stand_navigator.dart';
 
 class SandboxScreen extends ConsumerStatefulWidget {
   const SandboxScreen({super.key});
@@ -432,11 +433,23 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
       },
       child: Focus(
         autofocus: true,
-        child: Scaffold(
-          appBar: AppBar(
-            title: isMobileWidth
-                ? null
-                : Text(
+        child: PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) {
+            if (!didPop) {
+              StandNavigator.navigateBackToFairMap(context);
+            }
+          },
+          child: Scaffold(
+            appBar: AppBar(
+              leading: IconButton(
+                tooltip: isEn ? 'Back to Fair' : 'Voltar ao Mapa',
+                icon: const Icon(Icons.arrow_back_rounded),
+                onPressed: () => StandNavigator.navigateBackToFairMap(context),
+              ),
+              title: isMobileWidth
+                  ? null
+                  : Text(
                     isEn ? 'Free Sandbox' : 'Bancada Livre',
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontFamily: GoogleFonts.rajdhani().fontFamily,
@@ -859,6 +872,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
               ),
             ),
           ),
+        ),
         ),
       ),
     );

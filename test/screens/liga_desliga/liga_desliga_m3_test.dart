@@ -37,8 +37,8 @@ void main() {
       expect(find.text('Luminária A'), findsNWidgets(2)); // 1 para cada chave
       expect(find.text('Luminária B'), findsNWidgets(2)); // 1 para cada chave
 
-      // Card de Objetivo e Dica do Prof. Volts
-      expect(find.text('Dica do Prof. Volts:'), findsOneWidget);
+      // Botão flutuante de Dica do Prof. Volts
+      expect(find.byTooltip('Dica do Professor Volts'), findsOneWidget);
 
       // Card de Stepper do Progresso da Investigação
       expect(find.text('Progresso da investigação'), findsOneWidget);
