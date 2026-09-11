@@ -475,7 +475,7 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
     );
   }
 
-  /// Cabeçalho com a Marca Oficial Horizontal sem fundo (monograma na altura dos textos)
+  /// Cabeçalho com a Marca Oficial Horizontal (Low-Poly 3D Extrudado)
   Widget _buildBrandingHeader(UiScale scale) {
     return FittedBox(
       fit: BoxFit.scaleDown,
@@ -483,12 +483,13 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Emblema Vetorial monocromático branco acompanhando a altura total dos textos
+          // Emblema Vetorial 3D Low-Poly com extrusão mecânica e glow
           CircuitEEmblem(
             size: scale.size(54, min: 44, max: 64),
             color: Colors.white,
             progress: 1.0,
             pulseGlow: true,
+            lowPoly3D: true,
           ),
 
           SizedBox(width: scale.spacing(14, min: 10, max: 18)),
@@ -498,7 +499,7 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Linha superior: Marca Oficial ELETROLAB dual-tone + Badge de Volume
+              // Linha superior: Marca Oficial ELETROLAB dual-tone 3D + Badge de Volume
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -508,18 +509,31 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
                         TextSpan(
                           text: 'ELETRO',
                           style: TextStyle(
-                            color: const Color(0xFFF8FAFC),
+                            color: const Color(0xFFFFFFFF),
                             shadows: [
+                              // 1. Faceta chanfrada superior/intermediária esmeralda
                               Shadow(
-                                color: Colors.black.withValues(alpha: 0.75),
-                                blurRadius: scale.size(8),
-                                offset: Offset(0, scale.size(2)),
+                                color: const Color(0xFF0F766E),
+                                offset: Offset(0, scale.size(1.0)),
+                                blurRadius: 0,
                               ),
+                              // 2. Extrusão 3D angular sólida (bloco geométrico)
                               Shadow(
-                                color: const Color(
-                                  0xFF34D399,
-                                ).withValues(alpha: 0.70),
-                                blurRadius: scale.size(10),
+                                color: const Color(0xFF042F2E),
+                                offset: Offset(0, scale.size(2.5)),
+                                blurRadius: 0,
+                              ),
+                              // 3. Base inferior facetada escura
+                              Shadow(
+                                color: const Color(0xFF011C15),
+                                offset: Offset(0, scale.size(4.0)),
+                                blurRadius: 0,
+                              ),
+                              // 4. Sombra de oclusão de contato
+                              Shadow(
+                                color: Colors.black.withValues(alpha: 0.85),
+                                offset: Offset(0, scale.size(5.5)),
+                                blurRadius: scale.size(5),
                               ),
                             ],
                           ),
@@ -529,16 +543,29 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
                           style: TextStyle(
                             color: const Color(0xFFFBBF24),
                             shadows: [
+                              // 1. Faceta chanfrada superior âmbar
                               Shadow(
-                                color: Colors.black.withValues(alpha: 0.75),
-                                blurRadius: scale.size(8),
-                                offset: Offset(0, scale.size(2)),
+                                color: const Color(0xFFD97706),
+                                offset: Offset(0, scale.size(1.0)),
+                                blurRadius: 0,
                               ),
+                              // 2. Extrusão 3D angular sólida âmbar escuro
                               Shadow(
-                                color: const Color(
-                                  0xFFF59E0B,
-                                ).withValues(alpha: 0.85),
-                                blurRadius: scale.size(12),
+                                color: const Color(0xFF92400E),
+                                offset: Offset(0, scale.size(2.5)),
+                                blurRadius: 0,
+                              ),
+                              // 3. Base inferior facetada marrom bronze
+                              Shadow(
+                                color: const Color(0xFF451A03),
+                                offset: Offset(0, scale.size(4.0)),
+                                blurRadius: 0,
+                              ),
+                              // 4. Sombra de oclusão de contato
+                              Shadow(
+                                color: Colors.black.withValues(alpha: 0.85),
+                                offset: Offset(0, scale.size(5.5)),
+                                blurRadius: scale.size(5),
                               ),
                             ],
                           ),
@@ -551,26 +578,37 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
                       letterSpacing: 2.5,
                     ),
                   ),
-                  SizedBox(width: scale.spacing(8, min: 6, max: 12)),
+                  SizedBox(width: scale.spacing(10, min: 7, max: 14)),
                   _buildVolumeBadge(scale),
                 ],
               ),
 
               SizedBox(height: scale.spacing(3)),
 
-              // Subtítulo Oficial
+              // Subtítulo Oficial com Chanfro 3D Chiseled
               Text(
                 'ENERGIZANDO A FEIRA DE CIÊNCIAS',
                 style: GoogleFonts.outfit(
-                  color: Colors.white,
+                  color: const Color(0xFFF1F5F9),
                   fontSize: scale.font(10.5, min: 8.5, max: 13.0),
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.6,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.8,
                   shadows: [
+                    // Micro-extrusão chanfrada 3D sólida
                     Shadow(
-                      color: Colors.black.withValues(alpha: 0.85),
-                      blurRadius: scale.size(6),
+                      color: const Color(0xFF01221A),
                       offset: Offset(0, scale.size(1.5)),
+                      blurRadius: 0,
+                    ),
+                    Shadow(
+                      color: const Color(0xFF00140F),
+                      offset: Offset(0, scale.size(2.5)),
+                      blurRadius: 0,
+                    ),
+                    Shadow(
+                      color: Colors.black.withValues(alpha: 0.90),
+                      offset: Offset(0, scale.size(4.0)),
+                      blurRadius: scale.size(3),
                     ),
                   ],
                 ),
@@ -582,54 +620,73 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
     );
   }
 
-  /// Badge de Franquia / Edição (Chanfrado Low-Poly)
+  /// Badge de Franquia / Edição (Placa Chanfrada Low-Poly 3D com Gem Facetada)
   Widget _buildVolumeBadge(UiScale scale) {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: scale.spacing(12, min: 9, max: 16),
-        vertical: scale.spacing(3, min: 2, max: 5),
+        vertical: scale.spacing(4, min: 2.5, max: 6),
       ),
       decoration: ShapeDecoration(
-        color: const Color(0xDD021F18),
+        color: const Color(0xFF03261E),
         shape: BeveledRectangleBorder(
-          borderRadius: BorderRadius.circular(scale.size(6)),
-          side: const BorderSide(color: Color(0xFF10B981), width: 1.0),
+          borderRadius: BorderRadius.circular(scale.size(7)),
+          side: const BorderSide(color: Color(0xFF10B981), width: 1.2),
         ),
-        shadows: const [
+        shadows: [
+          // Base de profundidade mecânica 3D
           BoxShadow(
-            color: Colors.black45,
-            blurRadius: 6,
-            offset: Offset(0, 2),
+            color: const Color(0xFF01140E),
+            offset: Offset(0, scale.size(2.5)),
+            blurRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.60),
+            offset: Offset(0, scale.size(5)),
+            blurRadius: scale.size(6),
           ),
         ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: scale.size(6, min: 5, max: 7),
-            height: scale.size(6, min: 5, max: 7),
-            decoration: ShapeDecoration(
-              color: const Color(0xFF10B981),
-              shape: BeveledRectangleBorder(
-                borderRadius: BorderRadius.circular(2),
-              ),
-              shadows: const [
-                BoxShadow(
-                  color: Color(0xFF10B981),
-                  blurRadius: 4,
+          // Cristal / Gem Esmeralda Low-Poly 3D
+          Transform.rotate(
+            angle: 0.785398, // 45 graus (losango de diamante)
+            child: Container(
+              width: scale.size(7, min: 5.5, max: 8.5),
+              height: scale.size(7, min: 5.5, max: 8.5),
+              decoration: ShapeDecoration(
+                color: const Color(0xFF34D399),
+                shape: BeveledRectangleBorder(
+                  borderRadius: BorderRadius.circular(scale.size(1.5)),
+                  side: const BorderSide(color: Color(0xFFA7F3D0), width: 0.8),
                 ),
-              ],
+                shadows: const [
+                  BoxShadow(
+                    color: Color(0xFF10B981),
+                    blurRadius: 5,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
             ),
           ),
-          SizedBox(width: scale.spacing(6, min: 4, max: 8)),
+          SizedBox(width: scale.spacing(8, min: 5, max: 10)),
           Text(
             'JOGO 1 • VOLUME 1',
             style: GoogleFonts.rajdhani(
-              color: const Color(0xFFE2E8F0),
+              color: const Color(0xFFF1F5F9),
               fontSize: scale.font(11.5, min: 9.5, max: 14),
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.3,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.4,
+              shadows: [
+                Shadow(
+                  color: const Color(0xFF011A13),
+                  offset: Offset(0, scale.size(1.2)),
+                  blurRadius: 0,
+                ),
+              ],
             ),
           ),
         ],

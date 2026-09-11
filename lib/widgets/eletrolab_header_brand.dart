@@ -64,25 +64,37 @@ class EletroLabHeaderBrand extends StatelessWidget {
                 size: circleSize,
                 progress: 1.0,
                 pulseGlow: true,
+                lowPoly3D: true,
               ),
               SizedBox(width: scale.spacing(9)),
 
-              // Textos com a tipografia dual-tone ELETROLAB
+              // Textos com a tipografia dual-tone ELETROLAB 3D
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text.rich(
                     TextSpan(
-                      children: const [
+                      children: [
                         TextSpan(
                           text: 'ELETRO',
                           style: TextStyle(
-                            color: Color(0xFFF8FAFC),
+                            color: const Color(0xFFFFFFFF),
                             shadows: [
                               Shadow(
-                                color: Color(0xFF10B981),
-                                blurRadius: 8,
+                                color: const Color(0xFF0F766E),
+                                offset: Offset(0, scale.size(1.0)),
+                                blurRadius: 0,
+                              ),
+                              Shadow(
+                                color: const Color(0xFF042F2E),
+                                offset: Offset(0, scale.size(2.2)),
+                                blurRadius: 0,
+                              ),
+                              Shadow(
+                                color: Colors.black.withValues(alpha: 0.8),
+                                offset: Offset(0, scale.size(4.0)),
+                                blurRadius: scale.size(4),
                               ),
                             ],
                           ),
@@ -90,11 +102,22 @@ class EletroLabHeaderBrand extends StatelessWidget {
                         TextSpan(
                           text: 'LAB',
                           style: TextStyle(
-                            color: Color(0xFFFBBF24),
+                            color: const Color(0xFFFBBF24),
                             shadows: [
                               Shadow(
-                                color: Color(0xFFF59E0B),
-                                blurRadius: 10,
+                                color: const Color(0xFFD97706),
+                                offset: Offset(0, scale.size(1.0)),
+                                blurRadius: 0,
+                              ),
+                              Shadow(
+                                color: const Color(0xFF92400E),
+                                offset: Offset(0, scale.size(2.2)),
+                                blurRadius: 0,
+                              ),
+                              Shadow(
+                                color: Colors.black.withValues(alpha: 0.8),
+                                offset: Offset(0, scale.size(4.0)),
+                                blurRadius: scale.size(4),
                               ),
                             ],
                           ),

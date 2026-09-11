@@ -9,6 +9,7 @@ class CircuitEEmblem extends StatelessWidget {
     this.progress = 1.0,
     this.pulseGlow = true,
     this.color,
+    this.lowPoly3D = false,
   });
 
   /// Dimensão do emblema (largura e altura)
@@ -23,6 +24,9 @@ class CircuitEEmblem extends StatelessWidget {
   /// Cor sólida opcional para renderização monocromática (ex: todo branco)
   final Color? color;
 
+  /// Renderiza com extrusão facetada 3D para combinar com o estilo Low-Poly
+  final bool lowPoly3D;
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -35,6 +39,7 @@ class CircuitEEmblem extends StatelessWidget {
           progress: progress.clamp(0.0, 1.0),
           pulseGlow: pulseGlow,
           color: color,
+          lowPoly3D: lowPoly3D,
         ),
       ),
     );
@@ -45,6 +50,7 @@ class _CircuitEVectorPainter extends CustomPainter {
   final double progress;
   final bool pulseGlow;
   final Color? color;
+  final bool lowPoly3D;
 
   // Cache para evitar reconstruir caminhos em repaints frequentes
   Path? _cachedPath;
@@ -55,6 +61,7 @@ class _CircuitEVectorPainter extends CustomPainter {
     required this.progress,
     required this.pulseGlow,
     this.color,
+    this.lowPoly3D = false,
   });
 
   @override
@@ -75,6 +82,36 @@ class _CircuitEVectorPainter extends CustomPainter {
 
     final path = _cachedPath!;
     final padRRects = _cachedPadRRects!;
+
+    // 1. Camada de Extrusão Sólida Low-Poly 3D (Base com relevo mecânico)
+    if (lowPoly3D) {
+      final depth = (size.height * 0.055).clamp(2.0, 5.0);
+      final depthOffset = Offset(0, depth);
+
+      // Sombra de contato escurecida
+      final shadowPaint = Paint()
+        ..color = Colors.black.withValues(alpha: 0.65)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0);
+      canvas.save();
+      canvas.translate(0, depth + 1.5);
+      canvas.drawPath(path, shadowPaint);
+      for (final rrect in padRRects) {
+        canvas.drawRRect(rrect, shadowPaint);
+      }
+      canvas.restore();
+
+      // Extrusão física facetada
+      final baseFacetPaint = Paint()
+        ..color = const Color(0xFF02261E)
+        ..style = PaintingStyle.fill;
+      canvas.save();
+      canvas.translate(depthOffset.dx, depthOffset.dy);
+      canvas.drawPath(path, baseFacetPaint);
+      for (final rrect in padRRects) {
+        canvas.drawRRect(rrect, baseFacetPaint);
+      }
+      canvas.restore();
+    }
 
     if (color != null) {
       // Renderização monocromática
