@@ -354,7 +354,7 @@ class _WorkbenchMissionObjectiveCardState
                   'Missão ${widget.missionNumber} · ${widget.title}',
                   style: GoogleFonts.outfit(
                     color: const Color(0xFF0F172A),
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w800,
                     fontSize: scale.font(UiTypography.panelTitle),
                   ),
                   maxLines: 2,
@@ -369,10 +369,10 @@ class _WorkbenchMissionObjectiveCardState
           Text(
             widget.description,
             style: GoogleFonts.outfit(
-              color: const Color(0xFF475569),
+              color: const Color(0xFF334155),
               fontSize: scale.font(UiTypography.body),
               height: 1.35,
-              fontWeight: FontWeight.w400,
+              fontWeight: FontWeight.w500,
             ),
           ),
 
@@ -488,7 +488,7 @@ class ProfVoltsTipBox extends StatelessWidget {
                 'Dica do Prof. Volts:',
                 style: GoogleFonts.outfit(
                   color: const Color(0xFFD97706),
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w800,
                   fontSize: scale.font(UiTypography.label),
                 ),
               ),
@@ -499,7 +499,8 @@ class ProfVoltsTipBox extends StatelessWidget {
                   color: const Color(0xFF78350F),
                   fontSize: scale.font(UiTypography.body),
                   fontStyle: FontStyle.italic,
-                  height: 1.3,
+                  fontWeight: FontWeight.w500,
+                  height: 1.35,
                 ),
               ),
             ],
@@ -755,8 +756,8 @@ class WorkbenchInvestigationStepperCard extends StatelessWidget {
             child: Text(
               label,
               style: GoogleFonts.outfit(
-                color: const Color(0xFF64748B),
-                fontWeight: FontWeight.w400,
+                color: const Color(0xFF475569),
+                fontWeight: FontWeight.w500,
                 fontSize: scale.font(UiTypography.label),
               ),
             ),

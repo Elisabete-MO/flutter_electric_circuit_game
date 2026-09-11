@@ -83,8 +83,12 @@ class UiScale {
   /// Identifica se a tela é móvel / compacta (< 640px)
   bool get isMobile => screenWidth < 640 || screenHeight < 480;
 
+  /// Identifica se a tela está em formato landscape mobile (altura < 500px e largura >= 500px,
+  /// ex: iPhone 16 Pro Max 956x440 em orientação horizontal).
+  bool get isMobileLandscape => screenHeight < 500 && screenWidth >= 500;
+
   /// Identifica se a tela é tablet / intermediária (640px - 1024px)
-  bool get isTablet => screenWidth >= 640 && screenWidth < 1024;
+  bool get isTablet => screenWidth >= 640 && screenWidth < 1024 && !isMobileLandscape;
 
   /// Identifica se a tela é desktop / tela cheia (>= 1024px)
   bool get isDesktop => screenWidth >= 1024;
