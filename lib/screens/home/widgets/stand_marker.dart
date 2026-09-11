@@ -112,18 +112,24 @@ class _StandMarkerState extends State<StandMarker> {
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              // 1. Table Container (Image + Border + Shadow)
+              // 1. Table Container (Image + Beveled Border + Shadow)
               AnimatedContainer(
                 duration: duration,
                 width: widget.width,
                 height: height,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: borderColor, width: borderWidth),
-                  boxShadow: shadows,
+                decoration: ShapeDecoration(
+                  shape: BeveledRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: BorderSide(color: borderColor, width: borderWidth),
+                  ),
+                  shadows: shadows,
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(9),
+                child: ClipPath(
+                  clipper: ShapeBorderClipper(
+                    shape: BeveledRectangleBorder(
+                      borderRadius: BorderRadius.circular(7.5),
+                    ),
+                  ),
                   child: Stack(
                     children: [
                       Positioned.fill(
@@ -172,16 +178,16 @@ class _StandMarkerState extends State<StandMarker> {
                 ),
               ),
 
-              // 2. Integrated Number Badge (Top-Left corner over table)
+              // 2. Integrated Number Badge (Top-Left corner over table - Chanfrado Low-Poly)
               Positioned(
-                top: 4,
-                left: 4,
+                top: 3,
+                left: 3,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 6,
-                    vertical: 3,
+                    vertical: 2,
                   ),
-                  decoration: BoxDecoration(
+                  decoration: ShapeDecoration(
                     color: widget.isSelected
                         ? const Color(0xFFF59E0B)
                         : (isBancadaLivre
@@ -190,19 +196,21 @@ class _StandMarkerState extends State<StandMarker> {
                                     ? const Color(0xFFD97706)
                                     : const Color(
                                         0xFF021B15,
-                                      ).withValues(alpha: 0.88))),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: widget.isSelected
-                          ? Colors.white
-                          : (isBancadaLivre
-                                ? const Color(0xFF38BDF8)
-                                : const Color(
-                                    0xFF10B981,
-                                  ).withValues(alpha: 0.8)),
-                      width: 1.0,
+                                      ).withValues(alpha: 0.92))),
+                    shape: BeveledRectangleBorder(
+                      borderRadius: BorderRadius.circular(4),
+                      side: BorderSide(
+                        color: widget.isSelected
+                            ? Colors.white
+                            : (isBancadaLivre
+                                  ? const Color(0xFF38BDF8)
+                                  : const Color(
+                                      0xFF10B981,
+                                    ).withValues(alpha: 0.85)),
+                        width: 1.0,
+                      ),
                     ),
-                    boxShadow: const [
+                    shadows: const [
                       BoxShadow(
                         color: Colors.black45,
                         blurRadius: 4,
@@ -224,23 +232,25 @@ class _StandMarkerState extends State<StandMarker> {
                 ),
               ),
 
-              // 3. Special Tag Badge (Bottom-Right corner over table for Tutorial / Livre)
+              // 3. Special Tag Badge (Bottom-Right corner over table - Chanfrado Low-Poly)
               if (isTutorial || isBancadaLivre)
                 Positioned(
-                  bottom: 4,
-                  right: 4,
+                  bottom: 3,
+                  right: 3,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 5,
                       vertical: 2,
                     ),
-                    decoration: BoxDecoration(
+                    decoration: ShapeDecoration(
                       color: isBancadaLivre
                           ? const Color(0xFF7C4DFF)
                           : const Color(0xFFF59E0B),
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: Colors.white70, width: 0.8),
-                      boxShadow: const [
+                      shape: BeveledRectangleBorder(
+                        borderRadius: BorderRadius.circular(4),
+                        side: const BorderSide(color: Colors.white70, width: 0.8),
+                      ),
+                      shadows: const [
                         BoxShadow(color: Colors.black38, blurRadius: 3),
                       ],
                     ),

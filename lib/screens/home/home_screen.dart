@@ -229,7 +229,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  /// Botão Flutuante Circular com estilo Glassmorphic
+  /// Botão Flutuante Estilizado no padrão Low-Poly 3D
   Widget _buildFloatingIconButton(
     BuildContext context, {
     required IconData icon,
@@ -238,36 +238,65 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     required VoidCallback onTap,
   }) {
     final scale = context.uiScale;
+    final double buttonSize = scale.size(54, min: 46, max: 68);
+    final double bevel = scale.size(10, min: 8, max: 14);
 
-    return Material(
-      color: Colors.transparent,
-      child: Tooltip(
-        message: tooltip,
-        child: InkWell(
-          onTap: onTap,
-          customBorder: const CircleBorder(),
-          child: Container(
-            padding: scale.insetsAll(16),
-            decoration: BoxDecoration(
-              color: const Color(0xEE03281E),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: const Color(0xFF10B981).withValues(alpha: 0.5),
-                width: 1.5,
+    return Tooltip(
+      message: tooltip,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: SizedBox(
+          width: buttonSize,
+          height: buttonSize + 3.0,
+          child: Stack(
+            children: [
+              // Base 3D inferior
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: buttonSize,
+                child: Material(
+                  color: const Color(0xFF021B14),
+                  shape: BeveledRectangleBorder(
+                    borderRadius: BorderRadius.circular(bevel),
+                  ),
+                  child: const SizedBox.expand(),
+                ),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.5),
-                  blurRadius: scale.size(16),
-                  offset: Offset(0, scale.size(4)),
+              // Face frontal
+              Positioned(
+                left: 0,
+                right: 0,
+                top: 0,
+                height: buttonSize,
+                child: Material(
+                  color: const Color(0xFF063B2C),
+                  shape: BeveledRectangleBorder(
+                    borderRadius: BorderRadius.circular(bevel),
+                    side: BorderSide(
+                      color: const Color(0xFF10B981).withValues(alpha: 0.8),
+                      width: 1.4,
+                    ),
+                  ),
+                  elevation: 3,
+                  child: InkWell(
+                    onTap: onTap,
+                    customBorder: BeveledRectangleBorder(
+                      borderRadius: BorderRadius.circular(bevel),
+                    ),
+                    splashColor: const Color(0xFF10B981).withValues(alpha: 0.3),
+                    child: Center(
+                      child: Icon(
+                        icon,
+                        color: accentColor,
+                        size: scale.icon(26),
+                      ),
+                    ),
+                  ),
                 ),
-                BoxShadow(
-                  color: const Color(0xFF10B981).withValues(alpha: 0.25),
-                  blurRadius: scale.size(12),
-                ),
-              ],
-            ),
-            child: Icon(icon, color: accentColor, size: scale.icon(28)),
+              ),
+            ],
           ),
         ),
       ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/ui_scale.dart';
 import '../../../models/stand_data.dart';
+import '../../../widgets/low_poly_badge.dart';
+import '../../../widgets/low_poly_button.dart';
 
 /// Floating info card with 3D top-down perspective detailing the selected stand.
 class StandInfoCard extends StatelessWidget {
@@ -26,14 +28,17 @@ class StandInfoCard extends StatelessWidget {
       constraints: BoxConstraints(
         maxWidth: scale.size(410, min: 320, max: 680),
       ),
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF042920), Color(0xFF021612)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(scale.size(18)),
-        boxShadow: [
+        shape: BeveledRectangleBorder(
+          borderRadius: BorderRadius.circular(scale.size(16)),
+          side: const BorderSide(color: Color(0xFF10B981), width: 1.5),
+        ),
+        shadows: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.65),
             blurRadius: scale.size(24),
@@ -46,20 +51,21 @@ class StandInfoCard extends StatelessWidget {
             spreadRadius: 0,
           ),
         ],
-        border: Border.all(color: const Color(0xFF10B981), width: 1.4),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 1. Top Image Preview with Close Button & Number Tag
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(scale.size(17)),
-                ),
-                child: Container(
+      child: ClipPath(
+        clipper: ShapeBorderClipper(
+          shape: BeveledRectangleBorder(
+            borderRadius: BorderRadius.circular(scale.size(15.5)),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 1. Top Image Preview with Close Button & Number Tag
+            Stack(
+              children: [
+                Container(
                   height: scale.size(160, min: 130, max: 280),
                   width: double.infinity,
                   color: const Color(0xFF021612),
@@ -97,61 +103,51 @@ class StandInfoCard extends StatelessWidget {
                     ],
                   ),
                 ),
-              ),
 
-              // Stand Number Badge on Preview Image
-              Positioned(
-                top: scale.spacing(10),
-                left: scale.spacing(10),
-                child: Container(
-                  padding: scale.insetsSymmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF021612).withValues(alpha: 0.92),
-                    borderRadius: BorderRadius.circular(scale.size(8)),
-                    border: Border.all(
-                      color: const Color(0xFF10B981),
-                      width: 1.2,
-                    ),
-                    boxShadow: const [
-                      BoxShadow(color: Colors.black45, blurRadius: 4),
-                    ],
+                // Stand Number Badge on Preview Image (Chanfrado Low-Poly)
+                Positioned(
+                  top: scale.spacing(10),
+                  left: scale.spacing(10),
+                  child: LowPolyBadge(
+                    label: 'ESTANDE $numberFormatted',
+                    variant: stand.isBancadaLivre
+                        ? LowPolyBadgeVariant.cyan
+                        : (stand.number == 1
+                              ? LowPolyBadgeVariant.amber
+                              : LowPolyBadgeVariant.emerald),
+                    fontSize: 12.0,
+                    bevelRadius: 6.0,
                   ),
-                  child: Text(
-                    'ESTANDE $numberFormatted',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
-                      fontSize: scale.font(12.5),
-                      letterSpacing: 0.6,
+                ),
+
+                // Close Button (Chanfrado Low-Poly)
+                Positioned(
+                  top: scale.spacing(10),
+                  right: scale.spacing(10),
+                  child: InkWell(
+                    onTap: onClose,
+                    customBorder: BeveledRectangleBorder(
+                      borderRadius: BorderRadius.circular(scale.size(6)),
+                    ),
+                    child: Container(
+                      padding: scale.insetsAll(6),
+                      decoration: ShapeDecoration(
+                        color: const Color(0xFF021B14).withValues(alpha: 0.9),
+                        shape: BeveledRectangleBorder(
+                          borderRadius: BorderRadius.circular(scale.size(6)),
+                          side: const BorderSide(color: Colors.white38, width: 1.0),
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.close_rounded,
+                        size: scale.icon(18),
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),
-              ),
-
-              // Close Button
-              Positioned(
-                top: scale.spacing(10),
-                right: scale.spacing(10),
-                child: InkWell(
-                  onTap: onClose,
-                  borderRadius: BorderRadius.circular(scale.size(18)),
-                  child: Container(
-                    padding: scale.insetsAll(6),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.65),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white38, width: 0.9),
-                    ),
-                    child: Icon(
-                      Icons.close_rounded,
-                      size: scale.icon(18),
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+              ],
+            ),
 
           // 2. Body Details
           Padding(
@@ -247,23 +243,25 @@ class StandInfoCard extends StatelessWidget {
                         child: Container(
                           width: scale.size(17),
                           height: scale.size(17),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
+                          decoration: ShapeDecoration(
+                            shape: BeveledRectangleBorder(
+                              borderRadius: BorderRadius.circular(3.5),
+                              side: BorderSide(
+                                color: isFilled
+                                    ? const Color(0xFF10B981)
+                                    : const Color(0xFF64748B),
+                                width: 1.5,
+                              ),
+                            ),
                             color: isFilled
                                 ? const Color(0xFF10B981)
                                 : Colors.transparent,
-                            border: Border.all(
-                              color: isFilled
-                                  ? const Color(0xFF10B981)
-                                  : const Color(0xFF64748B),
-                              width: 1.8,
-                            ),
                           ),
                           child: isFilled
                               ? Icon(
                                   Icons.check_rounded,
                                   size: scale.icon(11),
-                                  color: Colors.white,
+                                  color: const Color(0xFF021B14),
                                 )
                               : null,
                         ),
@@ -275,47 +273,35 @@ class StandInfoCard extends StatelessWidget {
                   SizedBox(height: scale.spacing(12)),
                 ],
 
-                // Action Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: onStartMission,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF10B981),
-                      foregroundColor: const Color(0xFF022C22),
-                      elevation: 4,
-                      padding: scale.insetsSymmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(scale.size(12)),
-                      ),
-                      textStyle: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: scale.font(16.0),
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                    icon: Icon(
-                      stand.isBancadaLivre
-                          ? Icons.biotech_rounded
-                          : (stand.number == 1
-                                ? Icons.school_rounded
-                                : Icons.play_arrow_rounded),
-                      size: scale.icon(22),
-                    ),
-                    label: Text(
-                      stand.isBancadaLivre
-                          ? 'Abrir Simulador 3D'
-                          : (stand.number == 1
-                                ? 'Iniciar Tutorial'
-                                : 'Começar missão'),
-                    ),
-                  ),
+                // Action Button (Low-Poly 3D com efeito push-down)
+                LowPolyButton(
+                  label: stand.isBancadaLivre
+                      ? 'Abrir Simulador 3D'
+                      : (stand.number == 1
+                            ? 'Iniciar Tutorial'
+                            : 'Começar Missão'),
+                  icon: stand.isBancadaLivre
+                      ? Icons.biotech_rounded
+                      : (stand.number == 1
+                            ? Icons.school_rounded
+                            : Icons.play_arrow_rounded),
+                  variant: stand.isBancadaLivre
+                      ? LowPolyButtonVariant.cyan
+                      : (stand.number == 1
+                            ? LowPolyButtonVariant.accent
+                            : LowPolyButtonVariant.primary),
+                  isFullWidth: true,
+                  height: 48.0,
+                  bevelRadius: 8.0,
+                  fontSize: 15.0,
+                  onPressed: onStartMission,
                 ),
               ],
             ),
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }
