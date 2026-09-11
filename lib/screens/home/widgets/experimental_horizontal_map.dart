@@ -114,9 +114,8 @@ class _ExperimentalHorizontalMapState
         final sortedStands = List<StandData>.from(widget.stands)
           ..sort((a, b) => a.number.compareTo(b.number));
 
-        // Tamanhos ampliados dos elementos no canvas
+        // Tamanhos dos elementos no canvas
         final double baseTableW = 440.0 * scale;
-        final double bancadaLivreW = 540.0 * scale;
         final double logoSize = 420.0 * scale;
 
         return Stack(
@@ -141,13 +140,13 @@ class _ExperimentalHorizontalMapState
                         width: 2048.0 * scale,
                         height: totalScaledHeight,
                         child: Image.asset(
-                          'assets/stands/quadra_trilha_esquerda_4k.png',
+                          'assets/low-poly/quadra_trilha_esquerda.png',
                           fit: BoxFit.fill,
                           errorBuilder: (context, error, stackTrace) => Container(
                             color: const Color(0xFF042920),
                             child: const Center(
                               child: Text(
-                                'Quadra Esquerda 4K',
+                                'Quadra Esquerda',
                                 style: TextStyle(color: Colors.white54),
                               ),
                             ),
@@ -162,13 +161,13 @@ class _ExperimentalHorizontalMapState
                         width: 2048.0 * scale,
                         height: totalScaledHeight,
                         child: Image.asset(
-                          'assets/stands/quadra_trilha_direita_4k.png',
+                          'assets/low-poly/quadra_trilha_direita.png',
                           fit: BoxFit.fill,
                           errorBuilder: (context, error, stackTrace) => Container(
                             color: const Color(0xFF021B15),
                             child: const Center(
                               child: Text(
-                                'Quadra Direita 4K',
+                                'Quadra Direita',
                                 style: TextStyle(color: Colors.white54),
                               ),
                             ),
@@ -210,12 +209,11 @@ class _ExperimentalHorizontalMapState
                         final pos = _standCanvasPositions[stand.number] ??
                             const StandPosition(2048, 576);
 
-                        final double standW = stand.isBancadaLivre
-                            ? bancadaLivreW
-                            : baseTableW;
+                        final double standW = baseTableW;
+                        final double standH = standW * (338.0 / 363.0);
 
                         final double left = (pos.x * scale) - (standW / 2.0);
-                        final double top = (pos.y * scale) - (standW * 0.33);
+                        final double top = (pos.y * scale) - (standH / 2.0);
 
                         return Positioned(
                           left: left,

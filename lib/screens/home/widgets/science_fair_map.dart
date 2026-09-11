@@ -116,13 +116,11 @@ class ScienceFairMap extends StatelessWidget {
 
               // 5. Stand Markers (01 to 12)
               ...stands.map((stand) {
-                // Bancada Livre (Stand 12) is extra large and special
-                final double standW = stand.isBancadaLivre
-                    ? (baseMarkerW * 1.45).clamp(150.0, 240.0)
-                    : baseMarkerW;
+                final double standW = baseMarkerW;
+                final double standH = standW * (338.0 / 363.0);
 
                 final double left = mapW * stand.relX - (standW / 2);
-                final double top = mapH * stand.relY - (standW * 0.33);
+                final double top = mapH * stand.relY - (standH / 2);
 
                 return Positioned(
                   left: left,

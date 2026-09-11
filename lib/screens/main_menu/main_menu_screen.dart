@@ -42,7 +42,7 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
             // 1. Imagem de Fundo (Fachada do Ginásio sem camada escura)
             Positioned.fill(
               child: Image.asset(
-                'assets/intro/gym_front.png',
+                'assets/low-poly/ginasio-alpha-low-poly-portas-fechadas.png',
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
                   return Container(color: const Color(0xFF03281E));

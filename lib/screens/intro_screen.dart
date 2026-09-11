@@ -192,7 +192,7 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
           // 1. Imagem de Fundo (Porta Aberta do Ginásio sem camada escura)
           Positioned.fill(
             child: Image.asset(
-              'assets/intro/gym_front_open_door.png',
+              'assets/low-poly/ginasio-alpha-low-poly-portas-abertas.png',
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
                 return Container(
@@ -486,7 +486,7 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
               width: spriteWidth * 3.0,
               height: spriteHeight,
               child: Image.asset(
-                'assets/intro/spritesheet_nuri.png',
+                'assets/low-poly/professora-nuri-sprites.png',
                 width: spriteWidth * 3.0,
                 height: spriteHeight,
                 fit: BoxFit.fill,

@@ -44,27 +44,28 @@ class Preloader {
     'assets/images/concept.png',
 
     // Intro / Professora Nuri
-    'assets/intro/gym_front.png',
-    'assets/intro/gym_front_open_door.png',
-    'assets/intro/spritesheet_nuri.png',
+    'assets/low-poly/ginasio-alpha-low-poly-portas-fechadas.png',
+    'assets/low-poly/ginasio-alpha-low-poly-portas-abertas.png',
+    'assets/low-poly/professora-nuri-sprites.png',
 
     // Referências e tutoriais
     'assets/references/referencia_tutorial_8_componentes.png',
 
-    // Estandes da Feira de Ciências
-    'assets/stands/estande_01.png',
-    'assets/stands/estande_02.png',
-    'assets/stands/estande_03.png',
-    'assets/stands/estande_04.png',
-    'assets/stands/estande_05.png',
-    'assets/stands/estande_06.png',
-    'assets/stands/estande_07.png',
-    'assets/stands/estande_08.png',
-    'assets/stands/estande_09.png',
-    'assets/stands/estande_11.png',
-    'assets/stands/estande_12.png',
-    'assets/stands/quadra_trilha_direita_4k.png',
-    'assets/stands/quadra_trilha_esquerda_4k.png',
+    // Estandes da Feira de Ciências (Low-Poly 3D)
+    'assets/low-poly/mesas-estandes/tutorial.png',
+    'assets/low-poly/mesas-estandes/acende-ai.png',
+    'assets/low-poly/mesas-estandes/liga-e-desliga.png',
+    'assets/low-poly/mesas-estandes/ruas-da-maquete.png',
+    'assets/low-poly/mesas-estandes/letreiros-de-led.png',
+    'assets/low-poly/mesas-estandes/movimento-em-miniatura.png',
+    'assets/low-poly/mesas-estandes/mede-testa-e-explica.png',
+    'assets/low-poly/mesas-estandes/circuito-seguro.png',
+    'assets/low-poly/mesas-estandes/horta-monitorada.png',
+    'assets/low-poly/mesas-estandes/portao-da-escola.png',
+    'assets/low-poly/mesas-estandes/maquete-coletiva.png',
+    'assets/low-poly/mesas-estandes/bancada-livre.png',
+    'assets/low-poly/quadra_trilha_direita.png',
+    'assets/low-poly/quadra_trilha_esquerda.png',
   ];
 
   /// Pré-carrega imagens e dados na memória antes de navegar para uma tela.

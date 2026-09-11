@@ -34,8 +34,8 @@ class _StandMarkerState extends State<StandMarker> {
         ? Duration.zero
         : const Duration(milliseconds: 220);
 
-    // Core dimensions & properties
-    final height = widget.width * (2.0 / 3.0); // 3:2 aspect ratio
+    // Core dimensions & properties (aspect ratio ~363x338 da mesa 3D low-poly)
+    final height = widget.width * (338.0 / 363.0);
     final numberFormatted = widget.stand.number < 10
         ? '0${widget.stand.number}'
         : '${widget.stand.number}';
@@ -129,7 +129,7 @@ class _StandMarkerState extends State<StandMarker> {
                       Positioned.fill(
                         child: Image.asset(
                           widget.stand.asset,
-                          fit: BoxFit.cover,
+                          fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) {
                             return Container(
                               color: const Color(0xFF0F172A),

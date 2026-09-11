@@ -59,21 +59,25 @@ class StandInfoCard extends StatelessWidget {
                 borderRadius: BorderRadius.vertical(
                   top: Radius.circular(scale.size(17)),
                 ),
-                child: SizedBox(
-                  height: scale.size(155, min: 120, max: 280),
+                child: Container(
+                  height: scale.size(160, min: 130, max: 280),
                   width: double.infinity,
+                  color: const Color(0xFF021612),
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      Image.asset(
-                        stand.asset,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          color: const Color(0xFF0F172A),
-                          child: Icon(
-                            Icons.science_rounded,
-                            color: Colors.white38,
-                            size: scale.icon(40),
+                      Padding(
+                        padding: scale.insetsAll(8),
+                        child: Image.asset(
+                          stand.asset,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            color: const Color(0xFF0F172A),
+                            child: Icon(
+                              Icons.science_rounded,
+                              color: Colors.white38,
+                              size: scale.icon(40),
+                            ),
                           ),
                         ),
                       ),
@@ -81,8 +85,9 @@ class StandInfoCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
-                              Colors.black.withValues(alpha: 0.2),
-                              const Color(0xFF042920),
+                              Colors.black.withValues(alpha: 0.1),
+                              Colors.transparent,
+                              const Color(0xFF042920).withValues(alpha: 0.5),
                             ],
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,

@@ -56,6 +56,8 @@ flutter:
     - assets/stands/
     - assets/intro/
     - assets/references/
+    - assets/low-poly/
+    - assets/low-poly/mesas-estandes/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
