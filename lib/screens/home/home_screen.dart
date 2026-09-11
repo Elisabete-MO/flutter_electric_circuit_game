@@ -67,6 +67,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       Navigator.of(context).pushNamed(Routes.medeTestaExplica);
     } else if (stand.number == 8 || stand.id == 'circuito_seguro') {
       Navigator.of(context).pushNamed(Routes.circuitoSeguro);
+    } else if (stand.number == 9 || stand.id == 'horta_monitorada') {
+      Navigator.of(context).pushNamed(Routes.hortaMonitorada);
+    } else if (stand.number == 10 || stand.id == 'portao_escola') {
+      Navigator.of(context).pushNamed(Routes.portaoEscola);
+    } else if (stand.number == 11 || stand.id == 'praca_maquete') {
+      Navigator.of(context).pushNamed(Routes.pracaMaquete);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -145,10 +151,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: Text(
                 'Entendido',
                 style: TextStyle(
-                  color: const Color(0xFF10B981),
+                  color: const Color(0xFF94A3B8),
                   fontWeight: FontWeight.bold,
                   fontSize: scale.font(15),
                 ),
+              ),
+            ),
+            FilledButton.icon(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushNamed(Routes.pracaMaquete);
+              },
+              icon: const Icon(Icons.location_city_rounded, size: 18),
+              label: Text(
+                'ABRIR PRAÇA DA MAQUETE',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: scale.font(14),
+                ),
+              ),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF10B981),
+                foregroundColor: Colors.white,
               ),
             ),
           ],
