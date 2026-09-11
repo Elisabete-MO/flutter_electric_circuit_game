@@ -41,6 +41,10 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
   // Conexões das pontas do multímetro nos nós: 'tp1' (+9V), 'tp2' (Chave/Resistor), 'tp3' (Resistor/LED), 'tp4' (Terra 0V)
   String? _redProbeTarget = 'tp2';
   String? _blackProbeTarget = 'tp3';
+  Offset? _redProbePos;
+  Offset? _blackProbePos;
+  bool _isDraggingRed = false;
+  bool _isDraggingBlack = false;
 
   MultimeterMode _multimeterMode = MultimeterMode.resistance;
   bool _hasInspectedResistor = false;
@@ -76,24 +80,24 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
 
     switch (_multimeterMode) {
       case MultimeterMode.resistance:
-        // Se medindo sobre o resistor (TP2 e TP3)
+        // Medindo sobre o resistor com defeito (TP2 e TP3)
         if ((_redProbeTarget == 'tp2' && _blackProbeTarget == 'tp3') ||
             (_redProbeTarget == 'tp3' && _blackProbeTarget == 'tp2')) {
           _hasInspectedResistor = true;
-          return _isFixed ? '680' : '10.0k';
+          return _isFixed ? '680' : '10000';
         }
-        return '0.0';
+        return 'OL'; // Circuito aberto ou outro nó
       case MultimeterMode.voltageDc:
         return _measuredVoltage.toStringAsFixed(2);
       case MultimeterMode.currentMa:
-        return _currentMa.toStringAsFixed(2);
+        return _currentMa.toStringAsFixed(1);
       case MultimeterMode.continuity:
-        // Teste de continuidade apita se a chave estiver fechada
+        // Continuidade na chave fechada
         if ((_redProbeTarget == 'tp1' && _blackProbeTarget == 'tp2') ||
             (_redProbeTarget == 'tp2' && _blackProbeTarget == 'tp1')) {
           return 'BEEP';
         }
-        return '---';
+        return 'OPEN';
       case MultimeterMode.off:
         return '---';
     }
@@ -121,21 +125,43 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
     ));
   }
 
-  void _setRedProbeTarget(String? target) {
+  void _setRedProbeTarget(String? target, {Offset? snappedPos}) {
     final prev = _redProbeTarget;
+    final prevPos = _redProbePos;
     _undoRedoController.execute(ToggleProbeAction(
-      description: 'Mover Ponta Vermelha para $target',
-      onApply: () => setState(() => _redProbeTarget = target),
-      onUndo: () => setState(() => _redProbeTarget = prev),
+      description: 'Mover Ponta Vermelha para ${target ?? 'Bancada'}',
+      onApply: () => setState(() {
+        _redProbeTarget = target;
+        if (snappedPos != null) {
+          _redProbePos = snappedPos;
+        } else if (target == null) {
+          _redProbePos = null;
+        }
+      }),
+      onUndo: () => setState(() {
+        _redProbeTarget = prev;
+        _redProbePos = prevPos;
+      }),
     ));
   }
 
-  void _setBlackProbeTarget(String? target) {
+  void _setBlackProbeTarget(String? target, {Offset? snappedPos}) {
     final prev = _blackProbeTarget;
+    final prevPos = _blackProbePos;
     _undoRedoController.execute(ToggleProbeAction(
-      description: 'Mover Ponta Preta para $target',
-      onApply: () => setState(() => _blackProbeTarget = target),
-      onUndo: () => setState(() => _blackProbeTarget = prev),
+      description: 'Mover Ponta Preta para ${target ?? 'Bancada'}',
+      onApply: () => setState(() {
+        _blackProbeTarget = target;
+        if (snappedPos != null) {
+          _blackProbePos = snappedPos;
+        } else if (target == null) {
+          _blackProbePos = null;
+        }
+      }),
+      onUndo: () => setState(() {
+        _blackProbeTarget = prev;
+        _blackProbePos = prevPos;
+      }),
     ));
   }
 
@@ -152,8 +178,10 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
     setState(() {
       _isFixed = false;
       _hasInspectedResistor = false;
-      _redProbeTarget = 'tp2';
-      _blackProbeTarget = 'tp3';
+      _redProbeTarget = null;
+      _blackProbeTarget = null;
+      _redProbePos = null;
+      _blackProbePos = null;
       _multimeterMode = MultimeterMode.resistance;
     });
   }
@@ -438,6 +466,22 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
             width: double.infinity,
             child: TextButton.icon(
               onPressed: _reset,
+              icon: const Icon(Icons.link_off_rounded, size: 16),
+              label: Text(
+                'Soltar Pontas na Bancada',
+                style: GoogleFonts.rajdhani(
+                  color: const Color(0xFF94A3B8),
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: TextButton.icon(
+              onPressed: _reset,
               icon: const Icon(Icons.refresh_rounded, size: 16),
               label: Text(
                 'Restaurar Caso Original',
@@ -472,70 +516,44 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
         final tp3Pos = Offset(w * 0.56, h * 0.30); // Saída do resistor / entrada LED
         final tp4Pos = Offset(w * 0.72, h * 0.30); // Terra / Saída LED
 
-        final meterRedJack = Offset(meterPos.dx - 35, meterPos.dy + 120);
-        final meterBlackJack = Offset(meterPos.dx + 35, meterPos.dy + 120);
+        final meterBlackJack = Offset(meterPos.dx - 10, meterPos.dy + 118);
+        final meterRedJack = Offset(meterPos.dx + 38, meterPos.dy + 118);
 
-        Offset? getTargetOffset(String? target) {
-          switch (target) {
-            case 'tp1':
-              return tp1Pos;
-            case 'tp2':
-              return tp2Pos;
-            case 'tp3':
-              return tp3Pos;
-            case 'tp4':
-              return tp4Pos;
-            default:
-              return null;
-          }
+        // Sincronização e posicionamento livre das pontas
+        if (_redProbeTarget == 'tp1') {
+          _redProbePos = tp1Pos;
+        } else if (_redProbeTarget == 'tp2') {
+          _redProbePos = tp2Pos;
+        } else if (_redProbeTarget == 'tp3') {
+          _redProbePos = tp3Pos;
+        } else if (_redProbeTarget == 'tp4') {
+          _redProbePos = tp4Pos;
+        } else {
+          _redProbePos ??= Offset(w * 0.44, h * 0.65);
         }
 
-        final targetRed = getTargetOffset(_redProbeTarget);
-        final targetBlack = getTargetOffset(_blackProbeTarget);
+        if (_blackProbeTarget == 'tp1') {
+          _blackProbePos = tp1Pos;
+        } else if (_blackProbeTarget == 'tp2') {
+          _blackProbePos = tp2Pos;
+        } else if (_blackProbeTarget == 'tp3') {
+          _blackProbePos = tp3Pos;
+        } else if (_blackProbeTarget == 'tp4') {
+          _blackProbePos = tp4Pos;
+        } else {
+          _blackProbePos ??= Offset(w * 0.54, h * 0.65);
+        }
+
+        final effectiveRedPos = _redProbePos!;
+        final effectiveBlackPos = _blackProbePos!;
+
+        final probeRedTail = Offset(effectiveRedPos.dx, effectiveRedPos.dy - 93);
+        final probeBlackTail = Offset(effectiveBlackPos.dx, effectiveBlackPos.dy - 93);
 
         return Stack(
           clipBehavior: Clip.none,
           children: [
-            // Cabos flexíveis das pontas de prova do multímetro
-            Positioned.fill(
-              child: CustomPaint(
-                painter: ProbeCablesPainter(
-                  meterRedJack: meterRedJack,
-                  meterBlackJack: meterBlackJack,
-                  targetRed: targetRed,
-                  targetBlack: targetBlack,
-                ),
-              ),
-            ),
-
-            // Título Didático
-            Positioned(
-              top: 16,
-              left: 20,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'PERÍCIA ELÉTRICA: O CASO DO LED APAGADO',
-                    style: GoogleFonts.rajdhani(
-                      color: const Color(0xFF0F172A),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                  Text(
-                    'O circuito está energizado mas o LED quase não acende. Meça os nós para achar a falha.',
-                    style: GoogleFonts.outfit(
-                      color: const Color(0xFF64748B),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Fiação fixa da bancada
+            // 1. Fiação fixa do circuito de perícia
             Positioned.fill(
               child: CustomPaint(
                 painter: _M5CircuitPainter(
@@ -552,12 +570,12 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
               ),
             ),
 
-            // 1. Bateria 9V
+            // 2. Bateria 9V
             Positioned(
-              left: battPos.dx - 40,
+              left: battPos.dx - 45,
               top: battPos.dy - 55,
               child: Container(
-                width: 80,
+                width: 90,
                 height: 110,
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.94),
@@ -568,7 +586,7 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     CustomPaint(
-                      size: const Size(42, 42),
+                      size: const Size(48, 48),
                       painter: ComponentPhysicalPainter(
                         type: ComponentType.battery,
                         isDarkMode: false,
@@ -576,19 +594,11 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'BATERIA',
+                      'BATERIA 9V',
                       style: GoogleFonts.rajdhani(
                         fontWeight: FontWeight.bold,
-                        fontSize: 10,
+                        fontSize: 11,
                         color: const Color(0xFF0F172A),
-                      ),
-                    ),
-                    Text(
-                      '9.0V OK',
-                      style: GoogleFonts.rajdhani(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 9,
-                        color: const Color(0xFF059669),
                       ),
                     ),
                   ],
@@ -596,37 +606,42 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
               ),
             ),
 
-            // 2. Chave Fechada
+            // 3. Chave Liga/Desliga
             Positioned(
-              left: switchPos.dx - 40,
+              left: switchPos.dx - 45,
               top: switchPos.dy - 55,
               child: Container(
-                width: 80,
+                width: 90,
                 height: 110,
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.94),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFCBD5E1)),
+                  border: Border.all(
+                    color: const Color(0xFF10B981),
+                    width: 2,
+                  ),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.toggle_on_rounded,
-                        size: 36, color: Color(0xFF10B981)),
+                    const Icon(
+                      Icons.toggle_on_rounded,
+                      size: 42,
+                      color: Color(0xFF10B981),
+                    ),
                     Text(
-                      'CHAVE',
+                      'CHAVE ON',
                       style: GoogleFonts.rajdhani(
                         fontWeight: FontWeight.bold,
-                        fontSize: 10,
-                        color: const Color(0xFF0F172A),
+                        fontSize: 11,
+                        color: const Color(0xFF059669),
                       ),
                     ),
                     Text(
-                      'FECHADA',
-                      style: GoogleFonts.rajdhani(
-                        fontWeight: FontWeight.bold,
+                      'Fechada',
+                      style: GoogleFonts.outfit(
                         fontSize: 9,
-                        color: const Color(0xFF059669),
+                        color: const Color(0xFF94A3B8),
                       ),
                     ),
                   ],
@@ -634,12 +649,12 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
               ),
             ),
 
-            // 3. Resistor Sob Perícia (10k anômalo ou 680 correto)
+            // 4. Resistor sob Suspeita
             Positioned(
-              left: resistorPos.dx - 45,
+              left: resistorPos.dx - 55,
               top: resistorPos.dy - 55,
               child: Container(
-                width: 90,
+                width: 110,
                 height: 110,
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.95),
@@ -648,58 +663,51 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
                     color: _isFixed
                         ? const Color(0xFF10B981)
                         : const Color(0xFFEF4444),
-                    width: 2.0,
+                    width: 2,
                   ),
-                  boxShadow: [
-                    if (!_isFixed)
-                      BoxShadow(
-                        color: Colors.red.withValues(alpha: 0.2),
-                        blurRadius: 8,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CustomPaint(
+                      size: const Size(48, 48),
+                      painter: ComponentPhysicalPainter(
+                        type: ComponentType.resistor,
+                        isDarkMode: false,
                       ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _isFixed ? '680 Ω' : '10 kΩ !',
+                      style: GoogleFonts.rajdhani(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: _isFixed
+                            ? const Color(0xFF059669)
+                            : const Color(0xFFDC2626),
+                      ),
+                    ),
+                    Text(
+                      _isFixed ? 'CORRETO' : 'ANÔMALO',
+                      style: GoogleFonts.rajdhani(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 9,
+                        color: _isFixed
+                            ? const Color(0xFF059669)
+                            : const Color(0xFFDC2626),
+                      ),
+                    ),
                   ],
                 ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CustomPaint(
-                    size: const Size(44, 44),
-                    painter: ComponentPhysicalPainter(
-                      type: ComponentType.resistor,
-                      isDarkMode: false,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    _isFixed ? '680 Ω' : '10 kΩ !',
-                    style: GoogleFonts.rajdhani(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      color: _isFixed
-                          ? const Color(0xFF059669)
-                          : const Color(0xFFDC2626),
-                    ),
-                  ),
-                  Text(
-                    _isFixed ? 'CORRETO' : 'ANÔMALO',
-                    style: GoogleFonts.rajdhani(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 9,
-                      color: _isFixed
-                          ? const Color(0xFF059669)
-                          : const Color(0xFFDC2626),
-                    ),
-                  ),
-                ],
               ),
             ),
-          ),
 
-            // 4. LED
+            // 5. LED de Saída
             Positioned(
-              left: ledPos.dx - 40,
+              left: ledPos.dx - 45,
               top: ledPos.dy - 55,
               child: Container(
-                width: 80,
+                width: 90,
                 height: 110,
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.94),
@@ -712,29 +720,28 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
                     Stack(
                       alignment: Alignment.center,
                       children: [
-                        if (_isFixed)
-                          Container(
-                            width: 38,
-                            height: 38,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: const Color(0xFF10B981)
-                                  .withValues(alpha: 0.6),
-                            ),
+                        Container(
+                          width: _isFixed ? 44 : 28,
+                          height: _isFixed ? 44 : 28,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: const Color(0xFF10B981)
+                                .withValues(alpha: _isFixed ? 0.6 : 0.15),
                           ),
+                        ),
                         CustomPaint(
                           size: const Size(40, 40),
                           painter: ComponentPhysicalPainter(
                             type: ComponentType.led,
-                            isActive: _isFixed,
+                            isActive: true,
                             isDarkMode: false,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     Text(
-                      'LED',
+                      'LED VERDE',
                       style: GoogleFonts.rajdhani(
                         fontWeight: FontWeight.bold,
                         fontSize: 10,
@@ -756,7 +763,7 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
               ),
             ),
 
-            // Pontos de teste nos nós (TP1 a TP4)
+            // 6. Pontos de teste nos nós (TP1 a TP4)
             Positioned(
               left: tp1Pos.dx - 20,
               top: tp1Pos.dy - 20,
@@ -825,7 +832,7 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
               ),
             ),
 
-            // Multímetro Digital de Bancada
+            // 7. Multímetro Digital de Bancada
             Positioned(
               left: meterPos.dx - 87,
               top: meterPos.dy - 140,
@@ -836,6 +843,106 @@ class _MedeTestaExplicaM5State extends State<MedeTestaExplicaM5> {
                 displayUnit: _multimeterMode.unit,
                 isRedConnected: _redProbeTarget != null,
                 isBlackConnected: _blackProbeTarget != null,
+              ),
+            ),
+
+            // 8. Cabos elásticos dinâmicos (EM CIMA da bancada e componentes, NUNCA por trás!)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: CustomPaint(
+                  painter: ProbeCablesPainter(
+                    meterRedJack: meterRedJack,
+                    meterBlackJack: meterBlackJack,
+                    probeRedTail: probeRedTail,
+                    probeBlackTail: probeBlackTail,
+                  ),
+                ),
+              ),
+            ),
+
+            // 9. Caneta de Ponta de Prova Vermelha (+) Arrastável (apontando para baixo)
+            Positioned(
+              left: effectiveRedPos.dx - 14,
+              top: effectiveRedPos.dy - 96,
+              child: GestureDetector(
+                onPanStart: (_) => setState(() => _isDraggingRed = true),
+                onPanUpdate: (details) {
+                  setState(() {
+                    _redProbePos = (_redProbePos ?? effectiveRedPos) + details.delta;
+                    _redProbeTarget = null;
+                  });
+                },
+                onPanEnd: (_) {
+                  setState(() {
+                    _isDraggingRed = false;
+                    // Snap magnético nos 4 nós de teste
+                    if ((_redProbePos! - tp1Pos).distance < 42) {
+                      _redProbeTarget = 'tp1';
+                      _redProbePos = tp1Pos;
+                    } else if ((_redProbePos! - tp2Pos).distance < 42) {
+                      _redProbeTarget = 'tp2';
+                      _redProbePos = tp2Pos;
+                    } else if ((_redProbePos! - tp3Pos).distance < 42) {
+                      _redProbeTarget = 'tp3';
+                      _redProbePos = tp3Pos;
+                    } else if ((_redProbePos! - tp4Pos).distance < 42) {
+                      _redProbeTarget = 'tp4';
+                      _redProbePos = tp4Pos;
+                    }
+                  });
+                },
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.grab,
+                  child: ProbePenWidget(
+                    isRed: true,
+                    isConnected: _redProbeTarget != null,
+                    isDragging: _isDraggingRed,
+                    pointingDown: true,
+                  ),
+                ),
+              ),
+            ),
+
+            // 10. Caneta de Ponta de Prova Preta (COM) Arrastável (apontando para baixo)
+            Positioned(
+              left: effectiveBlackPos.dx - 14,
+              top: effectiveBlackPos.dy - 96,
+              child: GestureDetector(
+                onPanStart: (_) => setState(() => _isDraggingBlack = true),
+                onPanUpdate: (details) {
+                  setState(() {
+                    _blackProbePos = (_blackProbePos ?? effectiveBlackPos) + details.delta;
+                    _blackProbeTarget = null;
+                  });
+                },
+                onPanEnd: (_) {
+                  setState(() {
+                    _isDraggingBlack = false;
+                    // Snap magnético nos 4 nós de teste
+                    if ((_blackProbePos! - tp1Pos).distance < 42) {
+                      _blackProbeTarget = 'tp1';
+                      _blackProbePos = tp1Pos;
+                    } else if ((_blackProbePos! - tp2Pos).distance < 42) {
+                      _blackProbeTarget = 'tp2';
+                      _blackProbePos = tp2Pos;
+                    } else if ((_blackProbePos! - tp3Pos).distance < 42) {
+                      _blackProbeTarget = 'tp3';
+                      _blackProbePos = tp3Pos;
+                    } else if ((_blackProbePos! - tp4Pos).distance < 42) {
+                      _blackProbeTarget = 'tp4';
+                      _blackProbePos = tp4Pos;
+                    }
+                  });
+                },
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.grab,
+                  child: ProbePenWidget(
+                    isRed: false,
+                    isConnected: _blackProbeTarget != null,
+                    isDragging: _isDraggingBlack,
+                    pointingDown: true,
+                  ),
+                ),
               ),
             ),
           ],

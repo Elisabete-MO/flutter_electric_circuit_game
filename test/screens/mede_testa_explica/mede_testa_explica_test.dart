@@ -75,7 +75,7 @@ void main() {
       await tester.pumpWidget(buildTestable(MedeTestaExplicaM2(onMissionComplete: () {})));
       await tester.pump(const Duration(milliseconds: 200));
 
-      expect(find.textContaining('QUEDA DE TENSÃO NA CARGA'), findsOneWidget);
+      expect(find.byType(ProbePenWidget), findsNWidgets(2));
       expect(find.textContaining('CHAVE: FECHADA (ON)'), findsOneWidget);
       expect(find.text('LÂMPADA'), findsOneWidget);
 
@@ -91,7 +91,7 @@ void main() {
       await tester.pumpWidget(buildTestable(MedeTestaExplicaM3(onMissionComplete: () {})));
       await tester.pump(const Duration(milliseconds: 200));
 
-      expect(find.textContaining('LEI DE OHM & CONTROLE DE CORRENTE'), findsOneWidget);
+      expect(find.byType(ProbePenWidget), findsNWidgets(2));
       expect(find.textContaining('POTENCIÔMETRO (R)'), findsOneWidget);
       expect(find.textContaining('500 Ω'), findsWidgets);
       // I = 7V / 500Ω = 14.0 mA
@@ -111,7 +111,7 @@ void main() {
       await tester.pumpWidget(buildTestable(MedeTestaExplicaM4(onMissionComplete: () {})));
       await tester.pump(const Duration(milliseconds: 200));
 
-      expect(find.textContaining('DIMENSIONAMENTO DE RESISTOR DE PROTEÇÃO'), findsOneWidget);
+      expect(find.byType(ProbePenWidget), findsNWidgets(2));
       expect(find.textContaining('FAIXA SEGURA'), findsOneWidget);
       expect(find.textContaining('680 Ω'), findsWidgets);
 
@@ -127,7 +127,7 @@ void main() {
       await tester.pumpWidget(buildTestable(MedeTestaExplicaM5(onMissionComplete: () {})));
       await tester.pump(const Duration(milliseconds: 200));
 
-      expect(find.textContaining('PERÍCIA ELÉTRICA: O CASO DO LED APAGADO'), findsOneWidget);
+      expect(find.byType(ProbePenWidget), findsNWidgets(2));
       expect(find.textContaining('10 kΩ !'), findsOneWidget);
       expect(find.textContaining('ANÔMALO'), findsOneWidget);
 

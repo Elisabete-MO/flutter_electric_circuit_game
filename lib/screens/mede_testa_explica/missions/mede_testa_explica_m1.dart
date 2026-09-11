@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/ui_scale.dart';
 import '../../../models/circuit_action.dart';
-import '../../../models/first_step_component.dart';
 import '../../../models/stand_mission.dart';
 import '../../../state/circuit_undo_redo_controller.dart';
 import '../../../widgets/success_confetti_overlay.dart';
@@ -548,12 +547,14 @@ class _MedeTestaExplicaM1State extends State<MedeTestaExplicaM1> {
 
             // 3. Cabos elásticos dinâmicos (EM CIMA da bancada e da bateria, NUNCA por trás!)
             Positioned.fill(
-              child: CustomPaint(
-                painter: ProbeCablesPainter(
-                  meterRedJack: meterRedJack,
-                  meterBlackJack: meterBlackJack,
-                  probeRedTail: probeRedTail,
-                  probeBlackTail: probeBlackTail,
+              child: IgnorePointer(
+                child: CustomPaint(
+                  painter: ProbeCablesPainter(
+                    meterRedJack: meterRedJack,
+                    meterBlackJack: meterBlackJack,
+                    probeRedTail: probeRedTail,
+                    probeBlackTail: probeBlackTail,
+                  ),
                 ),
               ),
             ),

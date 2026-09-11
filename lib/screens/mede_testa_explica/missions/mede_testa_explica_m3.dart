@@ -41,6 +41,10 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
   // Conexões das pontas do multímetro em série: TP2 e TP3
   String? _redProbeTarget = 'tp2';
   String? _blackProbeTarget = 'tp3';
+  Offset? _redProbePos;
+  Offset? _blackProbePos;
+  bool _isDraggingRed = false;
+  bool _isDraggingBlack = false;
 
   MultimeterMode _multimeterMode = MultimeterMode.currentMa;
 
@@ -107,21 +111,43 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
     ));
   }
 
-  void _setRedProbeTarget(String? target) {
+  void _setRedProbeTarget(String? target, {Offset? snappedPos}) {
     final prev = _redProbeTarget;
+    final prevPos = _redProbePos;
     _undoRedoController.execute(ToggleProbeAction(
-      description: 'Mover Ponta Vermelha para $target',
-      onApply: () => setState(() => _redProbeTarget = target),
-      onUndo: () => setState(() => _redProbeTarget = prev),
+      description: 'Mover Ponta Vermelha para ${target ?? 'Bancada'}',
+      onApply: () => setState(() {
+        _redProbeTarget = target;
+        if (snappedPos != null) {
+          _redProbePos = snappedPos;
+        } else if (target == null) {
+          _redProbePos = null;
+        }
+      }),
+      onUndo: () => setState(() {
+        _redProbeTarget = prev;
+        _redProbePos = prevPos;
+      }),
     ));
   }
 
-  void _setBlackProbeTarget(String? target) {
+  void _setBlackProbeTarget(String? target, {Offset? snappedPos}) {
     final prev = _blackProbeTarget;
+    final prevPos = _blackProbePos;
     _undoRedoController.execute(ToggleProbeAction(
-      description: 'Mover Ponta Preta para $target',
-      onApply: () => setState(() => _blackProbeTarget = target),
-      onUndo: () => setState(() => _blackProbeTarget = prev),
+      description: 'Mover Ponta Preta para ${target ?? 'Bancada'}',
+      onApply: () => setState(() {
+        _blackProbeTarget = target;
+        if (snappedPos != null) {
+          _blackProbePos = snappedPos;
+        } else if (target == null) {
+          _blackProbePos = null;
+        }
+      }),
+      onUndo: () => setState(() {
+        _blackProbeTarget = prev;
+        _blackProbePos = prevPos;
+      }),
     ));
   }
 
@@ -129,8 +155,10 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
     setState(() {
       _resistanceValue = 500.0;
       _hasTunedResistance = false;
-      _redProbeTarget = 'tp2';
-      _blackProbeTarget = 'tp3';
+      _redProbeTarget = null;
+      _blackProbeTarget = null;
+      _redProbePos = null;
+      _blackProbePos = null;
       _multimeterMode = MultimeterMode.currentMa;
     });
   }
@@ -371,6 +399,58 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
               ),
             ),
           ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(
+                      color: _isAmperimeterConnected
+                          ? const Color(0xFF10B981)
+                          : const Color(0xFF475569),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                  ),
+                  onPressed: () {
+                    _setRedProbeTarget('tp2');
+                    _setBlackProbeTarget('tp3');
+                  },
+                  child: Text(
+                    'Inserir em Série\n(TP2-TP3)',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.rajdhani(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF475569)),
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                  ),
+                  onPressed: () {
+                    _setRedProbeTarget(null);
+                    _setBlackProbeTarget(null);
+                  },
+                  child: Text(
+                    'Soltar Pontas\nna Bancada',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.rajdhani(
+                      color: Colors.white70,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -390,61 +470,37 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
         final ledPos = Offset(w * 0.56, h * 0.65);
         final meterPos = Offset(w * 0.80, h * 0.48);
 
-        // Terminais do multímetro
-        final meterRedJack = Offset(meterPos.dx - 35, meterPos.dy + 120);
-        final meterBlackJack = Offset(meterPos.dx + 35, meterPos.dy + 120);
+        // Terminais do multímetro (COM preto à esquerda, mA vermelho à direita)
+        final meterBlackJack = Offset(meterPos.dx - 10, meterPos.dy + 118);
+        final meterRedJack = Offset(meterPos.dx + 38, meterPos.dy + 118);
 
-        final targetRed = _redProbeTarget == 'tp2'
-            ? tp2Pos
-            : (_redProbeTarget == 'tp3' ? tp3Pos : null);
+        // Sincronização e posicionamento livre das pontas
+        if (_redProbeTarget == 'tp2') {
+          _redProbePos = tp2Pos;
+        } else if (_redProbeTarget == 'tp3') {
+          _redProbePos = tp3Pos;
+        } else {
+          _redProbePos ??= Offset(w * 0.44, h * 0.65);
+        }
 
-        final targetBlack = _blackProbeTarget == 'tp3'
-            ? tp3Pos
-            : (_blackProbeTarget == 'tp2' ? tp2Pos : null);
+        if (_blackProbeTarget == 'tp2') {
+          _blackProbePos = tp2Pos;
+        } else if (_blackProbeTarget == 'tp3') {
+          _blackProbePos = tp3Pos;
+        } else {
+          _blackProbePos ??= Offset(w * 0.54, h * 0.65);
+        }
+
+        final effectiveRedPos = _redProbePos!;
+        final effectiveBlackPos = _blackProbePos!;
+
+        final probeRedTail = Offset(effectiveRedPos.dx, effectiveRedPos.dy - 93);
+        final probeBlackTail = Offset(effectiveBlackPos.dx, effectiveBlackPos.dy - 93);
 
         return Stack(
           clipBehavior: Clip.none,
           children: [
-            // Cabos flexíveis ligando o multímetro em série aos pontos TP2 e TP3
-            Positioned.fill(
-              child: CustomPaint(
-                painter: ProbeCablesPainter(
-                  meterRedJack: meterRedJack,
-                  meterBlackJack: meterBlackJack,
-                  targetRed: targetRed,
-                  targetBlack: targetBlack,
-                ),
-              ),
-            ),
-
-            // Título Didático
-            Positioned(
-              top: 16,
-              left: 20,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'LEI DE OHM & CONTROLE DE CORRENTE',
-                    style: GoogleFonts.rajdhani(
-                      color: const Color(0xFF0F172A),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                  Text(
-                    'Gire o botão do potenciômetro e veja a corrente oscilar no multímetro em série.',
-                    style: GoogleFonts.outfit(
-                      color: const Color(0xFF64748B),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Fiação fixa do circuito
+            // 1. Fiação fixa do circuito
             Positioned.fill(
               child: CustomPaint(
                 painter: _OhmCircuitPainter(
@@ -458,7 +514,7 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
               ),
             ),
 
-            // 1. Bateria 9V
+            // 2. Bateria 9V
             Positioned(
               left: battPos.dx - 45,
               top: battPos.dy - 55,
@@ -494,7 +550,7 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
               ),
             ),
 
-            // 2. Potenciômetro Rotativo Interativo
+            // 3. Potenciômetro Rotativo Interativo
             Positioned(
               left: potPos.dx - 65,
               top: potPos.dy - 85,
@@ -506,7 +562,7 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
               ),
             ),
 
-            // Ponto de Teste TP2 (Saída do Potenciômetro)
+            // 4. Ponto de Teste TP2 (Saída do Potenciômetro)
             Positioned(
               left: tp2Pos.dx - 20,
               top: tp2Pos.dy - 20,
@@ -524,7 +580,7 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
               ),
             ),
 
-            // Ponto de Teste TP3 (Entrada do LED)
+            // 5. Ponto de Teste TP3 (Entrada do LED)
             Positioned(
               left: tp3Pos.dx - 20,
               top: tp3Pos.dy - 20,
@@ -542,7 +598,7 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
               ),
             ),
 
-            // 3. LED Indicador (com brilho proporcional à corrente)
+            // 6. LED Indicador (com brilho proporcional à corrente)
             Positioned(
               left: ledPos.dx - 45,
               top: ledPos.dy - 55,
@@ -606,7 +662,7 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
               ),
             ),
 
-            // Multímetro Digital de Bancada
+            // 7. Multímetro Digital de Bancada
             Positioned(
               left: meterPos.dx - 87,
               top: meterPos.dy - 140,
@@ -617,6 +673,94 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
                 displayUnit: _multimeterMode.unit,
                 isRedConnected: _redProbeTarget != null,
                 isBlackConnected: _blackProbeTarget != null,
+              ),
+            ),
+
+            // 8. Cabos elásticos dinâmicos (EM CIMA da bancada e componentes, NUNCA por trás!)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: CustomPaint(
+                  painter: ProbeCablesPainter(
+                    meterRedJack: meterRedJack,
+                    meterBlackJack: meterBlackJack,
+                    probeRedTail: probeRedTail,
+                    probeBlackTail: probeBlackTail,
+                  ),
+                ),
+              ),
+            ),
+
+            // 9. Caneta de Ponta de Prova Vermelha (+) Arrastável (apontando para baixo)
+            Positioned(
+              left: effectiveRedPos.dx - 14,
+              top: effectiveRedPos.dy - 96,
+              child: GestureDetector(
+                onPanStart: (_) => setState(() => _isDraggingRed = true),
+                onPanUpdate: (details) {
+                  setState(() {
+                    _redProbePos = (_redProbePos ?? effectiveRedPos) + details.delta;
+                    _redProbeTarget = null;
+                  });
+                },
+                onPanEnd: (_) {
+                  setState(() {
+                    _isDraggingRed = false;
+                    // Snap magnético nos pontos de teste
+                    if ((_redProbePos! - tp2Pos).distance < 42) {
+                      _redProbeTarget = 'tp2';
+                      _redProbePos = tp2Pos;
+                    } else if ((_redProbePos! - tp3Pos).distance < 42) {
+                      _redProbeTarget = 'tp3';
+                      _redProbePos = tp3Pos;
+                    }
+                  });
+                },
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.grab,
+                  child: ProbePenWidget(
+                    isRed: true,
+                    isConnected: _redProbeTarget != null,
+                    isDragging: _isDraggingRed,
+                    pointingDown: true,
+                  ),
+                ),
+              ),
+            ),
+
+            // 10. Caneta de Ponta de Prova Preta (COM) Arrastável (apontando para baixo)
+            Positioned(
+              left: effectiveBlackPos.dx - 14,
+              top: effectiveBlackPos.dy - 96,
+              child: GestureDetector(
+                onPanStart: (_) => setState(() => _isDraggingBlack = true),
+                onPanUpdate: (details) {
+                  setState(() {
+                    _blackProbePos = (_blackProbePos ?? effectiveBlackPos) + details.delta;
+                    _blackProbeTarget = null;
+                  });
+                },
+                onPanEnd: (_) {
+                  setState(() {
+                    _isDraggingBlack = false;
+                    // Snap magnético nos pontos de teste
+                    if ((_blackProbePos! - tp2Pos).distance < 42) {
+                      _blackProbeTarget = 'tp2';
+                      _blackProbePos = tp2Pos;
+                    } else if ((_blackProbePos! - tp3Pos).distance < 42) {
+                      _blackProbeTarget = 'tp3';
+                      _blackProbePos = tp3Pos;
+                    }
+                  });
+                },
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.grab,
+                  child: ProbePenWidget(
+                    isRed: false,
+                    isConnected: _blackProbeTarget != null,
+                    isDragging: _isDraggingBlack,
+                    pointingDown: true,
+                  ),
+                ),
               ),
             ),
           ],

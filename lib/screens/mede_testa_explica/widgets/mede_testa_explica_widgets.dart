@@ -2,12 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../models/first_step_component.dart';
 import '../../../state/circuit_undo_redo_controller.dart';
-import '../../../widgets/circuit_symbol_painter.dart';
-import '../../../widgets/component_physical_painter.dart';
-import '../../../widgets/component_vector_painters.dart';
-import '../../../widgets/workbench_components.dart';
 
 /// Modos de operação da chave seletora do Multímetro Digital
 enum MultimeterMode {
