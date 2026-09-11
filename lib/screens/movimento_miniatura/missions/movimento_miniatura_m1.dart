@@ -158,6 +158,7 @@ class _MovimentoMiniaturaM1State extends State<MovimentoMiniaturaM1>
           currentMa: _isClosed ? 120.0 : 0.0,
           isClosed: _isClosed,
         ),
+        voltsTip: 'A corrente elétrica que percorre a bobina interna interage com os ímãs fixos do estator, fazendo o eixo girar!',
         bottomWidget: MovimentoUndoRedoButtons(
           controller: _undoRedoController,
           onUndo: () => setState(() => _undoRedoController.undo()),
@@ -170,6 +171,8 @@ class _MovimentoMiniaturaM1State extends State<MovimentoMiniaturaM1>
         showTeamHeader: false,
         buttonColor: const Color(0xFF0284C7),
         toolboxItems: [
+          _buildMotorSideControl(),
+          const SizedBox(height: 12),
           _buildMissionObjectiveCard(),
           const SizedBox(height: 12),
           _buildInvestigationStepperCard(),
@@ -183,81 +186,149 @@ class _MovimentoMiniaturaM1State extends State<MovimentoMiniaturaM1>
     );
   }
 
-  Widget _buildWorkbenchDisplay() {
-    return Stack(
-      children: [
-        // 1. Desenho do Motor CC, Protoboard e Bateria 9V
-        Positioned.fill(
-          child: AnimatedBuilder(
-            animation: _animController,
-            builder: (context, child) {
-              return CustomPaint(
-                painter: MovimentoMiniaturaBreadboardPainter(
-                  animationValue: _animController.value,
-                  usePhysicalStyle: _usePhysicalStyle,
-                  isClosed: _isClosed,
-                  isReversed: false,
-                  hasMotor: _motorConnected,
-                ),
-              );
-            },
-          ),
+  Widget _buildMotorSideControl() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A).withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _motorConnected
+              ? const Color(0xFF0284C7)
+              : const Color(0xFF475569),
+          width: 1.5,
         ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Montagem do Atuador:',
+            style: GoogleFonts.rajdhani(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 8),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: _motorConnected
+                  ? const Color(0xFF0284C7)
+                  : const Color(0xFF334155),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 14, vertical: 10),
+            ),
+            onPressed: _toggleMotor,
+            icon: Icon(
+              _motorConnected
+                  ? Icons.check_circle_rounded
+                  : Icons.add_circle_outline_rounded,
+              size: 18,
+            ),
+            label: Text(
+              _motorConnected
+                  ? 'Motor Conectado na Protoboard'
+                  : 'Conectar Motor CC na Protoboard',
+              style: GoogleFonts.rajdhani(
+                  fontWeight: FontWeight.bold, fontSize: 13),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-        // 2. Dock de Controle Interativo na Bancada
-        Positioned(
-          left: 20,
-          bottom: 16,
-          right: 20,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: const Color(0xFF0F172A).withValues(alpha: 0.88),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: const Color(0xFF0284C7).withValues(alpha: 0.5),
+  Widget _buildWorkbenchDisplay() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final w = constraints.maxWidth;
+        final h = constraints.maxHeight;
+
+        final motorWidth = (w * 0.13).clamp(46.0, 96.0);
+        final motorHeight = (motorWidth * 1.45).clamp(66.0, 138.0);
+        final motorLeft = (w * 0.03).clamp(8.0, 42.0);
+        final bbTop = (h * 0.22).clamp(60.0, 105.0);
+        final bbHeight = (h * 0.54).clamp(140.0, 235.0);
+        final motorTop = bbTop + (bbHeight - motorHeight) * 0.52 + 10.0;
+
+        return Stack(
+          children: [
+            // 1. Desenho do Motor CC, Protoboard e Bateria 9V
+            Positioned.fill(
+              child: AnimatedBuilder(
+                animation: _animController,
+                builder: (context, child) {
+                  return CustomPaint(
+                    painter: MovimentoMiniaturaBreadboardPainter(
+                      animationValue: _animController.value,
+                      usePhysicalStyle: _usePhysicalStyle,
+                      isClosed: _isClosed,
+                      isReversed: false,
+                      hasMotor: _motorConnected,
+                    ),
+                  );
+                },
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.3),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
             ),
-            child: Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 12,
-              runSpacing: 8,
-              children: [
-                FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: _motorConnected
-                        ? const Color(0xFF0284C7)
-                        : const Color(0xFF334155),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 10),
-                  ),
-                  onPressed: _toggleMotor,
-                  icon: Icon(
-                    _motorConnected
-                        ? Icons.check_circle_rounded
-                        : Icons.add_circle_outline_rounded,
-                    size: 18,
-                  ),
-                  label: Text(
-                    _motorConnected
-                        ? 'Motor Conectado na Protoboard'
-                        : 'Conectar Motor CC na Protoboard',
-                    style: GoogleFonts.rajdhani(
-                        fontWeight: FontWeight.bold, fontSize: 13),
+
+            // 2. Hotspot Tátil Direto no Motor CC
+            Positioned(
+              left: motorLeft - 4,
+              top: motorTop - 20,
+              width: motorWidth + 8,
+              height: motorHeight + 35,
+              child: Tooltip(
+                message: _motorConnected
+                    ? 'Toque no Motor CC para desconectar'
+                    : 'Toque no Motor CC para conectar à protoboard',
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    splashColor: const Color(0xFF0284C7).withValues(alpha: 0.3),
+                    highlightColor: const Color(0xFF0284C7).withValues(alpha: 0.15),
+                    onTap: _toggleMotor,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: _motorConnected
+                              ? const Color(0xFF0284C7).withValues(alpha: 0.3)
+                              : Colors.amber.withValues(alpha: 0.7),
+                          width: 2,
+                        ),
+                      ),
+                      alignment: Alignment.bottomCenter,
+                      padding: const EdgeInsets.only(bottom: 2),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F172A).withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: _motorConnected
+                                ? const Color(0xFF0284C7)
+                                : Colors.amber,
+                          ),
+                        ),
+                        child: Text(
+                          _motorConnected ? '✓ Motor Ativo' : 'Toque p/ Conectar',
+                          style: GoogleFonts.rajdhani(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 

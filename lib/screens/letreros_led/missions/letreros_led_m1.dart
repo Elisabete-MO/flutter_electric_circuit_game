@@ -2,12 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../models/circuit_action.dart';
-import '../../../models/first_step_component.dart';
 import '../../../models/stand_mission.dart';
 import '../../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../../state/circuit_undo_redo_controller.dart';
-import '../../../widgets/circuit_symbol_painter.dart';
-import '../../../widgets/component_physical_painter.dart';
 import '../../../widgets/prof_volts_explanation_dialog.dart';
 import '../../../widgets/prof_volts_feedback_dialog.dart';
 import '../../../widgets/prof_volts_prediction_dialog.dart';
@@ -259,152 +256,124 @@ class _LetrerosLedM1State extends State<LetrerosLedM1>
               ),
             ),
 
-            // 2. Painel Interativo de Bancada
-            Positioned(
-              left: 20,
-              bottom: 16,
-              right: 20,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A).withValues(alpha: 0.88),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFF334155)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 12,
-                  runSpacing: 8,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    // Botão Inserir/Remover LED
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _m1LedInserted
-                            ? const Color(0xFF0284C7)
-                            : const Color(0xFF1E293B),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 10),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                      ),
-                      icon: Icon(
-                        _m1LedInserted
-                            ? Icons.check_circle_rounded
-                            : Icons.add_circle_outline_rounded,
-                        size: 18,
-                        color: Colors.white,
-                      ),
-                      label: Text(
-                        _m1LedInserted
-                            ? 'LED Vermelho Inserido'
-                            : 'Inserir LED na Protoboard',
-                        style: GoogleFonts.rajdhani(
-                            fontWeight: FontWeight.bold, fontSize: 13),
-                      ),
-                      onPressed: () => _insertComponent(
-                        name: 'LED Vermelho',
-                        getInserted: () => _m1LedInserted,
-                        setInserted: (v) => _m1LedInserted = v,
-                      ),
-                    ),
-
-                    // Botão Inverter Polaridade do LED
-                    if (_m1LedInserted)
-                      OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1E293B),
-                          side: BorderSide(
-                            color: _m1LedDirectPolarity
-                                ? const Color(0xFF10B981)
-                                : Colors.amberAccent,
-                            width: 1.5,
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 10),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10)),
-                        ),
-                        icon: Icon(
-                          Icons.flip_camera_android_rounded,
-                          size: 18,
-                          color: _m1LedDirectPolarity
-                              ? const Color(0xFF10B981)
-                              : Colors.amberAccent,
-                        ),
-                        label: Text(
-                          _m1LedDirectPolarity
-                              ? 'Polaridade: Direta [A(+) → K(-)]'
-                              : 'Polaridade: Invertida [K(-) → A(+)]',
-                          style: GoogleFonts.rajdhani(
-                            color: _m1LedDirectPolarity
-                                ? const Color(0xFF10B981)
-                                : Colors.amberAccent,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                        onPressed: _togglePolarity,
-                      ),
-
-                    // Botão Resistor 680 Ω
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _m1ResistorInserted
-                            ? const Color(0xFF059669)
-                            : const Color(0xFF1E293B),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 10),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                      ),
-                      icon: Icon(
-                        _m1ResistorInserted
-                            ? Icons.verified_rounded
-                            : Icons.add_circle_outline_rounded,
-                        size: 18,
-                        color: Colors.white,
-                      ),
-                      label: Text(
-                        _m1ResistorInserted
-                            ? 'Resistor 680 Ω Conectado'
-                            : 'Inserir Resistor 680 Ω',
-                        style: GoogleFonts.rajdhani(
-                            fontWeight: FontWeight.bold, fontSize: 13),
-                      ),
-                      onPressed: () => _insertComponent(
-                        name: 'Resistor 680 Ω',
-                        getInserted: () => _m1ResistorInserted,
-                        setInserted: (v) => _m1ResistorInserted = v,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            // 2. Hotspots Táteis de Toque Direto na Protoboard
+            ..._buildDirectTouchHotspots(constraints),
           ],
         );
       },
     );
   }
 
+  List<Widget> _buildDirectTouchHotspots(BoxConstraints constraints) {
+    final w = constraints.maxWidth;
+    final h = constraints.maxHeight;
+    final batWidth = (w * 0.17).clamp(55.0, 155.0);
+    final batLeft = (w * 0.03).clamp(8.0, 32.0);
+    final spacing = (w * 0.03).clamp(8.0, 24.0);
+    final bbLeft = batLeft + batWidth + spacing;
+    final bbWidth = (w - bbLeft - 14.0).clamp(140.0, 560.0);
+    final bbTop = (h * 0.24).clamp(60.0, 115.0);
+    final bbHeight = (h * 0.54).clamp(140.0, 240.0);
+
+    const cols = 20;
+    final startX = bbLeft + 32.0;
+    final stepX = (bbWidth - 64.0) / (cols - 1);
+    final rowStepTop = (bbHeight * 0.22) / 4;
+    final rowHY = bbTop + bbHeight * 0.24 + 2 * rowStepTop;
+    final rowFY = bbTop + bbHeight * 0.24 + 4 * rowStepTop;
+
+    final resistorLeft = startX + 3 * stepX - 12;
+    final resistorWidth = 3 * stepX + 24;
+    final ledLeft = startX + 6 * stepX - 12;
+    final ledWidth = 3 * stepX + 24;
+
+    return [
+      // Hotspot do Resistor (Linha h, Colunas 3 a 6)
+      Positioned(
+        left: resistorLeft,
+        top: rowHY - 16,
+        width: resistorWidth,
+        height: 36,
+        child: Tooltip(
+          message: _m1ResistorInserted
+              ? 'Resistor 680 Ω (Toque para remover)'
+              : 'Toque para encaixar Resistor 680 Ω',
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: () => _insertComponent(
+                name: 'Resistor 680 Ω',
+                getInserted: () => _m1ResistorInserted,
+                setInserted: (v) => _m1ResistorInserted = v,
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: _m1ResistorInserted
+                        ? Colors.transparent
+                        : const Color(0xFF10B981).withValues(alpha: 0.6),
+                    width: 1.2,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+
+      // Hotspot do LED (Linha f, Colunas 6 a 9)
+      Positioned(
+        left: ledLeft,
+        top: rowFY - 22,
+        width: ledWidth,
+        height: 44,
+        child: Tooltip(
+          message: !_m1LedInserted
+              ? 'Toque para encaixar LED Vermelho'
+              : 'Toque para inverter polaridade do LED',
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: () {
+                if (!_m1LedInserted) {
+                  _insertComponent(
+                    name: 'LED Vermelho',
+                    getInserted: () => _m1LedInserted,
+                    setInserted: (v) => _m1LedInserted = v,
+                  );
+                } else {
+                  _togglePolarity();
+                }
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: _m1LedInserted
+                        ? Colors.transparent
+                        : Colors.amberAccent.withValues(alpha: 0.6),
+                    width: 1.2,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ];
+  }
+
   Widget _buildSideToolboxDrawer() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
           padding: const EdgeInsets.only(bottom: 8.0, top: 4.0),
           child: Text(
-            'Componentes da Bancada:',
+            'Ações na Protoboard:',
             style: GoogleFonts.rajdhani(
               color: const Color(0xFF64748B),
               fontWeight: FontWeight.bold,
@@ -413,73 +382,115 @@ class _LetrerosLedM1State extends State<LetrerosLedM1>
             ),
           ),
         ),
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: [
-            InkWell(
-              borderRadius: BorderRadius.circular(14),
-              onTap: () => _insertComponent(
-                name: 'LED Vermelho',
-                getInserted: () => _m1LedInserted,
-                setInserted: (v) => _m1LedInserted = v,
+        // Botão Inserir/Remover LED
+        ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _m1LedInserted
+                ? const Color(0xFF0284C7)
+                : const Color(0xFF1E293B),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          icon: Icon(
+            _m1LedInserted
+                ? Icons.check_circle_rounded
+                : Icons.add_circle_outline_rounded,
+            size: 16,
+            color: Colors.white,
+          ),
+          label: Text(
+            _m1LedInserted
+                ? 'LED Vermelho Inserido'
+                : 'Inserir LED na Protoboard',
+            style: GoogleFonts.rajdhani(
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+          ),
+          onPressed: () => _insertComponent(
+            name: 'LED Vermelho',
+            getInserted: () => _m1LedInserted,
+            setInserted: (v) => _m1LedInserted = v,
+          ),
+        ),
+        const SizedBox(height: 8),
+
+        // Botão Inverter Polaridade do LED
+        if (_m1LedInserted) ...[
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              backgroundColor: const Color(0xFF1E293B),
+              side: BorderSide(
+                color: _m1LedDirectPolarity
+                    ? const Color(0xFF10B981)
+                    : Colors.amberAccent,
+                width: 1.5,
               ),
-              child: WorkbenchSymbolToolboxTile<String>(
-                data: 'led_red',
-                label: 'LED Vermelho',
-                tooltip: 'Toque para inserir na protoboard',
-                symbolWidget: _usePhysicalStyle
-                    ? CustomPaint(
-                        size: const Size(44, 44),
-                        painter: ComponentPhysicalPainter(
-                          type: ComponentType.led,
-                          isActive: true,
-                          isDarkMode: false,
-                        ),
-                      )
-                    : CustomPaint(
-                        size: const Size(40, 30),
-                        painter: CircuitSymbolPainter(
-                          type: ComponentType.led,
-                          isActive: true,
-                          color: const Color(0xFF0F172A),
-                          strokeWidth: 2.2,
-                        ),
-                      ),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
               ),
             ),
-            InkWell(
-              borderRadius: BorderRadius.circular(14),
-              onTap: () => _insertComponent(
-                name: 'Resistor 680 Ω',
-                getInserted: () => _m1ResistorInserted,
-                setInserted: (v) => _m1ResistorInserted = v,
-              ),
-              child: WorkbenchSymbolToolboxTile<String>(
-                data: 'resistor_680',
-                label: 'Resistor 680 Ω',
-                tooltip: 'Limita corrente para proteger o LED',
-                symbolWidget: _usePhysicalStyle
-                    ? CustomPaint(
-                        size: const Size(44, 44),
-                        painter: ComponentPhysicalPainter(
-                          type: ComponentType.resistor,
-                          isActive: true,
-                          isDarkMode: false,
-                        ),
-                      )
-                    : CustomPaint(
-                        size: const Size(40, 30),
-                        painter: CircuitSymbolPainter(
-                          type: ComponentType.resistor,
-                          isActive: true,
-                          color: const Color(0xFF0F172A),
-                          strokeWidth: 2.2,
-                        ),
-                      ),
+            icon: Icon(
+              Icons.flip_camera_android_rounded,
+              size: 16,
+              color: _m1LedDirectPolarity
+                  ? const Color(0xFF10B981)
+                  : Colors.amberAccent,
+            ),
+            label: Text(
+              _m1LedDirectPolarity
+                  ? 'Polaridade: Direta [A(+) → K(-)]'
+                  : 'Polaridade: Invertida [K(-) → A(+)]',
+              style: GoogleFonts.rajdhani(
+                color: _m1LedDirectPolarity
+                    ? const Color(0xFF10B981)
+                    : Colors.amberAccent,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
               ),
             ),
-          ],
+            onPressed: _togglePolarity,
+          ),
+          const SizedBox(height: 8),
+        ],
+
+        // Botão Resistor 680 Ω
+        ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _m1ResistorInserted
+                ? const Color(0xFF059669)
+                : const Color(0xFF1E293B),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          icon: Icon(
+            _m1ResistorInserted
+                ? Icons.verified_rounded
+                : Icons.add_circle_outline_rounded,
+            size: 16,
+            color: Colors.white,
+          ),
+          label: Text(
+            _m1ResistorInserted
+                ? 'Resistor 680 Ω Conectado'
+                : 'Inserir Resistor 680 Ω',
+            style: GoogleFonts.rajdhani(
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+          ),
+          onPressed: () => _insertComponent(
+            name: 'Resistor 680 Ω',
+            getInserted: () => _m1ResistorInserted,
+            setInserted: (v) => _m1ResistorInserted = v,
+          ),
         ),
       ],
     );

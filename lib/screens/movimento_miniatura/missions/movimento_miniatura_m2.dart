@@ -158,6 +158,7 @@ class _MovimentoMiniaturaM2State extends State<MovimentoMiniaturaM2>
           currentMa: _isClosed ? 120.0 : 0.0,
           isClosed: _isClosed,
         ),
+        voltsTip: 'Inverter a polaridade da tensão inverte o sentido da corrente e das linhas de campo magnético, mudando o sentido do torque!',
         bottomWidget: MovimentoUndoRedoButtons(
           controller: _undoRedoController,
           onUndo: () => setState(() => _undoRedoController.undo()),
@@ -170,6 +171,8 @@ class _MovimentoMiniaturaM2State extends State<MovimentoMiniaturaM2>
         showTeamHeader: false,
         buttonColor: const Color(0xFF0284C7),
         toolboxItems: [
+          _buildPolaritySideControl(),
+          const SizedBox(height: 12),
           _buildMissionObjectiveCard(),
           const SizedBox(height: 12),
           _buildInvestigationStepperCard(),
@@ -183,76 +186,144 @@ class _MovimentoMiniaturaM2State extends State<MovimentoMiniaturaM2>
     );
   }
 
-  Widget _buildWorkbenchDisplay() {
-    return Stack(
-      children: [
-        // 1. Desenho do Motor CC na Protoboard
-        Positioned.fill(
-          child: AnimatedBuilder(
-            animation: _animController,
-            builder: (context, child) {
-              return CustomPaint(
-                painter: MovimentoMiniaturaBreadboardPainter(
-                  animationValue: _animController.value,
-                  usePhysicalStyle: _usePhysicalStyle,
-                  isClosed: _isClosed,
-                  isReversed: _isReversed,
-                  hasMotor: true,
-                ),
-              );
-            },
-          ),
+  Widget _buildPolaritySideControl() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A).withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _isReversed
+              ? const Color(0xFFF97316)
+              : const Color(0xFF0284C7),
+          width: 1.5,
         ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Sentido de Giro do Motor:',
+            style: GoogleFonts.rajdhani(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 8),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: _isReversed
+                  ? const Color(0xFFF97316)
+                  : const Color(0xFF0284C7),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 14, vertical: 10),
+            ),
+            onPressed: _togglePolarity,
+            icon: const Icon(Icons.swap_horiz_rounded, size: 18),
+            label: Text(
+              _isReversed
+                  ? 'Polaridade Invertida: Polo (–) ➔ Polo (+)'
+                  : 'Polaridade Direta: Polo (+) ➔ Polo (–)',
+              style: GoogleFonts.rajdhani(
+                  fontWeight: FontWeight.bold, fontSize: 13),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-        // 2. Dock de Controle na Bancada
-        Positioned(
-          left: 20,
-          bottom: 16,
-          right: 20,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: const Color(0xFF0F172A).withValues(alpha: 0.88),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: const Color(0xFF0284C7).withValues(alpha: 0.5),
+  Widget _buildWorkbenchDisplay() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final w = constraints.maxWidth;
+        final h = constraints.maxHeight;
+
+        final motorWidth = (w * 0.13).clamp(46.0, 96.0);
+        final motorHeight = (motorWidth * 1.45).clamp(66.0, 138.0);
+        final motorLeft = (w * 0.03).clamp(8.0, 42.0);
+        final bbTop = (h * 0.22).clamp(60.0, 105.0);
+        final bbHeight = (h * 0.54).clamp(140.0, 235.0);
+        final motorTop = bbTop + (bbHeight - motorHeight) * 0.52 + 10.0;
+
+        return Stack(
+          children: [
+            // 1. Desenho do Motor CC na Protoboard
+            Positioned.fill(
+              child: AnimatedBuilder(
+                animation: _animController,
+                builder: (context, child) {
+                  return CustomPaint(
+                    painter: MovimentoMiniaturaBreadboardPainter(
+                      animationValue: _animController.value,
+                      usePhysicalStyle: _usePhysicalStyle,
+                      isClosed: _isClosed,
+                      isReversed: _isReversed,
+                      hasMotor: true,
+                    ),
+                  );
+                },
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.3),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
             ),
-            child: Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 12,
-              runSpacing: 8,
-              children: [
-                FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: _isReversed
-                        ? const Color(0xFFF97316)
-                        : const Color(0xFF0284C7),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 10),
-                  ),
-                  onPressed: _togglePolarity,
-                  icon: const Icon(Icons.swap_horiz_rounded, size: 18),
-                  label: Text(
-                    _isReversed
-                        ? 'Polaridade Invertida: Polo (–) ➔ Polo (+)'
-                        : 'Polaridade Direta: Polo (+) ➔ Polo (–)',
-                    style: GoogleFonts.rajdhani(
-                        fontWeight: FontWeight.bold, fontSize: 13),
+
+            // 2. Hotspot Tátil Direto no Motor CC para Alternar Sentido
+            Positioned(
+              left: motorLeft - 4,
+              top: motorTop - 20,
+              width: motorWidth + 8,
+              height: motorHeight + 35,
+              child: Tooltip(
+                message: _isReversed
+                    ? 'Toque para alternar para Polaridade Direta (Giro Horário)'
+                    : 'Toque para inverter polaridade (Giro Anti-horário)',
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    splashColor: const Color(0xFFF97316).withValues(alpha: 0.3),
+                    highlightColor: const Color(0xFFF97316).withValues(alpha: 0.15),
+                    onTap: _togglePolarity,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: _isReversed
+                              ? const Color(0xFFF97316).withValues(alpha: 0.6)
+                              : const Color(0xFF0284C7).withValues(alpha: 0.6),
+                          width: 2,
+                        ),
+                      ),
+                      alignment: Alignment.bottomCenter,
+                      padding: const EdgeInsets.only(bottom: 2),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F172A).withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: _isReversed
+                                ? const Color(0xFFF97316)
+                                : const Color(0xFF0284C7),
+                          ),
+                        ),
+                        child: Text(
+                          _isReversed ? '↺ Sentido Inverso' : '↻ Sentido Direto',
+                          style: GoogleFonts.rajdhani(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 

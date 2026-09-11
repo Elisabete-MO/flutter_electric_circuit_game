@@ -183,6 +183,7 @@ class _LetrerosLedM3State extends State<LetrerosLedM3>
           _allFixed,
         ),
         bottomWidget: _buildUndoRedoButtons(),
+        voltsTip: _mission.voltsMediation,
         child: _buildWorkbenchDisplay(),
       ),
       sidePanel: WorkbenchSidePanel(
@@ -195,7 +196,8 @@ class _LetrerosLedM3State extends State<LetrerosLedM3>
           _buildInvestigationStepperCard(),
           const SizedBox(height: 12),
           buildLetrerosLedPredictionBadge(_prediction),
-          _buildSideInstructions(),
+          const SizedBox(height: 12),
+          _buildHypothesesSidePanel(),
         ],
         onEnergizePressed: _onEnergizePressed,
         isLoading: _isSimulating,
@@ -232,219 +234,271 @@ class _LetrerosLedM3State extends State<LetrerosLedM3>
               ),
             ),
 
-            // 2. Painel de Investigação de Hipóteses
-            Positioned(
-              left: 20,
-              bottom: 14,
-              right: 20,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A).withValues(alpha: 0.92),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: _allFixed ? const Color(0xFF10B981) : Colors.amberAccent,
-                    width: 1.5,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: (_allFixed ? const Color(0xFF10B981) : Colors.amberAccent)
-                          .withValues(alpha: 0.16),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Wrap(
-                      alignment: WrapAlignment.center,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 8,
-                      children: [
-                        Icon(
-                          _allFixed ? Icons.check_circle_rounded : Icons.search_rounded,
-                          color: _allFixed ? const Color(0xFF10B981) : Colors.amberAccent,
-                          size: 18,
-                        ),
-                        Text(
-                          _allFixed
-                              ? 'Diagnóstico Concluído: Circuito 100% Restaurado!'
-                              : 'Investigação de Falhas (Testar Hipóteses na Protoboard):',
-                          style: GoogleFonts.rajdhani(
-                            color: _allFixed ? const Color(0xFF10B981) : Colors.amberAccent,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 8,
-                      alignment: WrapAlignment.center,
-                      children: [
-                        // H1: Conectar Fio Jumper
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _m3WireConnected
-                                ? const Color(0xFF10B981)
-                                : const Color(0xFF1E293B),
-                            foregroundColor: Colors.white,
-                            side: BorderSide(
-                              color: _m3WireConnected
-                                  ? const Color(0xFF10B981)
-                                  : const Color(0xFF475569),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 8),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)),
-                          ),
-                          icon: Icon(
-                            _m3WireConnected ? Icons.check : Icons.cable_rounded,
-                            size: 16,
-                          ),
-                          label: Text(
-                            _m3WireConnected
-                                ? 'H1: Jumper Conectado'
-                                : 'H1: Fechar Jumper Aberto',
-                            style: GoogleFonts.rajdhani(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                            ),
-                          ),
-                          onPressed: () {
-                            final prev = _m3WireConnected;
-                            _undoRedoController.execute(ToggleBoolAction(
-                              description: 'Conectar Jumper',
-                              onApply: () =>
-                                  setState(() => _m3WireConnected = !prev),
-                              onUndo: () =>
-                                  setState(() => _m3WireConnected = prev),
-                            ));
-                          },
-                        ),
-
-                        // H2: Resistor no Trilho
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _m3ResistorInBranch
-                                ? const Color(0xFF10B981)
-                                : const Color(0xFF1E293B),
-                            foregroundColor: Colors.white,
-                            side: BorderSide(
-                              color: _m3ResistorInBranch
-                                  ? const Color(0xFF10B981)
-                                  : const Color(0xFF475569),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 8),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)),
-                          ),
-                          icon: Icon(
-                            _m3ResistorInBranch ? Icons.check : Icons.security_rounded,
-                            size: 16,
-                          ),
-                          label: Text(
-                            _m3ResistorInBranch
-                                ? 'H2: Resistor no Trilho'
-                                : 'H2: Alinhar Resistor no Ramo',
-                            style: GoogleFonts.rajdhani(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                            ),
-                          ),
-                          onPressed: () {
-                            final prev = _m3ResistorInBranch;
-                            _undoRedoController.execute(ToggleBoolAction(
-                              description: 'Alinhar Resistor',
-                              onApply: () =>
-                                  setState(() => _m3ResistorInBranch = !prev),
-                              onUndo: () =>
-                                  setState(() => _m3ResistorInBranch = prev),
-                            ));
-                          },
-                        ),
-
-                        // H3: Girar LED
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _m3LedRotated
-                                ? const Color(0xFF10B981)
-                                : const Color(0xFF1E293B),
-                            foregroundColor: Colors.white,
-                            side: BorderSide(
-                              color: _m3LedRotated
-                                  ? const Color(0xFF10B981)
-                                  : const Color(0xFF475569),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 8),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)),
-                          ),
-                          icon: Icon(
-                            _m3LedRotated ? Icons.check : Icons.rotate_right_rounded,
-                            size: 16,
-                          ),
-                          label: Text(
-                            _m3LedRotated
-                                ? 'H3: LED Orientado [A(+) → K(-)]'
-                                : 'H3: Inverter LED na Protoboard',
-                            style: GoogleFonts.rajdhani(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                            ),
-                          ),
-                          onPressed: () {
-                            final prev = _m3LedRotated;
-                            _undoRedoController.execute(ToggleBoolAction(
-                              description: 'Girar LED',
-                              onApply: () =>
-                                  setState(() => _m3LedRotated = !prev),
-                              onUndo: () =>
-                                  setState(() => _m3LedRotated = prev),
-                            ));
-                          },
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            // 2. Hotspots Táteis de Toque Direto nas Peças da Protoboard
+            ..._buildDirectTouchHotspots(constraints),
           ],
         );
       },
     );
   }
 
-  Widget _buildSideInstructions() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Diagnóstico de Falhas:',
-          style: GoogleFonts.rajdhani(
-            color: const Color(0xFF0284C7),
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
+  List<Widget> _buildDirectTouchHotspots(BoxConstraints constraints) {
+    final w = constraints.maxWidth;
+    final h = constraints.maxHeight;
+    final batWidth = (w * 0.17).clamp(55.0, 155.0);
+    final batLeft = (w * 0.03).clamp(8.0, 32.0);
+    final spacing = (w * 0.03).clamp(8.0, 24.0);
+    final bbLeft = batLeft + batWidth + spacing;
+    final bbWidth = (w - bbLeft - 14.0).clamp(140.0, 560.0);
+    final bbTop = (h * 0.24).clamp(60.0, 115.0);
+    final bbHeight = (h * 0.54).clamp(140.0, 240.0);
+
+    const cols = 20;
+    final startX = bbLeft + 32.0;
+    final stepX = (bbWidth - 64.0) / (cols - 1);
+    final rowStepTop = (bbHeight * 0.22) / 4;
+    final rowHY = bbTop + bbHeight * 0.24 + 2 * rowStepTop;
+    final rowFY = bbTop + bbHeight * 0.24 + 4 * rowStepTop;
+
+    final jumperLeft = startX + 3 * stepX - 14;
+    final resistorLeft = startX + 3 * stepX - 10;
+    final resistorWidth = 3 * stepX + 22;
+    final ledLeft = startX + 6 * stepX - 10;
+    final ledWidth = 3 * stepX + 22;
+
+    return [
+      // Hotspot H1: Jumper Aberto (Coluna 3)
+      Positioned(
+        left: jumperLeft,
+        top: bbTop + bbHeight * 0.12,
+        width: 32,
+        height: 38,
+        child: Tooltip(
+          message: _m3WireConnected
+              ? 'H1: Jumper Conectado (Toque para desconectar)'
+              : 'H1: Fechar Jumper Aberto (Toque para conectar)',
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: () {
+                final prev = _m3WireConnected;
+                _undoRedoController.execute(ToggleBoolAction(
+                  description: 'Conectar Jumper',
+                  onApply: () => setState(() => _m3WireConnected = !prev),
+                  onUndo: () => setState(() => _m3WireConnected = prev),
+                ));
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: _m3WireConnected
+                        ? Colors.transparent
+                        : Colors.amberAccent.withValues(alpha: 0.6),
+                    width: 1.2,
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
-        const SizedBox(height: 6),
-        Text(
-          'Ao depurar um circuito que não funciona, inspecione sistematicamente: continuidade dos jumpers, alinhamento dos resistores nos furos corretos da protoboard e orientação do LED!',
-          style: GoogleFonts.rajdhani(
-            color: const Color(0xFF475569),
-            fontSize: 13,
-            height: 1.3,
+      ),
+
+      // Hotspot H2: Resistor (Coluna 3 a 6)
+      Positioned(
+        left: resistorLeft,
+        top: rowHY - 16,
+        width: resistorWidth,
+        height: 36,
+        child: Tooltip(
+          message: _m3ResistorInBranch
+              ? 'H2: Resistor Alinhado no Ramo (Toque para mover)'
+              : 'H2: Alinhar Resistor no Ramo (Toque para corrigir trilho)',
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: () {
+                final prev = _m3ResistorInBranch;
+                _undoRedoController.execute(ToggleBoolAction(
+                  description: 'Alinhar Resistor',
+                  onApply: () => setState(() => _m3ResistorInBranch = !prev),
+                  onUndo: () => setState(() => _m3ResistorInBranch = prev),
+                ));
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: _m3ResistorInBranch
+                        ? Colors.transparent
+                        : Colors.amberAccent.withValues(alpha: 0.6),
+                    width: 1.2,
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
-      ],
+      ),
+
+      // Hotspot H3: LED Invertido (Coluna 6 a 9)
+      Positioned(
+        left: ledLeft,
+        top: rowFY - 22,
+        width: ledWidth,
+        height: 44,
+        child: Tooltip(
+          message: _m3LedRotated
+              ? 'H3: LED Orientado no Sentido Direto (Toque para inverter)'
+              : 'H3: Inverter LED na Protoboard (Toque para girar 180°)',
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: () {
+                final prev = _m3LedRotated;
+                _undoRedoController.execute(ToggleBoolAction(
+                  description: 'Girar LED',
+                  onApply: () => setState(() => _m3LedRotated = !prev),
+                  onUndo: () => setState(() => _m3LedRotated = prev),
+                ));
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: _m3LedRotated
+                        ? Colors.transparent
+                        : Colors.amberAccent.withValues(alpha: 0.6),
+                    width: 1.2,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ];
+  }
+
+  Widget _buildHypothesesSidePanel() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: _allFixed ? const Color(0xFF10B981) : Colors.amberAccent,
+          width: 1.2,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(
+                _allFixed ? Icons.check_circle_rounded : Icons.search_rounded,
+                color: _allFixed ? const Color(0xFF10B981) : Colors.amberAccent,
+                size: 18,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  _allFixed
+                      ? 'Diagnóstico Concluído: Restaurado!'
+                      : 'Investigação de Falhas (Testar Hipóteses):',
+                  style: GoogleFonts.rajdhani(
+                    color: _allFixed ? const Color(0xFF10B981) : Colors.amberAccent,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+
+          // H1: Conectar Fio Jumper
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _m3WireConnected
+                  ? const Color(0xFF10B981)
+                  : const Color(0xFF334155),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            icon: Icon(_m3WireConnected ? Icons.check : Icons.cable_rounded, size: 16),
+            label: Text(
+              _m3WireConnected ? 'H1: Jumper Conectado' : 'H1: Fechar Jumper Aberto',
+              style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold, fontSize: 12),
+            ),
+            onPressed: () {
+              final prev = _m3WireConnected;
+              _undoRedoController.execute(ToggleBoolAction(
+                description: 'Conectar Jumper',
+                onApply: () => setState(() => _m3WireConnected = !prev),
+                onUndo: () => setState(() => _m3WireConnected = prev),
+              ));
+            },
+          ),
+          const SizedBox(height: 6),
+
+          // H2: Resistor no Trilho
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _m3ResistorInBranch
+                  ? const Color(0xFF10B981)
+                  : const Color(0xFF334155),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            icon: Icon(_m3ResistorInBranch ? Icons.check : Icons.security_rounded, size: 16),
+            label: Text(
+              _m3ResistorInBranch ? 'H2: Resistor no Trilho' : 'H2: Alinhar Resistor no Ramo',
+              style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold, fontSize: 12),
+            ),
+            onPressed: () {
+              final prev = _m3ResistorInBranch;
+              _undoRedoController.execute(ToggleBoolAction(
+                description: 'Alinhar Resistor',
+                onApply: () => setState(() => _m3ResistorInBranch = !prev),
+                onUndo: () => setState(() => _m3ResistorInBranch = prev),
+              ));
+            },
+          ),
+          const SizedBox(height: 6),
+
+          // H3: Girar LED
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _m3LedRotated
+                  ? const Color(0xFF10B981)
+                  : const Color(0xFF334155),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            icon: Icon(_m3LedRotated ? Icons.check : Icons.rotate_right_rounded, size: 16),
+            label: Text(
+              _m3LedRotated ? 'H3: LED Orientado [A(+) → K(-)]' : 'H3: Inverter LED na Protoboard',
+              style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold, fontSize: 12),
+            ),
+            onPressed: () {
+              final prev = _m3LedRotated;
+              _undoRedoController.execute(ToggleBoolAction(
+                description: 'Girar LED',
+                onApply: () => setState(() => _m3LedRotated = !prev),
+                onUndo: () => setState(() => _m3LedRotated = prev),
+              ));
+            },
+          ),
+        ],
+      ),
     );
   }
 

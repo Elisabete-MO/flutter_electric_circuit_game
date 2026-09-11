@@ -191,6 +191,7 @@ class _LetrerosLedM5State extends State<LetrerosLedM5>
           _currentTelemetryMa,
           _isClosed,
         ),
+        voltsTip: _mission.voltsMediation,
         bottomWidget: _buildUndoRedoButtons(),
         child: _buildWorkbenchDisplay(),
       ),
@@ -199,6 +200,8 @@ class _LetrerosLedM5State extends State<LetrerosLedM5>
         showTeamHeader: false,
         buttonColor: const Color(0xFF059669),
         toolboxItems: [
+          _buildSideBranchControls(),
+          const SizedBox(height: 12),
           _buildMissionObjectiveCard(),
           const SizedBox(height: 12),
           _buildInvestigationStepperCard(),
@@ -218,6 +221,9 @@ class _LetrerosLedM5State extends State<LetrerosLedM5>
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final w = constraints.maxWidth;
+        final h = constraints.maxHeight;
+
         return Stack(
           children: [
             // 1. Protoboard com 2 Ramos em Paralelo e Letreiros Duplos
@@ -253,191 +259,311 @@ class _LetrerosLedM5State extends State<LetrerosLedM5>
               ),
             ),
 
-            // 2. Painel Inferior de Controle dos Ramos
+            // 2. Hotspots Táteis Diretos na Bancada
+            // Hotspot 1: Ramo ENTRADA (Superior / Verde)
             Positioned(
-              left: 16,
-              bottom: 12,
-              right: 16,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A).withValues(alpha: 0.92),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: (entradaLit && saidaLit)
-                        ? const Color(0xFF10B981)
-                        : const Color(0xFF38BDF8),
-                    width: 1.5,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.3),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Wrap(
-                  spacing: 10,
-                  runSpacing: 8,
-                  alignment: WrapAlignment.center,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    // Botão Ramo Entrada (Verde)
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _m5BranchEntradaActive
-                            ? const Color(0xFF10B981)
-                            : const Color(0xFF1E293B),
-                        foregroundColor: Colors.white,
-                        side: const BorderSide(color: Color(0xFF10B981)),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
+              left: w * 0.22,
+              top: h * 0.22,
+              width: w * 0.56,
+              height: h * 0.24,
+              child: Tooltip(
+                message: _m5BranchEntradaActive
+                    ? 'Toque para desconectar Ramo ENTRADA (Verde)'
+                    : 'Toque para montar e conectar Ramo ENTRADA (Verde)',
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(14),
+                    splashColor: const Color(0xFF10B981).withValues(alpha: 0.3),
+                    highlightColor: const Color(0xFF10B981).withValues(alpha: 0.15),
+                    onTap: () {
+                      final prev = _m5BranchEntradaActive;
+                      _undoRedoController.execute(
+                        ToggleBoolAction(
+                          description: 'Toggle Ramo Entrada',
+                          onApply: () =>
+                              setState(() => _m5BranchEntradaActive = !prev),
+                          onUndo: () =>
+                              setState(() => _m5BranchEntradaActive = prev),
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                      );
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: _m5BranchEntradaActive
+                              ? const Color(0xFF10B981).withValues(alpha: 0.4)
+                              : Colors.amber.withValues(alpha: 0.6),
+                          width: 2,
                         ),
                       ),
-                      icon: Icon(
-                        _m5BranchEntradaActive
-                            ? Icons.check_circle_rounded
-                            : Icons.add_circle_outline_rounded,
-                        size: 18,
-                        color: Colors.white,
-                      ),
-                      label: Text(
-                        _m5BranchEntradaActive
-                            ? 'Ramo ENTRADA Ativo (Verde)'
-                            : 'Montar Ramo ENTRADA',
-                        style: GoogleFonts.rajdhani(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                      ),
-                      onPressed: () {
-                        final prev = _m5BranchEntradaActive;
-                        _undoRedoController.execute(
-                          ToggleBoolAction(
-                            description: 'Toggle Ramo Entrada',
-                            onApply: () =>
-                                setState(() => _m5BranchEntradaActive = !prev),
-                            onUndo: () =>
-                                setState(() => _m5BranchEntradaActive = prev),
-                          ),
-                        );
-                      },
-                    ),
-
-                    // Botão Ramo Saída (Vermelho)
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _m5BranchSaidaActive
-                            ? const Color(0xFFEF4444)
-                            : const Color(0xFF1E293B),
-                        foregroundColor: Colors.white,
-                        side: const BorderSide(color: Color(0xFFEF4444)),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      icon: Icon(
-                        _m5BranchSaidaActive
-                            ? Icons.check_circle_rounded
-                            : Icons.add_circle_outline_rounded,
-                        size: 18,
-                        color: Colors.white,
-                      ),
-                      label: Text(
-                        _m5BranchSaidaActive
-                            ? 'Ramo SAÍDA Ativo (Vermelho)'
-                            : 'Montar Ramo SAÍDA',
-                        style: GoogleFonts.rajdhani(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                      ),
-                      onPressed: () {
-                        final prev = _m5BranchSaidaActive;
-                        _undoRedoController.execute(
-                          ToggleBoolAction(
-                            description: 'Toggle Ramo Saída',
-                            onApply: () =>
-                                setState(() => _m5BranchSaidaActive = !prev),
-                            onUndo: () =>
-                                setState(() => _m5BranchSaidaActive = prev),
-                          ),
-                        );
-                      },
-                    ),
-
-                    // Botão Demonstrativo de Remoção do Ramo Saída
-                    if (_m5BranchEntradaActive && _m5BranchSaidaActive)
-                      OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(
-                            color: _m5OneBranchDisconnected
-                                ? Colors.amberAccent
-                                : const Color(0xFF38BDF8),
-                            width: 1.5,
-                          ),
-                          backgroundColor: const Color(0xFF1E293B),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 10,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                      alignment: Alignment.topLeft,
+                      padding: const EdgeInsets.all(6),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F172A).withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: _m5BranchEntradaActive
+                                ? const Color(0xFF10B981)
+                                : Colors.amber,
                           ),
                         ),
-                        icon: Icon(
-                          _m5OneBranchDisconnected
-                              ? Icons.power_off_rounded
-                              : Icons.power_rounded,
-                          color: _m5OneBranchDisconnected
-                              ? Colors.amberAccent
-                              : const Color(0xFF38BDF8),
-                          size: 18,
-                        ),
-                        label: Text(
-                          _m5OneBranchDisconnected
-                              ? 'Ramo SAÍDA Desconectado (ENTRADA segue 100% aceso!)'
-                              : 'Simular Desconexão de um Ramo',
+                        child: Text(
+                          _m5BranchEntradaActive ? '✓ Ramo ENTRADA' : '+ Toque p/ Montar ENTRADA',
                           style: GoogleFonts.rajdhani(
                             color: Colors.white,
+                            fontSize: 11,
                             fontWeight: FontWeight.bold,
-                            fontSize: 13,
                           ),
                         ),
-                        onPressed: () {
-                          final prev = _m5OneBranchDisconnected;
-                          _undoRedoController.execute(
-                            ToggleBoolAction(
-                              description: 'Desconectar Ramo',
-                              onApply: () => setState(
-                                () => _m5OneBranchDisconnected = !prev,
-                              ),
-                              onUndo: () => setState(
-                                () => _m5OneBranchDisconnected = prev,
-                              ),
-                            ),
-                          );
-                        },
                       ),
-                  ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // Hotspot 2: Ramo SAÍDA (Inferior / Vermelho)
+            Positioned(
+              left: w * 0.22,
+              top: h * 0.50,
+              width: w * 0.56,
+              height: h * 0.24,
+              child: Tooltip(
+                message: _m5BranchSaidaActive
+                    ? 'Toque para desconectar Ramo SAÍDA (Vermelho)'
+                    : 'Toque para montar e conectar Ramo SAÍDA (Vermelho)',
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(14),
+                    splashColor: const Color(0xFFEF4444).withValues(alpha: 0.3),
+                    highlightColor: const Color(0xFFEF4444).withValues(alpha: 0.15),
+                    onTap: () {
+                      final prev = _m5BranchSaidaActive;
+                      _undoRedoController.execute(
+                        ToggleBoolAction(
+                          description: 'Toggle Ramo Saída',
+                          onApply: () =>
+                              setState(() => _m5BranchSaidaActive = !prev),
+                          onUndo: () =>
+                              setState(() => _m5BranchSaidaActive = prev),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: _m5BranchSaidaActive
+                              ? const Color(0xFFEF4444).withValues(alpha: 0.4)
+                              : Colors.amber.withValues(alpha: 0.6),
+                          width: 2,
+                        ),
+                      ),
+                      alignment: Alignment.bottomLeft,
+                      padding: const EdgeInsets.all(6),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F172A).withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: _m5BranchSaidaActive
+                                ? const Color(0xFFEF4444)
+                                : Colors.amber,
+                          ),
+                        ),
+                        child: Text(
+                          _m5BranchSaidaActive ? '✓ Ramo SAÍDA' : '+ Toque p/ Montar SAÍDA',
+                          style: GoogleFonts.rajdhani(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
           ],
         );
       },
+    );
+  }
+
+  Widget _buildSideBranchControls() {
+    return Container(
+      margin: const EdgeInsets.only(top: 8, bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A).withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: (_m5BranchEntradaActive && _m5BranchSaidaActive)
+              ? const Color(0xFF10B981)
+              : const Color(0xFF38BDF8),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Botão Ramo Entrada (Verde)
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _m5BranchEntradaActive
+                  ? const Color(0xFF10B981)
+                  : const Color(0xFF1E293B),
+              foregroundColor: Colors.white,
+              side: const BorderSide(color: Color(0xFF10B981)),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            icon: Icon(
+              _m5BranchEntradaActive
+                  ? Icons.check_circle_rounded
+                  : Icons.add_circle_outline_rounded,
+              size: 18,
+              color: Colors.white,
+            ),
+            label: Text(
+              _m5BranchEntradaActive
+                  ? 'Ramo ENTRADA Ativo (Verde)'
+                  : 'Montar Ramo ENTRADA',
+              style: GoogleFonts.rajdhani(
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+            ),
+            onPressed: () {
+              final prev = _m5BranchEntradaActive;
+              _undoRedoController.execute(
+                ToggleBoolAction(
+                  description: 'Toggle Ramo Entrada',
+                  onApply: () =>
+                      setState(() => _m5BranchEntradaActive = !prev),
+                  onUndo: () =>
+                      setState(() => _m5BranchEntradaActive = prev),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 8),
+
+          // Botão Ramo Saída (Vermelho)
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _m5BranchSaidaActive
+                  ? const Color(0xFFEF4444)
+                  : const Color(0xFF1E293B),
+              foregroundColor: Colors.white,
+              side: const BorderSide(color: Color(0xFFEF4444)),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            icon: Icon(
+              _m5BranchSaidaActive
+                  ? Icons.check_circle_rounded
+                  : Icons.add_circle_outline_rounded,
+              size: 18,
+              color: Colors.white,
+            ),
+            label: Text(
+              _m5BranchSaidaActive
+                  ? 'Ramo SAÍDA Ativo (Vermelho)'
+                  : 'Montar Ramo SAÍDA',
+              style: GoogleFonts.rajdhani(
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+            ),
+            onPressed: () {
+              final prev = _m5BranchSaidaActive;
+              _undoRedoController.execute(
+                ToggleBoolAction(
+                  description: 'Toggle Ramo Saída',
+                  onApply: () =>
+                      setState(() => _m5BranchSaidaActive = !prev),
+                  onUndo: () =>
+                      setState(() => _m5BranchSaidaActive = prev),
+                ),
+              );
+            },
+          ),
+
+          // Botão Demonstrativo de Remoção do Ramo Saída
+          if (_m5BranchEntradaActive && _m5BranchSaidaActive) ...[
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(
+                  color: _m5OneBranchDisconnected
+                      ? Colors.amberAccent
+                      : const Color(0xFF38BDF8),
+                  width: 1.5,
+                ),
+                backgroundColor: const Color(0xFF1E293B),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              icon: Icon(
+                _m5OneBranchDisconnected
+                    ? Icons.power_off_rounded
+                    : Icons.power_rounded,
+                color: _m5OneBranchDisconnected
+                    ? Colors.amberAccent
+                    : const Color(0xFF38BDF8),
+                size: 18,
+              ),
+              label: Text(
+                _m5OneBranchDisconnected
+                    ? 'Ramo SAÍDA Desconectado (ENTRADA 100% aceso)'
+                    : 'Simular Desconexão de um Ramo',
+                style: GoogleFonts.rajdhani(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+              onPressed: () {
+                final prev = _m5OneBranchDisconnected;
+                _undoRedoController.execute(
+                  ToggleBoolAction(
+                    description: 'Desconectar Ramo',
+                    onApply: () => setState(
+                      () => _m5OneBranchDisconnected = !prev,
+                    ),
+                    onUndo: () => setState(
+                      () => _m5OneBranchDisconnected = prev,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ],
+      ),
     );
   }
 

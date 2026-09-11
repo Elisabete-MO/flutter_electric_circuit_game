@@ -154,91 +154,81 @@ class _RuasMaqueteM4State extends State<RuasMaqueteM4>
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        // Área Principal da Bancada
-        Expanded(
-          flex: 7,
-          child: WorkbenchTableFrame(
-            usePhysicalStyle: _usePhysicalStyle,
-            onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
-            leftHeaderWidget:
-                buildRuasMaqueteStatusCard(_m4ParallelWireConnected),
-            rightHeaderWidget: buildRuasMaqueteTelemetryCard(
-              4.5,
-              _m4ParallelWireConnected ? 180.0 : 0.0,
-              _m4ParallelWireConnected,
-            ),
-            bottomWidget: _buildUndoRedoButtons(),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final w = constraints.maxWidth;
-                final h = constraints.maxHeight;
-                final lampY = h * 0.28;
-                final socketY = h * 0.80;
-                final socketX = w * 0.50;
+    return WorkbenchResponsiveLayout(
+      workbench: WorkbenchTableFrame(
+        usePhysicalStyle: _usePhysicalStyle,
+        onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
+        leftHeaderWidget:
+            buildRuasMaqueteStatusCard(_m4ParallelWireConnected),
+        rightHeaderWidget: buildRuasMaqueteTelemetryCard(
+          4.5,
+          _m4ParallelWireConnected ? 180.0 : 0.0,
+          _m4ParallelWireConnected,
+        ),
+        bottomWidget: _buildUndoRedoButtons(),
+        voltsTip: _mission.voltsMediation,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final w = constraints.maxWidth;
+            final h = constraints.maxHeight;
+            final lampY = h * 0.28;
+            final socketY = h * 0.80;
+            final socketX = w * 0.50;
 
-                return Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Positioned.fill(
-                      child: AnimatedBuilder(
-                        animation: _electronAnimController,
-                        builder: (context, child) {
-                          return CustomPaint(
-                            painter: RuasMaquetePainter(
-                              missionIndex: 3,
-                              animValue: _electronAnimController.value,
-                              m1Connected: false,
-                              m2Series: false,
-                              m3Junction: false,
-                              m3Return: false,
-                              m4Parallel: _m4ParallelWireConnected,
-                              m5House1Broken: false,
-                              usePhysicalStyle: _usePhysicalStyle,
-                              lampY: lampY,
-                              socketY: socketY,
-                              lamp1X: w * 0.34,
-                              lamp2X: w * 0.66,
-                              socketX: socketX,
-                              socketRotation: _m4ParallelRotation,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    ..._buildOverlayElements(
-                      socketX: socketX,
-                      lampY: lampY,
-                      socketY: socketY,
-                      w: w,
-                      h: h,
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
+            return Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Positioned.fill(
+                  child: AnimatedBuilder(
+                    animation: _electronAnimController,
+                    builder: (context, child) {
+                      return CustomPaint(
+                        painter: RuasMaquetePainter(
+                          missionIndex: 3,
+                          animValue: _electronAnimController.value,
+                          m1Connected: false,
+                          m2Series: false,
+                          m3Junction: false,
+                          m3Return: false,
+                          m4Parallel: _m4ParallelWireConnected,
+                          m5House1Broken: false,
+                          usePhysicalStyle: _usePhysicalStyle,
+                          lampY: lampY,
+                          socketY: socketY,
+                          lamp1X: w * 0.34,
+                          lamp2X: w * 0.66,
+                          socketX: socketX,
+                          socketRotation: _m4ParallelRotation,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                ..._buildOverlayElements(
+                  socketX: socketX,
+                  lampY: lampY,
+                  socketY: socketY,
+                  w: w,
+                  h: h,
+                ),
+              ],
+            );
+          },
         ),
-        const SizedBox(width: 16),
-        // Painel Lateral (Objetivo, Stepper & Validação)
-        Expanded(
-          flex: 3,
-          child: WorkbenchSidePanel(
-            teamTitle: 'Painel da Equipe Bairro',
-            showTeamHeader: false,
-            buttonColor: const Color(0xFF059669),
-            toolboxItems: [
-              _buildMissionObjectiveCard(),
-              const SizedBox(height: 12),
-              _buildInvestigationStepperCard(),
-              const SizedBox(height: 12),
-              _buildSideTools(),
-            ],
-            onEnergizePressed: _validate,
-          ),
-        ),
-      ],
+      ),
+      sidePanel: WorkbenchSidePanel(
+        teamTitle: 'Painel da Equipe Bairro',
+        showTeamHeader: false,
+        buttonColor: const Color(0xFF059669),
+        toolboxItems: [
+          _buildMissionObjectiveCard(),
+          const SizedBox(height: 12),
+          _buildInvestigationStepperCard(),
+          const SizedBox(height: 12),
+          _buildSideTools(),
+        ],
+        onEnergizePressed: _validate,
+      ),
     );
   }
 

@@ -204,6 +204,7 @@ class _LetrerosLedM4State extends State<LetrerosLedM4>
           _currentMa,
           _m4SelectedResistor != null,
         ),
+        voltsTip: _mission.voltsMediation,
         bottomWidget: _buildUndoRedoButtons(),
         child: _buildWorkbenchDisplay(),
       ),
@@ -212,6 +213,8 @@ class _LetrerosLedM4State extends State<LetrerosLedM4>
         showTeamHeader: false,
         buttonColor: const Color(0xFF059669),
         toolboxItems: [
+          _buildResistorSideSelector(),
+          const SizedBox(height: 12),
           _buildMissionObjectiveCard(),
           const SizedBox(height: 12),
           _buildInvestigationStepperCard(),
@@ -232,6 +235,9 @@ class _LetrerosLedM4State extends State<LetrerosLedM4>
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final w = constraints.maxWidth;
+        final h = constraints.maxHeight;
+
         return Stack(
           children: [
             // 1. Protoboard, Bateria 9V, Resistor Selecionado e Letreiro
@@ -263,74 +269,129 @@ class _LetrerosLedM4State extends State<LetrerosLedM4>
               ),
             ),
 
-            // 2. Painel Inferior de Troca Rápida de Resistor
+            // 2. Hotspot Tátil Direto na Protoboard: Toque no Resistor para ciclar valores
             Positioned(
-              left: 20,
-              bottom: 14,
-              right: 20,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A).withValues(alpha: 0.92),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isIdeal
-                        ? const Color(0xFF10B981)
-                        : (isBurnt ? const Color(0xFFEF4444) : Colors.amberAccent),
-                    width: 1.5,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.3),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Selecione o Resistor para Encaixar na Protoboard:',
-                      style: GoogleFonts.rajdhani(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
+              left: w * 0.35,
+              top: h * 0.40,
+              width: w * 0.30,
+              height: h * 0.20,
+              child: Tooltip(
+                message: _m4SelectedResistor == null
+                    ? 'Toque para encaixar o Resistor na Protoboard'
+                    : 'Toque para alternar o Resistor (${_m4SelectedResistor == '68' ? '68 Ω' : (_m4SelectedResistor == '680' ? '680 Ω' : '6.8 kΩ')})',
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    splashColor: const Color(0xFF38BDF8).withValues(alpha: 0.3),
+                    highlightColor: const Color(0xFF38BDF8).withValues(alpha: 0.15),
+                    onTap: () {
+                      // Cicla: null -> 680 -> 68 -> 6800 -> 680
+                      final next = _m4SelectedResistor == null
+                          ? '680'
+                          : (_m4SelectedResistor == '680'
+                              ? '68'
+                              : (_m4SelectedResistor == '68' ? '6800' : '680'));
+                      _selectResistor(next);
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: _m4SelectedResistor == null
+                              ? Colors.amber.withValues(alpha: 0.6)
+                              : Colors.transparent,
+                          width: 2,
+                        ),
+                      ),
+                      child: Align(
+                        alignment: Alignment.bottomCenter,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          margin: const EdgeInsets.only(bottom: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0F172A).withValues(alpha: 0.85),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: isIdeal
+                                  ? const Color(0xFF10B981)
+                                  : (isBurnt ? const Color(0xFFEF4444) : Colors.amber),
+                            ),
+                          ),
+                          child: Text(
+                            _m4SelectedResistor == null
+                                ? 'Toque p/ Inserir Resistor'
+                                : 'Toque p/ Trocar (${_m4SelectedResistor == '68' ? '68 Ω' : (_m4SelectedResistor == '680' ? '680 Ω' : '6.8 kΩ')})',
+                            style: GoogleFonts.rajdhani(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 8,
-                      alignment: WrapAlignment.center,
-                      children: [
-                        _buildResistorOptionButton(
-                          label: '68 Ω (Baixo / 103 mA)',
-                          value: '68',
-                          color: const Color(0xFFEF4444),
-                          icon: Icons.flash_on_rounded,
-                        ),
-                        _buildResistorOptionButton(
-                          label: '680 Ω (Ideal / 10.3 mA)',
-                          value: '680',
-                          color: const Color(0xFF10B981),
-                          icon: Icons.check_circle_rounded,
-                        ),
-                        _buildResistorOptionButton(
-                          label: '6,8 kΩ (Alto / 1.0 mA)',
-                          value: '6800',
-                          color: const Color(0xFFF59E0B),
-                          icon: Icons.wb_twilight_rounded,
-                        ),
-                      ],
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
           ],
         );
       },
+    );
+  }
+
+  Widget _buildResistorSideSelector() {
+    final isIdeal = _m4SelectedResistor == '680';
+    final isBurnt = _m4SelectedResistor == '68';
+
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A).withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isIdeal
+              ? const Color(0xFF10B981)
+              : (isBurnt ? const Color(0xFFEF4444) : Colors.amberAccent),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Selecione o Resistor para Encaixar na Protoboard:',
+            style: GoogleFonts.rajdhani(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 8),
+          _buildResistorOptionButton(
+            label: '68 Ω (Baixo / 103 mA)',
+            value: '68',
+            color: const Color(0xFFEF4444),
+            icon: Icons.flash_on_rounded,
+          ),
+          const SizedBox(height: 6),
+          _buildResistorOptionButton(
+            label: '680 Ω (Ideal / 10.3 mA)',
+            value: '680',
+            color: const Color(0xFF10B981),
+            icon: Icons.check_circle_rounded,
+          ),
+          const SizedBox(height: 6),
+          _buildResistorOptionButton(
+            label: '6,8 kΩ (Alto / 1.0 mA)',
+            value: '6800',
+            color: const Color(0xFFF59E0B),
+            icon: Icons.wb_twilight_rounded,
+          ),
+        ],
+      ),
     );
   }
 

@@ -173,6 +173,7 @@ class _MovimentoMiniaturaM5State extends State<MovimentoMiniaturaM5>
           currentMa: _isClosed ? 140.0 : 0.0,
           isClosed: _isClosed,
         ),
+        voltsTip: 'Com a Ponte H, controlamos a direção de rotação com sinais lógicos de 5V sem mover nenhum fio!',
         bottomWidget: MovimentoUndoRedoButtons(
           controller: _undoRedoController,
           onUndo: () => setState(() => _undoRedoController.undo()),
@@ -185,6 +186,8 @@ class _MovimentoMiniaturaM5State extends State<MovimentoMiniaturaM5>
         showTeamHeader: false,
         buttonColor: const Color(0xFF0284C7),
         toolboxItems: [
+          _buildHBridgeSideControl(),
+          const SizedBox(height: 12),
           _buildMissionObjectiveCard(),
           const SizedBox(height: 12),
           _buildInvestigationStepperCard(),
@@ -198,115 +201,195 @@ class _MovimentoMiniaturaM5State extends State<MovimentoMiniaturaM5>
     );
   }
 
-  Widget _buildWorkbenchDisplay() {
-    return Stack(
-      children: [
-        // 1. Desenho da Ponte H na Protoboard com Motor CC
-        Positioned.fill(
-          child: AnimatedBuilder(
-            animation: _animController,
-            builder: (context, child) {
-              return CustomPaint(
-                painter: MovimentoMiniaturaBreadboardPainter(
-                  animationValue: _animController.value,
-                  usePhysicalStyle: _usePhysicalStyle,
-                  isClosed: _isClosed,
-                  isReversed: _activeChannel == 2,
-                  hasMotor: true,
-                  showHBridge: _hBridgeInstalled,
-                  hBridgeDirection: _activeChannel,
-                ),
-              );
-            },
-          ),
+  Widget _buildHBridgeSideControl() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A).withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _hBridgeInstalled
+              ? (_activeChannel == 1 ? const Color(0xFF10B981) : const Color(0xFFEF4444))
+              : const Color(0xFF475569),
+          width: 1.5,
         ),
-
-        // 2. Dock de Controle na Bancada
-        Positioned(
-          left: 20,
-          bottom: 16,
-          right: 20,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: const Color(0xFF0F172A).withValues(alpha: 0.88),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: const Color(0xFF0284C7).withValues(alpha: 0.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Controle da Ponte H:',
+            style: GoogleFonts.rajdhani(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 8),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: _hBridgeInstalled
+                  ? const Color(0xFF0284C7)
+                  : const Color(0xFF334155),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 12, vertical: 10),
+            ),
+            onPressed: _toggleHBridge,
+            icon: Icon(
+              _hBridgeInstalled
+                  ? Icons.check_circle_rounded
+                  : Icons.add_circle_outline_rounded,
+              size: 16,
+            ),
+            label: Text(
+              _hBridgeInstalled ? 'Ponte H Conectada (4x NPN)' : 'Instalar Ponte H na Protoboard',
+              style: GoogleFonts.rajdhani(
+                  fontWeight: FontWeight.bold, fontSize: 12),
+            ),
+          ),
+          if (_hBridgeInstalled) ...[
+            const SizedBox(height: 6),
+            FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: _activeChannel == 1
+                    ? const Color(0xFF10B981)
+                    : const Color(0xFF334155),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 10),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.3),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+              onPressed: () => _selectChannel(1),
+              icon: const Icon(Icons.rotate_right_rounded, size: 16),
+              label: Text(
+                'CANAL D0: HORÁRIO ↻ (LED VERDE)',
+                style: GoogleFonts.rajdhani(
+                    fontWeight: FontWeight.bold, fontSize: 12),
+              ),
             ),
-            child: Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 12,
-              runSpacing: 8,
-              children: [
-                FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: _hBridgeInstalled
-                        ? const Color(0xFF0284C7)
-                        : const Color(0xFF334155),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 10),
-                  ),
-                  onPressed: _toggleHBridge,
-                  icon: Icon(
-                    _hBridgeInstalled
-                        ? Icons.check_circle_rounded
-                        : Icons.add_circle_outline_rounded,
-                    size: 16,
-                  ),
-                  label: Text(
-                    _hBridgeInstalled ? 'Ponte H Conectada (4x NPN)' : 'Instalar Ponte H na Protoboard',
-                    style: GoogleFonts.rajdhani(
-                        fontWeight: FontWeight.bold, fontSize: 12),
+            const SizedBox(height: 6),
+            FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: _activeChannel == 2
+                    ? const Color(0xFFEF4444)
+                    : const Color(0xFF334155),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 10),
+              ),
+              onPressed: () => _selectChannel(2),
+              icon: const Icon(Icons.rotate_left_rounded, size: 16),
+              label: Text(
+                'CANAL D1: ANTI-HORÁRIO ↺ (LED VERMELHO)',
+                style: GoogleFonts.rajdhani(
+                    fontWeight: FontWeight.bold, fontSize: 12),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWorkbenchDisplay() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final w = constraints.maxWidth;
+        final h = constraints.maxHeight;
+
+        final motorWidth = (w * 0.13).clamp(46.0, 96.0);
+        final motorLeft = (w * 0.03).clamp(8.0, 42.0);
+        final batWidth = (w * 0.16).clamp(52.0, 145.0);
+        final batRight = w - 12.0;
+        final batLeft = batRight - batWidth;
+        final spacing = (w * 0.03).clamp(8.0, 24.0);
+        final bbLeft = motorLeft + motorWidth + spacing;
+        final bbWidth = (batLeft - bbLeft - spacing).clamp(130.0, 440.0);
+        final bbTop = (h * 0.22).clamp(60.0, 105.0);
+        final bbHeight = (h * 0.54).clamp(140.0, 235.0);
+
+        return Stack(
+          children: [
+            // 1. Desenho da Ponte H na Protoboard com Motor CC
+            Positioned.fill(
+              child: AnimatedBuilder(
+                animation: _animController,
+                builder: (context, child) {
+                  return CustomPaint(
+                    painter: MovimentoMiniaturaBreadboardPainter(
+                      animationValue: _animController.value,
+                      usePhysicalStyle: _usePhysicalStyle,
+                      isClosed: _isClosed,
+                      isReversed: _activeChannel == 2,
+                      hasMotor: true,
+                      showHBridge: _hBridgeInstalled,
+                      hBridgeDirection: _activeChannel,
+                    ),
+                  );
+                },
+              ),
+            ),
+
+            // 2. Hotspot Tátil na Ponte H (centro da protoboard)
+            Positioned(
+              left: bbLeft + bbWidth * 0.20,
+              top: bbTop + bbHeight * 0.25,
+              width: bbWidth * 0.60,
+              height: bbHeight * 0.50,
+              child: Tooltip(
+                message: !_hBridgeInstalled
+                    ? 'Toque para instalar Ponte H na Protoboard'
+                    : 'Ponte H Ativa: toque nos canais D0/D1 para alternar sentido',
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(14),
+                    splashColor: const Color(0xFF0284C7).withValues(alpha: 0.3),
+                    highlightColor: const Color(0xFF0284C7).withValues(alpha: 0.15),
+                    onTap: !_hBridgeInstalled
+                        ? _toggleHBridge
+                        : () => _selectChannel(_activeChannel == 1 ? 2 : 1),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: !_hBridgeInstalled
+                              ? Colors.amber.withValues(alpha: 0.6)
+                              : (_activeChannel == 1
+                                  ? const Color(0xFF10B981).withValues(alpha: 0.4)
+                                  : const Color(0xFFEF4444).withValues(alpha: 0.4)),
+                          width: 1.5,
+                        ),
+                      ),
+                      alignment: Alignment.bottomCenter,
+                      padding: const EdgeInsets.only(bottom: 2),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F172A).withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: !_hBridgeInstalled
+                                ? Colors.amber
+                                : (_activeChannel == 1 ? const Color(0xFF10B981) : const Color(0xFFEF4444)),
+                          ),
+                        ),
+                        child: Text(
+                          !_hBridgeInstalled
+                              ? 'Toque p/ Instalar Ponte H'
+                              : (_activeChannel == 1 ? 'D0 (Horário ↻)' : 'D1 (Anti-horário ↺)'),
+                          style: GoogleFonts.rajdhani(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-                if (_hBridgeInstalled) ...[
-                  FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: _activeChannel == 1
-                          ? const Color(0xFF10B981)
-                          : const Color(0xFF334155),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 10),
-                    ),
-                    onPressed: () => _selectChannel(1),
-                    icon: const Icon(Icons.rotate_right_rounded, size: 16),
-                    label: Text(
-                      'CANAL D0: HORÁRIO ↻ (LED VERDE)',
-                      style: GoogleFonts.rajdhani(
-                          fontWeight: FontWeight.bold, fontSize: 12),
-                    ),
-                  ),
-                  FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: _activeChannel == 2
-                          ? const Color(0xFFEF4444)
-                          : const Color(0xFF334155),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 10),
-                    ),
-                    onPressed: () => _selectChannel(2),
-                    icon: const Icon(Icons.rotate_left_rounded, size: 16),
-                    label: Text(
-                      'CANAL D1: ANTI-HORÁRIO ↺ (LED VERMELHO)',
-                      style: GoogleFonts.rajdhani(
-                          fontWeight: FontWeight.bold, fontSize: 12),
-                    ),
-                  ),
-                ],
-              ],
+              ),
             ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 

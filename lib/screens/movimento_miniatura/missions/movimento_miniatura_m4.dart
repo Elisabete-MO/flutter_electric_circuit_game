@@ -170,6 +170,7 @@ class _MovimentoMiniaturaM4State extends State<MovimentoMiniaturaM4>
           currentMa: _isClosed ? 135.0 : 0.0,
           isClosed: _isClosed,
         ),
+        voltsTip: 'Uma pequena corrente na base do NPN controla uma corrente muito maior no motor, atuando como chave eletrônica rápida e segura!',
         bottomWidget: MovimentoUndoRedoButtons(
           controller: _undoRedoController,
           onUndo: () => setState(() => _undoRedoController.undo()),
@@ -182,6 +183,8 @@ class _MovimentoMiniaturaM4State extends State<MovimentoMiniaturaM4>
         showTeamHeader: false,
         buttonColor: const Color(0xFF0284C7),
         toolboxItems: [
+          _buildTransistorSideControl(),
+          const SizedBox(height: 12),
           _buildMissionObjectiveCard(),
           const SizedBox(height: 12),
           _buildInvestigationStepperCard(),
@@ -195,120 +198,248 @@ class _MovimentoMiniaturaM4State extends State<MovimentoMiniaturaM4>
     );
   }
 
-  Widget _buildWorkbenchDisplay() {
-    return Stack(
-      children: [
-        // 1. Desenho do Motor CC, Transistor e LED na Protoboard
-        Positioned.fill(
-          child: AnimatedBuilder(
-            animation: _animController,
-            builder: (context, child) {
-              return CustomPaint(
-                painter: MovimentoMiniaturaBreadboardPainter(
-                  animationValue: _animController.value,
-                  usePhysicalStyle: _usePhysicalStyle,
-                  isClosed: _isClosed,
-                  isReversed: false,
-                  hasMotor: true,
-                  showTransistor: _transistorInserted,
-                  isTransistorTriggered: _isBaseTriggered,
-                  hasIndicatorLed: _ledIndicatorInserted,
-                ),
-              );
-            },
-          ),
+  Widget _buildTransistorSideControl() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A).withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: (_transistorInserted && _ledIndicatorInserted)
+              ? (_isBaseTriggered ? const Color(0xFF10B981) : const Color(0xFF0284C7))
+              : const Color(0xFF475569),
+          width: 1.5,
         ),
-
-        // 2. Dock de Controle na Bancada
-        Positioned(
-          left: 20,
-          bottom: 16,
-          right: 20,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: const Color(0xFF0F172A).withValues(alpha: 0.88),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: const Color(0xFF0284C7).withValues(alpha: 0.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Chaveamento Semicondutor:',
+            style: GoogleFonts.rajdhani(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 8),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: _transistorInserted
+                  ? const Color(0xFF0284C7)
+                  : const Color(0xFF334155),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 12, vertical: 10),
+            ),
+            onPressed: _toggleTransistor,
+            icon: Icon(
+              _transistorInserted
+                  ? Icons.check_circle_rounded
+                  : Icons.add_circle_outline_rounded,
+              size: 16,
+            ),
+            label: Text(
+              _transistorInserted ? 'Transistor NPN Instalado' : 'Instalar Transistor NPN',
+              style: GoogleFonts.rajdhani(
+                  fontWeight: FontWeight.bold, fontSize: 12),
+            ),
+          ),
+          const SizedBox(height: 6),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: _ledIndicatorInserted
+                  ? const Color(0xFF10B981)
+                  : const Color(0xFF334155),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 12, vertical: 10),
+            ),
+            onPressed: _toggleLedIndicator,
+            icon: Icon(
+              _ledIndicatorInserted
+                  ? Icons.check_circle_rounded
+                  : Icons.add_circle_outline_rounded,
+              size: 16,
+            ),
+            label: Text(
+              _ledIndicatorInserted ? 'LED Indicador Verde Conectado' : 'Conectar LED Indicador',
+              style: GoogleFonts.rajdhani(
+                  fontWeight: FontWeight.bold, fontSize: 12),
+            ),
+          ),
+          if (_transistorInserted && _ledIndicatorInserted) ...[
+            const SizedBox(height: 6),
+            FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: _isBaseTriggered
+                    ? const Color(0xFF10B981)
+                    : const Color(0xFFEAB308),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 10),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.3),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+              onPressed: _toggleBaseTrigger,
+              icon: const Icon(Icons.flash_on_rounded, size: 16),
+              label: Text(
+                _isBaseTriggered ? 'SINAL NA BASE (ON)' : 'DISPARAR BASE NPN',
+                style: GoogleFonts.rajdhani(
+                    fontWeight: FontWeight.bold, fontSize: 12),
+              ),
             ),
-            child: Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 12,
-              runSpacing: 8,
-              children: [
-                FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: _transistorInserted
-                        ? const Color(0xFF0284C7)
-                        : const Color(0xFF334155),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 10),
-                  ),
-                  onPressed: _toggleTransistor,
-                  icon: Icon(
-                    _transistorInserted
-                        ? Icons.check_circle_rounded
-                        : Icons.add_circle_outline_rounded,
-                    size: 16,
-                  ),
-                  label: Text(
-                    _transistorInserted ? 'Transistor NPN Instalado' : 'Instalar Transistor NPN',
-                    style: GoogleFonts.rajdhani(
-                        fontWeight: FontWeight.bold, fontSize: 12),
-                  ),
-                ),
-                FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: _ledIndicatorInserted
-                        ? const Color(0xFF10B981)
-                        : const Color(0xFF334155),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 10),
-                  ),
-                  onPressed: _toggleLedIndicator,
-                  icon: Icon(
-                    _ledIndicatorInserted
-                        ? Icons.check_circle_rounded
-                        : Icons.add_circle_outline_rounded,
-                    size: 16,
-                  ),
-                  label: Text(
-                    _ledIndicatorInserted ? 'LED Indicador Verde Conectado' : 'Conectar LED Indicador',
-                    style: GoogleFonts.rajdhani(
-                        fontWeight: FontWeight.bold, fontSize: 12),
-                  ),
-                ),
-                if (_transistorInserted && _ledIndicatorInserted)
-                  FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: _isBaseTriggered
-                          ? const Color(0xFF10B981)
-                          : const Color(0xFFEAB308),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 10),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWorkbenchDisplay() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final w = constraints.maxWidth;
+        final h = constraints.maxHeight;
+
+        final motorWidth = (w * 0.13).clamp(46.0, 96.0);
+        final motorLeft = (w * 0.03).clamp(8.0, 42.0);
+        final batWidth = (w * 0.16).clamp(52.0, 145.0);
+        final batRight = w - 12.0;
+        final batLeft = batRight - batWidth;
+        final spacing = (w * 0.03).clamp(8.0, 24.0);
+        final bbLeft = motorLeft + motorWidth + spacing;
+        final bbWidth = (batLeft - bbLeft - spacing).clamp(130.0, 440.0);
+        final bbTop = (h * 0.22).clamp(60.0, 105.0);
+        final bbHeight = (h * 0.54).clamp(140.0, 235.0);
+
+        return Stack(
+          children: [
+            // 1. Desenho do Motor CC, Transistor e LED na Protoboard
+            Positioned.fill(
+              child: AnimatedBuilder(
+                animation: _animController,
+                builder: (context, child) {
+                  return CustomPaint(
+                    painter: MovimentoMiniaturaBreadboardPainter(
+                      animationValue: _animController.value,
+                      usePhysicalStyle: _usePhysicalStyle,
+                      isClosed: _isClosed,
+                      isReversed: false,
+                      hasMotor: true,
+                      showTransistor: _transistorInserted,
+                      isTransistorTriggered: _isBaseTriggered,
+                      hasIndicatorLed: _ledIndicatorInserted,
                     ),
-                    onPressed: _toggleBaseTrigger,
-                    icon: const Icon(Icons.flash_on_rounded, size: 16),
-                    label: Text(
-                      _isBaseTriggered ? 'SINAL NA BASE (ON)' : 'DISPARAR BASE NPN',
-                      style: GoogleFonts.rajdhani(
-                          fontWeight: FontWeight.bold, fontSize: 12),
-                    ),
-                  ),
-              ],
+                  );
+                },
+              ),
             ),
-          ),
-        ),
-      ],
+
+            // 2. Hotspot Tátil no Transistor NPN
+            Positioned(
+              left: bbLeft + bbWidth * 0.25,
+              top: bbTop + bbHeight * 0.30,
+              width: bbWidth * 0.25,
+              height: bbHeight * 0.45,
+              child: Tooltip(
+                message: !_transistorInserted
+                    ? 'Toque para instalar Transistor NPN (TO-92)'
+                    : (_isBaseTriggered
+                        ? 'Toque para desarmar sinal de base'
+                        : 'Toque para disparar base do NPN'),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    splashColor: const Color(0xFF0284C7).withValues(alpha: 0.3),
+                    highlightColor: const Color(0xFF0284C7).withValues(alpha: 0.15),
+                    onTap: !_transistorInserted ? _toggleTransistor : _toggleBaseTrigger,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: !_transistorInserted
+                              ? Colors.amber.withValues(alpha: 0.6)
+                              : (_isBaseTriggered ? const Color(0xFF10B981) : const Color(0xFF0284C7).withValues(alpha: 0.4)),
+                          width: 1.5,
+                        ),
+                      ),
+                      alignment: Alignment.bottomCenter,
+                      padding: const EdgeInsets.only(bottom: 2),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F172A).withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: !_transistorInserted ? Colors.amber : const Color(0xFF0284C7),
+                          ),
+                        ),
+                        child: Text(
+                          !_transistorInserted ? 'Toque p/ NPN' : (_isBaseTriggered ? 'Base ON' : 'Base OFF'),
+                          style: GoogleFonts.rajdhani(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // 3. Hotspot Tátil no LED Indicador
+            Positioned(
+              left: bbLeft + bbWidth * 0.55,
+              top: bbTop + bbHeight * 0.30,
+              width: bbWidth * 0.25,
+              height: bbHeight * 0.45,
+              child: Tooltip(
+                message: !_ledIndicatorInserted
+                    ? 'Toque para conectar LED Indicador Verde'
+                    : 'LED Indicador conectado (Toque para remover)',
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    splashColor: const Color(0xFF10B981).withValues(alpha: 0.3),
+                    highlightColor: const Color(0xFF10B981).withValues(alpha: 0.15),
+                    onTap: _toggleLedIndicator,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: !_ledIndicatorInserted
+                              ? Colors.amber.withValues(alpha: 0.6)
+                              : const Color(0xFF10B981).withValues(alpha: 0.4),
+                          width: 1.5,
+                        ),
+                      ),
+                      alignment: Alignment.bottomCenter,
+                      padding: const EdgeInsets.only(bottom: 2),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F172A).withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: !_ledIndicatorInserted ? Colors.amber : const Color(0xFF10B981),
+                          ),
+                        ),
+                        child: Text(
+                          !_ledIndicatorInserted ? 'Toque p/ LED' : '✓ LED Verde',
+                          style: GoogleFonts.rajdhani(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 

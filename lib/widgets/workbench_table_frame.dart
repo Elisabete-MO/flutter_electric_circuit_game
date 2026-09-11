@@ -414,13 +414,12 @@ class WorkbenchResponsiveLayout extends StatelessWidget {
           );
         }
 
-        // Modo Horizontal com Proporção Otimizada
-        // Painel lateral com largura calibrada pelo UiScale (270px a 340px em 1080p, escalando em 2K/4K)
-        final sidePanelWidth = scale.cardWidth(
-          300.0,
-          maxPercent: 0.32,
-          min: 270.0,
-          max: scale.size(360.0, min: 300.0, max: 540.0),
+        // Modo Horizontal com Proporção Otimizada Padronizada
+        // Painel lateral com alvo de 28% da largura da tela, com piso de legibilidade e teto de conforto
+        final targetPercentWidth = w * 0.28;
+        final sidePanelWidth = targetPercentWidth.clamp(
+          scale.size(280.0, min: 260.0, max: 320.0),
+          scale.size(360.0, min: 320.0, max: 460.0),
         );
 
         return Row(

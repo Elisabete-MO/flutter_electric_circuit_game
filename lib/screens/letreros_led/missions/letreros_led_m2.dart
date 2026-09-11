@@ -197,6 +197,8 @@ class _LetrerosLedM2State extends State<LetrerosLedM2>
           _buildInvestigationStepperCard(),
           const SizedBox(height: 12),
           buildLetrerosLedPredictionBadge(_prediction),
+          const SizedBox(height: 12),
+          _buildSideControls(),
         ],
         onEnergizePressed: _onEnergizePressed,
         isLoading: _isSimulating,
@@ -232,109 +234,135 @@ class _LetrerosLedM2State extends State<LetrerosLedM2>
               ),
             ),
 
-            // 2. Painel Interativo de Bancada
-            Positioned(
-              left: 24,
-              bottom: 16,
-              right: 24,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A).withValues(alpha: 0.90),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: _m2LedInvertedFixed
-                        ? const Color(0xFF10B981)
-                        : Colors.amberAccent,
-                    width: 1.5,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: (_m2LedInvertedFixed
-                              ? const Color(0xFF10B981)
-                              : Colors.amberAccent)
-                          .withValues(alpha: 0.18),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Wrap(
-                  alignment: WrapAlignment.spaceBetween,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 12,
-                  runSpacing: 8,
-                  children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          _m2LedInvertedFixed
-                              ? Icons.check_circle_rounded
-                              : Icons.warning_amber_rounded,
-                          color: _m2LedInvertedFixed
-                              ? const Color(0xFF10B981)
-                              : Colors.amberAccent,
-                          size: 26,
-                        ),
-                        const SizedBox(width: 10),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              _m2LedInvertedFixed
-                                  ? 'LED em Sentido Direto [A(+) → K(-)]'
-                                  : 'LED Invertido na Protoboard [K(-) no +]',
-                              style: GoogleFonts.rajdhani(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                            Text(
-                              _m2LedInvertedFixed
-                                  ? 'Corrente conduzindo livremente (~10.3 mA)'
-                                  : 'Corrente bloqueada pelo diodo (0.0 mA)',
-                              style: GoogleFonts.rajdhani(
-                                color: _m2LedInvertedFixed
-                                    ? const Color(0xFF34D399)
-                                    : const Color(0xFFFBBF24),
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _m2LedInvertedFixed
-                            ? const Color(0xFF10B981)
-                            : const Color(0xFF0284C7),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                      ),
-                      icon: const Icon(Icons.rotate_right_rounded, size: 20),
-                      label: Text(
-                        _m2LedInvertedFixed
-                            ? 'Inverter Novamente (180°)'
-                            : 'Girar LED na Protoboard (180°)',
-                        style: GoogleFonts.rajdhani(
-                            fontWeight: FontWeight.bold, fontSize: 14),
-                      ),
-                      onPressed: _toggleLedPolarity,
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            // 2. Hotspot Tátil de Toque Direto no LED da Protoboard
+            ..._buildLedTouchHotspot(constraints),
           ],
         );
       },
+    );
+  }
+
+  List<Widget> _buildLedTouchHotspot(BoxConstraints constraints) {
+    final w = constraints.maxWidth;
+    final h = constraints.maxHeight;
+    final batWidth = (w * 0.17).clamp(55.0, 155.0);
+    final batLeft = (w * 0.03).clamp(8.0, 32.0);
+    final spacing = (w * 0.03).clamp(8.0, 24.0);
+    final bbLeft = batLeft + batWidth + spacing;
+    final bbWidth = (w - bbLeft - 14.0).clamp(140.0, 560.0);
+    final bbTop = (h * 0.24).clamp(60.0, 115.0);
+    final bbHeight = (h * 0.54).clamp(140.0, 240.0);
+
+    const cols = 20;
+    final startX = bbLeft + 32.0;
+    final stepX = (bbWidth - 64.0) / (cols - 1);
+    final rowStepTop = (bbHeight * 0.22) / 4;
+    final rowFY = bbTop + bbHeight * 0.24 + 4 * rowStepTop;
+
+    final ledLeft = startX + 6 * stepX - 12;
+    final ledWidth = 3 * stepX + 24;
+
+    return [
+      Positioned(
+        left: ledLeft,
+        top: rowFY - 22,
+        width: ledWidth,
+        height: 44,
+        child: Tooltip(
+          message: _m2LedInvertedFixed
+              ? 'LED em Sentido Direto (Toque para inverter polaridade)'
+              : 'LED Invertido na Protoboard (Toque para girar 180°)',
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: _toggleLedPolarity,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: _m2LedInvertedFixed
+                        ? const Color(0xFF10B981).withValues(alpha: 0.4)
+                        : Colors.amberAccent.withValues(alpha: 0.7),
+                    width: 1.5,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ];
+  }
+
+  Widget _buildSideControls() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: _m2LedInvertedFixed
+              ? const Color(0xFF10B981)
+              : Colors.amberAccent,
+          width: 1.2,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(
+                _m2LedInvertedFixed
+                    ? Icons.check_circle_rounded
+                    : Icons.warning_amber_rounded,
+                color: _m2LedInvertedFixed
+                    ? const Color(0xFF10B981)
+                    : Colors.amberAccent,
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _m2LedInvertedFixed
+                      ? 'LED na Protoboard em Sentido Direto'
+                      : 'LED Invertido na Protoboard [K(-) no +]',
+                  style: GoogleFonts.rajdhani(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _m2LedInvertedFixed
+                  ? const Color(0xFF10B981)
+                  : const Color(0xFF0284C7),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            icon: const Icon(Icons.rotate_right_rounded, size: 18),
+            label: Text(
+              _m2LedInvertedFixed
+                  ? 'Inverter Novamente (180°)'
+                  : 'Girar LED na Protoboard (180°)',
+              style: GoogleFonts.rajdhani(
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+            ),
+            onPressed: _toggleLedPolarity,
+          ),
+        ],
+      ),
     );
   }
 

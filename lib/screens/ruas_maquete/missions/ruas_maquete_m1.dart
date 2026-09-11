@@ -154,93 +154,82 @@ class _RuasMaqueteM1State extends State<RuasMaqueteM1>
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        // Área Principal da Bancada
-        Expanded(
-          flex: 7,
-          child: WorkbenchTableFrame(
-            usePhysicalStyle: _usePhysicalStyle,
-            onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
-            leftHeaderWidget: buildRuasMaqueteStatusCard(_isClosed),
-            rightHeaderWidget: buildRuasMaqueteTelemetryCard(
-              4.5,
-              _isClosed ? 80.0 : 0.0,
-              _isClosed,
-            ),
-            bottomWidget: _buildUndoRedoButtons(),
-            voltsTip: _mission.voltsMediation,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final w = constraints.maxWidth;
-                final h = constraints.maxHeight;
-                final lampY = h * 0.28;
-                final socketY = h * 0.80;
-                final lamp1X = w * 0.34;
-                final lamp2X = w * 0.66;
-                final socketX = w * 0.50;
+    return WorkbenchResponsiveLayout(
+      workbench: WorkbenchTableFrame(
+        usePhysicalStyle: _usePhysicalStyle,
+        onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
+        leftHeaderWidget: buildRuasMaqueteStatusCard(_isClosed),
+        rightHeaderWidget: buildRuasMaqueteTelemetryCard(
+          4.5,
+          _isClosed ? 80.0 : 0.0,
+          _isClosed,
+        ),
+        bottomWidget: _buildUndoRedoButtons(),
+        voltsTip: _mission.voltsMediation,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final w = constraints.maxWidth;
+            final h = constraints.maxHeight;
+            final lampY = h * 0.28;
+            final socketY = h * 0.80;
+            final lamp1X = w * 0.34;
+            final lamp2X = w * 0.66;
+            final socketX = w * 0.50;
 
-                return Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Positioned.fill(
-                      child: AnimatedBuilder(
-                        animation: _electronAnimController,
-                        builder: (context, child) {
-                          return CustomPaint(
-                            painter: RuasMaquetePainter(
-                              missionIndex: 0,
-                              animValue: _electronAnimController.value,
-                              m1Connected: _isClosed,
-                              m2Series: false,
-                              m3Junction: false,
-                              m3Return: false,
-                              m4Parallel: false,
-                              m5House1Broken: false,
-                              usePhysicalStyle: _usePhysicalStyle,
-                              lampY: lampY,
-                              socketY: socketY,
-                              lamp1X: lamp1X,
-                              lamp2X: lamp2X,
-                              socketX: socketX,
-                              socketRotation: _m1WireRotation,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    ..._buildOverlayElements(
-                      lamp1X: lamp1X,
-                      lamp2X: lamp2X,
-                      socketX: socketX,
-                      lampY: lampY,
-                      socketY: socketY,
-                      w: w,
-                      h: h,
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
+            return Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Positioned.fill(
+                  child: AnimatedBuilder(
+                    animation: _electronAnimController,
+                    builder: (context, child) {
+                      return CustomPaint(
+                        painter: RuasMaquetePainter(
+                          missionIndex: 0,
+                          animValue: _electronAnimController.value,
+                          m1Connected: _isClosed,
+                          m2Series: false,
+                          m3Junction: false,
+                          m3Return: false,
+                          m4Parallel: false,
+                          m5House1Broken: false,
+                          usePhysicalStyle: _usePhysicalStyle,
+                          lampY: lampY,
+                          socketY: socketY,
+                          lamp1X: lamp1X,
+                          lamp2X: lamp2X,
+                          socketX: socketX,
+                          socketRotation: _m1WireRotation,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                ..._buildOverlayElements(
+                  lamp1X: lamp1X,
+                  lamp2X: lamp2X,
+                  socketX: socketX,
+                  lampY: lampY,
+                  socketY: socketY,
+                  w: w,
+                  h: h,
+                ),
+              ],
+            );
+          },
         ),
-        const SizedBox(width: 16),
-        // Painel Lateral (Objetivo, Stepper & Validação)
-        Expanded(
-          flex: 3,
-          child: WorkbenchSidePanel(
-            teamTitle: 'Painel da Equipe Bairro',
-            showTeamHeader: false,
-            buttonColor: const Color(0xFF059669),
-            toolboxItems: [
-              _buildMissionObjectiveCard(),
-              const SizedBox(height: 12),
-              _buildInvestigationStepperCard(),
-            ],
-            onEnergizePressed: _validate,
-          ),
-        ),
-      ],
+      ),
+      sidePanel: WorkbenchSidePanel(
+        teamTitle: 'Painel da Equipe Bairro',
+        showTeamHeader: false,
+        buttonColor: const Color(0xFF059669),
+        toolboxItems: [
+          _buildMissionObjectiveCard(),
+          const SizedBox(height: 12),
+          _buildInvestigationStepperCard(),
+        ],
+        onEnergizePressed: _validate,
+      ),
     );
   }
 

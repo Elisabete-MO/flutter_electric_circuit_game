@@ -168,6 +168,7 @@ class _MovimentoMiniaturaM3State extends State<MovimentoMiniaturaM3>
           currentMa: _isClosed ? 120.0 : 0.0,
           isClosed: _isClosed,
         ),
+        voltsTip: 'O pushbutton interrompe o circuito em repouso (normalmente aberto) e só fecha contato quando você mantém pressionado!',
         bottomWidget: MovimentoUndoRedoButtons(
           controller: _undoRedoController,
           onUndo: () => setState(() => _undoRedoController.undo()),
@@ -180,6 +181,8 @@ class _MovimentoMiniaturaM3State extends State<MovimentoMiniaturaM3>
         showTeamHeader: false,
         buttonColor: const Color(0xFF0284C7),
         toolboxItems: [
+          _buildPushbuttonSideControl(),
+          const SizedBox(height: 12),
           _buildMissionObjectiveCard(),
           const SizedBox(height: 12),
           _buildInvestigationStepperCard(),
@@ -193,107 +196,187 @@ class _MovimentoMiniaturaM3State extends State<MovimentoMiniaturaM3>
     );
   }
 
-  Widget _buildWorkbenchDisplay() {
-    return Stack(
-      children: [
-        // 1. Desenho do Motor CC e Pushbutton na Protoboard
-        Positioned.fill(
-          child: AnimatedBuilder(
-            animation: _animController,
-            builder: (context, child) {
-              return CustomPaint(
-                painter: MovimentoMiniaturaBreadboardPainter(
-                  animationValue: _animController.value,
-                  usePhysicalStyle: _usePhysicalStyle,
-                  isClosed: _isClosed,
-                  isReversed: false,
-                  hasMotor: true,
-                  showPushButton: _buttonInserted,
-                  isPushButtonPressed: _isButtonPressed,
-                ),
-              );
-            },
-          ),
+  Widget _buildPushbuttonSideControl() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A).withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _buttonInserted
+              ? (_isButtonPressed ? const Color(0xFF10B981) : const Color(0xFF0284C7))
+              : const Color(0xFF475569),
+          width: 1.5,
         ),
-
-        // 2. Dock de Controle na Bancada
-        Positioned(
-          left: 20,
-          bottom: 16,
-          right: 20,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: const Color(0xFF0F172A).withValues(alpha: 0.88),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: const Color(0xFF0284C7).withValues(alpha: 0.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Controle do Pushbutton:',
+            style: GoogleFonts.rajdhani(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 8),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: _buttonInserted
+                  ? const Color(0xFF0284C7)
+                  : const Color(0xFF334155),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 14, vertical: 10),
+            ),
+            onPressed: _toggleButtonInserted,
+            icon: Icon(
+              _buttonInserted
+                  ? Icons.check_circle_rounded
+                  : Icons.add_circle_outline_rounded,
+              size: 18,
+            ),
+            label: Text(
+              _buttonInserted
+                  ? 'Pushbutton Instalado na Vala'
+                  : 'Instalar Pushbutton na Protoboard',
+              style: GoogleFonts.rajdhani(
+                  fontWeight: FontWeight.bold, fontSize: 13),
+            ),
+          ),
+          if (_buttonInserted) ...[
+            const SizedBox(height: 8),
+            FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: _isButtonPressed
+                    ? const Color(0xFF10B981)
+                    : const Color(0xFFDC2626),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 10),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.3),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+              onPressed: _toggleButtonState,
+              icon: Icon(
+                _isButtonPressed
+                    ? Icons.play_arrow_rounded
+                    : Icons.stop_rounded,
+                size: 18,
+              ),
+              label: Text(
+                _isButtonPressed
+                    ? 'BOTÃO PRESSIONADO (ON)'
+                    : 'PRESSIONAR BOTÃO (TESTE)',
+                style: GoogleFonts.rajdhani(
+                    fontWeight: FontWeight.bold, fontSize: 13),
+              ),
             ),
-            child: Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 12,
-              runSpacing: 8,
-              children: [
-                FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: _buttonInserted
-                        ? const Color(0xFF0284C7)
-                        : const Color(0xFF334155),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 10),
-                  ),
-                  onPressed: _toggleButtonInserted,
-                  icon: Icon(
-                    _buttonInserted
-                        ? Icons.check_circle_rounded
-                        : Icons.add_circle_outline_rounded,
-                    size: 18,
-                  ),
-                  label: Text(
-                    _buttonInserted
-                        ? 'Pushbutton Instalado na Vala'
-                        : 'Instalar Pushbutton na Protoboard',
-                    style: GoogleFonts.rajdhani(
-                        fontWeight: FontWeight.bold, fontSize: 13),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWorkbenchDisplay() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final w = constraints.maxWidth;
+        final h = constraints.maxHeight;
+
+        final motorWidth = (w * 0.13).clamp(46.0, 96.0);
+        final motorLeft = (w * 0.03).clamp(8.0, 42.0);
+        final batWidth = (w * 0.16).clamp(52.0, 145.0);
+        final batRight = w - 12.0;
+        final batLeft = batRight - batWidth;
+        final spacing = (w * 0.03).clamp(8.0, 24.0);
+        final bbLeft = motorLeft + motorWidth + spacing;
+        final bbWidth = (batLeft - bbLeft - spacing).clamp(130.0, 440.0);
+        final bbTop = (h * 0.22).clamp(60.0, 105.0);
+        final bbHeight = (h * 0.54).clamp(140.0, 235.0);
+
+        return Stack(
+          children: [
+            // 1. Desenho do Motor CC e Pushbutton na Protoboard
+            Positioned.fill(
+              child: AnimatedBuilder(
+                animation: _animController,
+                builder: (context, child) {
+                  return CustomPaint(
+                    painter: MovimentoMiniaturaBreadboardPainter(
+                      animationValue: _animController.value,
+                      usePhysicalStyle: _usePhysicalStyle,
+                      isClosed: _isClosed,
+                      isReversed: false,
+                      hasMotor: true,
+                      showPushButton: _buttonInserted,
+                      isPushButtonPressed: _isButtonPressed,
+                    ),
+                  );
+                },
+              ),
+            ),
+
+            // 2. Hotspot Tátil Direto no Pushbutton na Protoboard
+            Positioned(
+              left: bbLeft + bbWidth * 0.36,
+              top: bbTop + bbHeight * 0.30,
+              width: bbWidth * 0.30,
+              height: bbHeight * 0.40,
+              child: Tooltip(
+                message: !_buttonInserted
+                    ? 'Toque para instalar o Pushbutton na vala central'
+                    : (_isButtonPressed
+                        ? 'Toque para soltar o botão (OFF)'
+                        : 'Toque para pressionar o botão (ON)'),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(14),
+                    splashColor: const Color(0xFF10B981).withValues(alpha: 0.3),
+                    highlightColor: const Color(0xFF10B981).withValues(alpha: 0.15),
+                    onTap: !_buttonInserted ? _toggleButtonInserted : _toggleButtonState,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: !_buttonInserted
+                              ? Colors.amber.withValues(alpha: 0.7)
+                              : (_isButtonPressed
+                                  ? const Color(0xFF10B981)
+                                  : const Color(0xFF0284C7).withValues(alpha: 0.5)),
+                          width: 2,
+                        ),
+                      ),
+                      alignment: Alignment.bottomCenter,
+                      padding: const EdgeInsets.only(bottom: 2),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F172A).withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: !_buttonInserted
+                                ? Colors.amber
+                                : (_isButtonPressed ? const Color(0xFF10B981) : const Color(0xFF0284C7)),
+                          ),
+                        ),
+                        child: Text(
+                          !_buttonInserted
+                              ? 'Toque p/ Instalar Botão'
+                              : (_isButtonPressed ? 'Pressionado (ON)' : 'Toque p/ Ligar (OFF)'),
+                          style: GoogleFonts.rajdhani(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-                if (_buttonInserted)
-                  FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: _isButtonPressed
-                          ? const Color(0xFF10B981)
-                          : const Color(0xFFDC2626),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 10),
-                    ),
-                    onPressed: _toggleButtonState,
-                    icon: Icon(
-                      _isButtonPressed
-                          ? Icons.play_arrow_rounded
-                          : Icons.stop_rounded,
-                      size: 18,
-                    ),
-                    label: Text(
-                      _isButtonPressed
-                          ? 'BOTÃO PRESSIONADO (ON)'
-                          : 'PRESSIONAR BOTÃO (TESTE)',
-                      style: GoogleFonts.rajdhani(
-                          fontWeight: FontWeight.bold, fontSize: 13),
-                    ),
-                  ),
-              ],
+              ),
             ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 
