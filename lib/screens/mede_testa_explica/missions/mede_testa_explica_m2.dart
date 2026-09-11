@@ -5,21 +5,15 @@ import '../../../core/ui_scale.dart';
 import '../../../models/circuit_action.dart';
 import '../../../models/first_step_component.dart';
 import '../../../models/stand_mission.dart';
-import '../../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../../state/circuit_undo_redo_controller.dart';
-import '../../../widgets/circuit_symbol_painter.dart';
 import '../../../widgets/component_physical_painter.dart';
-import '../../../widgets/component_vector_painters.dart';
-import '../../../widgets/physical_blueprint_socket.dart';
-import '../../../widgets/realistic_wire_painter.dart';
-import '../../../widgets/schematic_blueprint_socket.dart';
 import '../../../widgets/success_confetti_overlay.dart';
 import '../../../widgets/workbench_components.dart';
 import '../../../widgets/workbench_sidebar_cards.dart';
 import '../../../widgets/workbench_table_frame.dart';
 import '../widgets/mede_testa_explica_widgets.dart';
 
-/// Missão 2 do Estande 07 — Queda de Tensão na Carga (Lâmpada).
+/// Missão 2 do Estande 07 — Queda de Tensão na Carga (Lâmpada) com Multímetro Interativo.
 class MedeTestaExplicaM2 extends StatefulWidget {
   final VoidCallback onMissionComplete;
 
@@ -40,83 +34,136 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
   bool _usePhysicalStyle = true;
   bool _isSimulating = false;
 
-  bool _redProbeConnected = true;
-  bool _blackProbeConnected = true;
+  // Estado do circuito
+  bool _switchClosed = true;
 
-  bool _m2BatteryInserted = true;
-  double _m2BatteryRotation = 0.0;
-  bool _m2BulbInserted = true;
-  double _m2BulbRotation = 0.0;
-  bool _m2VoltmeterInserted = false;
-  double _m2VoltmeterRotation = 0.0;
+  // Conexões das pontas nos Test Points: 'tp1' (+9V), 'tp2' (Chave/Lâmpada), 'tp3' (0V Terra)
+  String? _redProbeTarget = 'tp2';
+  String? _blackProbeTarget = 'tp3';
 
-  bool get _isClosed =>
-      _m2BatteryInserted &&
-      _m2BulbInserted &&
-      _redProbeConnected &&
-      _blackProbeConnected;
+  MultimeterMode _multimeterMode = MultimeterMode.voltageDc;
+
+  bool get _bothProbesConnected =>
+      _redProbeTarget != null && _blackProbeTarget != null;
+
+  // Medição da ddp entre os nós
+  double get _measuredVoltage {
+    if (_multimeterMode != MultimeterMode.voltageDc) return 0.0;
+    if (!_bothProbesConnected) return 0.0;
+    if (_redProbeTarget == _blackProbeTarget) return 0.0;
+
+    // Medindo sobre a lâmpada (TP2 e TP3)
+    if ((_redProbeTarget == 'tp2' && _blackProbeTarget == 'tp3') ||
+        (_redProbeTarget == 'tp3' && _blackProbeTarget == 'tp2')) {
+      final sign = (_redProbeTarget == 'tp2') ? 1.0 : -1.0;
+      return _switchClosed ? (9.0 * sign) : 0.0;
+    }
+
+    // Medindo sobre a chave (TP1 e TP2)
+    if ((_redProbeTarget == 'tp1' && _blackProbeTarget == 'tp2') ||
+        (_redProbeTarget == 'tp2' && _blackProbeTarget == 'tp1')) {
+      final sign = (_redProbeTarget == 'tp1') ? 1.0 : -1.0;
+      return _switchClosed ? 0.0 : (9.0 * sign);
+    }
+
+    // Medindo sobre a fonte total (TP1 e TP3)
+    if ((_redProbeTarget == 'tp1' && _blackProbeTarget == 'tp3') ||
+        (_redProbeTarget == 'tp3' && _blackProbeTarget == 'tp1')) {
+      final sign = (_redProbeTarget == 'tp1') ? 1.0 : -1.0;
+      return 9.0 * sign;
+    }
+
+    return 0.0;
+  }
+
+  String get _displayValue {
+    if (_multimeterMode == MultimeterMode.off) return '---';
+    if (!_bothProbesConnected) return '0.00';
+    if (_redProbeTarget == _blackProbeTarget) return '0.00';
+
+    switch (_multimeterMode) {
+      case MultimeterMode.voltageDc:
+        return _measuredVoltage.toStringAsFixed(2);
+      case MultimeterMode.currentMa:
+        return _switchClosed ? '180.0' : '0.00';
+      case MultimeterMode.resistance:
+        return _switchClosed ? '50.0' : 'O.L';
+      case MultimeterMode.continuity:
+        return (_switchClosed &&
+                ((_redProbeTarget == 'tp1' && _blackProbeTarget == 'tp2') ||
+                    (_redProbeTarget == 'tp2' && _blackProbeTarget == 'tp1')))
+            ? 'BEEP'
+            : '---';
+      case MultimeterMode.off:
+        return '---';
+    }
+  }
+
+  bool get _isBulbMeasured =>
+      (_redProbeTarget == 'tp2' && _blackProbeTarget == 'tp3') ||
+      (_redProbeTarget == 'tp3' && _blackProbeTarget == 'tp2');
 
   int get _currentStepperIndex {
-    if (!(_m2BatteryInserted && _m2BulbInserted)) return 0;
-    if (!_m2VoltmeterInserted || !(_redProbeConnected && _blackProbeConnected)) {
-      return 1;
-    }
+    if (!_switchClosed) return 0;
+    if (!_isBulbMeasured) return 1;
+    if (_multimeterMode != MultimeterMode.voltageDc) return 1;
     return 2;
   }
 
   bool _isStepCompleted(int index) {
-    if (index == 0) return _m2BatteryInserted && _m2BulbInserted;
-    if (index == 1) {
-      return _m2VoltmeterInserted && _redProbeConnected && _blackProbeConnected;
+    if (index == 0) return _switchClosed;
+    if (index == 1) return _isBulbMeasured;
+    if (index == 2) {
+      return _switchClosed &&
+          _isBulbMeasured &&
+          _multimeterMode == MultimeterMode.voltageDc &&
+          _measuredVoltage.abs() == 9.0;
     }
-    if (index == 2) return _isClosed && _m2VoltmeterInserted;
     return false;
   }
 
-  void _insertComponent({
-    required String name,
-    required bool Function() getInserted,
-    required void Function(bool) setInserted,
-    required double Function() getRotation,
-    required void Function(double) setRotation,
-  }) {
-    final prevInserted = getInserted();
-    final prevRotation = getRotation();
-    final nextInserted = !prevInserted;
-    _undoRedoController.execute(InsertComponentAction(
-      description: nextInserted ? 'Inserir $name' : 'Remover $name',
-      onApply: () => setState(() {
-        setInserted(nextInserted);
-        if (nextInserted) setRotation(0);
-      }),
-      onUndo: () => setState(() {
-        setInserted(prevInserted);
-        setRotation(prevRotation);
-      }),
+  void _toggleSwitch() {
+    final prev = _switchClosed;
+    _undoRedoController.execute(ToggleBoolAction(
+      description: _switchClosed ? 'Abrir chave' : 'Fechar chave',
+      onApply: () => setState(() => _switchClosed = !_switchClosed),
+      onUndo: () => setState(() => _switchClosed = prev),
     ));
   }
 
-  void _rotateComponent({
-    required String name,
-    required double Function() getRotation,
-    required void Function(double) setRotation,
-  }) {
-    final prevRotation = getRotation();
-    final newRotation = (prevRotation + 90) % 360;
-    _undoRedoController.execute(RotateComponentAction(
-      description: 'Girar $name',
-      onApply: () => setState(() => setRotation(newRotation)),
-      onUndo: () => setState(() => setRotation(prevRotation)),
+  void _setRedProbeTarget(String? target) {
+    final prev = _redProbeTarget;
+    _undoRedoController.execute(ToggleProbeAction(
+      description: 'Mover Ponta Vermelha para $target',
+      onApply: () => setState(() => _redProbeTarget = target),
+      onUndo: () => setState(() => _redProbeTarget = prev),
+    ));
+  }
+
+  void _setBlackProbeTarget(String? target) {
+    final prev = _blackProbeTarget;
+    _undoRedoController.execute(ToggleProbeAction(
+      description: 'Mover Ponta Preta para $target',
+      onApply: () => setState(() => _blackProbeTarget = target),
+      onUndo: () => setState(() => _blackProbeTarget = prev),
+    ));
+  }
+
+  void _setMultimeterMode(MultimeterMode mode) {
+    final prev = _multimeterMode;
+    _undoRedoController.execute(SelectOptionAction(
+      description: 'Mudar seletor para ${mode.shortLabel}',
+      onApply: () => setState(() => _multimeterMode = mode),
+      onUndo: () => setState(() => _multimeterMode = prev),
     ));
   }
 
   void _reset() {
     setState(() {
-      _redProbeConnected = true;
-      _blackProbeConnected = true;
-      _m2BatteryInserted = true;
-      _m2BulbInserted = true;
-      _m2VoltmeterInserted = false;
+      _switchClosed = true;
+      _redProbeTarget = 'tp2';
+      _blackProbeTarget = 'tp3';
+      _multimeterMode = MultimeterMode.voltageDc;
     });
   }
 
@@ -128,27 +175,28 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
       bool isSuccess = false;
       String feedback = _mission.failureFeedback;
 
-      if (_redProbeConnected && _blackProbeConnected && _m2VoltmeterInserted) {
-        final result = await MissionCircuitBuilder()
-            .addBattery(id: 'bat1', voltage: 9.0)
-            .addBulb(id: 'bulb1', resistance: 5.0)
-            .connect('bat1', 'B', 'bulb1', 'A')
-            .connect('bulb1', 'B', 'bat1', 'A')
-            .simulate();
-        if (result.hasClosedLoop) {
-          final vDrop = result.componentVoltages['bulb1'] ?? 9.0;
-          feedback =
-              'Queda de tensão na lâmpada: ${vDrop.toStringAsFixed(2)}V. '
-              'A carga converte a diferença de potencial em luz e calor.';
-          isSuccess = true;
-        } else {
-          feedback = 'Circuito aberto. Verifique as conexões da bancada.';
-        }
-      } else if (!_m2VoltmeterInserted) {
-        feedback = 'Arraste o Voltímetro da gaveta para medir a carga.';
-      } else {
+      if (!_switchClosed) {
         feedback =
-            'Conecte as pontas de prova vermelha e preta nos terminais da lâmpada.';
+            'Feche o interruptor para energizar o circuito e acender a lâmpada.';
+      } else if (!_bothProbesConnected) {
+        feedback =
+            'Posicione as duas pontas de prova nos terminais da carga (TP2 e TP3).';
+      } else if (!_isBulbMeasured) {
+        if ((_redProbeTarget == 'tp1' && _blackProbeTarget == 'tp2') ||
+            (_redProbeTarget == 'tp2' && _blackProbeTarget == 'tp1')) {
+          feedback =
+              'Você está medindo sobre a chave fechada (0.00V)! O objetivo é medir a queda de tensão na lâmpada (TP2 e TP3).';
+        } else {
+          feedback =
+              'Conecte as pontas de prova diretamente sobre a lâmpada (TP2 e TP3).';
+        }
+      } else if (_multimeterMode != MultimeterMode.voltageDc) {
+        feedback =
+            'Gire a chave seletora do multímetro para V⎓ (Tensão Contínua).';
+      } else if (_measuredVoltage.abs() == 9.0) {
+        isSuccess = true;
+        feedback =
+            'Perfeito! Queda de tensão de 9.00V medida sobre a lâmpada. Toda a energia da fonte é consumida na carga!';
       }
 
       if (isSuccess) {
@@ -177,7 +225,7 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
                 color: Color(0xFF10B981), size: 32),
             const SizedBox(width: 12),
             Text(
-              'Missão Concluída!',
+              'Queda de Tensão Comprovada!',
               style: GoogleFonts.rajdhani(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -187,13 +235,14 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
           ],
         ),
         content: Text(
-          'Fantástico! Você comprovou que a carga (lâmpada incandescente) recebe e consome a totalidade dos 9.0V da fonte, medindo com o voltímetro em paralelo nos terminais A e B.',
+          'Brilhante! Você demonstrou que um condutor/chave fechada não consome tensão (0V de queda) e que praticamente toda a d.d.p. de 9.00V da fonte é convertida em luz e calor sobre a lâmpada!',
           style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14),
         ),
         actions: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
+          FilledButton(
+            style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFF10B981),
+              foregroundColor: Colors.white,
             ),
             onPressed: () {
               Navigator.of(context).pop();
@@ -201,11 +250,8 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
               widget.onMissionComplete();
             },
             child: Text(
-              'AVANÇAR',
-              style: GoogleFonts.rajdhani(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
+              'Avançar Missão',
+              style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -213,22 +259,22 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
     );
   }
 
-  void _showFailureDialog(String message) {
+  void _showFailureDialog(String feedback) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: const Color(0xFF1E1010),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: Colors.redAccent, width: 2),
+          side: const BorderSide(color: Color(0xFFEF4444), width: 2),
         ),
         title: Row(
           children: [
             const Icon(Icons.error_outline_rounded,
-                color: Colors.redAccent, size: 28),
+                color: Color(0xFFEF4444), size: 28),
             const SizedBox(width: 10),
             Text(
-              'Atenção na Medição',
+              'Ajuste Necessário',
               style: GoogleFonts.rajdhani(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -238,16 +284,16 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
           ],
         ),
         content: Text(
-          message,
+          feedback,
           style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: Text(
-              'REVISAR',
+              'Revisar Pontos de Teste',
               style: GoogleFonts.rajdhani(
-                color: const Color(0xFF00E5FF),
+                color: const Color(0xFFEF4444),
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -257,598 +303,524 @@ class _MedeTestaExplicaM2State extends State<MedeTestaExplicaM2> {
     );
   }
 
-  Widget _buildUndoRedoButtons() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: _usePhysicalStyle ? Colors.white : const Color(0xFF0F172A),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: _usePhysicalStyle
-              ? const Color(0xFFCBD5E1)
-              : const Color(0xFF334155),
+  @override
+  Widget build(BuildContext context) {
+    final scale = UiScale.of(context);
+
+    return WorkbenchResponsiveLayout(
+      workbench: WorkbenchTableFrame(
+        usePhysicalStyle: _usePhysicalStyle,
+        onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
+        leftHeaderWidget: MedeTestaStatusCard(isClosed: _switchClosed),
+        rightHeaderWidget: MedeTestaTelemetryCard(
+          voltage: _measuredVoltage.abs(),
+          currentMa: _switchClosed ? 180.0 : 0.0,
+          isClosed: _switchClosed,
         ),
+        bottomWidget: MedeTestaUndoRedoButtons(
+          controller: _undoRedoController,
+          onUndo: () => setState(() => _undoRedoController.undo()),
+          onRedo: () => setState(() => _undoRedoController.redo()),
+        ),
+        voltsTip: _mission.voltsMediation,
+        child: _buildWorkbenchContent(scale),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.undo_rounded),
-            tooltip: 'Desfazer',
-            color: _undoRedoController.canUndo
-                ? const Color(0xFF059669)
-                : Colors.grey,
-            onPressed: _undoRedoController.canUndo
-                ? () => setState(() => _undoRedoController.undo())
-                : null,
+      sidePanel: WorkbenchSidePanel(
+        teamTitle: 'Equipe Instrumentação',
+        showTeamHeader: false,
+        buttonColor: const Color(0xFF059669),
+        buttonLabel: 'VALIDAR QUEDA NA CARGA',
+        toolboxItems: [
+          WorkbenchMissionObjectiveCard(
+            missionNumber: 2,
+            title: _mission.title,
+            description: _mission.objective,
+            voltsTip: _mission.voltsMediation,
           ),
-          IconButton(
-            icon: const Icon(Icons.redo_rounded),
-            tooltip: 'Refazer',
-            color: _undoRedoController.canRedo
-                ? const Color(0xFF059669)
-                : Colors.grey,
-            onPressed: _undoRedoController.canRedo
-                ? () => setState(() => _undoRedoController.redo())
-                : null,
+          const SizedBox(height: 12),
+          WorkbenchInvestigationStepperCard(
+            title: 'Roteiro de Investigação',
+            currentStepIndex: _currentStepperIndex,
+            isStepCompleted: _isStepCompleted,
+            steps: const [
+              'Ligar a chave para acender a lâmpada',
+              'Conectar pontas de prova nos nós da lâmpada (TP2 e TP3)',
+              'Girar seletor para V⎓ e validar 9.00V de queda na carga',
+            ],
+          ),
+          const SizedBox(height: 12),
+          _buildQuickControls(),
+        ],
+        onEnergizePressed: _validateMission,
+        isLoading: _isSimulating,
+      ),
+    );
+  }
+
+  Widget _buildQuickControls() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF334155)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'CONTROLE DO CIRCUITO & PONTAS',
+            style: GoogleFonts.rajdhani(
+              color: const Color(0xFF94A3B8),
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Botão Chave
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: _switchClosed
+                    ? const Color(0xFF10B981)
+                    : const Color(0xFF64748B),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+              ),
+              onPressed: _toggleSwitch,
+              icon: Icon(_switchClosed
+                  ? Icons.toggle_on_rounded
+                  : Icons.toggle_off_rounded),
+              label: Text(
+                _switchClosed ? 'CHAVE: FECHADA (ON)' : 'CHAVE: ABERTA (OFF)',
+                style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Botões de medição rápida
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    side: BorderSide(
+                      color: _isBulbMeasured
+                          ? const Color(0xFF10B981)
+                          : const Color(0xFF475569),
+                    ),
+                  ),
+                  onPressed: () {
+                    _setRedProbeTarget('tp2');
+                    _setBlackProbeTarget('tp3');
+                  },
+                  child: Text(
+                    'Medir Lâmpada\n(TP2-TP3)',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.rajdhani(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    side: const BorderSide(color: Color(0xFF475569)),
+                  ),
+                  onPressed: () {
+                    _setRedProbeTarget('tp1');
+                    _setBlackProbeTarget('tp2');
+                  },
+                  child: Text(
+                    'Medir Chave\n(TP1-TP2)',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.rajdhani(
+                      color: Colors.white70,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final showReading = _m2BatteryInserted &&
-        _m2BulbInserted &&
-        _m2VoltmeterInserted &&
-        _redProbeConnected &&
-        _blackProbeConnected;
-    final voltage = showReading ? 9.0 : 0.0;
-    final currentMa = _m2BatteryInserted && _m2BulbInserted ? 1800.0 : 0.0;
+  Widget _buildWorkbenchContent(UiScale scale) {
+    return LayoutBuilder(
+      builder: (context, box) {
+        final w = box.maxWidth;
+        final h = box.maxHeight;
 
-    return Row(
-      children: [
-        Expanded(
-          flex: 7,
-          child: Column(
-            children: [
-              Expanded(
-                child: WorkbenchTableFrame(
-                  usePhysicalStyle: _usePhysicalStyle,
-                  onStyleChanged: (val) =>
-                      setState(() => _usePhysicalStyle = val),
-                  leftHeaderWidget: MedeTestaStatusCard(isClosed: _isClosed),
-                  rightHeaderWidget: MedeTestaTelemetryCard(
-                    voltage: voltage,
-                    currentMa: currentMa,
-                    isClosed: _isClosed,
-                  ),
-                  bottomWidget: _buildUndoRedoButtons(),
-                  child: _usePhysicalStyle
-                      ? _buildPhysicalCanvas()
-                      : _buildSchematicCanvas(),
+        // Posições dos componentes do circuito em série
+        final battPos = Offset(w * 0.16, h * 0.50);
+        final switchPos = Offset(w * 0.34, h * 0.50);
+        final bulbPos = Offset(w * 0.52, h * 0.50);
+        final meterPos = Offset(w * 0.76, h * 0.50);
+
+        // Pontos de teste
+        final tp1Pos = Offset(w * 0.25, h * 0.32); // Entre bateria e chave
+        final tp2Pos = Offset(w * 0.43, h * 0.32); // Entre chave e lâmpada
+        final tp3Pos = Offset(w * 0.60, h * 0.32); // Retorno da lâmpada
+
+        // Bornes do multímetro
+        final meterRedJack = Offset(meterPos.dx - 35, meterPos.dy + 120);
+        final meterBlackJack = Offset(meterPos.dx + 35, meterPos.dy + 120);
+
+        Offset? getTargetOffset(String? target) {
+          switch (target) {
+            case 'tp1':
+              return tp1Pos;
+            case 'tp2':
+              return tp2Pos;
+            case 'tp3':
+              return tp3Pos;
+            default:
+              return null;
+          }
+        }
+
+        final targetRed = getTargetOffset(_redProbeTarget);
+        final targetBlack = getTargetOffset(_blackProbeTarget);
+
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // Fiação elástica das pontas de prova do multímetro
+            Positioned.fill(
+              child: CustomPaint(
+                painter: ProbeCablesPainter(
+                  meterRedJack: meterRedJack,
+                  meterBlackJack: meterBlackJack,
+                  targetRed: targetRed,
+                  targetBlack: targetBlack,
                 ),
               ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          flex: 3,
-          child: WorkbenchSidePanel(
-            teamTitle: 'Painel da Investigação',
-            showTeamHeader: false,
-            buttonColor: const Color(0xFF059669),
-            toolboxItems: [
-              WorkbenchMissionObjectiveCard(
-                missionNumber: 2,
-                title: _mission.title,
-                description: _mission.objective,
-                voltsTip: _mission.voltsMediation,
-              ),
-              const SizedBox(height: 12),
-              WorkbenchInvestigationStepperCard(
-                title: 'Roteiro de investigação',
-                currentStepIndex: _currentStepperIndex,
-                isStepCompleted: _isStepCompleted,
-                steps: const [
-                  'Inserir bateria e lâmpada no circuito',
-                  'Posicionar Voltímetro e conectar na lâmpada',
-                  'Medir a queda de tensão e energizar',
+            ),
+
+            // Título Didático
+            Positioned(
+              top: 16,
+              left: 20,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'QUEDA DE TENSÃO NA CARGA (LÂMPADA)',
+                    style: GoogleFonts.rajdhani(
+                      color: const Color(0xFF0F172A),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                  Text(
+                    'Compare a tensão sobre a chave fechada (0V) e sobre a lâmpada acesa (9V).',
+                    style: GoogleFonts.outfit(
+                      color: const Color(0xFF64748B),
+                      fontSize: 12,
+                    ),
+                  ),
                 ],
               ),
-              const SizedBox(height: 12),
-              MedeTestaSideToolbox(
-                usePhysicalStyle: _usePhysicalStyle,
-                onReset: _reset,
+            ),
+
+            // Trilhas da placa de ensaio conectando os componentes
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _CircuitBusPainter(
+                  battPos: battPos,
+                  switchPos: switchPos,
+                  bulbPos: bulbPos,
+                  tp1Pos: tp1Pos,
+                  tp2Pos: tp2Pos,
+                  tp3Pos: tp3Pos,
+                  isClosed: _switchClosed,
+                ),
               ),
-            ],
-            onEnergizePressed: _validateMission,
-            isLoading: _isSimulating,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPhysicalCanvas() {
-    final scale = UiScale.of(context);
-    final showReading = _m2BatteryInserted &&
-        _m2BulbInserted &&
-        _m2VoltmeterInserted &&
-        _redProbeConnected &&
-        _blackProbeConnected;
-    final voltageReading = showReading ? 9.0 : 0.0;
-
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          'Medição de Queda de Potencial (Queda de Tensão na Carga)',
-          style: GoogleFonts.rajdhani(
-            color: const Color(0xFF0F172A),
-            fontWeight: FontWeight.bold,
-            fontSize: scale.font(17, min: 14, max: 20),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final w = constraints.maxWidth;
-                final h = constraints.maxHeight;
-                final batteryX = w * 0.22;
-                final bulbX = w * 0.78;
-                final centerY = h * 0.60;
-                final voltmeterX = w * 0.50;
-                final voltmeterY = h * 0.18;
-
-                final sock = scale.size(110.0, min: 90.0, max: 135.0);
-                final comp = sock * 0.62;
-
-                final batteryPlacement = ComponentPlacement(
-                  position: Offset(batteryX, centerY),
-                  rotation: _m2BatteryRotation,
-                  type: ComponentType.battery,
-                );
-                final bulbPlacement = ComponentPlacement(
-                  position: Offset(bulbX, centerY),
-                  rotation: _m2BulbRotation,
-                  type: ComponentType.bulb,
-                );
-
-                final wires = <WirePath>[];
-                if (_m2BatteryInserted && _m2BulbInserted) {
-                  wires.add(DynamicWirePath.fromComponents(
-                    compA: batteryPlacement,
-                    terminalIndexA: 1,
-                    compB: bulbPlacement,
-                    terminalIndexB: 0,
-                    color: const Color(0xFFEF4444),
-                    isActive: true,
-                  ).toWirePath());
-                  wires.add(DynamicWirePath.fromComponents(
-                    compA: bulbPlacement,
-                    terminalIndexA: 1,
-                    compB: batteryPlacement,
-                    terminalIndexB: 0,
-                    color: const Color(0xFF1E293B),
-                    isActive: true,
-                  ).toWirePath());
-                }
-
-                return Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    // Fios de alimentação principais da fonte para a lâmpada
-                    if (wires.isNotEmpty)
-                      Positioned.fill(
-                        child: RealisticWireWidget(
-                          wires: wires,
-                          animationValue: 0,
-                          showElectrons: _m2BatteryInserted && _m2BulbInserted,
-                        ),
-                      ),
-
-                    // Fios de ponta de prova do Voltímetro para a Lâmpada
-                    if (_m2BulbInserted)
-                      Positioned.fill(
-                        child: CustomPaint(
-                          painter: MedeTestaDualProbeWirePainter(
-                            fromCenter: Offset(voltmeterX, voltmeterY),
-                            toCenter: Offset(bulbX, centerY),
-                            isConnected: _m2VoltmeterInserted &&
-                                _redProbeConnected &&
-                                _blackProbeConnected,
-                          ),
-                        ),
-                      ),
-
-                    // Socket 1: Bateria 9V
-                    Positioned(
-                      left: batteryX - sock / 2,
-                      top: centerY - sock / 2,
-                      child: PhysicalBlueprintSocket<String>(
-                        expectedData: 'battery',
-                        isFilled: _m2BatteryInserted,
-                        rotation: _m2BatteryRotation,
-                        width: sock,
-                        height: sock,
-                        showLabel: true,
-                        onAccept: (_) => _insertComponent(
-                          name: 'Bateria',
-                          getInserted: () => _m2BatteryInserted,
-                          setInserted: (v) => _m2BatteryInserted = v,
-                          getRotation: () => _m2BatteryRotation,
-                          setRotation: (v) => _m2BatteryRotation = v,
-                        ),
-                        onRotate: () => _rotateComponent(
-                          name: 'Bateria',
-                          getRotation: () => _m2BatteryRotation,
-                          setRotation: (v) => _m2BatteryRotation = v,
-                        ),
-                        onTap: () {},
-                        symbolWidget: CustomPaint(
-                          size: Size(comp, comp),
-                          painter: ComponentPhysicalPainter(
-                            type: ComponentType.battery,
-                            isDarkMode: false,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // Socket 2: Lâmpada (Carga)
-                    Positioned(
-                      left: bulbX - sock / 2,
-                      top: centerY - sock / 2,
-                      child: PhysicalBlueprintSocket<String>(
-                        expectedData: 'bulb',
-                        isFilled: _m2BulbInserted,
-                        rotation: _m2BulbRotation,
-                        width: sock,
-                        height: sock,
-                        showLabel: true,
-                        onAccept: (_) => _insertComponent(
-                          name: 'Lâmpada',
-                          getInserted: () => _m2BulbInserted,
-                          setInserted: (v) => _m2BulbInserted = v,
-                          getRotation: () => _m2BulbRotation,
-                          setRotation: (v) => _m2BulbRotation = v,
-                        ),
-                        onRotate: () => _rotateComponent(
-                          name: 'Lâmpada',
-                          getRotation: () => _m2BulbRotation,
-                          setRotation: (v) => _m2BulbRotation = v,
-                        ),
-                        onTap: () {},
-                        symbolWidget: CustomPaint(
-                          size: Size(comp, comp),
-                          painter: ComponentPhysicalPainter(
-                            type: ComponentType.bulb,
-                            isActive: _m2BatteryInserted && _m2BulbInserted,
-                            isDarkMode: false,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // Pontas de prova nos terminais da lâmpada
-                    if (_m2BulbInserted)
-                      Positioned(
-                        left: bulbX - 55,
-                        top: centerY - sock / 2 - 38,
-                        child: MedeTestaProbeSlot(
-                          isRed: true,
-                          isConnected: _redProbeConnected,
-                          onTap: () => setState(
-                              () => _redProbeConnected = !_redProbeConnected),
-                          label: 'Nó (+)',
-                        ),
-                      ),
-                    if (_m2BulbInserted)
-                      Positioned(
-                        left: bulbX + 5,
-                        top: centerY - sock / 2 - 38,
-                        child: MedeTestaProbeSlot(
-                          isRed: false,
-                          isConnected: _blackProbeConnected,
-                          onTap: () => setState(() =>
-                              _blackProbeConnected = !_blackProbeConnected),
-                          label: 'Nó (-)',
-                        ),
-                      ),
-
-                    // Socket 3: Voltímetro (Topo Central)
-                    Positioned(
-                      left: voltmeterX - sock / 2,
-                      top: voltmeterY - sock / 2,
-                      child: PhysicalBlueprintSocket<String>(
-                        expectedData: 'multimeter_v',
-                        isFilled: _m2VoltmeterInserted,
-                        rotation: _m2VoltmeterRotation,
-                        width: sock,
-                        height: sock,
-                        showLabel: true,
-                        onAccept: (_) => _insertComponent(
-                          name: 'Voltímetro',
-                          getInserted: () => _m2VoltmeterInserted,
-                          setInserted: (v) => _m2VoltmeterInserted = v,
-                          getRotation: () => _m2VoltmeterRotation,
-                          setRotation: (v) => _m2VoltmeterRotation = v,
-                        ),
-                        onRotate: () => _rotateComponent(
-                          name: 'Voltímetro',
-                          getRotation: () => _m2VoltmeterRotation,
-                          setRotation: (v) => _m2VoltmeterRotation = v,
-                        ),
-                        onTap: () {},
-                        symbolWidget: MeterVectorWidget(
-                          size: comp,
-                          meterType: 'V',
-                          accentColor: const Color(0xFF0284C7),
-                        ),
-                      ),
-                    ),
-
-                    // Leitura Digital Voltímetro
-                    if (_m2VoltmeterInserted)
-                      Positioned(
-                        left: voltmeterX - 45,
-                        top: voltmeterY + sock / 2 + 10,
-                        child: MedeTestaMeterReading(
-                          value: voltageReading.toStringAsFixed(1),
-                          unit: 'V DC',
-                          color: const Color(0xFF0284C7),
-                        ),
-                      ),
-                  ],
-                );
-              },
             ),
-          ),
-        ),
-      ],
-    );
-  }
 
-  Widget _buildSchematicCanvas() {
-    final scale = UiScale.of(context);
-    final showReading = _m2BatteryInserted &&
-        _m2BulbInserted &&
-        _m2VoltmeterInserted &&
-        _redProbeConnected &&
-        _blackProbeConnected;
-    final voltageReading = showReading ? 9.0 : 0.0;
-
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          'Diagrama Esquemático — Queda de Tensão na Lâmpada',
-          style: GoogleFonts.rajdhani(
-            color: const Color(0xFF0F172A),
-            fontWeight: FontWeight.bold,
-            fontSize: scale.font(17, min: 14, max: 20),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final w = constraints.maxWidth;
-                final h = constraints.maxHeight;
-                final batteryX = w * 0.22;
-                final bulbX = w * 0.78;
-                final centerY = h * 0.60;
-                final voltmeterX = w * 0.50;
-                final voltmeterY = h * 0.18;
-
-                final batteryPlacement = ComponentPlacement(
-                  position: Offset(batteryX, centerY),
-                  rotation: _m2BatteryRotation,
-                  type: ComponentType.battery,
-                );
-                final bulbPlacement = ComponentPlacement(
-                  position: Offset(bulbX, centerY),
-                  rotation: _m2BulbRotation,
-                  type: ComponentType.bulb,
-                );
-
-                final wires = <WirePath>[];
-                if (_m2BatteryInserted && _m2BulbInserted) {
-                  wires.add(DynamicWirePath.fromComponents(
-                    compA: batteryPlacement,
-                    terminalIndexA: 1,
-                    compB: bulbPlacement,
-                    terminalIndexB: 0,
-                    color: const Color(0xFFEF4444),
-                    isActive: true,
-                  ).toWirePath());
-                  wires.add(DynamicWirePath.fromComponents(
-                    compA: bulbPlacement,
-                    terminalIndexA: 1,
-                    compB: batteryPlacement,
-                    terminalIndexB: 0,
-                    color: const Color(0xFF1E293B),
-                    isActive: true,
-                  ).toWirePath());
-                }
-
-                final sock = scale.size(105.0, min: 85.0, max: 130.0);
-                final comp = sock * 0.65;
-
-                return Stack(
-                  clipBehavior: Clip.none,
+            // 1. Bateria 9V
+            Positioned(
+              left: battPos.dx - 45,
+              top: battPos.dy - 55,
+              child: Container(
+                width: 90,
+                height: 110,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.94),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFCBD5E1)),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    if (wires.isNotEmpty)
-                      Positioned.fill(
-                        child: RealisticWireWidget(
-                          wires: wires,
-                          animationValue: 0,
-                          showElectrons: _m2BatteryInserted && _m2BulbInserted,
-                        ),
-                      ),
-
-                    // Fios de ponta de prova esquemáticos
-                    if (_m2BulbInserted)
-                      Positioned.fill(
-                        child: CustomPaint(
-                          painter: MedeTestaDualProbeWirePainter(
-                            fromCenter: Offset(voltmeterX, voltmeterY),
-                            toCenter: Offset(bulbX, centerY),
-                            isConnected: _m2VoltmeterInserted &&
-                                _redProbeConnected &&
-                                _blackProbeConnected,
-                          ),
-                        ),
-                      ),
-
-                    Positioned(
-                      left: batteryX - sock / 2,
-                      top: centerY - sock / 2,
-                      child: SchematicBlueprintSocket<String>(
-                        expectedData: 'battery',
-                        isFilled: _m2BatteryInserted,
-                        showLabel: false,
-                        rotation: _m2BatteryRotation,
-                        width: sock,
-                        height: sock,
-                        onAccept: (_) => _insertComponent(
-                          name: 'Bateria',
-                          getInserted: () => _m2BatteryInserted,
-                          setInserted: (v) => _m2BatteryInserted = v,
-                          getRotation: () => _m2BatteryRotation,
-                          setRotation: (v) => _m2BatteryRotation = v,
-                        ),
-                        onRotate: () => _rotateComponent(
-                          name: 'Bateria',
-                          getRotation: () => _m2BatteryRotation,
-                          setRotation: (v) => _m2BatteryRotation = v,
-                        ),
-                        onTap: () {},
-                        symbolWidget: CustomPaint(
-                          size: Size(comp, comp * 0.7),
-                          painter: CircuitSymbolPainter(
-                            type: ComponentType.battery,
-                            color: const Color(0xFF0F172A),
-                            strokeWidth: 2.5,
-                          ),
-                        ),
-                        placeholderWidget: CustomPaint(
-                          size: Size(comp * 0.85, comp * 0.6),
-                          painter: CircuitSymbolPainter(
-                            type: ComponentType.battery,
-                            isActive: false,
-                            color: const Color(0xFF94A3B8),
-                            strokeWidth: 2.0,
-                          ),
-                        ),
-                        label: '',
+                    CustomPaint(
+                      size: const Size(48, 48),
+                      painter: ComponentPhysicalPainter(
+                        type: ComponentType.battery,
+                        isDarkMode: false,
                       ),
                     ),
-                    Positioned(
-                      left: bulbX - sock / 2,
-                      top: centerY - sock / 2,
-                      child: SchematicBlueprintSocket<String>(
-                        expectedData: 'bulb',
-                        isFilled: _m2BulbInserted,
-                        showLabel: false,
-                        rotation: _m2BulbRotation,
-                        width: sock,
-                        height: sock,
-                        onAccept: (_) => _insertComponent(
-                          name: 'Lâmpada',
-                          getInserted: () => _m2BulbInserted,
-                          setInserted: (v) => _m2BulbInserted = v,
-                          getRotation: () => _m2BulbRotation,
-                          setRotation: (v) => _m2BulbRotation = v,
-                        ),
-                        onRotate: () => _rotateComponent(
-                          name: 'Lâmpada',
-                          getRotation: () => _m2BulbRotation,
-                          setRotation: (v) => _m2BulbRotation = v,
-                        ),
-                        onTap: () {},
-                        symbolWidget: CustomPaint(
-                          size: Size(comp, comp * 0.7),
-                          painter: CircuitSymbolPainter(
-                            type: ComponentType.bulb,
-                            isActive: _m2BatteryInserted && _m2BulbInserted,
-                            color: const Color(0xFF0F172A),
-                            strokeWidth: 2.5,
-                          ),
-                        ),
-                        placeholderWidget: CustomPaint(
-                          size: Size(comp * 0.85, comp * 0.6),
-                          painter: CircuitSymbolPainter(
-                            type: ComponentType.bulb,
-                            isActive: false,
-                            color: const Color(0xFF94A3B8),
-                            strokeWidth: 2.0,
-                          ),
-                        ),
-                        label: '',
+                    const SizedBox(height: 4),
+                    Text(
+                      'BATERIA 9V',
+                      style: GoogleFonts.rajdhani(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                        color: const Color(0xFF0F172A),
                       ),
                     ),
-                    Positioned(
-                      left: voltmeterX - sock / 2,
-                      top: voltmeterY - sock / 2,
-                      child: SchematicBlueprintSocket<String>(
-                        expectedData: 'multimeter_v',
-                        isFilled: _m2VoltmeterInserted,
-                        showLabel: false,
-                        rotation: _m2VoltmeterRotation,
-                        width: sock,
-                        height: sock,
-                        onAccept: (_) => _insertComponent(
-                          name: 'Voltímetro',
-                          getInserted: () => _m2VoltmeterInserted,
-                          setInserted: (v) => _m2VoltmeterInserted = v,
-                          getRotation: () => _m2VoltmeterRotation,
-                          setRotation: (v) => _m2VoltmeterRotation = v,
-                        ),
-                        onRotate: () => _rotateComponent(
-                          name: 'Voltímetro',
-                          getRotation: () => _m2VoltmeterRotation,
-                          setRotation: (v) => _m2VoltmeterRotation = v,
-                        ),
-                        onTap: () {},
-                        symbolWidget: MeterVectorWidget(
-                          size: comp,
-                          meterType: 'V',
-                          accentColor: const Color(0xFF0284C7),
-                        ),
-                        placeholderWidget: MeterVectorWidget(
-                          size: comp * 0.85,
-                          meterType: 'V',
-                          accentColor: const Color(0xFF94A3B8),
-                        ),
-                        label: '',
-                      ),
-                    ),
-                    if (_m2VoltmeterInserted)
-                      Positioned(
-                        left: voltmeterX - 45,
-                        top: voltmeterY + sock / 2 + 10,
-                        child: MedeTestaMeterReading(
-                          value: voltageReading.toStringAsFixed(1),
-                          unit: 'V DC',
-                          color: const Color(0xFF0284C7),
-                        ),
-                      ),
                   ],
-                );
-              },
+                ),
+              ),
             ),
-          ),
-        ),
-      ],
+
+            // 2. Chave Liga/Desliga Interativa
+            Positioned(
+              left: switchPos.dx - 45,
+              top: switchPos.dy - 55,
+              child: InkWell(
+                onTap: _toggleSwitch,
+                borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  width: 90,
+                  height: 110,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.94),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: _switchClosed
+                          ? const Color(0xFF10B981)
+                          : const Color(0xFFCBD5E1),
+                      width: _switchClosed ? 2 : 1,
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        _switchClosed
+                            ? Icons.toggle_on_rounded
+                            : Icons.toggle_off_rounded,
+                        size: 42,
+                        color: _switchClosed
+                            ? const Color(0xFF10B981)
+                            : const Color(0xFF64748B),
+                      ),
+                      Text(
+                        _switchClosed ? 'CHAVE ON' : 'CHAVE OFF',
+                        style: GoogleFonts.rajdhani(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
+                          color: _switchClosed
+                              ? const Color(0xFF059669)
+                              : const Color(0xFF64748B),
+                        ),
+                      ),
+                      Text(
+                        'Toque p/ alternar',
+                        style: GoogleFonts.outfit(
+                          fontSize: 9,
+                          color: const Color(0xFF94A3B8),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // 3. Lâmpada Incandescente (Carga)
+            Positioned(
+              left: bulbPos.dx - 45,
+              top: bulbPos.dy - 55,
+              child: Container(
+                width: 90,
+                height: 110,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.94),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFCBD5E1)),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CustomPaint(
+                      size: const Size(48, 48),
+                      painter: ComponentPhysicalPainter(
+                        type: ComponentType.bulb,
+                        isActive: _switchClosed,
+                        isDarkMode: false,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'LÂMPADA',
+                      style: GoogleFonts.rajdhani(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                        color: const Color(0xFF0F172A),
+                      ),
+                    ),
+                    Text(
+                      _switchClosed ? 'ACESA (9V)' : 'APAGADA (0V)',
+                      style: GoogleFonts.rajdhani(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 9,
+                        color: _switchClosed
+                            ? const Color(0xFFD97706)
+                            : const Color(0xFF94A3B8),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Ponto de Teste TP1 (+9V saída da bateria)
+            Positioned(
+              left: tp1Pos.dx - 20,
+              top: tp1Pos.dy - 20,
+              child: TestPointNode(
+                id: 'TP1',
+                label: 'Positivo (+9V)',
+                hasRedProbe: _redProbeTarget == 'tp1',
+                hasBlackProbe: _blackProbeTarget == 'tp1',
+                onConnectRed: () => _setRedProbeTarget('tp1'),
+                onConnectBlack: () => _setBlackProbeTarget('tp1'),
+                onDisconnect: () {
+                  if (_redProbeTarget == 'tp1') _setRedProbeTarget(null);
+                  if (_blackProbeTarget == 'tp1') _setBlackProbeTarget(null);
+                },
+              ),
+            ),
+
+            // Ponto de Teste TP2 (Entre chave e lâmpada)
+            Positioned(
+              left: tp2Pos.dx - 20,
+              top: tp2Pos.dy - 20,
+              child: TestPointNode(
+                id: 'TP2',
+                label: 'Entrada da Lâmpada',
+                hasRedProbe: _redProbeTarget == 'tp2',
+                hasBlackProbe: _blackProbeTarget == 'tp2',
+                onConnectRed: () => _setRedProbeTarget('tp2'),
+                onConnectBlack: () => _setBlackProbeTarget('tp2'),
+                onDisconnect: () {
+                  if (_redProbeTarget == 'tp2') _setRedProbeTarget(null);
+                  if (_blackProbeTarget == 'tp2') _setBlackProbeTarget(null);
+                },
+              ),
+            ),
+
+            // Ponto de Teste TP3 (Retorno terra da lâmpada)
+            Positioned(
+              left: tp3Pos.dx - 20,
+              top: tp3Pos.dy - 20,
+              child: TestPointNode(
+                id: 'TP3',
+                label: 'Saída da Lâmpada (0V / Terra)',
+                hasRedProbe: _redProbeTarget == 'tp3',
+                hasBlackProbe: _blackProbeTarget == 'tp3',
+                onConnectRed: () => _setRedProbeTarget('tp3'),
+                onConnectBlack: () => _setBlackProbeTarget('tp3'),
+                onDisconnect: () {
+                  if (_redProbeTarget == 'tp3') _setRedProbeTarget(null);
+                  if (_blackProbeTarget == 'tp3') _setBlackProbeTarget(null);
+                },
+              ),
+            ),
+
+            // Multímetro Digital de Bancada
+            Positioned(
+              left: meterPos.dx - 87,
+              top: meterPos.dy - 140,
+              child: DigitalMultimeterWidget(
+                currentMode: _multimeterMode,
+                onModeChanged: _setMultimeterMode,
+                displayValue: _displayValue,
+                displayUnit: _multimeterMode.unit,
+                isRedConnected: _redProbeTarget != null,
+                isBlackConnected: _blackProbeTarget != null,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
+}
+
+/// Linhas de fiação da bancada conectando a bateria, chave e lâmpada
+class _CircuitBusPainter extends CustomPainter {
+  final Offset battPos;
+  final Offset switchPos;
+  final Offset bulbPos;
+  final Offset tp1Pos;
+  final Offset tp2Pos;
+  final Offset tp3Pos;
+  final bool isClosed;
+
+  _CircuitBusPainter({
+    required this.battPos,
+    required this.switchPos,
+    required this.bulbPos,
+    required this.tp1Pos,
+    required this.tp2Pos,
+    required this.tp3Pos,
+    required this.isClosed,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final wirePaint = Paint()
+      ..color = isClosed ? const Color(0xFF0284C7) : const Color(0xFF94A3B8)
+      ..strokeWidth = 3.0
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final groundPaint = Paint()
+      ..color = const Color(0xFF334155)
+      ..strokeWidth = 3.0
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    // Fio superior: Bateria (+) -> TP1 -> Chave
+    final topPath = Path()
+      ..moveTo(battPos.dx + 45, battPos.dy - 20)
+      ..lineTo(tp1Pos.dx, tp1Pos.dy + 20)
+      ..lineTo(switchPos.dx - 45, switchPos.dy - 20);
+    canvas.drawPath(topPath, wirePaint);
+
+    // Fio médio: Chave -> TP2 -> Lâmpada
+    final midPath = Path()
+      ..moveTo(switchPos.dx + 45, switchPos.dy - 20)
+      ..lineTo(tp2Pos.dx, tp2Pos.dy + 20)
+      ..lineTo(bulbPos.dx - 45, bulbPos.dy - 20);
+    canvas.drawPath(midPath, wirePaint);
+
+    // Fio de retorno inferior: Lâmpada -> TP3 -> Bateria (-)
+    final returnPath = Path()
+      ..moveTo(bulbPos.dx + 45, bulbPos.dy)
+      ..lineTo(tp3Pos.dx, tp3Pos.dy + 20)
+      ..lineTo(tp3Pos.dx, bulbPos.dy + 75)
+      ..lineTo(battPos.dx, bulbPos.dy + 75)
+      ..lineTo(battPos.dx, battPos.dy + 55);
+    canvas.drawPath(returnPath, groundPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _CircuitBusPainter oldDelegate) =>
+      oldDelegate.isClosed != isClosed;
 }

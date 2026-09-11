@@ -5,20 +5,14 @@ import '../../../core/ui_scale.dart';
 import '../../../models/circuit_action.dart';
 import '../../../models/first_step_component.dart';
 import '../../../models/stand_mission.dart';
-import '../../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../../state/circuit_undo_redo_controller.dart';
-import '../../../widgets/circuit_symbol_painter.dart';
-import '../../../widgets/component_physical_painter.dart';
-import '../../../widgets/component_vector_painters.dart';
-import '../../../widgets/physical_blueprint_socket.dart';
-import '../../../widgets/schematic_blueprint_socket.dart';
 import '../../../widgets/success_confetti_overlay.dart';
 import '../../../widgets/workbench_components.dart';
 import '../../../widgets/workbench_sidebar_cards.dart';
 import '../../../widgets/workbench_table_frame.dart';
 import '../widgets/mede_testa_explica_widgets.dart';
 
-/// Missão 1 do Estande 07 — Medição Direta da Bateria 9V com Voltímetro e Amperímetro lado a lado.
+/// Missão 1 do Estande 07 — Medição Direta da Bateria 9V com Multímetro Realista e Pontas de Prova Soltas.
 class MedeTestaExplicaM1 extends StatefulWidget {
   final VoidCallback onMissionComplete;
 
@@ -39,80 +33,127 @@ class _MedeTestaExplicaM1State extends State<MedeTestaExplicaM1> {
   bool _usePhysicalStyle = true;
   bool _isSimulating = false;
 
-  bool _redProbeConnected = true;
-  bool _blackProbeConnected = true;
+  // Posições das pontas de prova na bancada (agulha em Offset)
+  Offset? _redProbePos;
+  Offset? _blackProbePos;
+  bool _isDraggingRed = false;
+  bool _isDraggingBlack = false;
 
-  bool _m1BatteryInserted = true;
-  double _m1BatteryRotation = 0.0;
-  bool _m1VoltmeterInserted = false;
-  double _m1VoltmeterRotation = 0.0;
-  bool _m1AmperimeterInserted = false;
-  double _m1AmperimeterRotation = 0.0;
+  MultimeterMode _multimeterMode = MultimeterMode.voltageDc;
 
-  bool get _isClosed =>
-      _m1BatteryInserted && _redProbeConnected && _blackProbeConnected;
+  // Alvo em que a ponta está conectada: 'pos', 'neg' ou null (livre na bancada)
+  String? _redTerminalTarget;
+  String? _blackTerminalTarget;
+
+  bool get _bothProbesConnected =>
+      _redTerminalTarget != null && _blackTerminalTarget != null;
+
+  bool get _isCorrectPolarity =>
+      _redTerminalTarget == 'pos' && _blackTerminalTarget == 'neg';
+
+  bool get _isInvertedPolarity =>
+      _redTerminalTarget == 'neg' && _blackTerminalTarget == 'pos';
+
+  double get _measuredVoltage {
+    if (!_bothProbesConnected) return 0.0;
+    if (_redTerminalTarget == _blackTerminalTarget) return 0.0;
+    if (_isCorrectPolarity) return 9.0;
+    if (_isInvertedPolarity) return -9.0;
+    return 0.0;
+  }
+
+  String get _displayValue {
+    if (_multimeterMode == MultimeterMode.off) return '---';
+    if (!_bothProbesConnected) return '0.00';
+    if (_redTerminalTarget == _blackTerminalTarget) return '0.00';
+
+    switch (_multimeterMode) {
+      case MultimeterMode.voltageDc:
+        return _measuredVoltage.toStringAsFixed(2);
+      case MultimeterMode.currentMa:
+        return '0.00';
+      case MultimeterMode.resistance:
+        return 'O.L';
+      case MultimeterMode.continuity:
+        return '---';
+      case MultimeterMode.off:
+        return '---';
+    }
+  }
 
   int get _currentStepperIndex {
-    if (!_m1BatteryInserted) return 0;
-    if (!_m1VoltmeterInserted || !(_redProbeConnected && _blackProbeConnected)) {
-      return 1;
-    }
+    if (!_bothProbesConnected) return 0;
+    if (_multimeterMode != MultimeterMode.voltageDc) return 1;
     return 2;
   }
 
   bool _isStepCompleted(int index) {
-    if (index == 0) return _m1BatteryInserted;
-    if (index == 1) {
-      return _m1VoltmeterInserted && _redProbeConnected && _blackProbeConnected;
+    if (index == 0) return _bothProbesConnected;
+    if (index == 1) return _multimeterMode == MultimeterMode.voltageDc;
+    if (index == 2) {
+      return _bothProbesConnected &&
+          _multimeterMode == MultimeterMode.voltageDc &&
+          _measuredVoltage.abs() == 9.0;
     }
-    if (index == 2) return _isClosed && _m1VoltmeterInserted;
     return false;
   }
 
-  void _insertComponent({
-    required String name,
-    required bool Function() getInserted,
-    required void Function(bool) setInserted,
-    required double Function() getRotation,
-    required void Function(double) setRotation,
-  }) {
-    final prevInserted = getInserted();
-    final prevRotation = getRotation();
-    final nextInserted = !prevInserted;
-    _undoRedoController.execute(InsertComponentAction(
-      description: nextInserted ? 'Inserir $name' : 'Remover $name',
+  void _setRedTerminalTarget(String? target, {Offset? snappedPos}) {
+    final prevTarget = _redTerminalTarget;
+    final prevPos = _redProbePos;
+    _undoRedoController.execute(ToggleProbeAction(
+      description: 'Mover Ponta Vermelha para ${target ?? 'Bancada'}',
       onApply: () => setState(() {
-        setInserted(nextInserted);
-        if (nextInserted) setRotation(0);
+        _redTerminalTarget = target;
+        if (snappedPos != null) {
+          _redProbePos = snappedPos;
+        } else if (target == null) {
+          _redProbePos = null;
+        }
       }),
       onUndo: () => setState(() {
-        setInserted(prevInserted);
-        setRotation(prevRotation);
+        _redTerminalTarget = prevTarget;
+        _redProbePos = prevPos;
       }),
     ));
   }
 
-  void _rotateComponent({
-    required String name,
-    required double Function() getRotation,
-    required void Function(double) setRotation,
-  }) {
-    final prevRotation = getRotation();
-    final newRotation = (prevRotation + 90) % 360;
-    _undoRedoController.execute(RotateComponentAction(
-      description: 'Girar $name',
-      onApply: () => setState(() => setRotation(newRotation)),
-      onUndo: () => setState(() => setRotation(prevRotation)),
+  void _setBlackTerminalTarget(String? target, {Offset? snappedPos}) {
+    final prevTarget = _blackTerminalTarget;
+    final prevPos = _blackProbePos;
+    _undoRedoController.execute(ToggleProbeAction(
+      description: 'Mover Ponta Preta para ${target ?? 'Bancada'}',
+      onApply: () => setState(() {
+        _blackTerminalTarget = target;
+        if (snappedPos != null) {
+          _blackProbePos = snappedPos;
+        } else if (target == null) {
+          _blackProbePos = null;
+        }
+      }),
+      onUndo: () => setState(() {
+        _blackTerminalTarget = prevTarget;
+        _blackProbePos = prevPos;
+      }),
+    ));
+  }
+
+  void _setMultimeterMode(MultimeterMode mode) {
+    final prev = _multimeterMode;
+    _undoRedoController.execute(SelectOptionAction(
+      description: 'Mudar seletor para ${mode.shortLabel}',
+      onApply: () => setState(() => _multimeterMode = mode),
+      onUndo: () => setState(() => _multimeterMode = prev),
     ));
   }
 
   void _reset() {
     setState(() {
-      _redProbeConnected = true;
-      _blackProbeConnected = true;
-      _m1BatteryInserted = true;
-      _m1VoltmeterInserted = false;
-      _m1AmperimeterInserted = false;
+      _redTerminalTarget = null;
+      _blackTerminalTarget = null;
+      _redProbePos = null;
+      _blackProbePos = null;
+      _multimeterMode = MultimeterMode.voltageDc;
     });
   }
 
@@ -124,19 +165,24 @@ class _MedeTestaExplicaM1State extends State<MedeTestaExplicaM1> {
       bool isSuccess = false;
       String feedback = _mission.failureFeedback;
 
-      if (_redProbeConnected && _blackProbeConnected && _m1VoltmeterInserted) {
-        await MissionCircuitBuilder()
-            .addBattery(id: 'bat1', voltage: 9.0)
-            .connect('bat1', 'B', 'bat1', 'A')
-            .simulate();
+      if (!_bothProbesConnected) {
         feedback =
-            'Tensão da bateria: 9.0V DC. Voltímetro conectado em paralelo com a fonte!';
+            'Arraste e encoste as duas pontas de prova (vermelha e preta) nos terminais metálicos da bateria de 9V!';
+      } else if (_redTerminalTarget == _blackTerminalTarget) {
+        feedback =
+            'As duas pontas estão encostadas no mesmo terminal! Encoste uma no terminal positivo (+) e outra no negativo (-).';
+      } else if (_multimeterMode != MultimeterMode.voltageDc) {
+        feedback =
+            'Gire a chave seletora do multímetro para V⎓ (Tensão Contínua) para ler a d.d.p. da bateria.';
+      } else if (_measuredVoltage.abs() == 9.0) {
         isSuccess = true;
-      } else if (!_m1VoltmeterInserted) {
-        feedback = 'Arraste o Voltímetro da gaveta para a bancada de teste.';
-      } else {
-        feedback =
-            'Posicione ambas as pontas de prova nos terminais da bateria.';
+        if (_measuredVoltage < 0) {
+          feedback =
+              'Excelente observação! A tensão medida foi de -9.00V porque você encostou a ponta vermelha no pólo negativo e a preta no positivo. Convenção de sinais comprovada!';
+        } else {
+          feedback =
+              'Perfeito! Leitura direta de 9.00V DC obtida com sucesso ao encostar as pontas de prova nos pólos da bateria.';
+        }
       }
 
       if (isSuccess) {
@@ -165,7 +211,7 @@ class _MedeTestaExplicaM1State extends State<MedeTestaExplicaM1> {
                 color: Color(0xFF10B981), size: 32),
             const SizedBox(width: 12),
             Text(
-              'Missão Concluída!',
+              'Medição Concluída!',
               style: GoogleFonts.rajdhani(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -175,13 +221,14 @@ class _MedeTestaExplicaM1State extends State<MedeTestaExplicaM1> {
           ],
         ),
         content: Text(
-          'Excelente! Você mediu a diferença de potencial elétrico (tensão = 9.0V DC) diretamente nos terminais da bateria usando as pontas de prova do voltímetro em paralelo.',
+          'Excelente trabalho! Você pegou as pontas de prova reais do multímetro, encostou nos terminais metálicos da bateria de 9V e comprovou a diferença de potencial elétrico de 9.00V DC!',
           style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14),
         ),
         actions: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
+          FilledButton(
+            style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFF10B981),
+              foregroundColor: Colors.white,
             ),
             onPressed: () {
               Navigator.of(context).pop();
@@ -189,11 +236,8 @@ class _MedeTestaExplicaM1State extends State<MedeTestaExplicaM1> {
               widget.onMissionComplete();
             },
             child: Text(
-              'AVANÇAR',
-              style: GoogleFonts.rajdhani(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
+              'Avançar Missão',
+              style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -201,22 +245,22 @@ class _MedeTestaExplicaM1State extends State<MedeTestaExplicaM1> {
     );
   }
 
-  void _showFailureDialog(String message) {
+  void _showFailureDialog(String feedback) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: const Color(0xFF1E1010),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: Colors.redAccent, width: 2),
+          side: const BorderSide(color: Color(0xFFEF4444), width: 2),
         ),
         title: Row(
           children: [
             const Icon(Icons.error_outline_rounded,
-                color: Colors.redAccent, size: 28),
+                color: Color(0xFFEF4444), size: 28),
             const SizedBox(width: 10),
             Text(
-              'Atenção na Medição',
+              'Ajuste Necessário',
               style: GoogleFonts.rajdhani(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -226,16 +270,16 @@ class _MedeTestaExplicaM1State extends State<MedeTestaExplicaM1> {
           ],
         ),
         content: Text(
-          message,
+          feedback,
           style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: Text(
-              'REVISAR',
+              'Revisar Pontas de Prova',
               style: GoogleFonts.rajdhani(
-                color: const Color(0xFF00E5FF),
+                color: const Color(0xFFEF4444),
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -245,579 +289,356 @@ class _MedeTestaExplicaM1State extends State<MedeTestaExplicaM1> {
     );
   }
 
-  Widget _buildUndoRedoButtons() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: _usePhysicalStyle ? Colors.white : const Color(0xFF0F172A),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: _usePhysicalStyle
-              ? const Color(0xFFCBD5E1)
-              : const Color(0xFF334155),
+  @override
+  Widget build(BuildContext context) {
+    final scale = UiScale.of(context);
+
+    return WorkbenchResponsiveLayout(
+      workbench: WorkbenchTableFrame(
+        usePhysicalStyle: _usePhysicalStyle,
+        onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
+        leftHeaderWidget: MedeTestaStatusCard(
+          isClosed: _bothProbesConnected &&
+              _multimeterMode == MultimeterMode.voltageDc,
         ),
+        rightHeaderWidget: MedeTestaTelemetryCard(
+          voltage: _measuredVoltage.abs(),
+          currentMa: 0.0,
+          isClosed: _bothProbesConnected,
+        ),
+        bottomWidget: MedeTestaUndoRedoButtons(
+          controller: _undoRedoController,
+          onUndo: () => setState(() => _undoRedoController.undo()),
+          onRedo: () => setState(() => _undoRedoController.redo()),
+        ),
+        voltsTip: _mission.voltsMediation,
+        child: _buildWorkbenchContent(scale),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.undo_rounded),
-            tooltip: 'Desfazer',
-            color: _undoRedoController.canUndo
-                ? const Color(0xFF059669)
-                : Colors.grey,
-            onPressed: _undoRedoController.canUndo
-                ? () => setState(() => _undoRedoController.undo())
-                : null,
+      sidePanel: WorkbenchSidePanel(
+        teamTitle: 'Equipe Instrumentação',
+        showTeamHeader: false,
+        buttonColor: const Color(0xFF059669),
+        buttonLabel: 'VALIDAR MEDIÇÃO',
+        toolboxItems: [
+          WorkbenchMissionObjectiveCard(
+            missionNumber: 1,
+            title: _mission.title,
+            description: _mission.objective,
+            voltsTip: _mission.voltsMediation,
           ),
-          IconButton(
-            icon: const Icon(Icons.redo_rounded),
-            tooltip: 'Refazer',
-            color: _undoRedoController.canRedo
-                ? const Color(0xFF059669)
-                : Colors.grey,
-            onPressed: _undoRedoController.canRedo
-                ? () => setState(() => _undoRedoController.redo())
-                : null,
+          const SizedBox(height: 12),
+          WorkbenchInvestigationStepperCard(
+            title: 'Roteiro de Investigação',
+            currentStepIndex: _currentStepperIndex,
+            isStepCompleted: _isStepCompleted,
+            steps: const [
+              'Arraste as pontas de prova e encoste nos terminais da bateria',
+              'Girar seletor do multímetro para V⎓ (Tensão Contínua)',
+              'Validar a medição de 9.00V DC no display',
+            ],
+          ),
+          const SizedBox(height: 12),
+          _buildProbeControlsCard(),
+        ],
+        onEnergizePressed: _validateMission,
+        isLoading: _isSimulating,
+      ),
+    );
+  }
+
+  Widget _buildProbeControlsCard() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF334155)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'CONTROLE RÁPIDO DE PONTAS',
+            style: GoogleFonts.rajdhani(
+              color: const Color(0xFF94A3B8),
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Dica: Você pode arrastar as pontas de prova com o dedo/mouse pela bancada.',
+            style: GoogleFonts.outfit(color: Colors.white60, fontSize: 11),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFEF4444),
+                    side: const BorderSide(color: Color(0xFFEF4444)),
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                  ),
+                  onPressed: () {
+                    final next = _redTerminalTarget == null
+                        ? 'pos'
+                        : (_redTerminalTarget == 'pos' ? 'neg' : null);
+                    _setRedTerminalTarget(next);
+                  },
+                  icon: const Icon(Icons.touch_app_rounded, size: 14),
+                  label: Text(
+                    'Ponta Vermelha: ${_targetLabel(_redTerminalTarget)}',
+                    style: GoogleFonts.rajdhani(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white38),
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                  ),
+                  onPressed: () {
+                    final next = _blackTerminalTarget == null
+                        ? 'neg'
+                        : (_blackTerminalTarget == 'neg' ? 'pos' : null);
+                    _setBlackTerminalTarget(next);
+                  },
+                  icon: const Icon(Icons.touch_app_rounded, size: 14),
+                  label: Text(
+                    'Ponta Preta: ${_targetLabel(_blackTerminalTarget)}',
+                    style: GoogleFonts.rajdhani(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: TextButton.icon(
+              onPressed: _reset,
+              icon: const Icon(Icons.cable_rounded, size: 16),
+              label: Text(
+                'Soltar Pontas na Bancada',
+                style: GoogleFonts.rajdhani(
+                  color: const Color(0xFF94A3B8),
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final showReading =
-        _m1BatteryInserted && _redProbeConnected && _blackProbeConnected;
-    final voltage = showReading && _m1VoltmeterInserted ? 9.0 : 0.0;
-    final currentMa = 0.0;
+  String _targetLabel(String? target) {
+    if (target == 'pos') return 'POLO (+)';
+    if (target == 'neg') return 'POLO (-)';
+    return 'SOLTA NA BANCADA';
+  }
 
-    return Row(
-      children: [
-        Expanded(
-          flex: 7,
-          child: Column(
-            children: [
-              Expanded(
-                child: WorkbenchTableFrame(
-                  usePhysicalStyle: _usePhysicalStyle,
-                  onStyleChanged: (val) =>
-                      setState(() => _usePhysicalStyle = val),
-                  leftHeaderWidget: MedeTestaStatusCard(isClosed: _isClosed),
-                  rightHeaderWidget: MedeTestaTelemetryCard(
-                    voltage: voltage,
-                    currentMa: currentMa,
-                    isClosed: _isClosed,
-                  ),
-                  bottomWidget: _buildUndoRedoButtons(),
-                  child: _usePhysicalStyle
-                      ? _buildPhysicalCanvas()
-                      : _buildSchematicCanvas(),
+  Widget _buildWorkbenchContent(UiScale scale) {
+    return LayoutBuilder(
+      builder: (context, box) {
+        final w = box.maxWidth;
+        final h = box.maxHeight;
+
+        // Posição central da Bateria 9V na bancada (sem caixa branca!)
+        final battPos = Offset(w * 0.28, h * 0.48);
+        const battWidth = 110.0;
+        const battHeight = 160.0;
+        final battTopLeft = Offset(battPos.dx - battWidth / 2, battPos.dy - battHeight / 2);
+
+        // Posições exatas dos pólos de contato metálicos na bateria (topo dos terminais 3D)
+        final posTerminalContact = Offset(battTopLeft.dx + battWidth * 0.31, battTopLeft.dy + 4.0);
+        final negTerminalContact = Offset(battTopLeft.dx + battWidth * 0.69, battTopLeft.dy + 4.0);
+
+        // Posição do Multímetro na bancada
+        final meterPos = Offset(w * 0.74, h * 0.46);
+        // Bornes inferiores dos conectores banana inseridos
+        final meterBlackJack = Offset(meterPos.dx - 10, meterPos.dy + 118);
+        final meterRedJack = Offset(meterPos.dx + 38, meterPos.dy + 118);
+
+        // Inicialização padrão das pontas se ainda não definidas:
+        // Soltas na bancada de trabalho ao lado do multímetro, sem tocar na bateria!
+        if (_redProbePos == null) {
+          if (_redTerminalTarget == 'pos') {
+            _redProbePos = posTerminalContact;
+          } else if (_redTerminalTarget == 'neg') {
+            _redProbePos = negTerminalContact;
+          } else {
+            _redProbePos = Offset(w * 0.44, h * 0.65);
+          }
+        }
+
+        if (_blackProbePos == null) {
+          if (_blackTerminalTarget == 'neg') {
+            _blackProbePos = negTerminalContact;
+          } else if (_blackTerminalTarget == 'pos') {
+            _blackProbePos = posTerminalContact;
+          } else {
+            _blackProbePos = Offset(w * 0.54, h * 0.65);
+          }
+        }
+
+        // Se estiver encaixada nos terminais e não estiver sendo arrastada, alinha perfeitamente
+        final effectiveRedPos = _isDraggingRed
+            ? _redProbePos!
+            : (_redTerminalTarget == 'pos'
+                ? posTerminalContact
+                : (_redTerminalTarget == 'neg' ? negTerminalContact : _redProbePos!));
+
+        final effectiveBlackPos = _isDraggingBlack
+            ? _blackProbePos!
+            : (_blackTerminalTarget == 'neg'
+                ? negTerminalContact
+                : (_blackTerminalTarget == 'pos' ? posTerminalContact : _blackProbePos!));
+
+        // Cauda das canetas de prova (onde o cabo entra, no topo da caneta que aponta para baixo)
+        final probeRedTail = Offset(effectiveRedPos.dx, effectiveRedPos.dy - 93);
+        final probeBlackTail = Offset(effectiveBlackPos.dx, effectiveBlackPos.dy - 93);
+
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // 1. Bateria 9V Ultra-Realista (sem caixa branca, direto na bancada)
+            Positioned(
+              left: battTopLeft.dx,
+              top: battTopLeft.dy,
+              child: Realistic9VBatteryWidget(
+                width: battWidth,
+                height: battHeight,
+                hasRedProbeConnectedPos: _redTerminalTarget == 'pos',
+                hasBlackProbeConnectedPos: _blackTerminalTarget == 'pos',
+                hasRedProbeConnectedNeg: _redTerminalTarget == 'neg',
+                hasBlackProbeConnectedNeg: _blackTerminalTarget == 'neg',
+              ),
+            ),
+
+            // 2. Multímetro Digital de Alta Fidelidade (inspirado na ilustração)
+            Positioned(
+              left: meterPos.dx - 97,
+              top: meterPos.dy - 145,
+              child: DigitalMultimeterWidget(
+                currentMode: _multimeterMode,
+                onModeChanged: _setMultimeterMode,
+                displayValue: _displayValue,
+                displayUnit: _multimeterMode.unit,
+                isRedConnected: _redTerminalTarget != null,
+                isBlackConnected: _blackTerminalTarget != null,
+              ),
+            ),
+
+            // 3. Cabos elásticos dinâmicos (EM CIMA da bancada e da bateria, NUNCA por trás!)
+            Positioned.fill(
+              child: CustomPaint(
+                painter: ProbeCablesPainter(
+                  meterRedJack: meterRedJack,
+                  meterBlackJack: meterBlackJack,
+                  probeRedTail: probeRedTail,
+                  probeBlackTail: probeBlackTail,
                 ),
               ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          flex: 3,
-          child: WorkbenchSidePanel(
-            teamTitle: 'Painel da Investigação',
-            showTeamHeader: false,
-            buttonColor: const Color(0xFF059669),
-            toolboxItems: [
-              WorkbenchMissionObjectiveCard(
-                missionNumber: 1,
-                title: _mission.title,
-                description: _mission.objective,
-                voltsTip: _mission.voltsMediation,
-              ),
-              const SizedBox(height: 12),
-              WorkbenchInvestigationStepperCard(
-                title: 'Roteiro de investigação',
-                currentStepIndex: _currentStepperIndex,
-                isStepCompleted: _isStepCompleted,
-                steps: const [
-                  'Inserir bateria no centro da bancada',
-                  'Posicionar Voltímetro e conectar fios de prova',
-                  'Validar leitura de tensão (9.0V DC)',
-                ],
-              ),
-              const SizedBox(height: 12),
-              MedeTestaSideToolbox(
-                usePhysicalStyle: _usePhysicalStyle,
-                onReset: _reset,
-              ),
-            ],
-            onEnergizePressed: _validateMission,
-            isLoading: _isSimulating,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPhysicalCanvas() {
-    final scale = UiScale.of(context);
-    final showReading =
-        _m1BatteryInserted && _redProbeConnected && _blackProbeConnected;
-    final voltageReading = showReading && _m1VoltmeterInserted ? 9.0 : 0.0;
-    final currentReading = 0.0;
-
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          'Medição Direta de Fonte DC — Instrumentos em Paralelo',
-          style: GoogleFonts.rajdhani(
-            color: const Color(0xFF0F172A),
-            fontWeight: FontWeight.bold,
-            fontSize: scale.font(17, min: 14, max: 20),
-          ),
-        ),
-        const SizedBox(height: 10),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final w = constraints.maxWidth;
-                final h = constraints.maxHeight;
-                final centerY = h * 0.48;
-
-                // Lado a lado: Voltímetro (esquerda) | Bateria 9V (centro) | Amperímetro (direita)
-                final voltmeterX = w * 0.20;
-                final batteryX = w * 0.50;
-                final amperimeterX = w * 0.80;
-
-                final sock = scale.size(115.0, min: 95.0, max: 140.0);
-                final comp = sock * 0.65;
-
-                return Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    // Fios de ponta de prova do Voltímetro para a Bateria
-                    if (_m1BatteryInserted)
-                      Positioned.fill(
-                        child: CustomPaint(
-                          painter: MedeTestaDualProbeWirePainter(
-                            fromCenter: Offset(voltmeterX, centerY),
-                            toCenter: Offset(batteryX, centerY),
-                            isConnected: _m1VoltmeterInserted &&
-                                _redProbeConnected &&
-                                _blackProbeConnected,
-                          ),
-                        ),
-                      ),
-
-                    // Fios de ponta de prova do Amperímetro para a Bateria (se inserido)
-                    if (_m1BatteryInserted && _m1AmperimeterInserted)
-                      Positioned.fill(
-                        child: CustomPaint(
-                          painter: MedeTestaDualProbeWirePainter(
-                            fromCenter: Offset(amperimeterX, centerY),
-                            toCenter: Offset(batteryX, centerY),
-                            isConnected: _m1AmperimeterInserted,
-                          ),
-                        ),
-                      ),
-
-                    // Socket 1: Voltímetro (Esquerda)
-                    Positioned(
-                      left: voltmeterX - sock / 2,
-                      top: centerY - sock / 2,
-                      child: PhysicalBlueprintSocket<String>(
-                        expectedData: 'multimeter_v',
-                        isFilled: _m1VoltmeterInserted,
-                        rotation: _m1VoltmeterRotation,
-                        width: sock,
-                        height: sock,
-                        showLabel: true,
-                        onAccept: (_) => _insertComponent(
-                          name: 'Voltímetro',
-                          getInserted: () => _m1VoltmeterInserted,
-                          setInserted: (v) => _m1VoltmeterInserted = v,
-                          getRotation: () => _m1VoltmeterRotation,
-                          setRotation: (v) => _m1VoltmeterRotation = v,
-                        ),
-                        onRotate: () => _rotateComponent(
-                          name: 'Voltímetro',
-                          getRotation: () => _m1VoltmeterRotation,
-                          setRotation: (v) => _m1VoltmeterRotation = v,
-                        ),
-                        onTap: () {},
-                        symbolWidget: MeterVectorWidget(
-                          size: comp,
-                          meterType: 'V',
-                          accentColor: const Color(0xFF0284C7),
-                        ),
-                      ),
-                    ),
-
-                    // Leitura Digital Voltímetro
-                    if (_m1VoltmeterInserted)
-                      Positioned(
-                        left: voltmeterX - 45,
-                        top: centerY + sock / 2 + 10,
-                        child: MedeTestaMeterReading(
-                          value: voltageReading.toStringAsFixed(1),
-                          unit: 'V DC',
-                          color: const Color(0xFF0284C7),
-                        ),
-                      ),
-
-                    // Socket 2: Bateria 9V (Centro)
-                    Positioned(
-                      left: batteryX - sock / 2,
-                      top: centerY - sock / 2,
-                      child: PhysicalBlueprintSocket<String>(
-                        expectedData: 'battery',
-                        isFilled: _m1BatteryInserted,
-                        rotation: _m1BatteryRotation,
-                        width: sock,
-                        height: sock,
-                        showLabel: true,
-                        onAccept: (_) => _insertComponent(
-                          name: 'Bateria',
-                          getInserted: () => _m1BatteryInserted,
-                          setInserted: (v) => _m1BatteryInserted = v,
-                          getRotation: () => _m1BatteryRotation,
-                          setRotation: (v) => _m1BatteryRotation = v,
-                        ),
-                        onRotate: () => _rotateComponent(
-                          name: 'Bateria',
-                          getRotation: () => _m1BatteryRotation,
-                          setRotation: (v) => _m1BatteryRotation = v,
-                        ),
-                        onTap: () {},
-                        symbolWidget: CustomPaint(
-                          size: Size(comp, comp),
-                          painter: ComponentPhysicalPainter(
-                            type: ComponentType.battery,
-                            isDarkMode: false,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // Controles de pontas de prova na Bateria
-                    if (_m1BatteryInserted)
-                      Positioned(
-                        left: batteryX - 50,
-                        top: centerY - sock / 2 - 38,
-                        child: MedeTestaProbeSlot(
-                          isRed: true,
-                          isConnected: _redProbeConnected,
-                          onTap: () => setState(
-                              () => _redProbeConnected = !_redProbeConnected),
-                          label: 'Polo (+)',
-                        ),
-                      ),
-                    if (_m1BatteryInserted)
-                      Positioned(
-                        left: batteryX + 10,
-                        top: centerY - sock / 2 - 38,
-                        child: MedeTestaProbeSlot(
-                          isRed: false,
-                          isConnected: _blackProbeConnected,
-                          onTap: () => setState(() =>
-                              _blackProbeConnected = !_blackProbeConnected),
-                          label: 'Polo (-)',
-                        ),
-                      ),
-
-                    // Socket 3: Amperímetro (Direita - Opcional para comparação)
-                    Positioned(
-                      left: amperimeterX - sock / 2,
-                      top: centerY - sock / 2,
-                      child: PhysicalBlueprintSocket<String>(
-                        expectedData: 'multimeter_a',
-                        isFilled: _m1AmperimeterInserted,
-                        rotation: _m1AmperimeterRotation,
-                        width: sock,
-                        height: sock,
-                        showLabel: true,
-                        onAccept: (_) => _insertComponent(
-                          name: 'Amperímetro',
-                          getInserted: () => _m1AmperimeterInserted,
-                          setInserted: (v) => _m1AmperimeterInserted = v,
-                          getRotation: () => _m1AmperimeterRotation,
-                          setRotation: (v) => _m1AmperimeterRotation = v,
-                        ),
-                        onRotate: () => _rotateComponent(
-                          name: 'Amperímetro',
-                          getRotation: () => _m1AmperimeterRotation,
-                          setRotation: (v) => _m1AmperimeterRotation = v,
-                        ),
-                        onTap: () {},
-                        symbolWidget: MeterVectorWidget(
-                          size: comp,
-                          meterType: 'A',
-                          accentColor: const Color(0xFFD97706),
-                        ),
-                      ),
-                    ),
-
-                    // Leitura Digital Amperímetro
-                    if (_m1AmperimeterInserted)
-                      Positioned(
-                        left: amperimeterX - 45,
-                        top: centerY + sock / 2 + 10,
-                        child: MedeTestaMeterReading(
-                          value: currentReading.toStringAsFixed(1),
-                          unit: 'mA',
-                          color: const Color(0xFFD97706),
-                        ),
-                      ),
-                  ],
-                );
-              },
             ),
-          ),
-        ),
-      ],
-    );
-  }
 
-  Widget _buildSchematicCanvas() {
-    final scale = UiScale.of(context);
-    final showReading =
-        _m1BatteryInserted && _redProbeConnected && _blackProbeConnected;
-    final voltageReading = showReading && _m1VoltmeterInserted ? 9.0 : 0.0;
-    final currentReading = 0.0;
-
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          'Diagrama Esquemático — Medição com Voltímetro em Paralelo',
-          style: GoogleFonts.rajdhani(
-            color: const Color(0xFF0F172A),
-            fontWeight: FontWeight.bold,
-            fontSize: scale.font(17, min: 14, max: 20),
-          ),
-        ),
-        const SizedBox(height: 10),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final w = constraints.maxWidth;
-                final h = constraints.maxHeight;
-                final centerY = h * 0.48;
-
-                final voltmeterX = w * 0.20;
-                final batteryX = w * 0.50;
-                final amperimeterX = w * 0.80;
-
-                final sock = scale.size(105.0, min: 85.0, max: 130.0);
-                final comp = sock * 0.65;
-
-                return Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    // Fios de ponta de prova esquemáticos
-                    if (_m1BatteryInserted)
-                      Positioned.fill(
-                        child: CustomPaint(
-                          painter: MedeTestaDualProbeWirePainter(
-                            fromCenter: Offset(voltmeterX, centerY),
-                            toCenter: Offset(batteryX, centerY),
-                            isConnected: _m1VoltmeterInserted &&
-                                _redProbeConnected &&
-                                _blackProbeConnected,
-                          ),
-                        ),
-                      ),
-                    if (_m1BatteryInserted && _m1AmperimeterInserted)
-                      Positioned.fill(
-                        child: CustomPaint(
-                          painter: MedeTestaDualProbeWirePainter(
-                            fromCenter: Offset(amperimeterX, centerY),
-                            toCenter: Offset(batteryX, centerY),
-                            isConnected: _m1AmperimeterInserted,
-                          ),
-                        ),
-                      ),
-
-                    // Socket 1: Voltímetro Esquemático
-                    Positioned(
-                      left: voltmeterX - sock / 2,
-                      top: centerY - sock / 2,
-                      child: SchematicBlueprintSocket<String>(
-                        expectedData: 'multimeter_v',
-                        isFilled: _m1VoltmeterInserted,
-                        showLabel: false,
-                        rotation: _m1VoltmeterRotation,
-                        width: sock,
-                        height: sock,
-                        onAccept: (_) => _insertComponent(
-                          name: 'Voltímetro',
-                          getInserted: () => _m1VoltmeterInserted,
-                          setInserted: (v) => _m1VoltmeterInserted = v,
-                          getRotation: () => _m1VoltmeterRotation,
-                          setRotation: (v) => _m1VoltmeterRotation = v,
-                        ),
-                        onRotate: () => _rotateComponent(
-                          name: 'Voltímetro',
-                          getRotation: () => _m1VoltmeterRotation,
-                          setRotation: (v) => _m1VoltmeterRotation = v,
-                        ),
-                        onTap: () {},
-                        symbolWidget: MeterVectorWidget(
-                          size: comp,
-                          meterType: 'V',
-                          accentColor: const Color(0xFF0284C7),
-                        ),
-                        placeholderWidget: MeterVectorWidget(
-                          size: comp * 0.85,
-                          meterType: 'V',
-                          accentColor: const Color(0xFF94A3B8),
-                        ),
-                        label: '',
-                      ),
-                    ),
-
-                    // Leitura Digital Voltímetro
-                    if (_m1VoltmeterInserted)
-                      Positioned(
-                        left: voltmeterX - 45,
-                        top: centerY + sock / 2 + 10,
-                        child: MedeTestaMeterReading(
-                          value: voltageReading.toStringAsFixed(1),
-                          unit: 'V DC',
-                          color: const Color(0xFF0284C7),
-                        ),
-                      ),
-
-                    // Socket 2: Bateria Esquemática
-                    Positioned(
-                      left: batteryX - sock / 2,
-                      top: centerY - sock / 2,
-                      child: SchematicBlueprintSocket<String>(
-                        expectedData: 'battery',
-                        isFilled: _m1BatteryInserted,
-                        showLabel: false,
-                        rotation: _m1BatteryRotation,
-                        width: sock,
-                        height: sock,
-                        onAccept: (_) => _insertComponent(
-                          name: 'Bateria',
-                          getInserted: () => _m1BatteryInserted,
-                          setInserted: (v) => _m1BatteryInserted = v,
-                          getRotation: () => _m1BatteryRotation,
-                          setRotation: (v) => _m1BatteryRotation = v,
-                        ),
-                        onRotate: () => _rotateComponent(
-                          name: 'Bateria',
-                          getRotation: () => _m1BatteryRotation,
-                          setRotation: (v) => _m1BatteryRotation = v,
-                        ),
-                        onTap: () {},
-                        symbolWidget: CustomPaint(
-                          size: Size(comp, comp * 0.7),
-                          painter: CircuitSymbolPainter(
-                            type: ComponentType.battery,
-                            color: const Color(0xFF0F172A),
-                            strokeWidth: 2.5,
-                          ),
-                        ),
-                        placeholderWidget: CustomPaint(
-                          size: Size(comp * 0.85, comp * 0.6),
-                          painter: CircuitSymbolPainter(
-                            type: ComponentType.battery,
-                            isActive: false,
-                            color: const Color(0xFF94A3B8),
-                            strokeWidth: 2.0,
-                          ),
-                        ),
-                        label: '',
-                      ),
-                    ),
-
-                    // Pontas de prova esquemáticas
-                    if (_m1BatteryInserted)
-                      Positioned(
-                        left: batteryX - 50,
-                        top: centerY - sock / 2 - 38,
-                        child: MedeTestaProbeSlot(
-                          isRed: true,
-                          isConnected: _redProbeConnected,
-                          onTap: () => setState(
-                              () => _redProbeConnected = !_redProbeConnected),
-                          label: 'Polo (+)',
-                        ),
-                      ),
-                    if (_m1BatteryInserted)
-                      Positioned(
-                        left: batteryX + 10,
-                        top: centerY - sock / 2 - 38,
-                        child: MedeTestaProbeSlot(
-                          isRed: false,
-                          isConnected: _blackProbeConnected,
-                          onTap: () => setState(() =>
-                              _blackProbeConnected = !_blackProbeConnected),
-                          label: 'Polo (-)',
-                        ),
-                      ),
-
-                    // Socket 3: Amperímetro Esquemático
-                    Positioned(
-                      left: amperimeterX - sock / 2,
-                      top: centerY - sock / 2,
-                      child: SchematicBlueprintSocket<String>(
-                        expectedData: 'multimeter_a',
-                        isFilled: _m1AmperimeterInserted,
-                        showLabel: false,
-                        rotation: _m1AmperimeterRotation,
-                        width: sock,
-                        height: sock,
-                        onAccept: (_) => _insertComponent(
-                          name: 'Amperímetro',
-                          getInserted: () => _m1AmperimeterInserted,
-                          setInserted: (v) => _m1AmperimeterInserted = v,
-                          getRotation: () => _m1AmperimeterRotation,
-                          setRotation: (v) => _m1AmperimeterRotation = v,
-                        ),
-                        onRotate: () => _rotateComponent(
-                          name: 'Amperímetro',
-                          getRotation: () => _m1AmperimeterRotation,
-                          setRotation: (v) => _m1AmperimeterRotation = v,
-                        ),
-                        onTap: () {},
-                        symbolWidget: MeterVectorWidget(
-                          size: comp,
-                          meterType: 'A',
-                          accentColor: const Color(0xFFD97706),
-                        ),
-                        placeholderWidget: MeterVectorWidget(
-                          size: comp * 0.85,
-                          meterType: 'A',
-                          accentColor: const Color(0xFF94A3B8),
-                        ),
-                        label: '',
-                      ),
-                    ),
-
-                    // Leitura Digital Amperímetro
-                    if (_m1AmperimeterInserted)
-                      Positioned(
-                        left: amperimeterX - 45,
-                        top: centerY + sock / 2 + 10,
-                        child: MedeTestaMeterReading(
-                          value: currentReading.toStringAsFixed(1),
-                          unit: 'mA',
-                          color: const Color(0xFFD97706),
-                        ),
-                      ),
-                  ],
-                );
-              },
+            // 4. Caneta de Ponta de Prova Vermelha (+) Arrastável (apontando para baixo)
+            Positioned(
+              left: effectiveRedPos.dx - 14,
+              top: effectiveRedPos.dy - 96,
+              child: GestureDetector(
+                onPanStart: (_) => setState(() => _isDraggingRed = true),
+                onPanUpdate: (details) {
+                  setState(() {
+                    _redProbePos = (_redProbePos ?? effectiveRedPos) + details.delta;
+                    // Desconecta temporariamente enquanto arrasta livremente
+                    _redTerminalTarget = null;
+                  });
+                },
+                onPanEnd: (_) {
+                  setState(() {
+                    _isDraggingRed = false;
+                    // Snap magnético no terminal positivo (+)
+                    if ((_redProbePos! - posTerminalContact).distance < 42) {
+                      _redTerminalTarget = 'pos';
+                      _redProbePos = posTerminalContact;
+                    }
+                    // Snap magnético no terminal negativo (-)
+                    else if ((_redProbePos! - negTerminalContact).distance < 42) {
+                      _redTerminalTarget = 'neg';
+                      _redProbePos = negTerminalContact;
+                    }
+                  });
+                },
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.grab,
+                  child: ProbePenWidget(
+                    isRed: true,
+                    isConnected: _redTerminalTarget != null,
+                    isDragging: _isDraggingRed,
+                    pointingDown: true,
+                  ),
+                ),
+              ),
             ),
-          ),
-        ),
-      ],
+
+            // 5. Caneta de Ponta de Prova Preta (COM) Arrastável (apontando para baixo)
+            Positioned(
+              left: effectiveBlackPos.dx - 14,
+              top: effectiveBlackPos.dy - 96,
+              child: GestureDetector(
+                onPanStart: (_) => setState(() => _isDraggingBlack = true),
+                onPanUpdate: (details) {
+                  setState(() {
+                    _blackProbePos = (_blackProbePos ?? effectiveBlackPos) + details.delta;
+                    _blackTerminalTarget = null;
+                  });
+                },
+                onPanEnd: (_) {
+                  setState(() {
+                    _isDraggingBlack = false;
+                    // Snap magnético no terminal negativo (-)
+                    if ((_blackProbePos! - negTerminalContact).distance < 42) {
+                      _blackTerminalTarget = 'neg';
+                      _blackProbePos = negTerminalContact;
+                    }
+                    // Snap magnético no terminal positivo (+)
+                    else if ((_blackProbePos! - posTerminalContact).distance < 42) {
+                      _blackTerminalTarget = 'pos';
+                      _blackProbePos = posTerminalContact;
+                    }
+                  });
+                },
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.grab,
+                  child: ProbePenWidget(
+                    isRed: false,
+                    isConnected: _blackTerminalTarget != null,
+                    isDragging: _isDraggingBlack,
+                    pointingDown: true,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

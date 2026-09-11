@@ -5,21 +5,15 @@ import '../../../core/ui_scale.dart';
 import '../../../models/circuit_action.dart';
 import '../../../models/first_step_component.dart';
 import '../../../models/stand_mission.dart';
-import '../../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../../state/circuit_undo_redo_controller.dart';
-import '../../../widgets/circuit_symbol_painter.dart';
 import '../../../widgets/component_physical_painter.dart';
-import '../../../widgets/component_vector_painters.dart';
-import '../../../widgets/physical_blueprint_socket.dart';
-import '../../../widgets/realistic_wire_painter.dart';
-import '../../../widgets/schematic_blueprint_socket.dart';
 import '../../../widgets/success_confetti_overlay.dart';
 import '../../../widgets/workbench_components.dart';
 import '../../../widgets/workbench_sidebar_cards.dart';
 import '../../../widgets/workbench_table_frame.dart';
 import '../widgets/mede_testa_explica_widgets.dart';
 
-/// Missão 3 do Estande 07 — Lei de Ohm (Reostato e Amperímetro).
+/// Missão 3 do Estande 07 — Lei de Ohm com Potenciômetro Rotativo e Multímetro em Série.
 class MedeTestaExplicaM3 extends StatefulWidget {
   final VoidCallback onMissionComplete;
 
@@ -40,78 +34,104 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
   bool _usePhysicalStyle = true;
   bool _isSimulating = false;
 
-  bool _m3BatteryInserted = true;
-  double _m3BatteryRotation = 0.0;
-  bool _m3ResistorInserted = true;
-  double _m3ResistorRotation = 0.0;
-  bool _m3LedInserted = true;
-  double _m3LedRotation = 0.0;
-  double _m3ResistanceValue = 300.0;
-  bool _m3AmperimeterInserted = false;
-  double _m3AmperimeterRotation = 0.0;
+  // Valor da resistência ajustável (100 a 1000 Ohms)
+  double _resistanceValue = 500.0;
+  bool _hasTunedResistance = false;
 
-  bool get _isClosed =>
-      _m3BatteryInserted && _m3ResistorInserted && _m3LedInserted;
+  // Conexões das pontas do multímetro em série: TP2 e TP3
+  String? _redProbeTarget = 'tp2';
+  String? _blackProbeTarget = 'tp3';
+
+  MultimeterMode _multimeterMode = MultimeterMode.currentMa;
+
+  bool get _isAmperimeterConnected =>
+      (_redProbeTarget == 'tp2' && _blackProbeTarget == 'tp3') ||
+      (_redProbeTarget == 'tp3' && _blackProbeTarget == 'tp2');
+
+  // Cálculo da corrente pela Lei de Ohm: I = (V_bat - V_led) / R
+  // V_bat = 9V, V_led = 2.0V -> V_net = 7.0V
+  double get _currentMa {
+    if (!_isAmperimeterConnected) return 0.0;
+    return (7.0 / _resistanceValue) * 1000.0;
+  }
+
+  String get _displayValue {
+    if (_multimeterMode == MultimeterMode.off) return '---';
+    if (!_isAmperimeterConnected) return '0.00';
+
+    switch (_multimeterMode) {
+      case MultimeterMode.currentMa:
+        return _currentMa.toStringAsFixed(1);
+      case MultimeterMode.voltageDc:
+        // Queda no amperímetro em série é praticamente zero
+        return '0.02';
+      case MultimeterMode.resistance:
+        return _resistanceValue.round().toString();
+      case MultimeterMode.continuity:
+        return 'BEEP';
+      case MultimeterMode.off:
+        return '---';
+    }
+  }
 
   int get _currentStepperIndex {
-    if (!(_m3BatteryInserted && _m3ResistorInserted && _m3LedInserted)) return 0;
-    if (!_m3AmperimeterInserted) return 1;
+    if (_multimeterMode != MultimeterMode.currentMa) return 0;
+    if (!_hasTunedResistance) return 1;
     return 2;
   }
 
   bool _isStepCompleted(int index) {
-    if (index == 0) {
-      return _m3BatteryInserted && _m3ResistorInserted && _m3LedInserted;
+    if (index == 0) return _multimeterMode == MultimeterMode.currentMa;
+    if (index == 1) return _hasTunedResistance;
+    if (index == 2) {
+      return _multimeterMode == MultimeterMode.currentMa &&
+          _isAmperimeterConnected &&
+          _hasTunedResistance;
     }
-    if (index == 1) return _m3AmperimeterInserted;
-    if (index == 2) return _isClosed && _m3AmperimeterInserted;
     return false;
   }
 
-  void _insertComponent({
-    required String name,
-    required bool Function() getInserted,
-    required void Function(bool) setInserted,
-    required double Function() getRotation,
-    required void Function(double) setRotation,
-  }) {
-    final prevInserted = getInserted();
-    final prevRotation = getRotation();
-    final nextInserted = !prevInserted;
-    _undoRedoController.execute(InsertComponentAction(
-      description: nextInserted ? 'Inserir $name' : 'Remover $name',
-      onApply: () => setState(() {
-        setInserted(nextInserted);
-        if (nextInserted) setRotation(0);
-      }),
-      onUndo: () => setState(() {
-        setInserted(prevInserted);
-        setRotation(prevRotation);
-      }),
+  void _onResistanceChanged(double val) {
+    setState(() {
+      _resistanceValue = val;
+      _hasTunedResistance = true;
+    });
+  }
+
+  void _setMultimeterMode(MultimeterMode mode) {
+    final prev = _multimeterMode;
+    _undoRedoController.execute(SelectOptionAction(
+      description: 'Mudar seletor para ${mode.shortLabel}',
+      onApply: () => setState(() => _multimeterMode = mode),
+      onUndo: () => setState(() => _multimeterMode = prev),
     ));
   }
 
-  void _rotateComponent({
-    required String name,
-    required double Function() getRotation,
-    required void Function(double) setRotation,
-  }) {
-    final prevRotation = getRotation();
-    final newRotation = (prevRotation + 90) % 360;
-    _undoRedoController.execute(RotateComponentAction(
-      description: 'Girar $name',
-      onApply: () => setState(() => setRotation(newRotation)),
-      onUndo: () => setState(() => setRotation(prevRotation)),
+  void _setRedProbeTarget(String? target) {
+    final prev = _redProbeTarget;
+    _undoRedoController.execute(ToggleProbeAction(
+      description: 'Mover Ponta Vermelha para $target',
+      onApply: () => setState(() => _redProbeTarget = target),
+      onUndo: () => setState(() => _redProbeTarget = prev),
+    ));
+  }
+
+  void _setBlackProbeTarget(String? target) {
+    final prev = _blackProbeTarget;
+    _undoRedoController.execute(ToggleProbeAction(
+      description: 'Mover Ponta Preta para $target',
+      onApply: () => setState(() => _blackProbeTarget = target),
+      onUndo: () => setState(() => _blackProbeTarget = prev),
     ));
   }
 
   void _reset() {
     setState(() {
-      _m3BatteryInserted = true;
-      _m3ResistorInserted = true;
-      _m3LedInserted = true;
-      _m3ResistanceValue = 300.0;
-      _m3AmperimeterInserted = false;
+      _resistanceValue = 500.0;
+      _hasTunedResistance = false;
+      _redProbeTarget = 'tp2';
+      _blackProbeTarget = 'tp3';
+      _multimeterMode = MultimeterMode.currentMa;
     });
   }
 
@@ -123,27 +143,17 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
       bool isSuccess = false;
       String feedback = _mission.failureFeedback;
 
-      if (_m3AmperimeterInserted) {
-        final result = await MissionCircuitBuilder()
-            .addBattery(id: 'bat1', voltage: 9.0)
-            .addResistor(id: 'r1', resistance: _m3ResistanceValue)
-            .addLed(id: 'led1')
-            .connect('bat1', 'B', 'r1', 'A')
-            .connect('r1', 'B', 'led1', 'A')
-            .connect('led1', 'B', 'bat1', 'A')
-            .simulate();
-        if (result.hasClosedLoop && result.errorMessage == null) {
-          final currentMa = result.current * 1000;
-          feedback =
-              'Lei de Ohm: I = ${currentMa.toStringAsFixed(1)}mA com R = ${_m3ResistanceValue.round()} Ω. '
-              'Maior resistência = menor corrente.';
-          isSuccess = true;
-        } else {
-          feedback = result.errorMessage ??
-              'Ajuste o reostato para variar a corrente.';
-        }
+      if (_multimeterMode != MultimeterMode.currentMa) {
+        feedback =
+            'Gire a chave seletora para mA⎓ para medir a corrente elétrica do circuito em série.';
+      } else if (!_isAmperimeterConnected) {
+        feedback =
+            'O amperímetro deve ser inserido em série no circuito através dos pontos TP2 e TP3.';
       } else {
-        feedback = 'Arraste o Amperímetro da gaveta para medir a corrente em série.';
+        isSuccess = true;
+        feedback =
+            'Excelente! Com R = ${_resistanceValue.round()}Ω, a corrente medida foi de ${_currentMa.toStringAsFixed(1)}mA. '
+            'Você comprovou a Lei de Ohm: a corrente varia de forma inversamente proporcional à resistência!';
       }
 
       if (isSuccess) {
@@ -172,7 +182,7 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
                 color: Color(0xFF10B981), size: 32),
             const SizedBox(width: 12),
             Text(
-              'Missão Concluída!',
+              'Lei de Ohm Comprovada!',
               style: GoogleFonts.rajdhani(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -182,13 +192,14 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
           ],
         ),
         content: Text(
-          'Perfeito! Você validou experimentalmente a 1ª Lei de Ohm (I = V / R). Ao aumentar a resistência do reostato, a corrente medida pelo amperímetro diminui proporcionalmente.',
+          'Fantástico! Você usou o multímetro em série no modo amperímetro e viu os elétrons responderem ao giro do potenciômetro: ao aumentar a resistência, a corrente cai (I = V ÷ R) e o brilho do LED diminui suavemente.',
           style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14),
         ),
         actions: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
+          FilledButton(
+            style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFF10B981),
+              foregroundColor: Colors.white,
             ),
             onPressed: () {
               Navigator.of(context).pop();
@@ -196,11 +207,8 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
               widget.onMissionComplete();
             },
             child: Text(
-              'AVANÇAR',
-              style: GoogleFonts.rajdhani(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
+              'Avançar Missão',
+              style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -208,22 +216,22 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
     );
   }
 
-  void _showFailureDialog(String message) {
+  void _showFailureDialog(String feedback) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: const Color(0xFF1E1010),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: Colors.redAccent, width: 2),
+          side: const BorderSide(color: Color(0xFFEF4444), width: 2),
         ),
         title: Row(
           children: [
             const Icon(Icons.error_outline_rounded,
-                color: Colors.redAccent, size: 28),
+                color: Color(0xFFEF4444), size: 28),
             const SizedBox(width: 10),
             Text(
-              'Atenção na Medição',
+              'Ajuste Necessário',
               style: GoogleFonts.rajdhani(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -233,16 +241,16 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
           ],
         ),
         content: Text(
-          message,
+          feedback,
           style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: Text(
-              'REVISAR',
+              'Revisar Instrumento',
               style: GoogleFonts.rajdhani(
-                color: const Color(0xFF00E5FF),
+                color: const Color(0xFFEF4444),
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -252,710 +260,432 @@ class _MedeTestaExplicaM3State extends State<MedeTestaExplicaM3> {
     );
   }
 
-  Widget _buildUndoRedoButtons() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: _usePhysicalStyle ? Colors.white : const Color(0xFF0F172A),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: _usePhysicalStyle
-              ? const Color(0xFFCBD5E1)
-              : const Color(0xFF334155),
+  @override
+  Widget build(BuildContext context) {
+    final scale = UiScale.of(context);
+
+    return WorkbenchResponsiveLayout(
+      workbench: WorkbenchTableFrame(
+        usePhysicalStyle: _usePhysicalStyle,
+        onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
+        leftHeaderWidget: MedeTestaStatusCard(
+          isClosed: _isAmperimeterConnected,
         ),
+        rightHeaderWidget: MedeTestaTelemetryCard(
+          voltage: 9.0,
+          currentMa: _currentMa,
+          isClosed: _isAmperimeterConnected,
+        ),
+        bottomWidget: MedeTestaUndoRedoButtons(
+          controller: _undoRedoController,
+          onUndo: () => setState(() => _undoRedoController.undo()),
+          onRedo: () => setState(() => _undoRedoController.redo()),
+        ),
+        voltsTip: _mission.voltsMediation,
+        child: _buildWorkbenchContent(scale),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.undo_rounded),
-            tooltip: 'Desfazer',
-            color: _undoRedoController.canUndo
-                ? const Color(0xFF059669)
-                : Colors.grey,
-            onPressed: _undoRedoController.canUndo
-                ? () => setState(() => _undoRedoController.undo())
-                : null,
+      sidePanel: WorkbenchSidePanel(
+        teamTitle: 'Equipe Instrumentação',
+        showTeamHeader: false,
+        buttonColor: const Color(0xFF059669),
+        buttonLabel: 'COMPROVAR LEI DE OHM',
+        toolboxItems: [
+          WorkbenchMissionObjectiveCard(
+            missionNumber: 3,
+            title: _mission.title,
+            description: _mission.objective,
+            voltsTip: _mission.voltsMediation,
           ),
-          IconButton(
-            icon: const Icon(Icons.redo_rounded),
-            tooltip: 'Refazer',
-            color: _undoRedoController.canRedo
-                ? const Color(0xFF059669)
-                : Colors.grey,
-            onPressed: _undoRedoController.canRedo
-                ? () => setState(() => _undoRedoController.redo())
-                : null,
+          const SizedBox(height: 12),
+          WorkbenchInvestigationStepperCard(
+            title: 'Roteiro de Investigação',
+            currentStepIndex: _currentStepperIndex,
+            isStepCompleted: _isStepCompleted,
+            steps: const [
+              'Girar seletor do multímetro para mA⎓ (Corrente)',
+              'Girar o potenciômetro e observar a variação de corrente',
+              'Comprovar a Lei de Ohm (Maior R = Menor Corrente)',
+            ],
+          ),
+          const SizedBox(height: 12),
+          _buildSideOhmSummary(),
+        ],
+        onEnergizePressed: _validateMission,
+        isLoading: _isSimulating,
+      ),
+    );
+  }
+
+  Widget _buildSideOhmSummary() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF334155)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'CÁLCULO EM TEMPO REAL',
+            style: GoogleFonts.rajdhani(
+              color: const Color(0xFF94A3B8),
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Fórmula: I = V ÷ R',
+            style: GoogleFonts.rajdhani(
+              color: const Color(0xFFF59E0B),
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'R = ${_resistanceValue.round()} Ω  ➔  I = ${_currentMa.toStringAsFixed(1)} mA',
+            style: GoogleFonts.shareTechMono(
+              color: const Color(0xFF38BDF8),
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFF475569)),
+                padding: const EdgeInsets.symmetric(vertical: 6),
+              ),
+              onPressed: _reset,
+              child: Text(
+                'Restaurar (500 Ω)',
+                style: GoogleFonts.rajdhani(
+                  color: Colors.white70,
+                  fontSize: 11,
+                ),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final currentMa = (9.0 / _m3ResistanceValue) * 1000.0;
-    final voltage = _isClosed ? 9.0 : 0.0;
+  Widget _buildWorkbenchContent(UiScale scale) {
+    return LayoutBuilder(
+      builder: (context, box) {
+        final w = box.maxWidth;
+        final h = box.maxHeight;
 
-    return Row(
-      children: [
-        Expanded(
-          flex: 7,
-          child: Column(
-            children: [
-              Expanded(
-                child: WorkbenchTableFrame(
-                  usePhysicalStyle: _usePhysicalStyle,
-                  onStyleChanged: (val) =>
-                      setState(() => _usePhysicalStyle = val),
-                  leftHeaderWidget: MedeTestaStatusCard(isClosed: _isClosed),
-                  rightHeaderWidget: MedeTestaTelemetryCard(
-                    voltage: voltage,
-                    currentMa: _m3AmperimeterInserted ? currentMa : 0.0,
-                    isClosed: _isClosed,
-                  ),
-                  bottomWidget: _buildUndoRedoButtons(),
-                  child: _usePhysicalStyle
-                      ? _buildPhysicalCanvas()
-                      : _buildSchematicCanvas(),
+        // Posições dos componentes
+        final battPos = Offset(w * 0.15, h * 0.48);
+        final potPos = Offset(w * 0.36, h * 0.48);
+        final tp2Pos = Offset(w * 0.48, h * 0.30); // Saída do potenciômetro
+        final tp3Pos = Offset(w * 0.58, h * 0.30); // Entrada do LED
+        final ledPos = Offset(w * 0.56, h * 0.65);
+        final meterPos = Offset(w * 0.80, h * 0.48);
+
+        // Terminais do multímetro
+        final meterRedJack = Offset(meterPos.dx - 35, meterPos.dy + 120);
+        final meterBlackJack = Offset(meterPos.dx + 35, meterPos.dy + 120);
+
+        final targetRed = _redProbeTarget == 'tp2'
+            ? tp2Pos
+            : (_redProbeTarget == 'tp3' ? tp3Pos : null);
+
+        final targetBlack = _blackProbeTarget == 'tp3'
+            ? tp3Pos
+            : (_blackProbeTarget == 'tp2' ? tp2Pos : null);
+
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // Cabos flexíveis ligando o multímetro em série aos pontos TP2 e TP3
+            Positioned.fill(
+              child: CustomPaint(
+                painter: ProbeCablesPainter(
+                  meterRedJack: meterRedJack,
+                  meterBlackJack: meterBlackJack,
+                  targetRed: targetRed,
+                  targetBlack: targetBlack,
                 ),
               ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          flex: 3,
-          child: WorkbenchSidePanel(
-            teamTitle: 'Painel da Investigação',
-            showTeamHeader: false,
-            buttonColor: const Color(0xFF059669),
-            toolboxItems: [
-              WorkbenchMissionObjectiveCard(
-                missionNumber: 3,
-                title: _mission.title,
-                description: _mission.objective,
-                voltsTip: _mission.voltsMediation,
-              ),
-              const SizedBox(height: 12),
-              WorkbenchInvestigationStepperCard(
-                title: 'Roteiro de investigação',
-                currentStepIndex: _currentStepperIndex,
-                isStepCompleted: _isStepCompleted,
-                steps: const [
-                  'Montar circuito em série (bateria, resistor, LED)',
-                  'Inserir amperímetro em série no circuito',
-                  'Variar a resistência e observar a corrente',
+            ),
+
+            // Título Didático
+            Positioned(
+              top: 16,
+              left: 20,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'LEI DE OHM & CONTROLE DE CORRENTE',
+                    style: GoogleFonts.rajdhani(
+                      color: const Color(0xFF0F172A),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                  Text(
+                    'Gire o botão do potenciômetro e veja a corrente oscilar no multímetro em série.',
+                    style: GoogleFonts.outfit(
+                      color: const Color(0xFF64748B),
+                      fontSize: 12,
+                    ),
+                  ),
                 ],
               ),
-              const SizedBox(height: 12),
-              MedeTestaSideToolbox(
-                usePhysicalStyle: _usePhysicalStyle,
-                onReset: _reset,
-              ),
-            ],
-            onEnergizePressed: _validateMission,
-            isLoading: _isSimulating,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPhysicalCanvas() {
-    final scale = UiScale.of(context);
-    final currentMa = (9.0 / _m3ResistanceValue) * 1000.0;
-    final allInserted =
-        _m3BatteryInserted && _m3ResistorInserted && _m3LedInserted;
-    final ledActive = allInserted && _m3ResistanceValue < 900.0;
-    final showReading = allInserted && _m3AmperimeterInserted;
-    final ammeterReading = showReading ? currentMa : 0.0;
-
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          'Lei de Ohm: I = V / R (${currentMa.toStringAsFixed(1)} mA)',
-          style: GoogleFonts.rajdhani(
-            color: const Color(0xFF10B981),
-            fontWeight: FontWeight.bold,
-            fontSize: scale.font(18, min: 14, max: 22),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final w = constraints.maxWidth;
-                final h = constraints.maxHeight;
-                final batteryX = w * 0.20;
-                final batteryY = h * 0.65;
-                final resistorX = w * 0.50;
-                final resistorY = h * 0.25;
-                final ledX = w * 0.80;
-                final ledY = h * 0.25;
-                final ammeterX = w * 0.20;
-                final ammeterY = h * 0.18;
-
-                final sock = scale.size(110.0, min: 90.0, max: 135.0);
-                final comp = sock * 0.62;
-
-                final batteryPlacement = ComponentPlacement(
-                  position: Offset(batteryX, batteryY),
-                  rotation: _m3BatteryRotation,
-                  type: ComponentType.battery,
-                );
-                final resistorPlacement = ComponentPlacement(
-                  position: Offset(resistorX, resistorY),
-                  rotation: _m3ResistorRotation,
-                  type: ComponentType.resistor,
-                );
-                final ledPlacement = ComponentPlacement(
-                  position: Offset(ledX, ledY),
-                  rotation: _m3LedRotation,
-                  type: ComponentType.led,
-                );
-
-                final wires = <WirePath>[];
-                if (_m3BatteryInserted && _m3ResistorInserted) {
-                  wires.add(DynamicWirePath.fromComponents(
-                    compA: batteryPlacement,
-                    terminalIndexA: 1,
-                    compB: resistorPlacement,
-                    terminalIndexB: 0,
-                    color: const Color(0xFFEF4444),
-                    isActive: true,
-                  ).toWirePath());
-                }
-                if (_m3ResistorInserted && _m3LedInserted) {
-                  wires.add(DynamicWirePath.fromComponents(
-                    compA: resistorPlacement,
-                    terminalIndexA: 1,
-                    compB: ledPlacement,
-                    terminalIndexB: 0,
-                    color: const Color(0xFFF97316),
-                    isActive: true,
-                  ).toWirePath());
-                }
-                if (_m3LedInserted && _m3BatteryInserted) {
-                  wires.add(DynamicWirePath.fromComponents(
-                    compA: ledPlacement,
-                    terminalIndexA: 1,
-                    compB: batteryPlacement,
-                    terminalIndexB: 0,
-                    color: const Color(0xFF1E293B),
-                    isActive: true,
-                  ).toWirePath());
-                }
-
-                return Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    if (wires.isNotEmpty)
-                      Positioned.fill(
-                        child: RealisticWireWidget(
-                          wires: wires,
-                          animationValue: 0,
-                          showElectrons: allInserted,
-                        ),
-                      ),
-                    Positioned(
-                      left: batteryX - sock / 2,
-                      top: batteryY - sock / 2,
-                      child: PhysicalBlueprintSocket<String>(
-                        expectedData: 'battery',
-                        isFilled: _m3BatteryInserted,
-                        rotation: _m3BatteryRotation,
-                        width: sock,
-                        height: sock,
-                        showLabel: true,
-                        onAccept: (_) => _insertComponent(
-                          name: 'Bateria',
-                          getInserted: () => _m3BatteryInserted,
-                          setInserted: (v) => _m3BatteryInserted = v,
-                          getRotation: () => _m3BatteryRotation,
-                          setRotation: (v) => _m3BatteryRotation = v,
-                        ),
-                        onRotate: () => _rotateComponent(
-                          name: 'Bateria',
-                          getRotation: () => _m3BatteryRotation,
-                          setRotation: (v) => _m3BatteryRotation = v,
-                        ),
-                        onTap: () {},
-                        symbolWidget: CustomPaint(
-                          size: Size(comp, comp),
-                          painter: ComponentPhysicalPainter(
-                            type: ComponentType.battery,
-                            isDarkMode: false,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      left: resistorX - sock / 2,
-                      top: resistorY - sock / 2,
-                      child: PhysicalBlueprintSocket<String>(
-                        expectedData: 'resistor',
-                        isFilled: _m3ResistorInserted,
-                        rotation: _m3ResistorRotation,
-                        width: sock,
-                        height: sock,
-                        showLabel: true,
-                        onAccept: (_) => _insertComponent(
-                          name: 'Resistor',
-                          getInserted: () => _m3ResistorInserted,
-                          setInserted: (v) => _m3ResistorInserted = v,
-                          getRotation: () => _m3ResistorRotation,
-                          setRotation: (v) => _m3ResistorRotation = v,
-                        ),
-                        onRotate: () => _rotateComponent(
-                          name: 'Resistor',
-                          getRotation: () => _m3ResistorRotation,
-                          setRotation: (v) => _m3ResistorRotation = v,
-                        ),
-                        onTap: () {},
-                        symbolWidget: CustomPaint(
-                          size: Size(comp, comp),
-                          painter: ComponentPhysicalPainter(
-                            type: ComponentType.resistor,
-                            isDarkMode: false,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      left: ledX - sock / 2,
-                      top: ledY - sock / 2,
-                      child: PhysicalBlueprintSocket<String>(
-                        expectedData: 'led',
-                        isFilled: _m3LedInserted,
-                        rotation: _m3LedRotation,
-                        width: sock,
-                        height: sock,
-                        showLabel: true,
-                        onAccept: (_) => _insertComponent(
-                          name: 'LED',
-                          getInserted: () => _m3LedInserted,
-                          setInserted: (v) => _m3LedInserted = v,
-                          getRotation: () => _m3LedRotation,
-                          setRotation: (v) => _m3LedRotation = v,
-                        ),
-                        onRotate: () => _rotateComponent(
-                          name: 'LED',
-                          getRotation: () => _m3LedRotation,
-                          setRotation: (v) => _m3LedRotation = v,
-                        ),
-                        onTap: () {},
-                        symbolWidget: CustomPaint(
-                          size: Size(comp, comp),
-                          painter: ComponentPhysicalPainter(
-                            type: ComponentType.led,
-                            isActive: ledActive,
-                            isDarkMode: false,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      left: ammeterX - sock / 2,
-                      top: ammeterY - sock / 2,
-                      child: PhysicalBlueprintSocket<String>(
-                        expectedData: 'multimeter_a',
-                        isFilled: _m3AmperimeterInserted,
-                        rotation: _m3AmperimeterRotation,
-                        width: sock,
-                        height: sock,
-                        showLabel: true,
-                        onAccept: (_) => _insertComponent(
-                          name: 'Amperímetro',
-                          getInserted: () => _m3AmperimeterInserted,
-                          setInserted: (v) => _m3AmperimeterInserted = v,
-                          getRotation: () => _m3AmperimeterRotation,
-                          setRotation: (v) => _m3AmperimeterRotation = v,
-                        ),
-                        onRotate: () => _rotateComponent(
-                          name: 'Amperímetro',
-                          getRotation: () => _m3AmperimeterRotation,
-                          setRotation: (v) => _m3AmperimeterRotation = v,
-                        ),
-                        onTap: () {},
-                        symbolWidget: MeterVectorWidget(
-                          size: comp,
-                          meterType: 'A',
-                          accentColor: const Color(0xFFD97706),
-                        ),
-                      ),
-                    ),
-                    if (_m3AmperimeterInserted)
-                      Positioned(
-                        left: ammeterX - 45,
-                        top: ammeterY + sock / 2 + 8,
-                        child: MedeTestaMeterReading(
-                          value: ammeterReading.toStringAsFixed(1),
-                          unit: 'mA',
-                          color: const Color(0xFFD97706),
-                        ),
-                      ),
-                  ],
-                );
-              },
             ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 24),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              Text(
-                'Reostato (R): ${_m3ResistanceValue.round()} Ω',
-                style: GoogleFonts.rajdhani(
-                  color: const Color(0xFF0F172A),
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
+
+            // Fiação fixa do circuito
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _OhmCircuitPainter(
+                  battPos: battPos,
+                  potPos: potPos,
+                  tp2Pos: tp2Pos,
+                  tp3Pos: tp3Pos,
+                  ledPos: ledPos,
+                  isClosed: _isAmperimeterConnected,
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Slider(
-                  value: _m3ResistanceValue,
-                  min: 100.0,
-                  max: 1000.0,
-                  divisions: 18,
-                  activeColor: const Color(0xFF10B981),
-                  label: '${_m3ResistanceValue.round()} Ω',
-                  onChanged: (val) => setState(() => _m3ResistanceValue = val),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSchematicCanvas() {
-    final scale = UiScale.of(context);
-    final currentMa = (9.0 / _m3ResistanceValue) * 1000.0;
-    final allInserted =
-        _m3BatteryInserted && _m3ResistorInserted && _m3LedInserted;
-    final ledActive = allInserted && _m3ResistanceValue < 900.0;
-    final showReading = allInserted && _m3AmperimeterInserted;
-    final ammeterReading = showReading ? currentMa : 0.0;
-
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          'Diagrama Esquemático — Lei de Ohm (I = V / R)',
-          style: GoogleFonts.rajdhani(
-            color: const Color(0xFF10B981),
-            fontWeight: FontWeight.bold,
-            fontSize: scale.font(18, min: 14, max: 22),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final w = constraints.maxWidth;
-                final h = constraints.maxHeight;
-                final batteryX = w * 0.20;
-                final batteryY = h * 0.65;
-                final resistorX = w * 0.50;
-                final resistorY = h * 0.25;
-                final ledX = w * 0.80;
-                final ledY = h * 0.25;
-                final ammeterX = w * 0.20;
-                final ammeterY = h * 0.18;
-
-                final sock = scale.size(105.0, min: 85.0, max: 130.0);
-                final comp = sock * 0.65;
-
-                final batteryPlacement = ComponentPlacement(
-                  position: Offset(batteryX, batteryY),
-                  rotation: _m3BatteryRotation,
-                  type: ComponentType.battery,
-                );
-                final resistorPlacement = ComponentPlacement(
-                  position: Offset(resistorX, resistorY),
-                  rotation: _m3ResistorRotation,
-                  type: ComponentType.resistor,
-                );
-                final ledPlacement = ComponentPlacement(
-                  position: Offset(ledX, ledY),
-                  rotation: _m3LedRotation,
-                  type: ComponentType.led,
-                );
-
-                final wires = <WirePath>[];
-                if (_m3BatteryInserted && _m3ResistorInserted) {
-                  wires.add(DynamicWirePath.fromComponents(
-                    compA: batteryPlacement,
-                    terminalIndexA: 1,
-                    compB: resistorPlacement,
-                    terminalIndexB: 0,
-                    color: const Color(0xFFEF4444),
-                    isActive: true,
-                  ).toWirePath());
-                }
-                if (_m3ResistorInserted && _m3LedInserted) {
-                  wires.add(DynamicWirePath.fromComponents(
-                    compA: resistorPlacement,
-                    terminalIndexA: 1,
-                    compB: ledPlacement,
-                    terminalIndexB: 0,
-                    color: const Color(0xFFF97316),
-                    isActive: true,
-                  ).toWirePath());
-                }
-                if (_m3LedInserted && _m3BatteryInserted) {
-                  wires.add(DynamicWirePath.fromComponents(
-                    compA: ledPlacement,
-                    terminalIndexA: 1,
-                    compB: batteryPlacement,
-                    terminalIndexB: 0,
-                    color: const Color(0xFF1E293B),
-                    isActive: true,
-                  ).toWirePath());
-                }
-
-                return Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    if (wires.isNotEmpty)
-                      Positioned.fill(
-                        child: RealisticWireWidget(
-                          wires: wires,
-                          animationValue: 0,
-                          showElectrons: allInserted,
-                        ),
-                      ),
-                    Positioned(
-                      left: batteryX - sock / 2,
-                      top: batteryY - sock / 2,
-                      child: SchematicBlueprintSocket<String>(
-                        expectedData: 'battery',
-                        isFilled: _m3BatteryInserted,
-                        showLabel: false,
-                        rotation: _m3BatteryRotation,
-                        width: sock,
-                        height: sock,
-                        onAccept: (_) => _insertComponent(
-                          name: 'Bateria',
-                          getInserted: () => _m3BatteryInserted,
-                          setInserted: (v) => _m3BatteryInserted = v,
-                          getRotation: () => _m3BatteryRotation,
-                          setRotation: (v) => _m3BatteryRotation = v,
-                        ),
-                        onRotate: () => _rotateComponent(
-                          name: 'Bateria',
-                          getRotation: () => _m3BatteryRotation,
-                          setRotation: (v) => _m3BatteryRotation = v,
-                        ),
-                        onTap: () {},
-                        symbolWidget: CustomPaint(
-                          size: Size(comp, comp),
-                          painter: CircuitSymbolPainter(
-                            type: ComponentType.battery,
-                            color: const Color(0xFF0F172A),
-                            strokeWidth: 2.5,
-                          ),
-                        ),
-                        placeholderWidget: CustomPaint(
-                          size: Size(comp * 0.85, comp * 0.85),
-                          painter: CircuitSymbolPainter(
-                            type: ComponentType.battery,
-                            isActive: false,
-                            color: const Color(0xFF94A3B8),
-                            strokeWidth: 2.0,
-                          ),
-                        ),
-                        label: '',
-                      ),
-                    ),
-                    Positioned(
-                      left: resistorX - sock / 2,
-                      top: resistorY - sock / 2,
-                      child: SchematicBlueprintSocket<String>(
-                        expectedData: 'resistor',
-                        isFilled: _m3ResistorInserted,
-                        showLabel: false,
-                        rotation: _m3ResistorRotation,
-                        width: sock,
-                        height: sock,
-                        onAccept: (_) => _insertComponent(
-                          name: 'Resistor',
-                          getInserted: () => _m3ResistorInserted,
-                          setInserted: (v) => _m3ResistorInserted = v,
-                          getRotation: () => _m3ResistorRotation,
-                          setRotation: (v) => _m3ResistorRotation = v,
-                        ),
-                        onRotate: () => _rotateComponent(
-                          name: 'Resistor',
-                          getRotation: () => _m3ResistorRotation,
-                          setRotation: (v) => _m3ResistorRotation = v,
-                        ),
-                        onTap: () {},
-                        symbolWidget: CustomPaint(
-                          size: Size(comp, comp),
-                          painter: CircuitSymbolPainter(
-                            type: ComponentType.resistor,
-                            color: const Color(0xFF0F172A),
-                            strokeWidth: 2.5,
-                          ),
-                        ),
-                        placeholderWidget: CustomPaint(
-                          size: Size(comp * 0.85, comp * 0.85),
-                          painter: CircuitSymbolPainter(
-                            type: ComponentType.resistor,
-                            isActive: false,
-                            color: const Color(0xFF94A3B8),
-                            strokeWidth: 2.0,
-                          ),
-                        ),
-                        label: '',
-                      ),
-                    ),
-                    Positioned(
-                      left: ledX - sock / 2,
-                      top: ledY - sock / 2,
-                      child: SchematicBlueprintSocket<String>(
-                        expectedData: 'led',
-                        isFilled: _m3LedInserted,
-                        showLabel: false,
-                        rotation: _m3LedRotation,
-                        width: sock,
-                        height: sock,
-                        onAccept: (_) => _insertComponent(
-                          name: 'LED',
-                          getInserted: () => _m3LedInserted,
-                          setInserted: (v) => _m3LedInserted = v,
-                          getRotation: () => _m3LedRotation,
-                          setRotation: (v) => _m3LedRotation = v,
-                        ),
-                        onRotate: () => _rotateComponent(
-                          name: 'LED',
-                          getRotation: () => _m3LedRotation,
-                          setRotation: (v) => _m3LedRotation = v,
-                        ),
-                        onTap: () {},
-                        symbolWidget: CustomPaint(
-                          size: Size(comp, comp),
-                          painter: CircuitSymbolPainter(
-                            type: ComponentType.led,
-                            isActive: ledActive,
-                            color: const Color(0xFF0F172A),
-                            strokeWidth: 2.5,
-                          ),
-                        ),
-                        placeholderWidget: CustomPaint(
-                          size: Size(comp * 0.85, comp * 0.85),
-                          painter: CircuitSymbolPainter(
-                            type: ComponentType.led,
-                            isActive: false,
-                            color: const Color(0xFF94A3B8),
-                            strokeWidth: 2.0,
-                          ),
-                        ),
-                        label: '',
-                      ),
-                    ),
-                    Positioned(
-                      left: ammeterX - sock / 2,
-                      top: ammeterY - sock / 2,
-                      child: SchematicBlueprintSocket<String>(
-                        expectedData: 'multimeter_a',
-                        isFilled: _m3AmperimeterInserted,
-                        showLabel: false,
-                        rotation: _m3AmperimeterRotation,
-                        width: sock,
-                        height: sock,
-                        onAccept: (_) => _insertComponent(
-                          name: 'Amperímetro',
-                          getInserted: () => _m3AmperimeterInserted,
-                          setInserted: (v) => _m3AmperimeterInserted = v,
-                          getRotation: () => _m3AmperimeterRotation,
-                          setRotation: (v) => _m3AmperimeterRotation = v,
-                        ),
-                        onRotate: () => _rotateComponent(
-                          name: 'Amperímetro',
-                          getRotation: () => _m3AmperimeterRotation,
-                          setRotation: (v) => _m3AmperimeterRotation = v,
-                        ),
-                        onTap: () {},
-                        symbolWidget: MeterVectorWidget(
-                          size: comp,
-                          meterType: 'A',
-                          accentColor: const Color(0xFFD97706),
-                        ),
-                        placeholderWidget: MeterVectorWidget(
-                          size: comp * 0.85,
-                          meterType: 'A',
-                          accentColor: const Color(0xFF94A3B8),
-                        ),
-                        label: '',
-                      ),
-                    ),
-                    if (_m3AmperimeterInserted)
-                      Positioned(
-                        left: ammeterX - 45,
-                        top: ammeterY + sock / 2 + 8,
-                        child: MedeTestaMeterReading(
-                          value: ammeterReading.toStringAsFixed(1),
-                          unit: 'mA',
-                          color: const Color(0xFFD97706),
-                        ),
-                      ),
-                  ],
-                );
-              },
             ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 24),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              Text(
-                'Reostato (R): ${_m3ResistanceValue.round()} Ω',
-                style: GoogleFonts.rajdhani(
-                  color: const Color(0xFF0F172A),
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
+
+            // 1. Bateria 9V
+            Positioned(
+              left: battPos.dx - 45,
+              top: battPos.dy - 55,
+              child: Container(
+                width: 90,
+                height: 110,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.94),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFCBD5E1)),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CustomPaint(
+                      size: const Size(48, 48),
+                      painter: ComponentPhysicalPainter(
+                        type: ComponentType.battery,
+                        isDarkMode: false,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'BATERIA 9V',
+                      style: GoogleFonts.rajdhani(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                        color: const Color(0xFF0F172A),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Slider(
-                  value: _m3ResistanceValue,
-                  min: 100.0,
-                  max: 1000.0,
-                  divisions: 18,
-                  activeColor: const Color(0xFF10B981),
-                  label: '${_m3ResistanceValue.round()} Ω',
-                  onChanged: (val) => setState(() => _m3ResistanceValue = val),
+            ),
+
+            // 2. Potenciômetro Rotativo Interativo
+            Positioned(
+              left: potPos.dx - 65,
+              top: potPos.dy - 85,
+              child: InteractivePotentiometerKnob(
+                value: _resistanceValue,
+                min: 100.0,
+                max: 1000.0,
+                onChanged: _onResistanceChanged,
+              ),
+            ),
+
+            // Ponto de Teste TP2 (Saída do Potenciômetro)
+            Positioned(
+              left: tp2Pos.dx - 20,
+              top: tp2Pos.dy - 20,
+              child: TestPointNode(
+                id: 'TP2',
+                label: 'Saída do Potenciômetro',
+                hasRedProbe: _redProbeTarget == 'tp2',
+                hasBlackProbe: _blackProbeTarget == 'tp2',
+                onConnectRed: () => _setRedProbeTarget('tp2'),
+                onConnectBlack: () => _setBlackProbeTarget('tp2'),
+                onDisconnect: () {
+                  if (_redProbeTarget == 'tp2') _setRedProbeTarget(null);
+                  if (_blackProbeTarget == 'tp2') _setBlackProbeTarget(null);
+                },
+              ),
+            ),
+
+            // Ponto de Teste TP3 (Entrada do LED)
+            Positioned(
+              left: tp3Pos.dx - 20,
+              top: tp3Pos.dy - 20,
+              child: TestPointNode(
+                id: 'TP3',
+                label: 'Entrada do LED',
+                hasRedProbe: _redProbeTarget == 'tp3',
+                hasBlackProbe: _blackProbeTarget == 'tp3',
+                onConnectRed: () => _setRedProbeTarget('tp3'),
+                onConnectBlack: () => _setBlackProbeTarget('tp3'),
+                onDisconnect: () {
+                  if (_redProbeTarget == 'tp3') _setRedProbeTarget(null);
+                  if (_blackProbeTarget == 'tp3') _setBlackProbeTarget(null);
+                },
+              ),
+            ),
+
+            // 3. LED Indicador (com brilho proporcional à corrente)
+            Positioned(
+              left: ledPos.dx - 45,
+              top: ledPos.dy - 55,
+              child: Container(
+                width: 90,
+                height: 110,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.94),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFCBD5E1)),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        if (_isAmperimeterConnected)
+                          Container(
+                            width: 36 + (_currentMa / 2.5),
+                            height: 36 + (_currentMa / 2.5),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: const Color(0xFF10B981)
+                                  .withValues(alpha: (_currentMa / 80).clamp(0.2, 0.8)),
+                            ),
+                          ),
+                        CustomPaint(
+                          size: const Size(44, 44),
+                          painter: ComponentPhysicalPainter(
+                            type: ComponentType.led,
+                            isActive: _isAmperimeterConnected,
+                            isDarkMode: false,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'LED VERDE',
+                      style: GoogleFonts.rajdhani(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                        color: const Color(0xFF0F172A),
+                      ),
+                    ),
+                    Text(
+                      _isAmperimeterConnected
+                          ? '${_currentMa.toStringAsFixed(1)} mA'
+                          : 'APAGADO (0 mA)',
+                      style: GoogleFonts.rajdhani(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 9,
+                        color: _isAmperimeterConnected
+                            ? const Color(0xFF059669)
+                            : const Color(0xFF94A3B8),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
-      ],
+            ),
+
+            // Multímetro Digital de Bancada
+            Positioned(
+              left: meterPos.dx - 87,
+              top: meterPos.dy - 140,
+              child: DigitalMultimeterWidget(
+                currentMode: _multimeterMode,
+                onModeChanged: _setMultimeterMode,
+                displayValue: _displayValue,
+                displayUnit: _multimeterMode.unit,
+                isRedConnected: _redProbeTarget != null,
+                isBlackConnected: _blackProbeTarget != null,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
+}
+
+/// Fiação do circuito da Lei de Ohm conectando bateria, potenciômetro, TPs e LED
+class _OhmCircuitPainter extends CustomPainter {
+  final Offset battPos;
+  final Offset potPos;
+  final Offset tp2Pos;
+  final Offset tp3Pos;
+  final Offset ledPos;
+  final bool isClosed;
+
+  _OhmCircuitPainter({
+    required this.battPos,
+    required this.potPos,
+    required this.tp2Pos,
+    required this.tp3Pos,
+    required this.ledPos,
+    required this.isClosed,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final wirePaint = Paint()
+      ..color = isClosed ? const Color(0xFF0284C7) : const Color(0xFF94A3B8)
+      ..strokeWidth = 3.0
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final groundPaint = Paint()
+      ..color = const Color(0xFF334155)
+      ..strokeWidth = 3.0
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    // Bateria (+) -> Potenciômetro
+    final p1 = Path()
+      ..moveTo(battPos.dx + 45, battPos.dy - 20)
+      ..lineTo(potPos.dx - 65, potPos.dy - 20);
+    canvas.drawPath(p1, wirePaint);
+
+    // Potenciômetro -> TP2
+    final p2 = Path()
+      ..moveTo(potPos.dx + 65, potPos.dy - 20)
+      ..lineTo(tp2Pos.dx, tp2Pos.dy + 20);
+    canvas.drawPath(p2, wirePaint);
+
+    // TP3 -> LED
+    final p3 = Path()
+      ..moveTo(tp3Pos.dx, tp3Pos.dy + 20)
+      ..lineTo(ledPos.dx, ledPos.dy - 55);
+    canvas.drawPath(p3, wirePaint);
+
+    // LED (-) -> Retorno Bateria (-)
+    final pReturn = Path()
+      ..moveTo(ledPos.dx, ledPos.dy + 55)
+      ..lineTo(ledPos.dx, ledPos.dy + 75)
+      ..lineTo(battPos.dx, ledPos.dy + 75)
+      ..lineTo(battPos.dx, battPos.dy + 55);
+    canvas.drawPath(pReturn, groundPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _OhmCircuitPainter oldDelegate) =>
+      oldDelegate.isClosed != isClosed;
 }
