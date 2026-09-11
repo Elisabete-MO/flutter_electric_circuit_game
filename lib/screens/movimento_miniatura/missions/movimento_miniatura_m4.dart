@@ -480,31 +480,6 @@ class _MovimentoMiniaturaM4State extends State<MovimentoMiniaturaM4>
               height: 1.35,
             ),
           ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFEF3C7),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.smart_toy_rounded,
-                    color: Color(0xFFD97706), size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Prof. Volts: "Em circuitos paralelos, o motor e o LED compartilham a mesma tensão de 6V sem interferência de carga!"',
-                    style: GoogleFonts.outfit(
-                      fontSize: 11,
-                      fontStyle: FontStyle.italic,
-                      color: const Color(0xFF92400E),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );

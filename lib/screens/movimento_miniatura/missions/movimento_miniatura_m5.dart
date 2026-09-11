@@ -430,31 +430,6 @@ class _MovimentoMiniaturaM5State extends State<MovimentoMiniaturaM5>
               height: 1.35,
             ),
           ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFEF3C7),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.smart_toy_rounded,
-                    color: Color(0xFFD97706), size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Prof. Volts: "Com a Ponte H, controlamos a direção de rotação com sinais lógicos de 5V sem mover nenhum fio!"',
-                    style: GoogleFonts.outfit(
-                      fontSize: 11,
-                      fontStyle: FontStyle.italic,
-                      color: const Color(0xFF92400E),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );
