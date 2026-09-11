@@ -14,7 +14,7 @@ import '../../../widgets/workbench_table_frame.dart';
 import '../widgets/ruas_maquete_painter.dart';
 import '../widgets/ruas_maquete_widgets.dart';
 
-/// Missão 3 do Estande 04 — Bifurcação de Fios / Nó (Rua A e Rua B).
+/// Missão 3 do Estande 04 — O Nó de Derivação (Bifurcação de Kirchhoff e Independência).
 class RuasMaqueteM3 extends StatefulWidget {
   final VoidCallback onMissionComplete;
 
@@ -39,8 +39,9 @@ class _RuasMaqueteM3State extends State<RuasMaqueteM3>
 
   bool _m3JunctionInserted = false;
   bool _m3ReturnConnected = false;
-  double _m3JunctionRotation = 0.0;
   double _m3ReturnRotation = 0.0;
+
+  bool _houseSwitchOpen = false;
 
   @override
   void initState() {
@@ -59,27 +60,26 @@ class _RuasMaqueteM3State extends State<RuasMaqueteM3>
 
   bool get _bothLit => _m3JunctionInserted && _m3ReturnConnected;
 
-  void _insertComponent({
-    required String name,
-    required bool Function() getInserted,
-    required void Function(bool) setInserted,
-    required double Function() getRotation,
-    required void Function(double) setRotation,
-  }) {
-    final prevInserted = getInserted();
-    final prevRotation = getRotation();
-    final nextInserted = !prevInserted;
-    _undoRedoController.execute(InsertComponentAction(
-      description: nextInserted ? 'Inserir $name' : 'Remover $name',
-      onApply: () => setState(() {
-        setInserted(nextInserted);
-        if (nextInserted) setRotation(0);
-      }),
-      onUndo: () => setState(() {
-        setInserted(prevInserted);
-        setRotation(prevRotation);
-      }),
+  void _toggleJunction() {
+    final prev = _m3JunctionInserted;
+    _undoRedoController.execute(ToggleBoolAction(
+      description: prev ? 'Remover Nó de Derivação' : 'Conectar Nó de Derivação',
+      onApply: () => setState(() => _m3JunctionInserted = !prev),
+      onUndo: () => setState(() => _m3JunctionInserted = prev),
     ));
+  }
+
+  void _toggleReturn() {
+    final prev = _m3ReturnConnected;
+    _undoRedoController.execute(ToggleBoolAction(
+      description: prev ? 'Desconectar Retorno' : 'Conectar Linha de Retorno',
+      onApply: () => setState(() => _m3ReturnConnected = !prev),
+      onUndo: () => setState(() => _m3ReturnConnected = prev),
+    ));
+  }
+
+  void _toggleHouseSwitch() {
+    setState(() => _houseSwitchOpen = !_houseSwitchOpen);
   }
 
   void _rotateComponent({
@@ -107,16 +107,20 @@ class _RuasMaqueteM3State extends State<RuasMaqueteM3>
       if (_m3JunctionInserted && _m3ReturnConnected) {
         final result = await MissionCircuitBuilder()
             .addBattery(id: 'bat1', voltage: 4.5)
-            .addBulb(id: 'bulbA', resistance: 5.0)
-            .addBulb(id: 'bulbB', resistance: 5.0)
+            .addBulb(id: 'bulbA', resistance: 10.0)
+            .addBulb(id: 'bulbB', resistance: 10.0)
             .connect('bat1', 'B', 'bulbA', 'A')
             .connect('bulbA', 'B', 'bat1', 'A')
             .connect('bat1', 'B', 'bulbB', 'A')
             .connect('bulbB', 'B', 'bat1', 'A')
             .simulate();
+
         if (result.hasClosedLoop && result.errorMessage == null) {
+          final totalCurrent = result.current * 1000;
           feedbackMessage =
-              'Bifurcação validada! A corrente se divide em dois ramos independentes e reconverge ao polo negativo.';
+              'Bifurcação em Nó Validada! A corrente total (${totalCurrent.toStringAsFixed(0)}mA) '
+              'divide-se igualmente pelos dois ramos (~450mA cada), e ambas as lâmpadas brilham com 100% '
+              'da tensão nominal (4.5V).';
           isSuccess = true;
         } else {
           feedbackMessage = result.errorMessage ??
@@ -124,10 +128,10 @@ class _RuasMaqueteM3State extends State<RuasMaqueteM3>
         }
       } else if (!_m3JunctionInserted) {
         feedbackMessage =
-            'Insira o nó de bifurcação para dividir a corrente para as duas ruas.';
+            'Conecte o Nó de Derivação na bifurcação para dividir a corrente para o poste e para a casa.';
       } else {
         feedbackMessage =
-            'A bifurcação precisa se reconectar ao polo negativo da fonte.';
+            'A bifurcação precisa fechar o circuito com o barramento de retorno negativo da fonte.';
       }
 
       final fullMessage = isSuccess
@@ -164,8 +168,8 @@ class _RuasMaqueteM3State extends State<RuasMaqueteM3>
         onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
         leftHeaderWidget: buildRuasMaqueteStatusCard(_bothLit),
         rightHeaderWidget: buildRuasMaqueteTelemetryCard(
-          9.0,
-          _bothLit ? 160.0 : 0.0,
+          _bothLit ? 4.5 : 0.0,
+          _bothLit ? 180.0 : 0.0,
           _bothLit,
         ),
         bottomWidget: _buildUndoRedoButtons(),
@@ -174,10 +178,10 @@ class _RuasMaqueteM3State extends State<RuasMaqueteM3>
           builder: (context, constraints) {
             final w = constraints.maxWidth;
             final h = constraints.maxHeight;
-            final lampY = h * 0.28;
+            final lampY = h * 0.32;
             final socketY = h * 0.80;
-            final lamp1X = w * 0.34;
-            final lamp2X = w * 0.66;
+            final lamp1X = w * 0.32; // Poste
+            final lamp2X = w * 0.68; // Casa
             final socketX = w * 0.50;
 
             return Stack(
@@ -204,6 +208,7 @@ class _RuasMaqueteM3State extends State<RuasMaqueteM3>
                           lamp2X: lamp2X,
                           socketX: socketX,
                           socketRotation: _m3ReturnRotation,
+                          brightnessRatio: _bothLit ? 1.0 : 0.0,
                         ),
                       );
                     },
@@ -253,77 +258,65 @@ class _RuasMaqueteM3State extends State<RuasMaqueteM3>
     final nodeY = lampY + (h * 0.16).clamp(35.0, 60.0);
 
     return [
+      // Poste da Alameda
       Positioned(
         left: lamp1X - compW / 2,
         top: lampY - compH / 2,
-        child: buildRuasMaqueteLampSymbol(
-          isLit: _bothLit,
-          brightnessRatio: _bothLit ? 1.0 : 0.0,
-          usePhysicalStyle: _usePhysicalStyle,
-          width: compW,
-          height: compH,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            buildRuasMaqueteLampSymbol(
+              isLit: _bothLit,
+              brightnessRatio: _bothLit ? 1.0 : 0.0,
+              usePhysicalStyle: _usePhysicalStyle,
+              width: compW,
+              height: compH,
+            ),
+            const SizedBox(height: 4),
+            buildRuasMaqueteLabelBadge('Poste Alameda (Ramal 1)'),
+          ],
         ),
       ),
-      Positioned(
-        left: lamp1X - 85,
-        top: lampY + compH / 2 + 6,
-        width: 170,
-        child: Center(
-          child: buildRuasMaqueteLabelBadge('Rua A (Nó Norte)'),
-        ),
-      ),
+      // Casa Residencial (com janelinha iluminada)
       Positioned(
         left: lamp2X - compW / 2,
         top: lampY - compH / 2,
-        child: buildRuasMaqueteLampSymbol(
-          isLit: _bothLit,
-          brightnessRatio: _bothLit ? 1.0 : 0.0,
+        child: buildRuasMaqueteInteractiveHouse(
+          label: 'Casa Residencial (Ramal 2)',
+          isLit: _bothLit && !_houseSwitchOpen,
+          brightness: _bothLit ? 1.0 : 0.0,
+          isBroken: _houseSwitchOpen,
           usePhysicalStyle: _usePhysicalStyle,
+          onToggle: _toggleHouseSwitch,
           width: compW,
           height: compH,
         ),
       ),
+      // Nó de Derivação tátil na bifurcação
       Positioned(
-        left: lamp2X - 85,
-        top: lampY + compH / 2 + 6,
-        width: 170,
-        child: Center(
-          child: buildRuasMaqueteLabelBadge('Rua B (Nó Sul)'),
+        left: socketX - 22,
+        top: nodeY - 22,
+        child: buildRuasMaqueteJunctionBlock(
+          isConnected: _m3JunctionInserted,
+          onTap: _toggleJunction,
+          size: 44,
         ),
       ),
       Positioned(
-        left: socketX - compW / 2,
-        top: nodeY - compH / 2,
-        child: buildRuasMaqueteSocketTile(
-          width: compW,
-          height: compH,
-          expectedData: 'junction_node',
-          isFilled: _m3JunctionInserted,
-          symbolType: ComponentType.connectingWire,
-          label: 'Nó (+)',
-          usePhysicalStyle: _usePhysicalStyle,
-          rotation: _m3JunctionRotation,
-          onRotate: () => _rotateComponent(
-            name: 'Nó de Junção',
-            getRotation: () => _m3JunctionRotation,
-            setRotation: (v) => _m3JunctionRotation = v,
-          ),
-          onAccept: () => _insertComponent(
-            name: 'Nó de Junção',
-            getInserted: () => _m3JunctionInserted,
-            setInserted: (v) => _m3JunctionInserted = v,
-            getRotation: () => _m3JunctionRotation,
-            setRotation: (v) => _m3JunctionRotation = v,
-          ),
-          onTap: () => _insertComponent(
-            name: 'Nó de Junção',
-            getInserted: () => _m3JunctionInserted,
-            setInserted: (v) => _m3JunctionInserted = v,
-            getRotation: () => _m3JunctionRotation,
-            setRotation: (v) => _m3JunctionRotation = v,
+        left: socketX - 70,
+        top: nodeY + 24,
+        width: 140,
+        child: GestureDetector(
+          onTap: _toggleJunction,
+          child: Center(
+            child: buildRuasMaqueteLabelBadge(
+              'Nó de Kirchhoff (+)',
+              subtitle: _m3JunctionInserted ? '(Conectado)' : '(Toque p/ Ligar)',
+            ),
           ),
         ),
       ),
+      // Conexão do Barramento de Retorno (-)
       Positioned(
         left: socketX - compW / 2,
         top: socketY - compH / 2,
@@ -333,55 +326,60 @@ class _RuasMaqueteM3State extends State<RuasMaqueteM3>
           expectedData: 'fio_serie',
           isFilled: _m3ReturnConnected,
           symbolType: ComponentType.connectingWire,
-          label: 'Retorno (-)',
+          label: 'Barramento de Retorno (-)',
           usePhysicalStyle: _usePhysicalStyle,
           rotation: _m3ReturnRotation,
           onRotate: () => _rotateComponent(
-            name: 'Retorno Reconectado',
+            name: 'Retorno',
             getRotation: () => _m3ReturnRotation,
             setRotation: (v) => _m3ReturnRotation = v,
           ),
-          onAccept: () => _insertComponent(
-            name: 'Retorno Reconectado',
-            getInserted: () => _m3ReturnConnected,
-            setInserted: (v) => _m3ReturnConnected = v,
-            getRotation: () => _m3ReturnRotation,
-            setRotation: (v) => _m3ReturnRotation = v,
-          ),
-          onTap: () => _insertComponent(
-            name: 'Retorno Reconectado',
-            getInserted: () => _m3ReturnConnected,
-            setInserted: (v) => _m3ReturnConnected = v,
-            getRotation: () => _m3ReturnRotation,
-            setRotation: (v) => _m3ReturnRotation = v,
-          ),
+          onAccept: _toggleReturn,
+          onTap: _toggleReturn,
         ),
       ),
     ];
   }
 
   Widget _buildSideTools() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Dica Pedagógica do Prof. Volts:',
-          style: GoogleFonts.rajdhani(
-            color: const Color(0xFFD97706),
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.alt_route_rounded,
+                  size: 18, color: Color(0xFF0284C7)),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  '1ª Lei de Kirchhoff (Nós):',
+                  style: GoogleFonts.rajdhani(
+                    color: const Color(0xFF0284C7),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Uma bifurcação (nó) divide a corrente em duas rotas separadas (Rua A e Rua B). Ambas precisam se reconectar ao polo negativo para fechar o circuito!',
-          style: GoogleFonts.rajdhani(
-            color: const Color(0xFF475569),
-            fontSize: 14,
-            height: 1.3,
+          const SizedBox(height: 6),
+          Text(
+            'Ao inserir o Nó de Derivação, o fluxo de elétrons se divide em dois caminhos paralelos independentes. Ambas as cargas recebem os 4.5V totais!',
+            style: GoogleFonts.rajdhani(
+              color: const Color(0xFF475569),
+              fontSize: 12,
+              height: 1.3,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -446,13 +444,13 @@ class _RuasMaqueteM3State extends State<RuasMaqueteM3>
 
   Widget _buildInvestigationStepperCard() {
     return WorkbenchInvestigationStepperCard(
-      title: 'Progresso da malha paralela',
+      title: 'Passos da Bifurcação',
       currentStepIndex: _currentStepperIndex,
       isStepCompleted: _isStepCompleted,
       steps: const [
-        'Conectar nó de derivação (alimentação)',
-        'Conectar nó de retorno ao polo negativo',
-        'Comprovar brilho pleno e independente',
+        'Inserir o Nó de Derivação central',
+        'Ligar o Barramento de Retorno (-)',
+        'Observar corrente dividida e brilho 100%',
       ],
     );
   }

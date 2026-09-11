@@ -12,7 +12,7 @@ Cada estande pode conter 4, 5, 6 ou outra quantidade de missoes adequada a progr
 |---|---|---|---|
 | Acende Ai | fonte, fios, caminho fechado, iluminacao | Primeiro estande em definicao | circuito pronto, caminho interrompido, curto pedagogico, explicacao. |
 | Liga e Desliga | interruptor e controle | Planejado | estados aberto/fechado, controle de carga, previsao. |
-| Ruas da Maquete | serie, paralelo e ramificacoes | Planejado | duas cargas, independencia de ramos, falha simulada. |
+| Ruas da Maquete | serie, paralelo e ramificacoes | Implementado | Luminárias táteis, nós WAGO, mini-voltímetro, 4 ramos e isolamento de falha. |
 | Letreiros de LED | LED, polaridade, diodo e resistor | Planejado | LED invertido, protecao, sinalizacao. |
 | Movimento em Miniatura | motor CC | Planejado | primeiro giro, polaridade, botao de partida, indicador. |
 | Mede, Testa e Explica | tensao, corrente e resistencia | Planejado | leituras, escolha de resistor, investigacao. |
@@ -93,19 +93,15 @@ Comparar serie, paralelo, ramificacoes e independencia de cargas.
 
 “Quando ha mais de um destino, o desenho dos caminhos muda o comportamento de todo o circuito.”
 
-### Banco de missoes candidatas
+### Banco de missões (Implementadas no Estande 04)
 
-| Missao candidata | Objetivo | Componentes/conceitos | Fenomeno ou validacao | Status |
+| Missão | Objetivo | Componentes / Conceitos | Fenômeno / Validação na Maquete | Status |
 |---|---|---|---|---|
-| Mesmo caminho | Montar duas lampadas em serie. | Uma rota. | Abertura afeta conjunto. | Forte candidata |
-| Comparar brilho | Observar efeito de carga em serie. | Serie e carga. | Comparacao qualitativa. | Proposta |
-| Cruzamento de fios | Criar bifurcacao valida. | Juncao. | Ramos se reconectam a fonte. | Proposta |
-| Casas independentes | Montar paralelo. | Dois ramos. | Ambas ativas em ramos proprios. | Forte candidata |
-| Teste de manutencao | Remover/falhar uma carga. | Paralelo. | Outra permanece ativa. | Forte candidata |
-
-### Exemplo
-
-“Luzes da clinica”: duas lampadas em paralelo com teste de falha em uma delas. E exemplo pedagogico para representacao, previsao e diagnostico, nao modelo aprovado de estrelas ou overlays.
+| **M1: Primeiro Poste da Alameda** | Rosquear a lâmpada do poste e energizar a luminária. | Bateria 4.5V, Luminária de Poste, Soquete Rosqueável. | Acendimento suave da lâmpada (4.5V) e iluminação radial sobre a via. | **Implementada** |
+| **M2: Dois Postes em Série** | Medir a queda de tensão e comprovar o efeito cascata de apagão. | 2 Lâmpadas em série, Mini-voltímetro digital portátil (2.25V / 4.50V). | Divisão da tensão (2.25V + 2.25V = 4.50V), brilho reduzido e apagão mútuo ao desrosquear uma lâmpada. | **Implementada** |
+| **M3: O Nó de Kirchhoff** | Criar bifurcação na esquina com bloco de derivação. | Bloco WAGO de derivação (Nó), Poste e Casa Residencial. | Elétrons divididos em dois caminhos com tensão integral (4.5V) e 100% de brilho nos dois ramos. | **Implementada** |
+| **M4: Rede Paralela Urbana** | Alimentar rede urbana de 4 ramos e medir a corrente total. | 4 Ramos paralelos (2 Postes, 2 Casas), Telemetria de Corrente (~360 mA). | Cada carga opera a 4.5V independente e a corrente total da bateria é aditiva (soma dos ramos). | **Implementada** |
+| **M5: Inspeção & Manutenção** | Simular manutenção isolando a Casa 01 sem desligar a cidade. | 4 Ramos paralelos, Chave seccionadora/disjuntor tátil da Casa 01. | Interrupção seletiva da carga em manutenção enquanto as outras 3 permanecem 100% operacionais. | **Implementada** |
 
 ## Letreiros de LED
 

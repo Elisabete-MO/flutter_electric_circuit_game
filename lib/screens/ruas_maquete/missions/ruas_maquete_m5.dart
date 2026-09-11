@@ -4,7 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../models/circuit_action.dart';
 import '../../../models/first_step_component.dart';
 import '../../../models/stand_mission.dart';
-import '../../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../../state/circuit_undo_redo_controller.dart';
 import '../../../widgets/prof_volts_feedback_dialog.dart';
 import '../../../widgets/success_confetti_overlay.dart';
@@ -38,9 +37,10 @@ class _RuasMaqueteM5State extends State<RuasMaqueteM5>
   bool _isSimulating = false;
 
   bool _m5House1Broken = false;
+  bool _m5Bulb1Unscrewed = false;
+  bool _m5Bulb2Unscrewed = false;
   bool _m5MaintenanceConfirmed = false;
-  double _m5House1Rotation = 0.0;
-  double _m5MaintenanceRotation = 0.0;
+  double _m5BusRotation = 0.0;
 
   @override
   void initState() {
@@ -57,42 +57,36 @@ class _RuasMaqueteM5State extends State<RuasMaqueteM5>
     super.dispose();
   }
 
-  void _insertComponent({
-    required String name,
-    required bool Function() getInserted,
-    required void Function(bool) setInserted,
-    required double Function() getRotation,
-    required void Function(double) setRotation,
-  }) {
-    final prevInserted = getInserted();
-    final prevRotation = getRotation();
-    final nextInserted = !prevInserted;
-    _undoRedoController.execute(InsertComponentAction(
-      description: nextInserted ? 'Inserir $name' : 'Remover $name',
+  void _toggleHouse1() {
+    final prev = _m5House1Broken;
+    _undoRedoController.execute(ToggleBoolAction(
+      description: prev ? 'Reconectar Casa 01' : 'Simular Falha na Casa 01',
       onApply: () => setState(() {
-        setInserted(nextInserted);
-        if (nextInserted) setRotation(0);
+        _m5House1Broken = !prev;
+        if (!prev) _m5MaintenanceConfirmed = true;
       }),
-      onUndo: () => setState(() {
-        setInserted(prevInserted);
-        setRotation(prevRotation);
-      }),
+      onUndo: () => setState(() => _m5House1Broken = prev),
     ));
   }
 
-  void _rotateComponent({
-    required String name,
-    required double Function() getRotation,
-    required void Function(double) setRotation,
-  }) {
-    final prevRotation = getRotation();
-    final newRotation = (prevRotation + 90) % 360;
-    _undoRedoController.execute(RotateComponentAction(
-      description: 'Girar $name (${newRotation.toInt()}°)',
-      onApply: () => setState(() => setRotation(newRotation)),
-      onUndo: () => setState(() => setRotation(prevRotation)),
-    ));
+  void _toggleBulb1() {
+    setState(() => _m5Bulb1Unscrewed = !_m5Bulb1Unscrewed);
   }
+
+  void _toggleBulb2() {
+    setState(() => _m5Bulb2Unscrewed = !_m5Bulb2Unscrewed);
+  }
+
+  int get _activeCount {
+    int c = 0;
+    if (!_m5Bulb1Unscrewed) c++;
+    if (!_m5House1Broken) c++;
+    c++; // Casa 2 sempre ativa
+    if (!_m5Bulb2Unscrewed) c++;
+    return c;
+  }
+
+  double get _currentMa => _activeCount * 90.0;
 
   Future<void> _validate() async {
     if (_isSimulating) return;
@@ -102,32 +96,19 @@ class _RuasMaqueteM5State extends State<RuasMaqueteM5>
       bool isSuccess = false;
       String feedbackMessage = _mission.failureFeedback;
 
-      if (_m5House1Broken && _m5MaintenanceConfirmed) {
-        final result = await MissionCircuitBuilder()
-            .addBattery(id: 'bat1', voltage: 4.5)
-            .addBulb(id: 'bulbB', resistance: 5.0)
-            .connect('bat1', 'B', 'bulbB', 'A')
-            .connect('bulbB', 'B', 'bat1', 'A')
-            .simulate();
-        if (result.hasClosedLoop && result.errorMessage == null) {
-          feedbackMessage =
-              'Manutenção validada! A Lâmpada B permanece acesa mesmo com a Lâmpada A desconectada. '
-              'Em paralelo, os ramos são independentes.';
-          isSuccess = true;
-        } else {
-          feedbackMessage =
-              result.errorMessage ?? 'Erro na simulação do circuito.';
-        }
-      } else if (!_m5House1Broken) {
+      if (_m5House1Broken || _m5MaintenanceConfirmed) {
+        isSuccess = true;
         feedbackMessage =
-            'Simule o defeito na Lâmpada A para testar a independência do circuito!';
+            'Inspeção do Bairro Aprovada! Mesmo com a Casa 01 desconectada em manutenção, '
+            'a Casa 02 e os dois Postes continuam acesos a 100% de brilho com 4.5V nominais. '
+            'Você dominou a independência dos circuitos em paralelo!';
       } else {
         feedbackMessage =
-            'Confirme o resultado da manutenção ao observar que a Lâmpada B permanece acesa.';
+            'Toque na Casa 01 para abrir o interruptor de manutenção e testar a independência da vizinhança!';
       }
 
       final fullMessage = isSuccess
-          ? 'Missão "${_mission.title}" concluída com êxito! ${_mission.victoryCriteria}.\n\nProf. Volts: "${_mission.voltsMediation}"'
+          ? 'Inspeção do Bairro Aprovada! Missão "${_mission.title}" concluída com êxito! ${_mission.victoryCriteria}.\n\nProf. Volts: "${_mission.voltsMediation}"'
           : '$feedbackMessage\n\nProf. Volts: "${_mission.voltsMediation}"';
 
       if (mounted) {
@@ -161,7 +142,7 @@ class _RuasMaqueteM5State extends State<RuasMaqueteM5>
         leftHeaderWidget: buildRuasMaqueteStatusCard(true),
         rightHeaderWidget: buildRuasMaqueteTelemetryCard(
           4.5,
-          _m5House1Broken ? 135.0 : 180.0,
+          _currentMa,
           true,
         ),
         bottomWidget: _buildUndoRedoButtons(),
@@ -170,7 +151,7 @@ class _RuasMaqueteM5State extends State<RuasMaqueteM5>
           builder: (context, constraints) {
             final w = constraints.maxWidth;
             final h = constraints.maxHeight;
-            final lampY = h * 0.28;
+            final lampY = h * 0.32;
             final socketY = h * 0.80;
             final socketX = w * 0.50;
 
@@ -197,7 +178,10 @@ class _RuasMaqueteM5State extends State<RuasMaqueteM5>
                           lamp1X: w * 0.34,
                           lamp2X: w * 0.66,
                           socketX: socketX,
-                          socketRotation: _m5House1Rotation,
+                          socketRotation: _m5BusRotation,
+                          bulb1Unscrewed: _m5Bulb1Unscrewed,
+                          bulb2Unscrewed: _m5Bulb2Unscrewed,
+                          brightnessRatio: 1.0,
                         ),
                       );
                     },
@@ -216,7 +200,7 @@ class _RuasMaqueteM5State extends State<RuasMaqueteM5>
         ),
       ),
       sidePanel: WorkbenchSidePanel(
-        teamTitle: 'Painel da Equipe Bairro',
+        teamTitle: 'Painel do Inspetor Urbano',
         showTeamHeader: false,
         buttonColor: const Color(0xFF059669),
         toolboxItems: [
@@ -249,169 +233,131 @@ class _RuasMaqueteM5State extends State<RuasMaqueteM5>
     final sockH = sockW * 0.75;
 
     return [
-      // Poste 1 (Permanecendo Aceso)
+      // Poste 1 (Alameda) - Clicável para testar desrosquear
       Positioned(
         left: x1 - compW / 2,
         top: lampY - compH / 2,
-        child: buildRuasMaqueteLampSymbol(
-          isLit: true,
+        child: buildRuasMaqueteInteractiveLamp(
+          label: 'Poste Alameda',
+          isLit: !_m5Bulb1Unscrewed,
           brightnessRatio: 1.0,
           usePhysicalStyle: _usePhysicalStyle,
+          isUnscrewed: _m5Bulb1Unscrewed,
+          onToggleUnscrew: _toggleBulb1,
           width: compW,
           height: compH,
         ),
       ),
-      Positioned(
-        left: x1 - 65,
-        top: lampY + compH / 2 + 6,
-        width: 130,
-        child: Center(child: buildRuasMaqueteLabelBadge('Poste 1')),
-      ),
 
-      // Soquete / Casa 01 (Em Manutenção / Simulada)
+      // Casa 01 (Em Manutenção / Interativa via toque)
       Positioned(
         left: x2 - compW / 2,
         top: lampY - compH / 2,
-        child: buildRuasMaqueteSocketTile(
+        child: buildRuasMaqueteInteractiveHouse(
+          label: 'Casa 01 (Alvo)',
+          isLit: !_m5House1Broken,
+          brightness: 1.0,
+          isBroken: _m5House1Broken,
+          usePhysicalStyle: _usePhysicalStyle,
+          onToggle: _toggleHouse1,
           width: compW,
           height: compH,
-          expectedData: 'bulb',
-          isFilled: !_m5House1Broken,
-          symbolType: ComponentType.bulb,
-          label: 'Casa 01',
-          usePhysicalStyle: _usePhysicalStyle,
-          rotation: _m5House1Rotation,
-          onRotate: () => _rotateComponent(
-            name: 'Casa 01',
-            getRotation: () => _m5House1Rotation,
-            setRotation: (v) => _m5House1Rotation = v,
-          ),
-          onAccept: () => _insertComponent(
-            name: 'Casa 01',
-            getInserted: () => !_m5House1Broken,
-            setInserted: (v) => _m5House1Broken = !v,
-            getRotation: () => _m5House1Rotation,
-            setRotation: (v) => _m5House1Rotation = v,
-          ),
-          onTap: () => _insertComponent(
-            name: 'Casa 01',
-            getInserted: () => !_m5House1Broken,
-            setInserted: (v) => _m5House1Broken = !v,
-            getRotation: () => _m5House1Rotation,
-            setRotation: (v) => _m5House1Rotation = v,
-          ),
-        ),
-      ),
-      Positioned(
-        left: x2 - 65,
-        top: lampY + compH / 2 + 6,
-        width: 130,
-        child: Center(
-          child: buildRuasMaqueteLabelBadge(
-            'Casa 01',
-            isBroken: _m5House1Broken,
-          ),
         ),
       ),
 
-      // Casa 02 (Permanecendo Acesa)
+      // Casa 02 (Vizinha - Segue acesa a 100%)
       Positioned(
         left: x3 - compW / 2,
         top: lampY - compH / 2,
-        child: buildRuasMaqueteHouseSymbol(
-          name: 'Casa 02 (Praça)',
+        child: buildRuasMaqueteInteractiveHouse(
+          label: 'Casa 02 (Vizinha)',
           isLit: true,
           brightness: 1.0,
+          isBroken: false,
           usePhysicalStyle: _usePhysicalStyle,
+          onToggle: () {},
           width: compW,
           height: compH,
         ),
       ),
-      Positioned(
-        left: x3 - 65,
-        top: lampY + compH / 2 + 6,
-        width: 130,
-        child: Center(child: buildRuasMaqueteLabelBadge('Casa 02')),
-      ),
 
-      // Poste 2 (Permanecendo Aceso)
+      // Poste 2 (Avenida) - Clicável para testar desrosquear
       Positioned(
         left: x4 - compW / 2,
         top: lampY - compH / 2,
-        child: buildRuasMaqueteLampSymbol(
-          isLit: true,
+        child: buildRuasMaqueteInteractiveLamp(
+          label: 'Poste Avenida',
+          isLit: !_m5Bulb2Unscrewed,
           brightnessRatio: 1.0,
           usePhysicalStyle: _usePhysicalStyle,
+          isUnscrewed: _m5Bulb2Unscrewed,
+          onToggleUnscrew: _toggleBulb2,
           width: compW,
           height: compH,
         ),
       ),
-      Positioned(
-        left: x4 - 65,
-        top: lampY + compH / 2 + 6,
-        width: 130,
-        child: Center(child: buildRuasMaqueteLabelBadge('Poste 2')),
-      ),
 
-      // Soquete do Conector de Manutenção
+      // Barramento de Alimentação Central
       Positioned(
         left: socketX - sockW / 2,
         top: socketY - sockH / 2,
         child: buildRuasMaqueteSocketTile(
           width: sockW,
           height: sockH,
-          expectedData: 'fio_serie',
-          isFilled: _m5MaintenanceConfirmed,
+          expectedData: 'fio_paralelo',
+          isFilled: true,
           symbolType: ComponentType.connectingWire,
-          label: 'Manutenção',
+          label: 'Rede Ativa (4.5V)',
           usePhysicalStyle: _usePhysicalStyle,
-          rotation: _m5MaintenanceRotation,
-          onRotate: () => _rotateComponent(
-            name: 'Conector de Manutenção',
-            getRotation: () => _m5MaintenanceRotation,
-            setRotation: (v) => _m5MaintenanceRotation = v,
-          ),
-          onAccept: () => _insertComponent(
-            name: 'Conector de Manutenção',
-            getInserted: () => _m5MaintenanceConfirmed,
-            setInserted: (v) => _m5MaintenanceConfirmed = v,
-            getRotation: () => _m5MaintenanceRotation,
-            setRotation: (v) => _m5MaintenanceRotation = v,
-          ),
-          onTap: () => _insertComponent(
-            name: 'Conector de Manutenção',
-            getInserted: () => _m5MaintenanceConfirmed,
-            setInserted: (v) => _m5MaintenanceConfirmed = v,
-            getRotation: () => _m5MaintenanceRotation,
-            setRotation: (v) => _m5MaintenanceRotation = v,
-          ),
+          rotation: _m5BusRotation,
+          onRotate: () => setState(() => _m5BusRotation = (_m5BusRotation + 90) % 360),
+          onAccept: () {},
+          onTap: () {},
         ),
       ),
     ];
   }
 
   Widget _buildSideTools() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Conclusão da Equipe Bairro:',
-          style: GoogleFonts.rajdhani(
-            color: const Color(0xFFD97706),
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.verified_user_rounded,
+                  size: 18, color: Color(0xFF10B981)),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'Independência dos Ramos:',
+                  style: GoogleFonts.rajdhani(
+                    color: const Color(0xFF0F172A),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Em paralelo, quando a Lâmpada A se queima ou é removida, a Lâmpada B continua recebendo corrente em seu ramo independente. É por isso que as casas da cidade usam ligação em paralelo!',
-          style: GoogleFonts.rajdhani(
-            color: const Color(0xFF475569),
-            fontSize: 14,
-            height: 1.3,
+          const SizedBox(height: 6),
+          Text(
+            'Toque na Casa 01 para abrir seu disjuntor de manutenção. '
+            'Observe que a corrente cessa apenas no seu ramal — todos os demais vizinhos continuam 100% acesos!',
+            style: GoogleFonts.rajdhani(
+              color: const Color(0xFF475569),
+              fontSize: 12,
+              height: 1.3,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -452,15 +398,13 @@ class _RuasMaqueteM5State extends State<RuasMaqueteM5>
   }
 
   int get _currentStepperIndex {
-    if (!_m5House1Broken) return 0;
-    if (!_m5MaintenanceConfirmed) return 1;
-    return 2;
+    if (!_m5House1Broken && !_m5MaintenanceConfirmed) return 0;
+    return 1;
   }
 
   bool _isStepCompleted(int index) {
-    if (index == 0) return _m5House1Broken;
-    if (index == 1) return _m5House1Broken;
-    if (index == 2) return _m5MaintenanceConfirmed;
+    if (index == 0) return _m5House1Broken || _m5MaintenanceConfirmed;
+    if (index == 1) return _m5House1Broken || _m5MaintenanceConfirmed;
     return false;
   }
 
@@ -476,13 +420,12 @@ class _RuasMaqueteM5State extends State<RuasMaqueteM5>
 
   Widget _buildInvestigationStepperCard() {
     return WorkbenchInvestigationStepperCard(
-      title: 'Progresso da manutenção',
+      title: 'Procedimento de Inspeção',
       currentStepIndex: _currentStepperIndex,
       isStepCompleted: _isStepCompleted,
       steps: const [
-        'Desconectar residência para simular falha',
-        'Verificar se as outras casas continuam acesas',
-        'Confirmar manutenção e concluir',
+        'Tocar na Casa 01 para simular manutenção',
+        'Comprovar que os outros 3 ramos continuam acesos',
       ],
     );
   }

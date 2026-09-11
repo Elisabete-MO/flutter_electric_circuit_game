@@ -13,7 +13,7 @@ import '../../../widgets/workbench_table_frame.dart';
 import '../widgets/ruas_maquete_painter.dart';
 import '../widgets/ruas_maquete_widgets.dart';
 
-/// Missão 1 do Estande 04 — Postes em Série (Alameda e Avenida).
+/// Missão 1 do Estande 04 — Primeiro Poste da Alameda (Circuito Simples).
 class RuasMaqueteM1 extends StatefulWidget {
   final VoidCallback onMissionComplete;
 
@@ -36,9 +36,10 @@ class _RuasMaqueteM1State extends State<RuasMaqueteM1>
   bool _usePhysicalStyle = true;
   bool _isSimulating = false;
 
-  bool _m1WireConnected = false;
-  bool _m1WireInserted = false;
-  double _m1WireRotation = 0.0;
+  bool _m1BatteryConnected = false;
+  bool _m1BatteryInserted = false;
+  double _m1BatteryRotation = 0.0;
+  bool _m1BulbUnscrewed = false;
 
   @override
   void initState() {
@@ -55,7 +56,8 @@ class _RuasMaqueteM1State extends State<RuasMaqueteM1>
     super.dispose();
   }
 
-  bool get _isClosed => _m1WireInserted || _m1WireConnected;
+  bool get _isClosed =>
+      (_m1BatteryInserted || _m1BatteryConnected) && !_m1BulbUnscrewed;
 
   void _insertComponent({
     required String name,
@@ -94,6 +96,15 @@ class _RuasMaqueteM1State extends State<RuasMaqueteM1>
     ));
   }
 
+  void _toggleBulb() {
+    final prev = _m1BulbUnscrewed;
+    _undoRedoController.execute(ToggleBoolAction(
+      description: prev ? 'Rosquear Lâmpada' : 'Desrosquear Lâmpada',
+      onApply: () => setState(() => _m1BulbUnscrewed = !prev),
+      onUndo: () => setState(() => _m1BulbUnscrewed = prev),
+    ));
+  }
+
   Future<void> _validate() async {
     if (_isSimulating) return;
     setState(() => _isSimulating = true);
@@ -102,28 +113,29 @@ class _RuasMaqueteM1State extends State<RuasMaqueteM1>
       bool isSuccess = false;
       String feedbackMessage = _mission.failureFeedback;
 
-      if (_m1WireInserted || _m1WireConnected) {
+      if (_m1BulbUnscrewed) {
+        feedbackMessage =
+            'A lâmpada do poste está desrosqueada! Rosqueie-a no soquete tocando no poste.';
+      } else if (_m1BatteryInserted || _m1BatteryConnected) {
         final result = await MissionCircuitBuilder()
             .addBattery(id: 'bat1', voltage: 4.5)
-            .addBulb(id: 'bulb1', resistance: 5.0)
-            .addBulb(id: 'bulb2', resistance: 5.0)
+            .addBulb(id: 'bulb1', resistance: 10.0)
             .connect('bat1', 'B', 'bulb1', 'A')
-            .connect('bulb1', 'B', 'bulb2', 'A')
-            .connect('bulb2', 'B', 'bat1', 'A')
+            .connect('bulb1', 'B', 'bat1', 'A')
             .simulate();
         if (result.hasClosedLoop && result.errorMessage == null) {
           final currentMa = result.current * 1000;
           feedbackMessage =
-              'Circuito em série validado! Corrente: ${currentMa.toStringAsFixed(1)}mA. '
-              'Ambas as lâmpadas recebem a mesma corrente.';
+              'Circuito simples validado com sucesso! Corrente de ${currentMa.toStringAsFixed(1)}mA circulando '
+              'pelo poste com alimentação e retorno fechados.';
           isSuccess = true;
         } else {
           feedbackMessage = result.errorMessage ??
-              'Circuito em série incompleto. Verifique as conexões.';
+              'Circuito incompleto. Verifique se a bateria está conectada aos terminais.';
         }
       } else {
         feedbackMessage =
-            'Conecte o fio condutor em série para fechar o circuito dos postes!';
+            'Conecte a bateria aos terminais de alimentação e retorno do poste!';
       }
 
       final fullMessage = isSuccess
@@ -160,8 +172,8 @@ class _RuasMaqueteM1State extends State<RuasMaqueteM1>
         onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
         leftHeaderWidget: buildRuasMaqueteStatusCard(_isClosed),
         rightHeaderWidget: buildRuasMaqueteTelemetryCard(
-          4.5,
-          _isClosed ? 80.0 : 0.0,
+          _isClosed ? 4.5 : 0.0,
+          _isClosed ? 90.0 : 0.0,
           _isClosed,
         ),
         bottomWidget: _buildUndoRedoButtons(),
@@ -170,10 +182,9 @@ class _RuasMaqueteM1State extends State<RuasMaqueteM1>
           builder: (context, constraints) {
             final w = constraints.maxWidth;
             final h = constraints.maxHeight;
-            final lampY = h * 0.28;
-            final socketY = h * 0.80;
-            final lamp1X = w * 0.34;
-            final lamp2X = w * 0.66;
+            final lampY = h * 0.32;
+            final socketY = h * 0.78;
+            final lamp1X = w * 0.50; // Centralizado na alameda
             final socketX = w * 0.50;
 
             return Stack(
@@ -197,9 +208,11 @@ class _RuasMaqueteM1State extends State<RuasMaqueteM1>
                           lampY: lampY,
                           socketY: socketY,
                           lamp1X: lamp1X,
-                          lamp2X: lamp2X,
+                          lamp2X: lamp1X,
                           socketX: socketX,
-                          socketRotation: _m1WireRotation,
+                          socketRotation: _m1BatteryRotation,
+                          bulb1Unscrewed: _m1BulbUnscrewed,
+                          brightnessRatio: _isClosed ? 1.0 : 0.0,
                         ),
                       );
                     },
@@ -207,7 +220,6 @@ class _RuasMaqueteM1State extends State<RuasMaqueteM1>
                 ),
                 ..._buildOverlayElements(
                   lamp1X: lamp1X,
-                  lamp2X: lamp2X,
                   socketX: socketX,
                   lampY: lampY,
                   socketY: socketY,
@@ -220,7 +232,7 @@ class _RuasMaqueteM1State extends State<RuasMaqueteM1>
         ),
       ),
       sidePanel: WorkbenchSidePanel(
-        teamTitle: 'Painel da Equipe Bairro',
+        teamTitle: 'Painel da Alameda',
         showTeamHeader: false,
         buttonColor: const Color(0xFF059669),
         toolboxItems: [
@@ -235,54 +247,28 @@ class _RuasMaqueteM1State extends State<RuasMaqueteM1>
 
   List<Widget> _buildOverlayElements({
     required double lamp1X,
-    required double lamp2X,
     required double socketX,
     required double lampY,
     required double socketY,
     required double w,
     required double h,
   }) {
-    final isLit = _isClosed;
-    final compW = (w * 0.14).clamp(95.0, 130.0);
-    final compH = compW * 0.75;
+    final compW = (w * 0.16).clamp(100.0, 140.0);
+    final compH = compW * 0.80;
 
     return [
       Positioned(
         left: lamp1X - compW / 2,
         top: lampY - compH / 2,
-        child: buildRuasMaqueteLampSymbol(
-          isLit: isLit,
-          brightnessRatio: isLit ? 0.5 : 0.0,
+        child: buildRuasMaqueteInteractiveLamp(
+          label: 'Poste 1 (Alameda)',
+          isLit: _isClosed,
+          brightnessRatio: _isClosed ? 1.0 : 0.0,
           usePhysicalStyle: _usePhysicalStyle,
+          isUnscrewed: _m1BulbUnscrewed,
+          onToggleUnscrew: _toggleBulb,
           width: compW,
           height: compH,
-        ),
-      ),
-      Positioned(
-        left: lamp1X - 85,
-        top: lampY + compH / 2 + 6,
-        width: 170,
-        child: Center(
-          child: buildRuasMaqueteLabelBadge('Poste 1 (Alameda)'),
-        ),
-      ),
-      Positioned(
-        left: lamp2X - compW / 2,
-        top: lampY - compH / 2,
-        child: buildRuasMaqueteLampSymbol(
-          isLit: isLit,
-          brightnessRatio: isLit ? 0.5 : 0.0,
-          usePhysicalStyle: _usePhysicalStyle,
-          width: compW,
-          height: compH,
-        ),
-      ),
-      Positioned(
-        left: lamp2X - 85,
-        top: lampY + compH / 2 + 6,
-        width: 170,
-        child: Center(
-          child: buildRuasMaqueteLabelBadge('Poste 2 (Avenida)'),
         ),
       ),
       Positioned(
@@ -292,37 +278,43 @@ class _RuasMaqueteM1State extends State<RuasMaqueteM1>
           width: compW,
           height: compH,
           expectedData: 'battery',
-          isFilled: isLit,
+          isFilled: _m1BatteryInserted || _m1BatteryConnected,
           symbolType: ComponentType.battery,
           label: 'Bateria 4.5V',
           usePhysicalStyle: _usePhysicalStyle,
-          rotation: _m1WireRotation,
+          rotation: _m1BatteryRotation,
           onRotate: () => _rotateComponent(
             name: 'Bateria 4.5V',
-            getRotation: () => _m1WireRotation,
-            setRotation: (v) => _m1WireRotation = v,
+            getRotation: () => _m1BatteryRotation,
+            setRotation: (v) => _m1BatteryRotation = v,
           ),
           onAccept: () => _insertComponent(
             name: 'Bateria 4.5V',
-            getInserted: () => _m1WireInserted,
+            getInserted: () => _m1BatteryInserted,
             setInserted: (v) {
-              _m1WireInserted = v;
-              _m1WireConnected = v;
+              _m1BatteryInserted = v;
+              _m1BatteryConnected = v;
             },
-            getRotation: () => _m1WireRotation,
-            setRotation: (v) => _m1WireRotation = v,
+            getRotation: () => _m1BatteryRotation,
+            setRotation: (v) => _m1BatteryRotation = v,
           ),
           onTap: () => _insertComponent(
             name: 'Bateria 4.5V',
-            getInserted: () => _m1WireInserted,
+            getInserted: () => _m1BatteryInserted,
             setInserted: (v) {
-              _m1WireInserted = v;
-              _m1WireConnected = v;
+              _m1BatteryInserted = v;
+              _m1BatteryConnected = v;
             },
-            getRotation: () => _m1WireRotation,
-            setRotation: (v) => _m1WireRotation = v,
+            getRotation: () => _m1BatteryRotation,
+            setRotation: (v) => _m1BatteryRotation = v,
           ),
         ),
+      ),
+      Positioned(
+        left: socketX - 65,
+        top: socketY + compH / 2 + 6,
+        width: 130,
+        child: Center(child: buildRuasMaqueteLabelBadge('Bateria 4.5V')),
       ),
     ];
   }
@@ -371,7 +363,7 @@ class _RuasMaqueteM1State extends State<RuasMaqueteM1>
   bool _isStepCompleted(int index) {
     if (index == 0) return true;
     if (index == 1) return _isClosed;
-    if (index == 2) return _isClosed;
+    if (index == 2) return _isClosed && !_m1BulbUnscrewed;
     return false;
   }
 
@@ -391,9 +383,9 @@ class _RuasMaqueteM1State extends State<RuasMaqueteM1>
       currentStepIndex: _currentStepperIndex,
       isStepCompleted: _isStepCompleted,
       steps: const [
-        'Analisar caminho único em série',
-        'Fechar o elo condutor entre postes',
-        'Comprovar acendimento conjunto',
+        'Instalar fonte de alimentação 4.5V',
+        'Conectar condutores de ida e volta',
+        'Acender primeiro poste da alameda',
       ],
     );
   }

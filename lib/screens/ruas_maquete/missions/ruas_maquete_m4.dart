@@ -14,7 +14,7 @@ import '../../../widgets/workbench_table_frame.dart';
 import '../widgets/ruas_maquete_painter.dart';
 import '../widgets/ruas_maquete_widgets.dart';
 
-/// Missão 4 do Estande 04 — Casas Independentes / Ligação em Paralelo.
+/// Missão 4 do Estande 04 — Bairro em Pleno Funcionamento (4 Ramos em Paralelo).
 class RuasMaqueteM4 extends StatefulWidget {
   final VoidCallback onMissionComplete;
 
@@ -40,6 +40,9 @@ class _RuasMaqueteM4State extends State<RuasMaqueteM4>
   bool _m4ParallelWireConnected = false;
   double _m4ParallelRotation = 0.0;
 
+  bool _house1Active = true;
+  bool _house2Active = true;
+
   @override
   void initState() {
     super.initState();
@@ -55,26 +58,22 @@ class _RuasMaqueteM4State extends State<RuasMaqueteM4>
     super.dispose();
   }
 
-  void _insertComponent({
-    required String name,
-    required bool Function() getInserted,
-    required void Function(bool) setInserted,
-    required double Function() getRotation,
-    required void Function(double) setRotation,
-  }) {
-    final prevInserted = getInserted();
-    final prevRotation = getRotation();
-    final nextInserted = !prevInserted;
-    _undoRedoController.execute(InsertComponentAction(
-      description: nextInserted ? 'Inserir $name' : 'Remover $name',
-      onApply: () => setState(() {
-        setInserted(nextInserted);
-        if (nextInserted) setRotation(0);
-      }),
-      onUndo: () => setState(() {
-        setInserted(prevInserted);
-        setRotation(prevRotation);
-      }),
+  int get _activeBranchesCount {
+    if (!_m4ParallelWireConnected) return 0;
+    int count = 2; // Os 2 postes
+    if (_house1Active) count++;
+    if (_house2Active) count++;
+    return count;
+  }
+
+  double get _totalCurrentMa => _activeBranchesCount * 90.0;
+
+  void _toggleParallelBus() {
+    final prev = _m4ParallelWireConnected;
+    _undoRedoController.execute(ToggleBoolAction(
+      description: prev ? 'Desconectar Barramento' : 'Conectar Barramento Paralelo',
+      onApply: () => setState(() => _m4ParallelWireConnected = !prev),
+      onUndo: () => setState(() => _m4ParallelWireConnected = prev),
     ));
   }
 
@@ -103,27 +102,33 @@ class _RuasMaqueteM4State extends State<RuasMaqueteM4>
       if (_m4ParallelWireConnected) {
         final result = await MissionCircuitBuilder()
             .addBattery(id: 'bat1', voltage: 4.5)
-            .addBulb(id: 'bulb1', resistance: 5.0)
-            .addBulb(id: 'bulb2', resistance: 5.0)
+            .addBulb(id: 'bulb1', resistance: 10.0)
+            .addBulb(id: 'bulb2', resistance: 10.0)
+            .addBulb(id: 'house1', resistance: 10.0)
+            .addBulb(id: 'house2', resistance: 10.0)
             .connect('bat1', 'B', 'bulb1', 'A')
             .connect('bulb1', 'B', 'bat1', 'A')
             .connect('bat1', 'B', 'bulb2', 'A')
             .connect('bulb2', 'B', 'bat1', 'A')
+            .connect('bat1', 'B', 'house1', 'A')
+            .connect('house1', 'B', 'bat1', 'A')
+            .connect('bat1', 'B', 'house2', 'A')
+            .connect('house2', 'B', 'bat1', 'A')
             .simulate();
+
         if (result.hasClosedLoop && result.errorMessage == null) {
-          final current1 = (result.componentCurrents['bulb1'] ?? 0) * 1000;
-          final current2 = (result.componentCurrents['bulb2'] ?? 0) * 1000;
-          feedbackMessage = 'Circuito em paralelo validado! '
-              'Lâmpada 1: ${current1.toStringAsFixed(1)}mA, Lâmpada 2: ${current2.toStringAsFixed(1)}mA. '
-              'Ambas recebem tensão total da bateria.';
+          feedbackMessage =
+              'Rede Paralela Urbana Validada! Todos os 4 ramos (2 postes e 2 casas) recebem a tensão total '
+              'de 4.5V e a corrente total do barramento somou ${_totalCurrentMa.toStringAsFixed(0)}mA. '
+              'A cidade está totalmente eletrificada e segura!';
           isSuccess = true;
         } else {
           feedbackMessage = result.errorMessage ??
-              'Monte as ligações em paralelo para que cada casa tenha seu ramo individual.';
+              'Monte as ligações em paralelo para que cada casa e poste tenha seu ramo individual.';
         }
       } else {
         feedbackMessage =
-            'Monte as ligações em paralelo para que cada casa tenha seu ramo individual.';
+            'Conecte o Barramento de Distribuição Paralela na parte inferior para energizar os ramos do bairro.';
       }
 
       final fullMessage = isSuccess
@@ -161,8 +166,8 @@ class _RuasMaqueteM4State extends State<RuasMaqueteM4>
         leftHeaderWidget:
             buildRuasMaqueteStatusCard(_m4ParallelWireConnected),
         rightHeaderWidget: buildRuasMaqueteTelemetryCard(
-          4.5,
-          _m4ParallelWireConnected ? 180.0 : 0.0,
+          _m4ParallelWireConnected ? 4.5 : 0.0,
+          _totalCurrentMa,
           _m4ParallelWireConnected,
         ),
         bottomWidget: _buildUndoRedoButtons(),
@@ -171,7 +176,7 @@ class _RuasMaqueteM4State extends State<RuasMaqueteM4>
           builder: (context, constraints) {
             final w = constraints.maxWidth;
             final h = constraints.maxHeight;
-            final lampY = h * 0.28;
+            final lampY = h * 0.32;
             final socketY = h * 0.80;
             final socketX = w * 0.50;
 
@@ -199,6 +204,7 @@ class _RuasMaqueteM4State extends State<RuasMaqueteM4>
                           lamp2X: w * 0.66,
                           socketX: socketX,
                           socketRotation: _m4ParallelRotation,
+                          brightnessRatio: _m4ParallelWireConnected ? 1.0 : 0.0,
                         ),
                       );
                     },
@@ -254,89 +260,71 @@ class _RuasMaqueteM4State extends State<RuasMaqueteM4>
       Positioned(
         left: x1 - compW / 2,
         top: lampY - compH / 2,
-        child: buildRuasMaqueteLampSymbol(
-          isLit: _m4ParallelWireConnected,
-          brightnessRatio: 1.0,
-          usePhysicalStyle: _usePhysicalStyle,
-          width: compW,
-          height: compH,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            buildRuasMaqueteLampSymbol(
+              isLit: _m4ParallelWireConnected,
+              brightnessRatio: 1.0,
+              usePhysicalStyle: _usePhysicalStyle,
+              width: compW,
+              height: compH,
+            ),
+            const SizedBox(height: 4),
+            buildRuasMaqueteLabelBadge('Poste Alameda'),
+          ],
         ),
       ),
-      Positioned(
-        left: x1 - 65,
-        top: lampY + compH / 2 + 6,
-        width: 130,
-        child: Center(
-          child: buildRuasMaqueteLabelBadge('Poste 1'),
-        ),
-      ),
-
-      // Casa 01 (Alameda)
+      // Casa 1
       Positioned(
         left: x2 - compW / 2,
         top: lampY - compH / 2,
-        child: buildRuasMaqueteHouseSymbol(
-          name: 'Casa 01 (Alameda)',
-          isLit: _m4ParallelWireConnected,
+        child: buildRuasMaqueteInteractiveHouse(
+          label: 'Casa 1',
+          isLit: _m4ParallelWireConnected && _house1Active,
           brightness: 1.0,
+          isBroken: !_house1Active,
           usePhysicalStyle: _usePhysicalStyle,
+          onToggle: () => setState(() => _house1Active = !_house1Active),
           width: compW,
           height: compH,
         ),
       ),
-      Positioned(
-        left: x2 - 65,
-        top: lampY + compH / 2 + 6,
-        width: 130,
-        child: Center(
-          child: buildRuasMaqueteLabelBadge('Casa 01'),
-        ),
-      ),
-
-      // Casa 02 (Praça)
+      // Casa 2
       Positioned(
         left: x3 - compW / 2,
         top: lampY - compH / 2,
-        child: buildRuasMaqueteHouseSymbol(
-          name: 'Casa 02 (Praça)',
-          isLit: _m4ParallelWireConnected,
+        child: buildRuasMaqueteInteractiveHouse(
+          label: 'Casa 2',
+          isLit: _m4ParallelWireConnected && _house2Active,
           brightness: 1.0,
+          isBroken: !_house2Active,
           usePhysicalStyle: _usePhysicalStyle,
+          onToggle: () => setState(() => _house2Active = !_house2Active),
           width: compW,
           height: compH,
         ),
       ),
-      Positioned(
-        left: x3 - 65,
-        top: lampY + compH / 2 + 6,
-        width: 130,
-        child: Center(
-          child: buildRuasMaqueteLabelBadge('Casa 02'),
-        ),
-      ),
-
       // Poste 2 (Avenida)
       Positioned(
         left: x4 - compW / 2,
         top: lampY - compH / 2,
-        child: buildRuasMaqueteLampSymbol(
-          isLit: _m4ParallelWireConnected,
-          brightnessRatio: 1.0,
-          usePhysicalStyle: _usePhysicalStyle,
-          width: compW,
-          height: compH,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            buildRuasMaqueteLampSymbol(
+              isLit: _m4ParallelWireConnected,
+              brightnessRatio: 1.0,
+              usePhysicalStyle: _usePhysicalStyle,
+              width: compW,
+              height: compH,
+            ),
+            const SizedBox(height: 4),
+            buildRuasMaqueteLabelBadge('Poste Avenida'),
+          ],
         ),
       ),
-      Positioned(
-        left: x4 - 65,
-        top: lampY + compH / 2 + 6,
-        width: 130,
-        child: Center(
-          child: buildRuasMaqueteLabelBadge('Poste 2'),
-        ),
-      ),
-
-      // Soquete do Barramento Paralelo
+      // Soquete Central do Barramento Paralelo
       Positioned(
         left: socketX - sockW / 2,
         top: socketY - sockH / 2,
@@ -346,27 +334,29 @@ class _RuasMaqueteM4State extends State<RuasMaqueteM4>
           expectedData: 'fio_paralelo',
           isFilled: _m4ParallelWireConnected,
           symbolType: ComponentType.connectingWire,
-          label: 'Fiação Paralela',
+          label: 'Barramento Paralelo',
           usePhysicalStyle: _usePhysicalStyle,
           rotation: _m4ParallelRotation,
           onRotate: () => _rotateComponent(
-            name: 'Fio Paralelo',
+            name: 'Barramento Paralelo',
             getRotation: () => _m4ParallelRotation,
             setRotation: (v) => _m4ParallelRotation = v,
           ),
-          onAccept: () => _insertComponent(
-            name: 'Fio Paralelo',
-            getInserted: () => _m4ParallelWireConnected,
-            setInserted: (v) => _m4ParallelWireConnected = v,
-            getRotation: () => _m4ParallelRotation,
-            setRotation: (v) => _m4ParallelRotation = v,
-          ),
-          onTap: () => _insertComponent(
-            name: 'Fio Paralelo',
-            getInserted: () => _m4ParallelWireConnected,
-            setInserted: (v) => _m4ParallelWireConnected = v,
-            getRotation: () => _m4ParallelRotation,
-            setRotation: (v) => _m4ParallelRotation = v,
+          onAccept: _toggleParallelBus,
+          onTap: _toggleParallelBus,
+        ),
+      ),
+      Positioned(
+        left: socketX - 70,
+        top: socketY + sockH / 2 + 6,
+        width: 140,
+        child: GestureDetector(
+          onTap: _toggleParallelBus,
+          child: Center(
+            child: buildRuasMaqueteLabelBadge(
+              'Barramento Paralelo',
+              subtitle: _m4ParallelWireConnected ? '(Conectado)' : '(Toque p/ Ligar)',
+            ),
           ),
         ),
       ),
@@ -374,27 +364,45 @@ class _RuasMaqueteM4State extends State<RuasMaqueteM4>
   }
 
   Widget _buildSideTools() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Vantagem do Circuito em Paralelo:',
-          style: GoogleFonts.rajdhani(
-            color: const Color(0xFFD97706),
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.flash_on_rounded,
+                  size: 18, color: Color(0xFFD97706)),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'Soma das Correntes:',
+                  style: GoogleFonts.rajdhani(
+                    color: const Color(0xFF0F172A),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Cada casa do bairro recebe a tensão total da bateria (4.5V). Assim, todas as lâmpadas acendem com 100% de brilho máximo sem interferência!',
-          style: GoogleFonts.rajdhani(
-            color: const Color(0xFF475569),
-            fontSize: 14,
-            height: 1.3,
+          const SizedBox(height: 6),
+          Text(
+            'Cada carga em paralelo puxa ~90mA diretamente da fonte de 4.5V. '
+            'Com 4 cargas ativas, a corrente total chega a ${_totalCurrentMa.toStringAsFixed(0)}mA!',
+            style: GoogleFonts.rajdhani(
+              color: const Color(0xFF475569),
+              fontSize: 12,
+              height: 1.3,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -457,12 +465,12 @@ class _RuasMaqueteM4State extends State<RuasMaqueteM4>
 
   Widget _buildInvestigationStepperCard() {
     return WorkbenchInvestigationStepperCard(
-      title: 'Progresso do circuito residencial',
+      title: 'Etapas de Eletrificação',
       currentStepIndex: _currentStepperIndex,
       isStepCompleted: _isStepCompleted,
       steps: const [
-        'Conectar ramal paralelo da residência',
-        'Comprovar independência de funcionamento',
+        'Instalar o Barramento Paralelo de distribuição',
+        'Verificar tensão plena 4.5V nos 4 ramos urbanos',
       ],
     );
   }

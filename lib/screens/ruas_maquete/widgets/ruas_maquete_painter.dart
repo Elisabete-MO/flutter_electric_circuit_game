@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import '../../../models/component_terminals.dart';
 import '../../../models/first_step_component.dart';
 
-/// Painter customizado que renderiza as conexões elétricas e fluxo de elétrons do Estande Ruas da Maquete.
+/// Painter customizado que renderiza o cenário de maquete urbana (asfalto, calçada, iluminação),
+/// conexões elétricas e fluxo animado de elétrons do Estande Ruas da Maquete.
 class RuasMaquetePainter extends CustomPainter {
   final int missionIndex;
   final double animValue;
@@ -21,6 +22,9 @@ class RuasMaquetePainter extends CustomPainter {
   final double lamp2X;
   final double socketX;
   final double socketRotation;
+  final bool bulb1Unscrewed;
+  final bool bulb2Unscrewed;
+  final double brightnessRatio;
 
   RuasMaquetePainter({
     required this.missionIndex,
@@ -38,10 +42,17 @@ class RuasMaquetePainter extends CustomPainter {
     required this.lamp2X,
     required this.socketX,
     required this.socketRotation,
+    this.bulb1Unscrewed = false,
+    this.bulb2Unscrewed = false,
+    this.brightnessRatio = 1.0,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (usePhysicalStyle) {
+      _drawStreetScenery(canvas, size);
+    }
+
     final wirePaint = Paint()
       ..color =
           usePhysicalStyle ? const Color(0xFF94A3B8) : const Color(0xFF64748B)
@@ -108,9 +119,7 @@ class RuasMaquetePainter extends CustomPainter {
     }
 
     void drawTerminalDot(Offset pos) {
-      if (usePhysicalStyle) {
-        return;
-      } else {
+      if (!usePhysicalStyle) {
         canvas.drawCircle(pos, 3.5, nodePaint);
       }
     }
@@ -194,7 +203,7 @@ class RuasMaquetePainter extends CustomPainter {
     final outerLeftX = lamp1X - offsetSpan;
     final outerRightX = lamp2X + offsetSpan;
 
-    // Determinar waypoints de saída de fiação baseados na rotação do soquete
+    // Waypoints de saída da fiação
     final List<Offset> posExitWaypoints;
     final List<Offset> negExitWaypoints;
 
@@ -237,10 +246,44 @@ class RuasMaquetePainter extends CustomPainter {
       negExitWaypoints = [Offset(batNegTerminal.dx, topLoopY), batNegTerminal];
     }
 
-    // Desenhar caminhos de fios conforme a missão
+    // -------------------------------------------------------------
+    // RENDERIZAÇÃO DAS CONEXÕES CONFORME A MISSÃO
+    // -------------------------------------------------------------
     if (missionIndex == 0) {
-      final isConnected = m1Connected;
+      // Missão 1: Primeiro Poste (Circuito Simples)
+      final isConnected = m1Connected && !bulb1Unscrewed;
       final currentPaint = isConnected ? activeWirePaint : wirePaint;
+
+      final path1 = makeFlexiblePath([
+        ...posExitWaypoints,
+        Offset(lamp1X - offsetSpan * 0.8, topLoopY),
+        Offset(lamp1X - offsetSpan * 0.8, lampY),
+        Offset(lamp1X - termOffset, lampY),
+      ]);
+
+      final pathReturn = makeFlexiblePath([
+        Offset(lamp1X + termOffset, lampY),
+        Offset(lamp1X + offsetSpan * 0.8, lampY),
+        Offset(lamp1X + offsetSpan * 0.8, topLoopY),
+        ...negExitWaypoints,
+      ]);
+
+      drawStyledPath(path1, currentPaint, isPositive: true);
+      drawStyledPath(pathReturn, currentPaint, isPositive: false);
+
+      drawTerminalDot(batPosTerminal);
+      drawTerminalDot(Offset(lamp1X - termOffset, lampY));
+      drawTerminalDot(Offset(lamp1X + termOffset, lampY));
+      drawTerminalDot(batNegTerminal);
+
+      if (isConnected) {
+        _drawElectronsOnPath(canvas, path1, electronPaint);
+        _drawElectronsOnPath(canvas, pathReturn, electronPaint);
+      }
+    } else if (missionIndex == 1) {
+      // Missão 2: Série (Dois Postes em Cadeia)
+      final isClosed = m2Series && !bulb1Unscrewed && !bulb2Unscrewed;
+      final currentPaint = isClosed ? activeWirePaint : wirePaint;
 
       final path1 = makeFlexiblePath([
         ...posExitWaypoints,
@@ -249,12 +292,12 @@ class RuasMaquetePainter extends CustomPainter {
         Offset(lamp1X - termOffset, lampY),
       ]);
 
-      final path2 = makeFlexiblePath([
+      final pathSeriesJumper = makeFlexiblePath([
         Offset(lamp1X + termOffset, lampY),
         Offset(lamp2X - termOffset, lampY),
       ]);
 
-      final path3 = makeFlexiblePath([
+      final pathReturn = makeFlexiblePath([
         Offset(lamp2X + termOffset, lampY),
         Offset(outerRightX, lampY),
         Offset(outerRightX, topLoopY),
@@ -262,9 +305,9 @@ class RuasMaquetePainter extends CustomPainter {
       ]);
 
       drawStyledPath(path1, currentPaint, isPositive: true);
-      drawStyledPath(path2, currentPaint,
+      drawStyledPath(pathSeriesJumper, currentPaint,
           customColor: const Color(0xFFD97706));
-      drawStyledPath(path3, currentPaint, isPositive: false);
+      drawStyledPath(pathReturn, currentPaint, isPositive: false);
 
       drawTerminalDot(batPosTerminal);
       drawTerminalDot(Offset(lamp1X - termOffset, lampY));
@@ -273,50 +316,13 @@ class RuasMaquetePainter extends CustomPainter {
       drawTerminalDot(Offset(lamp2X + termOffset, lampY));
       drawTerminalDot(batNegTerminal);
 
-      if (isConnected) {
-        _drawElectronsOnPath(canvas, path1, electronPaint);
-        _drawElectronsOnPath(canvas, path2, electronPaint);
-        _drawElectronsOnPath(canvas, path3, electronPaint);
-      }
-    } else if (missionIndex == 1) {
-      final path1 = makeFlexiblePath([
-        ...posExitWaypoints,
-        Offset(outerLeftX, topLoopY),
-        Offset(outerLeftX, lampY),
-        Offset(lamp1X - termOffset, lampY),
-      ]);
-
-      final path2 = makeFlexiblePath([
-        Offset(lamp1X + termOffset, lampY),
-        Offset(lamp2X - termOffset, lampY),
-      ]);
-
-      final path3 = makeFlexiblePath([
-        Offset(lamp2X + termOffset, lampY),
-        Offset(outerRightX, lampY),
-        Offset(outerRightX, topLoopY),
-        ...negExitWaypoints,
-      ]);
-
-      drawStyledPath(path1, activeWirePaint, isPositive: true);
-      drawStyledPath(path2, activeWirePaint,
-          customColor: const Color(0xFFD97706));
-      drawStyledPath(path3, m2Series ? activeWirePaint : wirePaint,
-          isPositive: false);
-
-      drawTerminalDot(batPosTerminal);
-      drawTerminalDot(Offset(lamp1X - termOffset, lampY));
-      drawTerminalDot(Offset(lamp1X + termOffset, lampY));
-      drawTerminalDot(Offset(lamp2X - termOffset, lampY));
-      drawTerminalDot(Offset(lamp2X + termOffset, lampY));
-      drawTerminalDot(batNegTerminal);
-
-      _drawElectronsOnPath(canvas, path1, electronPaint);
-      _drawElectronsOnPath(canvas, path2, electronPaint);
-      if (m2Series) {
-        _drawElectronsOnPath(canvas, path3, electronPaint);
+      if (isClosed) {
+        _drawElectronsOnPath(canvas, path1, electronPaint, speedMultiplier: 0.6);
+        _drawElectronsOnPath(canvas, pathSeriesJumper, electronPaint, speedMultiplier: 0.6);
+        _drawElectronsOnPath(canvas, pathReturn, electronPaint, speedMultiplier: 0.6);
       }
     } else if (missionIndex == 2) {
+      // Missão 3: O Nó da Esquina (Bifurcação em Paralelo de 2 ramos)
       final isBothActive = m3Junction && m3Return;
       final nodeY = lampY + 45.0;
 
@@ -373,13 +379,14 @@ class RuasMaquetePainter extends CustomPainter {
       drawTerminalDot(batNegTerminal);
 
       if (isBothActive) {
-        _drawElectronsOnPath(canvas, pathTrunkVcc, electronPaint);
-        _drawElectronsOnPath(canvas, pathBranchA, electronPaint);
-        _drawElectronsOnPath(canvas, pathBranchB, electronPaint);
-        _drawElectronsOnPath(canvas, pathReturnA, electronPaint);
-        _drawElectronsOnPath(canvas, pathReturnB, electronPaint);
+        _drawElectronsOnPath(canvas, pathTrunkVcc, electronPaint, count: 5);
+        _drawElectronsOnPath(canvas, pathBranchA, electronPaint, count: 3);
+        _drawElectronsOnPath(canvas, pathBranchB, electronPaint, count: 3);
+        _drawElectronsOnPath(canvas, pathReturnA, electronPaint, count: 3);
+        _drawElectronsOnPath(canvas, pathReturnB, electronPaint, count: 3);
       }
     } else if (missionIndex == 3 || missionIndex == 4) {
+      // Missão 4 e 5: Bairro Completo em 4 Ramos Paralelos
       final isActive = m4Parallel || missionIndex == 4;
       final currentPaint = isActive ? activeWirePaint : wirePaint;
       final topVccY = lampY - (size.height * 0.16).clamp(45.0, 75.0);
@@ -387,10 +394,10 @@ class RuasMaquetePainter extends CustomPainter {
       final vccGutterY = socketY - (size.height * 0.16).clamp(40.0, 70.0);
       final gndGutterY = socketY - (size.height * 0.12).clamp(30.0, 55.0);
 
-      final x1 = size.width * 0.18; // Poste 1
+      final x1 = size.width * 0.18; // Poste Alameda
       final x2 = size.width * 0.38; // Casa 1
       final x3 = size.width * 0.62; // Casa 2
-      final x4 = size.width * 0.82; // Poste 2
+      final x4 = size.width * 0.82; // Poste Avenida
 
       final busOffset = (size.width * 0.05).clamp(35.0, 60.0);
       final busOuterLeftX = x1 - busOffset;
@@ -458,14 +465,14 @@ class RuasMaquetePainter extends CustomPainter {
         batNegTerminal,
       ]);
 
+      final isBranch2Active = isActive && (!m5House1Broken || missionIndex != 4);
+
       drawStyledPath(pathVccMain, currentPaint, isPositive: true);
       drawStyledPath(pathVccBranch1, isActive ? activeWirePaint : wirePaint,
           isPositive: true);
       drawStyledPath(
           pathVccBranch2,
-          (isActive && (!m5House1Broken || missionIndex != 4))
-              ? activeWirePaint
-              : wirePaint,
+          isBranch2Active ? activeWirePaint : wirePaint,
           isPositive: true);
       drawStyledPath(pathVccBranch3, isActive ? activeWirePaint : wirePaint,
           isPositive: true);
@@ -476,9 +483,7 @@ class RuasMaquetePainter extends CustomPainter {
           isPositive: false);
       drawStyledPath(
           pathGndBranch2,
-          (isActive && (!m5House1Broken || missionIndex != 4))
-              ? activeWirePaint
-              : wirePaint,
+          isBranch2Active ? activeWirePaint : wirePaint,
           isPositive: false);
       drawStyledPath(pathGndBranch3, isActive ? activeWirePaint : wirePaint,
           isPositive: false);
@@ -509,28 +514,71 @@ class RuasMaquetePainter extends CustomPainter {
       drawTerminalDot(batNegTerminal);
 
       if (isActive) {
-        _drawElectronsOnPath(canvas, pathVccMain, electronPaint);
-        _drawElectronsOnPath(canvas, pathGndMain, electronPaint);
+        _drawElectronsOnPath(canvas, pathVccMain, electronPaint, count: 6);
+        _drawElectronsOnPath(canvas, pathGndMain, electronPaint, count: 6);
 
-        _drawElectronsOnPath(canvas, pathVccBranch1, electronPaint);
-        _drawElectronsOnPath(canvas, pathGndBranch1, electronPaint);
+        _drawElectronsOnPath(canvas, pathVccBranch1, electronPaint, count: 2);
+        _drawElectronsOnPath(canvas, pathGndBranch1, electronPaint, count: 2);
 
-        if (!m5House1Broken || missionIndex != 4) {
-          _drawElectronsOnPath(canvas, pathVccBranch2, electronPaint);
-          _drawElectronsOnPath(canvas, pathGndBranch2, electronPaint);
+        if (isBranch2Active) {
+          _drawElectronsOnPath(canvas, pathVccBranch2, electronPaint, count: 2);
+          _drawElectronsOnPath(canvas, pathGndBranch2, electronPaint, count: 2);
         }
 
-        _drawElectronsOnPath(canvas, pathVccBranch3, electronPaint);
-        _drawElectronsOnPath(canvas, pathGndBranch3, electronPaint);
+        _drawElectronsOnPath(canvas, pathVccBranch3, electronPaint, count: 2);
+        _drawElectronsOnPath(canvas, pathGndBranch3, electronPaint, count: 2);
 
-        _drawElectronsOnPath(canvas, pathVccBranch4, electronPaint);
-        _drawElectronsOnPath(canvas, pathGndBranch4, electronPaint);
+        _drawElectronsOnPath(canvas, pathVccBranch4, electronPaint, count: 2);
+        _drawElectronsOnPath(canvas, pathGndBranch4, electronPaint, count: 2);
       }
     }
   }
 
-  void _drawElectronsOnPath(Canvas canvas, Path path, Paint paint) {
+  /// Desenha a via asfáltica e a calçada de pedestres da maquete
+  void _drawStreetScenery(Canvas canvas, Size size) {
+    final streetTop = lampY - 32.0;
+    final streetHeight = 85.0;
+    final streetRect = Rect.fromLTWH(0, streetTop, size.width, streetHeight);
+
+    // 1. Asfalto urbano da maquete
+    final asphaltPaint = Paint()
+      ..color = const Color(0xFF1E293B).withValues(alpha: 0.65)
+      ..style = PaintingStyle.fill;
+    canvas.drawRect(streetRect, asphaltPaint);
+
+    // 2. Meio-fio / Calçada de concreto
+    final curbPaint = Paint()
+      ..color = const Color(0xFF94A3B8).withValues(alpha: 0.50)
+      ..strokeWidth = 3.0
+      ..style = PaintingStyle.stroke;
+    canvas.drawLine(
+        Offset(0, streetTop), Offset(size.width, streetTop), curbPaint);
+    canvas.drawLine(Offset(0, streetTop + streetHeight),
+        Offset(size.width, streetTop + streetHeight), curbPaint);
+
+    // 3. Faixa central amarela tracejada
+    final dashPaint = Paint()
+      ..color = const Color(0xFFF59E0B).withValues(alpha: 0.40)
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke;
+
+    final dashY = streetTop + streetHeight / 2;
+    double currentX = 12.0;
+    while (currentX < size.width) {
+      canvas.drawLine(
+        Offset(currentX, dashY),
+        Offset(math.min(currentX + 18.0, size.width), dashY),
+        dashPaint,
+      );
+      currentX += 32.0;
+    }
+  }
+
+  void _drawElectronsOnPath(Canvas canvas, Path path, Paint paint,
+      {double speedMultiplier = 1.0, int count = 3}) {
     final metrics = path.computeMetrics().toList();
+    final adjustedAnim = (animValue * speedMultiplier) % 1.0;
+
     if (usePhysicalStyle) {
       final glowPaint = Paint()
         ..color = const Color(0xFFFEF08A)
@@ -538,9 +586,8 @@ class RuasMaquetePainter extends CustomPainter {
 
       for (final metric in metrics) {
         final length = metric.length;
-        const count = 3;
         for (int i = 0; i < count; i++) {
-          final distance = (length * ((animValue + i / count) % 1.0));
+          final distance = (length * ((adjustedAnim + i / count) % 1.0));
           final tangent = metric.getTangentForOffset(distance);
           if (tangent != null) {
             canvas.drawCircle(tangent.position, 2.5, glowPaint);
@@ -552,9 +599,8 @@ class RuasMaquetePainter extends CustomPainter {
     } else {
       for (final metric in metrics) {
         final length = metric.length;
-        const count = 4;
         for (int i = 0; i < count; i++) {
-          final distance = (length * ((animValue + i / count) % 1.0));
+          final distance = (length * ((adjustedAnim + i / count) % 1.0));
           final tangent = metric.getTangentForOffset(distance);
           if (tangent != null) {
             canvas.drawCircle(tangent.position, 3.5, paint);
@@ -580,6 +626,9 @@ class RuasMaquetePainter extends CustomPainter {
         oldDelegate.lamp1X != lamp1X ||
         oldDelegate.lamp2X != lamp2X ||
         oldDelegate.socketX != socketX ||
-        oldDelegate.socketRotation != socketRotation;
+        oldDelegate.socketRotation != socketRotation ||
+        oldDelegate.bulb1Unscrewed != bulb1Unscrewed ||
+        oldDelegate.bulb2Unscrewed != bulb2Unscrewed ||
+        oldDelegate.brightnessRatio != brightnessRatio;
   }
 }

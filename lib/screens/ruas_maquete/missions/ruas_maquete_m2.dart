@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../models/circuit_action.dart';
 import '../../../models/first_step_component.dart';
 import '../../../models/stand_mission.dart';
+import '../../../services/circuit_solver/mission_circuit_builder.dart';
 import '../../../state/circuit_undo_redo_controller.dart';
 import '../../../widgets/circuit_symbol_painter.dart';
 import '../../../widgets/component_physical_painter.dart';
 import '../../../widgets/physical_blueprint_socket.dart';
-import '../../../widgets/prof_volts_feedback_dialog.dart';
 import '../../../widgets/schematic_blueprint_socket.dart';
+import '../../../widgets/prof_volts_feedback_dialog.dart';
 import '../../../widgets/success_confetti_overlay.dart';
 import '../../../widgets/workbench_components.dart';
 import '../../../widgets/workbench_sidebar_cards.dart';
@@ -17,7 +17,7 @@ import '../../../widgets/workbench_table_frame.dart';
 import '../widgets/ruas_maquete_painter.dart';
 import '../widgets/ruas_maquete_widgets.dart';
 
-/// Missão 2 do Estande 04 — Comparação de Brilho (1 vs 2 Lâmpadas em Série).
+/// Missão 2 do Estande 04 — O Dilema das Duas Lâmpadas em Série (Divisão de Tensão e Dependência).
 class RuasMaqueteM2 extends StatefulWidget {
   final VoidCallback onMissionComplete;
 
@@ -38,10 +38,17 @@ class _RuasMaqueteM2State extends State<RuasMaqueteM2>
 
   late AnimationController _electronAnimController;
   bool _usePhysicalStyle = true;
+  bool _isSimulating = false;
 
-  bool _m2IsSeriesTwoBulbs = false;
-  String? _m2SelectedExplanation;
+  bool _m2IsSeriesTwoBulbs = true;
+  bool _m2Bulb1Unscrewed = false;
+  bool _m2Bulb2Unscrewed = false;
   double _m2SecondaryBulbRotation = 0.0;
+
+  // 0 = Poste 1, 1 = Poste 2, 2 = Bateria Total
+  int _probeTargetIndex = 0;
+  bool _hasUsedVoltmeter = false;
+  bool _hasTestedUnscrew = false;
 
   @override
   void initState() {
@@ -56,6 +63,67 @@ class _RuasMaqueteM2State extends State<RuasMaqueteM2>
   void dispose() {
     _electronAnimController.dispose();
     super.dispose();
+  }
+
+  bool get _isClosed =>
+      _m2IsSeriesTwoBulbs && !_m2Bulb1Unscrewed && !_m2Bulb2Unscrewed;
+
+  double get _measuredVoltage {
+    if (!_isClosed) return 0.0;
+    switch (_probeTargetIndex) {
+      case 0:
+        return 2.25; // Poste 1
+      case 1:
+        return 2.25; // Poste 2
+      case 2:
+        return 4.50; // Total
+      default:
+        return 2.25;
+    }
+  }
+
+  String get _probeTargetName {
+    switch (_probeTargetIndex) {
+      case 0:
+        return 'Poste 1 (Alameda)';
+      case 1:
+        return 'Poste 2 (Avenida)';
+      case 2:
+        return 'Bateria Total (VCC)';
+      default:
+        return 'Poste 1';
+    }
+  }
+
+  void _switchProbeTarget() {
+    setState(() {
+      _probeTargetIndex = (_probeTargetIndex + 1) % 3;
+      _hasUsedVoltmeter = true;
+    });
+  }
+
+  void _toggleBulb1() {
+    final prev = _m2Bulb1Unscrewed;
+    _undoRedoController.execute(ToggleBoolAction(
+      description: prev ? 'Rosquear Poste 1' : 'Desrosquear Poste 1',
+      onApply: () => setState(() {
+        _m2Bulb1Unscrewed = !prev;
+        _hasTestedUnscrew = true;
+      }),
+      onUndo: () => setState(() => _m2Bulb1Unscrewed = prev),
+    ));
+  }
+
+  void _toggleBulb2() {
+    final prev = _m2Bulb2Unscrewed;
+    _undoRedoController.execute(ToggleBoolAction(
+      description: prev ? 'Rosquear Poste 2' : 'Desrosquear Poste 2',
+      onApply: () => setState(() {
+        _m2Bulb2Unscrewed = !prev;
+        _hasTestedUnscrew = true;
+      }),
+      onUndo: () => setState(() => _m2Bulb2Unscrewed = prev),
+    ));
   }
 
   void _insertComponent({
@@ -95,39 +163,67 @@ class _RuasMaqueteM2State extends State<RuasMaqueteM2>
     ));
   }
 
-  void _validate() {
-    bool isSuccess = false;
-    String feedbackMessage = _mission.failureFeedback;
+  Future<void> _validate() async {
+    if (_isSimulating) return;
+    setState(() => _isSimulating = true);
 
-    if (_m2SelectedExplanation == 'corrente_reduzida') {
-      isSuccess = true;
-    } else if (_m2SelectedExplanation == null) {
-      feedbackMessage =
-          'Selecione a explicação física sobre o motivo do brilho atenuado em série.';
-    } else {
-      feedbackMessage =
-          'Pense bem: no circuito em série, adicionar mais resistências reduz a corrente total.';
+    try {
+      bool isSuccess = false;
+      String feedbackMessage = _mission.failureFeedback;
+
+      if (!_m2IsSeriesTwoBulbs) {
+        feedbackMessage =
+            'Insira o segundo poste no soquete para analisar o comportamento em série!';
+      } else if (_m2Bulb1Unscrewed || _m2Bulb2Unscrewed) {
+        feedbackMessage =
+            'Você comprovou o efeito cascata: desrosquear uma lâmpada em série abre o circuito e apaga tudo! '
+            'Agora rosqueie as duas para medir a divisão de tensão e concluir a investigação.';
+      } else {
+        final result = await MissionCircuitBuilder()
+            .addBattery(id: 'bat1', voltage: 4.5)
+            .addBulb(id: 'bulb1', resistance: 10.0)
+            .addBulb(id: 'bulb2', resistance: 10.0)
+            .connect('bat1', 'B', 'bulb1', 'A')
+            .connect('bulb1', 'B', 'bulb2', 'A')
+            .connect('bulb2', 'B', 'bat1', 'A')
+            .simulate();
+
+        if (result.hasClosedLoop && result.errorMessage == null) {
+          final currentMa = result.current * 1000;
+          feedbackMessage =
+              'Investigação em Série Concluída! Ambas as lâmpadas dividem a tensão da fonte (2.25V cada) '
+              'e a corrente caiu para ${currentMa.toStringAsFixed(1)}mA, gerando apenas 35% de brilho. '
+              'Por isso bairros e cidades nunca usam ligação em série!';
+          isSuccess = true;
+        } else {
+          feedbackMessage = result.errorMessage ?? 'Erro na montagem em série.';
+        }
+      }
+
+      final fullMessage = isSuccess
+          ? 'Missão "${_mission.title}" concluída com êxito! ${_mission.victoryCriteria}.\n\nProf. Volts: "${_mission.voltsMediation}"'
+          : '$feedbackMessage\n\nProf. Volts: "${_mission.voltsMediation}"';
+
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => ProfVoltsFeedbackDialog(
+            isCorrect: isSuccess,
+            message: fullMessage,
+            onAction: () {
+              Navigator.of(context).pop();
+              if (isSuccess) {
+                showSuccessConfetti(context);
+                widget.onMissionComplete();
+              }
+            },
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSimulating = false);
     }
-
-    final fullMessage = isSuccess
-        ? 'Missão "${_mission.title}" concluída com êxito! ${_mission.victoryCriteria}.\n\nProf. Volts: "${_mission.voltsMediation}"'
-        : '$feedbackMessage\n\nProf. Volts: "${_mission.voltsMediation}"';
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => ProfVoltsFeedbackDialog(
-        isCorrect: isSuccess,
-        message: fullMessage,
-        onAction: () {
-          Navigator.of(context).pop();
-          if (isSuccess) {
-            showSuccessConfetti(context);
-            widget.onMissionComplete();
-          }
-        },
-      ),
-    );
   }
 
   @override
@@ -136,11 +232,11 @@ class _RuasMaqueteM2State extends State<RuasMaqueteM2>
       workbench: WorkbenchTableFrame(
         usePhysicalStyle: _usePhysicalStyle,
         onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
-        leftHeaderWidget: buildRuasMaqueteStatusCard(true),
+        leftHeaderWidget: buildRuasMaqueteStatusCard(_isClosed),
         rightHeaderWidget: buildRuasMaqueteTelemetryCard(
-          4.5,
-          _m2IsSeriesTwoBulbs ? 45.0 : 90.0,
-          true,
+          _isClosed ? 4.5 : 0.0,
+          _isClosed ? 45.0 : 0.0,
+          _isClosed,
         ),
         bottomWidget: _buildUndoRedoButtons(),
         voltsTip: _mission.voltsMediation,
@@ -148,8 +244,8 @@ class _RuasMaqueteM2State extends State<RuasMaqueteM2>
           builder: (context, constraints) {
             final w = constraints.maxWidth;
             final h = constraints.maxHeight;
-            final lampY = h * 0.28;
-            final socketY = h * 0.80;
+            final lampY = h * 0.32;
+            final socketY = h * 0.78;
             final lamp1X = w * 0.34;
             final lamp2X = w * 0.66;
             final socketX = w * 0.50;
@@ -178,6 +274,9 @@ class _RuasMaqueteM2State extends State<RuasMaqueteM2>
                           lamp2X: lamp2X,
                           socketX: socketX,
                           socketRotation: 0.0,
+                          bulb1Unscrewed: _m2Bulb1Unscrewed,
+                          bulb2Unscrewed: _m2Bulb2Unscrewed,
+                          brightnessRatio: _isClosed ? 0.35 : 0.0,
                         ),
                       );
                     },
@@ -192,21 +291,29 @@ class _RuasMaqueteM2State extends State<RuasMaqueteM2>
                   w: w,
                   h: h,
                 ),
+                // Mini-Voltímetro interativo na bancada
+                Positioned(
+                  left: 14,
+                  bottom: 14,
+                  child: buildRuasMaqueteVoltmeterProbe(
+                    measuredVoltage: _measuredVoltage,
+                    targetLabel: _probeTargetName,
+                    onSwitchTarget: _switchProbeTarget,
+                  ),
+                ),
               ],
             );
           },
         ),
       ),
       sidePanel: WorkbenchSidePanel(
-        teamTitle: 'Painel da Equipe Bairro',
+        teamTitle: 'Laboratório Urbano',
         showTeamHeader: false,
         buttonColor: const Color(0xFF059669),
         toolboxItems: [
           _buildMissionObjectiveCard(),
           const SizedBox(height: 12),
           _buildInvestigationStepperCard(),
-          const SizedBox(height: 12),
-          _buildSideTools(),
         ],
         onEnergizePressed: _validate,
       ),
@@ -229,67 +336,65 @@ class _RuasMaqueteM2State extends State<RuasMaqueteM2>
       Positioned(
         left: lamp1X - compW / 2,
         top: lampY - compH / 2,
-        child: buildRuasMaqueteLampSymbol(
-          isLit: true,
-          brightnessRatio: _m2IsSeriesTwoBulbs ? 0.5 : 1.0,
+        child: buildRuasMaqueteInteractiveLamp(
+          label: 'Poste 1 (Alameda)',
+          isLit: _isClosed,
+          brightnessRatio: _isClosed ? 0.35 : 0.0,
           usePhysicalStyle: _usePhysicalStyle,
+          isUnscrewed: _m2Bulb1Unscrewed,
+          onToggleUnscrew: _toggleBulb1,
+          probeVoltageText: _probeTargetIndex == 0 ? '${_measuredVoltage}V' : null,
           width: compW,
           height: compH,
-        ),
-      ),
-      Positioned(
-        left: lamp1X - 85,
-        top: lampY + compH / 2 + 6,
-        width: 170,
-        child: Center(
-          child: buildRuasMaqueteLabelBadge(
-            'Poste Principal (${_m2IsSeriesTwoBulbs ? "50%" : "100%"})',
-          ),
         ),
       ),
       Positioned(
         left: lamp2X - compW / 2,
         top: lampY - compH / 2,
-        child: buildRuasMaqueteSocketTile(
-          width: compW,
-          height: compH,
-          expectedData: 'bulb',
-          isFilled: _m2IsSeriesTwoBulbs,
-          symbolType: ComponentType.bulb,
-          label: 'Poste Secundário',
-          brightnessRatio: 0.5,
-          usePhysicalStyle: _usePhysicalStyle,
-          rotation: _m2SecondaryBulbRotation,
-          onRotate: () => _rotateComponent(
-            name: 'Poste Secundário',
-            getRotation: () => _m2SecondaryBulbRotation,
-            setRotation: (v) => _m2SecondaryBulbRotation = v,
-          ),
-          onAccept: () => _insertComponent(
-            name: 'Poste Secundário',
-            getInserted: () => _m2IsSeriesTwoBulbs,
-            setInserted: (v) => _m2IsSeriesTwoBulbs = v,
-            getRotation: () => _m2SecondaryBulbRotation,
-            setRotation: (v) => _m2SecondaryBulbRotation = v,
-          ),
-          onTap: () => _insertComponent(
-            name: 'Poste Secundário',
-            getInserted: () => _m2IsSeriesTwoBulbs,
-            setInserted: (v) => _m2IsSeriesTwoBulbs = v,
-            getRotation: () => _m2SecondaryBulbRotation,
-            setRotation: (v) => _m2SecondaryBulbRotation = v,
-          ),
-        ),
+        child: _m2IsSeriesTwoBulbs
+            ? buildRuasMaqueteInteractiveLamp(
+                label: 'Poste 2 (Avenida)',
+                isLit: _isClosed,
+                brightnessRatio: _isClosed ? 0.35 : 0.0,
+                usePhysicalStyle: _usePhysicalStyle,
+                isUnscrewed: _m2Bulb2Unscrewed,
+                onToggleUnscrew: _toggleBulb2,
+                probeVoltageText:
+                    _probeTargetIndex == 1 ? '${_measuredVoltage}V' : null,
+                width: compW,
+                height: compH,
+              )
+            : buildRuasMaqueteSocketTile(
+                width: compW,
+                height: compH,
+                expectedData: 'bulb',
+                isFilled: false,
+                symbolType: ComponentType.bulb,
+                label: 'Encaixe do Poste 2',
+                brightnessRatio: 0.35,
+                usePhysicalStyle: _usePhysicalStyle,
+                rotation: _m2SecondaryBulbRotation,
+                onRotate: () => _rotateComponent(
+                  name: 'Poste 2',
+                  getRotation: () => _m2SecondaryBulbRotation,
+                  setRotation: (v) => _m2SecondaryBulbRotation = v,
+                ),
+                onAccept: () => _insertComponent(
+                  name: 'Poste 2',
+                  getInserted: () => _m2IsSeriesTwoBulbs,
+                  setInserted: (v) => _m2IsSeriesTwoBulbs = v,
+                  getRotation: () => _m2SecondaryBulbRotation,
+                  setRotation: (v) => _m2SecondaryBulbRotation = v,
+                ),
+                onTap: () => _insertComponent(
+                  name: 'Poste 2',
+                  getInserted: () => _m2IsSeriesTwoBulbs,
+                  setInserted: (v) => _m2IsSeriesTwoBulbs = v,
+                  getRotation: () => _m2SecondaryBulbRotation,
+                  setRotation: (v) => _m2SecondaryBulbRotation = v,
+                ),
+              ),
       ),
-      if (_m2IsSeriesTwoBulbs)
-        Positioned(
-          left: lamp2X - 85,
-          top: lampY + compH / 2 + 6,
-          width: 170,
-          child: Center(
-            child: buildRuasMaqueteLabelBadge('Poste 2 em Série (50%)'),
-          ),
-        ),
       Positioned(
         left: socketX - compW / 2,
         top: socketY - compH / 2,
@@ -334,96 +439,6 @@ class _RuasMaqueteM2State extends State<RuasMaqueteM2>
           );
   }
 
-  Widget _buildSideTools() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Pergunta de Investigação Física:',
-          style: GoogleFonts.rajdhani(
-            color: const Color(0xFFD97706),
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Por que o brilho dos dois postes diminuiu ao ligá-los no mesmo caminho em série?',
-          style: GoogleFonts.rajdhani(
-            color: const Color(0xFF0F172A),
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 12),
-        _buildExplanationOption(
-          id: 'corrente_reduzida',
-          text:
-              'Porque a corrente elétrica encontrou duas resistências na mesma rota, reduzindo a corrente disponível para cada lâmpada.',
-        ),
-        _buildExplanationOption(
-          id: 'bateria_esgotada',
-          text:
-              'Porque a bateria perdeu toda a sua energia instantaneamente ao acender o segundo poste.',
-        ),
-        _buildExplanationOption(
-          id: 'mais_energia',
-          text:
-              'Porque ligar postes em série gera mais energia do que a fonte original fornece.',
-        ),
-      ],
-    );
-  }
-
-  Widget _buildExplanationOption({required String id, required String text}) {
-    final isSelected = _m2SelectedExplanation == id;
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _m2SelectedExplanation = id;
-        });
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFEFF6FF) : Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: isSelected
-                ? const Color(0xFF0284C7)
-                : const Color(0xFFCBD5E1),
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
-              color: isSelected
-                  ? const Color(0xFF0284C7)
-                  : const Color(0xFF94A3B8),
-              size: 20,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                text,
-                style: GoogleFonts.rajdhani(
-                  color: isSelected
-                      ? const Color(0xFF0F172A)
-                      : const Color(0xFF475569),
-                  fontSize: 13,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildUndoRedoButtons() {
     return Container(
       decoration: BoxDecoration(
@@ -462,14 +477,16 @@ class _RuasMaqueteM2State extends State<RuasMaqueteM2>
 
   int get _currentStepperIndex {
     if (!_m2IsSeriesTwoBulbs) return 0;
-    if (_m2SelectedExplanation == null) return 1;
-    return 2;
+    if (!_hasUsedVoltmeter) return 1;
+    if (!_hasTestedUnscrew) return 2;
+    return 3;
   }
 
   bool _isStepCompleted(int index) {
     if (index == 0) return _m2IsSeriesTwoBulbs;
-    if (index == 1) return _m2IsSeriesTwoBulbs;
-    if (index == 2) return _m2SelectedExplanation != null;
+    if (index == 1) return _hasUsedVoltmeter;
+    if (index == 2) return _hasTestedUnscrew;
+    if (index == 3) return _isClosed;
     return false;
   }
 
@@ -485,13 +502,14 @@ class _RuasMaqueteM2State extends State<RuasMaqueteM2>
 
   Widget _buildInvestigationStepperCard() {
     return WorkbenchInvestigationStepperCard(
-      title: 'Progresso do experimento',
+      title: 'Roteiro de Investigação Experimental',
       currentStepIndex: _currentStepperIndex,
       isStepCompleted: _isStepCompleted,
       steps: const [
-        'Conectar segunda lâmpada em série',
-        'Comparar intensidade de brilho',
-        'Registrar explicação científica',
+        'Conectar segundo poste em série',
+        'Medir queda de tensão (2.25V no voltímetro)',
+        'Tocar no poste para testar o efeito cascata',
+        'Comprovar por que cidades evitam série',
       ],
     );
   }

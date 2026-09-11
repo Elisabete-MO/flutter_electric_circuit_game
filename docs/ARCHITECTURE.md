@@ -377,7 +377,7 @@ No estado atual da suíte de testes:
 
 | Métrica           | Estado         |
 | ----------------- | -------------- |
-| Arquivos de teste | 18             |
+| Arquivos de teste | 19             |
 | `flutter test`    | Todos passando |
 | Cobertura de Responsividade | Suíte dedicada com 12 resoluções para SplashScreen, MainMenuScreen e IntroScreen |
 
@@ -385,7 +385,7 @@ A suíte cobre atualmente partes reais do sistema, incluindo:
 
 * `CircuitValidator`;
 * fluxo `second_bench` (fases 1, 2 e 3);
-* missões guiadas selecionadas (`liga_desliga`, `letreros_led`, `movimento_miniatura`, `circuito_seguro`, `first_steps`);
+* missões guiadas selecionadas (`liga_desliga`, `ruas_maquete`, `letreros_led`, `movimento_miniatura`, `circuito_seguro`, `first_steps`);
 * geometria/alinhamento de terminais e sockets;
 * navegação e widgets principais (`SplashScreen`, `MainMenuScreen`, `IntroScreen`);
 * responsividade de interface e bancada de trabalho (`Workbench`, `UiScale`);
