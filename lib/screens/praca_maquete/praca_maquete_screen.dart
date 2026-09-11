@@ -6,22 +6,21 @@ import '../../state/progress_controller.dart';
 import '../../widgets/glass_container.dart';
 import '../common_stand/stand_flow_header.dart';
 import '../common_stand/stand_flow_state.dart';
-import 'missions/horta_monitorada_m1.dart';
-import 'missions/horta_monitorada_m2.dart';
-import 'missions/horta_monitorada_m3.dart';
-import 'missions/horta_monitorada_m4.dart';
-import 'missions/horta_monitorada_m5.dart';
+import 'missions/praca_maquete_m1.dart';
+import 'missions/praca_maquete_m2.dart';
+import 'missions/praca_maquete_m3.dart';
+import 'missions/praca_maquete_m4.dart';
+import 'missions/praca_maquete_m5.dart';
 
-/// Coordenador do fluxo de missões do Estande 09 — Horta Monitorada (Equipe Bio-Tech).
-class HortaMonitoradaScreen extends ConsumerStatefulWidget {
-  const HortaMonitoradaScreen({super.key});
+/// Coordenador do fluxo de missões do Estande 11 — Praça da Maquete Coletiva (Equipe Urbana).
+class PracaMaqueteScreen extends ConsumerStatefulWidget {
+  const PracaMaqueteScreen({super.key});
 
   @override
-  ConsumerState<HortaMonitoradaScreen> createState() =>
-      _HortaMonitoradaScreenState();
+  ConsumerState<PracaMaqueteScreen> createState() => _PracaMaqueteScreenState();
 }
 
-class _HortaMonitoradaScreenState extends ConsumerState<HortaMonitoradaScreen> {
+class _PracaMaqueteScreenState extends ConsumerState<PracaMaqueteScreen> {
   StandFlowState _flowState = StandFlowState.initial(totalMissions: 5);
 
   void _onMissionCompleted(int missionNumber) {
@@ -33,10 +32,10 @@ class _HortaMonitoradaScreenState extends ConsumerState<HortaMonitoradaScreen> {
     if (missionNumber == 5) {
       ref
           .read(progressControllerProvider.notifier)
-          .markAsCompleted('estande9', stars: 3);
+          .markAsCompleted('estande11', stars: 3);
       ref
           .read(progressControllerProvider.notifier)
-          .markAsCompleted('horta_monitorada', stars: 3);
+          .markAsCompleted('praca_maquete', stars: 3);
       _showCompletionDialog();
     }
   }
@@ -59,31 +58,31 @@ class _HortaMonitoradaScreenState extends ConsumerState<HortaMonitoradaScreen> {
           constraints: const BoxConstraints(maxWidth: 480),
           child: GlassContainer(
             borderRadius: 24,
-            accentColor: const Color(0xFF16A34A),
+            accentColor: const Color(0xFF8B5CF6),
             padding: const EdgeInsets.all(28),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Icon(
-                  Icons.eco_rounded,
-                  color: Color(0xFF16A34A),
+                  Icons.location_city_rounded,
+                  color: Color(0xFF8B5CF6),
                   size: 64,
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'ESTANDE 09 CONCLUÍDO!',
+                  'FEIRA DE CIÊNCIAS COMPLETA!',
                   style: TextStyle(
                     fontFamily: GoogleFonts.rajdhani().fontFamily,
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFF16A34A),
+                    color: const Color(0xFF8B5CF6),
                     letterSpacing: 1.2,
                   ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Parabéns! A Equipe Bio-Tech dominou a automação agrícola: divisor de tensão com potenciômetro, sensoriamento com LDR, acionamento de LED Grow Light e reserva com capacitor!',
+                  'A Maquete Coletiva Alpha Lumen está totalmente energizada e integrada! Parabéns à Equipe Urbana e a todos os alunos que participaram da feira!',
                   style: TextStyle(
                     fontFamily: GoogleFonts.outfit().fontFamily,
                     fontSize: 15,
@@ -105,7 +104,7 @@ class _HortaMonitoradaScreenState extends ConsumerState<HortaMonitoradaScreen> {
                     ),
                   ),
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF16A34A),
+                    backgroundColor: const Color(0xFF8B5CF6),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -146,8 +145,8 @@ class _HortaMonitoradaScreenState extends ConsumerState<HortaMonitoradaScreen> {
             child: Column(
               children: [
                 StandFlowHeader(
-                  standName: 'HORTA MONITORADA',
-                  standNumber: 9,
+                  standName: 'PRAÇA DA MAQUETE',
+                  standNumber: 11,
                   currentMissionNumber: _flowState.currentMissionNumber,
                   completedMissionNumbers: _flowState.completedMissionNumbers,
                   unlockedMissionNumbers: _flowState.unlockedMissionNumbers,
@@ -174,23 +173,23 @@ class _HortaMonitoradaScreenState extends ConsumerState<HortaMonitoradaScreen> {
 
   Widget _buildCurrentMissionWidget() {
     return switch (_flowState.currentMissionNumber) {
-      1 => HortaMonitoradaM1(
+      1 => PracaMaqueteM1(
           key: const ValueKey(1),
           onMissionComplete: () => _onMissionCompleted(1),
         ),
-      2 => HortaMonitoradaM2(
+      2 => PracaMaqueteM2(
           key: const ValueKey(2),
           onMissionComplete: () => _onMissionCompleted(2),
         ),
-      3 => HortaMonitoradaM3(
+      3 => PracaMaqueteM3(
           key: const ValueKey(3),
           onMissionComplete: () => _onMissionCompleted(3),
         ),
-      4 => HortaMonitoradaM4(
+      4 => PracaMaqueteM4(
           key: const ValueKey(4),
           onMissionComplete: () => _onMissionCompleted(4),
         ),
-      5 => HortaMonitoradaM5(
+      5 => PracaMaqueteM5(
           key: const ValueKey(5),
           onMissionComplete: () => _onMissionCompleted(5),
         ),

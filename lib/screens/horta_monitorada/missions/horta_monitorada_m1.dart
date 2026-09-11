@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../models/circuit_action.dart';
+import '../../../state/circuit_undo_redo_controller.dart';
 import '../../../widgets/prof_volts_feedback_dialog.dart';
 import '../../../widgets/success_confetti_overlay.dart';
 import '../../../widgets/workbench_components.dart';
 import '../../../widgets/workbench_table_frame.dart';
+import '../widgets/horta_monitorada_painter.dart';
 import '../widgets/horta_monitorada_widgets.dart';
-import '../widgets/horta_split_view.dart';
 
-/// Missão 01 — Luz de Cultivo: Ajustar a intensidade luminosa ideal com o potenciômetro.
+/// Missão 01 — Brilho Ajustável: Regular o potenciômetro para iluminação ideal da estufa
 class HortaMonitoradaM1 extends StatefulWidget {
   final VoidCallback onMissionComplete;
 
@@ -24,10 +26,11 @@ class HortaMonitoradaM1 extends StatefulWidget {
 class _HortaMonitoradaM1State extends State<HortaMonitoradaM1>
     with SingleTickerProviderStateMixin {
   late final AnimationController _animController;
+  final CircuitUndoRedoController _undoRedoController =
+      CircuitUndoRedoController();
 
   bool _usePhysicalStyle = true;
-  bool _isSwitchClosed = true;
-  double _potentiometer = 0.35; // Começa subalimentado
+  double _potPercent = 20.0; // Inicia baixo (subiluminado)
 
   @override
   void initState() {
@@ -44,17 +47,26 @@ class _HortaMonitoradaM1State extends State<HortaMonitoradaM1>
     super.dispose();
   }
 
-  bool get _isIntensityOptimal => _isSwitchClosed && _potentiometer >= 0.70 && _potentiometer <= 0.95;
+  bool get _isIdealRange => _potPercent >= 40.0 && _potPercent <= 80.0;
+
+  void _onPotChanged(double value) {
+    final prev = _potPercent;
+    _undoRedoController.execute(
+      UpdateValueAction(
+        description: 'Ajustar Potenciômetro para ${value.toStringAsFixed(0)}%',
+        onApply: () => setState(() => _potPercent = value),
+        onUndo: () => setState(() => _potPercent = prev),
+      ),
+    );
+  }
 
   void _validate() {
-    final isSuccess = _isIntensityOptimal;
+    final isSuccess = _isIdealRange;
     final message = isSuccess
-        ? 'Excelente calibração! O LED Grow está na faixa perfeita de 70% a 95% de luminosidade, proporcionando a energia ideal para a fotossíntese sem sobreaquecimento!'
-        : (!_isSwitchClosed
-            ? 'A chave de alimentação está aberta! Feche o circuito para energizar a calha de LED.'
-            : (_potentiometer < 0.70
-                ? 'Luz insuficiente para as mudas! Aumente o potenciômetro para elevar a corrente do LED.'
-                : 'Intensidade muito alta! Reduza um pouco o potenciômetro para proteger o LED e não queimar as folhas.'));
+        ? 'Perfeito! Com o potenciômetro entre 40% e 80%, as mudas recebem fótons suficientes para fotossíntese sem risco de estresse térmico!'
+        : (_potPercent < 40.0
+            ? 'Atenção! A iluminação está muito fraca (< 40%). As plantas não farão fotossíntese adequada.'
+            : 'Cuidado! A intensidade do LED está muito alta (> 80%), consumindo energia em excesso e aquecendo a estufa!');
 
     showDialog(
       context: context,
@@ -75,36 +87,42 @@ class _HortaMonitoradaM1State extends State<HortaMonitoradaM1>
 
   @override
   Widget build(BuildContext context) {
-    final lightPercent = _isSwitchClosed ? (_potentiometer * 100) : 0.0;
-    final currentMa = _isSwitchClosed ? (_potentiometer * 35.0) : 0.0;
+    final status = _potPercent < 40.0
+        ? HortaState.tooDim
+        : (_potPercent > 80.0 ? HortaState.tooBright : HortaState.ideal);
+
+    final brightness = (_potPercent / 100.0).clamp(0.0, 1.0);
 
     return WorkbenchResponsiveLayout(
       workbench: WorkbenchTableFrame(
         usePhysicalStyle: _usePhysicalStyle,
         onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
-        leftHeaderWidget: HortaStatusCard(
-          statusText: _isIntensityOptimal
-              ? 'LUMINOSIDADE ÓTIMA'
-              : (_potentiometer < 0.70 ? 'LUZ FRACA' : 'LUZ EXCESSIVA'),
-          isHealthy: _isIntensityOptimal,
-          icon: Icons.light_mode_rounded,
-        ),
+        leftHeaderWidget: HortaStatusCard(state: status),
         rightHeaderWidget: HortaTelemetryCard(
-          voltage: _isSwitchClosed ? 9.0 : 0.0,
-          currentMa: currentMa,
-          lightPercent: lightPercent,
-          moisturePercent: 70.0,
-          temperatureC: 23.5,
+          potPercent: _potPercent,
+          ledBrightnessPercent: _potPercent,
+          luxPercent: 100.0,
+          voltage: 5.0,
+        ),
+        bottomWidget: HortaUndoRedoButtons(
+          controller: _undoRedoController,
+          onUndo: () => setState(() => _undoRedoController.undo()),
+          onRedo: () => setState(() => _undoRedoController.redo()),
         ),
         child: AnimatedBuilder(
           animation: _animController,
           builder: (context, child) {
-            return HortaSplitView(
-              missionIndex: 0,
-              animValue: _animController.value,
-              usePhysicalStyle: _usePhysicalStyle,
-              isSwitchClosed: _isSwitchClosed,
-              potentiometerValue: _potentiometer,
+            return CustomPaint(
+              painter: HortaMonitoradaPainter(
+                missionIndex: 0,
+                animValue: _animController.value,
+                usePhysicalStyle: _usePhysicalStyle,
+                potPercent: _potPercent,
+                luxPercent: 100.0,
+                isLedOn: true,
+                ledBrightness: brightness,
+                isCircuitEnergized: true,
+              ),
             );
           },
         ),
@@ -112,13 +130,13 @@ class _HortaMonitoradaM1State extends State<HortaMonitoradaM1>
       sidePanel: WorkbenchSidePanel(
         teamTitle: 'Equipe Bio-Tech',
         showTeamHeader: false,
-        buttonColor: const Color(0xFF10B981),
+        buttonColor: const Color(0xFF16A34A),
         toolboxItems: [
           _buildObjectiveCard(),
           const SizedBox(height: 12),
-          _buildControlsCard(),
+          _buildInvestigationStepper(),
           const SizedBox(height: 12),
-          _buildChecklistCard(),
+          _buildToolboxControls(),
         ],
         onEnergizePressed: _validate,
       ),
@@ -137,7 +155,7 @@ class _HortaMonitoradaM1State extends State<HortaMonitoradaM1>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Missão 1 · Luz de Cultivo',
+            'Missão 1 · Brilho Ajustável',
             style: GoogleFonts.rajdhani(
               color: Colors.white,
               fontSize: 16,
@@ -146,7 +164,7 @@ class _HortaMonitoradaM1State extends State<HortaMonitoradaM1>
           ),
           const SizedBox(height: 4),
           Text(
-            'Ligue a chave de alimentação e ajuste o potenciômetro entre 70% e 95% para atingir a luminosidade ideal da estufa.',
+            'Use o potenciômetro como divisor de tensão para regular a intensidade do LED de cultivo na faixa ideal das plantas (40% a 80%).',
             style: GoogleFonts.rajdhani(
               color: const Color(0xFF94A3B8),
               fontSize: 13,
@@ -157,7 +175,7 @@ class _HortaMonitoradaM1State extends State<HortaMonitoradaM1>
     );
   }
 
-  Widget _buildControlsCard() {
+  Widget _buildInvestigationStepper() {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -168,72 +186,32 @@ class _HortaMonitoradaM1State extends State<HortaMonitoradaM1>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  'Alimentação 9V:',
-                  style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
-                ),
-              ),
-              Switch(
-                value: _isSwitchClosed,
-                activeThumbColor: const Color(0xFF10B981),
-                onChanged: (val) => setState(() => _isSwitchClosed = val),
-              ),
-            ],
+          Text(
+            'Checklist de Cultivo:',
+            style: GoogleFonts.rajdhani(
+              color: const Color(0xFF38BDF8),
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 8),
-          Text(
-            'Potenciômetro (${(_potentiometer * 100).toInt()}%):',
-            style: GoogleFonts.rajdhani(color: const Color(0xFF38BDF8), fontSize: 13, fontWeight: FontWeight.bold),
-          ),
-          Slider(
-            value: _potentiometer,
-            min: 0.0,
-            max: 1.0,
-            activeColor: const Color(0xFF38BDF8),
-            onChanged: (val) => setState(() => _potentiometer = val),
-          ),
+          _buildStepRow(1, 'Girar dial do potenciômetro', _potPercent != 20.0),
+          _buildStepRow(2, 'Observar feixe de luz sobre as mudas', true),
+          _buildStepRow(3, 'Atingir zona ideal (40% - 80%)', _isIdealRange),
         ],
       ),
     );
   }
 
-  Widget _buildChecklistCard() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F172A),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF334155)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Checklist de Validação:',
-            style: GoogleFonts.rajdhani(color: const Color(0xFF38BDF8), fontSize: 13, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 6),
-          _buildCheckItem('Chave geral fechada (ON)', _isSwitchClosed),
-          _buildCheckItem('Intensidade no alvo (70% - 95%)', _isIntensityOptimal),
-          _buildCheckItem('Calha LED iluminando o canteiro', _isSwitchClosed && _potentiometer > 0.1),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCheckItem(String label, bool isDone) {
+  Widget _buildStepRow(int step, String label, bool isDone) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2.5),
+      padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         children: [
           Icon(
             isDone ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
             color: isDone ? const Color(0xFF10B981) : const Color(0xFF64748B),
-            size: 15,
+            size: 16,
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -242,6 +220,70 @@ class _HortaMonitoradaM1State extends State<HortaMonitoradaM1>
               style: GoogleFonts.rajdhani(
                 color: isDone ? Colors.white : const Color(0xFF64748B),
                 fontSize: 12,
+                fontWeight: isDone ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToolboxControls() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF334155)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Ajuste do Potenciômetro:',
+                  style: GoogleFonts.rajdhani(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              Text(
+                '${_potPercent.toStringAsFixed(0)}%',
+                style: GoogleFonts.rajdhani(
+                  color: _isIdealRange ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+              ),
+            ],
+          ),
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: const Color(0xFF10B981),
+              inactiveTrackColor: const Color(0xFF334155),
+              thumbColor: const Color(0xFF22C55E),
+              overlayColor: const Color(0xFF10B981).withValues(alpha: 0.2),
+            ),
+            child: Slider(
+              value: _potPercent,
+              min: 0.0,
+              max: 100.0,
+              divisions: 20,
+              onChanged: _onPotChanged,
+            ),
+          ),
+          Center(
+            child: Text(
+              _isIdealRange ? '✓ FAIXA IDEAL BIO-TECH' : 'Faixa recomendada: 40% a 80%',
+              style: GoogleFonts.rajdhani(
+                color: _isIdealRange ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),

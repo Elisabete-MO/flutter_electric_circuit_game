@@ -7,31 +7,33 @@ import '../../../widgets/prof_volts_feedback_dialog.dart';
 import '../../../widgets/success_confetti_overlay.dart';
 import '../../../widgets/workbench_components.dart';
 import '../../../widgets/workbench_table_frame.dart';
-import '../widgets/horta_monitorada_painter.dart';
-import '../widgets/horta_monitorada_widgets.dart';
+import '../widgets/portao_escola_painter.dart';
+import '../widgets/portao_escola_widgets.dart';
 
-/// Missão 03 — Luz da Estufa: Integrar sensor LDR ao LED para automação noturna
-class HortaMonitoradaM3 extends StatefulWidget {
+/// Missão 05 — Botão do Visitante: Botoeira industrial completa com abertura e parada de emergência
+class PortaoEscolaM5 extends StatefulWidget {
   final VoidCallback onMissionComplete;
 
-  const HortaMonitoradaM3({
+  const PortaoEscolaM5({
     super.key,
     required this.onMissionComplete,
   });
 
   @override
-  State<HortaMonitoradaM3> createState() => _HortaMonitoradaM3State();
+  State<PortaoEscolaM5> createState() => _PortaoEscolaM5State();
 }
 
-class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
+class _PortaoEscolaM5State extends State<PortaoEscolaM5>
     with SingleTickerProviderStateMixin {
   late final AnimationController _animController;
   final CircuitUndoRedoController _undoRedoController =
       CircuitUndoRedoController();
 
   bool _usePhysicalStyle = true;
-  bool _isAutoModeEnabled = false;
-  double _luxPercent = 20.0; // Inicia em período noturno
+  bool _isOpenCommandActive = false;
+  bool _isEmergencyStopActive = false;
+  bool _hasTestedOpen = false;
+  bool _hasTestedEmergency = false;
 
   @override
   void initState() {
@@ -48,31 +50,49 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
     super.dispose();
   }
 
-  bool get _isNight => _luxPercent <= 30.0;
-  bool get _isLedActive => _isAutoModeEnabled && _isNight;
+  bool get _isCoilEnergized => _isOpenCommandActive && !_isEmergencyStopActive;
+  bool get _isBothTested => _hasTestedOpen && _hasTestedEmergency;
 
-  void _toggleAutoMode() {
-    final prev = _isAutoModeEnabled;
+  void _pressOpenButton() {
+    final prev = _isOpenCommandActive;
     _undoRedoController.execute(
       ToggleBoolAction(
-        description: prev ? 'Desativar Automação' : 'Armar Automação Noturna',
-        onApply: () => setState(() => _isAutoModeEnabled = !prev),
-        onUndo: () => setState(() => _isAutoModeEnabled = prev),
+        description: 'Pressionar Botão Abrir (Verde)',
+        onApply: () => setState(() {
+          _isOpenCommandActive = true;
+          _hasTestedOpen = true;
+        }),
+        onUndo: () => setState(() => _isOpenCommandActive = prev),
       ),
     );
   }
 
-  void _onLuxChanged(double value) {
-    setState(() => _luxPercent = value);
+  void _pressEmergencyStop() {
+    final prev = _isEmergencyStopActive;
+    _undoRedoController.execute(
+      ToggleBoolAction(
+        description: 'Acionar Parada de Emergência (Vermelho)',
+        onApply: () => setState(() {
+          _isEmergencyStopActive = true;
+          _isOpenCommandActive = false;
+          _hasTestedEmergency = true;
+        }),
+        onUndo: () => setState(() => _isEmergencyStopActive = prev),
+      ),
+    );
+  }
+
+  void _resetEmergencyStop() {
+    setState(() {
+      _isEmergencyStopActive = false;
+    });
   }
 
   void _validate() {
-    final isSuccess = _isAutoModeEnabled && _isNight && _isLedActive;
+    final isSuccess = _isBothTested && !_isEmergencyStopActive && _isOpenCommandActive;
     final message = isSuccess
-        ? 'Fantástico! Com o circuito de automação armado, ao cair da noite o LDR dispara o driver do LED Grow Light, garantindo ciclo contínuo de suplementação luminosa!'
-        : (!_isAutoModeEnabled
-            ? 'O circuito de automação ainda está desligado! Ative a chave de automação noturna.'
-            : 'Simule o anoitecer reduzindo a luz ambiente para comprovar o acendimento automático do LED.');
+        ? 'Excelente auditoria da Equipe Automação! O sistema de controle de acesso do Portão da Escola atende a todos os requisitos de segurança: acionamento por relé e intertravamento de emergência aprovados!'
+        : 'Teste a rotina completa de segurança: experimente acionar a abertura, testar a parada de emergência e restaurar a operação.';
 
     showDialog(
       context: context,
@@ -93,23 +113,22 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
 
   @override
   Widget build(BuildContext context) {
-    final status = _isLedActive
-        ? HortaState.nightActive
-        : (_isAutoModeEnabled ? HortaState.dayInactive : HortaState.standby);
-
-    final ledBrightness = _isLedActive ? 0.85 : 0.0;
+    final status = _isEmergencyStopActive
+        ? PortaoState.emergencyStop
+        : (_isCoilEnergized ? PortaoState.motorRunning : PortaoState.idle);
 
     return WorkbenchResponsiveLayout(
       workbench: WorkbenchTableFrame(
         usePhysicalStyle: _usePhysicalStyle,
         onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
-        leftHeaderWidget: HortaStatusCard(state: status),
-        rightHeaderWidget: HortaTelemetryCard(
-          luxPercent: _luxPercent,
-          ledBrightnessPercent: _isLedActive ? 85.0 : 0.0,
-          voltage: _isLedActive ? 5.0 : 0.0,
+        leftHeaderWidget: PortaoStatusCard(state: status),
+        rightHeaderWidget: PortaoTelemetryCard(
+          isCoilEnergized: _isCoilEnergized,
+          isContactClosed: _isCoilEnergized,
+          isMotorRunning: _isCoilEnergized,
+          gatePositionPercent: _isCoilEnergized ? 75.0 : 0.0,
         ),
-        bottomWidget: HortaUndoRedoButtons(
+        bottomWidget: PortaoUndoRedoButtons(
           controller: _undoRedoController,
           onUndo: () => setState(() => _undoRedoController.undo()),
           onRedo: () => setState(() => _undoRedoController.redo()),
@@ -118,25 +137,26 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
           animation: _animController,
           builder: (context, child) {
             return CustomPaint(
-              painter: HortaMonitoradaPainter(
-                missionIndex: 2,
+              painter: PortaoEscolaPainter(
+                missionIndex: 4,
                 animValue: _animController.value,
                 usePhysicalStyle: _usePhysicalStyle,
-                potPercent: 70.0,
-                luxPercent: _luxPercent,
-                isLedOn: _isLedActive,
-                ledBrightness: ledBrightness,
-                isNightMode: _isNight,
-                isCircuitEnergized: _isLedActive,
+                isCommandPressed: _isOpenCommandActive,
+                isCoilEnergized: _isCoilEnergized,
+                isContactClosed: _isCoilEnergized,
+                isMotorRunning: _isCoilEnergized,
+                gatePositionPercent: _isCoilEnergized ? 75.0 : 0.0,
+                isLightSignalOn: _isCoilEnergized,
+                isEmergencyStopActive: _isEmergencyStopActive,
               ),
             );
           },
         ),
       ),
       sidePanel: WorkbenchSidePanel(
-        teamTitle: 'Equipe Bio-Tech',
+        teamTitle: 'Equipe Automação',
         showTeamHeader: false,
-        buttonColor: const Color(0xFF16A34A),
+        buttonColor: const Color(0xFFF59E0B),
         toolboxItems: [
           _buildObjectiveCard(),
           const SizedBox(height: 12),
@@ -161,7 +181,7 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Missão 3 · Luz da Estufa',
+            'Missão 5 · Botão do Visitante',
             style: GoogleFonts.rajdhani(
               color: Colors.white,
               fontSize: 16,
@@ -170,7 +190,7 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
           ),
           const SizedBox(height: 4),
           Text(
-            'Ligue o circuito comparador automático: ao anoitecer (lux < 30%), o sensor deve ligar automaticamente o LED de suplementação vegetal.',
+            'Comissionamento Final: valide a botoeira industrial com botão verde de abertura e botão cogumelo vermelho de parada de emergência (NF).',
             style: GoogleFonts.rajdhani(
               color: const Color(0xFF94A3B8),
               fontSize: 13,
@@ -193,7 +213,7 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Checklist de Automação:',
+            'Auditoria de Segurança:',
             style: GoogleFonts.rajdhani(
               color: const Color(0xFF38BDF8),
               fontSize: 13,
@@ -201,9 +221,9 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
             ),
           ),
           const SizedBox(height: 8),
-          _buildStepRow(1, 'Habilitar modo automático', _isAutoModeEnabled),
-          _buildStepRow(2, 'Testar período noturno (< 30% lux)', _isNight),
-          _buildStepRow(3, 'Confirmar LED aceso e feixe na estufa', _isLedActive),
+          _buildStepRow(1, 'Testar comando de abertura (Verde)', _hasTestedOpen),
+          _buildStepRow(2, 'Testar parada de emergência (Vermelho)', _hasTestedEmergency),
+          _buildStepRow(3, 'Comissionar sistema em operação normal', _isCoilEnergized),
         ],
       ),
     );
@@ -248,56 +268,43 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
         children: [
           FilledButton.icon(
             style: FilledButton.styleFrom(
-              backgroundColor: _isAutoModeEnabled
-                  ? const Color(0xFF10B981)
-                  : const Color(0xFF64748B),
+              backgroundColor: const Color(0xFF10B981),
               padding: const EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
-            onPressed: _toggleAutoMode,
-            icon: Icon(_isAutoModeEnabled ? Icons.toggle_on_rounded : Icons.toggle_off_rounded),
+            onPressed: _isEmergencyStopActive ? null : _pressOpenButton,
+            icon: const Icon(Icons.meeting_room_rounded),
             label: Text(
-              _isAutoModeEnabled ? 'Automação Armada (ON)' : 'Armar Automação (OFF)',
+              'Botoeira de Abertura (Verde)',
               style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold, fontSize: 13),
             ),
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Simulação Solar:',
-                  style: GoogleFonts.rajdhani(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-              Text(
-                _isNight ? 'NOITE (${_luxPercent.toStringAsFixed(0)}%)' : 'DIA (${_luxPercent.toStringAsFixed(0)}%)',
-                style: GoogleFonts.rajdhani(
-                  color: _isNight ? const Color(0xFF8B5CF6) : const Color(0xFFFBBF24),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                ),
-              ),
-            ],
-          ),
-          SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              activeTrackColor: const Color(0xFFFBBF24),
-              inactiveTrackColor: const Color(0xFF334155),
-              thumbColor: const Color(0xFFFDE047),
+          const SizedBox(height: 8),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
-            child: Slider(
-              value: _luxPercent,
-              min: 0.0,
-              max: 100.0,
-              divisions: 20,
-              onChanged: _onLuxChanged,
+            onPressed: _pressEmergencyStop,
+            icon: const Icon(Icons.front_hand_rounded),
+            label: Text(
+              'Parada de Emergência (Vermelho)',
+              style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold, fontSize: 13),
             ),
           ),
+          if (_isEmergencyStopActive) ...[
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF38BDF8),
+                side: const BorderSide(color: Color(0xFF38BDF8)),
+              ),
+              onPressed: _resetEmergencyStop,
+              icon: const Icon(Icons.lock_open_rounded, size: 16),
+              label: Text('Destravar Botão de Emergência', style: GoogleFonts.rajdhani(fontSize: 12)),
+            ),
+          ],
         ],
       ),
     );

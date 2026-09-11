@@ -3,24 +3,20 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../state/circuit_undo_redo_controller.dart';
 
-enum HortaState {
-  standby,
-  adjusting,
-  ideal,
-  tooDim,
-  tooBright,
-  nightActive,
-  dayInactive,
-  charging,
-  discharging,
-  systemOk,
+enum PortaoState {
+  idle,
+  coilEnergized,
+  contactClosed,
+  motorRunning,
+  gateOpen,
+  emergencyStop,
 }
 
-/// Card de Status da Horta Monitorada (compacto e estilizado)
-class HortaStatusCard extends StatelessWidget {
-  final HortaState state;
+/// Card de Status do Portão da Escola e do Relé
+class PortaoStatusCard extends StatelessWidget {
+  final PortaoState state;
 
-  const HortaStatusCard({
+  const PortaoStatusCard({
     super.key,
     required this.state,
   });
@@ -31,45 +27,29 @@ class HortaStatusCard extends StatelessWidget {
     String statusText;
 
     switch (state) {
-      case HortaState.standby:
+      case PortaoState.idle:
         statusColor = const Color(0xFF64748B);
-        statusText = 'ESTUFA EM ESPERA';
+        statusText = 'PORTÃO FECHADO (STANDBY)';
         break;
-      case HortaState.adjusting:
+      case PortaoState.coilEnergized:
         statusColor = const Color(0xFFF59E0B);
-        statusText = 'AJUSTANDO CALIBRAÇÃO';
+        statusText = 'BOBINA ENERGIZADA (MAGNETISMO)';
         break;
-      case HortaState.ideal:
-        statusColor = const Color(0xFF10B981);
-        statusText = 'ILUMINAÇÃO IDEAL (OK)';
-        break;
-      case HortaState.tooDim:
+      case PortaoState.contactClosed:
         statusColor = const Color(0xFF38BDF8);
-        statusText = 'LUZ BAIXA (SUBILUMINADO)';
+        statusText = 'CONTATO NA FECHADO';
         break;
-      case HortaState.tooBright:
+      case PortaoState.motorRunning:
+        statusColor = const Color(0xFF10B981);
+        statusText = 'MOTOR EM MOVIMENTO (ABRINDO)';
+        break;
+      case PortaoState.gateOpen:
+        statusColor = const Color(0xFF10B981);
+        statusText = 'PORTÃO TOTALMENTE ABERTO';
+        break;
+      case PortaoState.emergencyStop:
         statusColor = const Color(0xFFEF4444);
-        statusText = 'LUZ EXCESSIVA (SOBREAQUECIMENTO)';
-        break;
-      case HortaState.nightActive:
-        statusColor = const Color(0xFF8B5CF6);
-        statusText = 'NOITE: LUZ AUTOMÁTICA ATIVA';
-        break;
-      case HortaState.dayInactive:
-        statusColor = const Color(0xFFF59E0B);
-        statusText = 'DIA: LUZ EM STANDBY';
-        break;
-      case HortaState.charging:
-        statusColor = const Color(0xFF06B6D4);
-        statusText = 'CARREGANDO CAPACITOR';
-        break;
-      case HortaState.discharging:
-        statusColor = const Color(0xFF10B981);
-        statusText = 'RESERVA EM DESCARGA';
-        break;
-      case HortaState.systemOk:
-        statusColor = const Color(0xFF10B981);
-        statusText = 'SISTEMA INTEGRADO OPERANTE';
+        statusText = 'PARADA DE EMERGÊNCIA (NF ABERTO)';
         break;
     }
 
@@ -113,21 +93,19 @@ class HortaStatusCard extends StatelessWidget {
   }
 }
 
-/// Telemetria da Horta: Iluminação, Tensão, Brilho do LED e Estado
-class HortaTelemetryCard extends StatelessWidget {
-  final double potPercent;
-  final double luxPercent;
-  final double voltage;
-  final double ledBrightnessPercent;
-  final bool isCapacitorCharged;
+/// Telemetria de Comando (5V) vs Carga (12V) do Relé
+class PortaoTelemetryCard extends StatelessWidget {
+  final bool isCoilEnergized;
+  final bool isContactClosed;
+  final bool isMotorRunning;
+  final double gatePositionPercent; // 0 a 100%
 
-  const HortaTelemetryCard({
+  const PortaoTelemetryCard({
     super.key,
-    this.potPercent = 0.0,
-    this.luxPercent = 100.0,
-    this.voltage = 5.0,
-    this.ledBrightnessPercent = 0.0,
-    this.isCapacitorCharged = false,
+    required this.isCoilEnergized,
+    required this.isContactClosed,
+    required this.isMotorRunning,
+    this.gatePositionPercent = 0.0,
   });
 
   @override
@@ -149,34 +127,16 @@ class HortaTelemetryCard extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.eco_rounded, size: 14, color: Color(0xFF16A34A)),
+          const Icon(Icons.sensors_rounded, size: 14, color: Color(0xFFF59E0B)),
           const SizedBox(width: 4),
           Text(
-            'LED: ${ledBrightnessPercent.toStringAsFixed(0)}%  |  LDR: ${luxPercent.toStringAsFixed(0)}%  |  ${voltage.toStringAsFixed(1)}V',
+            'CMD: ${isCoilEnergized ? "5V (ON)" : "0V (OFF)"}  |  CARGA: ${isContactClosed ? "12V (FECHADO)" : "ABERTO"}  |  PORTÃO: ${gatePositionPercent.toStringAsFixed(0)}%',
             style: GoogleFonts.rajdhani(
               color: const Color(0xFF0F172A),
               fontWeight: FontWeight.bold,
               fontSize: 11,
             ),
           ),
-          if (isCapacitorCharged) ...[
-            const SizedBox(width: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0284C7).withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                'CAP OK',
-                style: GoogleFonts.rajdhani(
-                  color: const Color(0xFF0284C7),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 9,
-                ),
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -184,12 +144,12 @@ class HortaTelemetryCard extends StatelessWidget {
 }
 
 /// Controles de Desfazer / Refazer
-class HortaUndoRedoButtons extends StatelessWidget {
+class PortaoUndoRedoButtons extends StatelessWidget {
   final CircuitUndoRedoController controller;
   final VoidCallback onUndo;
   final VoidCallback onRedo;
 
-  const HortaUndoRedoButtons({
+  const PortaoUndoRedoButtons({
     super.key,
     required this.controller,
     required this.onUndo,

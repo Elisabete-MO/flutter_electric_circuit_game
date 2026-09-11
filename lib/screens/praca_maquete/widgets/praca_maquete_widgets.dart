@@ -3,24 +3,20 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../state/circuit_undo_redo_controller.dart';
 
-enum HortaState {
+enum PracaState {
   standby,
-  adjusting,
-  ideal,
-  tooDim,
-  tooBright,
-  nightActive,
-  dayInactive,
-  charging,
-  discharging,
-  systemOk,
+  residentialLit,
+  streetLit,
+  subsystemsIntegrated,
+  faultDetected,
+  fullyEnergized,
 }
 
-/// Card de Status da Horta Monitorada (compacto e estilizado)
-class HortaStatusCard extends StatelessWidget {
-  final HortaState state;
+/// Card de Status da Praça da Maquete Coletiva
+class PracaStatusCard extends StatelessWidget {
+  final PracaState state;
 
-  const HortaStatusCard({
+  const PracaStatusCard({
     super.key,
     required this.state,
   });
@@ -31,45 +27,29 @@ class HortaStatusCard extends StatelessWidget {
     String statusText;
 
     switch (state) {
-      case HortaState.standby:
+      case PracaState.standby:
         statusColor = const Color(0xFF64748B);
-        statusText = 'ESTUFA EM ESPERA';
+        statusText = 'MAQUETE EM ESPERA';
         break;
-      case HortaState.adjusting:
-        statusColor = const Color(0xFFF59E0B);
-        statusText = 'AJUSTANDO CALIBRAÇÃO';
-        break;
-      case HortaState.ideal:
-        statusColor = const Color(0xFF10B981);
-        statusText = 'ILUMINAÇÃO IDEAL (OK)';
-        break;
-      case HortaState.tooDim:
+      case PracaState.residentialLit:
         statusColor = const Color(0xFF38BDF8);
-        statusText = 'LUZ BAIXA (SUBILUMINADO)';
+        statusText = 'REDE RESIDENCIAL ATIVA';
         break;
-      case HortaState.tooBright:
+      case PracaState.streetLit:
+        statusColor = const Color(0xFFFBBF24);
+        statusText = 'ILUMINAÇÃO PÚBLICA OPERANTE';
+        break;
+      case PracaState.subsystemsIntegrated:
+        statusColor = const Color(0xFF10B981);
+        statusText = 'SUBSISTEMAS URBANOS CONECTADOS';
+        break;
+      case PracaState.faultDetected:
         statusColor = const Color(0xFFEF4444);
-        statusText = 'LUZ EXCESSIVA (SOBREAQUECIMENTO)';
+        statusText = 'FALHA DE REDE DETECTADA';
         break;
-      case HortaState.nightActive:
+      case PracaState.fullyEnergized:
         statusColor = const Color(0xFF8B5CF6);
-        statusText = 'NOITE: LUZ AUTOMÁTICA ATIVA';
-        break;
-      case HortaState.dayInactive:
-        statusColor = const Color(0xFFF59E0B);
-        statusText = 'DIA: LUZ EM STANDBY';
-        break;
-      case HortaState.charging:
-        statusColor = const Color(0xFF06B6D4);
-        statusText = 'CARREGANDO CAPACITOR';
-        break;
-      case HortaState.discharging:
-        statusColor = const Color(0xFF10B981);
-        statusText = 'RESERVA EM DESCARGA';
-        break;
-      case HortaState.systemOk:
-        statusColor = const Color(0xFF10B981);
-        statusText = 'SISTEMA INTEGRADO OPERANTE';
+        statusText = 'CIDADE 100% ENERGIZADA!';
         break;
     }
 
@@ -113,25 +93,31 @@ class HortaStatusCard extends StatelessWidget {
   }
 }
 
-/// Telemetria da Horta: Iluminação, Tensão, Brilho do LED e Estado
-class HortaTelemetryCard extends StatelessWidget {
-  final double potPercent;
-  final double luxPercent;
-  final double voltage;
-  final double ledBrightnessPercent;
-  final bool isCapacitorCharged;
+/// Telemetria da Maquete: Carga Total e Subsistemas Ativos
+class PracaTelemetryCard extends StatelessWidget {
+  final bool housesOn;
+  final bool streetlightsOn;
+  final bool greenhouseOn;
+  final bool gateOn;
+  final double totalPowerWatts;
 
-  const HortaTelemetryCard({
+  const PracaTelemetryCard({
     super.key,
-    this.potPercent = 0.0,
-    this.luxPercent = 100.0,
-    this.voltage = 5.0,
-    this.ledBrightnessPercent = 0.0,
-    this.isCapacitorCharged = false,
+    this.housesOn = false,
+    this.streetlightsOn = false,
+    this.greenhouseOn = false,
+    this.gateOn = false,
+    this.totalPowerWatts = 0.0,
   });
 
   @override
   Widget build(BuildContext context) {
+    int activeCount = 0;
+    if (housesOn) activeCount++;
+    if (streetlightsOn) activeCount++;
+    if (greenhouseOn) activeCount++;
+    if (gateOn) activeCount++;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -149,34 +135,16 @@ class HortaTelemetryCard extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.eco_rounded, size: 14, color: Color(0xFF16A34A)),
+          const Icon(Icons.location_city_rounded, size: 14, color: Color(0xFF8B5CF6)),
           const SizedBox(width: 4),
           Text(
-            'LED: ${ledBrightnessPercent.toStringAsFixed(0)}%  |  LDR: ${luxPercent.toStringAsFixed(0)}%  |  ${voltage.toStringAsFixed(1)}V',
+            'REDES: $activeCount/4 ATIVAS  |  POTÊNCIA: ${totalPowerWatts.toStringAsFixed(0)}W  |  BARRAMENTO 12V',
             style: GoogleFonts.rajdhani(
               color: const Color(0xFF0F172A),
               fontWeight: FontWeight.bold,
               fontSize: 11,
             ),
           ),
-          if (isCapacitorCharged) ...[
-            const SizedBox(width: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0284C7).withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                'CAP OK',
-                style: GoogleFonts.rajdhani(
-                  color: const Color(0xFF0284C7),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 9,
-                ),
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -184,12 +152,12 @@ class HortaTelemetryCard extends StatelessWidget {
 }
 
 /// Controles de Desfazer / Refazer
-class HortaUndoRedoButtons extends StatelessWidget {
+class PracaUndoRedoButtons extends StatelessWidget {
   final CircuitUndoRedoController controller;
   final VoidCallback onUndo;
   final VoidCallback onRedo;
 
-  const HortaUndoRedoButtons({
+  const PracaUndoRedoButtons({
     super.key,
     required this.controller,
     required this.onUndo,

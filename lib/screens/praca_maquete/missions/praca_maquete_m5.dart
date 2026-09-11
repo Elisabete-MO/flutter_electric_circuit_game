@@ -7,31 +7,31 @@ import '../../../widgets/prof_volts_feedback_dialog.dart';
 import '../../../widgets/success_confetti_overlay.dart';
 import '../../../widgets/workbench_components.dart';
 import '../../../widgets/workbench_table_frame.dart';
-import '../widgets/horta_monitorada_painter.dart';
-import '../widgets/horta_monitorada_widgets.dart';
+import '../widgets/praca_maquete_painter.dart';
+import '../widgets/praca_maquete_widgets.dart';
 
-/// Missão 03 — Luz da Estufa: Integrar sensor LDR ao LED para automação noturna
-class HortaMonitoradaM3 extends StatefulWidget {
+/// Missão 05 — Visita da Comunidade: A grande inauguração e energização da Maquete Coletiva da Feira
+class PracaMaqueteM5 extends StatefulWidget {
   final VoidCallback onMissionComplete;
 
-  const HortaMonitoradaM3({
+  const PracaMaqueteM5({
     super.key,
     required this.onMissionComplete,
   });
 
   @override
-  State<HortaMonitoradaM3> createState() => _HortaMonitoradaM3State();
+  State<PracaMaqueteM5> createState() => _PracaMaqueteM5State();
 }
 
-class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
+class _PracaMaqueteM5State extends State<PracaMaqueteM5>
     with SingleTickerProviderStateMixin {
   late final AnimationController _animController;
   final CircuitUndoRedoController _undoRedoController =
       CircuitUndoRedoController();
 
   bool _usePhysicalStyle = true;
-  bool _isAutoModeEnabled = false;
-  double _luxPercent = 20.0; // Inicia em período noturno
+  bool _isMasterInaugurationSwitched = false;
+  bool _isAlphaMonumentLit = false;
 
   @override
   void initState() {
@@ -48,31 +48,28 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
     super.dispose();
   }
 
-  bool get _isNight => _luxPercent <= 30.0;
-  bool get _isLedActive => _isAutoModeEnabled && _isNight;
-
-  void _toggleAutoMode() {
-    final prev = _isAutoModeEnabled;
+  void _toggleMasterInauguration() {
+    final prev = _isMasterInaugurationSwitched;
     _undoRedoController.execute(
       ToggleBoolAction(
-        description: prev ? 'Desativar Automação' : 'Armar Automação Noturna',
-        onApply: () => setState(() => _isAutoModeEnabled = !prev),
-        onUndo: () => setState(() => _isAutoModeEnabled = prev),
+        description: prev ? 'Desligar Cerimônia' : 'Ligar Chave Mestra da Comunidade',
+        onApply: () => setState(() {
+          _isMasterInaugurationSwitched = !prev;
+          _isAlphaMonumentLit = !prev;
+        }),
+        onUndo: () => setState(() {
+          _isMasterInaugurationSwitched = prev;
+          _isAlphaMonumentLit = prev;
+        }),
       ),
     );
   }
 
-  void _onLuxChanged(double value) {
-    setState(() => _luxPercent = value);
-  }
-
   void _validate() {
-    final isSuccess = _isAutoModeEnabled && _isNight && _isLedActive;
+    final isSuccess = _isMasterInaugurationSwitched && _isAlphaMonumentLit;
     final message = isSuccess
-        ? 'Fantástico! Com o circuito de automação armado, ao cair da noite o LDR dispara o driver do LED Grow Light, garantindo ciclo contínuo de suplementação luminosa!'
-        : (!_isAutoModeEnabled
-            ? 'O circuito de automação ainda está desligado! Ative a chave de automação noturna.'
-            : 'Simule o anoitecer reduzindo a luz ambiente para comprovar o acendimento automático do LED.');
+        ? 'PARABÉNS A TODAS AS EQUIPES! A Maquete Coletiva Alpha Lumen está oficialmente inaugurada e 100% energizada! Toda a comunidade da escola e o Prof. Volts celebram a união da física, automação, sustentabilidade e eletrônica!'
+        : 'Acione a grande Chave Mestra de Inauguração para iluminar toda a maquete e o Monumento Alpha Lumen!';
 
     showDialog(
       context: context,
@@ -93,23 +90,23 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
 
   @override
   Widget build(BuildContext context) {
-    final status = _isLedActive
-        ? HortaState.nightActive
-        : (_isAutoModeEnabled ? HortaState.dayInactive : HortaState.standby);
-
-    final ledBrightness = _isLedActive ? 0.85 : 0.0;
+    final status = _isMasterInaugurationSwitched
+        ? PracaState.fullyEnergized
+        : PracaState.standby;
 
     return WorkbenchResponsiveLayout(
       workbench: WorkbenchTableFrame(
         usePhysicalStyle: _usePhysicalStyle,
         onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
-        leftHeaderWidget: HortaStatusCard(state: status),
-        rightHeaderWidget: HortaTelemetryCard(
-          luxPercent: _luxPercent,
-          ledBrightnessPercent: _isLedActive ? 85.0 : 0.0,
-          voltage: _isLedActive ? 5.0 : 0.0,
+        leftHeaderWidget: PracaStatusCard(state: status),
+        rightHeaderWidget: PracaTelemetryCard(
+          housesOn: _isMasterInaugurationSwitched,
+          streetlightsOn: _isMasterInaugurationSwitched,
+          greenhouseOn: _isMasterInaugurationSwitched,
+          gateOn: _isMasterInaugurationSwitched,
+          totalPowerWatts: _isMasterInaugurationSwitched ? 180.0 : 0.0,
         ),
-        bottomWidget: HortaUndoRedoButtons(
+        bottomWidget: PracaUndoRedoButtons(
           controller: _undoRedoController,
           onUndo: () => setState(() => _undoRedoController.undo()),
           onRedo: () => setState(() => _undoRedoController.redo()),
@@ -118,25 +115,25 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
           animation: _animController,
           builder: (context, child) {
             return CustomPaint(
-              painter: HortaMonitoradaPainter(
-                missionIndex: 2,
+              painter: PracaMaquetePainter(
+                missionIndex: 4,
                 animValue: _animController.value,
                 usePhysicalStyle: _usePhysicalStyle,
-                potPercent: 70.0,
-                luxPercent: _luxPercent,
-                isLedOn: _isLedActive,
-                ledBrightness: ledBrightness,
-                isNightMode: _isNight,
-                isCircuitEnergized: _isLedActive,
+                housesOn: _isMasterInaugurationSwitched,
+                streetlightsOn: _isMasterInaugurationSwitched,
+                greenhouseOn: _isMasterInaugurationSwitched,
+                gateOn: _isMasterInaugurationSwitched,
+                alphaMonumentOn: _isAlphaMonumentLit,
+                isMainGridEnergized: _isMasterInaugurationSwitched,
               ),
             );
           },
         ),
       ),
       sidePanel: WorkbenchSidePanel(
-        teamTitle: 'Equipe Bio-Tech',
+        teamTitle: 'Equipe Urbana',
         showTeamHeader: false,
-        buttonColor: const Color(0xFF16A34A),
+        buttonColor: const Color(0xFF8B5CF6),
         toolboxItems: [
           _buildObjectiveCard(),
           const SizedBox(height: 12),
@@ -161,7 +158,7 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Missão 3 · Luz da Estufa',
+            'Missão 5 · Visita da Comunidade',
             style: GoogleFonts.rajdhani(
               color: Colors.white,
               fontSize: 16,
@@ -170,7 +167,7 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
           ),
           const SizedBox(height: 4),
           Text(
-            'Ligue o circuito comparador automático: ao anoitecer (lux < 30%), o sensor deve ligar automaticamente o LED de suplementação vegetal.',
+            'A Grande Cerimônia: acione a Chave Mestra da Praça para inaugurar a maquete com todos os setores iluminados e o Monumento Alpha Lumen brilhando!',
             style: GoogleFonts.rajdhani(
               color: const Color(0xFF94A3B8),
               fontSize: 13,
@@ -193,7 +190,7 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Checklist de Automação:',
+            'Cerimônia de Inauguração:',
             style: GoogleFonts.rajdhani(
               color: const Color(0xFF38BDF8),
               fontSize: 13,
@@ -201,9 +198,9 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
             ),
           ),
           const SizedBox(height: 8),
-          _buildStepRow(1, 'Habilitar modo automático', _isAutoModeEnabled),
-          _buildStepRow(2, 'Testar período noturno (< 30% lux)', _isNight),
-          _buildStepRow(3, 'Confirmar LED aceso e feixe na estufa', _isLedActive),
+          _buildStepRow(1, 'Confirmar presença dos visitantes da comunidade', true),
+          _buildStepRow(2, 'Acionar Chave Mestra de Distribuição', _isMasterInaugurationSwitched),
+          _buildStepRow(3, 'Comprovar cidade iluminada e Monumento Alpha ativo', _isMasterInaugurationSwitched && _isAlphaMonumentLit),
         ],
       ),
     );
@@ -248,54 +245,26 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
         children: [
           FilledButton.icon(
             style: FilledButton.styleFrom(
-              backgroundColor: _isAutoModeEnabled
-                  ? const Color(0xFF10B981)
-                  : const Color(0xFF64748B),
-              padding: const EdgeInsets.symmetric(vertical: 12),
+              backgroundColor: _isMasterInaugurationSwitched ? const Color(0xFF10B981) : const Color(0xFF8B5CF6),
+              padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
-            onPressed: _toggleAutoMode,
-            icon: Icon(_isAutoModeEnabled ? Icons.toggle_on_rounded : Icons.toggle_off_rounded),
+            onPressed: _toggleMasterInauguration,
+            icon: Icon(_isMasterInaugurationSwitched ? Icons.celebration_rounded : Icons.offline_bolt_rounded),
             label: Text(
-              _isAutoModeEnabled ? 'Automação Armada (ON)' : 'Armar Automação (OFF)',
-              style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold, fontSize: 13),
+              _isMasterInaugurationSwitched ? 'CIDADE ALPHA ENERGIZADA (100%)' : 'ENERGIZAR MAQUETE COLETIVA',
+              style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold, fontSize: 13, letterSpacing: 0.8),
             ),
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Simulação Solar:',
-                  style: GoogleFonts.rajdhani(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                ),
+          const SizedBox(height: 8),
+          Center(
+            child: Text(
+              _isMasterInaugurationSwitched ? '✨ TODAS AS EQUIPES INTEGRADAS COM SUCESSO ✨' : 'Aguardando chave mestra da cerimônia...',
+              style: GoogleFonts.rajdhani(
+                color: _isMasterInaugurationSwitched ? const Color(0xFFA78BFA) : const Color(0xFF94A3B8),
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
               ),
-              Text(
-                _isNight ? 'NOITE (${_luxPercent.toStringAsFixed(0)}%)' : 'DIA (${_luxPercent.toStringAsFixed(0)}%)',
-                style: GoogleFonts.rajdhani(
-                  color: _isNight ? const Color(0xFF8B5CF6) : const Color(0xFFFBBF24),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                ),
-              ),
-            ],
-          ),
-          SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              activeTrackColor: const Color(0xFFFBBF24),
-              inactiveTrackColor: const Color(0xFF334155),
-              thumbColor: const Color(0xFFFDE047),
-            ),
-            child: Slider(
-              value: _luxPercent,
-              min: 0.0,
-              max: 100.0,
-              divisions: 20,
-              onChanged: _onLuxChanged,
             ),
           ),
         ],

@@ -7,31 +7,31 @@ import '../../../widgets/prof_volts_feedback_dialog.dart';
 import '../../../widgets/success_confetti_overlay.dart';
 import '../../../widgets/workbench_components.dart';
 import '../../../widgets/workbench_table_frame.dart';
-import '../widgets/horta_monitorada_painter.dart';
-import '../widgets/horta_monitorada_widgets.dart';
+import '../widgets/praca_maquete_painter.dart';
+import '../widgets/praca_maquete_widgets.dart';
 
-/// Missão 03 — Luz da Estufa: Integrar sensor LDR ao LED para automação noturna
-class HortaMonitoradaM3 extends StatefulWidget {
+/// Missão 03 — Horta e Portão: Integrar os subsistemas inteligentes da estufa e do portão na maquete
+class PracaMaqueteM3 extends StatefulWidget {
   final VoidCallback onMissionComplete;
 
-  const HortaMonitoradaM3({
+  const PracaMaqueteM3({
     super.key,
     required this.onMissionComplete,
   });
 
   @override
-  State<HortaMonitoradaM3> createState() => _HortaMonitoradaM3State();
+  State<PracaMaqueteM3> createState() => _PracaMaqueteM3State();
 }
 
-class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
+class _PracaMaqueteM3State extends State<PracaMaqueteM3>
     with SingleTickerProviderStateMixin {
   late final AnimationController _animController;
   final CircuitUndoRedoController _undoRedoController =
       CircuitUndoRedoController();
 
   bool _usePhysicalStyle = true;
-  bool _isAutoModeEnabled = false;
-  double _luxPercent = 20.0; // Inicia em período noturno
+  bool _isGreenhouseConnected = false;
+  bool _isGateConnected = false;
 
   @override
   void initState() {
@@ -48,31 +48,35 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
     super.dispose();
   }
 
-  bool get _isNight => _luxPercent <= 30.0;
-  bool get _isLedActive => _isAutoModeEnabled && _isNight;
+  bool get _areBothIntegrated => _isGreenhouseConnected && _isGateConnected;
 
-  void _toggleAutoMode() {
-    final prev = _isAutoModeEnabled;
+  void _toggleGreenhouse() {
+    final prev = _isGreenhouseConnected;
     _undoRedoController.execute(
       ToggleBoolAction(
-        description: prev ? 'Desativar Automação' : 'Armar Automação Noturna',
-        onApply: () => setState(() => _isAutoModeEnabled = !prev),
-        onUndo: () => setState(() => _isAutoModeEnabled = prev),
+        description: prev ? 'Desconectar Estufa Bio-Tech' : 'Integrar Estufa Bio-Tech',
+        onApply: () => setState(() => _isGreenhouseConnected = !prev),
+        onUndo: () => setState(() => _isGreenhouseConnected = prev),
       ),
     );
   }
 
-  void _onLuxChanged(double value) {
-    setState(() => _luxPercent = value);
+  void _toggleGate() {
+    final prev = _isGateConnected;
+    _undoRedoController.execute(
+      ToggleBoolAction(
+        description: prev ? 'Desconectar Portão da Escola' : 'Integrar Portão da Escola',
+        onApply: () => setState(() => _isGateConnected = !prev),
+        onUndo: () => setState(() => _isGateConnected = prev),
+      ),
+    );
   }
 
   void _validate() {
-    final isSuccess = _isAutoModeEnabled && _isNight && _isLedActive;
+    final isSuccess = _areBothIntegrated;
     final message = isSuccess
-        ? 'Fantástico! Com o circuito de automação armado, ao cair da noite o LDR dispara o driver do LED Grow Light, garantindo ciclo contínuo de suplementação luminosa!'
-        : (!_isAutoModeEnabled
-            ? 'O circuito de automação ainda está desligado! Ative a chave de automação noturna.'
-            : 'Simule o anoitecer reduzindo a luz ambiente para comprovar o acendimento automático do LED.');
+        ? 'Incrível! Os subsistemas dos Estandes 09 (Bio-Tech) e 10 (Automação) estão perfeitamente acoplados à rede da Maquete Coletiva! A estufa monitora as plantas e o portão controla os acessos!'
+        : 'Conecte tanto o ramal da Estufa Comunitária quanto o do Portão Automatizado para concluir a integração.';
 
     showDialog(
       context: context,
@@ -93,23 +97,23 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
 
   @override
   Widget build(BuildContext context) {
-    final status = _isLedActive
-        ? HortaState.nightActive
-        : (_isAutoModeEnabled ? HortaState.dayInactive : HortaState.standby);
-
-    final ledBrightness = _isLedActive ? 0.85 : 0.0;
+    final status = _areBothIntegrated
+        ? PracaState.subsystemsIntegrated
+        : PracaState.residentialLit;
 
     return WorkbenchResponsiveLayout(
       workbench: WorkbenchTableFrame(
         usePhysicalStyle: _usePhysicalStyle,
         onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
-        leftHeaderWidget: HortaStatusCard(state: status),
-        rightHeaderWidget: HortaTelemetryCard(
-          luxPercent: _luxPercent,
-          ledBrightnessPercent: _isLedActive ? 85.0 : 0.0,
-          voltage: _isLedActive ? 5.0 : 0.0,
+        leftHeaderWidget: PracaStatusCard(state: status),
+        rightHeaderWidget: PracaTelemetryCard(
+          housesOn: true,
+          streetlightsOn: true,
+          greenhouseOn: _isGreenhouseConnected,
+          gateOn: _isGateConnected,
+          totalPowerWatts: (_isGreenhouseConnected ? 25.0 : 0.0) + (_isGateConnected ? 40.0 : 0.0) + 70.0,
         ),
-        bottomWidget: HortaUndoRedoButtons(
+        bottomWidget: PracaUndoRedoButtons(
           controller: _undoRedoController,
           onUndo: () => setState(() => _undoRedoController.undo()),
           onRedo: () => setState(() => _undoRedoController.redo()),
@@ -118,25 +122,24 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
           animation: _animController,
           builder: (context, child) {
             return CustomPaint(
-              painter: HortaMonitoradaPainter(
+              painter: PracaMaquetePainter(
                 missionIndex: 2,
                 animValue: _animController.value,
                 usePhysicalStyle: _usePhysicalStyle,
-                potPercent: 70.0,
-                luxPercent: _luxPercent,
-                isLedOn: _isLedActive,
-                ledBrightness: ledBrightness,
-                isNightMode: _isNight,
-                isCircuitEnergized: _isLedActive,
+                housesOn: true,
+                streetlightsOn: true,
+                greenhouseOn: _isGreenhouseConnected,
+                gateOn: _isGateConnected,
+                isMainGridEnergized: true,
               ),
             );
           },
         ),
       ),
       sidePanel: WorkbenchSidePanel(
-        teamTitle: 'Equipe Bio-Tech',
+        teamTitle: 'Equipe Urbana',
         showTeamHeader: false,
-        buttonColor: const Color(0xFF16A34A),
+        buttonColor: const Color(0xFF8B5CF6),
         toolboxItems: [
           _buildObjectiveCard(),
           const SizedBox(height: 12),
@@ -161,7 +164,7 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Missão 3 · Luz da Estufa',
+            'Missão 3 · Horta e Portão',
             style: GoogleFonts.rajdhani(
               color: Colors.white,
               fontSize: 16,
@@ -170,7 +173,7 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
           ),
           const SizedBox(height: 4),
           Text(
-            'Ligue o circuito comparador automático: ao anoitecer (lux < 30%), o sensor deve ligar automaticamente o LED de suplementação vegetal.',
+            'Integre os projetos desenvolvidos pelos outros estandes: conecte a estufa automatizada e o portão eletromecânico à praça da cidade.',
             style: GoogleFonts.rajdhani(
               color: const Color(0xFF94A3B8),
               fontSize: 13,
@@ -193,7 +196,7 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Checklist de Automação:',
+            'Checklist de Integração Urbana:',
             style: GoogleFonts.rajdhani(
               color: const Color(0xFF38BDF8),
               fontSize: 13,
@@ -201,9 +204,9 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
             ),
           ),
           const SizedBox(height: 8),
-          _buildStepRow(1, 'Habilitar modo automático', _isAutoModeEnabled),
-          _buildStepRow(2, 'Testar período noturno (< 30% lux)', _isNight),
-          _buildStepRow(3, 'Confirmar LED aceso e feixe na estufa', _isLedActive),
+          _buildStepRow(1, 'Conectar ramal Estufa Bio-Tech', _isGreenhouseConnected),
+          _buildStepRow(2, 'Conectar ramal Portão da Escola', _isGateConnected),
+          _buildStepRow(3, 'Comprovar operação simultânea de ambos', _areBothIntegrated),
         ],
       ),
     );
@@ -248,54 +251,29 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
         children: [
           FilledButton.icon(
             style: FilledButton.styleFrom(
-              backgroundColor: _isAutoModeEnabled
-                  ? const Color(0xFF10B981)
-                  : const Color(0xFF64748B),
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              backgroundColor: _isGreenhouseConnected ? const Color(0xFF10B981) : const Color(0xFF16A34A),
+              padding: const EdgeInsets.symmetric(vertical: 11),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            onPressed: _toggleAutoMode,
-            icon: Icon(_isAutoModeEnabled ? Icons.toggle_on_rounded : Icons.toggle_off_rounded),
+            onPressed: _toggleGreenhouse,
+            icon: Icon(_isGreenhouseConnected ? Icons.eco_rounded : Icons.add_circle_outline_rounded),
             label: Text(
-              _isAutoModeEnabled ? 'Automação Armada (ON)' : 'Armar Automação (OFF)',
+              _isGreenhouseConnected ? 'Estufa Bio-Tech Conectada' : 'Integrar Estufa Bio-Tech',
               style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold, fontSize: 13),
             ),
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Simulação Solar:',
-                  style: GoogleFonts.rajdhani(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-              Text(
-                _isNight ? 'NOITE (${_luxPercent.toStringAsFixed(0)}%)' : 'DIA (${_luxPercent.toStringAsFixed(0)}%)',
-                style: GoogleFonts.rajdhani(
-                  color: _isNight ? const Color(0xFF8B5CF6) : const Color(0xFFFBBF24),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                ),
-              ),
-            ],
-          ),
-          SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              activeTrackColor: const Color(0xFFFBBF24),
-              inactiveTrackColor: const Color(0xFF334155),
-              thumbColor: const Color(0xFFFDE047),
+          const SizedBox(height: 8),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: _isGateConnected ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+              padding: const EdgeInsets.symmetric(vertical: 11),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: Slider(
-              value: _luxPercent,
-              min: 0.0,
-              max: 100.0,
-              divisions: 20,
-              onChanged: _onLuxChanged,
+            onPressed: _toggleGate,
+            icon: Icon(_isGateConnected ? Icons.sensors_rounded : Icons.add_circle_outline_rounded),
+            label: Text(
+              _isGateConnected ? 'Portão da Escola Conectado' : 'Integrar Portão da Escola',
+              style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold, fontSize: 13),
             ),
           ),
         ],

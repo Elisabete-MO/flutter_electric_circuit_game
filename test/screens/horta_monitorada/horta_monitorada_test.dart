@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:eletrolab/screens/common_stand/stand_flow_header.dart';
 import 'package:eletrolab/screens/horta_monitorada/horta_monitorada_screen.dart';
 import 'package:eletrolab/screens/horta_monitorada/missions/horta_monitorada_m1.dart';
 import 'package:eletrolab/screens/horta_monitorada/missions/horta_monitorada_m2.dart';
@@ -11,7 +10,7 @@ import 'package:eletrolab/screens/horta_monitorada/missions/horta_monitorada_m5.
 
 void main() {
   group('Estande 09 — Horta Monitorada (Equipe Bio-Tech) Tests', () {
-    testWidgets('M1 renderiza split-view e permite ajustar potenciômetro de iluminação',
+    testWidgets('M1 renderiza bancada e permite ajustar potenciômetro',
         (WidgetTester tester) async {
       await tester.binding.setSurfaceSize(const Size(1280, 800));
 
@@ -26,20 +25,19 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 200));
 
-      expect(find.text('Missão 1 · Luz de Cultivo'), findsOneWidget);
+      expect(find.text('Missão 1 · Brilho Ajustável'), findsOneWidget);
       expect(find.byType(CustomPaint), findsWidgets);
-      expect(find.text('LUZ FRACA'), findsOneWidget);
+      expect(find.text('LUZ BAIXA (SUBILUMINADO)'), findsOneWidget);
+      expect(find.byType(Slider), findsOneWidget);
 
-      // Deslizar o potenciômetro para aumentar a luz
-      final slider = find.byType(Slider);
-      expect(slider, findsOneWidget);
-      await tester.drag(slider, const Offset(100, 0));
+      // Ajusta o slider para zona ideal (60%)
+      await tester.drag(find.byType(Slider), const Offset(100, 0));
       await tester.pump(const Duration(milliseconds: 200));
 
       expect(find.byType(CustomPaint), findsWidgets);
     });
 
-    testWidgets('M2 permite simular solo seco e úmido na sonda resistiva',
+    testWidgets('M2 permite alternar iluminação solar e registrar LDR',
         (WidgetTester tester) async {
       await tester.binding.setSurfaceSize(const Size(1280, 800));
 
@@ -54,19 +52,17 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 200));
 
-      expect(find.text('Missão 2 · Sonda de Umidade'), findsOneWidget);
-      expect(find.text('ALERTA: SOLO SECO'), findsOneWidget);
+      expect(find.text('Missão 2 · Sensor de Ambiente'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Alternar para Noite Escura'), findsOneWidget);
 
-      // Deslizar umidade para > 65%
-      final slider = find.byType(Slider);
-      expect(slider, findsOneWidget);
-      await tester.drag(slider, const Offset(150, 0));
+      await tester.tap(find.widgetWithText(FilledButton, 'Alternar para Noite Escura'));
       await tester.pump(const Duration(milliseconds: 200));
 
-      expect(find.text('SOLO HIDRATADO'), findsOneWidget);
+      expect(find.text('NOITE: LUZ AUTOMÁTICA ATIVA'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Alternar para Dia Pleno'), findsOneWidget);
     });
 
-    testWidgets('M3 aciona exaustores e normaliza temperatura',
+    testWidgets('M3 permite armar automação noturna LDR + LED',
         (WidgetTester tester) async {
       await tester.binding.setSurfaceSize(const Size(1280, 800));
 
@@ -81,20 +77,17 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 200));
 
-      expect(find.text('Missão 3 · Ventilação Térmica'), findsOneWidget);
-      expect(find.text('TEMPERATURA ELEVADA'), findsOneWidget);
+      expect(find.text('Missão 3 · Luz da Estufa'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Armar Automação (OFF)'), findsOneWidget);
 
-      // Ligar a chave
-      final switchWidget = find.byType(Switch);
-      expect(switchWidget, findsOneWidget);
-      await tester.tap(switchWidget);
+      await tester.tap(find.widgetWithText(FilledButton, 'Armar Automação (OFF)'));
       await tester.pump(const Duration(milliseconds: 200));
 
-      expect(find.text('VENTILAÇÃO ATIVA'), findsOneWidget);
-      expect(find.text('Temp. Estufa: 23.5°C'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Automação Armada (ON)'), findsOneWidget);
+      expect(find.text('NOITE: LUZ AUTOMÁTICA ATIVA'), findsOneWidget);
     });
 
-    testWidgets('M4 dispara ciclo de irrigação e hidrata solo',
+    testWidgets('M4 permite carregar capacitor e simular queda de energia',
         (WidgetTester tester) async {
       await tester.binding.setSurfaceSize(const Size(1280, 800));
 
@@ -109,22 +102,21 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 200));
 
-      expect(find.text('Missão 4 · Bomba de Irrigação'), findsOneWidget);
-      expect(find.text('ALERTA: SOLO SECO'), findsOneWidget);
+      expect(find.text('Missão 4 · Energia por Instantes'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Carregar Capacitor (5V)'), findsOneWidget);
 
-      final pumpBtn = find.widgetWithText(FilledButton, 'ACIONAR REGADOR');
-      expect(pumpBtn, findsOneWidget);
-      await tester.tap(pumpBtn);
+      await tester.tap(find.widgetWithText(FilledButton, 'Carregar Capacitor (5V)'));
       await tester.pump(const Duration(milliseconds: 200));
 
-      expect(find.text('REGANDO CANTEIRO...'), findsOneWidget);
+      expect(find.text('CARREGANDO CAPACITOR'), findsOneWidget);
 
-      // Esperar ciclo da bomba terminar
-      await tester.pump(const Duration(milliseconds: 1300));
-      expect(find.text('SOLO REIDRATADO'), findsOneWidget);
+      await tester.tap(find.widgetWithText(FilledButton, 'Simular Queda de Energia'));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.text('RESERVA EM DESCARGA'), findsOneWidget);
     });
 
-    testWidgets('M5 executa simulação de cenários ambientais no barramento geral',
+    testWidgets('M5 comissionamento integrado da estufa inteligente',
         (WidgetTester tester) async {
       await tester.binding.setSurfaceSize(const Size(1280, 800));
 
@@ -139,29 +131,11 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 200));
 
-      expect(find.text('Missão 5 · Painel Integrado'), findsOneWidget);
-      expect(find.text('ESTUFA INTELIGENTE 100%'), findsOneWidget);
-
-      // Testar seleção de cenários
-      final solForteChip = find.text('2. Sol Forte');
-      expect(solForteChip, findsOneWidget);
-      await tester.tap(solForteChip);
-      await tester.pump(const Duration(milliseconds: 200));
-
-      final soloSecoChip = find.text('3. Solo Seco');
-      expect(soloSecoChip, findsOneWidget);
-      await tester.tap(soloSecoChip);
-      await tester.pump(const Duration(milliseconds: 200));
-
-      final noiteChip = find.text('4. Noite');
-      expect(noiteChip, findsOneWidget);
-      await tester.tap(noiteChip);
-      await tester.pump(const Duration(milliseconds: 200));
-
-      expect(find.text('Auditoria Final do Estande:'), findsOneWidget);
+      expect(find.text('Missão 5 · Painel da Horta'), findsOneWidget);
+      expect(find.text('SISTEMA INTEGRADO OPERANTE'), findsOneWidget);
     });
 
-    testWidgets('HortaMonitoradaScreen coordena o fluxo de missões',
+    testWidgets('HortaMonitoradaScreen carrega coordenador com cabeçalho',
         (WidgetTester tester) async {
       await tester.binding.setSurfaceSize(const Size(1280, 800));
 
@@ -174,8 +148,8 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 200));
 
-      expect(find.byType(StandFlowHeader), findsOneWidget);
-      expect(find.text('Missão 1 · Luz de Cultivo'), findsOneWidget);
+      expect(find.text('HORTA MONITORADA'), findsOneWidget);
+      expect(find.text('Missão 1 · Brilho Ajustável'), findsOneWidget);
     });
   });
 }

@@ -7,31 +7,30 @@ import '../../../widgets/prof_volts_feedback_dialog.dart';
 import '../../../widgets/success_confetti_overlay.dart';
 import '../../../widgets/workbench_components.dart';
 import '../../../widgets/workbench_table_frame.dart';
-import '../widgets/horta_monitorada_painter.dart';
-import '../widgets/horta_monitorada_widgets.dart';
+import '../widgets/portao_escola_painter.dart';
+import '../widgets/portao_escola_widgets.dart';
 
-/// Missão 03 — Luz da Estufa: Integrar sensor LDR ao LED para automação noturna
-class HortaMonitoradaM3 extends StatefulWidget {
+/// Missão 01 — O Relé Responde: Energizar a bobina eletromagnética e observar o fechamento do contato NA
+class PortaoEscolaM1 extends StatefulWidget {
   final VoidCallback onMissionComplete;
 
-  const HortaMonitoradaM3({
+  const PortaoEscolaM1({
     super.key,
     required this.onMissionComplete,
   });
 
   @override
-  State<HortaMonitoradaM3> createState() => _HortaMonitoradaM3State();
+  State<PortaoEscolaM1> createState() => _PortaoEscolaM1State();
 }
 
-class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
+class _PortaoEscolaM1State extends State<PortaoEscolaM1>
     with SingleTickerProviderStateMixin {
   late final AnimationController _animController;
   final CircuitUndoRedoController _undoRedoController =
       CircuitUndoRedoController();
 
   bool _usePhysicalStyle = true;
-  bool _isAutoModeEnabled = false;
-  double _luxPercent = 20.0; // Inicia em período noturno
+  bool _isButtonPressed = false;
 
   @override
   void initState() {
@@ -48,31 +47,25 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
     super.dispose();
   }
 
-  bool get _isNight => _luxPercent <= 30.0;
-  bool get _isLedActive => _isAutoModeEnabled && _isNight;
+  bool get _isCoilActive => _isButtonPressed;
+  bool get _isContactClosed => _isCoilActive;
 
-  void _toggleAutoMode() {
-    final prev = _isAutoModeEnabled;
+  void _toggleButton() {
+    final prev = _isButtonPressed;
     _undoRedoController.execute(
       ToggleBoolAction(
-        description: prev ? 'Desativar Automação' : 'Armar Automação Noturna',
-        onApply: () => setState(() => _isAutoModeEnabled = !prev),
-        onUndo: () => setState(() => _isAutoModeEnabled = prev),
+        description: prev ? 'Liberar Botão de Comando' : 'Pressionar Botão de Comando',
+        onApply: () => setState(() => _isButtonPressed = !prev),
+        onUndo: () => setState(() => _isButtonPressed = prev),
       ),
     );
   }
 
-  void _onLuxChanged(double value) {
-    setState(() => _luxPercent = value);
-  }
-
   void _validate() {
-    final isSuccess = _isAutoModeEnabled && _isNight && _isLedActive;
+    final isSuccess = _isButtonPressed && _isContactClosed;
     final message = isSuccess
-        ? 'Fantástico! Com o circuito de automação armado, ao cair da noite o LDR dispara o driver do LED Grow Light, garantindo ciclo contínuo de suplementação luminosa!'
-        : (!_isAutoModeEnabled
-            ? 'O circuito de automação ainda está desligado! Ative a chave de automação noturna.'
-            : 'Simule o anoitecer reduzindo a luz ambiente para comprovar o acendimento automático do LED.');
+        ? 'Excelente! Ao energizar a bobina com o pulso de 5V, o eletroímã atraiu a armadura móvel com um "clique" metálico, fechando o contato NA! Esse é o segredo do relé.'
+        : 'Pressione o Botão de Comando (Verde) para enviar 5V à bobina do relé e observe o contato NA fechar!';
 
     showDialog(
       context: context,
@@ -93,23 +86,22 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
 
   @override
   Widget build(BuildContext context) {
-    final status = _isLedActive
-        ? HortaState.nightActive
-        : (_isAutoModeEnabled ? HortaState.dayInactive : HortaState.standby);
-
-    final ledBrightness = _isLedActive ? 0.85 : 0.0;
+    final status = _isContactClosed
+        ? PortaoState.contactClosed
+        : (_isCoilActive ? PortaoState.coilEnergized : PortaoState.idle);
 
     return WorkbenchResponsiveLayout(
       workbench: WorkbenchTableFrame(
         usePhysicalStyle: _usePhysicalStyle,
         onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
-        leftHeaderWidget: HortaStatusCard(state: status),
-        rightHeaderWidget: HortaTelemetryCard(
-          luxPercent: _luxPercent,
-          ledBrightnessPercent: _isLedActive ? 85.0 : 0.0,
-          voltage: _isLedActive ? 5.0 : 0.0,
+        leftHeaderWidget: PortaoStatusCard(state: status),
+        rightHeaderWidget: PortaoTelemetryCard(
+          isCoilEnergized: _isCoilActive,
+          isContactClosed: _isContactClosed,
+          isMotorRunning: false,
+          gatePositionPercent: 0.0,
         ),
-        bottomWidget: HortaUndoRedoButtons(
+        bottomWidget: PortaoUndoRedoButtons(
           controller: _undoRedoController,
           onUndo: () => setState(() => _undoRedoController.undo()),
           onRedo: () => setState(() => _undoRedoController.redo()),
@@ -118,25 +110,24 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
           animation: _animController,
           builder: (context, child) {
             return CustomPaint(
-              painter: HortaMonitoradaPainter(
-                missionIndex: 2,
+              painter: PortaoEscolaPainter(
+                missionIndex: 0,
                 animValue: _animController.value,
                 usePhysicalStyle: _usePhysicalStyle,
-                potPercent: 70.0,
-                luxPercent: _luxPercent,
-                isLedOn: _isLedActive,
-                ledBrightness: ledBrightness,
-                isNightMode: _isNight,
-                isCircuitEnergized: _isLedActive,
+                isCommandPressed: _isButtonPressed,
+                isCoilEnergized: _isCoilActive,
+                isContactClosed: _isContactClosed,
+                isMotorRunning: false,
+                gatePositionPercent: 0.0,
               ),
             );
           },
         ),
       ),
       sidePanel: WorkbenchSidePanel(
-        teamTitle: 'Equipe Bio-Tech',
+        teamTitle: 'Equipe Automação',
         showTeamHeader: false,
-        buttonColor: const Color(0xFF16A34A),
+        buttonColor: const Color(0xFFF59E0B),
         toolboxItems: [
           _buildObjectiveCard(),
           const SizedBox(height: 12),
@@ -161,7 +152,7 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Missão 3 · Luz da Estufa',
+            'Missão 1 · O Relé Responde',
             style: GoogleFonts.rajdhani(
               color: Colors.white,
               fontSize: 16,
@@ -170,7 +161,7 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
           ),
           const SizedBox(height: 4),
           Text(
-            'Ligue o circuito comparador automático: ao anoitecer (lux < 30%), o sensor deve ligar automaticamente o LED de suplementação vegetal.',
+            'Acione o botão de comando para alimentar a bobina de 5V. Observe como o campo magnético atrai a lâmina metálica e fecha o contato Normalmente Aberto (NA).',
             style: GoogleFonts.rajdhani(
               color: const Color(0xFF94A3B8),
               fontSize: 13,
@@ -193,7 +184,7 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Checklist de Automação:',
+            'Checklist de Acionamento:',
             style: GoogleFonts.rajdhani(
               color: const Color(0xFF38BDF8),
               fontSize: 13,
@@ -201,9 +192,9 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
             ),
           ),
           const SizedBox(height: 8),
-          _buildStepRow(1, 'Habilitar modo automático', _isAutoModeEnabled),
-          _buildStepRow(2, 'Testar período noturno (< 30% lux)', _isNight),
-          _buildStepRow(3, 'Confirmar LED aceso e feixe na estufa', _isLedActive),
+          _buildStepRow(1, 'Inspecionar terminais da bobina', true),
+          _buildStepRow(2, 'Pressionar botoeira de pulso (5V)', _isButtonPressed),
+          _buildStepRow(3, 'Comprovar atração magnética e contato NA fechado', _isContactClosed),
         ],
       ),
     );
@@ -248,54 +239,26 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
         children: [
           FilledButton.icon(
             style: FilledButton.styleFrom(
-              backgroundColor: _isAutoModeEnabled
-                  ? const Color(0xFF10B981)
-                  : const Color(0xFF64748B),
+              backgroundColor: _isButtonPressed ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
               padding: const EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
-            onPressed: _toggleAutoMode,
-            icon: Icon(_isAutoModeEnabled ? Icons.toggle_on_rounded : Icons.toggle_off_rounded),
+            onPressed: _toggleButton,
+            icon: Icon(_isButtonPressed ? Icons.touch_app_rounded : Icons.fingerprint_rounded),
             label: Text(
-              _isAutoModeEnabled ? 'Automação Armada (ON)' : 'Armar Automação (OFF)',
+              _isButtonPressed ? 'Botão Pressionado (Bobina ON)' : 'Pressionar Botão de Comando',
               style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold, fontSize: 13),
             ),
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Simulação Solar:',
-                  style: GoogleFonts.rajdhani(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                ),
+          const SizedBox(height: 8),
+          Center(
+            child: Text(
+              _isContactClosed ? '✓ CONTATO NA FECHADO (CONDUZ)' : 'Contato NA Aberto (Em repouso)',
+              style: GoogleFonts.rajdhani(
+                color: _isContactClosed ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
               ),
-              Text(
-                _isNight ? 'NOITE (${_luxPercent.toStringAsFixed(0)}%)' : 'DIA (${_luxPercent.toStringAsFixed(0)}%)',
-                style: GoogleFonts.rajdhani(
-                  color: _isNight ? const Color(0xFF8B5CF6) : const Color(0xFFFBBF24),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                ),
-              ),
-            ],
-          ),
-          SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              activeTrackColor: const Color(0xFFFBBF24),
-              inactiveTrackColor: const Color(0xFF334155),
-              thumbColor: const Color(0xFFFDE047),
-            ),
-            child: Slider(
-              value: _luxPercent,
-              min: 0.0,
-              max: 100.0,
-              divisions: 20,
-              onChanged: _onLuxChanged,
             ),
           ),
         ],

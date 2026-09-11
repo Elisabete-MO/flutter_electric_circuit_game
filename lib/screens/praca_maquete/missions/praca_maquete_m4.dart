@@ -7,31 +7,32 @@ import '../../../widgets/prof_volts_feedback_dialog.dart';
 import '../../../widgets/success_confetti_overlay.dart';
 import '../../../widgets/workbench_components.dart';
 import '../../../widgets/workbench_table_frame.dart';
-import '../widgets/horta_monitorada_painter.dart';
-import '../widgets/horta_monitorada_widgets.dart';
+import '../widgets/praca_maquete_painter.dart';
+import '../widgets/praca_maquete_widgets.dart';
 
-/// Missão 03 — Luz da Estufa: Integrar sensor LDR ao LED para automação noturna
-class HortaMonitoradaM3 extends StatefulWidget {
+/// Missão 04 — Inspeção Final: Diagnosticar e solucionar 3 pendências elétricas antes da feira
+class PracaMaqueteM4 extends StatefulWidget {
   final VoidCallback onMissionComplete;
 
-  const HortaMonitoradaM3({
+  const PracaMaqueteM4({
     super.key,
     required this.onMissionComplete,
   });
 
   @override
-  State<HortaMonitoradaM3> createState() => _HortaMonitoradaM3State();
+  State<PracaMaqueteM4> createState() => _PracaMaqueteM4State();
 }
 
-class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
+class _PracaMaqueteM4State extends State<PracaMaqueteM4>
     with SingleTickerProviderStateMixin {
   late final AnimationController _animController;
   final CircuitUndoRedoController _undoRedoController =
       CircuitUndoRedoController();
 
   bool _usePhysicalStyle = true;
-  bool _isAutoModeEnabled = false;
-  double _luxPercent = 20.0; // Inicia em período noturno
+  bool _faultJumperFixed = false;
+  bool _faultFuseReplaced = false;
+  bool _faultBreakerCalibrated = false;
 
   @override
   void initState() {
@@ -48,31 +49,47 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
     super.dispose();
   }
 
-  bool get _isNight => _luxPercent <= 30.0;
-  bool get _isLedActive => _isAutoModeEnabled && _isNight;
+  bool get _isAllAudited =>
+      _faultJumperFixed && _faultFuseReplaced && _faultBreakerCalibrated;
 
-  void _toggleAutoMode() {
-    final prev = _isAutoModeEnabled;
+  void _toggleJumper() {
+    final prev = _faultJumperFixed;
     _undoRedoController.execute(
       ToggleBoolAction(
-        description: prev ? 'Desativar Automação' : 'Armar Automação Noturna',
-        onApply: () => setState(() => _isAutoModeEnabled = !prev),
-        onUndo: () => setState(() => _isAutoModeEnabled = prev),
+        description: prev ? 'Soltar Jumper Principal' : 'Encaixar Jumper do Barramento',
+        onApply: () => setState(() => _faultJumperFixed = !prev),
+        onUndo: () => setState(() => _faultJumperFixed = prev),
       ),
     );
   }
 
-  void _onLuxChanged(double value) {
-    setState(() => _luxPercent = value);
+  void _toggleFuse() {
+    final prev = _faultFuseReplaced;
+    _undoRedoController.execute(
+      ToggleBoolAction(
+        description: prev ? 'Remover Fusível Novo' : 'Substituir Fusível Rompido',
+        onApply: () => setState(() => _faultFuseReplaced = !prev),
+        onUndo: () => setState(() => _faultFuseReplaced = prev),
+      ),
+    );
+  }
+
+  void _toggleBreaker() {
+    final prev = _faultBreakerCalibrated;
+    _undoRedoController.execute(
+      ToggleBoolAction(
+        description: prev ? 'Desarmar Chave Geral' : 'Rearmar Chave Geral da Praça',
+        onApply: () => setState(() => _faultBreakerCalibrated = !prev),
+        onUndo: () => setState(() => _faultBreakerCalibrated = prev),
+      ),
+    );
   }
 
   void _validate() {
-    final isSuccess = _isAutoModeEnabled && _isNight && _isLedActive;
+    final isSuccess = _isAllAudited;
     final message = isSuccess
-        ? 'Fantástico! Com o circuito de automação armado, ao cair da noite o LDR dispara o driver do LED Grow Light, garantindo ciclo contínuo de suplementação luminosa!'
-        : (!_isAutoModeEnabled
-            ? 'O circuito de automação ainda está desligado! Ative a chave de automação noturna.'
-            : 'Simule o anoitecer reduzindo a luz ambiente para comprovar o acendimento automático do LED.');
+        ? 'Inspeção concluída com louvor! O jumper foi reconectado, o fusível de proteção substituído e a chave geral rearmada. A maquete coletiva está livre de falhas!'
+        : 'Ainda há pendências na maquete! Verifique o checklist de inspeção e resolva todas as 3 falhas antes de aprovar.';
 
     showDialog(
       context: context,
@@ -93,23 +110,23 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
 
   @override
   Widget build(BuildContext context) {
-    final status = _isLedActive
-        ? HortaState.nightActive
-        : (_isAutoModeEnabled ? HortaState.dayInactive : HortaState.standby);
-
-    final ledBrightness = _isLedActive ? 0.85 : 0.0;
+    final status = _isAllAudited
+        ? PracaState.fullyEnergized
+        : PracaState.faultDetected;
 
     return WorkbenchResponsiveLayout(
       workbench: WorkbenchTableFrame(
         usePhysicalStyle: _usePhysicalStyle,
         onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
-        leftHeaderWidget: HortaStatusCard(state: status),
-        rightHeaderWidget: HortaTelemetryCard(
-          luxPercent: _luxPercent,
-          ledBrightnessPercent: _isLedActive ? 85.0 : 0.0,
-          voltage: _isLedActive ? 5.0 : 0.0,
+        leftHeaderWidget: PracaStatusCard(state: status),
+        rightHeaderWidget: PracaTelemetryCard(
+          housesOn: _faultJumperFixed,
+          streetlightsOn: _faultFuseReplaced,
+          greenhouseOn: _faultBreakerCalibrated,
+          gateOn: _faultBreakerCalibrated,
+          totalPowerWatts: _isAllAudited ? 120.0 : 40.0,
         ),
-        bottomWidget: HortaUndoRedoButtons(
+        bottomWidget: PracaUndoRedoButtons(
           controller: _undoRedoController,
           onUndo: () => setState(() => _undoRedoController.undo()),
           onRedo: () => setState(() => _undoRedoController.redo()),
@@ -118,25 +135,25 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
           animation: _animController,
           builder: (context, child) {
             return CustomPaint(
-              painter: HortaMonitoradaPainter(
-                missionIndex: 2,
+              painter: PracaMaquetePainter(
+                missionIndex: 3,
                 animValue: _animController.value,
                 usePhysicalStyle: _usePhysicalStyle,
-                potPercent: 70.0,
-                luxPercent: _luxPercent,
-                isLedOn: _isLedActive,
-                ledBrightness: ledBrightness,
-                isNightMode: _isNight,
-                isCircuitEnergized: _isLedActive,
+                housesOn: _faultJumperFixed,
+                streetlightsOn: _faultFuseReplaced,
+                greenhouseOn: _faultBreakerCalibrated,
+                gateOn: _faultBreakerCalibrated,
+                alphaMonumentOn: _isAllAudited,
+                isMainGridEnergized: _isAllAudited,
               ),
             );
           },
         ),
       ),
       sidePanel: WorkbenchSidePanel(
-        teamTitle: 'Equipe Bio-Tech',
+        teamTitle: 'Equipe Urbana',
         showTeamHeader: false,
-        buttonColor: const Color(0xFF16A34A),
+        buttonColor: const Color(0xFF8B5CF6),
         toolboxItems: [
           _buildObjectiveCard(),
           const SizedBox(height: 12),
@@ -161,7 +178,7 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Missão 3 · Luz da Estufa',
+            'Missão 4 · Inspeção Final',
             style: GoogleFonts.rajdhani(
               color: Colors.white,
               fontSize: 16,
@@ -170,7 +187,7 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
           ),
           const SizedBox(height: 4),
           Text(
-            'Ligue o circuito comparador automático: ao anoitecer (lux < 30%), o sensor deve ligar automaticamente o LED de suplementação vegetal.',
+            'Auditoria Técnica Pré-Feira: localize e solucione as 3 não-conformidades encontradas na infraestrutura elétrica da maquete.',
             style: GoogleFonts.rajdhani(
               color: const Color(0xFF94A3B8),
               fontSize: 13,
@@ -193,7 +210,7 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Checklist de Automação:',
+            'Checklist de Auditoria:',
             style: GoogleFonts.rajdhani(
               color: const Color(0xFF38BDF8),
               fontSize: 13,
@@ -201,9 +218,9 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
             ),
           ),
           const SizedBox(height: 8),
-          _buildStepRow(1, 'Habilitar modo automático', _isAutoModeEnabled),
-          _buildStepRow(2, 'Testar período noturno (< 30% lux)', _isNight),
-          _buildStepRow(3, 'Confirmar LED aceso e feixe na estufa', _isLedActive),
+          _buildStepRow(1, 'Encaixar jumper do barramento principal', _faultJumperFixed),
+          _buildStepRow(2, 'Substituir fusível de iluminação', _faultFuseReplaced),
+          _buildStepRow(3, 'Rearmar chave geral da praça', _faultBreakerCalibrated),
         ],
       ),
     );
@@ -248,54 +265,43 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
         children: [
           FilledButton.icon(
             style: FilledButton.styleFrom(
-              backgroundColor: _isAutoModeEnabled
-                  ? const Color(0xFF10B981)
-                  : const Color(0xFF64748B),
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              backgroundColor: _faultJumperFixed ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            onPressed: _toggleAutoMode,
-            icon: Icon(_isAutoModeEnabled ? Icons.toggle_on_rounded : Icons.toggle_off_rounded),
+            onPressed: _toggleJumper,
+            icon: Icon(_faultJumperFixed ? Icons.check_rounded : Icons.link_off_rounded),
             label: Text(
-              _isAutoModeEnabled ? 'Automação Armada (ON)' : 'Armar Automação (OFF)',
-              style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold, fontSize: 13),
+              _faultJumperFixed ? 'Jumper do Barramento OK' : 'Reconectar Jumper Principal',
+              style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold, fontSize: 12),
             ),
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Simulação Solar:',
-                  style: GoogleFonts.rajdhani(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-              Text(
-                _isNight ? 'NOITE (${_luxPercent.toStringAsFixed(0)}%)' : 'DIA (${_luxPercent.toStringAsFixed(0)}%)',
-                style: GoogleFonts.rajdhani(
-                  color: _isNight ? const Color(0xFF8B5CF6) : const Color(0xFFFBBF24),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                ),
-              ),
-            ],
-          ),
-          SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              activeTrackColor: const Color(0xFFFBBF24),
-              inactiveTrackColor: const Color(0xFF334155),
-              thumbColor: const Color(0xFFFDE047),
+          const SizedBox(height: 8),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: _faultFuseReplaced ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: Slider(
-              value: _luxPercent,
-              min: 0.0,
-              max: 100.0,
-              divisions: 20,
-              onChanged: _onLuxChanged,
+            onPressed: _toggleFuse,
+            icon: Icon(_faultFuseReplaced ? Icons.check_rounded : Icons.healing_rounded),
+            label: Text(
+              _faultFuseReplaced ? 'Fusível Íntegro Instalado' : 'Substituir Fusível Rompido',
+              style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold, fontSize: 12),
+            ),
+          ),
+          const SizedBox(height: 8),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: _faultBreakerCalibrated ? const Color(0xFF10B981) : const Color(0xFF38BDF8),
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: _toggleBreaker,
+            icon: Icon(_faultBreakerCalibrated ? Icons.check_rounded : Icons.toggle_off_rounded),
+            label: Text(
+              _faultBreakerCalibrated ? 'Chave Geral Rearmada' : 'Rearmar Chave Geral da Praça',
+              style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold, fontSize: 12),
             ),
           ),
         ],

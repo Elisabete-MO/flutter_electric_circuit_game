@@ -1,14 +1,17 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../models/circuit_action.dart';
+import '../../../state/circuit_undo_redo_controller.dart';
 import '../../../widgets/prof_volts_feedback_dialog.dart';
 import '../../../widgets/success_confetti_overlay.dart';
 import '../../../widgets/workbench_components.dart';
 import '../../../widgets/workbench_table_frame.dart';
+import '../widgets/horta_monitorada_painter.dart';
 import '../widgets/horta_monitorada_widgets.dart';
-import '../widgets/horta_split_view.dart';
 
-/// Missão 04 — Bomba de Irrigação: Disparar o ciclo de rega por gotejamento quando o solo estiver seco.
+/// Missão 04 — Energia por Instantes: Armazenamento e descarga temporária com capacitor
 class HortaMonitoradaM4 extends StatefulWidget {
   final VoidCallback onMissionComplete;
 
@@ -24,11 +27,14 @@ class HortaMonitoradaM4 extends StatefulWidget {
 class _HortaMonitoradaM4State extends State<HortaMonitoradaM4>
     with SingleTickerProviderStateMixin {
   late final AnimationController _animController;
+  final CircuitUndoRedoController _undoRedoController =
+      CircuitUndoRedoController();
 
   bool _usePhysicalStyle = true;
-  bool _isPumpActive = false;
-  double _soilMoisture = 0.20; // Solo seco
-  bool _irrigationCycleCompleted = false;
+  double _chargeLevel = 0.0; // 0.0 a 1.0
+  bool _isMainPowerOn = true;
+  bool _hasDischargedObserved = false;
+  Timer? _dischargeTimer;
 
   @override
   void initState() {
@@ -41,33 +47,52 @@ class _HortaMonitoradaM4State extends State<HortaMonitoradaM4>
 
   @override
   void dispose() {
+    _dischargeTimer?.cancel();
     _animController.dispose();
     super.dispose();
   }
 
-  void _triggerIrrigationPump() {
+  bool get _isLedGlowing => _isMainPowerOn || _chargeLevel > 0.05;
+
+  void _chargeCapacitor() {
+    _dischargeTimer?.cancel();
+    final prev = _chargeLevel;
+    _undoRedoController.execute(
+      UpdateValueAction(
+        description: 'Carregar Capacitor (100%)',
+        onApply: () => setState(() {
+          _chargeLevel = 1.0;
+          _isMainPowerOn = true;
+        }),
+        onUndo: () => setState(() => _chargeLevel = prev),
+      ),
+    );
+  }
+
+  void _simulatePowerCut() {
     setState(() {
-      _isPumpActive = true;
+      _isMainPowerOn = false;
     });
 
-    Future.delayed(const Duration(milliseconds: 1200), () {
-      if (mounted) {
-        setState(() {
-          _soilMoisture = 0.80; // Solo umedecido
-          _isPumpActive = false;
-          _irrigationCycleCompleted = true;
-        });
-      }
+    _dischargeTimer?.cancel();
+    // Simula descarga exponencial com timer a cada 50ms por 2 segundos
+    _dischargeTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
+      setState(() {
+        _chargeLevel -= 0.035;
+        if (_chargeLevel <= 0.0) {
+          _chargeLevel = 0.0;
+          _hasDischargedObserved = true;
+          timer.cancel();
+        }
+      });
     });
   }
 
-  bool get _isSoilHydrated => _soilMoisture >= 0.70 && _irrigationCycleCompleted;
-
   void _validate() {
-    final isSuccess = _isSoilHydrated;
+    final isSuccess = _hasDischargedObserved || (_chargeLevel > 0.8 && !_isMainPowerOn);
     final message = isSuccess
-        ? 'Excelente trabalho! A bomba de irrigação foi acionada com sucesso, a água percorreu a tubulação e gotejou sobre as raízes, reidratando o solo para 80% e normalizando os sensores!'
-        : 'O solo ainda está ressecado! Pressione o botão da bomba para acionar a irrigação e hidratar o canteiro.';
+        ? 'Brilhante! O capacitor de 470µF funcionou como uma pequena represa de elétrons: mesmo sem a fonte, ele sustentou o LED durante a transição!'
+        : 'Carregue o capacitor a 100% e depois clique em "Simular Queda de Energia" para observar a descarga sustentando o LED!';
 
     showDialog(
       context: context,
@@ -88,37 +113,44 @@ class _HortaMonitoradaM4State extends State<HortaMonitoradaM4>
 
   @override
   Widget build(BuildContext context) {
-    final isDryAlert = _soilMoisture < 0.35;
+    final status = _isMainPowerOn
+        ? (_chargeLevel > 0.8 ? HortaState.charging : HortaState.standby)
+        : (_chargeLevel > 0.05 ? HortaState.discharging : HortaState.standby);
+
+    final ledBrightness = _isMainPowerOn ? 0.7 : _chargeLevel * 0.7;
 
     return WorkbenchResponsiveLayout(
       workbench: WorkbenchTableFrame(
         usePhysicalStyle: _usePhysicalStyle,
         onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
-        leftHeaderWidget: HortaStatusCard(
-          statusText: _isPumpActive
-              ? 'REGANDO CANTEIRO...'
-              : (_isSoilHydrated ? 'SOLO REIDRATADO' : 'ALERTA: SOLO SECO'),
-          isHealthy: _isSoilHydrated || _isPumpActive,
-          icon: _isPumpActive ? Icons.water_rounded : (isDryAlert ? Icons.warning_amber_rounded : Icons.water_drop_rounded),
-        ),
+        leftHeaderWidget: HortaStatusCard(state: status),
         rightHeaderWidget: HortaTelemetryCard(
-          voltage: _isPumpActive ? 9.0 : 0.0,
-          currentMa: _isPumpActive ? 180.0 : 15.0,
-          lightPercent: 85.0,
-          moisturePercent: _soilMoisture * 100,
-          temperatureC: 24.0,
+          isCapacitorCharged: _chargeLevel > 0.1,
+          voltage: _isMainPowerOn ? 5.0 : _chargeLevel * 5.0,
+          ledBrightnessPercent: ledBrightness * 100.0,
+        ),
+        bottomWidget: HortaUndoRedoButtons(
+          controller: _undoRedoController,
+          onUndo: () => setState(() => _undoRedoController.undo()),
+          onRedo: () => setState(() => _undoRedoController.redo()),
         ),
         child: AnimatedBuilder(
           animation: _animController,
           builder: (context, child) {
-            return HortaSplitView(
-              missionIndex: 3,
-              animValue: _animController.value,
-              usePhysicalStyle: _usePhysicalStyle,
-              isSwitchClosed: true,
-              potentiometerValue: 0.85,
-              soilMoisture: _soilMoisture,
-              isIrrigating: _isPumpActive,
+            return CustomPaint(
+              painter: HortaMonitoradaPainter(
+                missionIndex: 3,
+                animValue: _animController.value,
+                usePhysicalStyle: _usePhysicalStyle,
+                potPercent: 70.0,
+                luxPercent: 100.0,
+                isLedOn: _isLedGlowing,
+                ledBrightness: ledBrightness,
+                isCapacitorCharging: _isMainPowerOn && _chargeLevel > 0.8,
+                isCapacitorDischarging: !_isMainPowerOn && _chargeLevel > 0.05,
+                capacitorChargeLevel: _chargeLevel,
+                isCircuitEnergized: _isLedGlowing,
+              ),
             );
           },
         ),
@@ -126,13 +158,13 @@ class _HortaMonitoradaM4State extends State<HortaMonitoradaM4>
       sidePanel: WorkbenchSidePanel(
         teamTitle: 'Equipe Bio-Tech',
         showTeamHeader: false,
-        buttonColor: const Color(0xFF10B981),
+        buttonColor: const Color(0xFF16A34A),
         toolboxItems: [
           _buildObjectiveCard(),
           const SizedBox(height: 12),
-          _buildControlsCard(),
+          _buildInvestigationStepper(),
           const SizedBox(height: 12),
-          _buildChecklistCard(),
+          _buildToolboxControls(),
         ],
         onEnergizePressed: _validate,
       ),
@@ -151,7 +183,7 @@ class _HortaMonitoradaM4State extends State<HortaMonitoradaM4>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Missão 4 · Bomba de Irrigação',
+            'Missão 4 · Energia por Instantes',
             style: GoogleFonts.rajdhani(
               color: Colors.white,
               fontSize: 16,
@@ -160,7 +192,7 @@ class _HortaMonitoradaM4State extends State<HortaMonitoradaM4>
           ),
           const SizedBox(height: 4),
           Text(
-            'O canteiro está com apenas 20% de umidade. Acione a mini-bomba hidráulica para enviar água pelos tubos de gotejamento.',
+            'Carregue o capacitor e corte a fonte principal para comprovar que capacitores armazenam carga por instantes, sustentando a estufa sem apagão abrupto.',
             style: GoogleFonts.rajdhani(
               color: const Color(0xFF94A3B8),
               fontSize: 13,
@@ -171,42 +203,7 @@ class _HortaMonitoradaM4State extends State<HortaMonitoradaM4>
     );
   }
 
-  Widget _buildControlsCard() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F172A),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF334155)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Comando da Bomba DC:',
-            style: GoogleFonts.rajdhani(color: const Color(0xFF38BDF8), fontSize: 13, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 10),
-          FilledButton.icon(
-            style: FilledButton.styleFrom(
-              backgroundColor: _isPumpActive ? const Color(0xFF0284C7) : const Color(0xFF06B6D4),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            onPressed: _isPumpActive ? null : _triggerIrrigationPump,
-            icon: Icon(_isPumpActive ? Icons.hourglass_top_rounded : Icons.water_drop_rounded),
-            label: Text(
-              _isPumpActive ? 'IRRIGANDO...' : 'ACIONAR REGADOR',
-              style: GoogleFonts.rajdhani(fontSize: 14, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildChecklistCard() {
+  Widget _buildInvestigationStepper() {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -218,27 +215,31 @@ class _HortaMonitoradaM4State extends State<HortaMonitoradaM4>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Checklist de Irrigação:',
-            style: GoogleFonts.rajdhani(color: const Color(0xFF38BDF8), fontSize: 13, fontWeight: FontWeight.bold),
+            'Checklist do Capacitor:',
+            style: GoogleFonts.rajdhani(
+              color: const Color(0xFF38BDF8),
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-          const SizedBox(height: 6),
-          _buildCheckItem('Detectar solo seco', _soilMoisture < 0.35 || _irrigationCycleCompleted),
-          _buildCheckItem('Disparar ciclo da bomba hidráulica', _irrigationCycleCompleted),
-          _buildCheckItem('Umidade final adequada (>= 70%)', _soilMoisture >= 0.70),
+          const SizedBox(height: 8),
+          _buildStepRow(1, 'Carregar capacitor a 100%', _chargeLevel >= 0.9),
+          _buildStepRow(2, 'Simular corte da alimentação 5V', !_isMainPowerOn),
+          _buildStepRow(3, 'Observar brilho residual decair suavemente', _hasDischargedObserved),
         ],
       ),
     );
   }
 
-  Widget _buildCheckItem(String label, bool isDone) {
+  Widget _buildStepRow(int step, String label, bool isDone) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2.5),
+      padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         children: [
           Icon(
             isDone ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
             color: isDone ? const Color(0xFF10B981) : const Color(0xFF64748B),
-            size: 15,
+            size: 16,
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -247,8 +248,86 @@ class _HortaMonitoradaM4State extends State<HortaMonitoradaM4>
               style: GoogleFonts.rajdhani(
                 color: isDone ? Colors.white : const Color(0xFF64748B),
                 fontSize: 12,
+                fontWeight: isDone ? FontWeight.bold : FontWeight.normal,
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToolboxControls() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF334155)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF0284C7),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: _chargeCapacitor,
+            icon: const Icon(Icons.bolt_rounded),
+            label: Text(
+              'Carregar Capacitor (5V)',
+              style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold, fontSize: 13),
+            ),
+          ),
+          const SizedBox(height: 10),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: _chargeLevel > 0.05 ? _simulatePowerCut : null,
+            icon: const Icon(Icons.power_off_rounded),
+            label: Text(
+              'Simular Queda de Energia',
+              style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold, fontSize: 13),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Nível de Carga do Capacitor:',
+                      style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 12),
+                    ),
+                  ),
+                  Text(
+                    '${(_chargeLevel * 100).toStringAsFixed(0)}%',
+                    style: GoogleFonts.rajdhani(
+                      color: const Color(0xFF38BDF8),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: _chargeLevel,
+                  backgroundColor: const Color(0xFF334155),
+                  valueColor: const AlwaysStoppedAnimation(Color(0xFF38BDF8)),
+                  minHeight: 8,
+                ),
+              ),
+            ],
           ),
         ],
       ),

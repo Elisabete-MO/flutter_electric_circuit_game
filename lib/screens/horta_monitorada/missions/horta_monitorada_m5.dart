@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../models/circuit_action.dart';
+import '../../../state/circuit_undo_redo_controller.dart';
 import '../../../widgets/prof_volts_feedback_dialog.dart';
 import '../../../widgets/success_confetti_overlay.dart';
 import '../../../widgets/workbench_components.dart';
 import '../../../widgets/workbench_table_frame.dart';
+import '../widgets/horta_monitorada_painter.dart';
 import '../widgets/horta_monitorada_widgets.dart';
-import '../widgets/horta_split_view.dart';
 
-/// Missão 05 — Painel Integrado: Automação completa de todos os subsistemas da estufa com simulação de ciclo ambiental.
+/// Missão 05 — Painel da Horta: Comissionamento do sistema integrado da estufa inteligente
 class HortaMonitoradaM5 extends StatefulWidget {
   final VoidCallback onMissionComplete;
 
@@ -24,17 +26,14 @@ class HortaMonitoradaM5 extends StatefulWidget {
 class _HortaMonitoradaM5State extends State<HortaMonitoradaM5>
     with SingleTickerProviderStateMixin {
   late final AnimationController _animController;
+  final CircuitUndoRedoController _undoRedoController =
+      CircuitUndoRedoController();
 
   bool _usePhysicalStyle = true;
-  bool _masterSwitch = true;
-  double _growLightPotentiometer = 0.85;
-  double _soilMoisture = 0.75;
-  bool _fanActive = true;
-  bool _pumpActive = false;
-  int _environmentCycleStep = 0; // 0: Normal, 1: Sol Escaldante, 2: Solo Seco, 3: Noite Fria
-  bool _allCyclesTested = false;
-
-  final Set<int> _testedCycleSteps = {};
+  double _potPercent = 60.0;
+  final double _luxPercent = 25.0; // Noite
+  bool _isAutoModeArmed = true;
+  bool _isCapacitorReady = true;
 
   @override
   void initState() {
@@ -43,7 +42,6 @@ class _HortaMonitoradaM5State extends State<HortaMonitoradaM5>
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     )..repeat();
-    _testedCycleSteps.add(0);
   }
 
   @override
@@ -52,53 +50,35 @@ class _HortaMonitoradaM5State extends State<HortaMonitoradaM5>
     super.dispose();
   }
 
-  void _changeEnvironmentScenario(int step) {
-    setState(() {
-      _environmentCycleStep = step;
-      _testedCycleSteps.add(step);
+  bool get _isPotCalibrated => _potPercent >= 40.0 && _potPercent <= 80.0;
+  bool get _isNight => _luxPercent <= 30.0;
+  bool get _isLedActive => _isAutoModeArmed && _isNight;
+  bool get _isAllCalibrated => _isPotCalibrated && _isAutoModeArmed && _isCapacitorReady;
 
-      if (step == 1) {
-        // Sol Escaldante
-        _fanActive = true;
-      } else if (step == 2) {
-        // Solo Seco
-        _soilMoisture = 0.25;
-      } else if (step == 3) {
-        // Noite
-        _growLightPotentiometer = 0.90;
-      } else {
-        // Normal
-        _soilMoisture = 0.75;
-        _growLightPotentiometer = 0.85;
-      }
-
-      if (_testedCycleSteps.length >= 4) {
-        _allCyclesTested = true;
-      }
-    });
+  void _onPotChanged(double val) {
+    setState(() => _potPercent = val);
   }
 
-  void _triggerPump() {
-    setState(() => _pumpActive = true);
-    Future.delayed(const Duration(milliseconds: 1000), () {
-      if (mounted) {
-        setState(() {
-          _soilMoisture = 0.80;
-          _pumpActive = false;
-        });
-      }
-    });
+  void _toggleAutoMode() {
+    final prev = _isAutoModeArmed;
+    _undoRedoController.execute(
+      ToggleBoolAction(
+        description: prev ? 'Desarmar Automação' : 'Armar Automação',
+        onApply: () => setState(() => _isAutoModeArmed = !prev),
+        onUndo: () => setState(() => _isAutoModeArmed = prev),
+      ),
+    );
   }
 
-  bool get _isMasterSystemReady => _masterSwitch && _allCyclesTested;
+  void _toggleCapacitor() {
+    setState(() => _isCapacitorReady = !_isCapacitorReady);
+  }
 
   void _validate() {
-    final isSuccess = _isMasterSystemReady;
+    final isSuccess = _isAllCalibrated;
     final message = isSuccess
-        ? 'PROJETO CONCLUÍDO COM LOUVOR! O Painel Integrado da Horta Monitorada está 100% calibrado e autônomo. A Equipe Bio-Tech construiu uma estufa inteligente de ponta que responde perfeitamente a todas as variações ambientais da Feira de Ciências!'
-        : (!_masterSwitch
-            ? 'A chave geral de alimentação do barramento está aberta!'
-            : 'Teste todos os 4 cenários ambientais (Normal, Sol Forte, Solo Seco e Noite) para certificar a automação da estufa!');
+        ? 'Parabéns Equipe Bio-Tech! O painel da Horta Monitorada está 100% aprovado para a Feira de Ciências! Sensores, potenciômetro, LED de cultivo e capacitor de reserva operando em perfeita harmonia!'
+        : 'Verifique o checklist de comissionamento: certifique-se de que o potenciômetro está entre 40-80%, a automação noturna está armada e a reserva do capacitor está habilitada.';
 
     showDialog(
       context: context,
@@ -119,39 +99,45 @@ class _HortaMonitoradaM5State extends State<HortaMonitoradaM5>
 
   @override
   Widget build(BuildContext context) {
-    final currentMa = _masterSwitch
-        ? (35.0 * _growLightPotentiometer + (_fanActive ? 120.0 : 0.0) + (_pumpActive ? 180.0 : 0.0) + 15.0)
-        : 0.0;
+    final status = _isAllCalibrated
+        ? HortaState.systemOk
+        : (_isLedActive ? HortaState.nightActive : HortaState.adjusting);
+
+    final ledBrightness = (_potPercent / 100.0) * (_isLedActive ? 1.0 : 0.2);
 
     return WorkbenchResponsiveLayout(
       workbench: WorkbenchTableFrame(
         usePhysicalStyle: _usePhysicalStyle,
         onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
-        leftHeaderWidget: HortaStatusCard(
-          statusText: _masterSwitch ? 'ESTUFA INTELIGENTE 100%' : 'SISTEMA DESLIGADO',
-          isHealthy: _masterSwitch,
-          icon: Icons.verified_rounded,
-        ),
+        leftHeaderWidget: HortaStatusCard(state: status),
         rightHeaderWidget: HortaTelemetryCard(
-          voltage: _masterSwitch ? 9.0 : 0.0,
-          currentMa: currentMa,
-          lightPercent: _masterSwitch ? (_growLightPotentiometer * 100) : 0.0,
-          moisturePercent: _soilMoisture * 100,
-          temperatureC: _fanActive ? 23.5 : 31.0,
+          potPercent: _potPercent,
+          luxPercent: _luxPercent,
+          voltage: 5.0,
+          ledBrightnessPercent: ledBrightness * 100.0,
+          isCapacitorCharged: _isCapacitorReady,
+        ),
+        bottomWidget: HortaUndoRedoButtons(
+          controller: _undoRedoController,
+          onUndo: () => setState(() => _undoRedoController.undo()),
+          onRedo: () => setState(() => _undoRedoController.redo()),
         ),
         child: AnimatedBuilder(
           animation: _animController,
           builder: (context, child) {
-            return HortaSplitView(
-              missionIndex: 4,
-              animValue: _animController.value,
-              usePhysicalStyle: _usePhysicalStyle,
-              isSwitchClosed: _masterSwitch,
-              potentiometerValue: _growLightPotentiometer,
-              soilMoisture: _soilMoisture,
-              isFanActive: _fanActive,
-              isIrrigating: _pumpActive,
-              isMasterActive: _masterSwitch,
+            return CustomPaint(
+              painter: HortaMonitoradaPainter(
+                missionIndex: 4,
+                animValue: _animController.value,
+                usePhysicalStyle: _usePhysicalStyle,
+                potPercent: _potPercent,
+                luxPercent: _luxPercent,
+                isLedOn: true,
+                ledBrightness: ledBrightness,
+                capacitorChargeLevel: _isCapacitorReady ? 1.0 : 0.0,
+                isNightMode: _isNight,
+                isCircuitEnergized: true,
+              ),
             );
           },
         ),
@@ -159,13 +145,13 @@ class _HortaMonitoradaM5State extends State<HortaMonitoradaM5>
       sidePanel: WorkbenchSidePanel(
         teamTitle: 'Equipe Bio-Tech',
         showTeamHeader: false,
-        buttonColor: const Color(0xFF10B981),
+        buttonColor: const Color(0xFF16A34A),
         toolboxItems: [
           _buildObjectiveCard(),
           const SizedBox(height: 12),
-          _buildScenariosCard(),
+          _buildInvestigationStepper(),
           const SizedBox(height: 12),
-          _buildChecklistCard(),
+          _buildToolboxControls(),
         ],
         onEnergizePressed: _validate,
       ),
@@ -184,7 +170,7 @@ class _HortaMonitoradaM5State extends State<HortaMonitoradaM5>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Missão 5 · Painel Integrado',
+            'Missão 5 · Painel da Horta',
             style: GoogleFonts.rajdhani(
               color: Colors.white,
               fontSize: 16,
@@ -193,7 +179,7 @@ class _HortaMonitoradaM5State extends State<HortaMonitoradaM5>
           ),
           const SizedBox(height: 4),
           Text(
-            'Todos os 4 subsistemas (Luz, Sonda, Exaustor e Bomba) foram interligados em paralelo na fonte de 9V. Teste os ciclos ambientais para certificar o projeto.',
+            'Comissionamento Final: calibração integrada de todos os blocos (Potenciômetro + LDR noturno + Capacitor + LED) para validação oficial do Estande!',
             style: GoogleFonts.rajdhani(
               color: const Color(0xFF94A3B8),
               fontSize: 13,
@@ -204,87 +190,7 @@ class _HortaMonitoradaM5State extends State<HortaMonitoradaM5>
     );
   }
 
-  Widget _buildScenariosCard() {
-    final scenarios = [
-      {'label': '1. Ideal', 'icon': Icons.wb_sunny_rounded},
-      {'label': '2. Sol Forte', 'icon': Icons.local_fire_department_rounded},
-      {'label': '3. Solo Seco', 'icon': Icons.water_drop_rounded},
-      {'label': '4. Noite', 'icon': Icons.nightlight_round},
-    ];
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F172A),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF334155)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  'Barramento Geral 9V:',
-                  style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
-                ),
-              ),
-              Switch(
-                value: _masterSwitch,
-                activeThumbColor: const Color(0xFF10B981),
-                onChanged: (val) => setState(() => _masterSwitch = val),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Simulação de Ciclo Climático:',
-            style: GoogleFonts.rajdhani(color: const Color(0xFF38BDF8), fontSize: 13, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: List.generate(scenarios.length, (idx) {
-              final isSelected = _environmentCycleStep == idx;
-              return ChoiceChip(
-                label: Text(
-                  scenarios[idx]['label'] as String,
-                  style: GoogleFonts.rajdhani(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: isSelected ? Colors.black : Colors.white70,
-                  ),
-                ),
-                selected: isSelected,
-                selectedColor: const Color(0xFF10B981),
-                backgroundColor: const Color(0xFF1E293B),
-                onSelected: (val) {
-                  if (val) _changeEnvironmentScenario(idx);
-                },
-              );
-            }),
-          ),
-          if (_environmentCycleStep == 2) ...[
-            const SizedBox(height: 10),
-            FilledButton.icon(
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF06B6D4),
-                padding: const EdgeInsets.symmetric(vertical: 8),
-              ),
-              onPressed: _triggerPump,
-              icon: const Icon(Icons.water_drop_rounded, size: 16),
-              label: Text('Regar Canteiro', style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildChecklistCard() {
+  Widget _buildInvestigationStepper() {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -296,29 +202,32 @@ class _HortaMonitoradaM5State extends State<HortaMonitoradaM5>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Auditoria Final do Estande:',
-            style: GoogleFonts.rajdhani(color: const Color(0xFF38BDF8), fontSize: 13, fontWeight: FontWeight.bold),
+            'Auditoria da Estufa Bio-Tech:',
+            style: GoogleFonts.rajdhani(
+              color: const Color(0xFF38BDF8),
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-          const SizedBox(height: 6),
-          _buildCheckItem('Barramento 9V em paralelo ativo', _masterSwitch),
-          _buildCheckItem('Sub-sistema de Luz calibrado', true),
-          _buildCheckItem('Sub-sistema de Sonda e Bomba ativo', true),
-          _buildCheckItem('Sub-sistema de Exaustores ativo', true),
-          _buildCheckItem('Ciclos ambientais testados (${_testedCycleSteps.length}/4)', _allCyclesTested),
+          const SizedBox(height: 8),
+          _buildStepRow(1, 'Potenciômetro calibrado (40% - 80%)', _isPotCalibrated),
+          _buildStepRow(2, 'Automação noturna habilitada', _isAutoModeArmed),
+          _buildStepRow(3, 'Banco capacitivo de reserva OK', _isCapacitorReady),
+          _buildStepRow(4, 'Inspeção geral do painel aprovada', _isAllCalibrated),
         ],
       ),
     );
   }
 
-  Widget _buildCheckItem(String label, bool isDone) {
+  Widget _buildStepRow(int step, String label, bool isDone) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2.5),
+      padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         children: [
           Icon(
             isDone ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
             color: isDone ? const Color(0xFF10B981) : const Color(0xFF64748B),
-            size: 15,
+            size: 16,
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -327,7 +236,84 @@ class _HortaMonitoradaM5State extends State<HortaMonitoradaM5>
               style: GoogleFonts.rajdhani(
                 color: isDone ? Colors.white : const Color(0xFF64748B),
                 fontSize: 12,
+                fontWeight: isDone ? FontWeight.bold : FontWeight.normal,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToolboxControls() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF334155)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Potenciômetro:',
+                  style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+              ),
+              Text(
+                '${_potPercent.toStringAsFixed(0)}%',
+                style: GoogleFonts.rajdhani(
+                  color: _isPotCalibrated ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: const Color(0xFF10B981),
+              inactiveTrackColor: const Color(0xFF334155),
+              thumbColor: const Color(0xFF22C55E),
+            ),
+            child: Slider(
+              value: _potPercent,
+              min: 0.0,
+              max: 100.0,
+              divisions: 20,
+              onChanged: _onPotChanged,
+            ),
+          ),
+          const SizedBox(height: 8),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: _isAutoModeArmed ? const Color(0xFF10B981) : const Color(0xFF64748B),
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: _toggleAutoMode,
+            icon: Icon(_isAutoModeArmed ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded),
+            label: Text(
+              _isAutoModeArmed ? 'Automação Armada' : 'Armar Automação',
+              style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold, fontSize: 12),
+            ),
+          ),
+          const SizedBox(height: 8),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: _isCapacitorReady ? const Color(0xFF0284C7) : const Color(0xFF64748B),
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: _toggleCapacitor,
+            icon: const Icon(Icons.bolt_rounded),
+            label: Text(
+              _isCapacitorReady ? 'Capacitor em Standby (100%)' : 'Habilitar Capacitor',
+              style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold, fontSize: 12),
             ),
           ),
         ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../core/ui_scale.dart';
 import '../../models/phase1_component_data.dart';
 import '../../widgets/component_physical_painter.dart';
 import '../../widgets/prof_volts_feedback_dialog.dart';
@@ -318,6 +319,9 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
       return _buildQuizScaffold();
     }
 
+    final scale = context.uiScale;
+    final isMobileLandscape = scale.isMobileLandscape;
+
     return Row(
       children: [
         // Área Principal da Bancada
@@ -332,7 +336,7 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
             child: _buildBenchWorkspace(),
           ),
         ),
-        const SizedBox(width: 16),
+        SizedBox(width: isMobileLandscape ? 10 : 16),
         // Painel Lateral (Objetivo + Detalhes Didáticos + Ação)
         Expanded(
           flex: 3,
@@ -346,15 +350,27 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
                 ? 'INICIAR QUIZ DE FIXAÇÃO'
                 : 'EXPLORE OS 5 COMPONENTES (${_exploredIds.length}/5)',
             toolboxItems: [
-              const WorkbenchMissionObjectiveCard(
-                missionNumber: 1,
-                title: 'Conheça os componentes',
-                description: 'Explore os cinco componentes da bancada para entender suas funções didáticas e liberar o quiz.',
-                voltsTip: 'Toque em cada peça na bancada para examinar seus terminais e funções didáticas.',
-                accentColor: Color(0xFF0284C7),
-              ),
-              const SizedBox(height: 12),
+              if (!isMobileLandscape) ...[
+                const WorkbenchMissionObjectiveCard(
+                  missionNumber: 1,
+                  title: 'Conheça os componentes',
+                  description: 'Explore os cinco componentes da bancada para entender suas funções didáticas e liberar o quiz.',
+                  voltsTip: 'Toque em cada peça na bancada para examinar seus terminais e funções didáticas.',
+                  accentColor: Color(0xFF0284C7),
+                ),
+                const SizedBox(height: 12),
+              ],
               _buildSidePanelContent(),
+              if (isMobileLandscape) ...[
+                const SizedBox(height: 10),
+                const WorkbenchMissionObjectiveCard(
+                  missionNumber: 1,
+                  title: 'Conheça os componentes',
+                  description: 'Explore os cinco componentes para liberar o quiz de fixação.',
+                  voltsTip: 'Toque em cada peça na bancada para examinar suas funções.',
+                  accentColor: Color(0xFF0284C7),
+                ),
+              ],
             ],
             onEnergizePressed: () {
               if (_isAllExplored) {
@@ -443,16 +459,41 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
   // AMBIENTE DA BANCADA DE MADEIRA (73-75% de largura no Desktop)
   // ==========================================
   Widget _buildBenchWorkspace() {
+    final scale = context.uiScale;
+    final isMobileLandscape = scale.isMobileLandscape;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final w = constraints.maxWidth;
         final h = constraints.maxHeight;
 
-        // Proporções relativas horizontais dos 5 componentes sobre a bancada
-        final relativeXs = [0.12, 0.28, 0.46, 0.65, 0.82];
-        final relativeYs = [0.42, 0.44, 0.46, 0.42, 0.44];
-        final widths = [130.0, 140.0, 135.0, 90.0, 140.0];
-        final heights = [135.0, 120.0, 90.0, 130.0, 110.0];
+        // Disposição adaptativa em 2 grades para telas compactas ou mobile landscape
+        final bool useTwoRows = w < 780 || h < 480 || isMobileLandscape;
+
+        final List<double> relativeXs;
+        final List<double> relativeYs;
+        final double compScale;
+
+        if (useTwoRows) {
+          // Grade em 2 Linhas:
+          // Linha 1 (topo): Bateria (0), Chave SPST (1), Resistor 680Ω (2)
+          // Linha 2 (baixo): LED vermelho (3), Fios jumper (4)
+          relativeXs = [0.20, 0.50, 0.80, 0.35, 0.65];
+          relativeYs = [0.25, 0.25, 0.25, 0.70, 0.70];
+          compScale = (h < 310 || w < 540) ? 0.62 : 0.68;
+        } else {
+          // Linha única tradicional para telas amplas
+          relativeXs = [0.12, 0.28, 0.46, 0.65, 0.82];
+          relativeYs = [0.42, 0.44, 0.46, 0.42, 0.44];
+          compScale = 1.0;
+        }
+
+        final baseWidths = [130.0, 140.0, 135.0, 90.0, 140.0];
+        final baseHeights = [135.0, 120.0, 90.0, 130.0, 110.0];
+
+        final plaqueWidth = useTwoRows
+            ? (w * 0.27).clamp(115.0, 145.0)
+            : (w * 0.17).clamp(95.0, 160.0);
 
         return Stack(
           clipBehavior: Clip.none,
@@ -473,8 +514,14 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
               final isSelected = _selectedIndex == index;
               final isExplored = _exploredIds.contains(comp.id);
 
-              final posX = (w * relativeXs[index]) - (widths[index] / 2);
-              final posY = (h * relativeYs[index]) - (heights[index] / 2);
+              final itemW = baseWidths[index] * compScale;
+              final itemH = baseHeights[index] * compScale;
+
+              final centerX = w * relativeXs[index];
+              final centerY = h * relativeYs[index];
+
+              final posX = (centerX - (itemW / 2)).clamp(6.0, w - itemW - 6.0);
+              final posY = (centerY - (itemH / 2)).clamp(6.0, h - itemH - 30.0);
 
               Widget compImage = CustomPaint(
                 painter: ComponentPhysicalPainter(
@@ -482,7 +529,7 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
                   isActive: true,
                   isDarkMode: false,
                 ),
-                child: SizedBox(width: widths[index], height: heights[index]),
+                child: SizedBox(width: itemW, height: itemH),
               );
 
               if (isSelected) {
@@ -491,9 +538,9 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: StandFlowTokens.primaryGreen.withValues(alpha: 0.7),
-                        blurRadius: 18,
-                        spreadRadius: 3,
+                        color: StandFlowTokens.primaryGreen.withValues(alpha: 0.75),
+                        blurRadius: useTwoRows ? 14 : 18,
+                        spreadRadius: useTwoRows ? 2.5 : 3,
                       ),
                     ],
                   ),
@@ -501,15 +548,18 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
                 );
               }
 
+              final plaqueLeft = (centerX - (plaqueWidth / 2)).clamp(4.0, w - plaqueWidth - 4.0);
+              final plaqueTop = (posY + itemH + (useTwoRows ? 4.0 : 8.0)).clamp(10.0, h - 34.0);
+
               return Stack(
                 clipBehavior: Clip.none,
                 children: [
                   // Imagem do Componente
                   Positioned(
-                    left: posX.clamp(10.0, w - widths[index] - 10.0),
-                    top: posY.clamp(10.0, h - heights[index] - 50.0),
-                    width: widths[index],
-                    height: heights[index],
+                    left: posX,
+                    top: posY,
+                    width: itemW,
+                    height: itemH,
                     child: GestureDetector(
                       onTap: () => _selectComponent(index),
                       behavior: HitTestBehavior.opaque,
@@ -523,14 +573,17 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
 
                   // Placa com Nome abaixo do Componente
                   Positioned(
-                    left: (posX - 10).clamp(5.0, w - widths[index] - 5.0),
-                    top: posY + heights[index] + 8,
-                    width: widths[index] + 20,
+                    left: plaqueLeft,
+                    top: plaqueTop,
+                    width: plaqueWidth,
                     child: GestureDetector(
                       onTap: () => _selectComponent(index),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: useTwoRows ? 6 : 8,
+                          vertical: useTwoRows ? 4 : 5,
+                        ),
                         decoration: BoxDecoration(
                           color: isSelected
                               ? const Color(0xFF0F6B45)
@@ -552,11 +605,11 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             if (isExplored && !isSelected)
-                              const Padding(
-                                padding: EdgeInsets.only(right: 4),
+                              Padding(
+                                padding: const EdgeInsets.only(right: 4),
                                 child: Icon(
                                   Icons.check_circle_rounded,
-                                  size: 13,
+                                  size: useTwoRows ? 12 : 13,
                                   color: StandFlowTokens.accentGreen,
                                 ),
                               ),
@@ -566,7 +619,7 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontFamily: GoogleFonts.rajdhani().fontFamily,
-                                  fontSize: 13,
+                                  fontSize: useTwoRows ? 12.5 : 13,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
                                 ),
@@ -637,7 +690,7 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
                   color: Color(0xFFECFDF5),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(item.icon, color: const Color(0xFF059669), size: 20),
+                child: Icon(item.icon, color: const Color(0xFF059669), size: 22),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -647,16 +700,17 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
                     Text(
                       item.name,
                       style: GoogleFonts.rajdhani(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 19,
+                        fontWeight: FontWeight.w800,
                         color: const Color(0xFF0F172A),
                       ),
                     ),
                     Text(
                       item.shortDescription,
                       style: GoogleFonts.outfit(
-                        fontSize: 12,
-                        color: const Color(0xFF64748B),
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF334155),
                       ),
                     ),
                   ],
@@ -684,8 +738,8 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
                   'Saiba mais sobre o componente',
                   style: TextStyle(
                     fontFamily: GoogleFonts.rajdhani().fontFamily,
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w800,
                     color: StandFlowTokens.darkGreen,
                   ),
                 ),
@@ -701,8 +755,9 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
                       item.learnMore,
                       style: TextStyle(
                         fontFamily: GoogleFonts.outfit().fontFamily,
-                        fontSize: 13,
-                        color: StandFlowTokens.textDark,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF1E293B),
                         height: 1.4,
                       ),
                     ),
@@ -724,14 +779,14 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.help_outline_rounded, size: 18, color: StandFlowTokens.darkGreen),
+                    const Icon(Icons.help_outline_rounded, size: 19, color: StandFlowTokens.darkGreen),
                     const SizedBox(width: 6),
                     Text(
                       'Teste Rápido',
                       style: TextStyle(
                         fontFamily: GoogleFonts.rajdhani().fontFamily,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
                         color: StandFlowTokens.darkGreen,
                       ),
                     ),
@@ -742,8 +797,10 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
                   item.checkQuestion,
                   style: TextStyle(
                     fontFamily: GoogleFonts.outfit().fontFamily,
-                    fontSize: 13,
-                    color: StandFlowTokens.textDark,
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF0F172A),
+                    height: 1.3,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -752,10 +809,10 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
                     onPressed: () => setState(() => _isCheckAnswerRevealed = true),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: StandFlowTokens.darkGreen,
-                      side: const BorderSide(color: StandFlowTokens.darkGreen),
+                      side: const BorderSide(color: StandFlowTokens.darkGreen, width: 1.4),
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     ),
-                    child: const Text('Revelar Resposta'),
+                    child: const Text('Revelar Resposta', style: TextStyle(fontWeight: FontWeight.bold)),
                   )
                 else
                   Container(
@@ -769,7 +826,7 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
                       item.checkAnswer,
                       style: TextStyle(
                         fontFamily: GoogleFonts.outfit().fontFamily,
-                        fontSize: 12.5,
+                        fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: StandFlowTokens.darkGreen,
                       ),
@@ -785,7 +842,7 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
 
   Widget _buildDetailSection(String label, String content, IconData icon, {bool isCaution = false}) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10.0),
+      padding: const EdgeInsets.only(bottom: 12.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -793,29 +850,31 @@ class _SecondBenchPhase1State extends State<SecondBenchPhase1> {
             children: [
               Icon(
                 icon,
-                size: 16,
-                color: isCaution ? const Color(0xFFD97706) : StandFlowTokens.darkGreen,
+                size: 18,
+                color: isCaution ? const Color(0xFFD97706) : const Color(0xFF059669),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 7),
               Text(
                 label,
                 style: TextStyle(
                   fontFamily: GoogleFonts.rajdhani().fontFamily,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: isCaution ? const Color(0xFFD97706) : StandFlowTokens.darkGreen,
+                  fontSize: 15.5,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.3,
+                  color: isCaution ? const Color(0xFFD97706) : const Color(0xFF065F46),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 3),
           Text(
             content,
             style: TextStyle(
               fontFamily: GoogleFonts.outfit().fontFamily,
-              fontSize: 13,
-              color: StandFlowTokens.textDark,
-              height: 1.3,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF0F172A),
+              height: 1.35,
             ),
           ),
         ],

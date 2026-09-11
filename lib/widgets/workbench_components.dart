@@ -356,7 +356,10 @@ class WorkbenchSymbolToolboxTile<T extends Object> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scale = context.uiScale;
-    final tileSize = scale.size(84, min: 64, max: 130);
+    final isMobileLandscape = scale.isMobileLandscape;
+    final tileSize = isMobileLandscape
+        ? scale.size(64, min: 52, max: 84)
+        : scale.size(84, min: 64, max: 130);
 
     final tileContent = Container(
       width: tileSize,
@@ -467,8 +470,15 @@ class WorkbenchSidePanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final scale = context.uiScale;
 
+    final isCompactLandscape = scale.isMobileLandscape;
+
     return Container(
-      padding: EdgeInsets.all(scale.spacing(16, min: 12, max: 28)),
+      padding: isCompactLandscape
+          ? EdgeInsets.symmetric(
+              horizontal: scale.spacing(10, min: 8, max: 16),
+              vertical: scale.spacing(8, min: 6, max: 14),
+            )
+          : EdgeInsets.all(scale.spacing(16, min: 12, max: 28)),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(scale.size(20, min: 14, max: 32)),
@@ -525,7 +535,7 @@ class WorkbenchSidePanel extends StatelessWidget {
                     ],
                   ),
                 ),
-                SizedBox(height: scale.spacing(12, min: 8, max: 18)),
+                SizedBox(height: isCompactLandscape ? 6 : scale.spacing(12, min: 8, max: 18)),
               ],
               if (hasBoundedHeight)
                 Expanded(
@@ -535,10 +545,12 @@ class WorkbenchSidePanel extends StatelessWidget {
                 )
               else
                 itemsContent,
-              SizedBox(height: scale.spacing(12, min: 8, max: 18)),
+              SizedBox(height: isCompactLandscape ? 6 : scale.spacing(12, min: 8, max: 18)),
               SizedBox(
                 width: double.infinity,
-                height: scale.size(48, min: 40, max: 68),
+                height: isCompactLandscape
+                    ? scale.size(40, min: 36, max: 52)
+                    : scale.size(48, min: 40, max: 68),
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: buttonColor ?? const Color(0xFF059669),

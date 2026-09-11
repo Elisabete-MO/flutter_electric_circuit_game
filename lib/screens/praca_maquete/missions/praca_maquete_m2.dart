@@ -7,31 +7,31 @@ import '../../../widgets/prof_volts_feedback_dialog.dart';
 import '../../../widgets/success_confetti_overlay.dart';
 import '../../../widgets/workbench_components.dart';
 import '../../../widgets/workbench_table_frame.dart';
-import '../widgets/horta_monitorada_painter.dart';
-import '../widgets/horta_monitorada_widgets.dart';
+import '../widgets/praca_maquete_painter.dart';
+import '../widgets/praca_maquete_widgets.dart';
 
-/// Missão 03 — Luz da Estufa: Integrar sensor LDR ao LED para automação noturna
-class HortaMonitoradaM3 extends StatefulWidget {
+/// Missão 02 — Rua em Funcionamento: Testar a resiliência e independência da rede de iluminação pública
+class PracaMaqueteM2 extends StatefulWidget {
   final VoidCallback onMissionComplete;
 
-  const HortaMonitoradaM3({
+  const PracaMaqueteM2({
     super.key,
     required this.onMissionComplete,
   });
 
   @override
-  State<HortaMonitoradaM3> createState() => _HortaMonitoradaM3State();
+  State<PracaMaqueteM2> createState() => _PracaMaqueteM2State();
 }
 
-class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
+class _PracaMaqueteM2State extends State<PracaMaqueteM2>
     with SingleTickerProviderStateMixin {
   late final AnimationController _animController;
   final CircuitUndoRedoController _undoRedoController =
       CircuitUndoRedoController();
 
   bool _usePhysicalStyle = true;
-  bool _isAutoModeEnabled = false;
-  double _luxPercent = 20.0; // Inicia em período noturno
+  bool _isStreetPowerOn = true;
+  bool _isFaultSimulated = false;
 
   @override
   void initState() {
@@ -48,31 +48,26 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
     super.dispose();
   }
 
-  bool get _isNight => _luxPercent <= 30.0;
-  bool get _isLedActive => _isAutoModeEnabled && _isNight;
+  void _toggleStreetPower() {
+    setState(() => _isStreetPowerOn = !_isStreetPowerOn);
+  }
 
-  void _toggleAutoMode() {
-    final prev = _isAutoModeEnabled;
+  void _simulateFaultyPole() {
+    final prev = _isFaultSimulated;
     _undoRedoController.execute(
       ToggleBoolAction(
-        description: prev ? 'Desativar Automação' : 'Armar Automação Noturna',
-        onApply: () => setState(() => _isAutoModeEnabled = !prev),
-        onUndo: () => setState(() => _isAutoModeEnabled = prev),
+        description: prev ? 'Restaurar Poste 2' : 'Simular Lâmpada Queimada no Poste 2',
+        onApply: () => setState(() => _isFaultSimulated = !prev),
+        onUndo: () => setState(() => _isFaultSimulated = prev),
       ),
     );
   }
 
-  void _onLuxChanged(double value) {
-    setState(() => _luxPercent = value);
-  }
-
   void _validate() {
-    final isSuccess = _isAutoModeEnabled && _isNight && _isLedActive;
+    final isSuccess = _isStreetPowerOn && _isFaultSimulated;
     final message = isSuccess
-        ? 'Fantástico! Com o circuito de automação armado, ao cair da noite o LDR dispara o driver do LED Grow Light, garantindo ciclo contínuo de suplementação luminosa!'
-        : (!_isAutoModeEnabled
-            ? 'O circuito de automação ainda está desligado! Ative a chave de automação noturna.'
-            : 'Simule o anoitecer reduzindo a luz ambiente para comprovar o acendimento automático do LED.');
+        ? 'Fantástico! Você comprovou a regra de ouro das redes urbanas em paralelo: mesmo com o poste 2 em manutenção, os outros 3 postes continuam iluminando a via pública normalmente!'
+        : 'Ligue a rede da avenida e clique em "Simular Queima do Poste 2" para verificar se os demais postes permanecem acesos.';
 
     showDialog(
       context: context,
@@ -93,23 +88,22 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
 
   @override
   Widget build(BuildContext context) {
-    final status = _isLedActive
-        ? HortaState.nightActive
-        : (_isAutoModeEnabled ? HortaState.dayInactive : HortaState.standby);
+    final status = _isStreetPowerOn
+        ? (_isFaultSimulated ? PracaState.streetLit : PracaState.streetLit)
+        : PracaState.standby;
 
-    final ledBrightness = _isLedActive ? 0.85 : 0.0;
+    final activePoles = _isStreetPowerOn ? (_isFaultSimulated ? 3 : 4) : 0;
 
     return WorkbenchResponsiveLayout(
       workbench: WorkbenchTableFrame(
         usePhysicalStyle: _usePhysicalStyle,
         onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
-        leftHeaderWidget: HortaStatusCard(state: status),
-        rightHeaderWidget: HortaTelemetryCard(
-          luxPercent: _luxPercent,
-          ledBrightnessPercent: _isLedActive ? 85.0 : 0.0,
-          voltage: _isLedActive ? 5.0 : 0.0,
+        leftHeaderWidget: PracaStatusCard(state: status),
+        rightHeaderWidget: PracaTelemetryCard(
+          streetlightsOn: _isStreetPowerOn,
+          totalPowerWatts: activePoles * 15.0,
         ),
-        bottomWidget: HortaUndoRedoButtons(
+        bottomWidget: PracaUndoRedoButtons(
           controller: _undoRedoController,
           onUndo: () => setState(() => _undoRedoController.undo()),
           onRedo: () => setState(() => _undoRedoController.redo()),
@@ -118,25 +112,25 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
           animation: _animController,
           builder: (context, child) {
             return CustomPaint(
-              painter: HortaMonitoradaPainter(
-                missionIndex: 2,
+              painter: PracaMaquetePainter(
+                missionIndex: 1,
                 animValue: _animController.value,
                 usePhysicalStyle: _usePhysicalStyle,
-                potPercent: 70.0,
-                luxPercent: _luxPercent,
-                isLedOn: _isLedActive,
-                ledBrightness: ledBrightness,
-                isNightMode: _isNight,
-                isCircuitEnergized: _isLedActive,
+                housesOn: true,
+                streetlightsOn: _isStreetPowerOn,
+                faultyStreetlightIsolated: _isFaultSimulated,
+                greenhouseOn: false,
+                gateOn: false,
+                isMainGridEnergized: true,
               ),
             );
           },
         ),
       ),
       sidePanel: WorkbenchSidePanel(
-        teamTitle: 'Equipe Bio-Tech',
+        teamTitle: 'Equipe Urbana',
         showTeamHeader: false,
-        buttonColor: const Color(0xFF16A34A),
+        buttonColor: const Color(0xFF8B5CF6),
         toolboxItems: [
           _buildObjectiveCard(),
           const SizedBox(height: 12),
@@ -161,7 +155,7 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Missão 3 · Luz da Estufa',
+            'Missão 2 · Rua em Funcionamento',
             style: GoogleFonts.rajdhani(
               color: Colors.white,
               fontSize: 16,
@@ -170,7 +164,7 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
           ),
           const SizedBox(height: 4),
           Text(
-            'Ligue o circuito comparador automático: ao anoitecer (lux < 30%), o sensor deve ligar automaticamente o LED de suplementação vegetal.',
+            'Demonstre a tolerância a falhas na iluminação pública: simule a queima de uma lâmpada e comprove que os outros 3 postes permanecem acesos.',
             style: GoogleFonts.rajdhani(
               color: const Color(0xFF94A3B8),
               fontSize: 13,
@@ -193,7 +187,7 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Checklist de Automação:',
+            'Checklist de Tolerância a Falhas:',
             style: GoogleFonts.rajdhani(
               color: const Color(0xFF38BDF8),
               fontSize: 13,
@@ -201,9 +195,9 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
             ),
           ),
           const SizedBox(height: 8),
-          _buildStepRow(1, 'Habilitar modo automático', _isAutoModeEnabled),
-          _buildStepRow(2, 'Testar período noturno (< 30% lux)', _isNight),
-          _buildStepRow(3, 'Confirmar LED aceso e feixe na estufa', _isLedActive),
+          _buildStepRow(1, 'Energizar rede da avenida (4 postes)', _isStreetPowerOn),
+          _buildStepRow(2, 'Simular defeito seletivo no Poste 2', _isFaultSimulated),
+          _buildStepRow(3, 'Comprovar 3 postes mantendo a via iluminada', _isStreetPowerOn && _isFaultSimulated),
         ],
       ),
     );
@@ -248,54 +242,29 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
         children: [
           FilledButton.icon(
             style: FilledButton.styleFrom(
-              backgroundColor: _isAutoModeEnabled
-                  ? const Color(0xFF10B981)
-                  : const Color(0xFF64748B),
+              backgroundColor: _isFaultSimulated ? const Color(0xFFEF4444) : const Color(0xFFFBBF24),
+              foregroundColor: _isFaultSimulated ? Colors.white : const Color(0xFF0F172A),
               padding: const EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
-            onPressed: _toggleAutoMode,
-            icon: Icon(_isAutoModeEnabled ? Icons.toggle_on_rounded : Icons.toggle_off_rounded),
+            onPressed: _simulateFaultyPole,
+            icon: Icon(_isFaultSimulated ? Icons.build_rounded : Icons.warning_amber_rounded),
             label: Text(
-              _isAutoModeEnabled ? 'Automação Armada (ON)' : 'Armar Automação (OFF)',
+              _isFaultSimulated ? 'Poste 2 em Manutenção (3/4 Acesos)' : 'Simular Queima do Poste 2',
               style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold, fontSize: 13),
             ),
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Simulação Solar:',
-                  style: GoogleFonts.rajdhani(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-              Text(
-                _isNight ? 'NOITE (${_luxPercent.toStringAsFixed(0)}%)' : 'DIA (${_luxPercent.toStringAsFixed(0)}%)',
-                style: GoogleFonts.rajdhani(
-                  color: _isNight ? const Color(0xFF8B5CF6) : const Color(0xFFFBBF24),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                ),
-              ),
-            ],
-          ),
-          SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              activeTrackColor: const Color(0xFFFBBF24),
-              inactiveTrackColor: const Color(0xFF334155),
-              thumbColor: const Color(0xFFFDE047),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.white70,
+              side: const BorderSide(color: Color(0xFF475569)),
             ),
-            child: Slider(
-              value: _luxPercent,
-              min: 0.0,
-              max: 100.0,
-              divisions: 20,
-              onChanged: _onLuxChanged,
+            onPressed: _toggleStreetPower,
+            icon: Icon(_isStreetPowerOn ? Icons.power_rounded : Icons.power_off_rounded, size: 16),
+            label: Text(
+              _isStreetPowerOn ? 'Rede da Avenida Ligada' : 'Ligar Rede da Avenida',
+              style: GoogleFonts.rajdhani(fontSize: 12),
             ),
           ),
         ],

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -7,31 +8,32 @@ import '../../../widgets/prof_volts_feedback_dialog.dart';
 import '../../../widgets/success_confetti_overlay.dart';
 import '../../../widgets/workbench_components.dart';
 import '../../../widgets/workbench_table_frame.dart';
-import '../widgets/horta_monitorada_painter.dart';
-import '../widgets/horta_monitorada_widgets.dart';
+import '../widgets/portao_escola_painter.dart';
+import '../widgets/portao_escola_widgets.dart';
 
-/// Missão 03 — Luz da Estufa: Integrar sensor LDR ao LED para automação noturna
-class HortaMonitoradaM3 extends StatefulWidget {
+/// Missão 04 — Portão em Movimento: Controlar o motor redutor do portão deslizante através do relé
+class PortaoEscolaM4 extends StatefulWidget {
   final VoidCallback onMissionComplete;
 
-  const HortaMonitoradaM3({
+  const PortaoEscolaM4({
     super.key,
     required this.onMissionComplete,
   });
 
   @override
-  State<HortaMonitoradaM3> createState() => _HortaMonitoradaM3State();
+  State<PortaoEscolaM4> createState() => _PortaoEscolaM4State();
 }
 
-class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
+class _PortaoEscolaM4State extends State<PortaoEscolaM4>
     with SingleTickerProviderStateMixin {
   late final AnimationController _animController;
   final CircuitUndoRedoController _undoRedoController =
       CircuitUndoRedoController();
 
   bool _usePhysicalStyle = true;
-  bool _isAutoModeEnabled = false;
-  double _luxPercent = 20.0; // Inicia em período noturno
+  bool _isMotorArmed = false;
+  double _gatePosition = 0.0; // 0 a 100%
+  Timer? _moveTimer;
 
   @override
   void initState() {
@@ -44,35 +46,59 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
 
   @override
   void dispose() {
+    _moveTimer?.cancel();
     _animController.dispose();
     super.dispose();
   }
 
-  bool get _isNight => _luxPercent <= 30.0;
-  bool get _isLedActive => _isAutoModeEnabled && _isNight;
+  bool get _isGateFullyOpen => _gatePosition >= 95.0;
 
-  void _toggleAutoMode() {
-    final prev = _isAutoModeEnabled;
+  void _toggleMotor() {
+    final prev = _isMotorArmed;
     _undoRedoController.execute(
       ToggleBoolAction(
-        description: prev ? 'Desativar Automação' : 'Armar Automação Noturna',
-        onApply: () => setState(() => _isAutoModeEnabled = !prev),
-        onUndo: () => setState(() => _isAutoModeEnabled = prev),
+        description: prev ? 'Parar Motor' : 'Ligar Motor do Portão',
+        onApply: () {
+          setState(() => _isMotorArmed = !prev);
+          _startOrStopGateMotion(!prev);
+        },
+        onUndo: () {
+          setState(() => _isMotorArmed = prev);
+          _startOrStopGateMotion(prev);
+        },
       ),
     );
   }
 
-  void _onLuxChanged(double value) {
-    setState(() => _luxPercent = value);
+  void _startOrStopGateMotion(bool run) {
+    _moveTimer?.cancel();
+    if (run) {
+      _moveTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
+        setState(() {
+          _gatePosition += 2.5;
+          if (_gatePosition >= 100.0) {
+            _gatePosition = 100.0;
+            _isMotorArmed = false;
+            timer.cancel();
+          }
+        });
+      });
+    }
+  }
+
+  void _resetGate() {
+    _moveTimer?.cancel();
+    setState(() {
+      _gatePosition = 0.0;
+      _isMotorArmed = false;
+    });
   }
 
   void _validate() {
-    final isSuccess = _isAutoModeEnabled && _isNight && _isLedActive;
+    final isSuccess = _isGateFullyOpen;
     final message = isSuccess
-        ? 'Fantástico! Com o circuito de automação armado, ao cair da noite o LDR dispara o driver do LED Grow Light, garantindo ciclo contínuo de suplementação luminosa!'
-        : (!_isAutoModeEnabled
-            ? 'O circuito de automação ainda está desligado! Ative a chave de automação noturna.'
-            : 'Simule o anoitecer reduzindo a luz ambiente para comprovar o acendimento automático do LED.');
+        ? 'Perfeito! O motor DC recebeu alimentação segura através dos contatos do relé e deslizou o portão suavemente até a abertura completa!'
+        : 'Acione o motor através do relé e aguarde o portão abrir completamente até 100%!';
 
     showDialog(
       context: context,
@@ -93,23 +119,22 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
 
   @override
   Widget build(BuildContext context) {
-    final status = _isLedActive
-        ? HortaState.nightActive
-        : (_isAutoModeEnabled ? HortaState.dayInactive : HortaState.standby);
-
-    final ledBrightness = _isLedActive ? 0.85 : 0.0;
+    final status = _isGateFullyOpen
+        ? PortaoState.gateOpen
+        : (_isMotorArmed ? PortaoState.motorRunning : PortaoState.idle);
 
     return WorkbenchResponsiveLayout(
       workbench: WorkbenchTableFrame(
         usePhysicalStyle: _usePhysicalStyle,
         onStyleChanged: (val) => setState(() => _usePhysicalStyle = val),
-        leftHeaderWidget: HortaStatusCard(state: status),
-        rightHeaderWidget: HortaTelemetryCard(
-          luxPercent: _luxPercent,
-          ledBrightnessPercent: _isLedActive ? 85.0 : 0.0,
-          voltage: _isLedActive ? 5.0 : 0.0,
+        leftHeaderWidget: PortaoStatusCard(state: status),
+        rightHeaderWidget: PortaoTelemetryCard(
+          isCoilEnergized: _isMotorArmed,
+          isContactClosed: _isMotorArmed,
+          isMotorRunning: _isMotorArmed,
+          gatePositionPercent: _gatePosition,
         ),
-        bottomWidget: HortaUndoRedoButtons(
+        bottomWidget: PortaoUndoRedoButtons(
           controller: _undoRedoController,
           onUndo: () => setState(() => _undoRedoController.undo()),
           onRedo: () => setState(() => _undoRedoController.redo()),
@@ -118,25 +143,25 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
           animation: _animController,
           builder: (context, child) {
             return CustomPaint(
-              painter: HortaMonitoradaPainter(
-                missionIndex: 2,
+              painter: PortaoEscolaPainter(
+                missionIndex: 3,
                 animValue: _animController.value,
                 usePhysicalStyle: _usePhysicalStyle,
-                potPercent: 70.0,
-                luxPercent: _luxPercent,
-                isLedOn: _isLedActive,
-                ledBrightness: ledBrightness,
-                isNightMode: _isNight,
-                isCircuitEnergized: _isLedActive,
+                isCommandPressed: _isMotorArmed,
+                isCoilEnergized: _isMotorArmed,
+                isContactClosed: _isMotorArmed,
+                isMotorRunning: _isMotorArmed,
+                gatePositionPercent: _gatePosition,
+                isLightSignalOn: _isMotorArmed,
               ),
             );
           },
         ),
       ),
       sidePanel: WorkbenchSidePanel(
-        teamTitle: 'Equipe Bio-Tech',
+        teamTitle: 'Equipe Automação',
         showTeamHeader: false,
-        buttonColor: const Color(0xFF16A34A),
+        buttonColor: const Color(0xFFF59E0B),
         toolboxItems: [
           _buildObjectiveCard(),
           const SizedBox(height: 12),
@@ -161,7 +186,7 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Missão 3 · Luz da Estufa',
+            'Missão 4 · Portão em Movimento',
             style: GoogleFonts.rajdhani(
               color: Colors.white,
               fontSize: 16,
@@ -170,7 +195,7 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
           ),
           const SizedBox(height: 4),
           Text(
-            'Ligue o circuito comparador automático: ao anoitecer (lux < 30%), o sensor deve ligar automaticamente o LED de suplementação vegetal.',
+            'Conecte o atuador eletromecânico (motor DC redutor) para deslocar o portão até 100% de abertura sem expor o comando à corrente do motor.',
             style: GoogleFonts.rajdhani(
               color: const Color(0xFF94A3B8),
               fontSize: 13,
@@ -193,7 +218,7 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Checklist de Automação:',
+            'Checklist Mecatrônico:',
             style: GoogleFonts.rajdhani(
               color: const Color(0xFF38BDF8),
               fontSize: 13,
@@ -201,9 +226,9 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
             ),
           ),
           const SizedBox(height: 8),
-          _buildStepRow(1, 'Habilitar modo automático', _isAutoModeEnabled),
-          _buildStepRow(2, 'Testar período noturno (< 30% lux)', _isNight),
-          _buildStepRow(3, 'Confirmar LED aceso e feixe na estufa', _isLedActive),
+          _buildStepRow(1, 'Ligar motor DC no contato de carga', true),
+          _buildStepRow(2, 'Acionar rotação da engrenagem', _isMotorArmed || _gatePosition > 0),
+          _buildStepRow(3, 'Completar abertura do portão (100%)', _isGateFullyOpen),
         ],
       ),
     );
@@ -248,55 +273,33 @@ class _HortaMonitoradaM3State extends State<HortaMonitoradaM3>
         children: [
           FilledButton.icon(
             style: FilledButton.styleFrom(
-              backgroundColor: _isAutoModeEnabled
-                  ? const Color(0xFF10B981)
-                  : const Color(0xFF64748B),
+              backgroundColor: _isMotorArmed ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
               padding: const EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
-            onPressed: _toggleAutoMode,
-            icon: Icon(_isAutoModeEnabled ? Icons.toggle_on_rounded : Icons.toggle_off_rounded),
+            onPressed: _toggleMotor,
+            icon: Icon(_isMotorArmed ? Icons.sync_rounded : Icons.play_arrow_rounded),
             label: Text(
-              _isAutoModeEnabled ? 'Automação Armada (ON)' : 'Armar Automação (OFF)',
+              _isMotorArmed ? 'Motor em Rotação...' : 'Acionar Motor do Portão',
               style: GoogleFonts.rajdhani(fontWeight: FontWeight.bold, fontSize: 13),
             ),
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Simulação Solar:',
-                  style: GoogleFonts.rajdhani(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-              Text(
-                _isNight ? 'NOITE (${_luxPercent.toStringAsFixed(0)}%)' : 'DIA (${_luxPercent.toStringAsFixed(0)}%)',
-                style: GoogleFonts.rajdhani(
-                  color: _isNight ? const Color(0xFF8B5CF6) : const Color(0xFFFBBF24),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                ),
-              ),
-            ],
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.white70,
+              side: const BorderSide(color: Color(0xFF475569)),
+            ),
+            onPressed: _resetGate,
+            icon: const Icon(Icons.restart_alt_rounded, size: 18),
+            label: Text('Reiniciar Portão (Fechar)', style: GoogleFonts.rajdhani(fontSize: 12)),
           ),
-          SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              activeTrackColor: const Color(0xFFFBBF24),
-              inactiveTrackColor: const Color(0xFF334155),
-              thumbColor: const Color(0xFFFDE047),
-            ),
-            child: Slider(
-              value: _luxPercent,
-              min: 0.0,
-              max: 100.0,
-              divisions: 20,
-              onChanged: _onLuxChanged,
-            ),
+          const SizedBox(height: 8),
+          LinearProgressIndicator(
+            value: _gatePosition / 100.0,
+            backgroundColor: const Color(0xFF334155),
+            valueColor: const AlwaysStoppedAnimation(Color(0xFF10B981)),
+            minHeight: 6,
           ),
         ],
       ),
