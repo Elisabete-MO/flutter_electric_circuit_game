@@ -217,11 +217,11 @@ Introduzir a ideia de que uma condicao pode alterar comportamento eletrico e aci
 
 | Missao candidata | Objetivo | Componentes/conceitos | Fenomeno ou validacao | Status |
 |---|---|---|---|---|
-| Brilho ajustavel | Ajustar LED. | Potenciometro. | Mudanca observavel. | Futura |
-| Sensor de ambiente | Interpretar mudanca simulada. | Termistor/LDR. | Sensor altera propriedade. | Futura |
-| Luz da estufa | Responder a condicao. | Sensor, LED, resistor. | Criterio de acionamento. | Futura |
-| Energia por instantes | Observar carga/descarga. | Capacitor. | Efeito nao e fonte permanente. | Futura; modelo atual nao tem transiente |
-| Painel da horta | Integrar ajuste e sensor. | Sistemas combinados. | Testar funcoes isoladas. | Futura |
+| M1: Luz de Cultivo | Ajustar brilho ótimo do Grow LED. | Potenciômetro, Resistor 220Ω, LED Grow. | Faixa 70% a 95% de luminosidade. | Implementado |
+| M2: Sonda de Solo | Sensoriamento resistivo de umidade. | Sonda de solo, Resistor, LED Alerta. | Solo seco (alerta) vs solo úmido (normal). | Implementado |
+| M3: Ventilação Térmica | Climatização com motores axiais. | Chave Toggle, Motor DC (Cooler). | Queda de temperatura de 32°C para 23.5°C. | Implementado |
+| M4: Bomba de Irrigação | Pulso de rega por gotejamento. | Push-button, Mini-bomba d'água DC. | Reidratação do solo até 80%. | Implementado |
+| M5: Painel Integrado | Automação geral em barramento paralelo. | Barramento 9V, 4 ramos, simulação climática. | Teste dos 4 cenários ambientais diários. | Implementado |
 
 ## Portao da Escola
 

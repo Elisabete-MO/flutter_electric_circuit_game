@@ -67,6 +67,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       Navigator.of(context).pushNamed(Routes.medeTestaExplica);
     } else if (stand.number == 8 || stand.id == 'circuito_seguro') {
       Navigator.of(context).pushNamed(Routes.circuitoSeguro);
+    } else if (stand.number == 9 || stand.id == 'horta_monitorada') {
+      Navigator.of(context).pushNamed(Routes.hortaMonitorada);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
