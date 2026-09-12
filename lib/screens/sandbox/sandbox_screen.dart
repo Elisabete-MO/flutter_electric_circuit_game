@@ -440,10 +440,14 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
             }
           },
           child: Scaffold(
+            backgroundColor: const Color(0xFF07241A),
             appBar: AppBar(
+              backgroundColor: const Color(0xFF07241A),
+              elevation: 0,
+              iconTheme: const IconThemeData(color: Colors.white),
               leading: IconButton(
                 tooltip: isEn ? 'Back to Fair' : 'Voltar ao Mapa',
-                icon: const Icon(Icons.arrow_back_rounded),
+                icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
                 onPressed: () => StandNavigator.navigateBackToFairMap(context),
               ),
               title: isMobileWidth
@@ -451,6 +455,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                   : Text(
                     isEn ? 'Free Sandbox' : 'Bancada Livre',
                     style: theme.textTheme.titleLarge?.copyWith(
+                      color: Colors.white,
                       fontFamily: GoogleFonts.rajdhani().fontFamily,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.0,
@@ -640,10 +645,30 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
               ),
             ],
           ),
-          body: TechGridBackground(
-            child: SafeArea(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
+          body: Container(
+            decoration: const BoxDecoration(
+              gradient: RadialGradient(
+                center: Alignment(0.0, -0.2),
+                radius: 1.2,
+                colors: [
+                  Color(0xFF0C3829),
+                  Color(0xFF07241A),
+                  Color(0xFF02130D),
+                ],
+              ),
+            ),
+            child: Stack(
+              children: [
+                const Positioned.fill(
+                  child: RepaintBoundary(
+                    child: CustomPaint(
+                      painter: WorkbenchFullscreenBackgroundPainter(),
+                    ),
+                  ),
+                ),
+                SafeArea(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
                   final isNarrow = constraints.maxWidth < 720;
 
                   Widget bodyContent;
@@ -819,11 +844,13 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                 },
               ),
             ),
-          ),
-        ),
+          ],
         ),
       ),
-    );
+    ),
+  ),
+),
+);
   }
 
   // --- GRID INTERATIVO E RENDER DE COMPONENTES ---
@@ -831,15 +858,15 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
   Widget _buildGridCanvas(SandboxState state, String? selectedId, ConnectionSource? connSource, bool isDark) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final double availableWidth = constraints.maxWidth.isInfinite ? 520.0 : constraints.maxWidth;
-        final double availableHeight = constraints.maxHeight.isInfinite ? 420.0 : constraints.maxHeight;
+        final double availableWidth = constraints.maxWidth.isInfinite ? 800.0 : constraints.maxWidth;
+        final double availableHeight = constraints.maxHeight.isInfinite ? 600.0 : constraints.maxHeight;
 
         final double cellSizeFromWidth = availableWidth / _gridCols;
         final double cellSizeFromHeight = availableHeight / _gridRows;
-        final double cellSize = cellSizeFromWidth.clamp(0, cellSizeFromHeight);
+        final double cellSize = cellSizeFromWidth.clamp(44.0, cellSizeFromHeight);
 
-        final double width = cellSize * _gridCols;
-        final double height = cellSize * _gridRows;
+        final double width = availableWidth;
+        final double height = availableHeight;
 
         final selectedComponentList = state.components.where((c) => c.id == selectedId).toList();
         final selectedComponent = selectedComponentList.isNotEmpty ? selectedComponentList.first : null;
@@ -848,22 +875,30 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
           width: width,
           height: height,
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF0D1424).withValues(alpha: 0.4) : Colors.grey.shade100.withValues(alpha: 0.4),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isDark ? Colors.white12 : Colors.black12,
-              width: 1.8,
+              color: const Color(0xFF10B981).withValues(alpha: 0.35),
+              width: 1.5,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.28),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
+          clipBehavior: Clip.antiAlias,
           child: Stack(
             children: [
-              // 1. Grid de fundo com retÃ­culo HUD
+              // 1. Grid de fundo com retículo HUD e linhas milimétricas
               Positioned.fill(
                 child: RepaintBoundary(
                   child: CustomPaint(
                     painter: GridPainter(
                       columns: _gridCols,
                       rows: _gridRows,
+                      cellSize: cellSize,
                       isDark: isDark,
                       hoverCell: _hoverGridCell,
                     ),
@@ -1194,15 +1229,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
           child: gridContainer,
         );
 
-        return Center(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.vertical,
-              child: interactiveGridContainer,
-            ),
-          ),
-        );
+        return interactiveGridContainer;
       },
     );
   }

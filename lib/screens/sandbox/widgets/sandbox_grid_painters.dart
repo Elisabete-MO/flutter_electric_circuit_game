@@ -5,23 +5,79 @@ import '../../../models/sandbox_component.dart';
 import '../../../models/sandbox_wire.dart';
 import '../models/connection_source.dart';
 
+class WorkbenchFullscreenBackgroundPainter extends CustomPainter {
+  const WorkbenchFullscreenBackgroundPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.width <= 0 || size.height <= 0) return;
+
+    final rect = Offset.zero & size;
+
+    // Fundo Verde Profundo da Bancada
+    final bgPaint = Paint()
+      ..shader = const RadialGradient(
+        center: Alignment(0.0, -0.2),
+        radius: 1.2,
+        colors: [
+          Color(0xFF0C3829),
+          Color(0xFF07241A),
+          Color(0xFF02130D),
+        ],
+      ).createShader(rect);
+    canvas.drawRect(rect, bgPaint);
+
+    // Grid Milimetrado de Bancada Técnica
+    final subGridPaint = Paint()
+      ..color = const Color(0xFF10B981).withValues(alpha: 0.045)
+      ..strokeWidth = 0.8;
+
+    const double subSpacing = 24.0;
+    for (double x = 0; x <= size.width; x += subSpacing) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), subGridPaint);
+    }
+    for (double y = 0; y <= size.height; y += subSpacing) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), subGridPaint);
+    }
+
+    // Linhas Principais (a cada 96px)
+    final mainGridPaint = Paint()
+      ..color = const Color(0xFF10B981).withValues(alpha: 0.09)
+      ..strokeWidth = 1.2;
+
+    const double mainSpacing = 96.0;
+    for (double x = 0; x <= size.width; x += mainSpacing) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), mainGridPaint);
+    }
+    for (double y = 0; y <= size.height; y += mainSpacing) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), mainGridPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
 // --- PAINTER DO GRID DE EDIÇÃO COM RETÍCULO HUD ---
 
 class GridPainter extends CustomPainter {
   final int columns;
   final int rows;
+  final double? cellSize;
   final bool isDark;
   final Offset? hoverCell;
 
   GridPainter({
     required this.columns,
     required this.rows,
+    this.cellSize,
     required this.isDark,
     this.hoverCell,
   });
 
   // Reutilização de objetos Paint para evitar alocações constantes
   static final Paint _gridLinePaint = Paint()..strokeWidth = 1.2;
+  static final Paint _subGridPaint = Paint()..strokeWidth = 0.8;
   static final Paint _hoverBgPaint = Paint();
   static final Paint _bracketPaint = Paint()
     ..strokeWidth = 1.8
@@ -49,7 +105,7 @@ class GridPainter extends CustomPainter {
       bgPaint,
     );
 
-    // Borda chanfrada de madeira / moldura da bancada
+    // Borda chanfrada da bancada técnica
     final borderPaint = Paint()
       ..color = const Color(0xFF10B981).withValues(alpha: 0.35)
       ..style = PaintingStyle.stroke
@@ -59,21 +115,35 @@ class GridPainter extends CustomPainter {
       borderPaint,
     );
 
-    _gridLinePaint.color = const Color(0xFF10B981).withValues(alpha: 0.12);
+    // Subdivisões milimétricas sutis por toda a extensão
+    _subGridPaint.color = const Color(0xFF10B981).withValues(alpha: 0.05);
+    const double subSpacing = 20.0;
+    for (double x = 0; x <= size.width; x += subSpacing) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), _subGridPaint);
+    }
+    for (double y = 0; y <= size.height; y += subSpacing) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), _subGridPaint);
+    }
 
-    final cellWidth = size.width / columns;
-    final cellHeight = size.height / rows;
+    _gridLinePaint.color = const Color(0xFF10B981).withValues(alpha: 0.16);
+
+    final cellWidth = cellSize ?? (size.width / columns);
+    final cellHeight = cellSize ?? (size.height / rows);
 
     // Linhas Verticais
-    for (int i = 1; i < columns; i++) {
+    for (int i = 1; i <= columns; i++) {
       final x = i * cellWidth;
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), _gridLinePaint);
+      if (x <= size.width) {
+        canvas.drawLine(Offset(x, 0), Offset(x, size.height), _gridLinePaint);
+      }
     }
 
     // Linhas Horizontais
-    for (int i = 1; i < rows; i++) {
+    for (int i = 1; i <= rows; i++) {
       final y = i * cellHeight;
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), _gridLinePaint);
+      if (y <= size.height) {
+        canvas.drawLine(Offset(0, y), Offset(size.width, y), _gridLinePaint);
+      }
     }
 
     // Destaque de Célula Hover com Cantoneiras HUD (Cyber Reticle)
@@ -98,13 +168,13 @@ class GridPainter extends CustomPainter {
         final pad = 3.0;
 
         // Top-Left
-        canvas.drawPath(Path()..moveTo(rect.left + pad + bLen, rect.top + pad)..lineTo(rect.left + pad, rect.top + pad)..lineTo(rect.left + pad, rect.top + pad + bLen), _bracketPaint);
+        canvas.drawPath(Path()..moveTo(cellRect.left + pad + bLen, cellRect.top + pad)..lineTo(cellRect.left + pad, cellRect.top + pad)..lineTo(cellRect.left + pad, cellRect.top + pad + bLen), _bracketPaint);
         // Top-Right
-        canvas.drawPath(Path()..moveTo(rect.right - pad - bLen, rect.top + pad)..lineTo(rect.right - pad, rect.top + pad)..lineTo(rect.right - pad, rect.top + pad + bLen), _bracketPaint);
+        canvas.drawPath(Path()..moveTo(cellRect.right - pad - bLen, cellRect.top + pad)..lineTo(cellRect.right - pad, cellRect.top + pad)..lineTo(cellRect.right - pad, cellRect.top + pad + bLen), _bracketPaint);
         // Bottom-Left
-        canvas.drawPath(Path()..moveTo(rect.left + pad + bLen, rect.bottom - pad)..lineTo(rect.left + pad, rect.bottom - pad)..lineTo(rect.left + pad, rect.bottom - pad - bLen), _bracketPaint);
+        canvas.drawPath(Path()..moveTo(cellRect.left + pad + bLen, cellRect.bottom - pad)..lineTo(cellRect.left + pad, cellRect.bottom - pad)..lineTo(cellRect.left + pad, cellRect.bottom - pad - bLen), _bracketPaint);
         // Bottom-Right
-        canvas.drawPath(Path()..moveTo(rect.right - pad - bLen, rect.bottom - pad)..lineTo(rect.right - pad, rect.bottom - pad)..lineTo(rect.right - pad, rect.bottom - pad - bLen), _bracketPaint);
+        canvas.drawPath(Path()..moveTo(cellRect.right - pad - bLen, cellRect.bottom - pad)..lineTo(cellRect.right - pad, cellRect.bottom - pad)..lineTo(cellRect.right - pad, cellRect.bottom - pad - bLen), _bracketPaint);
       }
     }
   }
@@ -113,6 +183,7 @@ class GridPainter extends CustomPainter {
   bool shouldRepaint(covariant GridPainter oldDelegate) {
     return oldDelegate.columns != columns ||
         oldDelegate.rows != rows ||
+        oldDelegate.cellSize != cellSize ||
         oldDelegate.isDark != isDark ||
         oldDelegate.hoverCell != hoverCell;
   }
