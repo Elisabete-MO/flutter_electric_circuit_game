@@ -124,14 +124,19 @@ class ComponentLeadExtensionsPainter extends CustomPainter {
       case ComponentType.battery:
       case ComponentType.batteryAA:
       case ComponentType.batteryPack4_5V:
-        pinA = Offset(size.width * 0.20, cy);
-        pinB = Offset(size.width * 0.80, cy);
+        pinA = Offset(size.width * 0.16, cy);
+        pinB = Offset(size.width * 0.84, cy);
+        break;
+      case ComponentType.bulb:
+      case ComponentType.lampLed:
+        pinA = Offset(size.width * 0.22, cy);
+        pinB = Offset(size.width * 0.78, cy);
         break;
       case ComponentType.powerSupply:
       case ComponentType.breadboard:
       case ComponentType.multimeterTool:
-        pinA = Offset(size.width * 0.15, cy);
-        pinB = Offset(size.width * 0.85, cy);
+        pinA = Offset(size.width * 0.12, cy);
+        pinB = Offset(size.width * 0.88, cy);
         break;
       default:
         pinA = Offset(size.width * 0.25, cy);

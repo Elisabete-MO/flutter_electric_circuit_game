@@ -1732,21 +1732,22 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
       case ComponentType.powerSupply:
       case ComponentType.breadboard:
       case ComponentType.multimeterTool:
-        return 1.30; // Grandes equipamentos de bancada (30% maiores)
+        return 1.50; // Grandes equipamentos de bancada (50% maiores)
       case ComponentType.battery:
       case ComponentType.batteryAA:
       case ComponentType.batteryPack4_5V:
-      case ComponentType.motor:
-        return 1.20; // Baterias e motores robustos (20% maiores)
+        return 1.45; // Baterias aumentadas com ótima presença visual (45% maiores)
       case ComponentType.bulb:
       case ComponentType.lampLed:
+        return 1.40; // Lâmpadas ampliadas para visualização clara de filamento e soquete (40% maiores)
+      case ComponentType.motor:
       case ComponentType.relay:
-        return 1.15; // Lâmpadas e relés
+        return 1.25; // Motores e relés
       case ComponentType.switchComponent:
       case ComponentType.pushbutton:
       case ComponentType.potentiometer:
       case ComponentType.buzzer:
-        return 1.10; // Chaves e atuadores
+        return 1.15; // Chaves e atuadores
       case ComponentType.resistor:
       case ComponentType.diode:
       case ComponentType.led:
@@ -1756,7 +1757,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
       case ComponentType.ntcThermistor:
         return 0.95; // Passivos e semicondutores proporcionais
       default:
-        return 1.05;
+        return 1.10;
     }
   }
 
