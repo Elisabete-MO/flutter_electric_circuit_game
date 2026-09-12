@@ -58,6 +58,207 @@ class WorkbenchFullscreenBackgroundPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
+// --- EXTENSÃO DOS FIOS DOS TERMINAIS DO COMPONENTE ATÉ O GRID ---
+
+class ComponentLeadExtensionsPainter extends CustomPainter {
+  final ComponentType type;
+  final bool isActive;
+  final bool isDark;
+  final double animationValue;
+  final bool isDiagramMode;
+
+  ComponentLeadExtensionsPainter({
+    required this.type,
+    required this.isActive,
+    required this.isDark,
+    this.animationValue = 0.0,
+    this.isDiagramMode = false,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.width <= 0 || size.height <= 0) return;
+
+    final cy = size.height * 0.5;
+
+    if (isDiagramMode) {
+      // No modo diagrama, desenha linhas condutoras retas clássicas
+      final linePaint = Paint()
+        ..color = isDark ? const Color(0xFF00F5D4) : Colors.black87
+        ..strokeWidth = isActive ? 2.8 : 2.0
+        ..strokeCap = StrokeCap.round;
+
+      canvas.drawLine(Offset(0, cy), Offset(size.width * 0.22, cy), linePaint);
+      canvas.drawLine(Offset(size.width * 0.78, cy), Offset(size.width, cy), linePaint);
+      return;
+    }
+
+    // Posições de ancoragem específicas nos terminais físicos do componente
+    Offset pinA;
+    Offset pinB;
+    bool isMetallicLeads = false;
+
+    switch (type) {
+      case ComponentType.switchComponent:
+      case ComponentType.pushbutton:
+        // Terminais metálicos na base inferior da chave/botão
+        pinA = Offset(size.width * 0.36, size.height * 0.72);
+        pinB = Offset(size.width * 0.64, size.height * 0.72);
+        break;
+      case ComponentType.relay:
+        pinA = Offset(size.width * 0.32, size.height * 0.75);
+        pinB = Offset(size.width * 0.68, size.height * 0.75);
+        break;
+      case ComponentType.resistor:
+      case ComponentType.diode:
+      case ComponentType.led:
+      case ComponentType.ceramicCapacitor:
+      case ComponentType.fuse:
+      case ComponentType.ldrSensor:
+      case ComponentType.ntcThermistor:
+        // Pernas metálicas cilíndricas axiais
+        pinA = Offset(size.width * 0.28, cy);
+        pinB = Offset(size.width * 0.72, cy);
+        isMetallicLeads = true;
+        break;
+      case ComponentType.battery:
+      case ComponentType.batteryAA:
+      case ComponentType.batteryPack4_5V:
+        pinA = Offset(size.width * 0.20, cy);
+        pinB = Offset(size.width * 0.80, cy);
+        break;
+      case ComponentType.powerSupply:
+      case ComponentType.breadboard:
+      case ComponentType.multimeterTool:
+        pinA = Offset(size.width * 0.15, cy);
+        pinB = Offset(size.width * 0.85, cy);
+        break;
+      default:
+        pinA = Offset(size.width * 0.25, cy);
+        pinB = Offset(size.width * 0.75, cy);
+        break;
+    }
+
+    final startA = Offset(0, cy);
+    final startB = Offset(size.width, cy);
+
+    const double leadStrokeWidth = 3.0;
+
+    // 1. Sombra suave de projeção no tapete de corte
+    final shadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.38)
+      ..strokeWidth = leadStrokeWidth + 2.0
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+
+    final pathA = Path()
+      ..moveTo(startA.dx, startA.dy)
+      ..cubicTo(
+        startA.dx + (pinA.dx - startA.dx) * 0.5,
+        startA.dy,
+        startA.dx + (pinA.dx - startA.dx) * 0.5,
+        pinA.dy,
+        pinA.dx,
+        pinA.dy,
+      );
+
+    final pathB = Path()
+      ..moveTo(startB.dx, startB.dy)
+      ..cubicTo(
+        startB.dx - (startB.dx - pinB.dx) * 0.5,
+        startB.dy,
+        startB.dx - (startB.dx - pinB.dx) * 0.5,
+        pinB.dy,
+        pinB.dx,
+        pinB.dy,
+      );
+
+    canvas.drawPath(pathA.shift(const Offset(0, 2.0)), shadowPaint);
+    canvas.drawPath(pathB.shift(const Offset(0, 2.0)), shadowPaint);
+
+    if (isMetallicLeads) {
+      // Pernas Metálicas de Estanho/Prata Polida (para resistores, diodos, leds)
+      final silverPaint = Paint()
+        ..shader = const LinearGradient(
+          colors: [
+            Color(0xFFCBD5E1),
+            Color(0xFF94A3B8),
+            Color(0xFFE2E8F0),
+          ],
+        ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
+        ..strokeWidth = leadStrokeWidth
+        ..strokeCap = StrokeCap.round
+        ..style = PaintingStyle.stroke;
+
+      canvas.drawPath(pathA, silverPaint);
+      canvas.drawPath(pathB, silverPaint);
+    } else {
+      // Cabos Isolados Flexíveis: Preto/Escuro (Terminal A) e Vermelho (Terminal B)
+      final leadPaintA = Paint()
+        ..shader = const LinearGradient(
+          colors: [
+            Color(0xFF1E293B),
+            Color(0xFF475569),
+            Color(0xFF0F172A),
+          ],
+        ).createShader(Rect.fromPoints(startA, pinA))
+        ..strokeWidth = leadStrokeWidth
+        ..strokeCap = StrokeCap.round
+        ..style = PaintingStyle.stroke;
+
+      final leadPaintB = Paint()
+        ..shader = const LinearGradient(
+          colors: [
+            Color(0xFFEF4444),
+            Color(0xFFDC2626),
+            Color(0xFF991B1B),
+          ],
+        ).createShader(Rect.fromPoints(startB, pinB))
+        ..strokeWidth = leadStrokeWidth
+        ..strokeCap = StrokeCap.round
+        ..style = PaintingStyle.stroke;
+
+      canvas.drawPath(pathA, leadPaintA);
+      canvas.drawPath(pathB, leadPaintB);
+    }
+
+    // Terminais de fixação / Olhais metálicos nas junções
+    final ferrulePaint = Paint()
+      ..shader = const RadialGradient(
+        colors: [
+          Color(0xFFF1F5F9),
+          Color(0xFF94A3B8),
+          Color(0xFF475569),
+        ],
+      ).createShader(Rect.fromCircle(center: pinA, radius: 4))
+      ..style = PaintingStyle.fill;
+
+    canvas.drawCircle(pinA, 3.5, ferrulePaint);
+    canvas.drawCircle(pinB, 3.5, ferrulePaint);
+
+    // Efeito de pulso de corrente brilhante nos terminais quando ativo
+    if (isActive) {
+      final glowPaint = Paint()
+        ..color = const Color(0xFF00FF9D).withValues(alpha: 0.8)
+        ..strokeWidth = 2.2
+        ..strokeCap = StrokeCap.round
+        ..style = PaintingStyle.stroke;
+
+      canvas.drawPath(pathA, glowPaint);
+      canvas.drawPath(pathB, glowPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant ComponentLeadExtensionsPainter oldDelegate) {
+    return oldDelegate.type != type ||
+        oldDelegate.isActive != isActive ||
+        oldDelegate.isDark != isDark ||
+        oldDelegate.isDiagramMode != isDiagramMode ||
+        oldDelegate.animationValue != animationValue;
+  }
+}
+
 // --- PAINTER DO GRID DE EDIÇÃO COM RETÍCULO HUD ---
 
 class GridPainter extends CustomPainter {

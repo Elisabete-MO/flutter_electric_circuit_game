@@ -1460,52 +1460,68 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                     child: Transform.rotate(
                       angle: component.rotation * (math.pi / 180.0),
                       child: Stack(
-                      children: [
-                        if (_isDiagramMode)
+                        children: [
+                          // 1. Extensão dos fios dos terminais conectando o componente ao grid
                           Positioned.fill(
                             child: CustomPaint(
-                              painter: CircuitSymbolPainter(
+                              painter: ComponentLeadExtensionsPainter(
                                 type: component.type,
                                 isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
-                                isBurned: isBurned,
-                                color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
-                                activeColor: active || component.isActive ? const Color(0xFF00FF9D) : const Color(0xFFFFB300),
-                                strokeWidth: active || component.isActive ? 2.8 : 2.0,
-                                value: component.value,
+                                isDark: isDark,
                                 animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
+                                isDiagramMode: _isDiagramMode,
                               ),
                             ),
-                          )
-                        else
-                          Positioned.fill(
-                            child: (component.type.getLowPolyAssetPath(component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive)) != null
-                                ? Image.asset(
-                                    component.type.getLowPolyAssetPath(component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive))!,
-                                    fit: BoxFit.contain,
-                                    errorBuilder: (context, error, stackTrace) => CustomPaint(
-                                      painter: ComponentPhysicalPainter(
-                                        type: component.type,
-                                        isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
-                                        isBurned: isBurned,
-                                        isDarkMode: isDark,
-                                        value: component.value,
-                                        animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
-                                      ),
-                                    ),
-                                  )
-                                : CustomPaint(
-                                    painter: ComponentPhysicalPainter(
-                                      type: component.type,
-                                      isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
-                                      isBurned: isBurned,
-                                      isDarkMode: isDark,
-                                      value: component.value,
-                                      animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
-                                    ),
-                                  )),
                           ),
-                      ],
-                    ),
+                          // 2. Componente com escala proporcional realista
+                          if (_isDiagramMode)
+                            Positioned.fill(
+                              child: CustomPaint(
+                                painter: CircuitSymbolPainter(
+                                  type: component.type,
+                                  isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
+                                  isBurned: isBurned,
+                                  color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
+                                  activeColor: active || component.isActive ? const Color(0xFF00FF9D) : const Color(0xFFFFB300),
+                                  strokeWidth: active || component.isActive ? 2.8 : 2.0,
+                                  value: component.value,
+                                  animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
+                                ),
+                              ),
+                            )
+                          else
+                            Positioned.fill(
+                              child: Transform.scale(
+                                scale: _getComponentScaleMultiplier(component.type),
+                                child: (component.type.getLowPolyAssetPath(component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive)) != null
+                                    ? Image.asset(
+                                        component.type.getLowPolyAssetPath(component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive))!,
+                                        fit: BoxFit.contain,
+                                        errorBuilder: (context, error, stackTrace) => CustomPaint(
+                                          painter: ComponentPhysicalPainter(
+                                            type: component.type,
+                                            isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
+                                            isBurned: isBurned,
+                                            isDarkMode: isDark,
+                                            value: component.value,
+                                            animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
+                                          ),
+                                        ),
+                                      )
+                                    : CustomPaint(
+                                        painter: ComponentPhysicalPainter(
+                                          type: component.type,
+                                          isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
+                                          isBurned: isBurned,
+                                          isDarkMode: isDark,
+                                          value: component.value,
+                                          animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
+                                        ),
+                                      )),
+                              ),
+                            ),
+                        ],
+                      ),
                   ),
                   );
                 },
@@ -1709,6 +1725,39 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
         ),
       ),
     );
+  }
+
+  double _getComponentScaleMultiplier(ComponentType type) {
+    switch (type) {
+      case ComponentType.powerSupply:
+      case ComponentType.breadboard:
+      case ComponentType.multimeterTool:
+        return 1.30; // Grandes equipamentos de bancada (30% maiores)
+      case ComponentType.battery:
+      case ComponentType.batteryAA:
+      case ComponentType.batteryPack4_5V:
+      case ComponentType.motor:
+        return 1.20; // Baterias e motores robustos (20% maiores)
+      case ComponentType.bulb:
+      case ComponentType.lampLed:
+      case ComponentType.relay:
+        return 1.15; // Lâmpadas e relés
+      case ComponentType.switchComponent:
+      case ComponentType.pushbutton:
+      case ComponentType.potentiometer:
+      case ComponentType.buzzer:
+        return 1.10; // Chaves e atuadores
+      case ComponentType.resistor:
+      case ComponentType.diode:
+      case ComponentType.led:
+      case ComponentType.ceramicCapacitor:
+      case ComponentType.fuse:
+      case ComponentType.ldrSensor:
+      case ComponentType.ntcThermistor:
+        return 0.95; // Passivos e semicondutores proporcionais
+      default:
+        return 1.05;
+    }
   }
 
   String _getComponentName(ComponentType type, AppLocalizations l10n) {
