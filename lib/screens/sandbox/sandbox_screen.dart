@@ -871,24 +871,9 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
         final selectedComponentList = state.components.where((c) => c.id == selectedId).toList();
         final selectedComponent = selectedComponentList.isNotEmpty ? selectedComponentList.first : null;
 
-        final gridContainer = Container(
+        final gridContainer = SizedBox(
           width: width,
           height: height,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: const Color(0xFF10B981).withValues(alpha: 0.35),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.28),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          clipBehavior: Clip.antiAlias,
           child: Stack(
             children: [
               // 1. Grid de fundo com retículo HUD e linhas milimétricas
@@ -1408,22 +1393,17 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
         decoration: BoxDecoration(
           color: isBurned
               ? const Color(0xFFFF3B7F).withValues(alpha: 0.15)
-              : (isHighThermal
-                  ? const Color(0xFFFFB300).withValues(alpha: 0.22)
-                  : (isSelected
-                      ? const Color(0xFF00F5D4).withValues(alpha: 0.12)
-                      : (isDark ? Colors.white.withValues(alpha: 0.03) : Colors.black.withValues(alpha: 0.02)))),
+              : (isSelected
+                  ? const Color(0xFF00F5D4).withValues(alpha: 0.10)
+                  : Colors.transparent),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isBurned
-                ? const Color(0xFFFF3B7F)
-                : (isHighThermal
-                    ? const Color(0xFFFFB300)
-                    : (isSelected
-                        ? const Color(0xFF00F5D4)
-                        : (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1)))),
-            width: isSelected || isBurned || isHighThermal ? 2.0 : 1.0,
-          ),
+          border: isBurned
+              ? Border.all(color: const Color(0xFFFF3B7F), width: 1.5)
+              : (isSelected
+                  ? Border.all(color: const Color(0xFF00F5D4), width: 1.5)
+                  : (isHighThermal
+                      ? Border.all(color: const Color(0xFFFFB300).withValues(alpha: 0.4), width: 1.0)
+                      : null)),
           boxShadow: isBurned
               ? [
                   BoxShadow(
@@ -1432,23 +1412,15 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                     spreadRadius: 1,
                   )
                 ]
-              : (isHighThermal
+              : (isSelected
                   ? [
                       BoxShadow(
-                        color: const Color(0xFFFFB300).withValues(alpha: 0.6),
-                        blurRadius: 14,
-                        spreadRadius: 2,
+                        color: const Color(0xFF00F5D4).withValues(alpha: 0.25),
+                        blurRadius: 8,
+                        spreadRadius: 1,
                       )
                     ]
-                  : (isSelected
-                      ? [
-                          BoxShadow(
-                            color: const Color(0xFF00F5D4).withValues(alpha: 0.3),
-                            blurRadius: 10,
-                            spreadRadius: 1,
-                          )
-                        ]
-                      : null)),
+                  : null),
         ),
         child: Stack(
           children: [
@@ -1461,6 +1433,28 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                       angle: component.rotation * (math.pi / 180.0),
                       child: Stack(
                         children: [
+                          // 0. Brilho radial luminoso difuso para lâmpadas e LEDs acesos
+                          if ((component.type == ComponentType.bulb || component.type == ComponentType.lampLed || component.type == ComponentType.led) && (active || component.isActive) && !_isDiagramMode)
+                            Positioned.fill(
+                              child: Center(
+                                child: Container(
+                                  width: 140,
+                                  height: 140,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: RadialGradient(
+                                      colors: [
+                                        const Color(0xFFFFE066).withValues(alpha: 0.70),
+                                        const Color(0xFFFFB300).withValues(alpha: 0.38),
+                                        const Color(0xFFFF8C00).withValues(alpha: 0.12),
+                                        Colors.transparent,
+                                      ],
+                                      stops: const [0.0, 0.32, 0.62, 1.0],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
                           // 1. Extensão dos fios dos terminais conectando o componente ao grid
                           Positioned.fill(
                             child: CustomPaint(

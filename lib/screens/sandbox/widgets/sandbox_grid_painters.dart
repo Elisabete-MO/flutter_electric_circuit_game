@@ -122,6 +122,10 @@ class ComponentLeadExtensionsPainter extends CustomPainter {
         isMetallicLeads = true;
         break;
       case ComponentType.battery:
+        // Na bateria 9V vertical, os bornes saem do topo (bornes snap negativo e positivo)
+        pinA = Offset(size.width * 0.40, size.height * 0.20);
+        pinB = Offset(size.width * 0.60, size.height * 0.20);
+        break;
       case ComponentType.batteryAA:
       case ComponentType.batteryPack4_5V:
         pinA = Offset(size.width * 0.16, cy);
@@ -259,8 +263,8 @@ class ComponentLeadExtensionsPainter extends CustomPainter {
     return oldDelegate.type != type ||
         oldDelegate.isActive != isActive ||
         oldDelegate.isDark != isDark ||
-        oldDelegate.isDiagramMode != isDiagramMode ||
-        oldDelegate.animationValue != animationValue;
+        oldDelegate.animationValue != animationValue ||
+        oldDelegate.isDiagramMode != isDiagramMode;
   }
 }
 
@@ -294,32 +298,6 @@ class GridPainter extends CustomPainter {
     if (size.width <= 0 || size.height <= 0) return;
 
     final rect = Offset.zero & size;
-
-    // Fundo da Lousa / Tapete de Corte Verde Esmeralda (Idêntico aos estandes da Feira)
-    final bgPaint = Paint()
-      ..shader = const RadialGradient(
-        center: Alignment.center,
-        radius: 0.95,
-        colors: [
-          Color(0xFF0C3829), // Centro esmeralda
-          Color(0xFF07241A),
-          Color(0xFF031610), // Bordas profundas
-        ],
-      ).createShader(rect);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(rect, const Radius.circular(16)),
-      bgPaint,
-    );
-
-    // Borda chanfrada da bancada técnica
-    final borderPaint = Paint()
-      ..color = const Color(0xFF10B981).withValues(alpha: 0.35)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(rect, const Radius.circular(16)),
-      borderPaint,
-    );
 
     // Subdivisões milimétricas sutis por toda a extensão
     _subGridPaint.color = const Color(0xFF10B981).withValues(alpha: 0.05);
