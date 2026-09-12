@@ -14,7 +14,7 @@ class WorkbenchFullscreenBackgroundPainter extends CustomPainter {
 
     final rect = Offset.zero & size;
 
-    // Fundo Verde Profundo da Bancada
+    // Fundo Verde Profundo e Gradiente da Bancada de Trabalho (Sem grid duplicado)
     final bgPaint = Paint()
       ..shader = const RadialGradient(
         center: Alignment(0.0, -0.2),
@@ -26,32 +26,6 @@ class WorkbenchFullscreenBackgroundPainter extends CustomPainter {
         ],
       ).createShader(rect);
     canvas.drawRect(rect, bgPaint);
-
-    // Grid Milimetrado de Bancada Técnica
-    final subGridPaint = Paint()
-      ..color = const Color(0xFF10B981).withValues(alpha: 0.045)
-      ..strokeWidth = 0.8;
-
-    const double subSpacing = 24.0;
-    for (double x = 0; x <= size.width; x += subSpacing) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), subGridPaint);
-    }
-    for (double y = 0; y <= size.height; y += subSpacing) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), subGridPaint);
-    }
-
-    // Linhas Principais (a cada 96px)
-    final mainGridPaint = Paint()
-      ..color = const Color(0xFF10B981).withValues(alpha: 0.09)
-      ..strokeWidth = 1.2;
-
-    const double mainSpacing = 96.0;
-    for (double x = 0; x <= size.width; x += mainSpacing) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), mainGridPaint);
-    }
-    for (double y = 0; y <= size.height; y += mainSpacing) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), mainGridPaint);
-    }
   }
 
   @override
@@ -299,35 +273,29 @@ class GridPainter extends CustomPainter {
 
     final rect = Offset.zero & size;
 
-    // Subdivisões milimétricas sutis por toda a extensão
-    _subGridPaint.color = const Color(0xFF10B981).withValues(alpha: 0.05);
-    const double subSpacing = 20.0;
-    for (double x = 0; x <= size.width; x += subSpacing) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), _subGridPaint);
-    }
-    for (double y = 0; y <= size.height; y += subSpacing) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), _subGridPaint);
-    }
-
-    _gridLinePaint.color = const Color(0xFF10B981).withValues(alpha: 0.16);
-
     final cellWidth = cellSize ?? (size.width / columns);
     final cellHeight = cellSize ?? (size.height / rows);
 
-    // Linhas Verticais
-    for (int i = 1; i <= columns; i++) {
-      final x = i * cellWidth;
-      if (x <= size.width) {
-        canvas.drawLine(Offset(x, 0), Offset(x, size.height), _gridLinePaint);
-      }
+    const int subDivisions = 4;
+    final double subSpacingX = cellWidth / subDivisions;
+    final double subSpacingY = cellHeight / subDivisions;
+
+    // 1. Subdivisões milimétricas sutis perfeitamente alinhadas com cada célula
+    _subGridPaint.color = const Color(0xFF10B981).withValues(alpha: 0.045);
+    for (double x = 0; x <= size.width + 0.1; x += subSpacingX) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), _subGridPaint);
+    }
+    for (double y = 0; y <= size.height + 0.1; y += subSpacingY) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), _subGridPaint);
     }
 
-    // Linhas Horizontais
-    for (int i = 1; i <= rows; i++) {
-      final y = i * cellHeight;
-      if (y <= size.height) {
-        canvas.drawLine(Offset(0, y), Offset(size.width, y), _gridLinePaint);
-      }
+    // 2. Linhas principais que definem as células da bancada técnica
+    _gridLinePaint.color = const Color(0xFF10B981).withValues(alpha: 0.18);
+    for (double x = 0; x <= size.width + 0.1; x += cellWidth) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), _gridLinePaint);
+    }
+    for (double y = 0; y <= size.height + 0.1; y += cellHeight) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), _gridLinePaint);
     }
 
     // Destaque de Célula Hover com Cantoneiras HUD (Cyber Reticle)
