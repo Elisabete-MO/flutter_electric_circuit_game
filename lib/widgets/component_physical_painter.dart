@@ -81,6 +81,9 @@ class ComponentPhysicalPainter extends CustomPainter {
       case ComponentType.buzzer:
         _drawPhysicalBuzzer(canvas, size, cx, cy);
         break;
+      default:
+        _drawPhysicalResistor(canvas, size, cx, cy);
+        break;
     }
 
     if (isBurned) {

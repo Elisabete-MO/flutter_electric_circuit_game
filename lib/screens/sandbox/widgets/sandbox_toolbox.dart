@@ -4,15 +4,15 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/ui_scale.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../models/first_step_component.dart';
-import '../../../widgets/glass_container.dart';
+import '../../../models/sandbox_component.dart';
 import '../../../widgets/component_physical_painter.dart';
 import '../../../widgets/circuit_symbol_painter.dart';
 
-class SandboxToolboxWidget extends StatelessWidget {
+/// Card Lateral Branco Padronizado da Bancada Livre com Categorias e Modelos Low-Poly 3D
+class SandboxToolboxWidget extends StatefulWidget {
   final bool isHorizontal;
   final bool isDark;
   final bool isDiagramMode;
-  final bool useRealisticAssets;
   final String Function(ComponentType, AppLocalizations) getComponentName;
 
   const SandboxToolboxWidget({
@@ -20,95 +20,141 @@ class SandboxToolboxWidget extends StatelessWidget {
     this.isHorizontal = false,
     required this.isDark,
     required this.isDiagramMode,
-    this.useRealisticAssets = true,
     required this.getComponentName,
   });
 
-  List<ComponentType> get _availableTypes => const [
-        ComponentType.battery,
-        ComponentType.powerSupply,
-        ComponentType.switchComponent,
-        ComponentType.bulb,
-        ComponentType.resistor,
-        ComponentType.potentiometer,
-        ComponentType.motor,
-        ComponentType.led,
-        ComponentType.diode,
-        ComponentType.fuse,
-        ComponentType.capacitor,
-        ComponentType.buzzer,
-      ];
+  @override
+  State<SandboxToolboxWidget> createState() => _SandboxToolboxWidgetState();
+}
+
+class _SandboxToolboxWidgetState extends State<SandboxToolboxWidget> {
+  SandboxCategory? _selectedCategory; // null = Todas as categorias
+
+  List<SandboxPaletteItem> get _filteredItems {
+    if (_selectedCategory == null) return allSandboxPaletteItems;
+    return allSandboxPaletteItems
+        .where((item) => item.category == _selectedCategory)
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final scale = context.uiScale;
 
-    if (isHorizontal) {
-      return GlassContainer(
-        borderRadius: scale.size(16, min: 12, max: 24),
-        opacity: isDark ? 0.35 : 0.6,
-        padding: EdgeInsets.symmetric(
-          vertical: scale.spacing(8, min: 6, max: 14),
-          horizontal: scale.spacing(12, min: 8, max: 20),
+    // Card Branco com acabamento dos estandes da Feira
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(scale.size(16, min: 12, max: 24)),
+        border: Border.all(
+          color: const Color(0xFFE2E8F0),
+          width: 1.5,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.symbolsPaletteTitle,
-              style: GoogleFonts.rajdhani(
-                fontWeight: FontWeight.bold,
-                fontSize: scale.font(14, min: 12, max: 20),
-                letterSpacing: 1.0,
-              ),
-            ),
-            SizedBox(height: scale.spacing(6, min: 4, max: 10)),
-            Expanded(
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: _availableTypes.length,
-                separatorBuilder: (context, index) => SizedBox(width: scale.spacing(10, min: 6, max: 16)),
-                itemBuilder: (context, index) {
-                  return SizedBox(
-                    width: scale.size(90, min: 72, max: 140),
-                    child: _buildToolboxItem(context, _availableTypes[index], l10n, compact: true),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return GlassContainer(
-      borderRadius: scale.size(16, min: 12, max: 24),
-      opacity: isDark ? 0.35 : 0.6,
-      padding: EdgeInsets.symmetric(
-        vertical: scale.spacing(16, min: 12, max: 24),
-        horizontal: scale.spacing(12, min: 8, max: 20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: scale.size(12, min: 8, max: 20),
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            l10n.symbolsPaletteTitle,
-            style: GoogleFonts.rajdhani(
-              fontWeight: FontWeight.bold,
-              fontSize: scale.font(15, min: 13, max: 22),
-              letterSpacing: 1.0,
+          // 1. Cabeçalho do Card Lateral
+          Container(
+            padding: scale.insetsSymmetric(horizontal: 14, vertical: 10),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+              border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
             ),
-            textAlign: TextAlign.center,
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFECFDF5),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: const Color(0xFF10B981)),
+                  ),
+                  child: const Icon(
+                    Icons.category_rounded,
+                    color: Color(0xFF059669),
+                    size: 16,
+                  ),
+                ),
+                SizedBox(width: scale.spacing(8)),
+                Expanded(
+                  child: Text(
+                    'PALETA DE COMPONENTES',
+                    style: GoogleFonts.rajdhani(
+                      fontWeight: FontWeight.w800,
+                      fontSize: scale.font(14, min: 12, max: 18),
+                      letterSpacing: 0.8,
+                      color: const Color(0xFF0F172A),
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '${_filteredItems.length}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          SizedBox(height: scale.spacing(12, min: 8, max: 18)),
+
+          // 2. Barra de Categorias (Filtros com ícones)
+          Container(
+            height: scale.size(38, min: 32, max: 44),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: const BoxDecoration(
+              color: Color(0xFFFFFFFF),
+              border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+            ),
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                _buildCategoryChip('Todos', null, Icons.apps_rounded, scale),
+                _buildCategoryChip('Fontes', SandboxCategory.sources, Icons.bolt_rounded, scale),
+                _buildCategoryChip('Cargas', SandboxCategory.loads, Icons.lightbulb_rounded, scale),
+                _buildCategoryChip('Chaves', SandboxCategory.switches, Icons.toggle_on_rounded, scale),
+                _buildCategoryChip('Passivos', SandboxCategory.passives, Icons.shield_rounded, scale),
+                _buildCategoryChip('Sensores', SandboxCategory.sensors, Icons.sensors_rounded, scale),
+                _buildCategoryChip('Ferramentas', SandboxCategory.tools, Icons.build_rounded, scale),
+              ],
+            ),
+          ),
+
+          // 3. Grid de Componentes Arrastáveis
           Expanded(
-            child: ListView.separated(
-              itemCount: _availableTypes.length,
-              separatorBuilder: (context, index) => SizedBox(height: scale.spacing(10, min: 6, max: 16)),
-              itemBuilder: (context, index) {
-                return _buildToolboxItem(context, _availableTypes[index], l10n);
-              },
+            child: Padding(
+              padding: scale.insetsAll(8),
+              child: GridView.builder(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: widget.isHorizontal ? 4 : 2,
+                  crossAxisSpacing: scale.spacing(6, min: 4, max: 10),
+                  mainAxisSpacing: scale.spacing(6, min: 4, max: 10),
+                  childAspectRatio: 0.95,
+                ),
+                itemCount: _filteredItems.length,
+                itemBuilder: (context, index) {
+                  final item = _filteredItems[index];
+                  return _buildToolboxItem(context, item, l10n);
+                },
+              ),
             ),
           ),
         ],
@@ -116,129 +162,150 @@ class SandboxToolboxWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildToolboxItem(BuildContext context, ComponentType type, AppLocalizations l10n, {bool compact = false}) {
-    final name = getComponentName(type, l10n);
-    final scale = context.uiScale;
-
-    Widget buildCard({Color? bgColor, Color? borderColor, double? fontSize}) {
-      return Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: scale.spacing(6, min: 4, max: 10),
-          vertical: scale.spacing(5, min: 3, max: 8),
-        ),
-        decoration: BoxDecoration(
-          color: bgColor ?? (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03)),
-          borderRadius: BorderRadius.circular(scale.size(10, min: 8, max: 16)),
-          border: Border.all(
-            color: borderColor ?? (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.08)),
+  Widget _buildCategoryChip(
+    String label,
+    SandboxCategory? category,
+    IconData icon,
+    UiScale scale,
+  ) {
+    final isSelected = _selectedCategory == category;
+    return Padding(
+      padding: const EdgeInsets.only(right: 6),
+      child: InkWell(
+        onTap: () => setState(() => _selectedCategory = category),
+        borderRadius: BorderRadius.circular(6),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFF047857) : const Color(0xFFF1F5F9),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(
+              color: isSelected ? const Color(0xFF047857) : const Color(0xFFCBD5E1),
+              width: 1.0,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 13,
+                color: isSelected ? Colors.white : const Color(0xFF475569),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : const Color(0xFF334155),
+                  fontSize: 11,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                ),
+              ),
+            ],
           ),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            AspectRatio(
-              aspectRatio: compact ? 2.0 : 1.8,
-              child: Stack(
-                children: [
-                  if (isDiagramMode)
-                    Positioned.fill(
-                      child: Opacity(
-                        opacity: isDark ? 0.25 : 0.30,
-                        child: (useRealisticAssets && type.getAssetPath(false) != null
-                            ? Image.asset(
-                                type.getAssetPath(false)!,
-                                fit: BoxFit.contain,
-                                errorBuilder: (context, error, stackTrace) => CustomPaint(
-                                  painter: ComponentPhysicalPainter(
-                                    type: type,
-                                    isActive: false,
-                                    isDarkMode: isDark,
-                                  ),
-                                ),
-                              )
-                            : CustomPaint(
-                                painter: ComponentPhysicalPainter(
-                                  type: type,
-                                  isActive: false,
-                                  isDarkMode: isDark,
-                                ),
-                              )),
+      ),
+    );
+  }
+
+  Widget _buildToolboxItem(
+    BuildContext context,
+    SandboxPaletteItem item,
+    AppLocalizations l10n,
+  ) {
+    final type = item.type;
+    final scale = context.uiScale;
+    final assetPath = type.getLowPolyAssetPath(false) ?? item.iconAsset;
+
+    Widget cardContent = Container(
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFAFAFA),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 3,
+            offset: Offset(0, 1.5),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Miniatura do Componente (Low-Poly ou Símbolo)
+          Expanded(
+            child: Center(
+              child: widget.isDiagramMode
+                  ? CustomPaint(
+                      size: const Size(40, 40),
+                      painter: CircuitSymbolPainter(
+                        type: type,
+                        isActive: false,
+                        color: const Color(0xFF0F172A),
+                        activeColor: const Color(0xFF059669),
+                        strokeWidth: 2.0,
+                      ),
+                    )
+                  : Image.asset(
+                      assetPath,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) => CustomPaint(
+                        size: const Size(36, 36),
+                        painter: ComponentPhysicalPainter(
+                          type: type,
+                          isActive: false,
+                          isDarkMode: false,
+                        ),
                       ),
                     ),
-                  Positioned.fill(
-                    child: isDiagramMode
-                        ? CustomPaint(
-                            painter: CircuitSymbolPainter(
-                              type: type,
-                              isActive: false,
-                              color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
-                              activeColor: const Color(0xFFFFB300),
-                              strokeWidth: scale.size(2.0, min: 1.5, max: 3.0),
-                            ),
-                          )
-                        : (useRealisticAssets && type.getAssetPath(false) != null
-                            ? Image.asset(
-                                type.getAssetPath(false)!,
-                                fit: BoxFit.contain,
-                                errorBuilder: (context, error, stackTrace) => CustomPaint(
-                                  painter: ComponentPhysicalPainter(
-                                    type: type,
-                                    isActive: false,
-                                    isDarkMode: isDark,
-                                  ),
-                                ),
-                              )
-                            : CustomPaint(
-                                painter: ComponentPhysicalPainter(
-                                  type: type,
-                                  isActive: false,
-                                  isDarkMode: isDark,
-                                ),
-                              )),
-                  ),
-                ],
-              ),
             ),
-            SizedBox(height: scale.spacing(3, min: 2, max: 6)),
-            Text(
-              name,
-              style: TextStyle(fontSize: fontSize ?? scale.font(10, min: 9, max: 15), fontWeight: FontWeight.w600),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      );
-    }
-
-    final itemWidget = buildCard();
-    final feedbackSize = scale.size(88, min: 72, max: 130);
-
-    final feedbackWidget = Material(
-      color: Colors.transparent,
-      child: SizedBox(
-        width: feedbackSize,
-        height: feedbackSize,
-        child: Opacity(
-          opacity: 0.85,
-          child: buildCard(
-            bgColor: isDark ? Colors.white.withValues(alpha: 0.14) : Colors.white.withValues(alpha: 0.9),
-            borderColor: const Color(0xFF00F5D4),
-            fontSize: scale.font(10, min: 9, max: 15),
           ),
-        ),
+          const SizedBox(height: 4),
+          // Nome do Componente
+          Text(
+            item.name,
+            style: GoogleFonts.outfit(
+              fontSize: scale.font(10.5, min: 9.0, max: 13.0),
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF1E293B),
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
 
     return Draggable<ComponentType>(
       data: type,
-      feedback: feedbackWidget,
-      dragAnchorStrategy: pointerDragAnchorStrategy,
-      childWhenDragging: Opacity(opacity: 0.35, child: itemWidget),
-      child: itemWidget,
+      feedback: Material(
+        color: Colors.transparent,
+        child: SizedBox(
+          width: scale.size(70, min: 55, max: 90),
+          height: scale.size(70, min: 55, max: 90),
+          child: Image.asset(
+            assetPath,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) => const Icon(
+              Icons.bolt,
+              color: Color(0xFF10B981),
+              size: 40,
+            ),
+          ),
+        ),
+      ),
+      childWhenDragging: Opacity(
+        opacity: 0.35,
+        child: cardContent,
+      ),
+      child: Tooltip(
+        message: '${item.name}\n${item.description}',
+        waitDuration: const Duration(milliseconds: 400),
+        child: cardContent,
+      ),
     );
   }
 }
-

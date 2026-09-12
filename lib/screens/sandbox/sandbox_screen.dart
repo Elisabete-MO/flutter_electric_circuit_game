@@ -60,7 +60,6 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
   Offset? _sparkPosition;
   bool _showMascot = true;
   bool _isDiagramMode = false;
-  bool _useRealisticAssets = true;
   ProfVoltsEmotion _lastVoltsEmotion = ProfVoltsEmotion.neutral;
 
   // Pilar 1: Instrumentos Virtuais de MediÃ§Ã£o (MultÃ­metro & OsciloscÃ³pio)
@@ -522,62 +521,13 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                         ),
                       ],
                     ),
-                    // Alternador de Modo: Componentes FÃ­sicos vs Diagrama EsquemÃ¡tico
+                    // Alternador de Modo: Componentes Físicos vs Diagrama Esquemático
                     Padding(
-                      padding: const EdgeInsets.only(right: 8),
+                      padding: const EdgeInsets.only(right: 12),
                       child: ModeToggleSwitch(
                         isDiagramMode: _isDiagramMode,
                         onChanged: (val) => setState(() => _isDiagramMode = val),
                         isCompact: true,
-                      ),
-                    ),
-                    // BotÃ£o "Modo realista" / "Modo cartoon"
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(20),
-                        onTap: () {
-                          setState(() {
-                            _useRealisticAssets = !_useRealisticAssets;
-                          });
-                        },
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: _useRealisticAssets
-                                ? theme.colorScheme.primary.withValues(alpha: 0.18)
-                                : (isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: _useRealisticAssets
-                                  ? theme.colorScheme.primary
-                                  : (isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1)),
-                              width: 1.2,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                _useRealisticAssets ? Icons.photo_library_rounded : Icons.brush_rounded,
-                                size: 14,
-                                color: _useRealisticAssets ? theme.colorScheme.primary : theme.colorScheme.onSurface,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                _useRealisticAssets ? 'Modo realista' : 'Modo cartoon',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontFamily: GoogleFonts.rajdhani().fontFamily,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 0.6,
-                                  color: _useRealisticAssets ? theme.colorScheme.primary : theme.colorScheme.onSurface,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
                       ),
                     ),
                     // Seletor de Tamanho da Bancada / Grid
@@ -694,19 +644,18 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
             child: SafeArea(
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  final isNarrow = constraints.maxWidth < 650;
+                  final isNarrow = constraints.maxWidth < 720;
 
                   Widget bodyContent;
                   if (isNarrow) {
                     bodyContent = Column(
                       children: [
                         SizedBox(
-                          height: 115,
+                          height: 145,
                           child: SandboxToolboxWidget(
                             isHorizontal: true,
                             isDark: isDark,
                             isDiagramMode: _isDiagramMode,
-                            useRealisticAssets: _useRealisticAssets,
                             getComponentName: _getComponentName,
                           ),
                         ),
@@ -735,12 +684,11 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                     bodyContent = Row(
                       children: [
                         SizedBox(
-                          width: 140,
+                          width: 260,
                           child: SandboxToolboxWidget(
                             isHorizontal: false,
                             isDark: isDark,
                             isDiagramMode: _isDiagramMode,
-                            useRealisticAssets: _useRealisticAssets,
                             getComponentName: _getComponentName,
                           ),
                         ),
@@ -751,7 +699,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                         if (selectedComponent != null) ...[
                           const SizedBox(width: 12),
                           SizedBox(
-                            width: 200,
+                            width: 220,
                             child: SandboxMetricsPanelWidget(
                               component: selectedComponent,
                               wires: sandboxState.wires,
@@ -1290,12 +1238,19 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
         onAcceptWithDetails: (details) {
           final data = details.data;
           if (data is ComponentType) {
+            double defVal = (data == ComponentType.battery || data == ComponentType.powerSupply) ? 9.0 : (data == ComponentType.resistor ? 10.0 : 0.0);
+            for (final item in allSandboxPaletteItems) {
+              if (item.type == data) {
+                defVal = item.defaultValue;
+                break;
+              }
+            }
             final newComponent = SandboxComponent(
               id: '${data.name}_${DateTime.now().millisecondsSinceEpoch}',
               type: data,
               gridX: gridX,
               gridY: gridY,
-              value: data == ComponentType.battery ? 9.0 : (data == ComponentType.resistor ? 10.0 : 0.0),
+              value: defVal,
             );
             ref.read(sandboxControllerProvider.notifier).addComponent(newComponent);
             setState(() {
@@ -1340,9 +1295,9 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                                 strokeWidth: 1.8,
                               ),
                             )
-                          : (_useRealisticAssets && draggedType.getAssetPath(false) != null
+                          : (draggedType.getLowPolyAssetPath(false) != null
                               ? Image.asset(
-                                  draggedType.getAssetPath(false)!,
+                                  draggedType.getLowPolyAssetPath(false)!,
                                   fit: BoxFit.contain,
                                   errorBuilder: (context, error, stackTrace) => CustomPaint(
                                     painter: ComponentPhysicalPainter(
@@ -1481,65 +1436,26 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                       children: [
                         if (_isDiagramMode)
                           Positioned.fill(
-                            child: Opacity(
-                              opacity: isDark ? 0.25 : 0.30,
-                              child: (_useRealisticAssets && component.type.getAssetPath(component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive)) != null
-                                  ? Image.asset(
-                                      component.type.getAssetPath(component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive))!,
-                                      fit: BoxFit.contain,
-                                      errorBuilder: (context, error, stackTrace) => CustomPaint(
-                                        painter: ComponentPhysicalPainter(
-                                          type: component.type,
-                                          isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
-                                          isBurned: isBurned,
-                                          isDarkMode: isDark,
-                                          value: component.value,
-                                          animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
-                                        ),
-                                      ),
-                                    )
-                                  : CustomPaint(
-                                      painter: ComponentPhysicalPainter(
-                                        type: component.type,
-                                        isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
-                                        isBurned: isBurned,
-                                        isDarkMode: isDark,
-                                        value: component.value,
-                                        animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
-                                      ),
-                                    )),
+                            child: CustomPaint(
+                              painter: CircuitSymbolPainter(
+                                type: component.type,
+                                isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
+                                isBurned: isBurned,
+                                color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
+                                activeColor: active || component.isActive ? const Color(0xFF00FF9D) : const Color(0xFFFFB300),
+                                strokeWidth: active || component.isActive ? 2.8 : 2.0,
+                                value: component.value,
+                                animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
+                              ),
                             ),
-                          ),
-                        Positioned.fill(
-                          child: _isDiagramMode
-                              ? CustomPaint(
-                                  painter: CircuitSymbolPainter(
-                                    type: component.type,
-                                    isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
-                                    isBurned: isBurned,
-                                    color: isDark ? const Color(0xFF00F5D4) : Colors.black87,
-                                    activeColor: active || component.isActive ? const Color(0xFF00FF9D) : const Color(0xFFFFB300),
-                                    strokeWidth: active || component.isActive ? 2.8 : 2.0,
-                                    value: component.value,
-                                    animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
-                                  ),
-                                )
-                              : (_useRealisticAssets && component.type.getAssetPath(component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive)) != null
-                                  ? Image.asset(
-                                      component.type.getAssetPath(component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive))!,
-                                      fit: BoxFit.contain,
-                                      errorBuilder: (context, error, stackTrace) => CustomPaint(
-                                        painter: ComponentPhysicalPainter(
-                                          type: component.type,
-                                          isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
-                                          isBurned: isBurned,
-                                          isDarkMode: isDark,
-                                          value: component.value,
-                                          animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
-                                        ),
-                                      ),
-                                    )
-                                  : CustomPaint(
+                          )
+                        else
+                          Positioned.fill(
+                            child: (component.type.getLowPolyAssetPath(component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive)) != null
+                                ? Image.asset(
+                                    component.type.getLowPolyAssetPath(component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive))!,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (context, error, stackTrace) => CustomPaint(
                                       painter: ComponentPhysicalPainter(
                                         type: component.type,
                                         isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
@@ -1548,8 +1464,19 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                                         value: component.value,
                                         animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
                                       ),
-                                    )),
-                        ),
+                                    ),
+                                  )
+                                : CustomPaint(
+                                    painter: ComponentPhysicalPainter(
+                                      type: component.type,
+                                      isActive: component.type == ComponentType.switchComponent ? component.isActive : (active || component.isActive),
+                                      isBurned: isBurned,
+                                      isDarkMode: isDark,
+                                      value: component.value,
+                                      animationValue: state.isSimulating ? _wireAnimationController.value : 0.0,
+                                    ),
+                                  )),
+                          ),
                       ],
                     ),
                   ),
@@ -1567,7 +1494,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                     color: Color(0xFFFFB300),
                     shape: BoxShape.circle,
                   ),
-                  child: const Text('ðŸ”¥', style: TextStyle(fontSize: 9)),
+                  child: const Text('🔥', style: TextStyle(fontSize: 9)),
                 ),
               ),
           ],
@@ -1616,7 +1543,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                       ),
                     ),
                     const SizedBox(width: 3),
-                    const Text('â€¢', style: TextStyle(color: Colors.white38, fontSize: 8)),
+                    const Text('•', style: TextStyle(color: Colors.white38, fontSize: 8)),
                     const SizedBox(width: 3),
                     Text(
                       '${(current * 1000).toStringAsFixed(0)}mA',
@@ -1679,7 +1606,10 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
     final isWiringMode = _connectionSource != null;
 
     final showPolarity = component.type == ComponentType.battery ||
+        component.type == ComponentType.batteryAA ||
+        component.type == ComponentType.batteryPack4_5V ||
         component.type == ComponentType.led ||
+        component.type == ComponentType.lampLed ||
         component.type == ComponentType.diode;
     final polaritySign = terminal == 'B' ? '+' : '-';
 
@@ -1755,6 +1685,11 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
   }
 
   String _getComponentName(ComponentType type, AppLocalizations l10n) {
+    for (final item in allSandboxPaletteItems) {
+      if (item.type == type) {
+        return item.name;
+      }
+    }
     switch (type) {
       case ComponentType.battery:
         return l10n.compBattery;
@@ -1775,13 +1710,15 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
       case ComponentType.potentiometer:
         return l10n.localeName == 'en' ? 'Potentiometer' : 'Potenciômetro';
       case ComponentType.powerSupply:
-        return l10n.localeName == 'en' ? 'Power Supply Studio' : 'Fonte Regulável';
+        return l10n.localeName == 'en' ? 'Power Supply' : 'Fonte DC Bancada';
       case ComponentType.fuse:
         return l10n.localeName == 'en' ? 'Fuse' : 'Fusível';
       case ComponentType.capacitor:
-        return l10n.localeName == 'en' ? 'Capacitor' : 'Capacitor';
+        return l10n.localeName == 'en' ? 'Capacitor' : 'Capacitor Eletrolítico';
       case ComponentType.buzzer:
         return l10n.localeName == 'en' ? 'Buzzer Alarm' : 'Buzzer / Alarme';
+      default:
+        return type.name;
     }
   }
 }

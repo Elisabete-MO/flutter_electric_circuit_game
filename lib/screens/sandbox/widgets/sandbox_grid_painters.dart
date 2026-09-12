@@ -29,9 +29,37 @@ class GridPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    _gridLinePaint.color = isDark 
-        ? Colors.white.withValues(alpha: 0.08) 
-        : Colors.black.withValues(alpha: 0.05);
+    if (size.width <= 0 || size.height <= 0) return;
+
+    final rect = Offset.zero & size;
+
+    // Fundo da Lousa / Tapete de Corte Verde Esmeralda (Idêntico aos estandes da Feira)
+    final bgPaint = Paint()
+      ..shader = const RadialGradient(
+        center: Alignment.center,
+        radius: 0.95,
+        colors: [
+          Color(0xFF0C3829), // Centro esmeralda
+          Color(0xFF07241A),
+          Color(0xFF031610), // Bordas profundas
+        ],
+      ).createShader(rect);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(rect, const Radius.circular(16)),
+      bgPaint,
+    );
+
+    // Borda chanfrada de madeira / moldura da bancada
+    final borderPaint = Paint()
+      ..color = const Color(0xFF10B981).withValues(alpha: 0.35)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(rect, const Radius.circular(16)),
+      borderPaint,
+    );
+
+    _gridLinePaint.color = const Color(0xFF10B981).withValues(alpha: 0.12);
 
     final cellWidth = size.width / columns;
     final cellHeight = size.height / rows;
@@ -54,18 +82,17 @@ class GridPainter extends CustomPainter {
       final gy = hoverCell!.dy.floor();
 
       if (gx >= 0 && gx < columns && gy >= 0 && gy < rows) {
-        final rect = Rect.fromLTWH(gx * cellWidth, gy * cellHeight, cellWidth, cellHeight);
+        final cellRect = Rect.fromLTWH(gx * cellWidth, gy * cellHeight, cellWidth, cellHeight);
         
-        // Fundo sutil
-        _hoverBgPaint.color = (isDark ? const Color(0xFF00F5D4) : const Color(0xFF00875A))
-            .withValues(alpha: 0.06);
+        // Fundo sutil esmeralda
+        _hoverBgPaint.color = const Color(0xFF10B981).withValues(alpha: 0.14);
         canvas.drawRRect(
-          RRect.fromRectAndRadius(rect, const Radius.circular(6)),
+          RRect.fromRectAndRadius(cellRect, const Radius.circular(6)),
           _hoverBgPaint,
         );
 
         // Cantoneiras HUD estilo cibernético
-        _bracketPaint.color = isDark ? const Color(0xFF00F5D4) : const Color(0xFF00875A);
+        _bracketPaint.color = const Color(0xFF34D399);
 
         const bLen = 8.0;
         final pad = 3.0;

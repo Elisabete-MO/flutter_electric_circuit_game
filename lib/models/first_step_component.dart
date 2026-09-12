@@ -1,4 +1,4 @@
-/// Tipos de componentes disponíveis nos Primeiros Passos.
+/// Tipos de componentes disponíveis no jogo e na bancada livre.
 enum ComponentType {
   battery,
   connectingWire,
@@ -13,6 +13,26 @@ enum ComponentType {
   fuse,
   capacitor,
   buzzer,
+  // Tipos estendidos para as 6 categorias da Bancada Livre
+  batteryAA,
+  batteryPack4_5V,
+  lampLed,
+  pushbutton,
+  switchThreeWay,
+  switchFourWay,
+  relay,
+  hBridge,
+  masterSwitch,
+  circuitBreaker,
+  ceramicCapacitor,
+  ldrSensor,
+  soilMoisture,
+  limitSwitch,
+  pirSensor,
+  ntcThermistor,
+  transistorBjt,
+  breadboard,
+  multimeterTool,
 }
 
 /// Modelo que define um componente educativo para a seção de Primeiros Passos.
@@ -155,10 +175,17 @@ extension ComponentTypeAssetX on ComponentType {
   String? getAssetPath(bool isActive) {
     switch (this) {
       case ComponentType.battery:
+      case ComponentType.batteryAA:
+      case ComponentType.batteryPack4_5V:
         return 'assets/components/battery.png';
       case ComponentType.bulb:
+      case ComponentType.lampLed:
         return isActive ? 'assets/components/bulb_on.png' : 'assets/components/bulb_off.png';
       case ComponentType.switchComponent:
+      case ComponentType.pushbutton:
+      case ComponentType.switchThreeWay:
+      case ComponentType.switchFourWay:
+      case ComponentType.masterSwitch:
         return isActive ? 'assets/components/switch_closed.png' : 'assets/components/switch_open.png';
       case ComponentType.resistor:
         return 'assets/components/resistor.png';
@@ -169,10 +196,12 @@ extension ComponentTypeAssetX on ComponentType {
       case ComponentType.motor:
         return 'assets/components/motor.png';
       case ComponentType.capacitor:
+      case ComponentType.ceramicCapacitor:
         return 'assets/components/capacitor.png';
       case ComponentType.potentiometer:
         return 'assets/components/potentiometer.png';
       case ComponentType.fuse:
+      case ComponentType.circuitBreaker:
         return 'assets/components/fuse.png';
       case ComponentType.buzzer:
         return 'assets/components/buzzer.png';
@@ -180,6 +209,81 @@ extension ComponentTypeAssetX on ComponentType {
         return 'assets/components/power_supply.png';
       case ComponentType.connectingWire:
         return 'assets/components/wires.png';
+      default:
+        return getLowPolyAssetPath(isActive);
+    }
+  }
+
+  /// Caminhos oficiais dos modelos Low-Poly 3D (pasta assets/components-low-poly/)
+  String? getLowPolyAssetPath(bool isActive) {
+    switch (this) {
+      case ComponentType.battery:
+        return 'assets/components-low-poly/bateria-9v-low-poly.png';
+      case ComponentType.batteryAA:
+      case ComponentType.batteryPack4_5V:
+        return 'assets/components-low-poly/pilha-aa-1-5v-low-poly.png';
+      case ComponentType.powerSupply:
+        return 'assets/components-low-poly/fonte-dc-didatica-low-poly.png';
+      case ComponentType.bulb:
+        return isActive
+            ? 'assets/components-low-poly/lampada-incandescente-ligada-low-poly.png'
+            : 'assets/components-low-poly/lampada-incandescente-desligada-low-poly.png';
+      case ComponentType.lampLed:
+        return isActive
+            ? 'assets/components-low-poly/lampada-led-ligada-low-poly.png'
+            : 'assets/components-low-poly/lampada-led-desligada-low-poly.png';
+      case ComponentType.led:
+        return isActive
+            ? 'assets/components-low-poly/led-vermelho-ligado-low-poly.png'
+            : 'assets/components-low-poly/led-vermelho-desligado-low-poly.png';
+      case ComponentType.motor:
+        return 'assets/components-low-poly/motor-cc-helice.png';
+      case ComponentType.buzzer:
+        return 'assets/components-low-poly/buzzer-low-poly.png';
+      case ComponentType.switchComponent:
+      case ComponentType.masterSwitch:
+        return isActive
+            ? 'assets/components-low-poly/chave-spst-ligado.png'
+            : 'assets/components-low-poly/chave-spst-desligado.png';
+      case ComponentType.pushbutton:
+      case ComponentType.limitSwitch:
+        return isActive
+            ? 'assets/components-low-poly/botao-pulsador-pressionado-low-poly.png'
+            : 'assets/components-low-poly/botao-pulsador-solto-low-poly.png';
+      case ComponentType.potentiometer:
+        return 'assets/components-low-poly/potenciometro.png';
+      case ComponentType.relay:
+      case ComponentType.switchThreeWay:
+      case ComponentType.switchFourWay:
+      case ComponentType.hBridge:
+        return 'assets/components-low-poly/rele-low-poly.png';
+      case ComponentType.resistor:
+        return 'assets/components-low-poly/resistor-fixo-low-poly.png';
+      case ComponentType.fuse:
+      case ComponentType.circuitBreaker:
+        return 'assets/components-low-poly/fusivel-didatico-low-poly.png';
+      case ComponentType.capacitor:
+        return 'assets/components-low-poly/capacitor-eletrolitico-low-poly.png';
+      case ComponentType.ceramicCapacitor:
+        return 'assets/components-low-poly/capacitor-ceramico-low-poly.png';
+      case ComponentType.diode:
+        return 'assets/components-low-poly/diodo-1n4007-low-poly.png';
+      case ComponentType.ldrSensor:
+        return 'assets/components-low-poly/sensor-ldr-low-poly.png';
+      case ComponentType.soilMoisture:
+        return 'assets/components-low-poly/sonda-de-solo-resistiva-low-poly.png';
+      case ComponentType.ntcThermistor:
+        return 'assets/components-low-poly/termistor-ntc-low-poly.png';
+      case ComponentType.transistorBjt:
+        return 'assets/components-low-poly/transistor.png';
+      case ComponentType.breadboard:
+        return 'assets/components-low-poly/protoboard-low-poly.png';
+      case ComponentType.multimeterTool:
+        return 'assets/components-low-poly/multimetro-digital-low-poly.png';
+      case ComponentType.connectingWire:
+        return 'assets/components-low-poly/conector-wago-3-vias-low-poly.png';
+      default:
+        return getAssetPath(isActive);
     }
   }
 
@@ -201,7 +305,7 @@ extension ComponentTypeAssetX on ComponentType {
       case ComponentType.motor:
         return 'assets/images/component_motor.png';
       default:
-        return getAssetPath(isActive);
+        return getLowPolyAssetPath(isActive) ?? getAssetPath(isActive);
     }
   }
 }

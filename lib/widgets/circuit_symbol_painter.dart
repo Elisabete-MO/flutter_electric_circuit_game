@@ -115,6 +115,9 @@ class CircuitSymbolPainter extends CustomPainter {
       case ComponentType.buzzer:
         _drawBuzzer(canvas, size, cx, cy, paint, fillPaint);
         break;
+      default:
+        _drawResistor(canvas, size, cx, cy, paint, fillPaint);
+        break;
     }
   }
 

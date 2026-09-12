@@ -44,6 +44,7 @@ class FirstStepPhysicalView extends StatelessWidget {
       case ComponentType.potentiometer:
       case ComponentType.buzzer:
       case ComponentType.powerSupply:
+      default:
         return 1.0;
     }
   }
@@ -388,6 +389,8 @@ class FirstStepsComponentDetailCard extends StatelessWidget {
         return 'ARMAZENADOR DE CARGA';
       case ComponentType.fuse:
         return 'PROTEÇÃO';
+      default:
+        return 'COMPONENTE';
     }
   }
 
