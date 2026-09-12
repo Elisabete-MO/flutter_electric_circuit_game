@@ -162,13 +162,17 @@ class SandboxMetricsPanelWidget extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    valueLabel,
-                    style: const TextStyle(
-                      fontSize: UiTypography.hud,
-                      fontWeight: FontWeight.bold,
+                  Expanded(
+                    child: Text(
+                      valueLabel,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: UiTypography.hud,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
+                  const SizedBox(width: 8),
                   Text(
                     '${component.value.toStringAsFixed(1)}$unit',
                     style: TextStyle(
