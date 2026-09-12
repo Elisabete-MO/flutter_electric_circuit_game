@@ -47,56 +47,12 @@ class _StandMarkerState extends State<StandMarker> {
         widget.stand.completedMissions >= widget.stand.totalMissions &&
         widget.stand.totalMissions > 0;
 
-    // Border color logic (thinner green border by default, cyan/amber when active)
-    final Color borderColor = widget.isSelected
+    // Dynamic ground selection aura color
+    final Color? floorGlowColor = widget.isSelected
         ? EletroLabColors.amber
         : (_isHovered
               ? EletroLabColors.neonCyan
-              : (isBancadaLivre
-                    ? const Color(0xFF00E5FF)
-                    : (isTutorial
-                          ? const Color(0xFFF59E0B)
-                          : (isCompleted
-                                ? const Color(0xFF10B981)
-                                : const Color(
-                                    0xFF059669,
-                                  ).withValues(alpha: 0.5)))));
-
-    // Thinner border width specification (1.0 normal, 2.0 selected/hovered)
-    final double borderWidth = widget.isSelected
-        ? 2.0
-        : (_isHovered ? 1.5 : 1.0);
-
-    // Dynamic glow shadow for consistent lighting & 3D floor projection
-    final List<BoxShadow> shadows = [
-      // Floor shadow (consistent soft directional light)
-      BoxShadow(
-        color: Colors.black.withValues(alpha: 0.45),
-        blurRadius: _isHovered ? 12 : 8,
-        spreadRadius: 1,
-        offset: const Offset(3, 6),
-      ),
-      if (widget.isSelected)
-        BoxShadow(
-          color: EletroLabColors.amber.withValues(alpha: 0.7),
-          blurRadius: 16,
-          spreadRadius: 2,
-        )
-      else if (isBancadaLivre)
-        BoxShadow(
-          color: const Color(
-            0xFF00E5FF,
-          ).withValues(alpha: _isHovered ? 0.6 : 0.35),
-          blurRadius: _isHovered ? 16 : 10,
-          spreadRadius: _isHovered ? 2 : 1,
-        )
-      else if (_isHovered)
-        BoxShadow(
-          color: EletroLabColors.neonCyan.withValues(alpha: 0.4),
-          blurRadius: 10,
-          spreadRadius: 1,
-        ),
-    ];
+              : (isBancadaLivre ? const Color(0xFF00E5FF) : null));
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -106,77 +62,116 @@ class _StandMarkerState extends State<StandMarker> {
         onTap: widget.onTap,
         behavior: HitTestBehavior.opaque,
         child: AnimatedScale(
-          scale: widget.isSelected ? 1.12 : (_isHovered ? 1.07 : 1.0),
+          scale: widget.isSelected ? 1.10 : (_isHovered ? 1.05 : 1.0),
           duration: duration,
           curve: Curves.easeOutCubic,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // 1. Table Container (Image + Beveled Border + Shadow)
-              AnimatedContainer(
-                duration: duration,
-                width: widget.width,
-                height: height,
-                decoration: ShapeDecoration(
-                  shape: BeveledRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    side: BorderSide(color: borderColor, width: borderWidth),
-                  ),
-                  shadows: shadows,
-                ),
-                child: ClipPath(
-                  clipper: ShapeBorderClipper(
-                    shape: BeveledRectangleBorder(
-                      borderRadius: BorderRadius.circular(7.5),
-                    ),
-                  ),
-                  child: Stack(
-                    children: [
-                      Positioned.fill(
-                        child: Image.asset(
-                          widget.stand.asset,
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              color: const Color(0xFF0F172A),
-                              alignment: Alignment.center,
-                              child: Text(
-                                '#${widget.stand.number}',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            );
-                          },
+          child: SizedBox(
+            width: widget.width,
+            height: height,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // 1. Sombra Realista de Contato no Piso (Ground Contact Shadow)
+                Positioned(
+                  left: widget.width * 0.08,
+                  right: widget.width * 0.08,
+                  bottom: height * 0.01,
+                  height: height * 0.26,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.all(
+                        Radius.elliptical(
+                          widget.width * 0.42,
+                          height * 0.13,
                         ),
                       ),
-
-                      // Bancada Livre Special Overlay Effect (Bancada Livre 3D Lab)
-                      if (isBancadaLivre)
-                        Positioned.fill(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  const Color(
-                                    0xFF00E5FF,
-                                  ).withValues(alpha: 0.15),
-                                  Colors.transparent,
-                                  const Color(
-                                    0xFF7C4DFF,
-                                  ).withValues(alpha: 0.20),
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                            ),
+                      gradient: RadialGradient(
+                        colors: [
+                          Colors.black.withValues(
+                            alpha: _isHovered ? 0.65 : 0.50,
                           ),
-                        ),
-                    ],
+                          Colors.black.withValues(
+                            alpha: _isHovered ? 0.35 : 0.22,
+                          ),
+                          Colors.transparent,
+                        ],
+                        stops: const [0.0, 0.58, 1.0],
+                      ),
+                    ),
                   ),
                 ),
-              ),
+
+                // 2. Halo Luminoso / Pedestal de Seleção no Piso (quando Selecionado ou Hover)
+                if (floorGlowColor != null)
+                  Positioned(
+                    left: widget.width * 0.03,
+                    right: widget.width * 0.03,
+                    bottom: 0,
+                    height: height * 0.32,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.all(
+                          Radius.elliptical(
+                            widget.width * 0.47,
+                            height * 0.16,
+                          ),
+                        ),
+                        gradient: RadialGradient(
+                          colors: [
+                            floorGlowColor.withValues(
+                              alpha: widget.isSelected ? 0.55 : 0.30,
+                            ),
+                            floorGlowColor.withValues(
+                              alpha: widget.isSelected ? 0.25 : 0.10,
+                            ),
+                            Colors.transparent,
+                          ],
+                          stops: const [0.0, 0.60, 1.0],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                // 3. Imagem 3D da Mesa (Renderizada diretamente sobre o chão)
+                Positioned.fill(
+                  child: Image.asset(
+                    widget.stand.asset,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: const Color(0xFF0F172A),
+                        alignment: Alignment.center,
+                        child: Text(
+                          '#${widget.stand.number}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+
+                // Bancada Livre Special Glow Overlay (3D Lab)
+                if (isBancadaLivre)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              const Color(0xFF00E5FF).withValues(alpha: 0.10),
+                              Colors.transparent,
+                              const Color(0xFF7C4DFF).withValues(alpha: 0.15),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
 
               // 2. Integrated Number Badge (Top-Left corner over table - Chanfrado Low-Poly)
               Positioned(
@@ -298,6 +293,7 @@ class _StandMarkerState extends State<StandMarker> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
