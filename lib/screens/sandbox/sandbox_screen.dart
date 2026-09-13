@@ -10,7 +10,6 @@ import '../../models/sandbox_component.dart';
 import '../../models/sandbox_wire.dart';
 import '../../models/sandbox_state.dart';
 import '../../state/sandbox_controller.dart';
-import '../../widgets/tech_grid_background.dart';
 import '../../widgets/prof_volts_full_body.dart';
 import '../../widgets/component_physical_painter.dart';
 import '../../widgets/circuit_symbol_painter.dart';
@@ -27,6 +26,7 @@ import 'widgets/sandbox_multimeter.dart';
 import 'widgets/sandbox_oscilloscope.dart';
 import 'widgets/sandbox_inspector_dialog.dart';
 import 'widgets/sandbox_export_dialog.dart';
+import 'widgets/sandbox_projects_dialog.dart';
 import '../common_stand/stand_navigator.dart';
 
 class SandboxScreen extends ConsumerStatefulWidget {
@@ -420,6 +420,22 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
         },
         const SingleActivator(LogicalKeyboardKey.keyY, meta: true): () {
           controller.redo();
+        },
+        const SingleActivator(LogicalKeyboardKey.keyD, control: true): () {
+          if (_selectedComponentId != null) {
+            final newId = controller.duplicateComponent(_selectedComponentId!, gridCols: _gridCols, gridRows: _gridRows);
+            if (newId != null) {
+              setState(() => _selectedComponentId = newId);
+            }
+          }
+        },
+        const SingleActivator(LogicalKeyboardKey.keyD, meta: true): () {
+          if (_selectedComponentId != null) {
+            final newId = controller.duplicateComponent(_selectedComponentId!, gridCols: _gridCols, gridRows: _gridRows);
+            if (newId != null) {
+              setState(() => _selectedComponentId = newId);
+            }
+          }
         },
         const SingleActivator(LogicalKeyboardKey.space): () {
           if (_selectedComponentId != null) {
@@ -837,6 +853,7 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                           onToggleOscilloscope: () => setState(() => _showOscilloscope = !_showOscilloscope),
                           onOpenInspector: () => _openInspectorDialog(sandboxState, isEn, isDark),
                           onOpenExportReport: () => _openExportReportDialog(sandboxState, isEn, isDark),
+                          onOpenProjects: () => _openProjectsDialog(sandboxState, isEn, isDark),
                         ),
                       ],
                     ),
@@ -948,9 +965,22 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
                   width: width,
                   isDark: isDark,
                   onRotate: () => ref.read(sandboxControllerProvider.notifier).rotateComponent(selectedComponent.id),
+                  onDuplicate: () {
+                    final newId = ref.read(sandboxControllerProvider.notifier).duplicateComponent(
+                          selectedComponent.id,
+                          gridCols: _gridCols,
+                          gridRows: _gridRows,
+                        );
+                    if (newId != null) {
+                      setState(() => _selectedComponentId = newId);
+                    }
+                  },
                   onToggleActive: selectedComponent.type == ComponentType.switchComponent
                       ? () => ref.read(sandboxControllerProvider.notifier).toggleComponentActive(selectedComponent.id)
                       : null,
+                  onValueChanged: (newVal) {
+                    ref.read(sandboxControllerProvider.notifier).updateComponentValue(selectedComponent.id, newVal);
+                  },
                   onDelete: () {
                     ref.read(sandboxControllerProvider.notifier).removeComponent(selectedComponent.id);
                     setState(() => _selectedComponentIds.clear());
@@ -1362,6 +1392,34 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
     );
   }
 
+  void _openProjectsDialog(SandboxState state, bool isEn, bool isDark) {
+    final controller = ref.read(sandboxControllerProvider.notifier);
+    final projects = controller.listSavedProjects();
+
+    showDialog(
+      context: context,
+      builder: (context) => SandboxProjectsDialog(
+        currentState: state,
+        isEn: isEn,
+        isDark: isDark,
+        projects: projects,
+        onSaveCurrent: (name) async {
+          await controller.saveNamedProject(name);
+        },
+        onLoadProject: (id) {
+          controller.loadNamedProject(id);
+          setState(() {
+            _selectedComponentIds.clear();
+            _selectedWireId = null;
+          });
+        },
+        onDeleteProject: (id) async {
+          await controller.deleteNamedProject(id);
+        },
+      ),
+    );
+  }
+
   Widget _buildPlacedComponent(SandboxComponent component, double cellSize, String? selectedId, bool isDark) {
     final isSelected = _selectedComponentIds.contains(component.id);
     final state = ref.watch(sandboxControllerProvider);
@@ -1723,35 +1781,61 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen> with TickerProvid
 
   double _getComponentScaleMultiplier(ComponentType type) {
     switch (type) {
+      // 1. Equipamentos e Instrumentos de Bancada (Proporção visual equilibrada)
       case ComponentType.powerSupply:
       case ComponentType.breadboard:
       case ComponentType.multimeterTool:
-        return 1.50; // Grandes equipamentos de bancada (50% maiores)
-      case ComponentType.battery:
+        return 0.88;
+
+      // 2. Pilhas e Baterias (Reduzidas para não dominarem a célula)
       case ComponentType.batteryAA:
       case ComponentType.batteryPack4_5V:
-        return 1.45; // Baterias aumentadas com ótima presença visual (45% maiores)
+        return 0.72; // Pilha AA esbelta e proporcional
+      case ComponentType.battery:
+        return 0.78; // Bateria 9V compacta
+
+      // 3. Cargas e Atuadores
       case ComponentType.bulb:
       case ComponentType.lampLed:
-        return 1.40; // Lâmpadas ampliadas para visualização clara de filamento e soquete (40% maiores)
+        return 0.82;
       case ComponentType.motor:
       case ComponentType.relay:
-        return 1.25; // Motores e relés
+        return 0.82;
+      case ComponentType.buzzer:
+        return 0.80;
+
+      // 4. Chaves, Controles e Conectores
       case ComponentType.switchComponent:
       case ComponentType.pushbutton:
       case ComponentType.potentiometer:
-      case ComponentType.buzzer:
-        return 1.15; // Chaves e atuadores
+      case ComponentType.connectingWire:
+        return 0.80;
+
+      // 5. Componentes Passivos Axiais (Aumentados para boa visibilidade das faixas/corpo)
       case ComponentType.resistor:
+        return 1.10; // Resistor com tamanho nítido
       case ComponentType.diode:
-      case ComponentType.led:
-      case ComponentType.ceramicCapacitor:
+        return 1.05; // Diodo 1N4007 com anel catódico visível
       case ComponentType.fuse:
+        return 0.88; // Fusível de vidro proporcional
+
+      // 6. Semicondutores e Sensores Radiais
+      case ComponentType.led:
+        return 0.88; // LED com domo e pernas claras
+      case ComponentType.ceramicCapacitor:
+        return 1.05; // Disco cerâmico ampliado para boa leitura
+      case ComponentType.capacitor:
+        return 0.80; // Capacitor eletrolítico azul cilíndrico
+      case ComponentType.transistorBjt:
+        return 0.80; // Encapsulamento TO-92 proporcional
       case ComponentType.ldrSensor:
       case ComponentType.ntcThermistor:
-        return 0.95; // Passivos e semicondutores proporcionais
+        return 0.88; // Sensor LDR e termistor NTC
+      case ComponentType.soilMoisture:
+        return 0.76; // Sonda de solo vertical
+
       default:
-        return 1.10;
+        return 0.82;
     }
   }
 

@@ -67,55 +67,138 @@ class ComponentLeadExtensionsPainter extends CustomPainter {
       return;
     }
 
-    // Posições de ancoragem específicas nos terminais físicos do componente
+    // Posições anatômicas exatas e estilos de roteamento dos terminais físicos
     Offset pinA;
     Offset pinB;
     bool isMetallicLeads = false;
+    bool isRadialDown = false;
+    bool isBatteryAA = false;
+    bool isBattery9V = false;
+    bool isPowerSupply = false;
 
     switch (type) {
-      case ComponentType.switchComponent:
-      case ComponentType.pushbutton:
-        // Terminais metálicos na base inferior da chave/botão
-        pinA = Offset(size.width * 0.36, size.height * 0.72);
-        pinB = Offset(size.width * 0.64, size.height * 0.72);
-        break;
-      case ComponentType.relay:
-        pinA = Offset(size.width * 0.32, size.height * 0.75);
-        pinB = Offset(size.width * 0.68, size.height * 0.75);
-        break;
+      // 1. Componentes Axiais Retos (Pernas nas extremidades horizontais)
       case ComponentType.resistor:
       case ComponentType.diode:
-      case ComponentType.led:
-      case ComponentType.ceramicCapacitor:
+        pinA = Offset(size.width * 0.30, cy);
+        pinB = Offset(size.width * 0.70, cy);
+        isMetallicLeads = true;
+        break;
+
       case ComponentType.fuse:
-      case ComponentType.ldrSensor:
-      case ComponentType.ntcThermistor:
-        // Pernas metálicas cilíndricas axiais
         pinA = Offset(size.width * 0.28, cy);
         pinB = Offset(size.width * 0.72, cy);
         isMetallicLeads = true;
         break;
-      case ComponentType.battery:
-        // Na bateria 9V vertical, os bornes saem do topo (bornes snap negativo e positivo)
-        pinA = Offset(size.width * 0.40, size.height * 0.20);
-        pinB = Offset(size.width * 0.60, size.height * 0.20);
-        break;
-      case ComponentType.batteryAA:
-      case ComponentType.batteryPack4_5V:
-        pinA = Offset(size.width * 0.16, cy);
-        pinB = Offset(size.width * 0.84, cy);
-        break;
+
       case ComponentType.bulb:
       case ComponentType.lampLed:
         pinA = Offset(size.width * 0.22, cy);
         pinB = Offset(size.width * 0.78, cy);
+        isMetallicLeads = true;
         break;
+
+      // 2. Componentes Verticais com Pernas Radiais para Baixo (Protoboard style 90°)
+      case ComponentType.led:
+        pinA = Offset(size.width * 0.45, size.height * 0.76);
+        pinB = Offset(size.width * 0.55, size.height * 0.76);
+        isMetallicLeads = true;
+        isRadialDown = true;
+        break;
+
+      case ComponentType.transistorBjt:
+        pinA = Offset(size.width * 0.42, size.height * 0.76);
+        pinB = Offset(size.width * 0.58, size.height * 0.76);
+        isMetallicLeads = true;
+        isRadialDown = true;
+        break;
+
+      case ComponentType.capacitor:
+        pinA = Offset(size.width * 0.44, size.height * 0.78);
+        pinB = Offset(size.width * 0.56, size.height * 0.78);
+        isMetallicLeads = true;
+        isRadialDown = true;
+        break;
+
+      case ComponentType.ceramicCapacitor:
+        pinA = Offset(size.width * 0.44, size.height * 0.76);
+        pinB = Offset(size.width * 0.56, size.height * 0.76);
+        isMetallicLeads = true;
+        isRadialDown = true;
+        break;
+
+      case ComponentType.ldrSensor:
+      case ComponentType.ntcThermistor:
+        pinA = Offset(size.width * 0.44, size.height * 0.76);
+        pinB = Offset(size.width * 0.56, size.height * 0.76);
+        isMetallicLeads = true;
+        isRadialDown = true;
+        break;
+
+      case ComponentType.soilMoisture:
+        pinA = Offset(size.width * 0.45, size.height * 0.82);
+        pinB = Offset(size.width * 0.55, size.height * 0.82);
+        isMetallicLeads = true;
+        isRadialDown = true;
+        break;
+
+      case ComponentType.buzzer:
+        pinA = Offset(size.width * 0.43, size.height * 0.76);
+        pinB = Offset(size.width * 0.57, size.height * 0.76);
+        isMetallicLeads = true;
+        isRadialDown = true;
+        break;
+
+      case ComponentType.potentiometer:
+        pinA = Offset(size.width * 0.40, size.height * 0.78);
+        pinB = Offset(size.width * 0.60, size.height * 0.78);
+        isMetallicLeads = true;
+        isRadialDown = true;
+        break;
+
+      // 3. Pilhas e Baterias
+      case ComponentType.batteryAA:
+      case ComponentType.batteryPack4_5V:
+        pinA = Offset(size.width * 0.50, size.height * 0.82); // Pólo Negativo (Base)
+        pinB = Offset(size.width * 0.50, size.height * 0.18); // Pólo Positivo (Topo)
+        isBatteryAA = true;
+        break;
+
+      case ComponentType.battery:
+        pinA = Offset(size.width * 0.42, size.height * 0.22); // Snap Negativo (Topo Esquerdo)
+        pinB = Offset(size.width * 0.58, size.height * 0.22); // Snap Positivo (Topo Direito)
+        isBattery9V = true;
+        break;
+
+      // 4. Fonte de Bancada
       case ComponentType.powerSupply:
-      case ComponentType.breadboard:
-      case ComponentType.multimeterTool:
-        pinA = Offset(size.width * 0.12, cy);
-        pinB = Offset(size.width * 0.88, cy);
+        pinA = Offset(size.width * 0.40, size.height * 0.72); // Borne Preto (-)
+        pinB = Offset(size.width * 0.54, size.height * 0.72); // Borne Vermelho (+)
+        isPowerSupply = true;
         break;
+
+      // 5. Chaves, Atuadores e Conectores
+      case ComponentType.switchComponent:
+      case ComponentType.pushbutton:
+        pinA = Offset(size.width * 0.32, size.height * 0.72);
+        pinB = Offset(size.width * 0.68, size.height * 0.72);
+        break;
+
+      case ComponentType.relay:
+        pinA = Offset(size.width * 0.30, size.height * 0.76);
+        pinB = Offset(size.width * 0.70, size.height * 0.76);
+        break;
+
+      case ComponentType.motor:
+        pinA = Offset(size.width * 0.66, size.height * 0.42);
+        pinB = Offset(size.width * 0.66, size.height * 0.58);
+        break;
+
+      case ComponentType.connectingWire:
+        pinA = Offset(size.width * 0.34, size.height * 0.76);
+        pinB = Offset(size.width * 0.66, size.height * 0.76);
+        break;
+
       default:
         pinA = Offset(size.width * 0.25, cy);
         pinB = Offset(size.width * 0.75, cy);
@@ -127,16 +210,86 @@ class ComponentLeadExtensionsPainter extends CustomPainter {
 
     const double leadStrokeWidth = 3.0;
 
-    // 1. Sombra suave de projeção no tapete de corte
-    final shadowPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.38)
-      ..strokeWidth = leadStrokeWidth + 2.0
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
+    // 1. Construção dos Caminhos Condutores (Paths)
+    final pathA = Path();
+    final pathB = Path();
 
-    final pathA = Path()
-      ..moveTo(startA.dx, startA.dy)
-      ..cubicTo(
+    if (isRadialDown) {
+      // Roteamento em 90° estilo protoboard (horizontal até o pino e desce vertical)
+      pathA.moveTo(startA.dx, startA.dy);
+      pathA.lineTo(pinA.dx, cy);
+      pathA.lineTo(pinA.dx, pinA.dy);
+
+      pathB.moveTo(startB.dx, startB.dy);
+      pathB.lineTo(pinB.dx, cy);
+      pathB.lineTo(pinB.dx, pinB.dy);
+    } else if (isBatteryAA) {
+      // Pilha AA: cabo preto vai suavemente à base (-), cabo vermelho ao topo (+)
+      pathA.moveTo(startA.dx, startA.dy);
+      pathA.cubicTo(
+        size.width * 0.25,
+        cy,
+        size.width * 0.30,
+        pinA.dy,
+        pinA.dx,
+        pinA.dy,
+      );
+
+      pathB.moveTo(startB.dx, startB.dy);
+      pathB.cubicTo(
+        size.width * 0.75,
+        cy,
+        size.width * 0.70,
+        pinB.dy,
+        pinB.dx,
+        pinB.dy,
+      );
+    } else if (isBattery9V) {
+      // Bateria 9V: cabos curvam suavemente para o topo nos bornes snap
+      pathA.moveTo(startA.dx, startA.dy);
+      pathA.cubicTo(
+        size.width * 0.20,
+        cy,
+        size.width * 0.25,
+        pinA.dy,
+        pinA.dx,
+        pinA.dy,
+      );
+
+      pathB.moveTo(startB.dx, startB.dy);
+      pathB.cubicTo(
+        size.width * 0.80,
+        cy,
+        size.width * 0.75,
+        pinB.dy,
+        pinB.dx,
+        pinB.dy,
+      );
+    } else if (isPowerSupply) {
+      // Fonte de Bancada: cabos de ponta de prova para os bornes do painel frontal
+      pathA.moveTo(startA.dx, startA.dy);
+      pathA.cubicTo(
+        size.width * 0.18,
+        cy,
+        size.width * 0.24,
+        pinA.dy,
+        pinA.dx,
+        pinA.dy,
+      );
+
+      pathB.moveTo(startB.dx, startB.dy);
+      pathB.cubicTo(
+        size.width * 0.82,
+        cy,
+        size.width * 0.68,
+        pinB.dy,
+        pinB.dx,
+        pinB.dy,
+      );
+    } else {
+      // Curva padrão suave para chaves, atuadores e axiais
+      pathA.moveTo(startA.dx, startA.dy);
+      pathA.cubicTo(
         startA.dx + (pinA.dx - startA.dx) * 0.5,
         startA.dy,
         startA.dx + (pinA.dx - startA.dx) * 0.5,
@@ -145,9 +298,8 @@ class ComponentLeadExtensionsPainter extends CustomPainter {
         pinA.dy,
       );
 
-    final pathB = Path()
-      ..moveTo(startB.dx, startB.dy)
-      ..cubicTo(
+      pathB.moveTo(startB.dx, startB.dy);
+      pathB.cubicTo(
         startB.dx - (startB.dx - pinB.dx) * 0.5,
         startB.dy,
         startB.dx - (startB.dx - pinB.dx) * 0.5,
@@ -155,12 +307,21 @@ class ComponentLeadExtensionsPainter extends CustomPainter {
         pinB.dx,
         pinB.dy,
       );
+    }
+
+    // 2. Sombra suave de projeção
+    final shadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.38)
+      ..strokeWidth = leadStrokeWidth + 2.0
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..style = PaintingStyle.stroke;
 
     canvas.drawPath(pathA.shift(const Offset(0, 2.0)), shadowPaint);
     canvas.drawPath(pathB.shift(const Offset(0, 2.0)), shadowPaint);
 
     if (isMetallicLeads) {
-      // Pernas Metálicas de Estanho/Prata Polida (para resistores, diodos, leds)
+      // Pernas Metálicas de Estanho/Prata Polida (para resistores, diodos, leds, transistores)
       final silverPaint = Paint()
         ..shader = const LinearGradient(
           colors: [
@@ -171,6 +332,7 @@ class ComponentLeadExtensionsPainter extends CustomPainter {
         ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
         ..strokeWidth = leadStrokeWidth
         ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
         ..style = PaintingStyle.stroke;
 
       canvas.drawPath(pathA, silverPaint);
@@ -187,6 +349,7 @@ class ComponentLeadExtensionsPainter extends CustomPainter {
         ).createShader(Rect.fromPoints(startA, pinA))
         ..strokeWidth = leadStrokeWidth
         ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
         ..style = PaintingStyle.stroke;
 
       final leadPaintB = Paint()
@@ -199,6 +362,7 @@ class ComponentLeadExtensionsPainter extends CustomPainter {
         ).createShader(Rect.fromPoints(startB, pinB))
         ..strokeWidth = leadStrokeWidth
         ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
         ..style = PaintingStyle.stroke;
 
       canvas.drawPath(pathA, leadPaintA);
@@ -225,6 +389,7 @@ class ComponentLeadExtensionsPainter extends CustomPainter {
         ..color = const Color(0xFF00FF9D).withValues(alpha: 0.8)
         ..strokeWidth = 2.2
         ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
         ..style = PaintingStyle.stroke;
 
       canvas.drawPath(pathA, glowPaint);
@@ -270,8 +435,6 @@ class GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     if (size.width <= 0 || size.height <= 0) return;
-
-    final rect = Offset.zero & size;
 
     final cellWidth = cellSize ?? (size.width / columns);
     final cellHeight = cellSize ?? (size.height / rows);
@@ -501,25 +664,42 @@ class WiresPainter extends CustomPainter {
         canvas.drawPath(path, _selectPaint);
       }
 
-      // Cor Didática do Fio por Polaridade de Origem (Vermelho +, Azul -, Amarelo Sinal)
+      // Cor Didática do Fio por Polaridade / Mapa de Calor de Potencial Elétrico
       final isFromPosPower = (fromComp.type == ComponentType.battery || fromComp.type == ComponentType.powerSupply) && wire.fromTerminal == 'B';
       final isToPosPower = (toComp.type == ComponentType.battery || toComp.type == ComponentType.powerSupply) && wire.toTerminal == 'B';
 
       final isFromNegPower = (fromComp.type == ComponentType.battery || fromComp.type == ComponentType.powerSupply) && wire.fromTerminal == 'A';
       final isToNegPower = (toComp.type == ComponentType.battery || toComp.type == ComponentType.powerSupply) && wire.toTerminal == 'A';
 
+      // Potencial elétrico no nó do fio
+      final fromV = simulationValues['node_voltage_${fromComp.id}_${wire.fromTerminal}'];
+      final toV = simulationValues['node_voltage_${toComp.id}_${wire.toTerminal}'];
+      final nodeVoltage = (fromV != null && toV != null) ? ((fromV + toV) / 2.0) : (fromV ?? toV ?? 0.0);
+
       final Color wireBaseColor;
       final Color wireGlowColor;
 
       if (isFromPosPower || isToPosPower) {
         wireBaseColor = const Color(0xFFE53935);
-        wireGlowColor = const Color(0xFFFF3B7F);
       } else if (isFromNegPower || isToNegPower) {
         wireBaseColor = isDark ? const Color(0xFF1E88E5) : const Color(0xFF1565C0);
-        wireGlowColor = const Color(0xFF00E5FF);
       } else {
         wireBaseColor = isDark ? const Color(0xFFFFB300) : const Color(0xFFFB8C00);
+      }
+
+      // Mapa de calor dinâmico do potencial (Volts):
+      // > 8V: Magenta elétrico / Coral
+      // 4V - 8V: Âmbar dourado / Neon Lime
+      // 1V - 4V: Verde esmeralda
+      // ~0V: Ciano / Azul elétrico
+      if (nodeVoltage >= 8.0) {
+        wireGlowColor = const Color(0xFFFF3B7F);
+      } else if (nodeVoltage >= 4.0) {
+        wireGlowColor = const Color(0xFFFFB300);
+      } else if (nodeVoltage > 0.2) {
         wireGlowColor = const Color(0xFF00FF9D);
+      } else {
+        wireGlowColor = const Color(0xFF00E5FF);
       }
 
       final wireColor = isWireActive ? wireGlowColor : wireBaseColor;

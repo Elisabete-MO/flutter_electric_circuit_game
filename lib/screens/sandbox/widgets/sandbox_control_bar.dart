@@ -25,6 +25,7 @@ class SandboxControlBarWidget extends StatelessWidget {
   final VoidCallback onToggleOscilloscope;
   final VoidCallback onOpenInspector;
   final VoidCallback onOpenExportReport;
+  final VoidCallback onOpenProjects;
 
   const SandboxControlBarWidget({
     super.key,
@@ -45,6 +46,7 @@ class SandboxControlBarWidget extends StatelessWidget {
     required this.onToggleOscilloscope,
     required this.onOpenInspector,
     required this.onOpenExportReport,
+    required this.onOpenProjects,
   });
 
   @override
@@ -127,6 +129,15 @@ class SandboxControlBarWidget extends StatelessWidget {
           ),
           tooltip: isEn ? "Circuit Report & BOM" : "Relatório Técnico & BOM",
           onPressed: onOpenExportReport,
+        ),
+        IconButton(
+          icon: Icon(
+            Icons.folder_special_rounded,
+            size: scale.icon(20, min: 16, max: 28),
+            color: const Color(0xFF38BDF8),
+          ),
+          tooltip: isEn ? "Saved Projects" : "Projetos Salvos",
+          onPressed: onOpenProjects,
         ),
 
         FilledButton(

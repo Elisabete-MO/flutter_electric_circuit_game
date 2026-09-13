@@ -291,6 +291,93 @@ class SandboxController extends Notifier<SandboxState> {
     await _persistence.save(state);
   }
 
+  String? duplicateComponent(String componentId, {int gridCols = 8, int gridRows = 5}) {
+    final comp = state.components.where((c) => c.id == componentId).firstOrNull;
+    if (comp == null) return null;
+
+    // Procura uma célula livre próxima
+    final occupied = state.components.map((c) => '${c.gridX},${c.gridY}').toSet();
+    
+    // Candidatos preferenciais: direita, baixo, esquerda, cima
+    final candidates = [
+      [comp.gridX + 1, comp.gridY],
+      [comp.gridX, comp.gridY + 1],
+      [comp.gridX - 1, comp.gridY],
+      [comp.gridX, comp.gridY - 1],
+      [comp.gridX + 1, comp.gridY + 1],
+    ];
+
+    int targetX = comp.gridX;
+    int targetY = comp.gridY;
+    bool found = false;
+
+    for (final cand in candidates) {
+      final x = cand[0];
+      final y = cand[1];
+      if (x >= 0 && x < gridCols && y >= 0 && y < gridRows && !occupied.contains('$x,$y')) {
+        targetX = x;
+        targetY = y;
+        found = true;
+        break;
+      }
+    }
+
+    // Se nenhuma adjacente estiver livre, busca a primeira célula vazia do grid
+    if (!found) {
+      for (int y = 0; y < gridRows && !found; y++) {
+        for (int x = 0; x < gridCols; x++) {
+          if (!occupied.contains('$x,$y')) {
+            targetX = x;
+            targetY = y;
+            found = true;
+            break;
+          }
+        }
+      }
+    }
+
+    final newId = '${comp.type.name}_${DateTime.now().millisecondsSinceEpoch}_${state.components.length}';
+    final cloned = SandboxComponent(
+      id: newId,
+      type: comp.type,
+      gridX: targetX,
+      gridY: targetY,
+      rotation: comp.rotation,
+      isActive: comp.isActive,
+      value: comp.value,
+    );
+
+    addComponent(cloned);
+    return newId;
+  }
+
+  List<SavedProjectSummary> listSavedProjects() {
+    return _persistence.listSavedProjects();
+  }
+
+  Future<void> saveNamedProject(String name, {String? existingId}) async {
+    await _persistence.saveProjectSlot(
+      name: name,
+      state: state,
+      existingId: existingId,
+    );
+  }
+
+  bool loadNamedProject(String id) {
+    final loaded = _persistence.loadProjectSlot(id);
+    if (loaded != null) {
+      _history.pushSnapshot(state);
+      state = loaded;
+      _recalculateCircuit();
+      return true;
+    }
+    return false;
+  }
+
+  Future<void> deleteNamedProject(String id) async {
+    await _persistence.deleteProjectSlot(id);
+  }
+
   void replaceBurnedComponent(String id) {
     _history.pushSnapshot(state);
     final updatedBurned = Set<String>.from(state.burnedComponentIds)..remove(id);

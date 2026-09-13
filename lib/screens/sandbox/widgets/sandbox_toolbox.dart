@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -29,12 +30,29 @@ class SandboxToolboxWidget extends StatefulWidget {
 
 class _SandboxToolboxWidgetState extends State<SandboxToolboxWidget> {
   SandboxCategory? _selectedCategory; // null = Todas as categorias
+  final TextEditingController _searchController = TextEditingController();
+  final ScrollController _categoryScrollController = ScrollController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _categoryScrollController.dispose();
+    super.dispose();
+  }
 
   List<SandboxPaletteItem> get _filteredItems {
-    if (_selectedCategory == null) return allSandboxPaletteItems;
-    return allSandboxPaletteItems
-        .where((item) => item.category == _selectedCategory)
-        .toList();
+    return allSandboxPaletteItems.where((item) {
+      final matchesCategory = _selectedCategory == null || item.category == _selectedCategory;
+      if (!matchesCategory) return false;
+
+      if (_searchQuery.trim().isEmpty) return true;
+
+      final query = _searchQuery.trim().toLowerCase();
+      final nameMatches = item.name.toLowerCase().contains(query);
+      final descMatches = item.description.toLowerCase().contains(query);
+      return nameMatches || descMatches;
+    }).toList();
   }
 
   @override
@@ -64,7 +82,7 @@ class _SandboxToolboxWidgetState extends State<SandboxToolboxWidget> {
         children: [
           // 1. Cabeçalho do Card Lateral
           Container(
-            padding: scale.insetsSymmetric(horizontal: 14, vertical: 10),
+            padding: scale.insetsSymmetric(horizontal: 12, vertical: 8),
             decoration: const BoxDecoration(
               color: Color(0xFFF8FAFC),
               borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
@@ -91,7 +109,7 @@ class _SandboxToolboxWidgetState extends State<SandboxToolboxWidget> {
                     'PALETA DE COMPONENTES',
                     style: GoogleFonts.rajdhani(
                       fontWeight: FontWeight.w800,
-                      fontSize: scale.font(14, min: 12, max: 18),
+                      fontSize: scale.font(13.5, min: 11.5, max: 17),
                       letterSpacing: 0.8,
                       color: const Color(0xFF0F172A),
                     ),
@@ -116,46 +134,163 @@ class _SandboxToolboxWidgetState extends State<SandboxToolboxWidget> {
             ),
           ),
 
-          // 2. Barra de Categorias (Filtros com ícones)
+          // 1.5. Campo de Busca Rápida
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 6, 8, 4),
+            child: SizedBox(
+              height: scale.size(34, min: 28, max: 38),
+              child: TextField(
+                controller: _searchController,
+                style: const TextStyle(fontSize: 12, color: Color(0xFF0F172A)),
+                decoration: InputDecoration(
+                  hintText: 'Buscar componente...',
+                  hintStyle: const TextStyle(fontSize: 11.5, color: Color(0xFF94A3B8)),
+                  prefixIcon: const Icon(Icons.search_rounded, size: 16, color: Color(0xFF64748B)),
+                  prefixIconConstraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+                          icon: const Icon(Icons.clear_rounded, size: 14, color: Color(0xFF94A3B8)),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _searchQuery = '');
+                          },
+                        )
+                      : null,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 8),
+                  filled: true,
+                  fillColor: const Color(0xFFF1F5F9),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.2),
+                  ),
+                ),
+                onChanged: (val) => setState(() => _searchQuery = val),
+              ),
+            ),
+          ),
+
+          // 2. Barra de Categorias (Filtros com ícones, arraste por mouse e botões laterais)
           Container(
-            height: scale.size(38, min: 32, max: 44),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            height: scale.size(36, min: 30, max: 42),
+            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 3),
             decoration: const BoxDecoration(
               color: Color(0xFFFFFFFF),
               border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
             ),
-            child: ListView(
-              scrollDirection: Axis.horizontal,
+            child: Row(
               children: [
-                _buildCategoryChip('Todos', null, Icons.apps_rounded, scale),
-                _buildCategoryChip('Fontes', SandboxCategory.sources, Icons.bolt_rounded, scale),
-                _buildCategoryChip('Cargas', SandboxCategory.loads, Icons.lightbulb_rounded, scale),
-                _buildCategoryChip('Chaves', SandboxCategory.switches, Icons.toggle_on_rounded, scale),
-                _buildCategoryChip('Passivos', SandboxCategory.passives, Icons.shield_rounded, scale),
-                _buildCategoryChip('Sensores', SandboxCategory.sensors, Icons.sensors_rounded, scale),
-                _buildCategoryChip('Ferramentas', SandboxCategory.tools, Icons.build_rounded, scale),
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 18, minHeight: 26),
+                  icon: const Icon(Icons.chevron_left_rounded, size: 16, color: Color(0xFF64748B)),
+                  tooltip: 'Rolar para a esquerda',
+                  onPressed: () {
+                    if (_categoryScrollController.hasClients) {
+                      _categoryScrollController.animateTo(
+                        (_categoryScrollController.offset - 100).clamp(0.0, _categoryScrollController.position.maxScrollExtent),
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeOut,
+                      );
+                    }
+                  },
+                ),
+                Expanded(
+                  child: ScrollConfiguration(
+                    behavior: ScrollConfiguration.of(context).copyWith(
+                      dragDevices: {
+                        PointerDeviceKind.touch,
+                        PointerDeviceKind.mouse,
+                        PointerDeviceKind.trackpad,
+                        PointerDeviceKind.stylus,
+                      },
+                    ),
+                    child: ListView(
+                      controller: _categoryScrollController,
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      children: [
+                        _buildCategoryChip('Todos', null, Icons.apps_rounded, scale),
+                        _buildCategoryChip('Fontes', SandboxCategory.sources, Icons.bolt_rounded, scale),
+                        _buildCategoryChip('Cargas', SandboxCategory.loads, Icons.lightbulb_rounded, scale),
+                        _buildCategoryChip('Chaves', SandboxCategory.switches, Icons.toggle_on_rounded, scale),
+                        _buildCategoryChip('Passivos', SandboxCategory.passives, Icons.shield_rounded, scale),
+                        _buildCategoryChip('Sensores', SandboxCategory.sensors, Icons.sensors_rounded, scale),
+                        _buildCategoryChip('Ferramentas', SandboxCategory.tools, Icons.build_rounded, scale),
+                      ],
+                    ),
+                  ),
+                ),
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 18, minHeight: 26),
+                  icon: const Icon(Icons.chevron_right_rounded, size: 16, color: Color(0xFF64748B)),
+                  tooltip: 'Rolar para a direita',
+                  onPressed: () {
+                    if (_categoryScrollController.hasClients) {
+                      _categoryScrollController.animateTo(
+                        (_categoryScrollController.offset + 100).clamp(0.0, _categoryScrollController.position.maxScrollExtent),
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeOut,
+                      );
+                    }
+                  },
+                ),
               ],
             ),
           ),
 
           // 3. Grid de Componentes Arrastáveis
           Expanded(
-            child: Padding(
-              padding: scale.insetsAll(8),
-              child: GridView.builder(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: widget.isHorizontal ? 4 : 2,
-                  crossAxisSpacing: scale.spacing(6, min: 4, max: 10),
-                  mainAxisSpacing: scale.spacing(6, min: 4, max: 10),
-                  childAspectRatio: 0.95,
-                ),
-                itemCount: _filteredItems.length,
-                itemBuilder: (context, index) {
-                  final item = _filteredItems[index];
-                  return _buildToolboxItem(context, item, l10n);
-                },
-              ),
-            ),
+            child: _filteredItems.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.search_off_rounded, size: 28, color: Color(0xFF94A3B8)),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Nenhum componente encontrado',
+                            style: GoogleFonts.outfit(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF64748B),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : Padding(
+                    padding: scale.insetsAll(8),
+                    child: GridView.builder(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: widget.isHorizontal ? 4 : 2,
+                        crossAxisSpacing: scale.spacing(6, min: 4, max: 10),
+                        mainAxisSpacing: scale.spacing(6, min: 4, max: 10),
+                        childAspectRatio: 0.95,
+                      ),
+                      itemCount: _filteredItems.length,
+                      itemBuilder: (context, index) {
+                        final item = _filteredItems[index];
+                        return _buildToolboxItem(context, item, l10n);
+                      },
+                    ),
+                  ),
           ),
         ],
       ),
