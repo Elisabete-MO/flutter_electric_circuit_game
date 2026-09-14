@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -27,11 +28,7 @@ enum Phase4LibraryItem {
 }
 
 /// Modos de ferramenta ativos.
-enum ActiveToolMode {
-  none,
-  wire,
-  removeWire,
-}
+enum ActiveToolMode { none, wire, removeWire }
 
 /// Previsão do estudante sobre o circuito.
 enum StudentPrediction {
@@ -48,6 +45,7 @@ class PlacedComponent {
   Offset relativePos;
   bool isSwitchClosed;
   bool isLedReversed;
+  int rotationSteps;
 
   PlacedComponent({
     required this.id,
@@ -55,6 +53,7 @@ class PlacedComponent {
     required this.relativePos,
     this.isSwitchClosed = false,
     this.isLedReversed = false,
+    this.rotationSteps = 0,
   });
 
   PlacedComponent copyWith({
@@ -63,6 +62,7 @@ class PlacedComponent {
     Offset? relativePos,
     bool? isSwitchClosed,
     bool? isLedReversed,
+    int? rotationSteps,
   }) {
     return PlacedComponent(
       id: id ?? this.id,
@@ -70,6 +70,7 @@ class PlacedComponent {
       relativePos: relativePos ?? this.relativePos,
       isSwitchClosed: isSwitchClosed ?? this.isSwitchClosed,
       isLedReversed: isLedReversed ?? this.isLedReversed,
+      rotationSteps: rotationSteps ?? this.rotationSteps,
     );
   }
 
@@ -80,8 +81,7 @@ class PlacedComponent {
       Phase4LibraryItem.ledRed => CircuitComponentKind.led,
       Phase4LibraryItem.resistor68 ||
       Phase4LibraryItem.resistor680 ||
-      Phase4LibraryItem.resistor6800 =>
-        CircuitComponentKind.resistor,
+      Phase4LibraryItem.resistor6800 => CircuitComponentKind.resistor,
       _ => CircuitComponentKind.resistor,
     };
   }
@@ -93,8 +93,7 @@ class PlacedComponent {
       Phase4LibraryItem.ledRed => ComponentType.led,
       Phase4LibraryItem.resistor68 ||
       Phase4LibraryItem.resistor680 ||
-      Phase4LibraryItem.resistor6800 =>
-        ComponentType.resistor,
+      Phase4LibraryItem.resistor6800 => ComponentType.resistor,
       _ => ComponentType.resistor,
     };
   }
@@ -112,7 +111,8 @@ class PlacedComponent {
     return switch (item) {
       Phase4LibraryItem.battery9V => 'Bateria 9 V',
       Phase4LibraryItem.switchSPST => 'Interruptor',
-      Phase4LibraryItem.ledRed => isLedReversed ? 'LED (Invertido)' : 'LED vermelho',
+      Phase4LibraryItem.ledRed =>
+        isLedReversed ? 'LED (Invertido)' : 'LED vermelho',
       Phase4LibraryItem.resistor68 => '68 Ω',
       Phase4LibraryItem.resistor680 => '680 Ω',
       Phase4LibraryItem.resistor6800 => '6,8 kΩ',
@@ -125,12 +125,13 @@ class PlacedComponent {
     return switch (item) {
       Phase4LibraryItem.battery9V => 'assets/components/battery.png',
       Phase4LibraryItem.switchSPST =>
-        isSwitchClosed ? 'assets/components/switch_closed.png' : 'assets/components/switch_open.png',
+        isSwitchClosed
+            ? 'assets/components/switch_closed.png'
+            : 'assets/components/switch_open.png',
       Phase4LibraryItem.ledRed => 'assets/components/led_off.png',
       Phase4LibraryItem.resistor68 ||
       Phase4LibraryItem.resistor680 ||
-      Phase4LibraryItem.resistor6800 =>
-        'assets/components/resistor.png',
+      Phase4LibraryItem.resistor6800 => 'assets/components/resistor.png',
       _ => 'assets/components/wires.png',
     };
   }
@@ -143,18 +144,15 @@ class _Phase4Snapshot {
   _Phase4Snapshot({
     required List<PlacedComponent> placed,
     required List<CircuitConnection> connections,
-  })  : placed = placed.map((c) => c.copyWith()).toList(),
-        connections = List.from(connections);
+  }) : placed = placed.map((c) => c.copyWith()).toList(),
+       connections = List.from(connections);
 }
 
 /// Tela da Fase 4 do Segundo Estande (Acende Aí): Bancada livre.
 class SecondBenchPhase4 extends StatefulWidget {
   final VoidCallback onPhaseComplete;
 
-  const SecondBenchPhase4({
-    super.key,
-    required this.onPhaseComplete,
-  });
+  const SecondBenchPhase4({super.key, required this.onPhaseComplete});
 
   @override
   State<SecondBenchPhase4> createState() => _SecondBenchPhase4State();
@@ -174,6 +172,33 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
   int _hintLevel = 0;
   bool _isCircuitLit = false;
 
+  String? _selectedComponentId;
+  Offset? _dragStartPos;
+  Offset? _compStartRelativePos;
+  bool _isDraggingComp = false;
+
+  bool _hasShortCircuitOrInvalidWiring() {
+    final graph = _buildGraph();
+    const validator = CircuitValidator();
+    final result = validator.validate(graph);
+    return result.status == CircuitStatus.shortCircuit;
+  }
+
+  void _rotateBattery(PlacedComponent comp, Size benchSize) {
+    _saveSnapshot();
+    setState(() {
+      final prevRotation = comp.rotationSteps;
+      comp.rotationSteps = (comp.rotationSteps + 1) % 4;
+
+      if (_hasShortCircuitOrInvalidWiring()) {
+        comp.rotationSteps = prevRotation;
+        _showMessage(
+          'Os polos positivo e negativo não podem ser ligados diretamente. Isso provocaria um curto-circuito.',
+        );
+      }
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -190,10 +215,7 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
   }
 
   void _saveSnapshot() {
-    _undoStack.add(_Phase4Snapshot(
-      placed: _placed,
-      connections: _connections,
-    ));
+    _undoStack.add(_Phase4Snapshot(placed: _placed, connections: _connections));
     if (_undoStack.length > 20) {
       _undoStack.removeAt(0);
     }
@@ -225,7 +247,10 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
     });
   }
 
-  void _addComponentAtRelativePosition(Phase4LibraryItem item, Offset relativePos) {
+  void _addComponentAtRelativePosition(
+    Phase4LibraryItem item,
+    Offset relativePos,
+  ) {
     if (item == Phase4LibraryItem.wireTool) {
       setState(() {
         _activeToolMode = _activeToolMode == ActiveToolMode.wire
@@ -264,7 +289,9 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
     } else if (item == Phase4LibraryItem.resistor68 ||
         item == Phase4LibraryItem.resistor680 ||
         item == Phase4LibraryItem.resistor6800) {
-      final existingIndex = _placed.indexWhere((c) => c.kind == CircuitComponentKind.resistor);
+      final existingIndex = _placed.indexWhere(
+        (c) => c.kind == CircuitComponentKind.resistor,
+      );
 
       if (existingIndex != -1) {
         _saveSnapshot();
@@ -287,14 +314,19 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
     final id = '${item.name}_${DateTime.now().millisecondsSinceEpoch}';
 
     setState(() {
-      _placed.add(PlacedComponent(
-        id: id,
-        item: item,
-        relativePos: Offset(
-          relativePos.dx.clamp(0.12, 0.85),
-          relativePos.dy.clamp(0.15, 0.85),
+      _placed.add(
+        PlacedComponent(
+          id: id,
+          item: item,
+          relativePos: Offset(
+            relativePos.dx.clamp(0.12, 0.85),
+            relativePos.dy.clamp(0.15, 0.85),
+          ),
         ),
-      ));
+      );
+      if (item == Phase4LibraryItem.battery9V) {
+        _selectedComponentId = id;
+      }
     });
   }
 
@@ -315,7 +347,9 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
     setState(() {
       _placed.removeWhere((c) => c.id == comp.id);
       _connections.removeWhere(
-          (conn) => conn.from.componentId == comp.id || conn.to.componentId == comp.id);
+        (conn) =>
+            conn.from.componentId == comp.id || conn.to.componentId == comp.id,
+      );
       if (_wireStartTerminal?.componentId == comp.id) {
         _wireStartTerminal = null;
       }
@@ -328,6 +362,10 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
       _saveSnapshot();
       setState(() {
         comp.isSwitchClosed = !comp.isSwitchClosed;
+        if (!comp.isSwitchClosed && _isCircuitLit) {
+          _isCircuitLit = false;
+          _flowController.stop();
+        }
       });
     }
   }
@@ -343,13 +381,15 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
 
   void _onTerminalTap(CircuitTerminal terminal) {
     if (_activeToolMode == ActiveToolMode.removeWire) {
-      final connsToRemove = _connections.where(
-        (c) => c.from == terminal || c.to == terminal,
-      ).toList();
+      final connsToRemove = _connections
+          .where((c) => c.from == terminal || c.to == terminal)
+          .toList();
       if (connsToRemove.isNotEmpty) {
         _saveSnapshot();
         setState(() {
-          _connections.removeWhere((c) => c.from == terminal || c.to == terminal);
+          _connections.removeWhere(
+            (c) => c.from == terminal || c.to == terminal,
+          );
         });
         _showMessage('Fio(s) do terminal removido(s).');
       } else {
@@ -359,18 +399,46 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
     }
 
     if (_activeToolMode != ActiveToolMode.wire) {
-      _showMessage('Ative a Ferramenta Fio na biblioteca para conectar os terminais.');
+      _showMessage(
+        'Ative a Ferramenta Fio na biblioteca para conectar os terminais.',
+      );
       return;
     }
 
     setState(() {
       if (_wireStartTerminal == null) {
         _wireStartTerminal = terminal;
-        _showMessage('Terminal de origem selecionado. Toque no terminal de destino.');
+        _showMessage(
+          'Terminal de origem selecionado. Toque no terminal de destino.',
+        );
       } else {
         if (_wireStartTerminal == terminal) {
           _wireStartTerminal = null;
           _showMessage('Seleção cancelada.');
+          return;
+        }
+
+        // Validação 1: Ligação direta entre os polos da bateria
+        final isStartBattery = _placed.any(
+          (c) =>
+              c.id == _wireStartTerminal!.componentId &&
+              c.kind == CircuitComponentKind.battery,
+        );
+        final isTargetBattery = _placed.any(
+          (c) =>
+              c.id == terminal.componentId &&
+              c.kind == CircuitComponentKind.battery,
+        );
+        final isPolarityShort =
+            (_wireStartTerminal!.name == 'pos' && terminal.name == 'neg') ||
+            (_wireStartTerminal!.name == 'neg' && terminal.name == 'pos');
+        if ((isStartBattery && isTargetBattery) ||
+            (isPolarityShort &&
+                _wireStartTerminal!.componentId == terminal.componentId)) {
+          _showMessage(
+            'Os polos positivo e negativo não podem ser ligados diretamente. Isso provocaria um curto-circuito.',
+          );
+          _wireStartTerminal = null;
           return;
         }
 
@@ -380,10 +448,42 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
           return;
         }
 
-        final exists = _connections.any((c) => c.connects(_wireStartTerminal!, terminal));
+        // Validação 2: Impedir dois fios conectados ao mesmo terminal
+        final startOccupied = _connections.any(
+          (c) => c.from == _wireStartTerminal! || c.to == _wireStartTerminal!,
+        );
+        final targetOccupied = _connections.any(
+          (c) => c.from == terminal || c.to == terminal,
+        );
+        if (startOccupied || targetOccupied) {
+          _showMessage(
+            'Os fios não podem ocupar o mesmo terminal. Remova a conexão existente antes.',
+          );
+          _wireStartTerminal = null;
+          return;
+        }
+
+        // Validação 3: Curto-circuito geral via CircuitValidator
+        final testConn = CircuitConnection(_wireStartTerminal!, terminal);
+        final testGraph = CircuitGraph(
+          components: _buildGraph().components,
+          connections: [..._connections, testConn],
+        );
+        final testResult = const CircuitValidator().validate(testGraph);
+        if (testResult.status == CircuitStatus.shortCircuit) {
+          _showMessage(
+            'Os polos positivo e negativo não podem ser ligados diretamente. Isso provocaria um curto-circuito.',
+          );
+          _wireStartTerminal = null;
+          return;
+        }
+
+        final exists = _connections.any(
+          (c) => c.connects(_wireStartTerminal!, terminal),
+        );
         if (!exists) {
           _saveSnapshot();
-          _connections.add(CircuitConnection(_wireStartTerminal!, terminal));
+          _connections.add(testConn);
           _showMessage('Fio conectado com sucesso!');
         } else {
           _showMessage('Esta conexão já existe.');
@@ -408,11 +508,17 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
 
     switch (comp.kind) {
       case CircuitComponentKind.battery:
-        if (terminal.name == 'pos') {
-          return Offset(absX - 16, absY - 26);
-        } else {
-          return Offset(absX + 16, absY - 26);
-        }
+        final rawOffset = (terminal.name == 'pos')
+            ? const Offset(-16, -26)
+            : const Offset(16, -26);
+        final rot = comp.rotationSteps % 4;
+        final rotatedOffset = switch (rot) {
+          1 => Offset(-rawOffset.dy, rawOffset.dx),
+          2 => Offset(-rawOffset.dx, -rawOffset.dy),
+          3 => Offset(rawOffset.dy, -rawOffset.dx),
+          _ => rawOffset,
+        };
+        return Offset(absX + rotatedOffset.dx, absY + rotatedOffset.dy);
 
       case CircuitComponentKind.switchComponent:
         if (terminal.name == 't1') {
@@ -469,103 +575,152 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
   Widget _buildPredictionDialog() {
     return StatefulBuilder(
       builder: (context, setModalState) {
+        final screenHeight = MediaQuery.sizeOf(context).height;
+        final viewInsetsBottom = MediaQuery.viewInsetsOf(context).bottom;
+        final isCompactHeight = screenHeight < 520;
+
         return Dialog(
           backgroundColor: Colors.transparent,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
-            child: GlassContainer(
-              borderRadius: 24,
-              accentColor: const Color(0xFF00FF9D),
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.psychology_rounded, color: Color(0xFF00FF9D), size: 30),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'Previsão de Comportamento',
-                          style: TextStyle(
-                            fontFamily: GoogleFonts.rajdhani().fontFamily,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+          insetPadding: EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: isCompactHeight ? 8 : 16,
+          ),
+          child: SafeArea(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: 520,
+                maxHeight:
+                    screenHeight -
+                    viewInsetsBottom -
+                    (isCompactHeight ? 16 : 32),
+              ),
+              child: GlassContainer(
+                borderRadius: 24,
+                accentColor: const Color(0xFF00FF9D),
+                padding: EdgeInsets.all(isCompactHeight ? 16 : 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.psychology_rounded,
+                          color: const Color(0xFF00FF9D),
+                          size: isCompactHeight ? 24 : 30,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Previsão de Comportamento',
+                            style: TextStyle(
+                              fontFamily: GoogleFonts.rajdhani().fontFamily,
+                              fontSize: isCompactHeight ? 18 : 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'O que você acha que acontecerá quando o circuito for energizado?',
-                    style: TextStyle(
-                      fontFamily: GoogleFonts.outfit().fontFamily,
-                      fontSize: 14,
-                      color: Colors.white70,
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildPredictionOption(
-                    setModalState,
-                    StudentPrediction.safeAndLit,
-                    'O LED acenderá normalmente e com segurança.',
-                    Icons.lightbulb_rounded,
-                  ),
-                  _buildPredictionOption(
-                    setModalState,
-                    StudentPrediction.openCircuit,
-                    'O LED permanecerá apagado (circuito aberto/incompleto).',
-                    Icons.power_off_rounded,
-                  ),
-                  _buildPredictionOption(
-                    setModalState,
-                    StudentPrediction.excessiveCurrent,
-                    'Haverá corrente excessiva (risco de queimar o LED).',
-                    Icons.warning_amber_rounded,
-                  ),
-                  _buildPredictionOption(
-                    setModalState,
-                    StudentPrediction.shortCircuit,
-                    'Existe risco de curto-circuito direto na bateria.',
-                    Icons.flash_on_rounded,
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: Text('CANCELAR', style: TextStyle(color: Colors.white54, fontFamily: GoogleFonts.rajdhani().fontFamily, fontWeight: FontWeight.bold)),
+                    SizedBox(height: isCompactHeight ? 8 : 12),
+                    Flexible(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'O que você acha que acontecerá quando o circuito for energizado?',
+                              style: TextStyle(
+                                fontFamily: GoogleFonts.outfit().fontFamily,
+                                fontSize: 14,
+                                color: Colors.white70,
+                              ),
+                            ),
+                            SizedBox(height: isCompactHeight ? 10 : 16),
+                            _buildPredictionOption(
+                              setModalState,
+                              StudentPrediction.safeAndLit,
+                              'O LED acenderá normalmente e com segurança.',
+                              Icons.lightbulb_rounded,
+                            ),
+                            _buildPredictionOption(
+                              setModalState,
+                              StudentPrediction.openCircuit,
+                              'O LED permanecerá apagado (circuito aberto/incompleto).',
+                              Icons.power_off_rounded,
+                            ),
+                            _buildPredictionOption(
+                              setModalState,
+                              StudentPrediction.excessiveCurrent,
+                              'Haverá corrente excessiva (risco de queimar o LED).',
+                              Icons.warning_amber_rounded,
+                            ),
+                            _buildPredictionOption(
+                              setModalState,
+                              StudentPrediction.shortCircuit,
+                              'Existe risco de curto-circuito direto na bateria.',
+                              Icons.flash_on_rounded,
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(width: 12),
-                      FilledButton.icon(
-                        onPressed: _studentPrediction != null
-                            ? () {
-                                Navigator.of(context).pop();
-                                _energizeAndEvaluate();
-                              }
-                            : null,
-                        icon: const Icon(Icons.bolt_rounded),
-                        label: Text(
-                          'ENERGIZAR CIRCUITO',
-                          style: TextStyle(
-                            fontFamily: GoogleFonts.rajdhani().fontFamily,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.1,
+                    ),
+                    SizedBox(height: isCompactHeight ? 12 : 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          style: TextButton.styleFrom(
+                            minimumSize: const Size(44, 44),
+                          ),
+                          child: Text(
+                            'CANCELAR',
+                            style: TextStyle(
+                              color: Colors.white54,
+                              fontFamily: GoogleFonts.rajdhani().fontFamily,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF00FF9D),
-                          foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        const SizedBox(width: 10),
+                        Flexible(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerRight,
+                            child: FilledButton.icon(
+                              onPressed: _studentPrediction != null
+                                  ? () {
+                                      Navigator.of(context).pop();
+                                      _energizeAndEvaluate();
+                                    }
+                                  : null,
+                              icon: const Icon(Icons.bolt_rounded),
+                              label: Text(
+                                'ENERGIZAR CIRCUITO',
+                                style: TextStyle(
+                                  fontFamily: GoogleFonts.rajdhani().fontFamily,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.1,
+                                ),
+                              ),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFF00FF9D),
+                                foregroundColor: Colors.black,
+                                minimumSize: const Size(44, 44),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isCompactHeight ? 14 : 18,
+                                  vertical: isCompactHeight ? 10 : 12,
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -593,6 +748,7 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
         },
         borderRadius: BorderRadius.circular(12),
         child: Container(
+          constraints: const BoxConstraints(minHeight: 44),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             color: isSelected
@@ -600,13 +756,19 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
                 : const Color(0xFF081C15),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isSelected ? const Color(0xFF00FF9D) : const Color(0xFF1E3A2F),
+              color: isSelected
+                  ? const Color(0xFF00FF9D)
+                  : const Color(0xFF1E3A2F),
               width: isSelected ? 1.5 : 1.0,
             ),
           ),
           child: Row(
             children: [
-              Icon(icon, color: isSelected ? const Color(0xFF00FF9D) : Colors.white54, size: 20),
+              Icon(
+                icon,
+                color: isSelected ? const Color(0xFF00FF9D) : Colors.white54,
+                size: 20,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -615,12 +777,16 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
                     fontFamily: GoogleFonts.outfit().fontFamily,
                     fontSize: 13,
                     color: isSelected ? Colors.white : Colors.white70,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                   ),
                 ),
               ),
               Icon(
-                isSelected ? Icons.radio_button_checked_rounded : Icons.radio_button_unchecked_rounded,
+                isSelected
+                    ? Icons.radio_button_checked_rounded
+                    : Icons.radio_button_unchecked_rounded,
                 color: isSelected ? const Color(0xFF00FF9D) : Colors.white38,
                 size: 22,
               ),
@@ -673,57 +839,84 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
       context: context,
       barrierDismissible: false,
       builder: (context) {
+        final screenHeight = MediaQuery.sizeOf(context).height;
+        final isCompactHeight = screenHeight < 520;
+
         return Dialog(
           backgroundColor: Colors.transparent,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
-            child: GlassContainer(
-              borderRadius: 24,
-              accentColor: const Color(0xFF00FF9D),
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.help_outline_rounded, color: Color(0xFF00FF9D), size: 28),
-                      const SizedBox(width: 10),
-                      Text(
-                        'Avaliação Final do Estande',
-                        style: TextStyle(
-                          fontFamily: GoogleFonts.rajdhani().fontFamily,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+          insetPadding: EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: isCompactHeight ? 8 : 16,
+          ),
+          child: SafeArea(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: 520,
+                maxHeight: screenHeight - (isCompactHeight ? 16 : 32),
+              ),
+              child: GlassContainer(
+                borderRadius: 24,
+                accentColor: const Color(0xFF00FF9D),
+                padding: EdgeInsets.all(isCompactHeight ? 16 : 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.help_outline_rounded,
+                          color: const Color(0xFF00FF9D),
+                          size: isCompactHeight ? 24 : 28,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Avaliação Final do Estande',
+                            style: TextStyle(
+                              fontFamily: GoogleFonts.rajdhani().fontFamily,
+                              fontSize: isCompactHeight ? 18 : 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: isCompactHeight ? 10 : 14),
+                    Flexible(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Por que o LED apagará quando o interruptor for aberto?',
+                              style: TextStyle(
+                                fontFamily: GoogleFonts.outfit().fontFamily,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(height: isCompactHeight ? 12 : 16),
+                            _buildFinalQuestionOption(
+                              'Porque o caminho da corrente elétrica será interrompido.',
+                              true,
+                            ),
+                            _buildFinalQuestionOption(
+                              'Porque a bateria descarregará instantaneamente.',
+                              false,
+                            ),
+                            _buildFinalQuestionOption(
+                              'Porque o resistor consumirá toda a energia disponível.',
+                              false,
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    'Por que o LED apagará quando o interruptor for aberto?',
-                    style: TextStyle(
-                      fontFamily: GoogleFonts.outfit().fontFamily,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildFinalQuestionOption(
-                    'Porque o caminho da corrente elétrica será interrompido.',
-                    true,
-                  ),
-                  _buildFinalQuestionOption(
-                    'Porque a bateria descarregará instantaneamente.',
-                    false,
-                  ),
-                  _buildFinalQuestionOption(
-                    'Porque o resistor consumirá toda a energia disponível.',
-                    false,
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -741,14 +934,19 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
           if (isCorrect) {
             widget.onPhaseComplete();
           } else {
-            _showMessage('Resposta incorreta. Tente analisar o caminho da corrente.');
+            _showMessage(
+              'Resposta incorreta. Tente analisar o caminho da corrente.',
+            );
             _showFinalQuestionDialog();
           }
         },
         style: OutlinedButton.styleFrom(
           side: const BorderSide(color: Color(0xFF1E3A2F)),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          minimumSize: const Size(44, 44),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           backgroundColor: const Color(0xFF081C15),
         ),
         child: Align(
@@ -772,9 +970,12 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
     });
 
     final hintText = switch (_hintLevel) {
-      1 => 'Nível 1 — Conceitual:\nA corrente elétrica precisa percorrer um caminho fechado e contínuo saindo do polo (+) até retornar ao polo (-) da bateria.',
-      2 => 'Nível 2 — Direcionada:\nConfira se o LED está com o ânodo no sentido da bateria (+), se o resistor selecionado é o de 680 Ω e se o interruptor está fechado.',
-      _ => 'Nível 3 — Visual:\nObserve os terminais destacados na bancada e os fios conectando Bateria 9V → Interruptor → Resistor (680 Ω) → LED vermelho → Bateria (-).',
+      1 =>
+        'Nível 1 — Conceitual:\nA corrente elétrica precisa percorrer um caminho fechado e contínuo saindo do polo (+) até retornar ao polo (-) da bateria.',
+      2 =>
+        'Nível 2 — Direcionada:\nConfira se o LED está com o ânodo no sentido da bateria (+), se o resistor selecionado é o de 680 Ω e se o interruptor está fechado.',
+      _ =>
+        'Nível 3 — Visual:\nObserve os terminais destacados na bancada e os fios conectando Bateria 9V → Interruptor → Resistor (680 Ω) → LED vermelho → Bateria (-).',
     };
 
     showDialog(
@@ -794,7 +995,10 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
           ),
           title: Row(
             children: [
-              const Icon(Icons.lightbulb_outline_rounded, color: Color(0xFF00FF9D)),
+              const Icon(
+                Icons.lightbulb_outline_rounded,
+                color: Color(0xFF00FF9D),
+              ),
               const SizedBox(width: 8),
               Text(
                 'Dica Pedagógica ($_hintLevel/3)',
@@ -817,7 +1021,14 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('ENTENDI', style: TextStyle(color: const Color(0xFF00FF9D), fontFamily: GoogleFonts.rajdhani().fontFamily, fontWeight: FontWeight.bold)),
+              child: Text(
+                'ENTENDI',
+                style: TextStyle(
+                  color: const Color(0xFF00FF9D),
+                  fontFamily: GoogleFonts.rajdhani().fontFamily,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         ),
@@ -855,14 +1066,22 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
               const WorkbenchMissionObjectiveCard(
                 missionNumber: 4,
                 title: 'Bancada livre',
-                description: 'Monte o circuito livremente, conecte os fios e teste seu funcionamento.',
-                voltsTip: 'Conecte Bateria 9V, Interruptor, Resistor (680 Ω) e LED em série. Preveja o resultado antes de energizar!',
+                description:
+                    'Monte o circuito livremente, conecte os fios e teste seu funcionamento.',
+                voltsTip:
+                    'Conecte Bateria 9V, Interruptor, Resistor (680 Ω) e LED em série. Preveja o resultado antes de energizar!',
                 accentColor: Color(0xFF0284C7),
               ),
               const SizedBox(height: 12),
               _buildSidePanelContent(),
             ],
             onEnergizePressed: () {
+              if (_hasShortCircuitOrInvalidWiring()) {
+                _showMessage(
+                  'Os polos positivo e negativo não podem ser ligados diretamente. Isso provocaria um curto-circuito.',
+                );
+                return;
+              }
               if (_placed.length >= 3) {
                 _startTestAndPrediction();
               } else {
@@ -881,7 +1100,9 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
       decoration: BoxDecoration(
         color: const Color(0xFF0F172A).withValues(alpha: 0.90),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4)),
+        border: Border.all(
+          color: const Color(0xFF10B981).withValues(alpha: 0.4),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -916,10 +1137,10 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
     final statusText = _placed.isEmpty
         ? 'ARRASTE PEÇAS PARA A BANCADA'
         : (_activeToolMode == ActiveToolMode.wire
-            ? 'FERRAMENTA FIO ATIVA'
-            : (_activeToolMode == ActiveToolMode.removeWire
-                ? 'REMOVER CONEXÕES'
-                : 'POSICIONAMENTO DE PEÇAS'));
+              ? 'FERRAMENTA FIO ATIVA'
+              : (_activeToolMode == ActiveToolMode.removeWire
+                    ? 'REMOVER CONEXÕES'
+                    : 'POSICIONAMENTO DE PEÇAS'));
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -942,8 +1163,8 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
             _activeToolMode == ActiveToolMode.wire
                 ? Icons.cable_rounded
                 : (_activeToolMode == ActiveToolMode.removeWire
-                    ? Icons.content_cut_rounded
-                    : Icons.handyman_rounded),
+                      ? Icons.content_cut_rounded
+                      : Icons.handyman_rounded),
             color: const Color(0xFF0284C7),
             size: 16,
           ),
@@ -971,7 +1192,9 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
       decoration: BoxDecoration(
         color: const Color(0xFF0F172A).withValues(alpha: 0.90),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4)),
+        border: Border.all(
+          color: const Color(0xFF10B981).withValues(alpha: 0.4),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.15),
@@ -1010,10 +1233,10 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
           onAcceptWithDetails: (details) {
             final box = context.findRenderObject() as RenderBox?;
             if (box != null) {
-              final localPos = box.globalToLocal(details.offset + const Offset(32, 32));
+              final localPos = box.globalToLocal(details.offset);
               final relPos = Offset(
-                localPos.dx / benchSize.width,
-                localPos.dy / benchSize.height,
+                (localPos.dx / benchSize.width).clamp(0.12, 0.85),
+                (localPos.dy / benchSize.height).clamp(0.15, 0.85),
               );
               _addComponentAtRelativePosition(details.data, relPos);
             }
@@ -1039,77 +1262,182 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
                 ..._placed.map((comp) {
                   final absX = comp.relativePos.dx * benchSize.width;
                   final absY = comp.relativePos.dy * benchSize.height;
+                  final isSelected = _selectedComponentId == comp.id;
 
                   return Positioned(
                     left: absX - 40,
                     top: absY - 32,
-                    child: GestureDetector(
-                      onLongPress: () => _removeComponent(comp),
-                      onTap: () {
-                        if (_activeToolMode == ActiveToolMode.wire ||
-                            _activeToolMode == ActiveToolMode.removeWire) {
-                          return;
-                        }
-                        if (comp.kind == CircuitComponentKind.switchComponent) {
-                          _toggleSwitch(comp);
-                        } else if (comp.kind == CircuitComponentKind.led) {
-                          _toggleLedPolarity(comp);
-                        }
-                      },
-                      child: SizedBox(
-                        width: 80,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 64,
-                              height: 64,
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.4),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: StandFlowTokens.primaryGreen.withValues(alpha: 0.6),
-                                ),
-                              ),
-                              child: Transform.scale(
-                                scaleX: comp.isLedReversed ? -1.0 : 1.0,
-                                child: CustomPaint(
-                                  painter: ComponentPhysicalPainter(
-                                    type: comp.componentType,
-                                    isActive: comp.kind == CircuitComponentKind.switchComponent
-                                        ? comp.isSwitchClosed
-                                        : (comp.kind == CircuitComponentKind.led ? (_isCircuitLit && !comp.isLedReversed) : true),
-                                    isDarkMode: false,
-                                    value: comp.kind == CircuitComponentKind.resistor
-                                        ? comp.resistanceOhms
-                                        : 9.0,
-                                    brightnessRatio: (_isCircuitLit && !comp.isLedReversed) ? 1.0 : 0.0,
+                    child: SizedBox(
+                      width: 80,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onLongPress: () => _removeComponent(comp),
+                            onPanStart: (details) {
+                              _dragStartPos = details.globalPosition;
+                              _compStartRelativePos = comp.relativePos;
+                              _isDraggingComp = false;
+                            },
+                            onPanUpdate: (details) {
+                              final start = _dragStartPos;
+                              final startRel = _compStartRelativePos;
+                              if (start != null && startRel != null) {
+                                final delta = details.globalPosition - start;
+                                if (delta.distance > 6.0) {
+                                  _isDraggingComp = true;
+                                  final newX =
+                                      ((startRel.dx * benchSize.width +
+                                                  delta.dx) /
+                                              benchSize.width)
+                                          .clamp(0.12, 0.85);
+                                  final newY =
+                                      ((startRel.dy * benchSize.height +
+                                                  delta.dy) /
+                                              benchSize.height)
+                                          .clamp(0.15, 0.85);
+                                  setState(() {
+                                    comp.relativePos = Offset(newX, newY);
+                                  });
+                                }
+                              }
+                            },
+                            onPanEnd: (_) {
+                              if (_isDraggingComp) {
+                                _saveSnapshot();
+                              }
+                              _isDraggingComp = false;
+                              _dragStartPos = null;
+                              _compStartRelativePos = null;
+                            },
+                            onDoubleTap: () {
+                              setState(() {
+                                _selectedComponentId = comp.id;
+                              });
+                              if (comp.kind ==
+                                  CircuitComponentKind.switchComponent) {
+                                _toggleSwitch(comp);
+                              } else if (comp.kind ==
+                                  CircuitComponentKind.led) {
+                                _toggleLedPolarity(comp);
+                              }
+                            },
+                            onTap: () {
+                              if (_isDraggingComp) return;
+                              setState(() {
+                                _selectedComponentId = comp.id;
+                              });
+                              if (comp.kind ==
+                                  CircuitComponentKind.switchComponent) {
+                                _toggleSwitch(comp);
+                              } else if (comp.kind ==
+                                  CircuitComponentKind.led) {
+                                _toggleLedPolarity(comp);
+                              }
+                            },
+                            child: Semantics(
+                              container: true,
+                              excludeSemantics: true,
+                              label:
+                                  comp.kind ==
+                                      CircuitComponentKind.switchComponent
+                                  ? (comp.isSwitchClosed
+                                        ? 'Interruptor fechado'
+                                        : 'Interruptor aberto')
+                                  : comp.label,
+                              button:
+                                  comp.kind ==
+                                  CircuitComponentKind.switchComponent,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    width: 64,
+                                    height: 64,
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.4,
+                                      ),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? const Color(0xFF00FF9D)
+                                            : StandFlowTokens.primaryGreen
+                                                  .withValues(alpha: 0.6),
+                                        width: isSelected ? 2.0 : 1.0,
+                                      ),
+                                    ),
+                                    child: Transform.rotate(
+                                      angle: comp.rotationSteps * (math.pi / 2),
+                                      child: Transform.scale(
+                                        scaleX: comp.isLedReversed ? -1.0 : 1.0,
+                                        child: CustomPaint(
+                                          painter: ComponentPhysicalPainter(
+                                            type: comp.componentType,
+                                            isActive:
+                                                comp.kind ==
+                                                    CircuitComponentKind
+                                                        .switchComponent
+                                                ? comp.isSwitchClosed
+                                                : (comp.kind ==
+                                                          CircuitComponentKind
+                                                              .led
+                                                      ? (_isCircuitLit &&
+                                                            !comp.isLedReversed)
+                                                      : true),
+                                            isDarkMode: false,
+                                            value:
+                                                comp.kind ==
+                                                    CircuitComponentKind
+                                                        .resistor
+                                                ? comp.resistanceOhms
+                                                : 9.0,
+                                            brightnessRatio:
+                                                (_isCircuitLit &&
+                                                    !comp.isLedReversed)
+                                                ? 1.0
+                                                : 0.0,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                  const SizedBox(height: 4),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF0F3D30),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      comp.kind ==
+                                              CircuitComponentKind
+                                                  .switchComponent
+                                          ? (comp.isSwitchClosed
+                                                ? 'Chave (Fechada)'
+                                                : 'Chave (Aberta)')
+                                          : comp.label,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontFamily:
+                                            GoogleFonts.rajdhani().fontFamily,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF0F3D30),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                comp.label,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontFamily: GoogleFonts.rajdhani().fontFamily,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                   );
@@ -1117,8 +1445,22 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
 
                 // Terminais Clicáveis dos Componentes para Fiação
                 ..._placed.expand((comp) {
-                  final term1 = CircuitTerminal(comp.id, comp.kind == CircuitComponentKind.battery ? 'pos' : (comp.kind == CircuitComponentKind.led ? 'anode' : 't1'));
-                  final term2 = CircuitTerminal(comp.id, comp.kind == CircuitComponentKind.battery ? 'neg' : (comp.kind == CircuitComponentKind.led ? 'cathode' : 't2'));
+                  final term1 = CircuitTerminal(
+                    comp.id,
+                    comp.kind == CircuitComponentKind.battery
+                        ? 'pos'
+                        : (comp.kind == CircuitComponentKind.led
+                              ? 'anode'
+                              : 't1'),
+                  );
+                  final term2 = CircuitTerminal(
+                    comp.id,
+                    comp.kind == CircuitComponentKind.battery
+                        ? 'neg'
+                        : (comp.kind == CircuitComponentKind.led
+                              ? 'cathode'
+                              : 't2'),
+                  );
 
                   final pos1 = _calculateTerminalPos(term1, benchSize);
                   final pos2 = _calculateTerminalPos(term2, benchSize);
@@ -1128,6 +1470,41 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
                     _buildTerminalWidget(term2, pos2),
                   ];
                 }),
+
+                // Botão de Rotação da Bateria Selecionada (renderizado sobreposto no topo da pilha)
+                ..._placed
+                    .where(
+                      (c) =>
+                          c.kind == CircuitComponentKind.battery &&
+                          c.id == _selectedComponentId,
+                    )
+                    .map((comp) {
+                      final absX = comp.relativePos.dx * benchSize.width;
+                      final absY = comp.relativePos.dy * benchSize.height;
+                      return Positioned(
+                        left: absX + 14,
+                        top: absY + 4,
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () => _rotateBattery(comp, benchSize),
+                          child: Container(
+                            padding: const EdgeInsets.all(5),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF10B981),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(color: Colors.black45, blurRadius: 4),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.rotate_right_rounded,
+                              size: 18,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
               ],
             );
           },
@@ -1175,7 +1552,9 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
           decoration: BoxDecoration(
             color: isSelected
                 ? StandFlowTokens.accentGreen
-                : (isWireActive || isRemoveActive ? baseColor : baseColor.withValues(alpha: 0.85)),
+                : (isWireActive || isRemoveActive
+                      ? baseColor
+                      : baseColor.withValues(alpha: 0.85)),
             shape: BoxShape.circle,
             border: Border.all(
               color: isSelected ? Colors.white : Colors.white70,
@@ -1272,7 +1651,11 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
         id: 'lib_remove_wire',
         value: Phase4LibraryItem.removeWireTool,
         label: 'Remover Conexão',
-        customPainterWidget: const Icon(Icons.content_cut_rounded, size: 36, color: Color(0xFFEF4444)),
+        customPainterWidget: const Icon(
+          Icons.content_cut_rounded,
+          size: 36,
+          color: Color(0xFFEF4444),
+        ),
         isSelected: _activeToolMode == ActiveToolMode.removeWire,
       ),
     ];
@@ -1302,7 +1685,11 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
                   color: Color(0xFFF0FDF4),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.inventory_2_rounded, color: Color(0xFF10B981), size: 20),
+                child: const Icon(
+                  Icons.inventory_2_rounded,
+                  color: Color(0xFF10B981),
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -1366,12 +1753,14 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
         wireColor = const Color(0xFFF59E0B);
       }
 
-      wirePaths.add(WirePath(
-        points: [p1, p2],
-        color: wireColor,
-        isActive: _isCircuitLit,
-        thickness: 5.0,
-      ));
+      wirePaths.add(
+        WirePath(
+          points: [p1, p2],
+          color: wireColor,
+          isActive: _isCircuitLit,
+          thickness: 5.0,
+        ),
+      );
     }
     return wirePaths;
   }

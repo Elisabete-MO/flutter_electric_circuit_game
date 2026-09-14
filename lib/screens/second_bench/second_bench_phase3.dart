@@ -13,19 +13,19 @@ import 'widgets/second_bench_item_grid.dart';
 
 /// Tipos de símbolos elétricos esquemáticos da Fase 3 (4 corretos + 2 distratores reais)
 enum Phase3SymbolType {
-  battery,         // Bateria (Pólos + e -)
-  resistor,        // Resistor (Zigue-zague)
-  led,             // LED (Diodo com setas de emissão)
+  battery, // Bateria (Pólos + e -)
+  resistor, // Resistor (Zigue-zague)
+  led, // LED (Diodo com setas de emissão)
   switchComponent, // Interruptor SPST aberto
-  lamp,            // Lâmpada Incandescente (Círculo com X) - Distrator 1
-  diode,           // Diodo Retificador (Diodo sem setas) - Distrator 2
+  lamp, // Lâmpada Incandescente (Círculo com X) - Distrator 1
+  diode, // Diodo Retificador (Diodo sem setas) - Distrator 2
 }
 
 /// Identificadores dos 4 encaixes do circuito em série na Fase 3
 enum Phase3SlotId {
-  battery,    // Lado Esquerdo (Vertical)
-  resistor,   // Topo (Horizontal)
-  led,        // Lado Direito (Vertical)
+  battery, // Lado Esquerdo (Vertical)
+  resistor, // Topo (Horizontal)
+  led, // Lado Direito (Vertical)
   switchComp, // Base (Horizontal)
 }
 
@@ -33,10 +33,7 @@ enum Phase3SlotId {
 class SecondBenchPhase3 extends StatefulWidget {
   final VoidCallback? onPhaseComplete;
 
-  const SecondBenchPhase3({
-    super.key,
-    this.onPhaseComplete,
-  });
+  const SecondBenchPhase3({super.key, this.onPhaseComplete});
 
   @override
   State<SecondBenchPhase3> createState() => _SecondBenchPhase3State();
@@ -149,7 +146,8 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
         barrierDismissible: false,
         builder: (context) => ProfVoltsFeedbackDialog(
           isCorrect: true,
-          message: 'Parabéns! Você associou corretamente todos os componentes físicos aos seus símbolos esquemáticos técnicos.',
+          message:
+              'Parabéns! Você associou corretamente todos os componentes físicos aos seus símbolos esquemáticos técnicos.',
           onAction: () {
             Navigator.of(context).pop();
             widget.onPhaseComplete?.call();
@@ -157,17 +155,22 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
         ),
       );
     } else {
-      String hint = 'Verifique a posição dos símbolos esquemáticos no circuito.';
+      String hint =
+          'Verifique a posição dos símbolos esquemáticos no circuito.';
       if (ledSym == Phase3SymbolType.lamp) {
-        hint = 'Observe: a lâmpada incandescente (círculo com X) não é equivalente ao LED esquemático.';
+        hint =
+            'Observe: a lâmpada incandescente (círculo com X) não é equivalente ao LED esquemático.';
       } else if (ledSym == Phase3SymbolType.diode) {
-        hint = 'O LED é um diodo emissor de luz. Seu símbolo esquemático precisa ter as duas setas apontando para fora.';
+        hint =
+            'O LED é um diodo emissor de luz. Seu símbolo esquemático precisa ter as duas setas apontando para fora.';
       } else if (!isBatOk) {
-        hint = 'Confira o símbolo da Bateria (duas linhas paralelas de comprimentos diferentes).';
+        hint =
+            'Confira o símbolo da Bateria (duas linhas paralelas de comprimentos diferentes).';
       } else if (!isResOk) {
         hint = 'Confira o símbolo do Resistor (zigue-zague ou retângulo IEC).';
       } else if (!isSwOk) {
-        hint = 'Confira o símbolo do Interruptor SPST (dois contatos e chave aberta).';
+        hint =
+            'Confira o símbolo do Interruptor SPST (dois contatos e chave aberta).';
       }
 
       showDialog(
@@ -204,7 +207,11 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.schema_rounded, color: StandFlowTokens.primaryGreen, size: 26),
+                  const Icon(
+                    Icons.schema_rounded,
+                    color: StandFlowTokens.primaryGreen,
+                    size: 26,
+                  ),
                   const SizedBox(width: 10),
                   Text(
                     'Ajuda — Fase 3',
@@ -218,9 +225,15 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
                 ],
               ),
               const SizedBox(height: 14),
-              _buildHelpBullet('Alternador de Modo: Alterne entre "Físico" para consultar a bancada real e "Diagrama" para preencher.'),
-              _buildHelpBullet('Arrastre ou Toque: Arraste os símbolos esquemáticos da biblioteca para os 4 encaixes do circuito.'),
-              _buildHelpBullet('Atenção aos Distratores: A lâmpada incandescente e o diodo simples possuem símbolos diferentes do LED.'),
+              _buildHelpBullet(
+                'Alternador de Modo: Alterne entre "Físico" para consultar a bancada real e "Diagrama" para preencher.',
+              ),
+              _buildHelpBullet(
+                'Arrastre ou Toque: Arraste os símbolos esquemáticos da biblioteca para os 4 encaixes do circuito.',
+              ),
+              _buildHelpBullet(
+                'Atenção aos Distratores: A lâmpada incandescente e o diodo simples possuem símbolos diferentes do LED.',
+              ),
               const SizedBox(height: 18),
               Center(
                 child: OutlinedButton(
@@ -245,11 +258,20 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('• ', style: TextStyle(color: StandFlowTokens.primaryGreen, fontWeight: FontWeight.bold)),
+          const Text(
+            '• ',
+            style: TextStyle(
+              color: StandFlowTokens.primaryGreen,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           Expanded(
             child: Text(
               text,
-              style: TextStyle(fontSize: 13.5, color: Colors.white.withValues(alpha: 0.9)),
+              style: TextStyle(
+                fontSize: 13.5,
+                color: Colors.white.withValues(alpha: 0.9),
+              ),
             ),
           ),
         ],
@@ -288,8 +310,10 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
               const WorkbenchMissionObjectiveCard(
                 missionNumber: 3,
                 title: 'Do componente ao símbolo',
-                description: 'Associe cada componente físico da bancada ao seu símbolo esquemático no diagrama elétrico.',
-                voltsTip: 'Alterne entre o modo Físico e Esquemático. Arraste ou toque nos símbolos esquemáticos para completar o diagrama.',
+                description:
+                    'Associe cada componente físico da bancada ao seu símbolo esquemático no diagrama elétrico.',
+                voltsTip:
+                    'Alterne entre o modo Físico e Esquemático. Arraste ou toque nos símbolos esquemáticos para completar o diagrama.',
                 accentColor: Color(0xFF0284C7),
               ),
               const SizedBox(height: 12),
@@ -317,7 +341,11 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
       ),
       child: OutlinedButton.icon(
         onPressed: _resetDiagram,
-        icon: const Icon(Icons.refresh_rounded, size: 18, color: Color(0xFF0F172A)),
+        icon: const Icon(
+          Icons.refresh_rounded,
+          size: 18,
+          color: Color(0xFF0F172A),
+        ),
         label: Text(
           'REINICIAR DIAGRAMA',
           style: GoogleFonts.rajdhani(
@@ -354,14 +382,18 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
         children: [
           Icon(
             _isDiagramMode ? Icons.schema_rounded : Icons.visibility_rounded,
-            color: _isDiagramMode ? const Color(0xFF0284C7) : const Color(0xFF10B981),
+            color: _isDiagramMode
+                ? const Color(0xFF0284C7)
+                : const Color(0xFF10B981),
             size: 16,
           ),
           const SizedBox(width: 6),
           Text(
             _isDiagramMode ? 'MODO DIAGRAMA' : 'CONSULTA FÍSICA',
             style: GoogleFonts.rajdhani(
-              color: _isDiagramMode ? const Color(0xFF0284C7) : const Color(0xFF10B981),
+              color: _isDiagramMode
+                  ? const Color(0xFF0284C7)
+                  : const Color(0xFF10B981),
               fontWeight: FontWeight.bold,
               fontSize: 12,
             ),
@@ -377,7 +409,9 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
       decoration: BoxDecoration(
         color: const Color(0xFF0F172A).withValues(alpha: 0.90),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4)),
+        border: Border.all(
+          color: const Color(0xFF10B981).withValues(alpha: 0.4),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.15),
@@ -389,7 +423,11 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.check_circle_rounded, color: Color(0xFF00FF9D), size: 16),
+          const Icon(
+            Icons.check_circle_rounded,
+            color: Color(0xFF00FF9D),
+            size: 16,
+          ),
           const SizedBox(width: 6),
           Text(
             '$_filledSlotsCount de 4 símbolos',
@@ -414,10 +452,26 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
         final h = constraints.maxHeight;
 
         // Posições dos 4 Encaixes no Circuito Fechado
-        final batRect = Rect.fromCenter(center: Offset(w * 0.22, h * 0.50), width: w * 0.12, height: h * 0.28);
-        final resRect = Rect.fromCenter(center: Offset(w * 0.50, h * 0.25), width: w * 0.24, height: h * 0.16);
-        final ledRect = Rect.fromCenter(center: Offset(w * 0.78, h * 0.50), width: w * 0.12, height: h * 0.28);
-        final swRect = Rect.fromCenter(center: Offset(w * 0.50, h * 0.75), width: w * 0.24, height: h * 0.16);
+        final batRect = Rect.fromCenter(
+          center: Offset(w * 0.22, h * 0.50),
+          width: w * 0.12,
+          height: h * 0.28,
+        );
+        final resRect = Rect.fromCenter(
+          center: Offset(w * 0.50, h * 0.25),
+          width: w * 0.24,
+          height: h * 0.16,
+        );
+        final ledRect = Rect.fromCenter(
+          center: Offset(w * 0.78, h * 0.50),
+          width: w * 0.12,
+          height: h * 0.28,
+        );
+        final swRect = Rect.fromCenter(
+          center: Offset(w * 0.50, h * 0.75),
+          width: w * 0.24,
+          height: h * 0.16,
+        );
 
         return Stack(
           clipBehavior: Clip.none,
@@ -441,29 +495,65 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
               Positioned(
                 left: batRect.right + 6,
                 top: batRect.top + 6,
-                child: const Text('+', style: TextStyle(color: Color(0xFFEDE7D7), fontSize: 18, fontWeight: FontWeight.bold)),
+                child: const Text(
+                  '+',
+                  style: TextStyle(
+                    color: Color(0xFFEDE7D7),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
               Positioned(
                 left: batRect.right + 6,
                 bottom: (h - batRect.bottom) + 6,
-                child: const Text('−', style: TextStyle(color: Color(0xFFEDE7D7), fontSize: 20, fontWeight: FontWeight.bold)),
+                child: const Text(
+                  '−',
+                  style: TextStyle(
+                    color: Color(0xFFEDE7D7),
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
               Positioned(
                 right: (w - ledRect.left) + 6,
                 top: ledRect.top + 6,
-                child: const Text('+', style: TextStyle(color: Color(0xFFEDE7D7), fontSize: 18, fontWeight: FontWeight.bold)),
+                child: const Text(
+                  '+',
+                  style: TextStyle(
+                    color: Color(0xFFEDE7D7),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
               Positioned(
                 right: (w - ledRect.left) + 6,
                 bottom: (h - ledRect.bottom) + 6,
-                child: const Text('−', style: TextStyle(color: Color(0xFFEDE7D7), fontSize: 20, fontWeight: FontWeight.bold)),
+                child: const Text(
+                  '−',
+                  style: TextStyle(
+                    color: Color(0xFFEDE7D7),
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
 
               // 2. Os 4 Encaixes Interativos (Slots)
               _buildSlotWidget(Phase3SlotId.battery, batRect, isVertical: true),
-              _buildSlotWidget(Phase3SlotId.resistor, resRect, isVertical: false),
+              _buildSlotWidget(
+                Phase3SlotId.resistor,
+                resRect,
+                isVertical: false,
+              ),
               _buildSlotWidget(Phase3SlotId.led, ledRect, isVertical: true),
-              _buildSlotWidget(Phase3SlotId.switchComp, swRect, isVertical: false),
+              _buildSlotWidget(
+                Phase3SlotId.switchComp,
+                swRect,
+                isVertical: false,
+              ),
             ] else ...[
               // Modo Físico de Consulta (Bancada Real)
               Positioned(
@@ -524,7 +614,10 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
                 left: (w - 280) / 2,
                 top: h * 0.48,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF0F172A).withValues(alpha: 0.9),
                     borderRadius: BorderRadius.circular(16),
@@ -532,88 +625,45 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
                   ),
                   child: const Text(
                     'Modo Físico de Consulta (Sem Edição)',
-                    style: TextStyle(color: StandFlowTokens.primaryGreen, fontWeight: FontWeight.bold, fontSize: 12),
+                    style: TextStyle(
+                      color: StandFlowTokens.primaryGreen,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
               ),
             ],
-
-            // Seletor de Modo (Físico | Diagrama) no topo da área livre (sempre por cima para receber toques)
-            Positioned(
-              top: 14,
-              left: (w - 200) / 2,
-              child: _buildModeSelector(),
-            ),
           ],
         );
       },
     );
   }
 
-  Widget _buildModeSelector() {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: const Color(0xFF061811).withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: StandFlowTokens.primaryGreen.withValues(alpha: 0.5)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildModeButton(
-            title: 'Físico',
-            isSelected: !_isDiagramMode,
-            onTap: () => setState(() => _isDiagramMode = false),
-          ),
-          _buildModeButton(
-            title: 'Diagrama',
-            isSelected: _isDiagramMode,
-            onTap: () => setState(() => _isDiagramMode = true),
-          ),
-        ],
-      ),
-    );
+  String _getSlotPhysicalAsset(Phase3SlotId slotKey) {
+    return switch (slotKey) {
+      Phase3SlotId.battery => 'assets/components/battery.png',
+      Phase3SlotId.resistor => 'assets/components/resistor.png',
+      Phase3SlotId.led => 'assets/components/led_off.png',
+      Phase3SlotId.switchComp => 'assets/components/switch_open.png',
+    };
   }
 
-  Widget _buildModeButton({
-    required String title,
-    required bool isSelected,
-    required VoidCallback onTap,
+  Widget _buildSlotWidget(
+    Phase3SlotId slotKey,
+    Rect rect, {
+    required bool isVertical,
   }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF0A2E20) : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
-          border: isSelected ? Border.all(color: StandFlowTokens.primaryGreen, width: 1.2) : null,
-        ),
-        child: Text(
-          title,
-          style: TextStyle(
-            fontFamily: GoogleFonts.rajdhani().fontFamily,
-            fontWeight: FontWeight.bold,
-            fontSize: 13.5,
-            color: isSelected ? Colors.white : Colors.white60,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSlotWidget(Phase3SlotId slotKey, Rect rect, {required bool isVertical}) {
     final placedSymbol = _slots[slotKey];
     final validation = _slotValidation[slotKey];
+    final slotW = math.max(rect.width, 44.0);
+    final slotH = math.max(rect.height, 44.0);
 
     return Positioned(
-      left: rect.left,
-      top: rect.top,
-      width: rect.width,
-      height: rect.height,
+      left: rect.center.dx - slotW / 2,
+      top: rect.center.dy - slotH / 2,
+      width: slotW,
+      height: slotH,
       child: DragTarget<Phase3SymbolType>(
         onAcceptWithDetails: (details) {
           _assignSymbolToSlot(slotKey, details.data);
@@ -648,7 +698,7 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
               decoration: BoxDecoration(
                 color: isHovering
                     ? StandFlowTokens.primaryGreen.withValues(alpha: 0.15)
-                    : const Color(0xFF071B12).withValues(alpha: 0.95),
+                    : const Color(0xFF071B12).withValues(alpha: 0.20),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: borderColor,
@@ -657,21 +707,44 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
                 boxShadow: isHovering
                     ? [
                         BoxShadow(
-                          color: StandFlowTokens.primaryGreen.withValues(alpha: 0.4),
+                          color: StandFlowTokens.primaryGreen.withValues(
+                            alpha: 0.4,
+                          ),
                           blurRadius: 10,
                           spreadRadius: 2,
                         ),
                       ]
                     : const [
-                        BoxShadow(color: Colors.black38, blurRadius: 4, offset: Offset(0, 2)),
+                        BoxShadow(
+                          color: Colors.black38,
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        ),
                       ],
               ),
               child: Stack(
                 alignment: Alignment.center,
                 children: [
+                  // 2. Asset físico semitransparente como referência
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: Padding(
+                        padding: const EdgeInsets.all(6.0),
+                        child: Opacity(
+                          opacity: 0.32,
+                          child: Image.asset(
+                            _getSlotPhysicalAsset(slotKey),
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // 3 & 4. Símbolo colocado ou placeholder
                   if (placedSymbol != null)
                     CustomPaint(
-                      size: Size(rect.width * 0.8, rect.height * 0.8),
+                      size: Size(slotW * 0.8, slotH * 0.8),
                       painter: _Phase3SymbolPainter(
                         symbolType: placedSymbol,
                         color: const Color(0xFFEDE7D7),
@@ -685,7 +758,7 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
                         Icon(
                           Icons.add_circle_outline_rounded,
                           size: 22,
-                          color: Colors.white.withValues(alpha: 0.4),
+                          color: Colors.white.withValues(alpha: 0.5),
                         ),
                         const SizedBox(height: 2),
                         Text(
@@ -693,10 +766,26 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
                           style: TextStyle(
                             fontFamily: GoogleFonts.rajdhani().fontFamily,
                             fontSize: 11,
-                            color: Colors.white.withValues(alpha: 0.5),
+                            color: Colors.white.withValues(alpha: 0.6),
                           ),
                         ),
                       ],
+                    ),
+
+                  // 5. Feedback de acerto ou erro
+                  if (validation != null)
+                    Positioned(
+                      top: 4,
+                      right: 4,
+                      child: Icon(
+                        validation
+                            ? Icons.check_circle_rounded
+                            : Icons.cancel_rounded,
+                        size: 16,
+                        color: validation
+                            ? StandFlowTokens.primaryGreen
+                            : const Color(0xFFFF5252),
+                      ),
                     ),
                 ],
               ),
@@ -766,7 +855,11 @@ class _SecondBenchPhase3State extends State<SecondBenchPhase3> {
                   color: Color(0xFFF0FDF4),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.auto_awesome_mosaic_rounded, color: Color(0xFF10B981), size: 20),
+                child: const Icon(
+                  Icons.auto_awesome_mosaic_rounded,
+                  color: Color(0xFF10B981),
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -828,7 +921,8 @@ class _OrthogonalCircuitPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFFEDE7D7) // Linha creme com alto contraste
+      ..color =
+          const Color(0xFFEDE7D7) // Linha creme com alto contraste
       ..strokeWidth = 3.5
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
@@ -894,14 +988,35 @@ class _Phase3SymbolPainter extends CustomPainter {
       canvas.rotate(math.pi / 2);
       canvas.translate(-size.height / 2, -size.width / 2);
       final rotatedSize = Size(size.height, size.width);
-      _drawSymbol(canvas, rotatedSize, rotatedSize.width / 2, rotatedSize.height / 2, paint, fillPaint);
+      _drawSymbol(
+        canvas,
+        rotatedSize,
+        rotatedSize.width / 2,
+        rotatedSize.height / 2,
+        paint,
+        fillPaint,
+      );
       canvas.restore();
     } else {
-      _drawSymbol(canvas, size, size.width / 2, size.height / 2, paint, fillPaint);
+      _drawSymbol(
+        canvas,
+        size,
+        size.width / 2,
+        size.height / 2,
+        paint,
+        fillPaint,
+      );
     }
   }
 
-  void _drawSymbol(Canvas canvas, Size size, double cx, double cy, Paint paint, Paint fillPaint) {
+  void _drawSymbol(
+    Canvas canvas,
+    Size size,
+    double cx,
+    double cy,
+    Paint paint,
+    Paint fillPaint,
+  ) {
     final w = size.width;
 
     switch (symbolType) {
@@ -910,9 +1025,17 @@ class _Phase3SymbolPainter extends CustomPainter {
         canvas.drawLine(Offset(0, cy), Offset(cx - 12, cy), paint);
         canvas.drawLine(Offset(cx + 12, cy), Offset(w, cy), paint);
         // Polo Negativo (-) linha curta e mais espessa
-        canvas.drawLine(Offset(cx - 12, cy - 12), Offset(cx - 12, cy + 12), paint..strokeWidth = strokeWidth * 1.8);
+        canvas.drawLine(
+          Offset(cx - 12, cy - 12),
+          Offset(cx - 12, cy + 12),
+          paint..strokeWidth = strokeWidth * 1.8,
+        );
         // Polo Positivo (+) linha longa e fina
-        canvas.drawLine(Offset(cx + 12, cy - 20), Offset(cx + 12, cy + 20), paint..strokeWidth = strokeWidth);
+        canvas.drawLine(
+          Offset(cx + 12, cy - 20),
+          Offset(cx + 12, cy + 20),
+          paint..strokeWidth = strokeWidth,
+        );
         break;
 
       case Phase3SymbolType.resistor:
@@ -943,13 +1066,37 @@ class _Phase3SymbolPainter extends CustomPainter {
           ..style = PaintingStyle.stroke
           ..strokeCap = StrokeCap.round;
 
-        canvas.drawLine(Offset(cx - 4, cy - 14), Offset(cx + 6, cy - 24), arrowPaint);
-        canvas.drawLine(Offset(cx + 6, cy - 24), Offset(cx + 2, cy - 24), arrowPaint);
-        canvas.drawLine(Offset(cx + 6, cy - 24), Offset(cx + 6, cy - 20), arrowPaint);
+        canvas.drawLine(
+          Offset(cx - 4, cy - 14),
+          Offset(cx + 6, cy - 24),
+          arrowPaint,
+        );
+        canvas.drawLine(
+          Offset(cx + 6, cy - 24),
+          Offset(cx + 2, cy - 24),
+          arrowPaint,
+        );
+        canvas.drawLine(
+          Offset(cx + 6, cy - 24),
+          Offset(cx + 6, cy - 20),
+          arrowPaint,
+        );
 
-        canvas.drawLine(Offset(cx + 6, cy - 10), Offset(cx + 16, cy - 20), arrowPaint);
-        canvas.drawLine(Offset(cx + 16, cy - 20), Offset(cx + 12, cy - 20), arrowPaint);
-        canvas.drawLine(Offset(cx + 16, cy - 20), Offset(cx + 16, cy - 16), arrowPaint);
+        canvas.drawLine(
+          Offset(cx + 6, cy - 10),
+          Offset(cx + 16, cy - 20),
+          arrowPaint,
+        );
+        canvas.drawLine(
+          Offset(cx + 16, cy - 20),
+          Offset(cx + 12, cy - 20),
+          arrowPaint,
+        );
+        canvas.drawLine(
+          Offset(cx + 16, cy - 20),
+          Offset(cx + 16, cy - 16),
+          arrowPaint,
+        );
         break;
 
       case Phase3SymbolType.switchComponent:
@@ -976,8 +1123,16 @@ class _Phase3SymbolPainter extends CustomPainter {
         canvas.drawCircle(Offset(cx, cy), radius, paint);
 
         final offset = radius * 0.707;
-        canvas.drawLine(Offset(cx - offset, cy - offset), Offset(cx + offset, cy + offset), paint);
-        canvas.drawLine(Offset(cx - offset, cy + offset), Offset(cx + offset, cy - offset), paint);
+        canvas.drawLine(
+          Offset(cx - offset, cy - offset),
+          Offset(cx + offset, cy + offset),
+          paint,
+        );
+        canvas.drawLine(
+          Offset(cx - offset, cy + offset),
+          Offset(cx + offset, cy - offset),
+          paint,
+        );
         break;
 
       case Phase3SymbolType.diode:
@@ -987,7 +1142,14 @@ class _Phase3SymbolPainter extends CustomPainter {
     }
   }
 
-  void _drawDiodeBase(Canvas canvas, Size size, double cx, double cy, Paint paint, Paint fillPaint) {
+  void _drawDiodeBase(
+    Canvas canvas,
+    Size size,
+    double cx,
+    double cy,
+    Paint paint,
+    Paint fillPaint,
+  ) {
     final w = size.width;
     final triW = 24.0;
     final triH = 22.0;
@@ -1005,7 +1167,11 @@ class _Phase3SymbolPainter extends CustomPainter {
       ..close();
 
     canvas.drawPath(path, paint);
-    canvas.drawLine(Offset(pRight, cy - triH / 2), Offset(pRight, cy + triH / 2), paint..strokeWidth = strokeWidth * 1.4);
+    canvas.drawLine(
+      Offset(pRight, cy - triH / 2),
+      Offset(pRight, cy + triH / 2),
+      paint..strokeWidth = strokeWidth * 1.4,
+    );
   }
 
   @override

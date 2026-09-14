@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../common_stand/stand_flow_tokens.dart';
+import '../../../widgets/draggable_card.dart';
 
 /// Item genérico da biblioteca para exibição na grade do painel lateral.
 class SecondBenchGridItemData<T extends Object> {
@@ -79,21 +80,23 @@ class SecondBenchItemGrid<T extends Object> extends StatelessWidget {
             color: item.isSelected
                 ? const Color(0xFFE2F3EC)
                 : (item.isDisabled
-                    ? const Color(0xFFEFEBE1)
-                    : const Color(0xFFFFFDF7)),
+                      ? const Color(0xFFEFEBE1)
+                      : const Color(0xFFFFFDF7)),
             borderRadius: BorderRadius.circular(StandFlowTokens.itemCardRadius),
             border: Border.all(
               color: item.isSelected
                   ? StandFlowTokens.primaryGreen
                   : (item.isDisabled
-                      ? const Color(0xFFD6CFC0)
-                      : const Color(0xFFC8BFA8)),
+                        ? const Color(0xFFD6CFC0)
+                        : const Color(0xFFC8BFA8)),
               width: item.isSelected ? 2.0 : 1.2,
             ),
             boxShadow: item.isSelected
                 ? [
                     BoxShadow(
-                      color: StandFlowTokens.primaryGreen.withValues(alpha: 0.3),
+                      color: StandFlowTokens.primaryGreen.withValues(
+                        alpha: 0.3,
+                      ),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -130,11 +133,11 @@ class SecondBenchItemGrid<T extends Object> extends StatelessWidget {
                                     ),
                               )
                             : (item.customPainterWidget ??
-                                const Icon(
-                                  Icons.electrical_services_rounded,
-                                  size: 36,
-                                  color: StandFlowTokens.darkGreen,
-                                )),
+                                  const Icon(
+                                    Icons.electrical_services_rounded,
+                                    size: 36,
+                                    color: StandFlowTokens.darkGreen,
+                                  )),
                       ),
                     ),
                   ),
@@ -171,7 +174,10 @@ class SecondBenchItemGrid<T extends Object> extends StatelessWidget {
                   top: 0,
                   right: 0,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: item.badgeColor ?? StandFlowTokens.primaryGreen,
                       borderRadius: BorderRadius.circular(6),
@@ -194,33 +200,7 @@ class SecondBenchItemGrid<T extends Object> extends StatelessWidget {
     );
 
     if (enableDrag && !item.isDisabled) {
-      return Draggable<T>(
-        data: item.value,
-        feedback: Material(
-          color: Colors.transparent,
-          child: Container(
-            width: 100,
-            height: 100,
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.9),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: StandFlowTokens.accentGreen, width: 2),
-              boxShadow: const [
-                BoxShadow(color: Colors.black45, blurRadius: 12, offset: Offset(0, 4)),
-              ],
-            ),
-            child: item.assetPath != null
-                ? Image.asset(item.assetPath!, fit: BoxFit.contain)
-                : (item.customPainterWidget ?? Container()),
-          ),
-        ),
-        childWhenDragging: Opacity(
-          opacity: 0.4,
-          child: cardChild,
-        ),
-        child: cardChild,
-      );
+      return DraggableCard<T>(data: item.value, child: cardChild);
     }
 
     return cardChild;
