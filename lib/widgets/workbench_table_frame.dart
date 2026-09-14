@@ -84,8 +84,54 @@ class WorkbenchTableFrame extends StatelessWidget {
               child: LayoutBuilder(
                 builder: (context, headerConstraints) {
                   final headerW = headerConstraints.maxWidth;
-                  final isCompact = headerW < 540;
+                  final isCompact = headerW < 560;
                   final isUltraCompact = headerW < 400;
+
+                  if (isCompact) {
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            if (leftHeaderWidget != null)
+                              Flexible(
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerLeft,
+                                    child: leftHeaderWidget!,
+                                  ),
+                                ),
+                              ),
+                            if (rightHeaderWidget != null)
+                              Flexible(
+                                child: Align(
+                                  alignment: Alignment.centerRight,
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerRight,
+                                    child: rightHeaderWidget!,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        if (showModeSelector) ...[
+                          const SizedBox(height: 4),
+                          Align(
+                            alignment: Alignment.center,
+                            child: _buildVisualModeSelector(
+                              context,
+                              isCompact: true,
+                              isUltraCompact: isUltraCompact,
+                            ),
+                          ),
+                        ],
+                      ],
+                    );
+                  }
 
                   return Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -372,7 +418,15 @@ class WorkbenchTableFrame extends StatelessWidget {
 ///   legibilidade mínima sem esmagar o conteúdo dos cards.
 /// - Em telas compactas (< 720px), faz o reflow responsivo vertical com rolagem suave,
 ///   impedindo qualquer overflow horizontal.
-class WorkbenchResponsiveLayout extends StatelessWidget {
+/// Layout Responsivo Universal para Bancadas do EletroLab (Bancada + Painel Lateral).
+///
+/// Garante que:
+/// - Desktop (w >= 1024): Bancada ocupa a maior parte e o painel lateral é fixo (26% a 28%).
+/// - Tablet / Mobile Paisagem (w < 1024 e w >= h): Bancada tem 100% da largura útil, com botão
+///   flutuante "Instruções" abrindo gaveta sobreposta (drawer com scrim escuro), preservando
+///   o estado do circuito 100% intacto sem recriar os widgets.
+/// - Celular Retrato (h > w): Bancada no topo com altura adaptada e instruções abaixo roláveis.
+class WorkbenchResponsiveLayout extends StatefulWidget {
   final Widget workbench;
   final Widget sidePanel;
   final double spacing;
@@ -385,6 +439,19 @@ class WorkbenchResponsiveLayout extends StatelessWidget {
   });
 
   @override
+  State<WorkbenchResponsiveLayout> createState() => _WorkbenchResponsiveLayoutState();
+}
+
+class _WorkbenchResponsiveLayoutState extends State<WorkbenchResponsiveLayout> {
+  bool _isDrawerOpen = false;
+
+  void _toggleDrawer() {
+    setState(() {
+      _isDrawerOpen = !_isDrawerOpen;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final scale = context.uiScale;
 
@@ -392,30 +459,150 @@ class WorkbenchResponsiveLayout extends StatelessWidget {
       builder: (context, constraints) {
         final w = constraints.maxWidth;
         final h = constraints.maxHeight;
+        final isPortrait = h > w;
+        final isMobileLandscape = !isPortrait && w < 1024;
 
-        // Modo Vertical / Empilhado para telas estreitas (portrait ou mobile < 720px)
-        if (w < 720) {
-          final benchHeight = h > 0
-              ? (h * 0.58).clamp(scale.size(320, min: 280, max: 480), scale.size(500, min: 380, max: 640))
-              : scale.size(340, min: 300, max: 480);
+        // 1. Modo Vertical / Empilhado para telas em modo retrato (h > w)
+        if (isPortrait) {
+          final benchHeight = (h * 0.52).clamp(280.0, 480.0);
 
           return SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 SizedBox(
                   height: benchHeight,
-                  child: workbench,
+                  child: widget.workbench,
                 ),
-                SizedBox(height: scale.spacing(spacing, min: 10, max: 24)),
-                sidePanel,
+                SizedBox(height: scale.spacing(widget.spacing, min: 10, max: 24)),
+                widget.sidePanel,
               ],
             ),
           );
         }
 
-        // Modo Horizontal com Proporção Otimizada Padronizada
-        // Painel lateral com alvo de 28% da largura da tela, com piso de legibilidade e teto de conforto
+        // 2. Modo Tablet / Mobile Paisagem (Bancada total + Drawer lateral sobreposto)
+        if (isMobileLandscape) {
+          final drawerWidth = (w * 0.42).clamp(280.0, 380.0);
+
+          return Stack(
+            children: [
+              // Bancada ocupa 100% do espaço útil
+              Positioned.fill(
+                child: widget.workbench,
+              ),
+
+              // Botão Flutuante de Instruções no canto superior direito
+              Positioned(
+                top: 10,
+                right: 12,
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: _toggleDrawer,
+                    borderRadius: BorderRadius.circular(20),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: const Color(0xFF38BDF8), width: 1.2),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black38,
+                              blurRadius: 8,
+                              offset: Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.menu_book_rounded,
+                              color: Color(0xFF38BDF8),
+                              size: 18,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Instruções',
+                              style: GoogleFonts.rajdhani(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Scrim escurecido para fechar ao tocar fora
+              if (_isDrawerOpen)
+                Positioned.fill(
+                  child: GestureDetector(
+                    onTap: _toggleDrawer,
+                    child: Container(
+                      color: Colors.black.withValues(alpha: 0.55),
+                    ),
+                  ),
+                ),
+
+              // Drawer lateral sobreposto deslizando da direita
+              if (_isDrawerOpen)
+                Positioned(
+                  top: 0,
+                  bottom: 0,
+                  right: 0,
+                  width: drawerWidth,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0F172A),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.5),
+                          blurRadius: 16,
+                          offset: const Offset(-4, 0),
+                        ),
+                      ],
+                      border: const Border(
+                        left: BorderSide(color: Color(0xFF334155), width: 1.2),
+                      ),
+                    ),
+                    child: Stack(
+                      children: [
+                        Positioned.fill(
+                          child: widget.sidePanel,
+                        ),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: Material(
+                            color: Colors.transparent,
+                            child: IconButton(
+                              icon: const Icon(Icons.close_rounded, color: Colors.white70, size: 22),
+                              tooltip: 'Fechar instruções',
+                              onPressed: _toggleDrawer,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          );
+        }
+
+        // 3. Modo Horizontal Desktop (w >= 1024)
         final targetPercentWidth = w * 0.28;
         final sidePanelWidth = targetPercentWidth.clamp(
           scale.size(280.0, min: 260.0, max: 320.0),
@@ -425,11 +612,11 @@ class WorkbenchResponsiveLayout extends StatelessWidget {
         return Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(child: workbench),
-            SizedBox(width: scale.spacing(spacing, min: 10, max: 24)),
+            Expanded(child: widget.workbench),
+            SizedBox(width: scale.spacing(widget.spacing, min: 10, max: 24)),
             SizedBox(
               width: sidePanelWidth,
-              child: sidePanel,
+              child: widget.sidePanel,
             ),
           ],
         );

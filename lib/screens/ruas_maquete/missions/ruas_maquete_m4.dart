@@ -176,8 +176,10 @@ class _RuasMaqueteM4State extends State<RuasMaqueteM4>
           builder: (context, constraints) {
             final w = constraints.maxWidth;
             final h = constraints.maxHeight;
-            final lampY = h * 0.32;
-            final socketY = h * 0.80;
+            final compW = (w * 0.13).clamp(54.0, 110.0);
+            final compH = compW * 0.75;
+            final lampY = (h * 0.33).clamp(65.0, 150.0);
+            final socketY = (h * 0.78).clamp(lampY + compH / 2 + 65.0, h - 35.0);
             final socketX = w * 0.50;
 
             return Stack(
@@ -216,6 +218,8 @@ class _RuasMaqueteM4State extends State<RuasMaqueteM4>
                   socketY: socketY,
                   w: w,
                   h: h,
+                  compW: compW,
+                  compH: compH,
                 ),
               ],
             );
@@ -226,6 +230,7 @@ class _RuasMaqueteM4State extends State<RuasMaqueteM4>
         teamTitle: 'Painel da Equipe Bairro',
         showTeamHeader: false,
         buttonColor: const Color(0xFF059669),
+        buttonLabel: 'Energizar e validar',
         toolboxItems: [
           _buildMissionObjectiveCard(),
           const SizedBox(height: 12),
@@ -244,84 +249,115 @@ class _RuasMaqueteM4State extends State<RuasMaqueteM4>
     required double socketY,
     required double w,
     required double h,
+    required double compW,
+    required double compH,
   }) {
-    final x1 = w * 0.18;
+    final x1 = w * 0.16;
     final x2 = w * 0.38;
     final x3 = w * 0.62;
-    final x4 = w * 0.82;
+    final x4 = w * 0.84;
 
-    final compW = (w * 0.13).clamp(80.0, 115.0);
-    final compH = compW * 0.75;
-    final sockW = (w * 0.15).clamp(95.0, 130.0);
+    final sockW = (w * 0.13).clamp(70.0, 110.0);
     final sockH = sockW * 0.75;
+    final labelSlotW = (w * 0.18).clamp(54.0, 120.0);
 
     return [
       // Poste 1 (Alameda)
       Positioned(
         left: x1 - compW / 2,
         top: lampY - compH / 2,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            buildRuasMaqueteLampSymbol(
-              isLit: _m4ParallelWireConnected,
-              brightnessRatio: 1.0,
-              usePhysicalStyle: _usePhysicalStyle,
-              width: compW,
-              height: compH,
-            ),
-            const SizedBox(height: 4),
-            buildRuasMaqueteLabelBadge('Poste Alameda'),
-          ],
+        child: SizedBox(
+          width: compW,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              buildRuasMaqueteLampSymbol(
+                isLit: _m4ParallelWireConnected,
+                brightnessRatio: 1.0,
+                usePhysicalStyle: _usePhysicalStyle,
+                width: compW,
+                height: compH,
+              ),
+              const SizedBox(height: 4),
+              SizedBox(
+                width: labelSlotW,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: buildRuasMaqueteLabelBadge('Poste Alameda'),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
       // Casa 1
       Positioned(
         left: x2 - compW / 2,
         top: lampY - compH / 2,
-        child: buildRuasMaqueteInteractiveHouse(
-          label: 'Casa 1',
-          isLit: _m4ParallelWireConnected && _house1Active,
-          brightness: 1.0,
-          isBroken: !_house1Active,
-          usePhysicalStyle: _usePhysicalStyle,
-          onToggle: () => setState(() => _house1Active = !_house1Active),
+        child: SizedBox(
           width: compW,
-          height: compH,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: buildRuasMaqueteInteractiveHouse(
+              label: 'Casa 1',
+              isLit: _m4ParallelWireConnected && _house1Active,
+              brightness: 1.0,
+              isBroken: !_house1Active,
+              usePhysicalStyle: _usePhysicalStyle,
+              onToggle: () => setState(() => _house1Active = !_house1Active),
+              width: compW,
+              height: compH,
+            ),
+          ),
         ),
       ),
       // Casa 2
       Positioned(
         left: x3 - compW / 2,
         top: lampY - compH / 2,
-        child: buildRuasMaqueteInteractiveHouse(
-          label: 'Casa 2',
-          isLit: _m4ParallelWireConnected && _house2Active,
-          brightness: 1.0,
-          isBroken: !_house2Active,
-          usePhysicalStyle: _usePhysicalStyle,
-          onToggle: () => setState(() => _house2Active = !_house2Active),
+        child: SizedBox(
           width: compW,
-          height: compH,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: buildRuasMaqueteInteractiveHouse(
+              label: 'Casa 2',
+              isLit: _m4ParallelWireConnected && _house2Active,
+              brightness: 1.0,
+              isBroken: !_house2Active,
+              usePhysicalStyle: _usePhysicalStyle,
+              onToggle: () => setState(() => _house2Active = !_house2Active),
+              width: compW,
+              height: compH,
+            ),
+          ),
         ),
       ),
       // Poste 2 (Avenida)
       Positioned(
         left: x4 - compW / 2,
         top: lampY - compH / 2,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            buildRuasMaqueteLampSymbol(
-              isLit: _m4ParallelWireConnected,
-              brightnessRatio: 1.0,
-              usePhysicalStyle: _usePhysicalStyle,
-              width: compW,
-              height: compH,
-            ),
-            const SizedBox(height: 4),
-            buildRuasMaqueteLabelBadge('Poste Avenida'),
-          ],
+        child: SizedBox(
+          width: compW,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              buildRuasMaqueteLampSymbol(
+                isLit: _m4ParallelWireConnected,
+                brightnessRatio: 1.0,
+                usePhysicalStyle: _usePhysicalStyle,
+                width: compW,
+                height: compH,
+              ),
+              const SizedBox(height: 4),
+              SizedBox(
+                width: labelSlotW,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: buildRuasMaqueteLabelBadge('Poste Avenida'),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
       // Soquete Central do Barramento Paralelo
@@ -348,7 +384,7 @@ class _RuasMaqueteM4State extends State<RuasMaqueteM4>
       ),
       Positioned(
         left: socketX - 70,
-        top: socketY + sockH / 2 + 6,
+        top: socketY + sockH / 2 + 4,
         width: 140,
         child: GestureDetector(
           onTap: _toggleParallelBus,
@@ -420,6 +456,7 @@ class _RuasMaqueteM4State extends State<RuasMaqueteM4>
           IconButton(
             icon: const Icon(Icons.undo_rounded, size: 20),
             tooltip: 'Desfazer ação',
+            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
             color: _undoRedoController.canUndo
                 ? const Color(0xFF0F172A)
                 : const Color(0xFFCBD5E1),
@@ -430,6 +467,7 @@ class _RuasMaqueteM4State extends State<RuasMaqueteM4>
           IconButton(
             icon: const Icon(Icons.redo_rounded, size: 20),
             tooltip: 'Refazer ação',
+            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
             color: _undoRedoController.canRedo
                 ? const Color(0xFF0F172A)
                 : const Color(0xFFCBD5E1),

@@ -549,8 +549,8 @@ class WorkbenchSidePanel extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 height: isCompactLandscape
-                    ? scale.size(40, min: 36, max: 52)
-                    : scale.size(48, min: 40, max: 68),
+                    ? scale.size(44, min: 44, max: 52)
+                    : scale.size(48, min: 44, max: 68),
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: buttonColor ?? const Color(0xFF059669),

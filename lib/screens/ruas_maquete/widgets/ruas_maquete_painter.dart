@@ -385,10 +385,146 @@ class RuasMaquetePainter extends CustomPainter {
         _drawElectronsOnPath(canvas, pathReturnA, electronPaint, count: 3);
         _drawElectronsOnPath(canvas, pathReturnB, electronPaint, count: 3);
       }
-    } else if (missionIndex == 3 || missionIndex == 4) {
-      // Missão 4 e 5: Bairro Completo em 4 Ramos Paralelos
-      final isActive = m4Parallel || missionIndex == 4;
+    } else if (missionIndex == 3) {
+      // Missão 4: Bairro Completo em 4 Ramos Paralelos
+      final isActive = m4Parallel;
       final currentPaint = isActive ? activeWirePaint : wirePaint;
+      final topVccY = math.min(lampY - 26.0, math.max(18.0, lampY - 48.0));
+      final botGndY = math.min(socketY - 20.0, math.max(lampY + 36.0, lampY + 54.0));
+      final vccGutterY = math.max(10.0, socketY - 45.0);
+      final gndGutterY = math.max(10.0, socketY - 32.0);
+
+      final x1 = size.width * 0.16; // Poste Alameda
+      final x2 = size.width * 0.38; // Casa 1
+      final x3 = size.width * 0.62; // Casa 2
+      final x4 = size.width * 0.84; // Poste Avenida
+
+      final busOuterLeftX = math.max(10.0, x1 - termOffset - 20.0);
+      final busOuterRightX = math.min(size.width - 10.0, x4 + termOffset + 20.0);
+
+      // Barramento VCC Superior Vermelho (alimentado pelo polo positivo do soquete central)
+      final pathVccMain = makeFlexiblePath([
+        batPosTerminal,
+        Offset(batPosTerminal.dx, vccGutterY),
+        Offset(busOuterLeftX, vccGutterY),
+        Offset(busOuterLeftX, topVccY),
+        Offset(x4 - termOffset, topVccY),
+      ]);
+
+      // 4 Derivações verticais curtas VCC para cada componente
+      final pathVccBranch1 = makeFlexiblePath([
+        Offset(x1 - termOffset, topVccY),
+        Offset(x1 - termOffset, lampY),
+      ]);
+
+      final pathVccBranch2 = makeFlexiblePath([
+        Offset(x2 - termOffset, topVccY),
+        Offset(x2 - termOffset, lampY),
+      ]);
+
+      final pathVccBranch3 = makeFlexiblePath([
+        Offset(x3 - termOffset, topVccY),
+        Offset(x3 - termOffset, lampY),
+      ]);
+
+      final pathVccBranch4 = makeFlexiblePath([
+        Offset(x4 - termOffset, topVccY),
+        Offset(x4 - termOffset, lampY),
+      ]);
+
+      // 4 Derivações verticais curtas GND de cada componente até o barramento inferior
+      final pathGndBranch1 = makeFlexiblePath([
+        Offset(x1 + termOffset, lampY),
+        Offset(x1 + termOffset, botGndY),
+      ]);
+
+      final pathGndBranch2 = makeFlexiblePath([
+        Offset(x2 + termOffset, lampY),
+        Offset(x2 + termOffset, botGndY),
+      ]);
+
+      final pathGndBranch3 = makeFlexiblePath([
+        Offset(x3 + termOffset, lampY),
+        Offset(x3 + termOffset, botGndY),
+      ]);
+
+      final pathGndBranch4 = makeFlexiblePath([
+        Offset(x4 + termOffset, lampY),
+        Offset(x4 + termOffset, botGndY),
+      ]);
+
+      // Barramento GND Inferior Azul (retorna ao polo negativo do soquete central)
+      final pathGndMain = makeFlexiblePath([
+        Offset(x1 + termOffset, botGndY),
+        Offset(busOuterRightX, botGndY),
+        Offset(busOuterRightX, gndGutterY),
+        Offset(batNegTerminal.dx, gndGutterY),
+        batNegTerminal,
+      ]);
+
+      drawStyledPath(pathVccMain, currentPaint, isPositive: true);
+      drawStyledPath(pathVccBranch1, isActive ? activeWirePaint : wirePaint,
+          isPositive: true);
+      drawStyledPath(pathVccBranch2, isActive ? activeWirePaint : wirePaint,
+          isPositive: true);
+      drawStyledPath(pathVccBranch3, isActive ? activeWirePaint : wirePaint,
+          isPositive: true);
+      drawStyledPath(pathVccBranch4, isActive ? activeWirePaint : wirePaint,
+          isPositive: true);
+
+      drawStyledPath(pathGndBranch1, isActive ? activeWirePaint : wirePaint,
+          isPositive: false);
+      drawStyledPath(pathGndBranch2, isActive ? activeWirePaint : wirePaint,
+          isPositive: false);
+      drawStyledPath(pathGndBranch3, isActive ? activeWirePaint : wirePaint,
+          isPositive: false);
+      drawStyledPath(pathGndBranch4, isActive ? activeWirePaint : wirePaint,
+          isPositive: false);
+      drawStyledPath(pathGndMain, isActive ? activeWirePaint : wirePaint,
+          isPositive: false);
+
+      // Terminais do Barramento Superior VCC
+      drawTerminalDot(batPosTerminal);
+      drawTerminalDot(Offset(x1 - termOffset, topVccY));
+      drawTerminalDot(Offset(x2 - termOffset, topVccY));
+      drawTerminalDot(Offset(x3 - termOffset, topVccY));
+      drawTerminalDot(Offset(x4 - termOffset, topVccY));
+
+      // Terminais dos 4 Componentes
+      drawTerminalDot(Offset(x1 - termOffset, lampY));
+      drawTerminalDot(Offset(x1 + termOffset, lampY));
+      drawTerminalDot(Offset(x2 - termOffset, lampY));
+      drawTerminalDot(Offset(x2 + termOffset, lampY));
+      drawTerminalDot(Offset(x3 - termOffset, lampY));
+      drawTerminalDot(Offset(x3 + termOffset, lampY));
+      drawTerminalDot(Offset(x4 - termOffset, lampY));
+      drawTerminalDot(Offset(x4 + termOffset, lampY));
+
+      // Terminais do Barramento Inferior GND
+      drawTerminalDot(Offset(x1 + termOffset, botGndY));
+      drawTerminalDot(Offset(x2 + termOffset, botGndY));
+      drawTerminalDot(Offset(x3 + termOffset, botGndY));
+      drawTerminalDot(Offset(x4 + termOffset, botGndY));
+      drawTerminalDot(Offset(busOuterRightX, botGndY));
+      drawTerminalDot(batNegTerminal);
+
+      if (isActive) {
+        _drawElectronsOnPath(canvas, pathVccMain, electronPaint, count: 6);
+        _drawElectronsOnPath(canvas, pathGndMain, electronPaint, count: 6);
+
+        _drawElectronsOnPath(canvas, pathVccBranch1, electronPaint, count: 2);
+        _drawElectronsOnPath(canvas, pathGndBranch1, electronPaint, count: 2);
+        _drawElectronsOnPath(canvas, pathVccBranch2, electronPaint, count: 2);
+        _drawElectronsOnPath(canvas, pathGndBranch2, electronPaint, count: 2);
+        _drawElectronsOnPath(canvas, pathVccBranch3, electronPaint, count: 2);
+        _drawElectronsOnPath(canvas, pathGndBranch3, electronPaint, count: 2);
+        _drawElectronsOnPath(canvas, pathVccBranch4, electronPaint, count: 2);
+        _drawElectronsOnPath(canvas, pathGndBranch4, electronPaint, count: 2);
+      }
+    } else if (missionIndex == 4) {
+      // Missão 5: Bairro Completo em 4 Ramos Paralelos (Circuito Original Preservado)
+      final isActive = true;
+      final currentPaint = activeWirePaint;
       final topVccY = lampY - (size.height * 0.16).clamp(45.0, 75.0);
       final botGndY = lampY + (size.height * 0.22).clamp(55.0, 90.0);
       final vccGutterY = socketY - (size.height * 0.16).clamp(40.0, 70.0);
@@ -465,32 +601,25 @@ class RuasMaquetePainter extends CustomPainter {
         batNegTerminal,
       ]);
 
-      final isBranch2Active = isActive && (!m5House1Broken || missionIndex != 4);
+      final isBranch2Active = !m5House1Broken;
 
       drawStyledPath(pathVccMain, currentPaint, isPositive: true);
-      drawStyledPath(pathVccBranch1, isActive ? activeWirePaint : wirePaint,
-          isPositive: true);
+      drawStyledPath(pathVccBranch1, activeWirePaint, isPositive: true);
       drawStyledPath(
           pathVccBranch2,
           isBranch2Active ? activeWirePaint : wirePaint,
           isPositive: true);
-      drawStyledPath(pathVccBranch3, isActive ? activeWirePaint : wirePaint,
-          isPositive: true);
-      drawStyledPath(pathVccBranch4, isActive ? activeWirePaint : wirePaint,
-          isPositive: true);
+      drawStyledPath(pathVccBranch3, activeWirePaint, isPositive: true);
+      drawStyledPath(pathVccBranch4, activeWirePaint, isPositive: true);
 
-      drawStyledPath(pathGndBranch1, isActive ? activeWirePaint : wirePaint,
-          isPositive: false);
+      drawStyledPath(pathGndBranch1, activeWirePaint, isPositive: false);
       drawStyledPath(
           pathGndBranch2,
           isBranch2Active ? activeWirePaint : wirePaint,
           isPositive: false);
-      drawStyledPath(pathGndBranch3, isActive ? activeWirePaint : wirePaint,
-          isPositive: false);
-      drawStyledPath(pathGndBranch4, isActive ? activeWirePaint : wirePaint,
-          isPositive: false);
-      drawStyledPath(pathGndMain, isActive ? activeWirePaint : wirePaint,
-          isPositive: false);
+      drawStyledPath(pathGndBranch3, activeWirePaint, isPositive: false);
+      drawStyledPath(pathGndBranch4, activeWirePaint, isPositive: false);
+      drawStyledPath(pathGndMain, activeWirePaint, isPositive: false);
 
       drawTerminalDot(batPosTerminal);
       drawTerminalDot(Offset(x1 - termOffset, topVccY));

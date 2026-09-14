@@ -85,6 +85,7 @@ class StandFlowHeader extends StatelessWidget {
                 scale,
                 showFullBrand: showFullBrand,
                 showStandName: showStandName,
+                isCompact: isCompact,
               ),
 
               SizedBox(width: scale.spacing(8, min: 4, max: 14)),
@@ -94,49 +95,51 @@ class StandFlowHeader extends StatelessWidget {
               // ===============================================================
               Expanded(
                 child: Center(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: List.generate(totalMissions, (index) {
-                        final missionNumber = index + 1;
-                        final isCurrent = currentMissionNumber == missionNumber;
-                        final isCompleted = completedMissionNumbers.contains(missionNumber);
-                        final isUnlocked = unlockedMissionNumbers.contains(missionNumber);
-                        final isNextUnlocked = unlockedMissionNumbers.contains(missionNumber + 1);
+                  child: isCompact
+                      ? _buildCompactMissionSelector(context, scale)
+                      : SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          physics: const BouncingScrollPhysics(),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: List.generate(totalMissions, (index) {
+                              final missionNumber = index + 1;
+                              final isCurrent = currentMissionNumber == missionNumber;
+                              final isCompleted = completedMissionNumbers.contains(missionNumber);
+                              final isUnlocked = unlockedMissionNumbers.contains(missionNumber);
+                              final isNextUnlocked = unlockedMissionNumbers.contains(missionNumber + 1);
 
-                        return Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _buildMissionPill(
-                              context: context,
-                              missionNumber: missionNumber,
-                              isCurrent: isCurrent,
-                              isCompleted: isCompleted,
-                              isUnlocked: isUnlocked,
-                            ),
-                            // Trilha conectora esguia entre as missões
-                            if (missionNumber < totalMissions && !isCompact)
-                              Container(
-                                width: scale.spacing(8, min: 3, max: 12),
-                                height: 1.8,
-                                margin: EdgeInsets.symmetric(
-                                  horizontal: scale.spacing(2, min: 1, max: 3),
-                                ),
-                                decoration: BoxDecoration(
-                                  color: (isCompleted && isNextUnlocked)
-                                      ? const Color(0xFF10B981).withValues(alpha: 0.6)
-                                      : const Color(0xFF334155).withValues(alpha: 0.5),
-                                  borderRadius: BorderRadius.circular(1),
-                                ),
-                              ),
-                          ],
-                        );
-                      }),
-                    ),
-                  ),
+                              return Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _buildMissionPill(
+                                    context: context,
+                                    missionNumber: missionNumber,
+                                    isCurrent: isCurrent,
+                                    isCompleted: isCompleted,
+                                    isUnlocked: isUnlocked,
+                                  ),
+                                  // Trilha conectora esguia entre as missões
+                                  if (missionNumber < totalMissions)
+                                    Container(
+                                      width: scale.spacing(8, min: 3, max: 12),
+                                      height: 1.8,
+                                      margin: EdgeInsets.symmetric(
+                                        horizontal: scale.spacing(2, min: 1, max: 3),
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: (isCompleted && isNextUnlocked)
+                                            ? const Color(0xFF10B981).withValues(alpha: 0.6)
+                                            : const Color(0xFF334155).withValues(alpha: 0.5),
+                                        borderRadius: BorderRadius.circular(1),
+                                      ),
+                                    ),
+                                ],
+                              );
+                            }),
+                          ),
+                        ),
                 ),
               ),
 
@@ -159,7 +162,66 @@ class StandFlowHeader extends StatelessWidget {
     UiScale scale, {
     required bool showFullBrand,
     required bool showStandName,
+    bool isCompact = false,
   }) {
+    if (isCompact) {
+      return Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(scale.size(8, min: 6, max: 12)),
+          onTap: onBack ?? () => StandNavigator.navigateBackToFairMap(context),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: scale.spacing(8, min: 6, max: 12),
+                vertical: scale.spacing(4, min: 3, max: 6),
+              ),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [
+                    Color(0xFF042920),
+                    Color(0xFF064E3B),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(scale.size(8, min: 6, max: 12)),
+                border: Border.all(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.45),
+                  width: 1.1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                    blurRadius: scale.size(5, min: 3, max: 8),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.arrow_back_rounded,
+                    color: const Color(0xFF00FF9D),
+                    size: scale.icon(16, min: 14, max: 20),
+                  ),
+                  SizedBox(width: scale.spacing(5, min: 3, max: 7)),
+                  Text(
+                    'Estande ${standNumber.toString().padLeft(2, '0')}',
+                    style: GoogleFonts.rajdhani(
+                      fontSize: scale.font(13, min: 11, max: 16),
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF00FF9D),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -169,17 +231,20 @@ class StandFlowHeader extends StatelessWidget {
           child: InkWell(
             borderRadius: BorderRadius.circular(scale.size(8, min: 6, max: 12)),
             onTap: onBack ?? () => StandNavigator.navigateBackToFairMap(context),
-            child: Container(
-              padding: EdgeInsets.all(scale.spacing(5, min: 3, max: 7)),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E293B).withValues(alpha: 0.7),
-                borderRadius: BorderRadius.circular(scale.size(8, min: 6, max: 12)),
-                border: Border.all(color: const Color(0xFF334155), width: 1.0),
-              ),
-              child: Icon(
-                Icons.arrow_back_rounded,
-                color: Colors.white,
-                size: scale.icon(17, min: 14, max: 22),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+              child: Container(
+                padding: EdgeInsets.all(scale.spacing(5, min: 3, max: 7)),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E293B).withValues(alpha: 0.7),
+                  borderRadius: BorderRadius.circular(scale.size(8, min: 6, max: 12)),
+                  border: Border.all(color: const Color(0xFF334155), width: 1.0),
+                ),
+                child: Icon(
+                  Icons.arrow_back_rounded,
+                  color: Colors.white,
+                  size: scale.icon(17, min: 14, max: 22),
+                ),
               ),
             ),
           ),
@@ -479,6 +544,61 @@ class StandFlowHeader extends StatelessWidget {
           onPressed: onSettingsTap ?? () => Navigator.of(context).pushNamed('/settings'),
         ),
       ],
+    );
+  }
+
+  /// Seletor compacto de missões para telas estreitas (‹ Missão X de 5 ›)
+  Widget _buildCompactMissionSelector(BuildContext context, UiScale scale) {
+    final prevMission = currentMissionNumber > 1 ? currentMissionNumber - 1 : null;
+    final nextMission = currentMissionNumber < totalMissions ? currentMissionNumber + 1 : null;
+
+    final canGoPrev = prevMission != null &&
+        (unlockedMissionNumbers.contains(prevMission) ||
+            completedMissionNumbers.contains(prevMission));
+    final canGoNext = nextMission != null &&
+        unlockedMissionNumbers.contains(nextMission);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B).withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFF334155), width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.chevron_left_rounded, size: 20),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+            color: canGoPrev ? Colors.white : Colors.white24,
+            onPressed: canGoPrev && onSelectMission != null
+                ? () => onSelectMission!(prevMission)
+                : null,
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: Text(
+              '‹ Missão $currentMissionNumber de $totalMissions ›',
+              style: GoogleFonts.rajdhani(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.chevron_right_rounded, size: 20),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+            color: canGoNext ? Colors.white : Colors.white24,
+            onPressed: canGoNext && onSelectMission != null
+                ? () => onSelectMission!(nextMission)
+                : null,
+          ),
+        ],
+      ),
     );
   }
 }
