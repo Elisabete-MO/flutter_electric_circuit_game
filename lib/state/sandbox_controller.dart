@@ -179,8 +179,9 @@ class SandboxController extends Notifier<SandboxState> {
       deltaY,
       gridCols: gridCols,
       gridRows: gridRows,
-    ))
+    )) {
       return false;
+    }
 
     _history.pushSnapshot(state);
     final updated = state.components.map((c) {

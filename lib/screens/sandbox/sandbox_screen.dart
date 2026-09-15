@@ -387,18 +387,20 @@ class _SandboxScreenState extends ConsumerState<SandboxScreen>
     if (voltsEmotion != _lastVoltsEmotion &&
         voltsEmotion != ProfVoltsEmotion.neutral) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted)
+        if (mounted) {
           setState(() {
             _showMascot = true;
           });
+        }
       });
     }
     if (voltsEmotion != _lastVoltsEmotion) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted)
+        if (mounted) {
           setState(() {
             _lastVoltsEmotion = voltsEmotion;
           });
+        }
       });
     }
 

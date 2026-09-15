@@ -31,7 +31,7 @@ class _CircuitoSeguroM4State extends State<CircuitoSeguroM4>
 
   bool _usePhysicalStyle = true;
   bool _isSwitchArmed = false;
-  bool _isFuseInserted = true;
+  final bool _isFuseInserted = true;
   bool _isBuzzerConnected = false;
 
   @override

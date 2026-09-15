@@ -31,7 +31,7 @@ class _CircuitoSeguroM1State extends State<CircuitoSeguroM1>
 
   bool _usePhysicalStyle = true;
   bool _shortCircuitPresent = true; // Inicia com o fio de curto
-  bool _isSwitchArmed = true;
+  final bool _isSwitchArmed = true;
 
   @override
   void initState() {

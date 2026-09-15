@@ -385,7 +385,6 @@ class CircuitoSeguroPainter extends CustomPainter {
     final col21X = startX + 20 * stepX;
 
     final rowCY = rowStartYTop + 2 * rowStepTop;
-    final rowDY = rowStartYTop + 3 * rowStepTop;
     final rowGY = rowStartYBot + 1 * rowStepBot;
     final trenchY = bb.top + bb.height * 0.50;
 
@@ -1023,7 +1022,6 @@ class CircuitoSeguroPainter extends CustomPainter {
     final swY = h * 0.28;
 
     final fuseX = w * 0.58;
-    final fuseY = h * 0.28;
 
     final loadX = w * 0.76;
     final loadY = h * 0.50;

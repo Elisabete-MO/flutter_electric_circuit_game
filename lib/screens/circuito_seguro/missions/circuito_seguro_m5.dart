@@ -32,9 +32,9 @@ class _CircuitoSeguroM5State extends State<CircuitoSeguroM5>
   bool _usePhysicalStyle = true;
   bool _shortCircuitPresent = true;
   bool _fuseBlown = true;
-  bool _wireBroken = true;
+  final bool _wireBroken = true;
   bool _wireRepaired = false;
-  bool _switchArmed = true;
+  final bool _switchArmed = true;
 
   @override
   void initState() {
