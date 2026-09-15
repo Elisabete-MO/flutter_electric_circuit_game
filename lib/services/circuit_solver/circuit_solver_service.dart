@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import '../../models/sandbox_state.dart';
-import '../../models/first_step_component.dart';
 import 'circuit_solver_strategy.dart';
 import 'dfs_circuit_solver.dart';
 import 'mna_circuit_solver.dart';
@@ -21,8 +20,9 @@ class CircuitSolverService {
   }
 
   static bool _isComplexCircuit(SandboxState state) {
-    final sources = state.components.where((c) =>
-        c.type == ComponentType.battery || c.type == ComponentType.powerSupply).toList();
+    final sources = state.components
+        .where((c) => CircuitElectricalSupport.isVoltageSource(c.type))
+        .toList();
     if (sources.length > 1) return true;
 
     final parent = <String, String>{};
@@ -50,7 +50,10 @@ class CircuitSolverService {
     }
 
     for (final w in state.wires) {
-      union('${w.fromComponentId}_${w.fromTerminal}', '${w.toComponentId}_${w.toTerminal}');
+      union(
+        '${w.fromComponentId}_${w.fromTerminal}',
+        '${w.toComponentId}_${w.toTerminal}',
+      );
     }
 
     final nodeCounts = <String, int>{};

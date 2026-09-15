@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/routes.dart';
 import '../../core/ui_scale.dart';
 import '../../models/stand_data.dart';
+import '../../state/progress_controller.dart';
 import 'widgets/experimental_horizontal_map.dart';
 import 'widgets/science_fair_map.dart';
 
@@ -20,17 +21,57 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   /// Mude para `false` para retornar imediatamente à tela padrão aprovada.
   static const bool useExperimentalHorizontalMap = true;
 
-  late List<StandData> _stands;
   StandData? _selectedStand;
+
+  static const Map<int, Set<String>> _completionIdsByStandNumber = {
+    2: {'acende_ai', 'second_bench'},
+    3: {'liga_desliga', 'estande3'},
+    4: {'ruas_maquete', 'estande4'},
+    5: {'letreros_led', 'estande5'},
+    6: {'movimento_miniatura', 'movimento', 'estande6'},
+    7: {'mede_testa_explica', 'mede_testa', 'estande7'},
+    8: {'circuito_seguro', 'estande8'},
+    9: {'horta_monitorada', 'estande9'},
+    10: {'portao_escola', 'estande10'},
+    11: {'praca_maquete', 'estande11'},
+  };
 
   @override
   void initState() {
     super.initState();
-    _stands = StandData.defaultStands;
     // Estande 01 ("Primeiros Passos") vem selecionado por padrão
-    _selectedStand = _stands.firstWhere(
+    _selectedStand = StandData.defaultStands.firstWhere(
       (s) => s.number == 1,
-      orElse: () => _stands.first,
+      orElse: () => StandData.defaultStands.first,
+    );
+  }
+
+  List<StandData> _standsFromProgress(ProgressState progressState) {
+    return StandData.defaultStands
+        .map((stand) {
+          if (!stand.hasMissions) return stand;
+
+          final completionIds =
+              _completionIdsByStandNumber[stand.number] ??
+              {stand.id, 'estande${stand.number}'};
+          final isCompleted = completionIds.any(
+            progressState.completedChallenges.contains,
+          );
+
+          return stand.copyWith(
+            completedMissions: isCompleted ? stand.totalMissions : 0,
+          );
+        })
+        .toList(growable: false);
+  }
+
+  StandData? _selectedStandFrom(List<StandData> stands) {
+    final selected = _selectedStand;
+    if (selected == null) return null;
+
+    return stands.firstWhere(
+      (stand) => stand.id == selected.id,
+      orElse: () => selected,
     );
   }
 
@@ -184,6 +225,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final scale = context.uiScale;
+    final progressState = ref.watch(progressControllerProvider);
+    final stands = _standsFromProgress(progressState);
+    final selectedStand = _selectedStandFrom(stands);
 
     return Scaffold(
       backgroundColor: const Color(0xFF021712), // Fundo escuro esmeralda
@@ -193,16 +237,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           Positioned.fill(
             child: useExperimentalHorizontalMap
                 ? ExperimentalHorizontalMap(
-                    stands: _stands,
-                    selectedStand: _selectedStand,
+                    stands: stands,
+                    selectedStand: selectedStand,
                     onSelectStand: _onSelectStand,
                     onStartMission: _onStartMission,
                     onCloseCard: _onCloseCard,
                     onTapMaqueteColetiva: _onTapMaqueteColetiva,
                   )
                 : ScienceFairMap(
-                    stands: _stands,
-                    selectedStand: _selectedStand,
+                    stands: stands,
+                    selectedStand: selectedStand,
                     onSelectStand: _onSelectStand,
                     onStartMission: _onStartMission,
                     onCloseCard: _onCloseCard,

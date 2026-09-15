@@ -8,16 +8,11 @@ class DfsCircuitSolver implements CircuitSolverStrategy {
   @override
   SandboxState solve(SandboxState targetState) {
     if (!targetState.isSimulating) {
-      return targetState.copyWith(
-        simulationValues: {},
-        errorMessage: null,
-      );
+      return targetState.copyWith(simulationValues: {}, errorMessage: null);
     }
 
     final powerSources = targetState.components
-        .where((c) =>
-            c.type == ComponentType.battery ||
-            c.type == ComponentType.powerSupply)
+        .where((c) => CircuitElectricalSupport.isVoltageSource(c.type))
         .toList();
     if (powerSources.isEmpty) {
       return targetState.copyWith(
@@ -48,8 +43,9 @@ class DfsCircuitSolver implements CircuitSolverStrategy {
         componentPath: componentPath,
         wirePath: wirePath,
         onLoopClosed: (pathComponents, pathWires) {
-          closedLoops.add(_ClosedLoopData(
-              List.from(pathComponents), List.from(pathWires)));
+          closedLoops.add(
+            _ClosedLoopData(List.from(pathComponents), List.from(pathWires)),
+          );
         },
       );
 
@@ -59,19 +55,14 @@ class DfsCircuitSolver implements CircuitSolverStrategy {
         for (final loop in closedLoops) {
           final loopPath = loop.components;
           final totalResistance = loopPath
-              .where((c) =>
-                  c.type != ComponentType.battery &&
-                  c.type != ComponentType.powerSupply)
+              .where((c) => !CircuitElectricalSupport.isVoltageSource(c.type))
               .fold(0.0, (sum, c) {
-            if (c.type == ComponentType.fuse) return sum + 0.1;
-            if (c.type == ComponentType.capacitor) return sum + 10.0;
-            if (c.type == ComponentType.buzzer) return sum + 8.0;
-            if (c.type == ComponentType.motor) return sum + 2.0;
-            return sum + c.value;
-          });
+                return sum + (CircuitElectricalSupport.resistanceFor(c) ?? 0.0);
+              });
 
           if (totalResistance <= 0.1) {
-            error = 'CURTO-CIRCUITO DETECTADO! Conexão direta entre pólos sem carga!';
+            error =
+                'CURTO-CIRCUITO DETECTADO! Conexão direta entre pólos sem carga!';
             isShortCircuit = true;
             for (final w in loop.wires) {
               shortCircuitWireIds.add(w.id);
@@ -85,20 +76,12 @@ class DfsCircuitSolver implements CircuitSolverStrategy {
           double currentPotential = source.value;
 
           for (final comp in loopPath) {
-            if (comp.type == ComponentType.battery ||
-                comp.type == ComponentType.powerSupply) {
+            if (CircuitElectricalSupport.isVoltageSource(comp.type)) {
               continue;
             }
 
-            final compRes = (comp.type == ComponentType.fuse)
-                ? 0.1
-                : (comp.type == ComponentType.capacitor
-                    ? 10.0
-                    : (comp.type == ComponentType.buzzer
-                        ? 8.0
-                        : (comp.type == ComponentType.motor
-                            ? 2.0
-                            : comp.value)));
+            final compRes = CircuitElectricalSupport.resistanceFor(comp);
+            if (compRes == null) continue;
             final vDrop = loopCurrent * compRes;
             final power = vDrop * loopCurrent;
 
@@ -114,7 +97,8 @@ class DfsCircuitSolver implements CircuitSolverStrategy {
             values['node_voltage_${comp.id}_A'] = currentPotential;
 
             // Verificação de Limites Físicos e Sobrecarga Educativa
-            final totalCompCurrent = values['current_${comp.id}'] ?? loopCurrent;
+            final totalCompCurrent =
+                values['current_${comp.id}'] ?? loopCurrent;
             if (comp.type == ComponentType.led) {
               if (totalCompCurrent > 0.05 || vDrop > 3.3) {
                 newBurnedSet.add(comp.id);
@@ -169,7 +153,7 @@ class DfsCircuitSolver implements CircuitSolverStrategy {
     required List<SandboxComponent> componentPath,
     required List<SandboxWire> wirePath,
     required void Function(List<SandboxComponent>, List<SandboxWire>)
-        onLoopClosed,
+    onLoopClosed,
   }) {
     componentPath.add(currentComponent);
 
@@ -188,8 +172,9 @@ class DfsCircuitSolver implements CircuitSolverStrategy {
           ? wire.toTerminal
           : wire.fromTerminal;
 
-      final nextComponentList =
-          targetState.components.where((c) => c.id == nextId).toList();
+      final nextComponentList = targetState.components
+          .where((c) => c.id == nextId)
+          .toList();
       if (nextComponentList.isEmpty) continue;
       final nextComponent = nextComponentList.first;
 
@@ -211,18 +196,16 @@ class DfsCircuitSolver implements CircuitSolverStrategy {
         continue; // Componente queimado interrompe o circuito (circuito aberto)
       }
 
-      if (nextComponent.type == ComponentType.switchComponent &&
-          !nextComponent.isActive) {
+      if (!CircuitElectricalSupport.canConduct(nextComponent)) {
         wirePath.removeLast();
         continue;
       }
 
-      if (nextComponent.type == ComponentType.diode ||
-          nextComponent.type == ComponentType.led) {
+      if (CircuitElectricalSupport.isDiodeLike(nextComponent.type)) {
         final isReversed =
             (nextComponent.rotation == 180.0 || nextComponent.rotation == 270.0)
-                ? (nextTerm == 'A')
-                : (nextTerm == 'B');
+            ? (nextTerm == 'A')
+            : (nextTerm == 'B');
         if (isReversed) {
           wirePath.removeLast();
           continue; // Bloqueia a corrente se ela tentar entrar pelo Cathode (-) - Polarização Reversa

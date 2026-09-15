@@ -8,17 +8,15 @@ import 'package:eletrolab/screens/main_menu/main_menu_screen.dart';
 import 'package:eletrolab/state/progress_controller.dart';
 
 void main() {
+  const modosDeJogoButtonKey = ValueKey('low_poly_menu_button_Modos de Jogo');
+
   setUp(() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  Widget buildMainMenuScreen({
-    required SharedPreferences prefs,
-  }) {
+  Widget buildMainMenuScreen({required SharedPreferences prefs}) {
     return ProviderScope(
-      overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-      ],
+      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
       child: MaterialApp(
         initialRoute: Routes.menu,
         routes: {
@@ -26,7 +24,8 @@ void main() {
           Routes.intro: (_) => const Scaffold(body: Text('Tela Intro')),
           Routes.home: (_) => const Scaffold(body: Text('Tela Feira')),
           Routes.sandbox: (_) => const Scaffold(body: Text('Tela Sandbox')),
-          Routes.firstSteps: (_) => const Scaffold(body: Text('Tela Primeiros Passos')),
+          Routes.firstSteps: (_) =>
+              const Scaffold(body: Text('Tela Primeiros Passos')),
           Routes.settings: (_) => const Scaffold(body: Text('Tela Settings')),
         },
       ),
@@ -34,7 +33,9 @@ void main() {
   }
 
   group('MainMenuScreen (Opção 1)', () {
-    testWidgets('sem progresso prévio: exibe Entrar na Feira e Modos de Jogo', (tester) async {
+    testWidgets('sem progresso prévio: exibe Entrar na Feira e Modos de Jogo', (
+      tester,
+    ) async {
       final prefs = await SharedPreferences.getInstance();
 
       await tester.pumpWidget(buildMainMenuScreen(prefs: prefs));
@@ -52,7 +53,7 @@ void main() {
       expect(find.text('Primeiros Passos & Conceitos'), findsNothing);
 
       // Clicar em Modos de Jogo
-      await tester.tap(find.text('Modos de Jogo'));
+      await tester.tap(find.byKey(modosDeJogoButtonKey));
       await tester.pumpAndSettle();
 
       // Submenu deve estar visível
@@ -71,7 +72,9 @@ void main() {
       expect(find.text('Bancada Livre'), findsNothing);
     });
 
-    testWidgets('com progresso prévio: exibe Continuar de Onde Parou', (tester) async {
+    testWidgets('com progresso prévio: exibe Continuar de Onde Parou', (
+      tester,
+    ) async {
       SharedPreferences.setMockInitialValues({
         'completed_challenges': ['stand_01', 'stand_02'],
       });
@@ -81,7 +84,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Continuar de Onde Parou'), findsOneWidget);
-      expect(find.textContaining('2 de 12 estandes concluídos'), findsOneWidget);
+      expect(
+        find.textContaining('2 de 12 estandes concluídos'),
+        findsOneWidget,
+      );
       expect(find.text('Entrar na Feira'), findsOneWidget);
       expect(find.text('Modos de Jogo'), findsOneWidget);
 

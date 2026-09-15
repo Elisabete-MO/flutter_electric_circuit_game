@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/first_step_component.dart';
 import '../models/sandbox_component.dart';
@@ -9,9 +10,23 @@ import '../services/circuit_solver/circuit_solver_service.dart';
 import 'progress_controller.dart';
 
 class SandboxController extends Notifier<SandboxState> {
+  SandboxController({CircuitSolverService? solverService})
+    : _solverService = solverService ?? CircuitSolverService();
+
   late final SandboxPersistenceRepository _persistence;
-  final HistoryManager<SandboxState> _history = HistoryManager<SandboxState>(maxDepth: 30);
-  final CircuitSolverService _solverService = CircuitSolverService();
+  final HistoryManager<SandboxState> _history = HistoryManager<SandboxState>(
+    maxDepth: 30,
+  );
+  final CircuitSolverService _solverService;
+  int _solveRevision = 0;
+  Timer? _recalculateTimer;
+
+  void _scheduleRecalculation({
+  required void Function() action,
+}) {
+  _recalculateTimer?.cancel();
+  _recalculateTimer = Timer(const Duration(milliseconds: 300), action);
+}
 
   @override
   SandboxState build() {
@@ -45,14 +60,98 @@ class SandboxController extends Notifier<SandboxState> {
     }
   }
 
-  void addComponent(SandboxComponent component) {
+  bool canPlaceComponentAt(
+    int gridX,
+    int gridY, {
+    String? movingComponentId,
+    int gridCols = 20,
+    int gridRows = 16,
+  }) {
+    if (gridX < 0 || gridX >= gridCols || gridY < 0 || gridY >= gridRows) {
+      return false;
+    }
+
+    return !state.components.any((c) {
+      if (c.id == movingComponentId) return false;
+      return c.gridX == gridX && c.gridY == gridY;
+    });
+  }
+
+  bool canMoveComponents(
+    Set<String> componentIds,
+    int deltaX,
+    int deltaY, {
+    int gridCols = 20,
+    int gridRows = 16,
+  }) {
+    if (componentIds.isEmpty) return false;
+
+    final targetCells = <String>{};
+    for (final c in state.components) {
+      if (!componentIds.contains(c.id)) continue;
+
+      final targetX = c.gridX + deltaX;
+      final targetY = c.gridY + deltaY;
+      if (targetX < 0 ||
+          targetX >= gridCols ||
+          targetY < 0 ||
+          targetY >= gridRows) {
+        return false;
+      }
+
+      if (!targetCells.add('$targetX,$targetY')) {
+        return false;
+      }
+    }
+
+    if (targetCells.isEmpty) return false;
+
+    return !state.components.any((c) {
+      if (componentIds.contains(c.id)) return false;
+      return targetCells.contains('${c.gridX},${c.gridY}');
+    });
+  }
+
+  bool addComponent(
+    SandboxComponent component, {
+    int gridCols = 20,
+    int gridRows = 16,
+  }) {
+    if (!canPlaceComponentAt(
+      component.gridX,
+      component.gridY,
+      gridCols: gridCols,
+      gridRows: gridRows,
+    )) {
+      return false;
+    }
+
     _history.pushSnapshot(state);
     final updated = [...state.components, component];
     state = state.copyWith(components: updated);
     _recalculateCircuit();
+    return true;
   }
 
-  void moveComponent(String componentId, int newX, int newY) {
+  bool moveComponent(
+    String componentId,
+    int newX,
+    int newY, {
+    int gridCols = 20,
+    int gridRows = 16,
+  }) {
+    final componentExists = state.components.any((c) => c.id == componentId);
+    if (!componentExists ||
+        !canPlaceComponentAt(
+          newX,
+          newY,
+          movingComponentId: componentId,
+          gridCols: gridCols,
+          gridRows: gridRows,
+        )) {
+      return false;
+    }
+
     _history.pushSnapshot(state);
     final updated = state.components.map((c) {
       if (c.id == componentId) {
@@ -62,39 +161,38 @@ class SandboxController extends Notifier<SandboxState> {
     }).toList();
 
     state = state.copyWith(components: updated);
-    _recalculateCircuit();
+    _scheduleRecalculation(action: _recalculateCircuit);
+    return true;
   }
 
-  void moveComponents(Set<String> componentIds, int deltaX, int deltaY) {
-    if (componentIds.isEmpty || (deltaX == 0 && deltaY == 0)) return;
-
-    // Verificar se todos os movimentos ficam dentro do grid
-    bool valid = true;
-    for (final c in state.components) {
-      if (componentIds.contains(c.id)) {
-        final targetX = c.gridX + deltaX;
-        final targetY = c.gridY + deltaY;
-        if (targetX < 0 || targetX >= 20 || targetY < 0 || targetY >= 16) {
-          valid = false;
-          break;
-        }
-      }
-    }
-    if (!valid) return;
+  bool moveComponents(
+    Set<String> componentIds,
+    int deltaX,
+    int deltaY, {
+    int gridCols = 20,
+    int gridRows = 16,
+  }) {
+    if (componentIds.isEmpty || (deltaX == 0 && deltaY == 0)) return false;
+    if (!canMoveComponents(
+      componentIds,
+      deltaX,
+      deltaY,
+      gridCols: gridCols,
+      gridRows: gridRows,
+    ))
+      return false;
 
     _history.pushSnapshot(state);
     final updated = state.components.map((c) {
       if (componentIds.contains(c.id)) {
-        return c.copyWith(
-          gridX: (c.gridX + deltaX).clamp(0, 19),
-          gridY: (c.gridY + deltaY).clamp(0, 15),
-        );
+        return c.copyWith(gridX: c.gridX + deltaX, gridY: c.gridY + deltaY);
       }
       return c;
     }).toList();
 
     state = state.copyWith(components: updated);
-    _recalculateCircuit();
+    _scheduleRecalculation(action: _recalculateCircuit);
+    return true;
   }
 
   void removeComponent(String componentId) {
@@ -104,15 +202,15 @@ class SandboxController extends Notifier<SandboxState> {
   void removeComponents(Set<String> componentIds) {
     if (componentIds.isEmpty) return;
     _history.pushSnapshot(state);
-    final updatedComponents = state.components.where((c) => !componentIds.contains(c.id)).toList();
+    final updatedComponents = state.components
+        .where((c) => !componentIds.contains(c.id))
+        .toList();
     final updatedWires = state.wires.where((w) {
-      return !componentIds.contains(w.fromComponentId) && !componentIds.contains(w.toComponentId);
+      return !componentIds.contains(w.fromComponentId) &&
+          !componentIds.contains(w.toComponentId);
     }).toList();
 
-    state = state.copyWith(
-      components: updatedComponents,
-      wires: updatedWires,
-    );
+    state = state.copyWith(components: updatedComponents, wires: updatedWires);
     _recalculateCircuit();
   }
 
@@ -223,51 +321,201 @@ class SandboxController extends Notifier<SandboxState> {
 
     switch (presetKey) {
       case 'simple_bulb':
-        final b = SandboxComponent(id: 'bat_$now', type: ComponentType.battery, gridX: 1, gridY: 2, value: 4.5);
-        final s = SandboxComponent(id: 'sw_$now', type: ComponentType.switchComponent, gridX: 3, gridY: 2, isActive: true);
-        final l = SandboxComponent(id: 'bulb_$now', type: ComponentType.bulb, gridX: 5, gridY: 2, value: 10.0);
+        final b = SandboxComponent(
+          id: 'bat_$now',
+          type: ComponentType.battery,
+          gridX: 1,
+          gridY: 2,
+          value: 4.5,
+        );
+        final s = SandboxComponent(
+          id: 'sw_$now',
+          type: ComponentType.switchComponent,
+          gridX: 3,
+          gridY: 2,
+          isActive: true,
+        );
+        final l = SandboxComponent(
+          id: 'bulb_$now',
+          type: ComponentType.bulb,
+          gridX: 5,
+          gridY: 2,
+          value: 10.0,
+        );
         newComponents = [b, s, l];
         newWires = [
-          SandboxWire(id: 'w1_$now', fromComponentId: b.id, fromTerminal: 'B', toComponentId: s.id, toTerminal: 'A'),
-          SandboxWire(id: 'w2_$now', fromComponentId: s.id, fromTerminal: 'B', toComponentId: l.id, toTerminal: 'A'),
-          SandboxWire(id: 'w3_$now', fromComponentId: l.id, fromTerminal: 'B', toComponentId: b.id, toTerminal: 'A'),
+          SandboxWire(
+            id: 'w1_$now',
+            fromComponentId: b.id,
+            fromTerminal: 'B',
+            toComponentId: s.id,
+            toTerminal: 'A',
+          ),
+          SandboxWire(
+            id: 'w2_$now',
+            fromComponentId: s.id,
+            fromTerminal: 'B',
+            toComponentId: l.id,
+            toTerminal: 'A',
+          ),
+          SandboxWire(
+            id: 'w3_$now',
+            fromComponentId: l.id,
+            fromTerminal: 'B',
+            toComponentId: b.id,
+            toTerminal: 'A',
+          ),
         ];
         break;
 
       case 'switch_motor':
-        final b = SandboxComponent(id: 'bat_$now', type: ComponentType.battery, gridX: 1, gridY: 2, value: 9.0);
-        final s = SandboxComponent(id: 'sw_$now', type: ComponentType.switchComponent, gridX: 3, gridY: 2, isActive: true);
-        final m = SandboxComponent(id: 'mot_$now', type: ComponentType.motor, gridX: 5, gridY: 2, value: 12.0);
+        final b = SandboxComponent(
+          id: 'bat_$now',
+          type: ComponentType.battery,
+          gridX: 1,
+          gridY: 2,
+          value: 9.0,
+        );
+        final s = SandboxComponent(
+          id: 'sw_$now',
+          type: ComponentType.switchComponent,
+          gridX: 3,
+          gridY: 2,
+          isActive: true,
+        );
+        final m = SandboxComponent(
+          id: 'mot_$now',
+          type: ComponentType.motor,
+          gridX: 5,
+          gridY: 2,
+          value: 12.0,
+        );
         newComponents = [b, s, m];
         newWires = [
-          SandboxWire(id: 'w1_$now', fromComponentId: b.id, fromTerminal: 'B', toComponentId: s.id, toTerminal: 'A'),
-          SandboxWire(id: 'w2_$now', fromComponentId: s.id, fromTerminal: 'B', toComponentId: m.id, toTerminal: 'A'),
-          SandboxWire(id: 'w3_$now', fromComponentId: m.id, fromTerminal: 'B', toComponentId: b.id, toTerminal: 'A'),
+          SandboxWire(
+            id: 'w1_$now',
+            fromComponentId: b.id,
+            fromTerminal: 'B',
+            toComponentId: s.id,
+            toTerminal: 'A',
+          ),
+          SandboxWire(
+            id: 'w2_$now',
+            fromComponentId: s.id,
+            fromTerminal: 'B',
+            toComponentId: m.id,
+            toTerminal: 'A',
+          ),
+          SandboxWire(
+            id: 'w3_$now',
+            fromComponentId: m.id,
+            fromTerminal: 'B',
+            toComponentId: b.id,
+            toTerminal: 'A',
+          ),
         ];
         break;
 
       case 'led_resistor':
-        final b = SandboxComponent(id: 'bat_$now', type: ComponentType.battery, gridX: 1, gridY: 2, value: 9.0);
-        final r = SandboxComponent(id: 'res_$now', type: ComponentType.resistor, gridX: 3, gridY: 2, value: 220.0);
-        final led = SandboxComponent(id: 'led_$now', type: ComponentType.led, gridX: 5, gridY: 2, value: 10.0);
+        final b = SandboxComponent(
+          id: 'bat_$now',
+          type: ComponentType.battery,
+          gridX: 1,
+          gridY: 2,
+          value: 9.0,
+        );
+        final r = SandboxComponent(
+          id: 'res_$now',
+          type: ComponentType.resistor,
+          gridX: 3,
+          gridY: 2,
+          value: 220.0,
+        );
+        final led = SandboxComponent(
+          id: 'led_$now',
+          type: ComponentType.led,
+          gridX: 5,
+          gridY: 2,
+          value: 10.0,
+        );
         newComponents = [b, r, led];
         newWires = [
-          SandboxWire(id: 'w1_$now', fromComponentId: b.id, fromTerminal: 'B', toComponentId: r.id, toTerminal: 'A'),
-          SandboxWire(id: 'w2_$now', fromComponentId: r.id, fromTerminal: 'B', toComponentId: led.id, toTerminal: 'A'),
-          SandboxWire(id: 'w3_$now', fromComponentId: led.id, fromTerminal: 'B', toComponentId: b.id, toTerminal: 'A'),
+          SandboxWire(
+            id: 'w1_$now',
+            fromComponentId: b.id,
+            fromTerminal: 'B',
+            toComponentId: r.id,
+            toTerminal: 'A',
+          ),
+          SandboxWire(
+            id: 'w2_$now',
+            fromComponentId: r.id,
+            fromTerminal: 'B',
+            toComponentId: led.id,
+            toTerminal: 'A',
+          ),
+          SandboxWire(
+            id: 'w3_$now',
+            fromComponentId: led.id,
+            fromTerminal: 'B',
+            toComponentId: b.id,
+            toTerminal: 'A',
+          ),
         ];
         break;
 
       case 'parallel_bulbs':
-        final b = SandboxComponent(id: 'bat_$now', type: ComponentType.battery, gridX: 1, gridY: 2, value: 9.0);
-        final l1 = SandboxComponent(id: 'b1_$now', type: ComponentType.bulb, gridX: 4, gridY: 1, value: 10.0);
-        final l2 = SandboxComponent(id: 'b2_$now', type: ComponentType.bulb, gridX: 4, gridY: 3, value: 10.0);
+        final b = SandboxComponent(
+          id: 'bat_$now',
+          type: ComponentType.battery,
+          gridX: 1,
+          gridY: 2,
+          value: 9.0,
+        );
+        final l1 = SandboxComponent(
+          id: 'b1_$now',
+          type: ComponentType.bulb,
+          gridX: 4,
+          gridY: 1,
+          value: 10.0,
+        );
+        final l2 = SandboxComponent(
+          id: 'b2_$now',
+          type: ComponentType.bulb,
+          gridX: 4,
+          gridY: 3,
+          value: 10.0,
+        );
         newComponents = [b, l1, l2];
         newWires = [
-          SandboxWire(id: 'w1_$now', fromComponentId: b.id, fromTerminal: 'B', toComponentId: l1.id, toTerminal: 'A'),
-          SandboxWire(id: 'w2_$now', fromComponentId: b.id, fromTerminal: 'B', toComponentId: l2.id, toTerminal: 'A'),
-          SandboxWire(id: 'w3_$now', fromComponentId: l1.id, fromTerminal: 'B', toComponentId: b.id, toTerminal: 'A'),
-          SandboxWire(id: 'w4_$now', fromComponentId: l2.id, fromTerminal: 'B', toComponentId: b.id, toTerminal: 'A'),
+          SandboxWire(
+            id: 'w1_$now',
+            fromComponentId: b.id,
+            fromTerminal: 'B',
+            toComponentId: l1.id,
+            toTerminal: 'A',
+          ),
+          SandboxWire(
+            id: 'w2_$now',
+            fromComponentId: b.id,
+            fromTerminal: 'B',
+            toComponentId: l2.id,
+            toTerminal: 'A',
+          ),
+          SandboxWire(
+            id: 'w3_$now',
+            fromComponentId: l1.id,
+            fromTerminal: 'B',
+            toComponentId: b.id,
+            toTerminal: 'A',
+          ),
+          SandboxWire(
+            id: 'w4_$now',
+            fromComponentId: l2.id,
+            fromTerminal: 'B',
+            toComponentId: b.id,
+            toTerminal: 'A',
+          ),
         ];
         break;
     }
@@ -286,18 +534,34 @@ class SandboxController extends Notifier<SandboxState> {
   }
 
   Future<void> _recalculateCircuit() async {
-    final solved = await _solverService.solve(state);
-    state = solved;
+    final revision = ++_solveRevision;
+    final stateToSolve = state;
+    final solved = await _solverService.solve(stateToSolve);
+    if (revision != _solveRevision) return;
+
+    state = state.copyWith(
+      simulationValues: solved.simulationValues,
+      errorMessage: solved.errorMessage,
+      burnedComponentIds: solved.burnedComponentIds,
+      isShortCircuit: solved.isShortCircuit,
+      shortCircuitWireIds: solved.shortCircuitWireIds,
+    );
     await _persistence.save(state);
   }
 
-  String? duplicateComponent(String componentId, {int gridCols = 8, int gridRows = 5}) {
+  String? duplicateComponent(
+    String componentId, {
+    int gridCols = 8,
+    int gridRows = 5,
+  }) {
     final comp = state.components.where((c) => c.id == componentId).firstOrNull;
     if (comp == null) return null;
 
     // Procura uma célula livre próxima
-    final occupied = state.components.map((c) => '${c.gridX},${c.gridY}').toSet();
-    
+    final occupied = state.components
+        .map((c) => '${c.gridX},${c.gridY}')
+        .toSet();
+
     // Candidatos preferenciais: direita, baixo, esquerda, cima
     final candidates = [
       [comp.gridX + 1, comp.gridY],
@@ -314,7 +578,11 @@ class SandboxController extends Notifier<SandboxState> {
     for (final cand in candidates) {
       final x = cand[0];
       final y = cand[1];
-      if (x >= 0 && x < gridCols && y >= 0 && y < gridRows && !occupied.contains('$x,$y')) {
+      if (x >= 0 &&
+          x < gridCols &&
+          y >= 0 &&
+          y < gridRows &&
+          !occupied.contains('$x,$y')) {
         targetX = x;
         targetY = y;
         found = true;
@@ -336,7 +604,10 @@ class SandboxController extends Notifier<SandboxState> {
       }
     }
 
-    final newId = '${comp.type.name}_${DateTime.now().millisecondsSinceEpoch}_${state.components.length}';
+    if (!found) return null;
+
+    final newId =
+        '${comp.type.name}_${DateTime.now().millisecondsSinceEpoch}_${state.components.length}';
     final cloned = SandboxComponent(
       id: newId,
       type: comp.type,
@@ -347,8 +618,8 @@ class SandboxController extends Notifier<SandboxState> {
       value: comp.value,
     );
 
-    addComponent(cloned);
-    return newId;
+    final added = addComponent(cloned, gridCols: gridCols, gridRows: gridRows);
+    return added ? newId : null;
   }
 
   List<SavedProjectSummary> listSavedProjects() {
@@ -380,7 +651,8 @@ class SandboxController extends Notifier<SandboxState> {
 
   void replaceBurnedComponent(String id) {
     _history.pushSnapshot(state);
-    final updatedBurned = Set<String>.from(state.burnedComponentIds)..remove(id);
+    final updatedBurned = Set<String>.from(state.burnedComponentIds)
+      ..remove(id);
     state = state.copyWith(burnedComponentIds: updatedBurned);
     _recalculateCircuit();
   }
@@ -392,6 +664,5 @@ class SandboxController extends Notifier<SandboxState> {
   }
 }
 
-final sandboxControllerProvider = NotifierProvider<SandboxController, SandboxState>(
-  SandboxController.new,
-);
+final sandboxControllerProvider =
+    NotifierProvider<SandboxController, SandboxState>(SandboxController.new);

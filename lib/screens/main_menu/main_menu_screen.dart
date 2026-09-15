@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -8,7 +7,6 @@ import '../../core/ui_scale.dart';
 import '../../state/progress_controller.dart';
 import '../../widgets/circuit_e_emblem.dart';
 import '../../widgets/low_poly_badge.dart';
-import '../../widgets/low_poly_button.dart';
 
 /// Tela de Menu Principal / Página Inicial do EletroLab.
 /// Cabeçalho com marca idêntica à tela de carregamento e card central compacto com modais.
@@ -28,6 +26,11 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
     final completedCount = progressState.completedChallenges.length;
     final bool hasProgress = completedCount > 0;
     final scale = context.uiScale;
+    final isUltraCompactMenu =
+        scale.isMobileLandscape && MediaQuery.sizeOf(context).height < 340;
+    final menuAlignment = scale.isMobileLandscape
+        ? Alignment.center
+        : const Alignment(0.0, 0.52);
 
     return PopScope(
       canPop: !_showGameModes,
@@ -42,12 +45,14 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
           children: [
             // 1. Imagem de Fundo (Fachada do Ginásio sem camada escura)
             Positioned.fill(
-              child: Image.asset(
-                'assets/low-poly/ginasio-alpha-low-poly-portas-fechadas.png',
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(color: const Color(0xFF03281E));
-                },
+              child: IgnorePointer(
+                child: Image.asset(
+                  'assets/low-poly/ginasio-alpha-low-poly-portas-fechadas.png',
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(color: const Color(0xFF03281E));
+                  },
+                ),
               ),
             ),
 
@@ -60,133 +65,156 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
 
                   // Painel Central: Marca Oficial + Card Glassmorphic do Menu
                   Expanded(
-                    child: Align(
-                      alignment: const Alignment(0.0, 0.52),
-                      child: SingleChildScrollView(
-                        physics: const BouncingScrollPhysics(),
-                        child: Padding(
-                          padding: scale.insetsSymmetric(
-                            horizontal: 24,
-                            vertical: 8,
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Identidade Oficial em formato horizontal (oculta no submenu)
-                              if (!_showGameModes) ...[
-                                _buildBrandingHeader(scale),
-                                SizedBox(
-                                  height: scale.spacing(12, min: 8, max: 18),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        return SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: constraints.maxHeight,
+                            ),
+                            child: Align(
+                              alignment: menuAlignment,
+                              child: Padding(
+                                padding: scale.insetsSymmetric(
+                                  horizontal: 24,
+                                  vertical: 8,
                                 ),
-                              ],
-
-                              // Card de Ações do Menu (Estilo Low-Poly 3D)
-                              ConstrainedBox(
-                                constraints: BoxConstraints(
-                                  maxWidth: scale.size(520, min: 360, max: 800),
-                                ),
-                                child: Container(
-                                  decoration: ShapeDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [
-                                        Color(0xF003261E),
-                                        Color(0xFA011712),
-                                      ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    shape: BeveledRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                        scale.size(20),
-                                      ),
-                                      side: const BorderSide(
-                                        color: Color(0xFF10B981),
-                                        width: 1.5,
-                                      ),
-                                    ),
-                                    shadows: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(
-                                          alpha: 0.60,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // Identidade Oficial em formato horizontal (oculta no submenu)
+                                    if (!_showGameModes &&
+                                        !isUltraCompactMenu) ...[
+                                      _buildBrandingHeader(scale),
+                                      SizedBox(
+                                        height: scale.spacing(
+                                          12,
+                                          min: 8,
+                                          max: 18,
                                         ),
-                                        blurRadius: scale.size(28),
-                                        offset: Offset(0, scale.size(8)),
-                                      ),
-                                      BoxShadow(
-                                        color: const Color(
-                                          0xFF10B981,
-                                        ).withValues(alpha: 0.25),
-                                        blurRadius: scale.size(18),
                                       ),
                                     ],
-                                  ),
-                                  child: ClipPath(
-                                    clipper: ShapeBorderClipper(
-                                      shape: BeveledRectangleBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          scale.size(19.5),
+
+                                    // Card de Ações do Menu (Estilo Low-Poly 3D)
+                                    ConstrainedBox(
+                                      constraints: BoxConstraints(
+                                        maxWidth: scale.size(
+                                          520,
+                                          min: 360,
+                                          max: 800,
                                         ),
                                       ),
-                                    ),
-                                    child: Container(
-                                      padding: scale.insetsSymmetric(
-                                        horizontal: 22,
-                                        vertical: 18,
-                                      ),
-                                      child: AnimatedSwitcher(
-                                        duration: const Duration(
-                                          milliseconds: 220,
-                                        ),
-                                        transitionBuilder: (child, animation) {
-                                          return FadeTransition(
-                                            opacity: animation,
-                                            child: child,
-                                          );
-                                        },
-                                        child: _showGameModes
-                                            ? KeyedSubtree(
-                                                key: const ValueKey(
-                                                  'game_modes_view',
-                                                ),
-                                                child: _buildGameModesView(
-                                                  context,
-                                                  scale,
-                                                  hasProgress,
-                                                ),
-                                              )
-                                            : KeyedSubtree(
-                                                key: const ValueKey(
-                                                  'main_menu_view',
-                                                ),
-                                                child: _buildMainMenuView(
-                                                  context,
-                                                  scale,
-                                                  hasProgress,
-                                                  completedCount,
-                                                ),
+                                      child: Container(
+                                        decoration: ShapeDecoration(
+                                          gradient: const LinearGradient(
+                                            colors: [
+                                              Color(0xF003261E),
+                                              Color(0xFA011712),
+                                            ],
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                          ),
+                                          shape: BeveledRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              scale.size(20),
+                                            ),
+                                            side: const BorderSide(
+                                              color: Color(0xFF10B981),
+                                              width: 1.5,
+                                            ),
+                                          ),
+                                          shadows: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(
+                                                alpha: 0.60,
                                               ),
+                                              blurRadius: scale.size(28),
+                                              offset: Offset(0, scale.size(8)),
+                                            ),
+                                            BoxShadow(
+                                              color: const Color(
+                                                0xFF10B981,
+                                              ).withValues(alpha: 0.25),
+                                              blurRadius: scale.size(18),
+                                            ),
+                                          ],
+                                        ),
+                                        child: ClipPath(
+                                          clipper: ShapeBorderClipper(
+                                            shape: BeveledRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(
+                                                    scale.size(19.5),
+                                                  ),
+                                            ),
+                                          ),
+                                          child: Container(
+                                            padding: scale.insetsSymmetric(
+                                              horizontal: 22,
+                                              vertical: 18,
+                                            ),
+                                            child: AnimatedSwitcher(
+                                              duration: const Duration(
+                                                milliseconds: 220,
+                                              ),
+                                              transitionBuilder:
+                                                  (child, animation) {
+                                                    return FadeTransition(
+                                                      opacity: animation,
+                                                      child: child,
+                                                    );
+                                                  },
+                                              child: _showGameModes
+                                                  ? KeyedSubtree(
+                                                      key: const ValueKey(
+                                                        'game_modes_view',
+                                                      ),
+                                                      child:
+                                                          _buildGameModesView(
+                                                            context,
+                                                            scale,
+                                                            hasProgress,
+                                                          ),
+                                                    )
+                                                  : KeyedSubtree(
+                                                      key: const ValueKey(
+                                                        'main_menu_view',
+                                                      ),
+                                                      child: _buildMainMenuView(
+                                                        context,
+                                                        scale,
+                                                        hasProgress,
+                                                        completedCount,
+                                                      ),
+                                                    ),
+                                            ),
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                  ),
+                                  ],
                                 ),
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
+                        );
+                      },
                     ),
                   ),
 
                   // Rodapé Limpo
-                  Padding(
-                    padding: scale.insetsOnly(bottom: 14, top: 4),
-                    child: Text(
-                      'EletroLab v1.2.0 • Laboratório Virtual de Circuitos Elétricos',
-                      style: GoogleFonts.outfit(
-                        color: const Color(0xFF022C22),
-                        fontSize: scale.font(13.5),
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.2,
+                  IgnorePointer(
+                    child: Padding(
+                      padding: scale.insetsOnly(bottom: 14, top: 4),
+                      child: Text(
+                        'EletroLab v1.2.0 • Laboratório Virtual de Circuitos Elétricos',
+                        style: GoogleFonts.outfit(
+                          color: const Color(0xFF022C22),
+                          fontSize: scale.font(13.5),
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.2,
+                        ),
                       ),
                     ),
                   ),
@@ -429,7 +457,9 @@ class _MainMenuScreenState extends ConsumerState<MainMenuScreen> {
                         customBorder: BeveledRectangleBorder(
                           borderRadius: BorderRadius.circular(bevel),
                         ),
-                        splashColor: const Color(0xFF10B981).withValues(alpha: 0.3),
+                        splashColor: const Color(
+                          0xFF10B981,
+                        ).withValues(alpha: 0.3),
                         child: Center(
                           child: Icon(
                             Icons.settings_rounded,
@@ -767,44 +797,48 @@ class _LowPolyMenuCardButtonState extends State<_LowPolyMenuCardButton> {
           });
         }
       },
-      child: GestureDetector(
-        onTapDown: (_) => setState(() => _isPressed = true),
-        onTapUp: (_) {
-          setState(() => _isPressed = false);
-          widget.onTap();
-        },
-        onTapCancel: () {
-          if (mounted) setState(() => _isPressed = false);
-        },
-        child: SizedBox(
-          width: double.infinity,
-          child: Stack(
-            children: [
-              // 1. Base 3D Inferior Fixa (extrusão sólida)
-              Positioned.fill(
-                top: depth,
-                child: Material(
-                  color: bottomBaseColor,
-                  shape: BeveledRectangleBorder(
-                    borderRadius: BorderRadius.circular(widget.bevel),
-                  ),
-                  child: const SizedBox.expand(),
+      child: SizedBox(
+        width: double.infinity,
+        child: Stack(
+          children: [
+            // 1. Base 3D Inferior Fixa (extrusão sólida)
+            Positioned.fill(
+              top: depth,
+              child: Material(
+                color: bottomBaseColor,
+                shape: BeveledRectangleBorder(
+                  borderRadius: BorderRadius.circular(widget.bevel),
                 ),
+                child: const SizedBox.expand(),
               ),
+            ),
 
-              // 2. Face Superior Dinâmica (translada com efeito mecânico)
-              Transform.translate(
-                offset: Offset(0, currentOffset),
-                child: Material(
-                  color: topFaceColor,
-                  shape: BeveledRectangleBorder(
-                    borderRadius: BorderRadius.circular(widget.bevel),
-                    side: BorderSide(
-                      color: borderColor,
-                      width: widget.isHighlighted ? 1.8 : 1.3,
-                    ),
+            // 2. Face Superior Dinâmica (translada com efeito mecânico)
+            Transform.translate(
+              offset: Offset(0, currentOffset),
+              child: Material(
+                color: topFaceColor,
+                shape: BeveledRectangleBorder(
+                  borderRadius: BorderRadius.circular(widget.bevel),
+                  side: BorderSide(
+                    color: borderColor,
+                    width: widget.isHighlighted ? 1.8 : 1.3,
                   ),
-                  elevation: _isPressed ? 0 : (widget.isHighlighted ? 3 : 1),
+                ),
+                elevation: _isPressed ? 0 : (widget.isHighlighted ? 3 : 1),
+                child: InkWell(
+                  key: ValueKey('low_poly_menu_button_${widget.title}'),
+                  onTap: widget.onTap,
+                  onTapDown: (_) => setState(() => _isPressed = true),
+                  onTapUp: (_) => setState(() => _isPressed = false),
+                  onTapCancel: () {
+                    if (mounted) setState(() => _isPressed = false);
+                  },
+                  customBorder: BeveledRectangleBorder(
+                    borderRadius: BorderRadius.circular(widget.bevel),
+                  ),
+                  splashColor: widget.accentColor.withValues(alpha: 0.20),
+                  highlightColor: Colors.white.withValues(alpha: 0.04),
                   child: Padding(
                     padding: scale.insetsSymmetric(
                       horizontal: 18,
@@ -852,8 +886,8 @@ class _LowPolyMenuCardButtonState extends State<_LowPolyMenuCardButton> {
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

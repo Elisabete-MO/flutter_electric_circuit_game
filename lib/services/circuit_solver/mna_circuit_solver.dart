@@ -6,10 +6,7 @@ class MnaCircuitSolver implements CircuitSolverStrategy {
   @override
   SandboxState solve(SandboxState targetState) {
     if (!targetState.isSimulating) {
-      return targetState.copyWith(
-        simulationValues: {},
-        errorMessage: null,
-      );
+      return targetState.copyWith(simulationValues: {}, errorMessage: null);
     }
 
     final components = targetState.components;
@@ -43,7 +40,10 @@ class MnaCircuitSolver implements CircuitSolverStrategy {
 
     // Unir os terminais que estão conectados por fios
     for (final w in wires) {
-      union('${w.fromComponentId}_${w.fromTerminal}', '${w.toComponentId}_${w.toTerminal}');
+      union(
+        '${w.fromComponentId}_${w.fromTerminal}',
+        '${w.toComponentId}_${w.toTerminal}',
+      );
     }
 
     // Mapear cada raiz única para um índice de nó
@@ -66,15 +66,17 @@ class MnaCircuitSolver implements CircuitSolverStrategy {
 
     // Encontrar o nó terra (GND / Referência): terminal A da primeira bateria/fonte
     int groundNode = 0;
-    final firstSource = components.firstWhereOrNull((c) =>
-        c.type == ComponentType.battery || c.type == ComponentType.powerSupply);
+    final firstSource = components.firstWhereOrNull(
+      (c) => CircuitElectricalSupport.isVoltageSource(c.type),
+    );
     if (firstSource != null) {
       groundNode = getTerminalNode(firstSource.id, 'A');
     }
 
     // Coletar fontes de tensão independentes
-    final voltageSources = components.where((c) =>
-        c.type == ComponentType.battery || c.type == ComponentType.powerSupply).toList();
+    final voltageSources = components
+        .where((c) => CircuitElectricalSupport.isVoltageSource(c.type))
+        .toList();
     final numVoltSources = voltageSources.length;
 
     if (numVoltSources == 0) {
@@ -86,8 +88,9 @@ class MnaCircuitSolver implements CircuitSolverStrategy {
 
     // Controle de estado dos diodos/LEDs: c.id -> isOpen (true/false)
     final diodeOpenStates = <String, bool>{};
-    final diodes = components.where((c) =>
-        c.type == ComponentType.diode || c.type == ComponentType.led).toList();
+    final diodes = components
+        .where((c) => CircuitElectricalSupport.isDiodeLike(c.type))
+        .toList();
     for (final d in diodes) {
       diodeOpenStates[d.id] = false; // assume conduzindo inicialmente
     }
@@ -99,7 +102,10 @@ class MnaCircuitSolver implements CircuitSolverStrategy {
     while (iterations < 10 && !converged) {
       iterations++;
       final matrixSize = totalNodes + numVoltSources;
-      final A = List.generate(matrixSize, (_) => List<double>.filled(matrixSize, 0.0));
+      final A = List.generate(
+        matrixSize,
+        (_) => List<double>.filled(matrixSize, 0.0),
+      );
       final z = List<double>.filled(matrixSize, 0.0);
 
       // Adicionar gmin (pequena condutância a terra) para garantir matriz não-singular
@@ -116,27 +122,10 @@ class MnaCircuitSolver implements CircuitSolverStrategy {
         final nA = getTerminalNode(c.id, 'A');
         final nB = getTerminalNode(c.id, 'B');
 
-        double? R;
-        if (c.type == ComponentType.resistor || c.type == ComponentType.bulb) {
-          R = c.value;
-        } else if (c.type == ComponentType.potentiometer) {
-          R = c.value <= 0 ? 0.01 : c.value;
-        } else if (c.type == ComponentType.motor) {
-          R = 2.0;
-        } else if (c.type == ComponentType.buzzer) {
-          R = 8.0;
-        } else if (c.type == ComponentType.fuse) {
-          R = 0.1;
-        } else if (c.type == ComponentType.capacitor) {
-          R = 10.0;
-        } else if (c.type == ComponentType.switchComponent) {
-          R = c.isActive ? 0.01 : null; // null representa circuito aberto
-        } else if (c.type == ComponentType.diode || c.type == ComponentType.led) {
-          final isOpen = diodeOpenStates[c.id] ?? false;
-          if (!isOpen) {
-            R = c.type == ComponentType.diode ? 0.5 : 2.0;
-          }
-        }
+        final R = CircuitElectricalSupport.resistanceFor(
+          c,
+          diodeOpen: diodeOpenStates[c.id] ?? false,
+        );
 
         if (R != null) {
           final G = 1.0 / R;
@@ -238,33 +227,16 @@ class MnaCircuitSolver implements CircuitSolverStrategy {
       final vDrop = (vB - vA).abs();
       double current = 0.0;
 
-      if (c.type == ComponentType.battery || c.type == ComponentType.powerSupply) {
+      if (CircuitElectricalSupport.isVoltageSource(c.type)) {
         final j = voltageSources.indexOf(c);
         if (j != -1) {
           current = solution[totalNodes + j].abs();
         }
       } else if (!targetState.burnedComponentIds.contains(c.id)) {
-        double? R;
-        if (c.type == ComponentType.resistor || c.type == ComponentType.bulb) {
-          R = c.value;
-        } else if (c.type == ComponentType.potentiometer) {
-          R = c.value <= 0 ? 0.01 : c.value;
-        } else if (c.type == ComponentType.motor) {
-          R = 2.0;
-        } else if (c.type == ComponentType.buzzer) {
-          R = 8.0;
-        } else if (c.type == ComponentType.fuse) {
-          R = 0.1;
-        } else if (c.type == ComponentType.capacitor) {
-          R = 10.0;
-        } else if (c.type == ComponentType.switchComponent) {
-          R = c.isActive ? 0.01 : null;
-        } else if (c.type == ComponentType.diode || c.type == ComponentType.led) {
-          final isOpen = diodeOpenStates[c.id] ?? false;
-          if (!isOpen) {
-            R = c.type == ComponentType.diode ? 0.5 : 2.0;
-          }
-        }
+        final R = CircuitElectricalSupport.resistanceFor(
+          c,
+          diodeOpen: diodeOpenStates[c.id] ?? false,
+        );
 
         if (R != null) {
           current = vDrop / R;
@@ -318,13 +290,17 @@ class MnaCircuitSolver implements CircuitSolverStrategy {
         final current = solution[totalNodes + j].abs();
         if (current > 20.0) {
           isShortCircuit = true;
-          error = 'CURTO-CIRCUITO DETECTADO! Conexão direta entre pólos sem carga!';
+          error =
+              'CURTO-CIRCUITO DETECTADO! Conexão direta entre pólos sem carga!';
           final srcNodeA = getTerminalNode(src.id, 'A');
           final srcNodeB = getTerminalNode(src.id, 'B');
           for (final w in wires) {
             final wNodeA = getTerminalNode(w.fromComponentId, w.fromTerminal);
             final wNodeB = getTerminalNode(w.toComponentId, w.toTerminal);
-            if (wNodeA == srcNodeA || wNodeB == srcNodeA || wNodeA == srcNodeB || wNodeB == srcNodeB) {
+            if (wNodeA == srcNodeA ||
+                wNodeB == srcNodeA ||
+                wNodeA == srcNodeB ||
+                wNodeB == srcNodeB) {
               shortCircuitWireIds.add(w.id);
             }
           }
