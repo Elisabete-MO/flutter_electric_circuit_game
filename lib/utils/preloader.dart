@@ -42,6 +42,7 @@ class Preloader {
     'assets/images/component_switch_off.png',
     'assets/images/component_switch_on.png',
     'assets/images/concept.png',
+    'assets/images/logo_alpha.png',
 
     // Intro / Professora Nuri
     'assets/low-poly/ginasio-alpha-low-poly-portas-fechadas.png',

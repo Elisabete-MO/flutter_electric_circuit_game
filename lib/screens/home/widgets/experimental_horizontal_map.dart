@@ -323,12 +323,17 @@ class _AlphaLumenCentralLogo extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   SizedBox(
-                    width: size * 0.34,
-                    height: size * 0.34,
-                    child: const Icon(
-                      Icons.stars_rounded,
-                      color: Colors.white,
-                      size: 36,
+                    width: size * 0.38,
+                    height: size * 0.38,
+                    child: Image.asset(
+                      'assets/images/logo_alpha.png',
+                      fit: BoxFit.contain,
+                      filterQuality: FilterQuality.medium,
+                      errorBuilder: (context, error, stackTrace) => const Icon(
+                        Icons.stars_rounded,
+                        color: Colors.white,
+                        size: 36,
+                      ),
                     ),
                   ),
                   SizedBox(height: size * 0.04),
