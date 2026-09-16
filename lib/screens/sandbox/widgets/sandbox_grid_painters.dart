@@ -665,11 +665,27 @@ class WiresPainter extends CustomPainter {
       }
 
       // Cor Didática do Fio por Polaridade / Mapa de Calor de Potencial Elétrico
-      final isFromPosPower = (fromComp.type == ComponentType.battery || fromComp.type == ComponentType.powerSupply) && wire.fromTerminal == 'B';
-      final isToPosPower = (toComp.type == ComponentType.battery || toComp.type == ComponentType.powerSupply) && wire.toTerminal == 'B';
+      bool isPosPower(SandboxComponent comp, String term) {
+        return (comp.type == ComponentType.battery ||
+                comp.type == ComponentType.batteryAA ||
+                comp.type == ComponentType.batteryPack4_5V ||
+                comp.type == ComponentType.powerSupply) &&
+            term == 'B';
+      }
 
-      final isFromNegPower = (fromComp.type == ComponentType.battery || fromComp.type == ComponentType.powerSupply) && wire.fromTerminal == 'A';
-      final isToNegPower = (toComp.type == ComponentType.battery || toComp.type == ComponentType.powerSupply) && wire.toTerminal == 'A';
+      bool isNegPower(SandboxComponent comp, String term) {
+        return (comp.type == ComponentType.battery ||
+                comp.type == ComponentType.batteryAA ||
+                comp.type == ComponentType.batteryPack4_5V ||
+                comp.type == ComponentType.powerSupply) &&
+            term == 'A';
+      }
+
+      final isFromPosPower = isPosPower(fromComp, wire.fromTerminal);
+      final isToPosPower = isPosPower(toComp, wire.toTerminal);
+
+      final isFromNegPower = isNegPower(fromComp, wire.fromTerminal);
+      final isToNegPower = isNegPower(toComp, wire.toTerminal);
 
       // Potencial elétrico no nó do fio
       final fromV = simulationValues['node_voltage_${fromComp.id}_${wire.fromTerminal}'];
@@ -794,10 +810,17 @@ class WiresPainter extends CustomPainter {
 
       // Animação de fluxo de corrente (partículas de elétrons pulsantes/correndo)
       if (isWireActive) {
+        // Sentido da corrente convencional: flui do maior potencial para o menor potencial.
+        // Se fromV < toV, o fluxo elétrico real vai de 'to' para 'from' (sentido inverso do Path).
+        final bool isReverseFlow = (fromV != null && toV != null && fromV < toV);
+        final double effectiveAnim = isReverseFlow
+            ? (1.0 - (animationValue % 1.0))
+            : (animationValue % 1.0);
+
         for (final metric in path.computeMetrics()) {
           final length = metric.length;
           const double spacing = 24.0;
-          final double initialOffset = animationValue * spacing;
+          final double initialOffset = effectiveAnim * spacing;
           
           for (double d = initialOffset; d < length; d += spacing) {
             final tangent = metric.getTangentForOffset(d);

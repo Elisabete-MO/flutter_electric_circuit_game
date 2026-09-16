@@ -615,6 +615,7 @@ class MovimentoMiniaturaBreadboardPainter extends CustomPainter {
         isReversed ? const Color(0xFFEAB308) : const Color(0xFF10B981),
         isActive: isClosed && !isFaulty,
         thickness: 3.2,
+        isReverseFlow: isReversed,
       );
 
       // Cabo 2 do Motor (Amarelo ou Verde invertido)
@@ -629,6 +630,7 @@ class MovimentoMiniaturaBreadboardPainter extends CustomPainter {
         isReversed ? const Color(0xFF10B981) : const Color(0xFFEAB308),
         isActive: isClosed && !isFaulty,
         thickness: 3.2,
+        isReverseFlow: isReversed,
       );
     }
 
@@ -776,24 +778,24 @@ class MovimentoMiniaturaBreadboardPainter extends CustomPainter {
     canvas.drawCircle(center, isPressed ? btnSize * 0.22 : btnSize * 0.26, Paint()..color = isPressed ? const Color(0xFF10B981) : const Color(0xFFDC2626));
   }
 
-  void _drawCurvedWire(Canvas canvas, Offset start, Offset ctrl1, Offset ctrl2, Offset end, Color color, {bool isActive = true, double thickness = 3.6}) {
+  void _drawCurvedWire(Canvas canvas, Offset start, Offset ctrl1, Offset ctrl2, Offset end, Color color, {bool isActive = true, double thickness = 3.6, bool isReverseFlow = false}) {
     final path = Path()..moveTo(start.dx, start.dy)..cubicTo(ctrl1.dx, ctrl1.dy, ctrl2.dx, ctrl2.dy, end.dx, end.dy);
     canvas.drawPath(path.shift(const Offset(2, 3)), Paint()..color = Colors.black.withValues(alpha: 0.25)..strokeWidth = thickness + 1.2..style = PaintingStyle.stroke..strokeCap = StrokeCap.round);
     canvas.drawPath(path, Paint()..color = isActive ? color : color.withValues(alpha: 0.5)..strokeWidth = thickness..style = PaintingStyle.stroke..strokeCap = StrokeCap.round);
     canvas.drawCircle(end, 2.4, Paint()..color = const Color(0xFF94A3B8));
     if (isActive && isClosed && !isFaulty) {
-      _drawFlowingElectrons(canvas, path);
+      _drawFlowingElectrons(canvas, path, isReverseFlow: isReverseFlow);
     }
   }
 
-  void _drawJumperWire(Canvas canvas, Offset start, Offset end, Color color, {bool isActive = true}) {
+  void _drawJumperWire(Canvas canvas, Offset start, Offset end, Color color, {bool isActive = true, bool isReverseFlow = false}) {
     final midY = (start.dy + end.dy) / 2;
     final path = Path()..moveTo(start.dx, start.dy)..lineTo(start.dx, midY)..lineTo(end.dx, midY)..lineTo(end.dx, end.dy);
     canvas.drawPath(path, Paint()..color = isActive ? color : color.withValues(alpha: 0.5)..strokeWidth = 3.0..style = PaintingStyle.stroke..strokeCap = StrokeCap.round);
     canvas.drawCircle(start, 2.2, Paint()..color = const Color(0xFF94A3B8));
     canvas.drawCircle(end, 2.2, Paint()..color = const Color(0xFF94A3B8));
     if (isActive && isClosed && !isFaulty) {
-      _drawFlowingElectrons(canvas, path);
+      _drawFlowingElectrons(canvas, path, isReverseFlow: isReverseFlow);
     }
   }
 
@@ -803,15 +805,19 @@ class MovimentoMiniaturaBreadboardPainter extends CustomPainter {
     canvas.drawCircle(brokenEnd, 3.0, Paint()..color = Colors.amberAccent);
   }
 
-  void _drawFlowingElectrons(Canvas canvas, Path path) {
+  void _drawFlowingElectrons(Canvas canvas, Path path, {bool isReverseFlow = false}) {
     const electronCount = 6;
     final glowPaint = Paint()..color = const Color(0xFFFDE047)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0);
     final corePaint = Paint()..color = const Color(0xFFFEF08A);
 
+    final effectiveAnim = isReverseFlow
+        ? (1.0 - (animationValue % 1.0))
+        : (animationValue % 1.0);
+
     for (final metric in path.computeMetrics()) {
       final length = metric.length;
       for (int i = 0; i < electronCount; i++) {
-        final distance = ((animationValue + (i / electronCount)) % 1.0) * length;
+        final distance = ((effectiveAnim + (i / electronCount)) % 1.0) * length;
         final tangent = metric.getTangentForOffset(distance);
         if (tangent != null) {
           canvas.drawCircle(tangent.position, 3.2, glowPaint);
