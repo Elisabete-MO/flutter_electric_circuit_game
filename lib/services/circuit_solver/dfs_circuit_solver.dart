@@ -30,7 +30,8 @@ class DfsCircuitSolver implements CircuitSolverStrategy {
     for (final source in powerSources) {
       final visited = <String>{source.id};
       final componentPath = <SandboxComponent>[];
-      final wirePath = <SandboxWire>[];
+      final wirePath = <_TraversedWire>[];
+      final inTerminals = <String, String>{};
       final List<_ClosedLoopData> closedLoops = [];
 
       // Start traversal from positive terminal 'B'
@@ -42,9 +43,14 @@ class DfsCircuitSolver implements CircuitSolverStrategy {
         visited: visited,
         componentPath: componentPath,
         wirePath: wirePath,
-        onLoopClosed: (pathComponents, pathWires) {
+        inTerminals: inTerminals,
+        onLoopClosed: (pathComponents, pathWires, termMap) {
           closedLoops.add(
-            _ClosedLoopData(List.from(pathComponents), List.from(pathWires)),
+            _ClosedLoopData(
+              List.from(pathComponents),
+              List.from(pathWires),
+              Map.from(termMap),
+            ),
           );
         },
       );
@@ -64,8 +70,8 @@ class DfsCircuitSolver implements CircuitSolverStrategy {
             error =
                 'CURTO-CIRCUITO DETECTADO! Conexão direta entre pólos sem carga!';
             isShortCircuit = true;
-            for (final w in loop.wires) {
-              shortCircuitWireIds.add(w.id);
+            for (final tw in loop.wires) {
+              shortCircuitWireIds.add(tw.wire.id);
             }
             break;
           }
@@ -74,6 +80,14 @@ class DfsCircuitSolver implements CircuitSolverStrategy {
           totalSourceCurrent += loopCurrent;
 
           double currentPotential = source.value;
+
+          // Marca os fios ativos e o sentido de fluxo (+1.0 = from->to, -1.0 = to->from)
+          for (final tw in loop.wires) {
+            values['active_${tw.wire.id}'] = 1.0;
+            values['wire_current_${tw.wire.id}'] =
+                (values['wire_current_${tw.wire.id}'] ?? 0.0) + loopCurrent;
+            values['wire_flow_${tw.wire.id}'] = tw.isForward ? 1.0 : -1.0;
+          }
 
           for (final comp in loopPath) {
             if (CircuitElectricalSupport.isVoltageSource(comp.type)) {
@@ -91,10 +105,12 @@ class DfsCircuitSolver implements CircuitSolverStrategy {
             values['voltage_drop_${comp.id}'] = vDrop;
             values['power_${comp.id}'] = power;
 
-            // Define potenciais nos terminais A e B de acordo com o sentido do fluxo
-            values['node_voltage_${comp.id}_B'] = currentPotential;
+            // Define potenciais nos terminais de acordo com o sentido REAL de entrada e saída
+            final inTerm = loop.inTerminals[comp.id] ?? 'A';
+            final outTerm = inTerm == 'A' ? 'B' : 'A';
+            values['node_voltage_${comp.id}_$inTerm'] = currentPotential;
             currentPotential -= vDrop;
-            values['node_voltage_${comp.id}_A'] = currentPotential;
+            values['node_voltage_${comp.id}_$outTerm'] = currentPotential;
 
             // Verificação de Limites Físicos e Sobrecarga Educativa
             final totalCompCurrent =
@@ -151,8 +167,13 @@ class DfsCircuitSolver implements CircuitSolverStrategy {
     required SandboxComponent targetBattery,
     required Set<String> visited,
     required List<SandboxComponent> componentPath,
-    required List<SandboxWire> wirePath,
-    required void Function(List<SandboxComponent>, List<SandboxWire>)
+    required List<_TraversedWire> wirePath,
+    required Map<String, String> inTerminals,
+    required void Function(
+      List<SandboxComponent>,
+      List<_TraversedWire>,
+      Map<String, String>,
+    )
     onLoopClosed,
   }) {
     componentPath.add(currentComponent);
@@ -165,12 +186,10 @@ class DfsCircuitSolver implements CircuitSolverStrategy {
     }).toList();
 
     for (final wire in wires) {
-      final nextId = wire.fromComponentId == currentComponent.id
-          ? wire.toComponentId
-          : wire.fromComponentId;
-      final nextTerm = wire.fromComponentId == currentComponent.id
-          ? wire.toTerminal
-          : wire.fromTerminal;
+      final isForward = (wire.fromComponentId == currentComponent.id &&
+          wire.fromTerminal == currentTerminal);
+      final nextId = isForward ? wire.toComponentId : wire.fromComponentId;
+      final nextTerm = isForward ? wire.toTerminal : wire.fromTerminal;
 
       final nextComponentList = targetState.components
           .where((c) => c.id == nextId)
@@ -178,10 +197,15 @@ class DfsCircuitSolver implements CircuitSolverStrategy {
       if (nextComponentList.isEmpty) continue;
       final nextComponent = nextComponentList.first;
 
-      wirePath.add(wire);
+      final traversedWire = _TraversedWire(wire, isForward);
+      wirePath.add(traversedWire);
 
       if (nextComponent.id == targetBattery.id && nextTerm == 'A') {
-        onLoopClosed(List.from(componentPath), List.from(wirePath));
+        onLoopClosed(
+          List.from(componentPath),
+          List.from(wirePath),
+          inTerminals,
+        );
         wirePath.removeLast();
         return;
       }
@@ -215,6 +239,7 @@ class DfsCircuitSolver implements CircuitSolverStrategy {
       final nextOutTerm = nextTerm == 'A' ? 'B' : 'A';
 
       visited.add(nextComponent.id);
+      inTerminals[nextComponent.id] = nextTerm;
       _traverseForState(
         targetState: targetState,
         currentComponent: nextComponent,
@@ -223,8 +248,10 @@ class DfsCircuitSolver implements CircuitSolverStrategy {
         visited: visited,
         componentPath: componentPath,
         wirePath: wirePath,
+        inTerminals: inTerminals,
         onLoopClosed: onLoopClosed,
       );
+      inTerminals.remove(nextComponent.id);
       visited.remove(nextComponent.id);
       wirePath.removeLast();
     }
@@ -233,8 +260,15 @@ class DfsCircuitSolver implements CircuitSolverStrategy {
   }
 }
 
+class _TraversedWire {
+  final SandboxWire wire;
+  final bool isForward;
+  _TraversedWire(this.wire, this.isForward);
+}
+
 class _ClosedLoopData {
   final List<SandboxComponent> components;
-  final List<SandboxWire> wires;
-  _ClosedLoopData(this.components, this.wires);
+  final List<_TraversedWire> wires;
+  final Map<String, String> inTerminals;
+  _ClosedLoopData(this.components, this.wires, this.inTerminals);
 }

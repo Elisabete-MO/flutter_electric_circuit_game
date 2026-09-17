@@ -283,6 +283,71 @@ class MnaCircuitSolver implements CircuitSolverStrategy {
       }
     }
 
+    // Calcular correntes nos fios através da lei de Kirchhoff (KCL)
+    final Map<String, double> terminalInjected = {};
+    for (final c in components) {
+      final vA = values['node_voltage_${c.id}_A'] ?? 0.0;
+      final vB = values['node_voltage_${c.id}_B'] ?? 0.0;
+
+      if (CircuitElectricalSupport.isVoltageSource(c.type)) {
+        final j = voltageSources.indexOf(c);
+        if (j != -1) {
+          final iSrc = solution[totalNodes + j];
+          terminalInjected['${c.id}_B'] = iSrc;
+          terminalInjected['${c.id}_A'] = -iSrc;
+        }
+      } else if (!targetState.burnedComponentIds.contains(c.id)) {
+        final R = CircuitElectricalSupport.resistanceFor(
+          c,
+          diodeOpen: diodeOpenStates[c.id] ?? false,
+        );
+        if (R != null && R > 0) {
+          final iInside = (vA - vB) / R;
+          terminalInjected['${c.id}_A'] = -iInside;
+          terminalInjected['${c.id}_B'] = iInside;
+        }
+      }
+    }
+
+    // Para cada fio w, encontrar os terminais conectados ao lado 'from' sem usar o fio w
+    for (final w in wires) {
+      final fromKey = '${w.fromComponentId}_${w.fromTerminal}';
+
+      final visited = <String>{fromKey};
+      final queue = <String>[fromKey];
+
+      while (queue.isNotEmpty) {
+        final curr = queue.removeAt(0);
+        for (final otherWire in wires) {
+          if (otherWire.id == w.id) continue;
+          final oFrom = '${otherWire.fromComponentId}_${otherWire.fromTerminal}';
+          final oTo = '${otherWire.toComponentId}_${otherWire.toTerminal}';
+
+          if (oFrom == curr && !visited.contains(oTo)) {
+            visited.add(oTo);
+            queue.add(oTo);
+          } else if (oTo == curr && !visited.contains(oFrom)) {
+            visited.add(oFrom);
+            queue.add(oFrom);
+          }
+        }
+      }
+
+      double currentFromSide = 0.0;
+      for (final term in visited) {
+        currentFromSide += terminalInjected[term] ?? 0.0;
+      }
+
+      final currentMag = currentFromSide.abs();
+      if (currentMag > 0.0001) {
+        values['active_${w.id}'] = 1.0;
+        values['wire_current_${w.id}'] = currentMag;
+        values['wire_flow_${w.id}'] = currentFromSide >= 0 ? 1.0 : -1.0;
+      } else {
+        values['wire_flow_${w.id}'] = 0.0;
+      }
+    }
+
     // Verificar se houve curto-circuito: qualquer corrente de fonte maior que 20A
     for (final src in voltageSources) {
       final j = voltageSources.indexOf(src);

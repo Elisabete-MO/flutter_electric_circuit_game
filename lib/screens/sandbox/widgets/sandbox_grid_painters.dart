@@ -644,11 +644,18 @@ class WiresPainter extends CustomPainter {
       final isShortWire = isShortCircuit && (shortCircuitWireIds.isEmpty || shortCircuitWireIds.contains(wire.id));
       final isSelected = wire.id == selectedWireId;
 
-      // Rota eletricamente ativa se a simulação estiver rodando e ambos os componentes conectados tiverem corrente
+      final wireActiveVal = simulationValues['active_${wire.id}'];
+      final wireCurrent = simulationValues['wire_current_${wire.id}'];
+      final wireFlow = simulationValues['wire_flow_${wire.id}'];
+
+      // Rota eletricamente ativa se a simulação estiver rodando e houver corrente no fio/circuito
       final isWireActive = isSimulating && 
           !isShortCircuit &&
-          simulationValues['active_${fromComp.id}'] == 1.0 && 
-          simulationValues['active_${toComp.id}'] == 1.0;
+          (wireActiveVal == 1.0 ||
+           (wireCurrent != null && wireCurrent > 0.0001) ||
+           (wireFlow != null && wireFlow != 0.0) ||
+           (simulationValues['active_${fromComp.id}'] == 1.0 && 
+            simulationValues['active_${toComp.id}'] == 1.0));
 
       // Usa cache para evitar reconstruir o Path do fio a cada frame animado
       final cacheKey = WirePathCacheKey(start, end, isDiagramMode, componentHash);
@@ -810,9 +817,22 @@ class WiresPainter extends CustomPainter {
 
       // Animação de fluxo de corrente (partículas de elétrons pulsantes/correndo)
       if (isWireActive) {
-        // Sentido da corrente convencional: flui do maior potencial para o menor potencial.
-        // Se fromV < toV, o fluxo elétrico real vai de 'to' para 'from' (sentido inverso do Path).
-        final bool isReverseFlow = (fromV != null && toV != null && fromV < toV);
+        // Sentido da corrente convencional: flui do polo positivo (+) para o polo negativo (-).
+        final bool isReverseFlow;
+        if (wireFlow != null && wireFlow != 0.0) {
+          isReverseFlow = wireFlow < 0; // -1.0 indica fluxo de 'to' para 'from'
+        } else if (isFromPosPower) {
+          isReverseFlow = false;
+        } else if (isToPosPower) {
+          isReverseFlow = true;
+        } else if (isFromNegPower) {
+          isReverseFlow = true;
+        } else if (isToNegPower) {
+          isReverseFlow = false;
+        } else {
+          isReverseFlow = (fromV != null && toV != null && fromV < toV);
+        }
+
         final double effectiveAnim = isReverseFlow
             ? (1.0 - (animationValue % 1.0))
             : (animationValue % 1.0);

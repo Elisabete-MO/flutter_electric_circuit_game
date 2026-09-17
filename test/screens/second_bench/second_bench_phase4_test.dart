@@ -355,6 +355,49 @@ void main() {
           }
         }
       });
+
+      test('Corrente flui do polo positivo (+) ao negativo (-) independente da ordem de conexão dos fios', () {
+        const validator = CircuitValidator();
+
+        final components = [
+          const CircuitComponentInstance(id: 'bat', kind: CircuitComponentKind.battery),
+          const CircuitComponentInstance(id: 'sw', kind: CircuitComponentKind.switchComponent, isSwitchClosed: true),
+          const CircuitComponentInstance(id: 'res', kind: CircuitComponentKind.resistor, resistanceOhms: 680),
+          const CircuitComponentInstance(id: 'led', kind: CircuitComponentKind.led),
+        ];
+
+        // Conexões criadas deliberadamente em ordem inversa (do destino para a origem)
+        final reversedConnections = [
+          const CircuitConnection(CircuitTerminal('sw', 't1'), CircuitTerminal('bat', 'pos')),
+          const CircuitConnection(CircuitTerminal('res', 't1'), CircuitTerminal('sw', 't2')),
+          const CircuitConnection(CircuitTerminal('led', 'anode'), CircuitTerminal('res', 't2')),
+          const CircuitConnection(CircuitTerminal('bat', 'neg'), CircuitTerminal('led', 'cathode')),
+        ];
+
+        final graph = CircuitGraph(components: components, connections: reversedConnections);
+        final orderedPath = validator.getOrderedTerminalsPath(graph);
+
+        expect(orderedPath, isNotNull);
+        expect(orderedPath!.first, equals(const CircuitTerminal('bat', 'pos')));
+        expect(orderedPath.last, equals(const CircuitTerminal('bat', 'neg')));
+
+        // A ordem deve seguir rigorosamente:
+        // bat(pos) -> sw(t1) -> sw(t2) -> res(t1) -> res(t2) -> led(anode) -> led(cathode) -> bat(neg)
+        final names = orderedPath.map((t) => '${t.componentId}.${t.name}').toList();
+        expect(
+          names,
+          equals([
+            'bat.pos',
+            'sw.t1',
+            'sw.t2',
+            'res.t1',
+            'res.t2',
+            'led.anode',
+            'led.cathode',
+            'bat.neg',
+          ]),
+        );
+      });
     },
   );
 }

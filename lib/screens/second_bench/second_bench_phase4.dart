@@ -1740,14 +1740,40 @@ class _SecondBenchPhase4State extends State<SecondBenchPhase4>
 
   List<WirePath> _buildWirePaths(Size benchSize) {
     final List<WirePath> wirePaths = [];
+
+    // Quando o circuito estiver energizado, obtém a ordem convencional da corrente (+ para -)
+    List<CircuitTerminal>? flowPath;
+    if (_isCircuitLit) {
+      const validator = CircuitValidator();
+      flowPath = validator.getOrderedTerminalsPath(_buildGraph());
+    }
+
     for (final conn in _connections) {
-      final p1 = _calculateTerminalPos(conn.from, benchSize);
-      final p2 = _calculateTerminalPos(conn.to, benchSize);
+      var fromTerm = conn.from;
+      var toTerm = conn.to;
+
+      if (flowPath != null) {
+        final idxFrom = flowPath.indexWhere(
+          (t) => t.componentId == fromTerm.componentId && t.name == fromTerm.name,
+        );
+        final idxTo = flowPath.indexWhere(
+          (t) => t.componentId == toTerm.componentId && t.name == toTerm.name,
+        );
+        if (idxFrom != -1 && idxTo != -1 && idxFrom > idxTo) {
+          // Inverte para que a corrente física/elétrons animados fluam sempre
+          // do potencial maior (mais próximo ao polo +) para o menor (mais próximo ao polo -)
+          fromTerm = conn.to;
+          toTerm = conn.from;
+        }
+      }
+
+      final p1 = _calculateTerminalPos(fromTerm, benchSize);
+      final p2 = _calculateTerminalPos(toTerm, benchSize);
 
       Color wireColor = const Color(0xFF10B981);
-      if (conn.from.name == 'pos' || conn.to.name == 'pos') {
+      if (fromTerm.name == 'pos' || toTerm.name == 'pos') {
         wireColor = const Color(0xFFEF4444);
-      } else if (conn.from.name == 'neg' || conn.to.name == 'neg') {
+      } else if (fromTerm.name == 'neg' || toTerm.name == 'neg') {
         wireColor = const Color(0xFF3B82F6);
       } else {
         wireColor = const Color(0xFFF59E0B);

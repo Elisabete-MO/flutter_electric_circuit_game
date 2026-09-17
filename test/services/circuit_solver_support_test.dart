@@ -107,6 +107,105 @@ void main() {
       expect(result.simulationValues['active_load'], isNull);
       expect(result.simulationValues['current_load'], isNull);
     });
+
+    test('DFS sets correct wire_flow and node potentials for forward wires', () {
+      final state = _seriesCircuit(sourceType: ComponentType.battery);
+      final result = DfsCircuitSolver().solve(state);
+
+      expect(result.errorMessage, isNull);
+      expect(result.simulationValues['active_w1'], equals(1.0));
+      expect(result.simulationValues['active_w2'], equals(1.0));
+      // w1 connects src(B/+) -> load(A): forward flow (+1.0)
+      expect(result.simulationValues['wire_flow_w1'], equals(1.0));
+      // w2 connects load(B) -> src(A/-): forward flow (+1.0)
+      expect(result.simulationValues['wire_flow_w2'], equals(1.0));
+      // Potential at entry terminal A is high (9.0V), at exit terminal B is 0.0V
+      expect(result.simulationValues['node_voltage_load_A'], closeTo(9.0, 0.001));
+      expect(result.simulationValues['node_voltage_load_B'], closeTo(0.0, 0.001));
+    });
+
+    test('DFS sets correct wire_flow when wires are drawn in reverse direction', () {
+      // Wires drawn from load to src instead of src to load
+      final state = SandboxState(
+        isSimulating: true,
+        components: [
+          _component('src', ComponentType.battery),
+          _component('load', ComponentType.resistor, gridX: 1, value: 10.0),
+        ],
+        wires: const [
+          SandboxWire(
+            id: 'w1',
+            fromComponentId: 'load',
+            fromTerminal: 'B',
+            toComponentId: 'src',
+            toTerminal: 'B', // connects to + pole
+          ),
+          SandboxWire(
+            id: 'w2',
+            fromComponentId: 'src',
+            fromTerminal: 'A', // connects from - pole
+            toComponentId: 'load',
+            toTerminal: 'A',
+          ),
+        ],
+      );
+      final result = DfsCircuitSolver().solve(state);
+
+      expect(result.errorMessage, isNull);
+      // w1: from=load(B), to=src(B/+). Current flows from src(+) to load(B), which is to->from (-1.0)
+      expect(result.simulationValues['wire_flow_w1'], equals(-1.0));
+      // w2: from=src(A/-), to=load(A). Current flows from load(A) to src(-), which is to->from (-1.0)
+      expect(result.simulationValues['wire_flow_w2'], equals(-1.0));
+      // Current entered load at terminal B: node_voltage_load_B is 9.0V, node_voltage_load_A is 0.0V
+      expect(result.simulationValues['node_voltage_load_B'], closeTo(9.0, 0.001));
+      expect(result.simulationValues['node_voltage_load_A'], closeTo(0.0, 0.001));
+    });
+
+    test('MNA sets correct wire_flow and wire_current', () {
+      final state = _seriesCircuit(sourceType: ComponentType.battery);
+      final result = MnaCircuitSolver().solve(state);
+
+      expect(result.errorMessage, isNull);
+      expect(result.simulationValues['active_w1'], equals(1.0));
+      expect(result.simulationValues['active_w2'], equals(1.0));
+      expect(result.simulationValues['wire_flow_w1'], equals(1.0));
+      expect(result.simulationValues['wire_flow_w2'], equals(1.0));
+      expect(result.simulationValues['wire_current_w1'], closeTo(0.9, 0.001));
+      expect(result.simulationValues['wire_current_w2'], closeTo(0.9, 0.001));
+    });
+
+    test('MNA sets correct wire_flow when wire is drawn backwards', () {
+      final state = SandboxState(
+        isSimulating: true,
+        components: [
+          _component('src', ComponentType.battery),
+          _component('load', ComponentType.resistor, gridX: 1, value: 10.0),
+        ],
+        wires: const [
+          SandboxWire(
+            id: 'w1',
+            fromComponentId: 'load',
+            fromTerminal: 'A',
+            toComponentId: 'src',
+            toTerminal: 'B', // connected to positive pole
+          ),
+          SandboxWire(
+            id: 'w2',
+            fromComponentId: 'load',
+            fromTerminal: 'B',
+            toComponentId: 'src',
+            toTerminal: 'A', // connected to negative pole
+          ),
+        ],
+      );
+      final result = MnaCircuitSolver().solve(state);
+
+      expect(result.errorMessage, isNull);
+      // w1 drawn from load(A) to src(B/+): flow is from src(+) to load, so to->from (-1.0)
+      expect(result.simulationValues['wire_flow_w1'], equals(-1.0));
+      // w2 drawn from load(B) to src(A/-): flow is from load to src(-), so from->to (+1.0)
+      expect(result.simulationValues['wire_flow_w2'], equals(1.0));
+    });
   });
 }
 

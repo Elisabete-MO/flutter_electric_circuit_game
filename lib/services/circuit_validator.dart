@@ -264,6 +264,18 @@ class CircuitValidator {
     );
   }
 
+  /// Retorna a lista de terminais ordenados no sentido convencional da corrente,
+  /// partindo do polo positivo (+) da bateria e terminando no polo negativo (-).
+  List<CircuitTerminal>? getOrderedTerminalsPath(CircuitGraph graph) {
+    final battery = graph.components
+        .where((c) => c.kind == CircuitComponentKind.battery)
+        .firstOrNull;
+    if (battery == null) return null;
+    final paths = _findPaths(graph, battery.terminalA, battery.terminalB);
+    if (paths.isEmpty) return null;
+    return paths.first.terminalsPath;
+  }
+
   /// Verifica se há ligação direta por fios entre dois terminais sem passar por outros componentes
   bool _hasDirectConnection(
       CircuitGraph graph, CircuitTerminal start, CircuitTerminal end) {
